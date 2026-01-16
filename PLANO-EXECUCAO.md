@@ -78,11 +78,11 @@ npm run dev        # Servidor inicia corretamente
 - [x] Executar migrations pendentes (`npm run db:push`) - **Schema sincronizado**
 - [x] Popular banco com dados de teste (`npm run db:seed`) - **15 parlamentares, 3 sessoes, 4 comissoes**
 
-#### Etapa 0.3: Backup e Versionamento
-- [ ] Criar branch `main` como baseline
-- [ ] Criar branch `develop` para desenvolvimento
-- [ ] Configurar estrategia de commits (conventional commits)
-- [ ] Documentar processo de deploy
+#### Etapa 0.3: Backup e Versionamento - **CONCLUIDA**
+- [x] Criar branch `main` como baseline - **OK**
+- [x] Criar branch `develop` para desenvolvimento - **OK**
+- [x] Configurar estrategia de commits (conventional commits) - **Usando feat/fix/docs**
+- [x] Vincular ao GitHub - **https://github.com/junielsonfarias/LegNet**
 
 **Entregaveis**:
 - Projeto compilando sem erros
@@ -787,7 +787,7 @@ test(fase-X): adicao de testes
 
 ### Metricas de Progresso
 
-- **Etapas Concluidas**: 2/32 (Etapa 0.1, 0.2)
+- **Etapas Concluidas**: 3/32 (Etapa 0.1, 0.2, 0.3)
 - **Erros Corrigidos**: 4/17 (E001 parcial, E004, rotas dinamicas, typo seed)
 - **Melhorias Implementadas**: 0/28
 - **Cobertura de Testes**: ~30%
