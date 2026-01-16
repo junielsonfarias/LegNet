@@ -29,6 +29,20 @@ export interface ApiSuccess<T = any> {
 export type ApiResponse<T = any> = ApiSuccess<T> | ApiError
 
 // Tipos de erro personalizados
+
+// Erro base com código de status HTTP
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number = 500,
+    public code?: string,
+    public details?: any
+  ) {
+    super(message)
+    this.name = 'AppError'
+  }
+}
+
 export class ValidationError extends Error {
   constructor(message: string, public details?: any) {
     super(message)
@@ -54,6 +68,20 @@ export class UnauthorizedError extends Error {
   constructor(message: string = 'Não autorizado') {
     super(message)
     this.name = 'UnauthorizedError'
+  }
+}
+
+export class ForbiddenError extends Error {
+  constructor(message: string = 'Acesso negado') {
+    super(message)
+    this.name = 'ForbiddenError'
+  }
+}
+
+export class RateLimitError extends Error {
+  constructor(message: string = 'Muitas requisições. Tente novamente mais tarde.') {
+    super(message)
+    this.name = 'RateLimitError'
   }
 }
 
@@ -130,7 +158,48 @@ export function createErrorResponse(
       { status: 401 }
     )
   }
-  
+
+  // Erro de acesso negado
+  if (error instanceof ForbiddenError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        timestamp,
+        path
+      },
+      { status: 403 }
+    )
+  }
+
+  // Erro de rate limit
+  if (error instanceof RateLimitError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        timestamp,
+        path
+      },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
+  // Erro de aplicação genérico com status code customizado
+  if (error instanceof AppError) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        ...(error.code && { code: error.code }),
+        ...(error.details && { details: error.details }),
+        timestamp,
+        path
+      },
+      { status: error.statusCode }
+    )
+  }
+
   // Erro genérico
   const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
   const errorStack = error instanceof Error ? error.stack : undefined

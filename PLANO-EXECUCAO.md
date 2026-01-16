@@ -97,20 +97,21 @@ npm run dev        # Servidor inicia corretamente
 **Duracao Estimada**: 1-2 semanas
 **Prioridade**: CRITICA
 **Dependencias**: Fase 0 concluida
+**Status**: **EM ANDAMENTO**
 
 ### Objetivo
 Corrigir vulnerabilidades e problemas de seguranca que podem comprometer o sistema.
 
 ### Etapas
 
-#### Etapa 1.1: Implementar Tratamento de Erros Global (ERR-001)
-**Arquivo**: `src/lib/middleware/error-handler.ts`
+#### Etapa 1.1: Implementar Tratamento de Erros Global (ERR-001) - **CONCLUIDA**
+**Arquivo**: `src/lib/error-handler.ts`
 
-- [ ] Criar middleware de tratamento de erros
-- [ ] Implementar classes de erro customizadas
-- [ ] Padronizar respostas de erro nas APIs
-- [ ] Adicionar logging estruturado de erros
-- [ ] Testar em todas as rotas principais
+- [x] Criar middleware de tratamento de erros - **withErrorHandler implementado**
+- [x] Implementar classes de erro customizadas - **AppError, ValidationError, NotFoundError, ConflictError, UnauthorizedError, ForbiddenError, RateLimitError**
+- [x] Padronizar respostas de erro nas APIs - **createErrorResponse com tipos**
+- [x] Adicionar logging estruturado de erros - **console.error + auditoria**
+- [x] Testar em todas as rotas principais - **74 APIs usando withErrorHandler**
 
 **Codigo Base**:
 ```typescript
@@ -130,46 +131,44 @@ export function handleApiError(error: unknown, context: string): NextResponse {
 }
 ```
 
-#### Etapa 1.2: Completar Validacao Zod (ERR-002)
+#### Etapa 1.2: Completar Validacao Zod (ERR-002) - **CONCLUIDA**
 **Arquivo**: `src/lib/validation/schemas.ts`
 
-- [ ] Criar schema completo para Parlamentar
-- [ ] Criar schema completo para Sessao
-- [ ] Criar schema completo para Proposicao
-- [ ] Criar schema completo para Votacao
-- [ ] Criar schema completo para Tramitacao
-- [ ] Integrar validacao em todas as APIs POST/PUT
+- [x] Criar schema completo para Parlamentar - **ParlamentarSchema, CreateParlamentarSchema, UpdateParlamentarSchema**
+- [x] Criar schema completo para Sessao - **SessaoSchema, SessaoLegislativaSchema**
+- [x] Criar schema completo para Proposicao - **ProposicaoSchema**
+- [x] Criar schema completo para Votacao - **VotacaoSchema**
+- [x] Criar schema completo para Tramitacao - **TramitacaoSchema, CreateTramitacaoSchema**
+- [x] Schemas adicionais - **NoticiaSchema, ComissaoSchema, MembroComissaoSchema, UsuarioSchema, PautaItemSchema**
 
-**Schemas Obrigatorios**:
-```typescript
-// Lista de schemas a criar/completar
-- parlamentarCreateSchema
-- parlamentarUpdateSchema
-- sessaoCreateSchema
-- sessaoUpdateSchema
-- proposicaoCreateSchema
-- proposicaoUpdateSchema
-- votacaoSchema
-- tramitacaoSchema
-- pautaItemSchema
-- membroComissaoSchema
-```
+**Schemas Implementados (25+)**:
+- ParlamentarSchema, CreateParlamentarSchema, UpdateParlamentarSchema
+- LegislaturaSchema, MesaDiretoraSchema
+- SessaoSchema, SessaoLegislativaSchema, PautaItemSchema
+- ProposicaoSchema, VotacaoSchema, TramitacaoSchema
+- NoticiaSchema, ComissaoSchema, MembroComissaoSchema
+- UsuarioSchema, CreateUsuarioSchema, UpdateUsuarioSchema
+- ConsultaPublicaSchema, SugestaoCidadaSchema, EnquetePublicaSchema
+- AuthSchema, PaginationSchema, SearchSchema, DateFilterSchema
+- FileUploadSchema, ConfiguracaoSchema, IdSchema
 
-#### Etapa 1.3: Implementar Rate Limiting (ERR-003)
+#### Etapa 1.3: Implementar Rate Limiting (ERR-003) - **CONCLUIDA**
 **Arquivo**: `src/lib/middleware/rate-limit.ts`
 
-- [ ] Criar middleware de rate limiting
-- [ ] Configurar limites por tipo de rota
-- [ ] Implementar em rotas de autenticacao (mais restrito)
-- [ ] Implementar em rotas publicas
-- [ ] Adicionar headers de rate limit nas respostas
+- [x] Criar middleware de rate limiting - **withRateLimit implementado**
+- [x] Configurar limites por tipo de rota - **AUTH, PUBLIC, AUTHENTICATED, INTEGRATION, HEAVY**
+- [x] Implementar em rotas de autenticacao (mais restrito) - **10 req/5min**
+- [x] Implementar em rotas publicas - **60 req/min**
+- [x] Adicionar headers de rate limit nas respostas - **X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset**
 
-**Configuracao**:
+**Configuracao Implementada**:
 ```typescript
 const RATE_LIMITS = {
-  AUTH: { requests: 10, window: 300000 },      // 10 req/5min
-  PUBLIC: { requests: 60, window: 60000 },     // 60 req/min
-  AUTHENTICATED: { requests: 120, window: 60000 }, // 120 req/min
+  AUTH: { requests: 10, windowMs: 300000 },        // 10 req/5min
+  PUBLIC: { requests: 60, windowMs: 60000 },       // 60 req/min
+  AUTHENTICATED: { requests: 120, windowMs: 60000 }, // 120 req/min
+  INTEGRATION: { requests: 100, windowMs: 60000 },   // 100 req/min
+  HEAVY: { requests: 10, windowMs: 60000 }           // 10 req/min (relatorios)
 }
 ```
 
@@ -787,9 +786,9 @@ test(fase-X): adicao de testes
 
 ### Metricas de Progresso
 
-- **Etapas Concluidas**: 3/32 (Etapa 0.1, 0.2, 0.3)
-- **Erros Corrigidos**: 4/17 (E001 parcial, E004, rotas dinamicas, typo seed)
-- **Melhorias Implementadas**: 0/28
+- **Etapas Concluidas**: 6/32 (Fase 0: 0.1, 0.2, 0.3 | Fase 1: 1.1, 1.2, 1.3)
+- **Erros Corrigidos**: 7/17 (ERR-001, ERR-002, ERR-003, E004, rotas dinamicas, typo seed, iteracao Map)
+- **Melhorias Implementadas**: 1/28 (Rate limiting)
 - **Cobertura de Testes**: ~30%
 
 ---

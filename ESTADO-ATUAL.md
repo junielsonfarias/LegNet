@@ -356,6 +356,21 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-16 - FASE 1: Correcoes de Seguranca (CONCLUIDA)
+- **Etapa 1.1 - Tratamento de Erros**:
+  - Adicionadas classes: AppError, ForbiddenError, RateLimitError
+  - 74 APIs usando withErrorHandler
+  - Respostas padronizadas com timestamps e paths
+- **Etapa 1.2 - Validacao Zod**:
+  - 25+ schemas implementados
+  - Novos: VotacaoSchema, TramitacaoSchema, NoticiaSchema, ComissaoSchema, MembroComissaoSchema, UsuarioSchema, SessaoSchema, PautaItemSchema
+  - Validacao de senha forte (maiuscula, minuscula, numero)
+- **Etapa 1.3 - Rate Limiting**:
+  - Middleware `withRateLimit` implementado
+  - 5 tipos: AUTH (10/5min), PUBLIC (60/min), AUTHENTICATED (120/min), INTEGRATION (100/min), HEAVY (10/min)
+  - Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+  - Funcoes: enforceRateLimit, resetRateLimit, getRateLimitStats
+
 ### 2026-01-16 - FASE 0 Etapa 0.3: Backup e Versionamento (CONCLUIDA)
 - **Git inicializado**: Repositorio local criado
 - **GitHub vinculado**: https://github.com/junielsonfarias/LegNet
