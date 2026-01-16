@@ -260,9 +260,9 @@
 ### Erros de Media Prioridade
 | ID | Descricao | Status | Solucao |
 |----|-----------|--------|---------|
-| E001 | Sessao sem tratamento de erro em algumas APIs | Em Correcao | Adicionar try-catch em todas as routes |
-| E002 | Validacao Zod incompleta em alguns endpoints | Em Correcao | Completar schemas de validacao |
-| E003 | Falta de rate limiting em algumas rotas | Pendente | Implementar middleware de rate limit |
+| E001 | Sessao sem tratamento de erro em algumas APIs | Corrigido | Implementado withErrorHandler em 74 APIs |
+| E002 | Validacao Zod incompleta em alguns endpoints | Corrigido | 25+ schemas implementados |
+| E003 | Falta de rate limiting em algumas rotas | Corrigido | Middleware withRateLimit implementado |
 
 ### Erros de Baixa Prioridade
 | ID | Descricao | Status | Solucao |
@@ -340,10 +340,12 @@
 ## Proximas Tarefas
 
 ### Sprint Atual
-1. [ ] Completar validacao Zod em todas APIs
-2. [ ] Implementar rate limiting global
-3. [ ] Criar testes unitarios para servicos principais
-4. [ ] Documentar APIs com OpenAPI
+1. [x] Completar validacao Zod em todas APIs - **25+ schemas implementados**
+2. [x] Implementar rate limiting global - **withRateLimit implementado**
+3. [x] Implementar cache basico - **MemoryCache implementado**
+4. [x] Implementar paginacao padrao - **pagination.ts criado**
+5. [ ] Criar testes unitarios para servicos principais
+6. [ ] Documentar APIs com OpenAPI
 
 ### Backlog
 1. Automacao completa de pautas
@@ -355,6 +357,31 @@
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-16 - FASE 2: Correcoes de Performance (CONCLUIDA)
+- **Etapa 2.1 - Indices no Banco de Dados**:
+  - Adicionados indices em User (role+ativo, createdAt)
+  - Adicionados indices em Parlamentar (ativo+cargo, partido, nome)
+  - Adicionados indices em Sessao (status+data, tipo+status, legislaturaId+data, data)
+  - Adicionados indices em Proposicao (status+dataApresentacao, tipo+status, autorId+ano, ano+tipo, dataApresentacao)
+  - Adicionados indices em Comissao (tipo+ativa, ativa)
+  - Adicionados indices em Noticia (publicada+dataPublicacao, categoria+publicada, dataPublicacao)
+  - Executado db:push com sucesso
+- **Etapa 2.3 - Paginacao Padrao**:
+  - Criado `src/lib/utils/pagination.ts`
+  - Interface PaginatedResponse<T> com items e pagination metadata
+  - Funcoes: extractPaginationParams, createPrismaPageArgs, createPaginatedResponse
+  - Helpers: paginateArray, sortArray, sortAndPaginateArray
+  - Validacao de parametros e geracao de links de navegacao
+  - Limites: MAX_LIMIT=100, DEFAULT_LIMIT=20
+- **Etapa 2.4 - Cache Basico**:
+  - Criado `src/lib/cache/memory-cache.ts`
+  - Classe MemoryCache com get, set, delete, getOrSet (cache-aside pattern)
+  - TTLs configurados: SHORT (1min), MEDIUM (5min), LONG (15min), HOUR, DAY
+  - CACHE_KEYS predefinidas para dados frequentes
+  - Funcoes de invalidacao: invalidateEntityCache, cacheHelpers
+  - Limpeza automatica a cada 5 minutos
+  - Decorador @cached para funcoes
 
 ### 2026-01-16 - FASE 1: Correcoes de Seguranca (CONCLUIDA)
 - **Etapa 1.1 - Tratamento de Erros**:
