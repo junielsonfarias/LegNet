@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Eletrônico - Câmara Municipal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .backdrop-blur-lg {
+            backdrop-filter: blur(16px);
+        }
+        .bg-white\/10 {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .bg-white\/20 {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .bg-green-500\/20 {
+            background-color: rgba(34, 197, 94, 0.2);
+        }
+        .bg-green-500\/30 {
+            background-color: rgba(34, 197, 94, 0.3);
+        }
+        .bg-red-500\/20 {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+        .bg-red-500\/30 {
+            background-color: rgba(239, 68, 68, 0.3);
+        }
+        .bg-blue-500\/20 {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        .bg-blue-500\/30 {
+            background-color: rgba(59, 130, 246, 0.3);
+        }
+        .bg-yellow-500\/30 {
+            background-color: rgba(234, 179, 8, 0.3);
+        }
+        .bg-purple-500\/20 {
+            background-color: rgba(147, 51, 234, 0.2);
+        }
+        .border-white\/20 {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .border-green-400\/30 {
+            border-color: rgba(74, 222, 128, 0.3);
+        }
+        .border-red-400\/30 {
+            border-color: rgba(248, 113, 113, 0.3);
+        }
+        .border-blue-400\/30 {
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+        .border-yellow-400\/30 {
+            border-color: rgba(250, 204, 21, 0.3);
+        }
+        .text-green-300 {
+            color: rgb(134, 239, 172);
+        }
+        .text-green-200 {
+            color: rgb(187, 247, 208);
+        }
+        .text-red-300 {
+            color: rgb(252, 165, 165);
+        }
+        .text-red-200 {
+            color: rgb(254, 202, 202);
+        }
+        .text-blue-300 {
+            color: rgb(147, 197, 253);
+        }
+        .text-blue-200 {
+            color: rgb(191, 219, 254);
+        }
+        .text-yellow-300 {
+            color: rgb(253, 224, 71);
+        }
+        .text-yellow-200 {
+            color: rgb(254, 240, 138);
+        }
+        .text-purple-300 {
+            color: rgb(196, 181, 253);
+        }
+        .text-purple-200 {
+            color: rgb(221, 214, 254);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+    <!-- Header do Painel -->
+    <div class="bg-white/10 backdrop-blur-lg border-b border-white/20 shadow-2xl">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                            <i data-lucide="monitor" class="h-6 w-6 text-white"></i>
+                        </div>
+                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">ORDINARIA - 001/2025</h1>
+                        <p class="text-blue-200">Câmara Municipal de Mojuí dos Campos</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="inline-flex items-center rounded-full font-semibold bg-green-500/20 text-green-300 text-base px-4 py-2 border border-green-400/30 mb-2">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                        SESSÃO EM ANDAMENTO
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-blue-300">
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="calendar" class="h-4 w-4"></i>
+                            24/01/2025
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="clock" class="h-4 w-4"></i>
+                            09:00 - 12:00
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <i data-lucide="activity" class="h-4 w-4"></i>
+                            <span id="currentTime">18:01:57</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Resultados da Votação -->
+            <div id="containerVotacao" class="lg:col-span-2 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
+                <div class="p-6">
+                    <h2 class="text-3xl font-bold flex items-center justify-center mb-6">
+                        <i data-lucide="vote" class="h-8 w-8 mr-3 text-green-400"></i>
+                        Votação Finalizada
+                    </h2>
+                    
+                    <!-- Título da Proposição -->
+                    <div class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-6 rounded-xl border border-blue-400/30 mb-6">
+                        <h3 class="text-2xl font-bold text-white mb-2">
+                            Projeto de Lei nº 001/2024
+                        </h3>
+                        <p class="text-lg text-blue-200 mb-4">
+                            Dispõe sobre a criação do programa de incentivo à agricultura familiar no município
+                        </p>
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="user" class="h-4 w-4 text-blue-300"></i>
+                                <span class="text-white">Autor: <span class="font-semibold text-blue-300">Francisco Pantoja</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultados da Votação -->
+                    <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                        <div class="p-6 bg-green-600/30 rounded-xl border border-green-400/30">
+                            <div class="text-5xl font-extrabold text-green-300 mb-2">7</div>
+                            <div class="text-xl text-green-200 font-semibold">SIM</div>
+                            <div class="text-sm text-green-300 mt-2">63.6%</div>
+                        </div>
+                        <div class="p-6 bg-red-600/30 rounded-xl border border-red-400/30">
+                            <div class="text-5xl font-extrabold text-red-300 mb-2">2</div>
+                            <div class="text-xl text-red-200 font-semibold">NÃO</div>
+                            <div class="text-sm text-red-300 mt-2">18.2%</div>
+                        </div>
+                        <div class="p-6 bg-yellow-600/30 rounded-xl border border-yellow-400/30">
+                            <div class="text-5xl font-extrabold text-yellow-300 mb-2">2</div>
+                            <div class="text-xl text-yellow-200 font-semibold">ABSTENÇÕES</div>
+                            <div class="text-sm text-yellow-300 mt-2">18.2%</div>
+                        </div>
+                    </div>
+
+                    <!-- Status da Votação -->
+                    <div class="text-center p-4 bg-green-500/20 rounded-lg border border-green-400/30">
+                        <i data-lucide="check-circle" class="h-8 w-8 inline mr-2 text-green-400"></i>
+                        <span class="text-xl font-bold text-green-300">Votação Finalizada - APROVADO</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Presença dos Parlamentares -->
+            <div id="presencaParlamentares" class="lg:col-span-1 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
+                <div class="p-4">
+                    <h2 class="text-xl font-bold flex items-center justify-center mb-4">
+                        <i data-lucide="users" class="h-6 w-6 mr-2 text-blue-400"></i>
+                        Presença dos Parlamentares
+                    </h2>
+                    
+                    <!-- Estatísticas de Presença -->
+                    <div class="grid grid-cols-3 gap-2 text-center mb-4">
+                        <div class="p-2 bg-green-600/30 rounded-lg border border-green-400/30">
+                            <div class="text-xl font-bold text-green-300">8</div>
+                            <div class="text-xs text-green-200">Presentes</div>
+                        </div>
+                        <div class="p-2 bg-red-600/30 rounded-lg border border-red-400/30">
+                            <div class="text-xl font-bold text-red-300">3</div>
+                            <div class="text-xs text-red-200">Ausentes</div>
+                        </div>
+                        <div class="p-2 bg-blue-600/30 rounded-lg border border-blue-400/30">
+                            <div class="text-xl font-bold text-blue-300">73%</div>
+                            <div class="text-xs text-blue-200">Presença</div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Presentes -->
+                    <div class="mb-3">
+                        <h3 class="text-sm font-bold text-green-300 mb-2 flex items-center">
+                            <i data-lucide="check-circle" class="h-4 w-4 mr-1"></i>
+                            Presentes (8)
+                        </h3>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Francisco Pantoja</p>
+                                    <p class="text-xs text-green-300">MDB</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Diego Silva</p>
+                                    <p class="text-xs text-green-300">PTB</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Mickael Aguiar</p>
+                                    <p class="text-xs text-green-300">PSD</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Jesanias Pessoa</p>
+                                    <p class="text-xs text-green-300">MDB</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Arnaldo Galvão</p>
+                                    <p class="text-xs text-green-300">PT</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Clei do Povo</p>
+                                    <p class="text-xs text-green-300">PSDB</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Enfermeiro Frank</p>
+                                    <p class="text-xs text-green-300">DEM</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Everaldo Camilo</p>
+                                    <p class="text-xs text-green-300">PP</p>
+                                </div>
+                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Ausentes -->
+                    <div>
+                        <h3 class="text-sm font-bold text-red-300 mb-2 flex items-center">
+                            <i data-lucide="x-circle" class="h-4 w-4 mr-1"></i>
+                            Ausentes (3)
+                        </h3>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
+                                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Joilson Santa Júlia</p>
+                                    <p class="text-xs text-red-300">PCdoB</p>
+                                </div>
+                                <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
+                                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Reges Rabelo</p>
+                                    <p class="text-xs text-red-300">PSB</p>
+                                </div>
+                                <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
+                            </div>
+                            <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
+                                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-white text-sm">Wallace Lalá</p>
+                                    <p class="text-xs text-red-300">PV</p>
+                                </div>
+                                <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicializar ícones Lucide
+        lucide.createIcons();
+        
+        // Dados dos vereadores (sincronizados com o sistema administrativo)
+        let vereadores = [
+            { id: 1, nome: "Francisco Pantoja", partido: "MDB", presente: true, voto: null },
+            { id: 2, nome: "Diego Silva", partido: "PTB", presente: true, voto: null },
+            { id: 3, nome: "Mickael Aguiar", partido: "PSD", presente: true, voto: null },
+            { id: 4, nome: "Jesanias Pessoa", partido: "MDB", presente: true, voto: null },
+            { id: 5, nome: "Arnaldo Galvão", partido: "PT", presente: true, voto: null },
+            { id: 6, nome: "Clei do Povo", partido: "PSDB", presente: true, voto: null },
+            { id: 7, nome: "Enfermeiro Frank", partido: "DEM", presente: true, voto: null },
+            { id: 8, nome: "Everaldo Camilo", partido: "PP", presente: true, voto: null },
+            { id: 9, nome: "Joilson Santa Júlia", partido: "PCdoB", presente: false, voto: null },
+            { id: 10, nome: "Reges Rabelo", partido: "PSB", presente: false, voto: null },
+            { id: 11, nome: "Wallace Lalá", partido: "PV", presente: false, voto: null }
+        ];
+
+        // Função para sincronizar dados com o sistema administrativo
+        async function sincronizarDados() {
+            try {
+                // Buscar dados da sessão ativa
+                const response = await fetch('/api/sessoes?status=em_andamento')
+                if (response.ok) {
+                    const sessoes = await response.json()
+                    if (sessoes.length > 0) {
+                        const sessaoAtiva = sessoes[0]
+                        
+                        // Atualizar informações da sessão
+                        document.getElementById('tituloSessao').textContent = sessaoAtiva.titulo
+                        document.getElementById('dataSessao').textContent = new Date(sessaoAtiva.data).toLocaleDateString('pt-BR')
+                        
+                        // Buscar presença dos parlamentares
+                        const presencaResponse = await fetch(`/api/sessoes/${sessaoAtiva.id}/presenca`)
+                        if (presencaResponse.ok) {
+                            const presenca = await presencaResponse.json()
+                            
+                            // Atualizar dados dos vereadores com presença real
+                            vereadores = vereadores.map(vereador => {
+                                const presencaData = presenca.find(p => p.parlamentarId === vereador.id)
+                                return {
+                                    ...vereador,
+                                    presente: presencaData ? presencaData.presente : false,
+                                    ausente: presencaData ? presencaData.ausente : true,
+                                    justificada: presencaData ? presencaData.justificada : false,
+                                    justificativa: presencaData ? presencaData.justificativa : null
+                                }
+                            })
+                            
+                            atualizarPainelVotacao()
+                            atualizarPresencaParlamentares()
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao sincronizar dados:', error)
+            }
+        }
+
+        let votacaoAtiva = false;
+        let votacaoIniciada = false;
+
+        // Atualizar horário em tempo real
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('pt-BR', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // Iniciar votação
+        function iniciarVotacao() {
+            votacaoAtiva = true;
+            votacaoIniciada = true;
+            atualizarPainelVotacao();
+            atualizarStatusVotacao();
+        }
+
+        // Finalizar votação
+        function finalizarVotacao() {
+            votacaoAtiva = false;
+            atualizarPainelVotacao();
+            atualizarStatusVotacao();
+        }
+
+        // Simular voto de um vereador
+        function simularVoto(vereadorId, tipoVoto) {
+            const vereador = vereadores.find(v => v.id === vereadorId);
+            if (vereador && vereador.presente) {
+                vereador.voto = tipoVoto;
+                atualizarPainelVotacao();
+            }
+        }
+
+        // Atualizar painel de votação
+        function atualizarPainelVotacao() {
+            const containerVotacao = document.getElementById('containerVotacao');
+            if (!containerVotacao) return;
+
+            if (votacaoAtiva) {
+                containerVotacao.innerHTML = `
+                    <div class="bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
+                        <div class="p-6">
+                            <h2 class="text-3xl font-bold flex items-center justify-center mb-6">
+                                <i data-lucide="vote" class="h-8 w-8 mr-3 text-yellow-400 animate-pulse"></i>
+                                Votação em Andamento
+                            </h2>
+                            
+                            <!-- Título da Proposição -->
+                            <div class="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-6 rounded-xl border border-yellow-400/30 mb-6">
+                                <h3 class="text-2xl font-bold text-white mb-2">
+                                    Projeto de Lei nº 001/2024
+                                </h3>
+                                <p class="text-lg text-yellow-200 mb-4">
+                                    Dispõe sobre a criação do programa de incentivo à agricultura familiar no município
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="user" class="h-4 w-4 text-yellow-300"></i>
+                                        <span class="text-white">Autor: <span class="font-semibold text-yellow-300">Francisco Pantoja</span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vereadores Presentes para Votação -->
+                            <div class="mb-6">
+                                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                                    <i data-lucide="users" class="h-5 w-5 mr-2"></i>
+                                    Vereadores Presentes (${vereadores.filter(v => v.presente).length})
+                                </h3>
+                                ${vereadores.filter(v => v.presente).length > 0 ? `
+                                <div class="grid grid-cols-2 gap-3">
+                                    ${vereadores.filter(v => v.presente).map(vereador => `
+                                        <div class="flex items-center gap-3 p-3 rounded-lg border ${
+                                            vereador.voto === null ? 'bg-gray-600/20 border-gray-400/30' :
+                                            vereador.voto === 'SIM' ? 'bg-green-500/20 border-green-400/30' :
+                                            vereador.voto === 'NAO' ? 'bg-red-500/20 border-red-400/30' :
+                                            'bg-orange-500/20 border-orange-400/30'
+                                        }">
+                                            <div class="w-10 h-10 rounded-full flex items-center justify-center ${
+                                                vereador.voto === null ? 'bg-gray-600' :
+                                                vereador.voto === 'SIM' ? 'bg-green-600' :
+                                                vereador.voto === 'NAO' ? 'bg-red-600' :
+                                                'bg-orange-600'
+                                            }">
+                                                <i data-lucide="user" class="h-5 w-5 text-white"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="font-semibold text-white text-sm">${vereador.nome}</p>
+                                                <p class="text-xs ${
+                                                    vereador.voto === null ? 'text-gray-300' :
+                                                    vereador.voto === 'SIM' ? 'text-green-300' :
+                                                    vereador.voto === 'NAO' ? 'text-red-300' :
+                                                    'text-orange-300'
+                                                }">${vereador.partido}</p>
+                                            </div>
+                                            ${vereador.voto ? `
+                                                <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                                                    vereador.voto === 'SIM' ? 'bg-green-600 text-green-100' :
+                                                    vereador.voto === 'NAO' ? 'bg-red-600 text-red-100' :
+                                                    'bg-orange-600 text-orange-100'
+                                                }">${vereador.voto}</span>
+                                            ` : `
+                                                <span class="px-3 py-1 rounded-full text-xs bg-gray-600 text-gray-300">Aguardando</span>
+                                            `}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                ` : `
+                                <div class="text-center py-8">
+                                    <div class="bg-gray-600/20 border border-gray-400/30 rounded-lg p-8">
+                                        <i data-lucide="users" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                                        <p class="text-white text-lg mb-2">Nenhum parlamentar presente</p>
+                                        <p class="text-gray-300 text-sm">A lista será preenchida conforme os parlamentares forem marcando presença</p>
+                                    </div>
+                                </div>
+                                `}
+                            </div>
+
+                            <!-- Resultados Parciais -->
+                            <div class="grid grid-cols-3 gap-4 text-center">
+                                <div class="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
+                                    <div class="text-3xl font-bold text-green-300">${vereadores.filter(v => v.voto === 'SIM').length}</div>
+                                    <div class="text-sm text-green-200">SIM</div>
+                                </div>
+                                <div class="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
+                                    <div class="text-3xl font-bold text-red-300">${vereadores.filter(v => v.voto === 'NAO').length}</div>
+                                    <div class="text-sm text-red-200">NÃO</div>
+                                </div>
+                                <div class="p-4 bg-orange-600/30 rounded-xl border border-orange-400/30">
+                                    <div class="text-3xl font-bold text-orange-300">${vereadores.filter(v => v.voto === 'ABSTENCAO').length}</div>
+                                    <div class="text-sm text-orange-200">ABSTENÇÕES</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (votacaoIniciada) {
+                // Mostrar resultados finais
+                const votosSim = vereadores.filter(v => v.voto === 'SIM').length;
+                const votosNao = vereadores.filter(v => v.voto === 'NAO').length;
+                const votosAbstencao = vereadores.filter(v => v.voto === 'ABSTENCAO').length;
+                const totalVotos = votosSim + votosNao + votosAbstencao;
+                const aprovado = votosSim > votosNao;
+
+                containerVotacao.innerHTML = `
+                    <div class="bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
+                        <div class="p-6">
+                            <h2 class="text-3xl font-bold flex items-center justify-center mb-6">
+                                <i data-lucide="vote" class="h-8 w-8 mr-3 text-green-400"></i>
+                                Votação Finalizada
+                            </h2>
+                            
+                            <!-- Título da Proposição -->
+                            <div class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-6 rounded-xl border border-blue-400/30 mb-6">
+                                <h3 class="text-2xl font-bold text-white mb-2">
+                                    Projeto de Lei nº 001/2024
+                                </h3>
+                                <p class="text-lg text-blue-200 mb-4">
+                                    Dispõe sobre a criação do programa de incentivo à agricultura familiar no município
+                                </p>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="user" class="h-4 w-4 text-blue-300"></i>
+                                        <span class="text-white">Autor: <span class="font-semibold text-blue-300">Francisco Pantoja</span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resultados da Votação -->
+                            <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                                <div class="p-6 bg-green-600/30 rounded-xl border border-green-400/30">
+                                    <div class="text-5xl font-extrabold text-green-300 mb-2">${votosSim}</div>
+                                    <div class="text-xl text-green-200 font-semibold">SIM</div>
+                                    <div class="text-sm text-green-300 mt-2">${totalVotos > 0 ? ((votosSim / totalVotos) * 100).toFixed(1) : 0}%</div>
+                                </div>
+                                <div class="p-6 bg-red-600/30 rounded-xl border border-red-400/30">
+                                    <div class="text-5xl font-extrabold text-red-300 mb-2">${votosNao}</div>
+                                    <div class="text-xl text-red-200 font-semibold">NÃO</div>
+                                    <div class="text-sm text-red-300 mt-2">${totalVotos > 0 ? ((votosNao / totalVotos) * 100).toFixed(1) : 0}%</div>
+                                </div>
+                                <div class="p-6 bg-orange-600/30 rounded-xl border border-orange-400/30">
+                                    <div class="text-5xl font-extrabold text-orange-300 mb-2">${votosAbstencao}</div>
+                                    <div class="text-xl text-orange-200 font-semibold">ABSTENÇÕES</div>
+                                    <div class="text-sm text-orange-300 mt-2">${totalVotos > 0 ? ((votosAbstencao / totalVotos) * 100).toFixed(1) : 0}%</div>
+                                </div>
+                            </div>
+
+                            <!-- Status da Votação -->
+                            <div class="text-center p-4 rounded-lg border ${aprovado ? 'bg-green-500/20 border-green-400/30' : 'bg-red-500/20 border-red-400/30'}">
+                                <i data-lucide="${aprovado ? 'check-circle' : 'x-circle'}" class="h-8 w-8 inline mr-2 ${aprovado ? 'text-green-400' : 'text-red-400'}"></i>
+                                <span class="text-xl font-bold ${aprovado ? 'text-green-300' : 'text-red-300'}">Votação Finalizada - ${aprovado ? 'APROVADO' : 'REJEITADO'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Reinicializar ícones Lucide
+            lucide.createIcons();
+        }
+
+        // Atualizar status da votação no header
+        function atualizarStatusVotacao() {
+            const statusElement = document.querySelector('.inline-flex.items-center.rounded-full');
+            if (statusElement) {
+                if (votacaoAtiva) {
+                    statusElement.className = 'inline-flex items-center rounded-full font-semibold bg-yellow-500/20 text-yellow-300 text-base px-4 py-2 border border-yellow-400/30 mb-2';
+                    statusElement.innerHTML = '<div class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>VOTAÇÃO EM ANDAMENTO';
+                } else if (votacaoIniciada) {
+                    statusElement.className = 'inline-flex items-center rounded-full font-semibold bg-blue-500/20 text-blue-300 text-base px-4 py-2 border border-blue-400/30 mb-2';
+                    statusElement.innerHTML = '<div class="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>VOTAÇÃO FINALIZADA';
+                } else {
+                    statusElement.className = 'inline-flex items-center rounded-full font-semibold bg-green-500/20 text-green-300 text-base px-4 py-2 border border-green-400/30 mb-2';
+                    statusElement.innerHTML = '<div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>SESSÃO EM ANDAMENTO';
+                }
+            }
+        }
+
+        function atualizarPresencaParlamentares() {
+            const containerPresenca = document.getElementById('presencaParlamentares');
+            if (!containerPresenca) return;
+
+            const presentes = vereadores.filter(v => v.presente);
+            const justificados = vereadores.filter(v => v.justificada);
+            const ausentes = vereadores.filter(v => v.ausente && !v.justificada);
+            const total = vereadores.length;
+            const percentualPresenca = total > 0 ? Math.round((presentes.length / total) * 100) : 0;
+
+            containerPresenca.innerHTML = `
+                <div class="p-4">
+                    <h2 class="text-xl font-bold flex items-center justify-center mb-4">
+                        <i data-lucide="users" class="h-6 w-6 mr-2 text-blue-400"></i>
+                        Presença dos Parlamentares
+                    </h2>
+                    
+                    <!-- Estatísticas de Presença -->
+                    <div class="grid grid-cols-3 gap-2 text-center mb-4">
+                        <div class="p-2 bg-green-600/30 rounded-lg border border-green-400/30">
+                            <div class="text-xl font-bold text-green-300">${presentes.length}</div>
+                            <div class="text-xs text-green-200">Presentes</div>
+                        </div>
+                        <div class="p-2 bg-red-600/30 rounded-lg border border-red-400/30">
+                            <div class="text-xl font-bold text-red-300">${ausentes.length}</div>
+                            <div class="text-xs text-red-200">Ausentes</div>
+                        </div>
+                        <div class="p-2 bg-blue-600/30 rounded-lg border border-blue-400/30">
+                            <div class="text-xl font-bold text-blue-300">${percentualPresenca}%</div>
+                            <div class="text-xs text-blue-200">Presença</div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Presentes -->
+                    <div class="mb-3">
+                        <h3 class="text-sm font-bold text-green-300 mb-2 flex items-center">
+                            <i data-lucide="check-circle" class="h-4 w-4 mr-1"></i>
+                            Presentes (${presentes.length})
+                        </h3>
+                        <div class="space-y-1">
+                            ${presentes.length > 0 ? presentes.map(vereador => `
+                                <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
+                                    <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                                        <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-white text-sm">${vereador.nome}</p>
+                                        <p class="text-xs text-green-300">${vereador.partido}</p>
+                                    </div>
+                                    <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                                </div>
+                            `).join('') : `
+                                <div class="text-center py-4">
+                                    <i data-lucide="users" class="h-8 w-8 text-gray-400 mx-auto mb-2"></i>
+                                    <p class="text-gray-400 text-sm">Nenhum parlamentar presente</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <!-- Lista de Ausentes Justificados -->
+                    ${justificados.length > 0 ? `
+                    <div class="mb-3">
+                        <h3 class="text-sm font-bold text-yellow-300 mb-2 flex items-center">
+                            <i data-lucide="user-minus" class="h-4 w-4 mr-1"></i>
+                            Ausentes Justificados (${justificados.length})
+                        </h3>
+                        <div class="space-y-1">
+                            ${justificados.map(vereador => `
+                                <div class="flex items-center gap-2 p-2 bg-yellow-500/20 rounded border border-yellow-400/30">
+                                    <div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center">
+                                        <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-white text-sm">${vereador.nome}</p>
+                                        <p class="text-xs text-yellow-300">${vereador.partido}</p>
+                                    </div>
+                                    <span class="bg-yellow-600/30 text-yellow-200 border border-yellow-400/50 px-2 py-1 rounded text-xs">Justificada</span>
+                                </div>
+                                ${vereador.justificativa ? `
+                                    <div class="text-xs text-yellow-200 ml-10 mb-1">
+                                        ${vereador.justificativa}
+                                    </div>
+                                ` : ''}
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Lista de Ausentes -->
+                    ${ausentes.length > 0 ? `
+                    <div class="mb-3">
+                        <h3 class="text-sm font-bold text-red-300 mb-2 flex items-center">
+                            <i data-lucide="user-x" class="h-4 w-4 mr-1"></i>
+                            Ausentes (${ausentes.length})
+                        </h3>
+                        <div class="space-y-1">
+                            ${ausentes.map(vereador => `
+                                <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
+                                    <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                                        <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-white text-sm">${vereador.nome}</p>
+                                        <p class="text-xs text-red-300">${vereador.partido}</p>
+                                    </div>
+                                    <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Simular votação automática para demonstração
+        function simularVotacaoCompleta() {
+            iniciarVotacao();
+            
+            // Simular votos com delay
+            setTimeout(() => simularVoto(1, 'SIM'), 1000);
+            setTimeout(() => simularVoto(2, 'SIM'), 2000);
+            setTimeout(() => simularVoto(3, 'NAO'), 3000);
+            setTimeout(() => simularVoto(4, 'SIM'), 4000);
+            setTimeout(() => simularVoto(5, 'ABSTENCAO'), 5000);
+            setTimeout(() => simularVoto(6, 'SIM'), 6000);
+            setTimeout(() => simularVoto(7, 'SIM'), 7000);
+            setTimeout(() => simularVoto(8, 'SIM'), 8000);
+            
+            setTimeout(() => finalizarVotacao(), 10000);
+        }
+
+        // Adicionar controles de votação
+        function adicionarControlesVotacao() {
+            const header = document.querySelector('.px-6.py-4 .flex.items-center.justify-between .text-right');
+            if (header) {
+                const controles = document.createElement('div');
+                controles.className = 'mt-4 flex gap-2';
+                controles.innerHTML = `
+                    <button onclick="iniciarVotacao()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                        Iniciar Votação
+                    </button>
+                    <button onclick="finalizarVotacao()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                        Finalizar Votação
+                    </button>
+                    <button onclick="simularVotacaoCompleta()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                        Simular Votação
+                    </button>
+                `;
+                header.appendChild(controles);
+            }
+        }
+
+        // Atualizar a cada segundo
+        setInterval(updateTime, 1000);
+        updateTime(); // Chamar imediatamente
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            sincronizarDados(); // Sincronizar dados iniciais
+            atualizarPainelVotacao();
+            atualizarPresencaParlamentares();
+            adicionarControlesVotacao();
+            
+            // Sincronizar dados a cada 30 segundos
+            setInterval(sincronizarDados, 30000);
+        });
+    </script>
+</body>
+</html>

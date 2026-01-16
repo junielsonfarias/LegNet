@@ -1,0 +1,944 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  name                 String?
+  email                String    @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  role                 UserRole  @default(USER)
+  parlamentarId        String?   @unique // Relacionamento com Parlamentar (se for parlamentar)
+  ativo                Boolean   @default(true)
+  twoFactorEnabled     Boolean   @default(false)
+  twoFactorSecret      String?   @db.Text
+  twoFactorBackupCodes String?   @db.Text
+  lastTwoFactorAt      DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  parlamentar Parlamentar? @relation(fields: [parlamentarId], references: [id])
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  USER
+  PARLAMENTAR
+  OPERADOR
+  SECRETARIA
+}
+
+model ConfiguracaoInstitucional {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  nomeCasa           String
+  sigla              String?
+  cnpj               String?
+  enderecoLogradouro String?
+  enderecoNumero     String?
+  enderecoBairro     String?
+  enderecoCidade     String?
+  enderecoEstado     String?
+  enderecoCep        String?
+  telefone           String?
+  email              String?
+  site               String?
+  logoUrl            String?
+  tema               String?  @default("claro")
+  timezone           String?  @default("America/Sao_Paulo")
+  descricao          String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("configuracoes_institucionais")
+}
+
+// Modelos específicos da Câmara
+
+model Parlamentar {
+  id          String           @id @default(cuid())
+  nome        String
+  apelido     String?
+  email       String?
+  telefone    String?
+  partido     String? // Partido atual (mantido para compatibilidade)
+  biografia   String?          @db.Text
+  foto        String?
+  cargo       CargoParlamentar @default(VEREADOR)
+  legislatura String // Legislatura atual (mantido para compatibilidade)
+  ativo       Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relacionamentos
+  proposicoes            Proposicao[]
+  presencas              PresencaSessao[]
+  comissoes              MembroComissao[]
+  votacoes               Votacao[]
+  mandatos               Mandato[]
+  filiacoes              Filiacao[]
+  mesasDiretora          MembroMesaDiretora[]
+  historicoParticipacoes HistoricoParticipacao[]
+  usuario                User? // Relacionamento com User (se tiver acesso ao sistema)
+  Tramitacao             Tramitacao[]
+  Publicacao             Publicacao[]
+
+  @@map("parlamentares")
+}
+
+enum CargoParlamentar {
+  PRESIDENTE
+  VICE_PRESIDENTE
+  PRIMEIRO_SECRETARIO
+  SEGUNDO_SECRETARIO
+  VEREADOR
+}
+
+model Sessao {
+  id            String       @id @default(cuid())
+  numero        Int
+  tipo          TipoSessao
+  data          DateTime
+  horario       String? // Hora da sessão (ex: "14:00")
+  local         String? // Local da sessão
+  status        StatusSessao @default(AGENDADA)
+  descricao     String?      @db.Text
+  ata           String?      @db.Text
+  finalizada    Boolean      @default(false) // Indica se é uma sessão já finalizada (para inclusão de dados pretéritos)
+  legislaturaId String? // Relacionamento com Legislatura
+  periodoId     String? // Relacionamento com PeriodoLegislatura
+  pauta         String?      @db.Text // JSON da pauta da sessão
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Relacionamentos
+  legislatura Legislatura?        @relation(fields: [legislaturaId], references: [id])
+  periodo     PeriodoLegislatura? @relation(fields: [periodoId], references: [id])
+  presencas   PresencaSessao[]
+  proposicoes Proposicao[]
+  pautaSessao PautaSessao?
+
+  @@map("sessoes")
+}
+
+enum TipoSessao {
+  ORDINARIA
+  EXTRAORDINARIA
+  SOLENE
+  ESPECIAL
+}
+
+enum StatusSessao {
+  AGENDADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum PautaStatus {
+  RASCUNHO
+  APROVADA
+  EM_ANDAMENTO
+  CONCLUIDA
+}
+
+enum PautaSecao {
+  EXPEDIENTE
+  ORDEM_DO_DIA
+  COMUNICACOES
+  HONRAS
+  OUTROS
+}
+
+enum PautaItemStatus {
+  PENDENTE
+  EM_DISCUSSAO
+  EM_VOTACAO
+  APROVADO
+  REJEITADO
+  RETIRADO
+  ADIADO
+  CONCLUIDO
+}
+
+model ApiToken {
+  id            String                  @id @default(cuid())
+  nome          String
+  descricao     String?
+  hashedToken   String                  @unique
+  permissoes    String[]
+  ativo         Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  lastUsedAt    DateTime?
+  lastUsedIp    String?
+  lastUsedAgent String?
+  notificacoes  NotificacaoMulticanal[]
+
+  @@unique([nome])
+  @@map("api_tokens")
+}
+
+model NotificacaoMulticanal {
+  id           String   @id @default(cuid())
+  tokenId      String?
+  canal        String
+  destinatario String
+  assunto      String?
+  mensagem     String   @db.Text
+  metadata     Json?
+  status       String   @default("pendente")
+  tentativas   Int      @default(0)
+  erro         String?
+  integration  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  token ApiToken? @relation(fields: [tokenId], references: [id])
+
+  @@map("notificacoes_multicanal")
+}
+
+model SessaoTemplate {
+  id                String     @id @default(cuid())
+  nome              String
+  descricao         String?
+  tipo              TipoSessao
+  ativo             Boolean    @default(true)
+  duracaoEstimativa Int?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  itens TemplateItem[]
+
+  @@unique([nome, tipo])
+  @@map("sessao_templates")
+}
+
+model TemplateItem {
+  id             String          @id @default(cuid())
+  templateId     String
+  secao          PautaSecao
+  ordem          Int
+  titulo         String
+  descricao      String?         @db.Text
+  tempoEstimado  Int?
+  tipoProposicao TipoProposicao?
+  obrigatorio    Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  template SessaoTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId, secao, ordem])
+  @@map("template_itens")
+}
+
+model PresencaSessao {
+  id            String   @id @default(cuid())
+  sessaoId      String
+  parlamentarId String
+  presente      Boolean  @default(false)
+  justificativa String?
+  createdAt     DateTime @default(now())
+
+  sessao      Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@unique([sessaoId, parlamentarId])
+  @@map("presencas_sessao")
+}
+
+model Proposicao {
+  id               String            @id @default(cuid())
+  numero           String
+  ano              Int
+  tipo             TipoProposicao
+  titulo           String
+  ementa           String            @db.Text
+  texto            String?           @db.Text
+  status           StatusProposicao  @default(APRESENTADA)
+  dataApresentacao DateTime
+  dataVotacao      DateTime?
+  resultado        ResultadoVotacao?
+  sessaoId         String?
+  autorId          String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Relacionamentos
+  sessao      Sessao?      @relation(fields: [sessaoId], references: [id])
+  autor       Parlamentar  @relation(fields: [autorId], references: [id])
+  votacoes    Votacao[]
+  pautaItens  PautaItem[]
+  tramitacoes Tramitacao[]
+
+  @@unique([numero, ano])
+  @@map("proposicoes")
+}
+
+enum TipoProposicao {
+  PROJETO_LEI
+  PROJETO_RESOLUCAO
+  PROJETO_DECRETO
+  INDICACAO
+  REQUERIMENTO
+  MOCAO
+  VOTO_PESAR
+  VOTO_APLAUSO
+}
+
+enum StatusProposicao {
+  APRESENTADA
+  EM_TRAMITACAO
+  APROVADA
+  REJEITADA
+  ARQUIVADA
+  VETADA
+}
+
+enum ResultadoVotacao {
+  APROVADA
+  REJEITADA
+  EMPATE
+}
+
+model Votacao {
+  id            String   @id @default(cuid())
+  proposicaoId  String
+  parlamentarId String
+  voto          TipoVoto
+  createdAt     DateTime @default(now())
+
+  proposicao  Proposicao  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@unique([proposicaoId, parlamentarId])
+  @@map("votacoes")
+}
+
+enum TipoVoto {
+  SIM
+  NAO
+  ABSTENCAO
+  AUSENTE
+}
+
+model Comissao {
+  id        String       @id @default(cuid())
+  nome      String
+  descricao String?      @db.Text
+  tipo      TipoComissao
+  ativa     Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relacionamentos
+  membros MembroComissao[]
+
+  @@map("comissoes")
+}
+
+enum TipoComissao {
+  PERMANENTE
+  TEMPORARIA
+  ESPECIAL
+  INQUERITO
+}
+
+model MembroComissao {
+  id            String        @id @default(cuid())
+  comissaoId    String
+  parlamentarId String
+  cargo         CargoComissao @default(MEMBRO)
+  dataInicio    DateTime
+  dataFim       DateTime?
+  ativo         Boolean       @default(true)
+  observacoes   String?       @db.Text
+  createdAt     DateTime      @default(now())
+
+  comissao    Comissao    @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@unique([comissaoId, parlamentarId])
+  @@map("membros_comissao")
+}
+
+enum CargoComissao {
+  PRESIDENTE
+  VICE_PRESIDENTE
+  RELATOR
+  MEMBRO
+}
+
+enum ParticipacaoTipo {
+  MESA_DIRETORA
+  COMISSAO
+}
+
+model HistoricoParticipacao {
+  id             String           @id @default(cuid())
+  parlamentarId  String
+  tipo           ParticipacaoTipo
+  referenciaId   String
+  referenciaHash String           @unique
+  referenciaNome String?
+  cargoId        String?
+  cargoNome      String
+  legislaturaId  String?
+  periodoId      String?
+  dataInicio     DateTime
+  dataFim        DateTime?
+  ativo          Boolean          @default(true)
+  observacoes    String?          @db.Text
+  origem         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  parlamentar Parlamentar         @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  legislatura Legislatura?        @relation(fields: [legislaturaId], references: [id], onDelete: Cascade)
+  periodo     PeriodoLegislatura? @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+
+  @@index([parlamentarId, tipo])
+  @@map("historico_participacoes")
+}
+
+model Publicacao {
+  id            String              @id @default(cuid())
+  titulo        String
+  descricao     String?             @db.Text
+  tipo          TipoPublicacao
+  numero        String?
+  ano           Int
+  data          DateTime
+  conteudo      String              @db.Text
+  arquivo       String?
+  tamanho       String?
+  publicada     Boolean             @default(false)
+  visualizacoes Int                 @default(0)
+  categoriaId   String?
+  autorTipo     AutorPublicacaoTipo @default(OUTRO)
+  autorNome     String
+  autorId       String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  categoria        CategoriaPublicacao? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
+  autorParlamentar Parlamentar?         @relation(fields: [autorId], references: [id], onDelete: SetNull)
+
+  @@index([categoriaId])
+  @@index([autorId])
+  @@map("publicacoes")
+}
+
+model CategoriaPublicacao {
+  id        String   @id @default(cuid())
+  nome      String
+  descricao String?
+  cor       String?  @default("#0f172a")
+  ativa     Boolean  @default(true)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  publicacoes Publicacao[]
+
+  @@unique([nome])
+  @@map("categorias_publicacao")
+}
+
+enum TipoPublicacao {
+  LEI
+  DECRETO
+  PORTARIA
+  RESOLUCAO
+  NOTICIA
+  INFORMATIVO
+  RELATORIO
+  PLANEJAMENTO
+  MANUAL
+  CODIGO
+  OUTRO
+}
+
+enum AutorPublicacaoTipo {
+  PARLAMENTAR
+  COMISSAO
+  ORGAO
+  OUTRO
+}
+
+model Noticia {
+  id             String    @id @default(cuid())
+  titulo         String
+  resumo         String?   @db.Text
+  conteudo       String    @db.Text
+  imagem         String?
+  categoria      String?
+  tags           String[]
+  publicada      Boolean   @default(false)
+  dataPublicacao DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("noticias")
+}
+
+model Legislatura {
+  id        String   @id @default(cuid())
+  numero    Int
+  anoInicio Int
+  anoFim    Int
+  ativa     Boolean  @default(false)
+  descricao String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  mandatos              Mandato[]
+  periodos              PeriodoLegislatura[]
+  sessoes               Sessao[]
+  HistoricoParticipacao HistoricoParticipacao[]
+
+  @@map("legislaturas")
+}
+
+model PeriodoLegislatura {
+  id            String    @id @default(cuid())
+  legislaturaId String
+  numero        Int // 1, 2, 3, 4 (dependendo da quantidade de períodos)
+  dataInicio    DateTime
+  dataFim       DateTime?
+  descricao     String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  legislatura           Legislatura             @relation(fields: [legislaturaId], references: [id], onDelete: Cascade)
+  mesasDiretora         MesaDiretora[]
+  cargos                CargoMesaDiretora[]
+  sessoes               Sessao[]
+  HistoricoParticipacao HistoricoParticipacao[]
+
+  @@unique([legislaturaId, numero])
+  @@map("periodos_legislatura")
+}
+
+model CargoMesaDiretora {
+  id          String   @id @default(cuid())
+  periodoId   String
+  nome        String // Ex: "Presidente", "Vice-Presidente", "1º Secretário"
+  ordem       Int // Ordem de precedência
+  obrigatorio Boolean  @default(true) // Se o cargo é obrigatório
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  periodo PeriodoLegislatura   @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  membros MembroMesaDiretora[]
+
+  @@unique([periodoId, nome])
+  @@map("cargos_mesa_diretora")
+}
+
+model MesaDiretora {
+  id        String   @id @default(cuid())
+  periodoId String
+  ativa     Boolean  @default(false)
+  descricao String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  periodo PeriodoLegislatura   @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  membros MembroMesaDiretora[]
+
+  @@map("mesas_diretora")
+}
+
+model MembroMesaDiretora {
+  id             String    @id @default(cuid())
+  mesaDiretoraId String
+  parlamentarId  String
+  cargoId        String
+  dataInicio     DateTime
+  dataFim        DateTime? // Para casos de substituição/afastamento
+  ativo          Boolean   @default(true) // Status atual do membro
+  observacoes    String?   @db.Text // Para registrar motivo de afastamento
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  mesaDiretora MesaDiretora      @relation(fields: [mesaDiretoraId], references: [id], onDelete: Cascade)
+  parlamentar  Parlamentar       @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  cargo        CargoMesaDiretora @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+
+  @@unique([mesaDiretoraId, cargoId, ativo]) // Apenas um membro ativo por cargo na mesa
+  @@map("membros_mesa_diretora")
+}
+
+model Mandato {
+  id            String           @id @default(cuid())
+  parlamentarId String
+  legislaturaId String
+  numeroVotos   Int              @default(0)
+  cargo         CargoParlamentar @default(VEREADOR)
+  dataInicio    DateTime
+  dataFim       DateTime?
+  ativo         Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  legislatura Legislatura @relation(fields: [legislaturaId], references: [id], onDelete: Cascade)
+
+  @@unique([parlamentarId, legislaturaId])
+  @@map("mandatos")
+}
+
+model Filiacao {
+  id            String    @id @default(cuid())
+  parlamentarId String
+  partido       String
+  dataInicio    DateTime
+  dataFim       DateTime?
+  ativa         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@map("filiacoes")
+}
+
+model PautaSessao {
+  id                    String      @id @default(cuid())
+  sessaoId              String      @unique
+  status                PautaStatus @default(RASCUNHO)
+  geradaAutomaticamente Boolean     @default(true)
+  observacoes           String?     @db.Text
+  tempoTotalEstimado    Int         @default(0)
+  tempoTotalReal        Int?
+  itemAtualId           String?     @unique
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  sessao    Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  itens     PautaItem[]
+  itemAtual PautaItem?  @relation("SessaoItemAtual", fields: [itemAtualId], references: [id])
+
+  @@map("pautas_sessao")
+}
+
+model PautaItem {
+  id             String          @id @default(cuid())
+  pautaId        String
+  secao          PautaSecao
+  ordem          Int
+  titulo         String
+  descricao      String?         @db.Text
+  proposicaoId   String?
+  tempoEstimado  Int?
+  tempoReal      Int?
+  status         PautaItemStatus @default(PENDENTE)
+  autor          String?
+  observacoes    String?         @db.Text
+  tempoAcumulado Int             @default(0)
+  iniciadoEm     DateTime?
+  finalizadoEm   DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  pauta       PautaSessao  @relation(fields: [pautaId], references: [id], onDelete: Cascade)
+  proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
+  sessaoAtual PautaSessao? @relation("SessaoItemAtual")
+
+  @@index([pautaId, secao, ordem])
+  @@map("pauta_itens")
+}
+
+model Configuracao {
+  id        String   @id @default(cuid())
+  chave     String   @unique
+  valor     String   @db.Text
+  descricao String?
+  categoria String   @default("Geral")
+  tipo      String   @default("string")
+  editavel  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("configuracoes")
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  userId       String?
+  userEmail    String?
+  userName     String?
+  userRole     UserRole?
+  action       String
+  entity       String
+  entityId     String?
+  ip           String?
+  userAgent    String?
+  status       AuditStatus @default(SUCCESS)
+  errorMessage String?
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+
+  @@index([entity, createdAt])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+enum TramitacaoStatus {
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum TramitacaoResultado {
+  APROVADO
+  REJEITADO
+  APROVADO_COM_EMENDAS
+  ARQUIVADO
+}
+
+enum TramitacaoUnidadeTipo {
+  COMISSAO
+  MESA_DIRETORA
+  PLENARIO
+  PREFEITURA
+  OUTROS
+}
+
+model TramitacaoTipoProposicao {
+  id             String          @id @default(cuid())
+  tipoProposicao TipoProposicao?
+  nome           String
+  sigla          String
+  descricao      String?
+  ativo          Boolean         @default(true)
+  prazoLimite    Int?
+  requerVotacao  Boolean         @default(true)
+  requerSancao   Boolean         @default(false)
+  ordem          Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([tipoProposicao])
+  @@map("tramitacao_tipo_proposicoes")
+}
+
+model TramitacaoUnidade {
+  id        String                @id @default(cuid())
+  nome      String
+  sigla     String?
+  descricao String?
+  tipo      TramitacaoUnidadeTipo
+  ativo     Boolean               @default(true)
+  ordem     Int                   @default(0)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  tramitacoes       Tramitacao[]
+  tiposResponsaveis TramitacaoTipo[]       @relation("TramitacaoTipoUnidadeResponsavel")
+  regraEtapas       RegraTramitacaoEtapa[]
+
+  @@map("tramitacao_unidades")
+}
+
+model TramitacaoTipo {
+  id                   String               @id @default(cuid())
+  nome                 String
+  descricao            String?
+  prazoRegimental      Int
+  prazoLegal           Int?
+  unidadeResponsavelId String?
+  requerParecer        Boolean              @default(false)
+  permiteRetorno       Boolean              @default(false)
+  statusResultado      TramitacaoResultado?
+  ativo                Boolean              @default(true)
+  ordem                Int                  @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  unidadeResponsavel TramitacaoUnidade?     @relation("TramitacaoTipoUnidadeResponsavel", fields: [unidadeResponsavelId], references: [id])
+  tramitacoes        Tramitacao[]
+  etapas             RegraTramitacaoEtapa[]
+
+  @@map("tramitacao_tipos")
+}
+
+model Tramitacao {
+  id               String               @id @default(cuid())
+  proposicaoId     String
+  dataEntrada      DateTime
+  dataSaida        DateTime?
+  status           TramitacaoStatus     @default(EM_ANDAMENTO)
+  tipoTramitacaoId String
+  unidadeId        String
+  observacoes      String?
+  parecer          String?
+  resultado        TramitacaoResultado?
+  responsavelId    String?
+  prazoVencimento  DateTime?
+  diasVencidos     Int?
+  automatica       Boolean              @default(false)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  proposicao     Proposicao              @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  responsavel    Parlamentar?            @relation(fields: [responsavelId], references: [id])
+  tipoTramitacao TramitacaoTipo          @relation(fields: [tipoTramitacaoId], references: [id])
+  unidade        TramitacaoUnidade       @relation(fields: [unidadeId], references: [id])
+  historicos     TramitacaoHistorico[]
+  notificacoes   TramitacaoNotificacao[]
+
+  @@index([proposicaoId])
+  @@map("tramitacoes")
+}
+
+model TramitacaoHistorico {
+  id              String   @id @default(cuid())
+  tramitacaoId    String
+  data            DateTime @default(now())
+  acao            String
+  descricao       String?  @db.Text
+  usuarioId       String?
+  dadosAnteriores Json?
+  dadosNovos      Json?
+  ip              String?
+
+  tramitacao Tramitacao @relation(fields: [tramitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([tramitacaoId, data])
+  @@map("tramitacoes_historico")
+}
+
+model TramitacaoNotificacao {
+  id           String    @id @default(cuid())
+  tramitacaoId String
+  canal        String
+  destinatario String
+  enviadoEm    DateTime?
+  status       String?
+  mensagem     String?   @db.Text
+  parametros   Json?
+
+  tramitacao Tramitacao @relation(fields: [tramitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([tramitacaoId, canal])
+  @@map("tramitacoes_notificacoes")
+}
+
+model RegraTramitacao {
+  id        String   @id @default(cuid())
+  nome      String
+  descricao String?
+  condicoes Json
+  acoes     Json
+  excecoes  Json?
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  etapas RegraTramitacaoEtapa[]
+
+  @@map("regras_tramitacao")
+}
+
+model RegraTramitacaoEtapa {
+  id               String   @id @default(cuid())
+  regraId          String
+  ordem            Int
+  nome             String
+  descricao        String?  @db.Text
+  tipoTramitacaoId String?
+  unidadeId        String?
+  notificacoes     Json?
+  alertas          Json?
+  prazoDias        Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  regra          RegraTramitacao    @relation(fields: [regraId], references: [id], onDelete: Cascade)
+  tipoTramitacao TramitacaoTipo?    @relation(fields: [tipoTramitacaoId], references: [id])
+  unidade        TramitacaoUnidade? @relation(fields: [unidadeId], references: [id])
+
+  @@index([regraId, ordem])
+  @@map("regras_tramitacao_etapas")
+}
+
+model ConfiguracaoTramitacao {
+  id        String   @id @default(cuid())
+  chave     String   @unique
+  valor     String   @db.Text
+  descricao String?
+  categoria String   @default("geral")
+  tipo      String   @default("string")
+  ativo     Boolean  @default(true)
+  editavel  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("configuracoes_tramitacao")
+}

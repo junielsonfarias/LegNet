@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npm run build:*)",
+      "Bash(npx prisma generate)",
+      "Bash(npx prisma db pull:*)",
+      "Bash(npm run db:seed:*)"
+    ]
+  }
+}
