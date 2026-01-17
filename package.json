@@ -4,6 +4,7 @@
   "description": "Sistema completo da Câmara Municipal de Mojuí dos Campos - Portal Institucional e Painel Administrativo",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
