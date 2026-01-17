@@ -1,18 +1,38 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Output standalone para Vercel e Docker
+  output: 'standalone',
+
   // Configurações de performance
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
-  
-  // Configurações de imagem otimizadas
+
+  // Configurações de imagem otimizadas para Vercel + Supabase
   images: {
-    domains: ['localhost', 'camaramojuidoscampos.pa.gov.br'],
     remotePatterns: [
+      // Dominio do site
       {
         protocol: 'https',
         hostname: 'camaramojuidoscampos.pa.gov.br',
-        port: '',
+        pathname: '/**',
+      },
+      // Supabase Storage (todos os projetos)
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.in',
+        pathname: '/storage/v1/object/public/**',
+      },
+      // Localhost para desenvolvimento
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
         pathname: '/**',
       },
     ],
@@ -126,9 +146,6 @@ const nextConfig = {
       fullUrl: false,
     },
   },
-  
-  // Configurações de output (apenas para produção)
-  // output: 'standalone', // Removido para desenvolvimento
   
   // Configurações de poweredByHeader
   poweredByHeader: false,
