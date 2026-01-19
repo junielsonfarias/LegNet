@@ -41,17 +41,17 @@ export function ParliamentariansSection() {
     fetchEstatisticas()
   }, [])
 
-  // Função para obter estatísticas de um parlamentar
-  const getStats = (parlamentarId: string) => {
-    const stats = estatisticas.find(e => e.id === parlamentarId)
-    return {
-      sessions: stats?.sessoes || 0,
-      matters: stats?.materias || 0
-    }
-  }
-
   // Separar mesa diretora e vereadores
   const { mesaDiretora, vereadores } = useMemo(() => {
+    // Função auxiliar para obter estatísticas
+    const getStats = (parlamentarId: string) => {
+      const stats = estatisticas.find(e => e.id === parlamentarId)
+      return {
+        sessions: stats?.sessoes || 0,
+        matters: stats?.materias || 0
+      }
+    }
+
     const mesa = parlamentares
       .filter(p => p.cargo !== 'VEREADOR')
       .map(p => {

@@ -272,7 +272,7 @@ export default function LeiOrganicaPage() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3">O que é a Lei Orgânica?</h3>
                 <ul className="space-y-2 text-sm text-gray-700">
-                  <li>• É a "Constituição" do município</li>
+                  <li>• É a &quot;Constituição&quot; do município</li>
                   <li>• Define a organização política e administrativa</li>
                   <li>• Estabelece as competências dos Poderes</li>
                   <li>• Fixa os direitos e deveres dos cidadãos</li>
