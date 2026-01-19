@@ -368,6 +368,21 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Implementação de Relatórios Excel
+- **Objetivo**: Permitir exportação de dados legislativos em Excel
+- **Bibliotecas instaladas**: `exceljs`, `jspdf`, `jspdf-autotable`
+- **Arquivos criados**:
+  - `src/lib/services/relatorios-service.ts` - Serviço de geração de relatórios
+  - `src/app/api/relatorios/route.ts` - API de exportação
+  - `src/components/admin/export-button.tsx` - Componente de botão de exportação
+- **Tipos de relatórios disponíveis**:
+  - Parlamentares (com estatísticas)
+  - Sessões (com contagem de presença)
+  - Proposições (com autor e resultado)
+  - Presença (percentual por parlamentar)
+  - Votações (resultado e contagem de votos)
+- **Uso**: `GET /api/relatorios?tipo=parlamentares&formato=excel`
+
 ### 2026-01-19 - Auditoria de Performance (Queries N+1)
 - **Objetivo**: Verificar e otimizar queries N+1 nas APIs principais
 - **Resultado**: APIs já estão otimizadas com `include` do Prisma
