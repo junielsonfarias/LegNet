@@ -63,9 +63,13 @@ export function ParliamentariansSection() {
         }
         const roleInfo = roleMap[p.cargo] || { role: p.cargo, icon: User, color: 'bg-gray-500' }
         const stats = getStats(p.id)
+        // Criar slug a partir do apelido ou usar o ID como fallback
+        const slug = p.apelido ? p.apelido.toLowerCase().replace(/\s+/g, '-') : p.id
         return {
           id: p.id,
           name: p.nome,
+          apelido: p.apelido,
+          slug,
           role: roleInfo.role,
           icon: roleInfo.icon,
           sessions: stats.sessions,
@@ -78,9 +82,13 @@ export function ParliamentariansSection() {
       .filter(p => p.cargo === 'VEREADOR')
       .map(p => {
         const stats = getStats(p.id)
+        // Criar slug a partir do apelido ou usar o ID como fallback
+        const slug = p.apelido ? p.apelido.toLowerCase().replace(/\s+/g, '-') : p.id
         return {
           id: p.id,
           name: p.nome,
+          apelido: p.apelido,
+          slug,
           sessions: stats.sessions,
           matters: stats.matters
         }
@@ -137,33 +145,33 @@ export function ParliamentariansSection() {
                 <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">
                   Mesa Diretora
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {mesaDiretora.map((membro) => (
                     <Link
                       key={membro.id}
-                      href={`/parlamentares/${membro.name.toLowerCase().replace(/\s+/g, '-')}`}
+                      href={`/parlamentares/${membro.slug}`}
                     >
-                      <Card className="camara-card hover:scale-105 transition-transform duration-200 cursor-pointer">
+                      <Card className="camara-card h-full hover:scale-105 transition-transform duration-200 cursor-pointer">
                         <CardHeader className="text-center pb-3">
-                          <div className={`w-16 h-16 ${membro.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                            <membro.icon className="h-8 w-8 text-white" />
+                          <div className={`w-20 h-20 ${membro.color} rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg`}>
+                            <membro.icon className="h-10 w-10 text-white" />
                           </div>
-                          <CardTitle className="text-lg font-semibold text-gray-900">
-                            {membro.name}
+                          <CardTitle className="text-base font-semibold text-gray-900 line-clamp-2 min-h-[3rem]">
+                            {membro.apelido || membro.name}
                           </CardTitle>
                           <p className="text-sm text-camara-primary font-medium">
                             {membro.role}
                           </p>
                         </CardHeader>
-                        <CardContent className="text-center">
+                        <CardContent className="text-center pt-0">
                           <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <div className="font-semibold text-camara-primary">{membro.sessions}</div>
-                              <div className="text-gray-600">Sessões</div>
+                            <div className="bg-gray-50 rounded-lg p-2">
+                              <div className="font-bold text-lg text-camara-primary">{membro.sessions}</div>
+                              <div className="text-xs text-gray-600">Sessões</div>
                             </div>
-                            <div>
-                              <div className="font-semibold text-camara-secondary">{membro.matters}</div>
-                              <div className="text-gray-600">Matérias</div>
+                            <div className="bg-gray-50 rounded-lg p-2">
+                              <div className="font-bold text-lg text-camara-secondary">{membro.matters}</div>
+                              <div className="text-xs text-gray-600">Matérias</div>
                             </div>
                           </div>
                         </CardContent>
@@ -180,26 +188,25 @@ export function ParliamentariansSection() {
                 <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">
                   Vereadores
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {vereadores.map((vereador, index) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {vereadores.map((vereador) => (
                     <Link
                       key={vereador.id}
-                      href={`/parlamentares/${vereador.name.toLowerCase().replace(/\s+/g, '-')}`}
+                      href={`/parlamentares/${vereador.slug}`}
                     >
-                      <Card className="camara-card hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                      <Card className="camara-card h-full hover:shadow-lg hover:border-camara-primary/30 transition-all duration-200 cursor-pointer">
                         <CardContent className="p-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-camara-primary rounded-full flex items-center justify-center text-white font-semibold">
-                              {index + 1}
+                          <div className="flex flex-col items-center text-center space-y-3">
+                            <div className="w-14 h-14 bg-gradient-to-br from-camara-primary to-camara-secondary rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                              {(vereador.apelido || vereador.name).charAt(0).toUpperCase()}
                             </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 text-sm">
-                                {vereador.name}
+                            <div className="w-full">
+                              <h4 className="font-semibold text-gray-900 text-sm line-clamp-2 min-h-[2.5rem]">
+                                {vereador.apelido || vereador.name}
                               </h4>
-                              <div className="flex items-center space-x-4 text-xs text-gray-600">
-                                <span>{vereador.sessions} sessões</span>
-                                <span>•</span>
-                                <span>{vereador.matters} matérias</span>
+                              <div className="flex justify-center gap-4 mt-2 text-xs text-gray-600">
+                                <span className="bg-gray-100 px-2 py-1 rounded">{vereador.sessions} sessões</span>
+                                <span className="bg-gray-100 px-2 py-1 rounded">{vereador.matters} matérias</span>
                               </div>
                             </div>
                           </div>

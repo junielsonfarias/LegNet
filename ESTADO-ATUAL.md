@@ -369,20 +369,28 @@
 
 ## Historico de Atualizacoes
 
-### 2026-01-19 - Correcao de Links de Parlamentares e Botoes de Acao
+### 2026-01-19 - Correcao de Links de Parlamentares e Botoes de Acao (v2)
 - **Problemas identificados**:
   - Cards de parlamentares na home nao eram clicaveis
+  - Links usavam `nome` ao inves de `apelido` para criar slug
   - Botao "Ver Perfil" na mesa diretora nao funcionava
   - Leis e decretos nao tinham botao para visualizar conteudo
   - Pagina de pesquisas (LRF) usava tabela nao responsiva
+  - Cards nao eram simetricos e responsivos
 - **Correcoes aplicadas**:
   - `src/components/home/parliamentarians-section.tsx`:
-    - Adicionado Link aos cards da Mesa Diretora
-    - Adicionado Link aos cards dos Vereadores
-    - Cards agora redirecionam para `/parlamentares/{slug}`
+    - Adicionado `apelido` e `slug` nos dados mapeados
+    - Links agora usam `slug` (baseado em apelido) corretamente
+    - Cards da Mesa Diretora redesenhados com altura uniforme (`h-full`)
+    - Cards de Vereadores centralizados e simetricos
+    - Estatisticas em caixas destacadas com fundo cinza
+    - Icones maiores (w-20 h-20) para Mesa Diretora
+    - Avatar com inicial do nome para vereadores
+    - Grid responsivo: 1 col (mobile), 2 cols (sm), 3-4 cols (lg/xl)
+    - Exibe apelido ao inves do nome completo nos cards
   - `src/app/parlamentares/mesa-diretora/page.tsx`:
     - Corrigido botao "Ver Perfil" com `asChild` e `Link`
-    - Adicionado import de `Link` do next/link
+    - Slug criado a partir do apelido com fallback para ID
   - `src/app/transparencia/leis/page.tsx`:
     - Adicionado estado `expandedId` para controlar expansao
     - Adicionado botao "Visualizar Conteudo" em cada lei
@@ -394,7 +402,7 @@
     - Adicionado botao "Visualizar" para cada documento
     - Conteudo expandido dentro do card
     - Melhor experiencia em dispositivos moveis
-- **Resultado**: Links de parlamentares funcionais, botoes de visualizacao em todas as paginas de transparencia
+- **Resultado**: Links de parlamentares funcionais usando apelido como slug, cards simetricos e responsivos
 
 ### 2026-01-19 - Correcao de Erros 404 e Pagina de Noticias
 - **Problema**: Links mockados na home apontavam para paginas inexistentes (404)
