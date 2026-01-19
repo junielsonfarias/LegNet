@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Users, Crown, Shield, User, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
+import { slugify } from '@/lib/utils'
 
 // Interface para estatísticas
 interface EstatisticaParlamentar {
@@ -63,8 +64,8 @@ export function ParliamentariansSection() {
         }
         const roleInfo = roleMap[p.cargo] || { role: p.cargo, icon: User, color: 'bg-gray-500' }
         const stats = getStats(p.id)
-        // Criar slug a partir do apelido ou usar o ID como fallback
-        const slug = p.apelido ? p.apelido.toLowerCase().replace(/\s+/g, '-') : p.id
+        // Criar slug a partir do apelido (normalizado, sem acentos) ou usar o ID como fallback
+        const slug = p.apelido ? slugify(p.apelido) : p.id
         return {
           id: p.id,
           name: p.nome,
@@ -82,8 +83,8 @@ export function ParliamentariansSection() {
       .filter(p => p.cargo === 'VEREADOR')
       .map(p => {
         const stats = getStats(p.id)
-        // Criar slug a partir do apelido ou usar o ID como fallback
-        const slug = p.apelido ? p.apelido.toLowerCase().replace(/\s+/g, '-') : p.id
+        // Criar slug a partir do apelido (normalizado, sem acentos) ou usar o ID como fallback
+        const slug = p.apelido ? slugify(p.apelido) : p.id
         return {
           id: p.id,
           name: p.nome,

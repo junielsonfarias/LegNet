@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
+import { slugify } from '@/lib/utils'
 
 interface PerfilParlamentar {
   id: string
@@ -114,9 +115,11 @@ export default function ParlamentarPerfilPage() {
 
   const parlamentarEncontrado = useMemo(() => {
     if (!slug) return null
+    // Normalizar o slug da URL para comparação (remover acentos, etc)
+    const slugNormalizado = slugify(decodeURIComponent(slug))
     return parlamentares.find(p => {
-      const apelidoSlug = p.apelido?.toLowerCase().replace(/\s+/g, '-') || ''
-      return apelidoSlug === slug || p.id === slug
+      const apelidoSlug = p.apelido ? slugify(p.apelido) : ''
+      return apelidoSlug === slugNormalizado || p.id === slug
     })
   }, [parlamentares, slug])
 

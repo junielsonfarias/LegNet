@@ -9,6 +9,7 @@ import { Users, Crown, Shield, Award, User, Mail, Phone, Calendar, Filter, BarCh
 import Link from 'next/link';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
+import { slugify } from '@/lib/utils';
 
 export default function MesaDiretoraPage() {
   const [legislaturaFiltro, setLegislaturaFiltro] = useState<string>('');
@@ -453,7 +454,7 @@ export default function MesaDiretoraPage() {
                     </Badge>
                     <div className="pt-2">
                       <Button asChild variant="outline" size="sm" className="w-full text-xs">
-                        <Link href={`/parlamentares/${vereador.apelido?.toLowerCase().replace(/\s+/g, '-') || vereador.id}`}>
+                        <Link href={`/parlamentares/${vereador.apelido ? slugify(vereador.apelido) : vereador.id}`}>
                           <Eye className="h-3 w-3 mr-1" />
                           Ver Perfil
                         </Link>
