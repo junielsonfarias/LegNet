@@ -369,6 +369,22 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Cadastro de Leis e Votacoes no Banco
+- **Leis cadastradas**: 10 leis municipais de 2025
+  - Lei 001/2025 - Galeria das Legislaturas
+  - Lei 002/2025 - Comissoes Permanentes
+  - Lei 003/2025 - Gratificacao Servidores
+  - Lei 004/2025 - Estrutura Administrativa
+  - Lei 005/2025 - Dia do Evangelho
+  - Lei 006/2025 - REFIS Municipal
+  - Lei 007/2025 - ISS Municipal
+  - Lei 008/2025 - Seguranca Alimentar
+  - Lei 009/2025 - Fundo Municipal de Cultura
+  - Lei 010/2025 - Denominacao Ginasio Vila Nova
+- **Votacoes cadastradas**: 110 votos (10 proposicoes x 11 parlamentares)
+- **Script**: `prisma/seed-leis-votacoes.ts`
+- **Resultado**: Paginas de leis e votacoes agora exibem dados reais
+
 ### 2026-01-19 - Correcao de Paginas com Dados Mock
 - **Problema**: 3 paginas usavam dados fictícios em vez do banco de dados
 - **Correcoes**:
