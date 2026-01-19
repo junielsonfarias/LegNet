@@ -4,290 +4,175 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Crown, Mail, Phone, MapPin, Calendar, FileText, Users, 
-  TrendingUp, Award, Download, Eye, ArrowLeft, Facebook, 
-  Instagram, Twitter, Linkedin, Clock, CheckCircle, AlertCircle
+import {
+  Crown, Mail, Phone, FileText, Users,
+  Eye, ArrowLeft, Clock, CheckCircle, XCircle,
+  AlertCircle, Loader2, BarChart3, Calendar
 } from 'lucide-react'
-import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
+import { useParlamentares } from '@/lib/hooks/use-parlamentares'
+
+interface PerfilParlamentar {
+  id: string
+  nome: string
+  apelido: string | null
+  email: string | null
+  telefone: string | null
+  partido: string | null
+  biografia: string | null
+  foto: string | null
+  cargo: string
+  legislatura: string
+  ativo: boolean
+  estatisticas: {
+    legislaturaAtual: {
+      materias: number
+      percentualMaterias: number
+      sessoes: number
+      totalSessoes: number
+      percentualPresenca: number
+      dataAtualizacao: string
+    }
+    exercicioAtual: {
+      materias: number
+      percentualMaterias: number
+      sessoes: number
+      percentualPresenca: number
+    }
+  }
+  estatisticasMaterias: {
+    total: number
+    aprovadas: number
+    emTramitacao: number
+    distribuicao: Array<{
+      tipo: string
+      quantidade: number
+      percentual: number
+    }>
+  }
+  ultimasMaterias: Array<{
+    id: string
+    numero: string
+    tipo: string
+    titulo: string
+    data: string
+    status: string
+    autor: string
+  }>
+  comissoes: Array<{
+    id: string
+    nome: string
+    cargo: string
+    dataInicio: string
+    dataFim: string
+  }>
+  mandatos: Array<{
+    id: string
+    cargo: string
+    vinculo: string
+    legislatura: string
+    periodo: string
+    numeroVotos: number
+    ativo: boolean
+  }>
+  filiacaoPartidaria: Array<{
+    id: string
+    partido: string
+    dataInicio: string
+    dataFim: string | null
+    ativa: boolean
+  }>
+  votacoesRecentes: Array<{
+    id: string
+    proposicaoId: string
+    proposicaoNumero: string
+    proposicaoTitulo: string
+    voto: string
+    data: string
+  }>
+  presencasRecentes: Array<{
+    sessaoId: string
+    sessaoNumero: number
+    sessaoData: string
+    presente: boolean
+    justificativa: string | null
+  }>
+}
 
 export default function ParlamentarPerfilPage() {
   const params = useParams()
   const slug = params.slug as string
   const [activeTab, setActiveTab] = useState('producao')
+  const [perfil, setPerfil] = useState<PerfilParlamentar | null>(null)
+  const [loadingPerfil, setLoadingPerfil] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Buscar parlamentar usando hook
-  const { parlamentares, loading } = useParlamentares()
-  
-  const vereadorFinal = useMemo(() => {
+  // Buscar parlamentar usando hook para obter o ID
+  const { parlamentares, loading: loadingParlamentares } = useParlamentares()
+
+  const parlamentarEncontrado = useMemo(() => {
     if (!slug) return null
-    // Buscar por slug (apelido convertido para slug)
     return parlamentares.find(p => {
       const apelidoSlug = p.apelido?.toLowerCase().replace(/\s+/g, '-') || ''
       return apelidoSlug === slug || p.id === slug
-    }) as any
+    })
   }, [parlamentares, slug])
 
-  // Dados mock antigos (remover após integração completa)
-  const parlamentaresDataOld = {
-    'pantoja-do-cartorio': {
-      id: 1,
-      name: 'Francisco Pereira Pantoja',
-      apelido: 'Pantoja do Cartório',
-      cargo: 'PRESIDENTE',
-      partido: 'MDB',
-      email: 'cartoriopantoja@gmail.com',
-      phone: '(98) 8038-898',
-      gabinete: 'Sala 101 - 1º Andar',
-      telefoneGabinete: '(93) 3333-1001',
-      legislatura: '2025/2028',
-      biografia: 'Francisco Pereira Pantoja, popularmente conhecido como "Pantoja do Cartório", nascido em 19 de novembro de 1945, filho de Nery da Costa Pantoja e Tertuliana Dias Pereira; casado, pai e avô; residente no município de Mojuí dos Campos há 48 anos. Tem como formação acadêmica o Bacharelado em Administração de Empresas e Bacharelado em Direito, pela FIT (Faculdades Integradas do Tapajós), hoje UNAMA (Universidade da Amazônia). É oficial Titular do Cartório de Registro Civil das Pessoas Naturais e Notas, de Mojuí dos Campos; e Vereador (2021 -2024). Seu entusiasmo pela carreira política começou quando, o mesmo, fez parte da comissão de Emancipação de Mojuí dos Campos, como Vice-presidente, onde logrou êxito. Disputou, como candidato a vereadorFinal, as eleições de 2021 e conseguiu eleger-se com mais de 452 votos; hoje eleito, vem potencializando os trabalhos voltados ao bem-estar da população, além de compartilhar com todos o conhecimento que conquistou ao longo de toda vida trabalhando na área jurídica.',
-      redesSociais: {
-        facebook: 'https://facebook.com/pantoja',
-        instagram: 'https://instagram.com/pantoja',
-        twitter: 'https://twitter.com/pantoja'
-      },
-      estatisticas: {
-        legislaturaAtual: {
-          materias: 14,
-          percentualMaterias: 4.23,
-          sessoes: 24,
-          percentualPresenca: 88.89,
-          dataAtualizacao: '10/09/2025'
-        },
-        exercicioAtual: {
-          materias: 14,
-          percentualMaterias: 4.23,
-          sessoes: 24,
-          percentualPresenca: 88.89
+  // Buscar perfil completo quando encontrar o parlamentar
+  useEffect(() => {
+    if (!parlamentarEncontrado?.id) return
+
+    const fetchPerfil = async () => {
+      try {
+        setLoadingPerfil(true)
+        setError(null)
+        const response = await fetch(`/api/parlamentares/${parlamentarEncontrado.id}/perfil`)
+        const result = await response.json()
+
+        if (result.success && result.data) {
+          setPerfil(result.data)
+        } else {
+          setError(result.error || 'Erro ao carregar perfil')
         }
-      },
-      ultimasMaterias: [
-        {
-          id: 1,
-          numero: '200/2025',
-          tipo: 'REQUERIMENTO - PARA O EXECUTIVO',
-          titulo: 'SOLICITA A CONSTRUÇÃO DE UMA ESCOLA DE ENSINO FUNDAMENTAL NA COMUNIDADE BICA 1, HAJA VISTA QUE AS CRIANÇAS DAQUELA COMUNIDADE E ADJACENTES SE RESSENTEM DA FALTA DE UMA ESCOLA QUE AS ABRIGUEM',
-          data: '11/06/2025',
-          status: 'Cadastrado',
-          autor: 'VEREADOR FRANCISCO PEREIRA PANTOJA'
-        },
-        {
-          id: 2,
-          numero: '199/2025',
-          tipo: 'REQUERIMENTO - PARA O EXECUTIVO',
-          titulo: 'SOLICITA RECUPERAÇÃO DA ESTRADA QUE LIGA A COMUNIDADE PRAIA GRANDE À BELA VISTA DO RIO MOJU, POR ENCONTRA-SE EM CONDIÇÕES PRECÁRIAS DE TRAFEGABILIDADE TANTO PARA PEDESTRE, COMO PARA VEÍCULOS',
-          data: '11/06/2025',
-          status: 'Cadastrado',
-          autor: 'VEREADOR FRANCISCO PEREIRA PANTOJA'
-        },
-        {
-          id: 3,
-          numero: '6/2025',
-          tipo: 'MOÇÃO DE APLAUSOS',
-          titulo: 'VOTOS DE APLAUSOS A SRA. ADRIANA ALMEIDA PELA REALIZAÇÃO DA CARRETA FORÇA DO BEM NO MUNICÍPIO DE MOJUÍ DOS CAMPOS, NOS DIAS 05 E 06 DE ABRIL DE 2025',
-          data: '14/05/2025',
-          status: 'Cadastrado',
-          autor: 'VEREADORES FRANCISO PEREIRA PANTOJA, DIEGO OLIVEIRA DA SILVA, WALLACE PESSOA OLIVEIRA, REGINALDO EMANUEL RABELO DA SILVA, FRANKLIN BENJAMIN PORTELA MACHADO, JOSÉ JOSICLEI DA SILVA OLIVEIRA, JOILSON NOGUEIRA XAVIER'
-        }
-      ],
-      comissoes: [
-        {
-          id: 1,
-          nome: 'COMISSÃO DE CONSTITUIÇÃO, JUSTIÇA E REDAÇÃO FINAL',
-          cargo: 'RELATOR',
-          dataInicio: '08/02/2023',
-          dataFim: '31/12/2024'
-        },
-        {
-          id: 2,
-          nome: 'COMISSÃO DE EDUCAÇÃO, SAÚDE, ASSISTÊNCIA, ESPORTE E CULTURA',
-          cargo: 'MEMBRO',
-          dataInicio: '08/02/2023',
-          dataFim: '31/12/2024'
-        }
-      ],
-      mandatos: [
-        {
-          cargo: 'PRESIDENTE',
-          vinculo: 'MESA DIRETORA',
-          legislatura: '4ª (Quarta) Legislatura (2025 - 2028)',
-          periodo: '01/01/2025'
-        },
-        {
-          cargo: 'VEREADOR(A)',
-          vinculo: 'VEREADOR EM EXERCÍCIO',
-          legislatura: '3ª (TERCEIRA) LEGISLATURA (2021 - 2024)',
-          periodo: '01/01/2021 à 31/12/2024'
-        }
-      ],
-      filiacaoPartidaria: [
-        {
-          periodo: '26/11/2006',
-          sigla: 'MDB',
-          partido: 'MOVIMENTO DEMOCRÁTICO BRASILEIRO'
-        }
-      ],
-      ultimasAgendas: [
-        {
-          id: 1,
-          titulo: 'VISITA EM ESCOLA',
-          data: '14/03/2025',
-          horario: '09:00',
-          local: 'ESCOLA FRANCISCO CHAGAS, DA CIDADE ALTA II DE MOJUÍ DOS CAMPOS',
-          tipo: 'REUNIÃO'
-        },
-        {
-          id: 2,
-          titulo: 'VISITA À COMUNIDADE',
-          data: '13/03/2025',
-          horario: '11:00',
-          local: 'COMUNIDADE CANAÃ',
-          tipo: 'REUNIÃO'
-        }
-      ],
-      estatisticasMaterias: {
-        total: 132,
-        distribuicao: [
-          { tipo: 'Indicação', quantidade: 30, percentual: 22.7 },
-          { tipo: 'Requerimento - Para O Executivo', quantidade: 81, percentual: 61.4 },
-          { tipo: 'Projeto de Decreto Legislativo', quantidade: 8, percentual: 6.1 },
-          { tipo: 'Requerimento Legislativo', quantidade: 8, percentual: 6.1 },
-          { tipo: 'Moção de Aplausos', quantidade: 3, percentual: 2.3 },
-          { tipo: 'Projeto de Lei - Legislativo', quantidade: 1, percentual: 0.8 },
-          { tipo: 'Requerimento - Para O Governador', quantidade: 1, percentual: 0.8 }
-        ]
-      }
-    },
-    'diego-do-ze-neto': {
-      id: 2,
-      name: 'Diego Oliveira da Silva',
-      apelido: 'Diego do Zé Neto',
-      cargo: 'VICE_PRESIDENTE',
-      partido: 'Partido B',
-      email: 'diego@camaramojui.com',
-      phone: '(93) 99999-0002',
-      gabinete: 'Sala 102 - 1º Andar',
-      telefoneGabinete: '(93) 3333-1002',
-      legislatura: '2025/2028',
-      biografia: 'Vice-presidente da Câmara Municipal, dedicado ao trabalho legislativo e à representação popular. Com vasta experiência na área pública, tem como prioridade a transparência e o desenvolvimento do município.',
-      redesSociais: {
-        facebook: 'https://facebook.com/diego',
-        instagram: 'https://instagram.com/diego'
-      },
-      estatisticas: {
-        legislaturaAtual: {
-          materias: 35,
-          percentualMaterias: 6.8,
-          sessoes: 27,
-          percentualPresenca: 92.0,
-          dataAtualizacao: '10/09/2025'
-        },
-        exercicioAtual: {
-          materias: 35,
-          percentualMaterias: 6.8,
-          sessoes: 27,
-          percentualPresenca: 92.0
-        }
-      },
-      ultimasMaterias: [
-        {
-          id: 1,
-          numero: '198/2025',
-          tipo: 'REQUERIMENTO - PARA O EXECUTIVO',
-          titulo: 'SOLICITA MELHORIAS NA INFRAESTRUTURA DA COMUNIDADE RURAL',
-          data: '10/06/2025',
-          status: 'Cadastrado',
-          autor: 'VEREADOR DIEGO OLIVEIRA DA SILVA'
-        },
-        {
-          id: 2,
-          numero: '197/2025',
-          tipo: 'INDICAÇÃO',
-          titulo: 'INDICA A CONSTRUÇÃO DE POSTO DE SAÚDE NA COMUNIDADE CENTRO',
-          data: '08/06/2025',
-          status: 'Tramitando',
-          autor: 'VEREADOR DIEGO OLIVEIRA DA SILVA'
-        }
-      ],
-      comissoes: [
-        {
-          id: 1,
-          nome: 'COMISSÃO DE SAÚDE',
-          cargo: 'PRESIDENTE',
-          dataInicio: '01/01/2025',
-          dataFim: '31/12/2028'
-        },
-        {
-          id: 2,
-          nome: 'COMISSÃO DE EDUCAÇÃO',
-          cargo: 'MEMBRO',
-          dataInicio: '01/01/2025',
-          dataFim: '31/12/2028'
-        }
-      ],
-      mandatos: [
-        {
-          cargo: 'VICE-PRESIDENTE',
-          vinculo: 'MESA DIRETORA',
-          legislatura: '4ª (Quarta) Legislatura (2025 - 2028)',
-          periodo: '01/01/2025'
-        },
-        {
-          cargo: 'VEREADOR(A)',
-          vinculo: 'VEREADOR EM EXERCÍCIO',
-          legislatura: '3ª (TERCEIRA) LEGISLATURA (2021 - 2024)',
-          periodo: '01/01/2021 à 31/12/2024'
-        }
-      ],
-      filiacaoPartidaria: [
-        {
-          periodo: '01/01/2021',
-          sigla: 'Partido B',
-          partido: 'Partido B'
-        }
-      ],
-      ultimasAgendas: [],
-      estatisticasMaterias: {
-        total: 35,
-        distribuicao: [
-          { tipo: 'Requerimento - Para O Executivo', quantidade: 20, percentual: 57.1 },
-          { tipo: 'Indicação', quantidade: 10, percentual: 28.6 },
-          { tipo: 'Moção de Aplausos', quantidade: 3, percentual: 8.6 },
-          { tipo: 'Projeto de Lei', quantidade: 2, percentual: 5.7 }
-        ]
+      } catch (err) {
+        setError('Erro ao carregar perfil do parlamentar')
+        console.error(err)
+      } finally {
+        setLoadingPerfil(false)
       }
     }
-  }
 
-  // Buscar dados do parlamentar
-  // Se não encontrou, usar dados mock como fallback temporário
-  const vereadorFinalFallback = parlamentaresDataOld[slug as keyof typeof parlamentaresDataOld]
-  const vereadorFinalFinal = vereadorFinal || vereadorFinalFallback
+    fetchPerfil()
+  }, [parlamentarEncontrado?.id])
+
+  const loading = loadingParlamentares || loadingPerfil
 
   // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-camara-primary"></div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-camara-primary" />
+          <p className="text-gray-600">Carregando perfil do parlamentar...</p>
+        </div>
       </div>
     )
   }
 
-  // Se não encontrar o parlamentar, mostrar erro
-  if (!vereadorFinalFinal) {
+  // Error state
+  if (error || (!loadingParlamentares && !parlamentarEncontrado)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">
           <CardContent className="p-8 text-center">
+            <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
               Parlamentar não encontrado
             </h1>
             <p className="text-gray-600 mb-6">
-              O parlamentar solicitado não foi encontrado.
+              {error || 'O parlamentar solicitado não foi encontrado no sistema.'}
             </p>
             <Button asChild>
               <Link href="/parlamentares">
@@ -301,16 +186,24 @@ export default function ParlamentarPerfilPage() {
     )
   }
 
+  if (!perfil) return null
+
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'APRESENTADA':
       case 'Cadastrado':
         return 'bg-blue-100 text-blue-800'
+      case 'EM_TRAMITACAO':
       case 'Tramitando':
         return 'bg-yellow-100 text-yellow-800'
+      case 'APROVADA':
       case 'Aprovada':
         return 'bg-green-100 text-green-800'
+      case 'REJEITADA':
       case 'Rejeitada':
         return 'bg-red-100 text-red-800'
+      case 'ARQUIVADA':
+        return 'bg-gray-100 text-gray-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -318,8 +211,8 @@ export default function ParlamentarPerfilPage() {
 
   const getTipoColor = (tipo: string) => {
     if (tipo.includes('REQUERIMENTO')) return 'bg-purple-100 text-purple-800'
-    if (tipo.includes('MOÇÃO')) return 'bg-green-100 text-green-800'
-    if (tipo.includes('INDICAÇÃO')) return 'bg-blue-100 text-blue-800'
+    if (tipo.includes('MOCAO') || tipo.includes('MOÇÃO')) return 'bg-green-100 text-green-800'
+    if (tipo.includes('INDICACAO') || tipo.includes('INDICAÇÃO')) return 'bg-blue-100 text-blue-800'
     if (tipo.includes('PROJETO')) return 'bg-orange-100 text-orange-800'
     return 'bg-gray-100 text-gray-800'
   }
@@ -353,6 +246,19 @@ export default function ParlamentarPerfilPage() {
     }
   }
 
+  const getVotoColor = (voto: string) => {
+    switch (voto) {
+      case 'SIM':
+        return 'bg-green-100 text-green-800'
+      case 'NAO':
+        return 'bg-red-100 text-red-800'
+      case 'ABSTENCAO':
+        return 'bg-yellow-100 text-yellow-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -362,7 +268,7 @@ export default function ParlamentarPerfilPage() {
             Parlamentares
           </Link>
           <span>/</span>
-          <span className="text-gray-900">Detalhe</span>
+          <span className="text-gray-900">{perfil.apelido || perfil.nome}</span>
         </div>
 
         {/* Botão Voltar */}
@@ -381,34 +287,38 @@ export default function ParlamentarPerfilPage() {
             <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
               {/* Foto */}
               <div className="relative">
-                <div className={`w-32 h-32 ${vereadorFinal?.cargo === 'PRESIDENTE' ? 'bg-camara-gold' : 'bg-camara-primary'} rounded-full flex items-center justify-center text-white`}>
-                  {vereadorFinal?.cargo === 'PRESIDENTE' ? (
+                <div className={`w-32 h-32 ${perfil.cargo === 'PRESIDENTE' ? 'bg-camara-gold' : 'bg-camara-primary'} rounded-full flex items-center justify-center text-white`}>
+                  {perfil.cargo === 'PRESIDENTE' ? (
                     <Crown className="h-16 w-16" />
                   ) : (
                     <Users className="h-16 w-16" />
                   )}
                 </div>
-                <Badge className={`absolute -top-2 -right-2 ${getCargoColor(vereadorFinal?.cargo || 'VEREADOR')} border`}>
-                  {getCargoLabel(vereadorFinal?.cargo || 'VEREADOR')}
+                <Badge className={`absolute -top-2 -right-2 ${getCargoColor(perfil.cargo)} border`}>
+                  {getCargoLabel(perfil.cargo)}
                 </Badge>
               </div>
 
               {/* Informações Principais */}
               <div className="flex-1">
-                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                   {vereadorFinal?.nome || 'Nome não disponível'}
-                 </h1>
-                 <h2 className="text-xl text-camara-primary font-semibold mb-4">
-                   {vereadorFinal?.apelido || 'Apelido não disponível'}
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {perfil.nome}
+                </h1>
+                <h2 className="text-xl text-camara-primary font-semibold mb-4">
+                  {perfil.apelido || ''}
                 </h2>
-                <div className="flex items-center space-x-4 mb-4">
-                  {vereadorFinal?.cargo !== 'VEREADOR' && (
-                    <Badge className={`${getCargoColor(vereadorFinal?.cargo || 'VEREADOR')} border`}>
-                      {getCargoLabel(vereadorFinal?.cargo || 'VEREADOR')} - Mesa Diretora
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  {perfil.cargo !== 'VEREADOR' && (
+                    <Badge className={`${getCargoColor(perfil.cargo)} border`}>
+                      {getCargoLabel(perfil.cargo)} - Mesa Diretora
                     </Badge>
                   )}
                   <Badge variant="outline">
-                    Partido: {vereadorFinal?.partido || 'N/A'}
+                    {perfil.partido || 'Sem partido'}
+                  </Badge>
+                  <Badge variant="outline" className="bg-blue-50">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {perfil.legislatura}
                   </Badge>
                 </div>
 
@@ -416,94 +326,91 @@ export default function ParlamentarPerfilPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-gray-500" />
-                     <span>{vereadorFinal?.email || 'N/A'}</span>
+                    <span>{perfil.email || 'Email não informado'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{vereadorFinal?.telefone || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span>{vereadorFinal?.gabinete || 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{vereadorFinal?.telefoneGabinete || 'N/A'}</span>
+                    <span>{perfil.telefone || 'Telefone não informado'}</span>
                   </div>
                 </div>
-
-                {/* Redes Sociais */}
-                {vereadorFinal?.redesSociais && (
-                  <div className="flex space-x-2 mt-4">
-                    {vereadorFinal?.redesSociais.facebook && (
-                      <Button size="sm" variant="outline" className="h-8 w-8 p-0">
-                        <Facebook className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {vereadorFinal?.redesSociais.instagram && (
-                      <Button size="sm" variant="outline" className="h-8 w-8 p-0">
-                        <Instagram className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {vereadorFinal?.redesSociais.twitter && (
-                      <Button size="sm" variant="outline" className="h-8 w-8 p-0">
-                        <Twitter className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Estatísticas da Legislatura */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg text-camara-primary">
-                LEGISLATURA ATUAL - 2025/2028
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">
-                     Quantidade de {vereadorFinal?.estatisticas?.legislaturaAtual?.materias || 0} matérias, representando {vereadorFinal?.estatisticas?.legislaturaAtual?.percentualMaterias || 0}% do total das matérias
+                  <p className="text-sm text-gray-600">Presenças em Sessões</p>
+                  <p className="text-3xl font-bold text-camara-primary">
+                    {perfil.estatisticas.legislaturaAtual.sessoes}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    de {perfil.estatisticas.legislaturaAtual.totalSessoes} sessões
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">
-                    Presente em {vereadorFinal?.estatisticas?.legislaturaAtual?.sessoes || 0} sessões, representando {vereadorFinal?.estatisticas?.legislaturaAtual?.percentualPresenca || 0}%
-                  </p>
+                <CheckCircle className="h-10 w-10 text-green-500 opacity-50" />
+              </div>
+              <div className="mt-2">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full"
+                    style={{ width: `${perfil.estatisticas.legislaturaAtual.percentualPresenca}%` }}
+                  />
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {perfil.estatisticas.legislaturaAtual.percentualPresenca}% de presença
+                </p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg text-camara-primary">
-                EXERCÍCIO ATUAL - 2025
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">
-                    Quantidade de {vereadorFinal?.estatisticas?.exercicioAtual?.materias || 0} matérias, representando {vereadorFinal?.estatisticas?.exercicioAtual?.percentualMaterias || 0}% do total das matérias
+                  <p className="text-sm text-gray-600">Matérias Apresentadas</p>
+                  <p className="text-3xl font-bold text-camara-secondary">
+                    {perfil.estatisticas.legislaturaAtual.materias}
                   </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">
-                    Presente em {vereadorFinal?.estatisticas?.exercicioAtual?.sessoes || 0} sessões, representando {vereadorFinal?.estatisticas?.exercicioAtual?.percentualPresenca || 0}%
-                  </p>
-                </div>
-                <div className="pt-2 border-t">
                   <p className="text-xs text-gray-500">
-                    Dados atualizados em: {vereadorFinal?.estatisticas?.legislaturaAtual?.dataAtualizacao || 'N/A'}
+                    {perfil.estatisticas.legislaturaAtual.percentualMaterias}% do total
                   </p>
                 </div>
+                <FileText className="h-10 w-10 text-camara-secondary opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Aprovadas</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {perfil.estatisticasMaterias.aprovadas}
+                  </p>
+                  <p className="text-xs text-gray-500">proposições</p>
+                </div>
+                <CheckCircle className="h-10 w-10 text-green-500 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Em Tramitação</p>
+                  <p className="text-3xl font-bold text-yellow-600">
+                    {perfil.estatisticasMaterias.emTramitacao}
+                  </p>
+                  <p className="text-xs text-gray-500">proposições</p>
+                </div>
+                <Clock className="h-10 w-10 text-yellow-500 opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -511,137 +418,196 @@ export default function ParlamentarPerfilPage() {
 
         {/* Tabs de Informações */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="producao">Produção Legislativa</TabsTrigger>
-            <TabsTrigger value="sessoes">Sessões</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            <TabsTrigger value="producao">Produção</TabsTrigger>
+            <TabsTrigger value="votacoes">Votações</TabsTrigger>
             <TabsTrigger value="comissoes">Comissões</TabsTrigger>
             <TabsTrigger value="mandatos">Mandatos</TabsTrigger>
-            <TabsTrigger value="filiacao">Filiação Partidária</TabsTrigger>
+            <TabsTrigger value="filiacao">Filiação</TabsTrigger>
             <TabsTrigger value="biografia">Biografia</TabsTrigger>
           </TabsList>
 
           {/* Produção Legislativa */}
           <TabsContent value="producao" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center text-camara-primary">
-                  <FileText className="mr-2 h-6 w-6" />
-                  Últimas matérias vinculadas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {vereadorFinal?.ultimasMaterias?.map((materia) => (
-                    <div key={materia.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge className={getTipoColor(materia.tipo)}>
-                              {materia.tipo}
-                            </Badge>
-                            <span className="text-sm font-medium text-gray-900">
-                              {materia.numero}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {materia.data}
-                            </span>
+            {perfil.ultimasMaterias.length > 0 ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-camara-primary">
+                    <FileText className="mr-2 h-6 w-6" />
+                    Últimas Proposições ({perfil.ultimasMaterias.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {perfil.ultimasMaterias.map((materia) => (
+                      <div key={materia.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 mb-2">
+                          <div className="flex-1">
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <Badge className={getTipoColor(materia.tipo)}>
+                                {materia.tipo.replace(/_/g, ' ')}
+                              </Badge>
+                              <span className="text-sm font-medium text-gray-900">
+                                {materia.numero}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {materia.data}
+                              </span>
+                            </div>
+                            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                              {materia.titulo}
+                            </h3>
                           </div>
-                          <h3 className="font-semibold text-gray-900 mb-2">
-                            {materia.titulo}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            De iniciativa do {materia.autor}
-                          </p>
-                        </div>
-                        <div className="ml-4">
                           <Badge className={getStatusColor(materia.status)}>
-                            {materia.status}
+                            {materia.status.replace(/_/g, ' ')}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-end">
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/legislativo/proposicoes/${materia.id}`}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver Detalhes
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="p-8 text-center">
+                  <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nenhuma proposição encontrada para este parlamentar.</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Distribuição por Tipo */}
+            {perfil.estatisticasMaterias.distribuicao.length > 0 && (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-camara-primary">
+                    <BarChart3 className="mr-2 h-6 w-6" />
+                    Distribuição por Tipo
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {perfil.estatisticasMaterias.distribuicao.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-700">{item.tipo.replace(/_/g, ' ')}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-32 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-camara-primary h-2 rounded-full"
+                              style={{ width: `${item.percentual}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium w-12 text-right">{item.quantidade}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Votações */}
+          <TabsContent value="votacoes" className="space-y-6">
+            {perfil.votacoesRecentes.length > 0 ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-camara-primary">
+                    <CheckCircle className="mr-2 h-6 w-6" />
+                    Votações Recentes ({perfil.votacoesRecentes.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {perfil.votacoesRecentes.map((votacao) => (
+                      <div key={votacao.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium text-gray-900">
+                                {votacao.proposicaoNumero}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {votacao.data}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 line-clamp-2">
+                              {votacao.proposicaoTitulo}
+                            </p>
+                          </div>
+                          <Badge className={getVotoColor(votacao.voto)}>
+                            {votacao.voto === 'NAO' ? 'NÃO' : votacao.voto}
                           </Badge>
                         </div>
                       </div>
-                      <div className="flex justify-end">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-1" />
-                          Acessar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Estatísticas de Matérias */}
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-camara-primary">
-                  Matérias (Quantidade)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  Produzimos no total de {vereadorFinal?.estatisticasMaterias?.total || 0} proposições e matérias, sendo:
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-sm font-medium">Projetos de Lei</span>
-                    <div className="text-right">
-                      <span className="font-bold text-camara-primary">{vereadorFinal?.estatisticasMaterias?.aprovadas || 0}</span>
-                      <span className="text-xs text-gray-500 ml-2">Aprovadas</span>
-                    </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span className="text-sm font-medium">Em Tramitação</span>
-                    <div className="text-right">
-                      <span className="font-bold text-camara-primary">{vereadorFinal?.estatisticasMaterias?.emTramitacao || 0}</span>
-                      <span className="text-xs text-gray-500 ml-2">Em análise</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="p-8 text-center">
+                  <CheckCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Nenhuma votação registrada para este parlamentar.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Comissões */}
           <TabsContent value="comissoes" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center text-camara-primary">
-                  <Users className="mr-2 h-6 w-6" />
-                  Últimas comissões vinculadas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {vereadorFinal?.comissoes?.map((comissao) => (
-                    <div key={comissao.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge className="bg-green-100 text-green-800">
+            {perfil.comissoes.length > 0 ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-camara-primary">
+                    <Users className="mr-2 h-6 w-6" />
+                    Participação em Comissões ({perfil.comissoes.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {perfil.comissoes.map((comissao) => (
+                      <div key={comissao.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
+                          <div>
+                            <Badge className="bg-green-100 text-green-800 mb-2">
                               {comissao.cargo}
                             </Badge>
+                            <h3 className="font-semibold text-gray-900">
+                              {comissao.nome}
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {comissao.dataInicio} - {comissao.dataFim}
+                            </p>
                           </div>
-                          <h3 className="font-semibold text-gray-900 mb-2">
-                            {comissao.nome}
-                          </h3>
-                          <div className="text-sm text-gray-600">
-                            <p><strong>Data início:</strong> {comissao.dataInicio}</p>
-                            <p><strong>Data fim:</strong> {comissao.dataFim}</p>
-                          </div>
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/legislativo/comissoes/${comissao.id}`}>
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver Comissão
+                            </Link>
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex justify-end">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-1" />
-                          Acessar
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-lg">
+                <CardContent className="p-8 text-center">
+                  <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Este parlamentar não participa de comissões no momento.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Mandatos */}
@@ -649,32 +615,44 @@ export default function ParlamentarPerfilPage() {
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="text-camara-primary">
-                  Informações dos mandatos
+                  Histórico de Mandatos
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Cargo</th>
-                        <th className="text-left p-3 font-semibold">Vínculo</th>
-                        <th className="text-left p-3 font-semibold">Legislatura</th>
-                        <th className="text-left p-3 font-semibold">Período</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vereadorFinal && (
-                        <tr className="border-b">
-                          <td className="p-3">{getCargoLabel(vereadorFinal.cargo)}</td>
-                          <td className="p-3">{vereadorFinal.partido || 'N/A'}</td>
-                          <td className="p-3">{vereadorFinal.legislatura}</td>
-                          <td className="p-3">Atual</td>
+                {perfil.mandatos.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b bg-gray-50">
+                          <th className="text-left p-3 font-semibold">Cargo</th>
+                          <th className="text-left p-3 font-semibold">Vínculo</th>
+                          <th className="text-left p-3 font-semibold">Legislatura</th>
+                          <th className="text-left p-3 font-semibold">Período</th>
+                          <th className="text-left p-3 font-semibold">Votos</th>
+                          <th className="text-left p-3 font-semibold">Status</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {perfil.mandatos.map((mandato) => (
+                          <tr key={mandato.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3">{getCargoLabel(mandato.cargo)}</td>
+                            <td className="p-3">{mandato.vinculo}</td>
+                            <td className="p-3">{mandato.legislatura}</td>
+                            <td className="p-3">{mandato.periodo}</td>
+                            <td className="p-3">{mandato.numeroVotos.toLocaleString('pt-BR')}</td>
+                            <td className="p-3">
+                              <Badge className={mandato.ativo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                {mandato.ativo ? 'Ativo' : 'Encerrado'}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">Nenhum mandato registrado.</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -684,32 +662,42 @@ export default function ParlamentarPerfilPage() {
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="text-camara-primary">
-                  Filiação partidária
+                  Histórico de Filiação Partidária
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Período</th>
-                        <th className="text-left p-3 font-semibold">Sigla</th>
-                        <th className="text-left p-3 font-semibold">Partido</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {vereadorFinal?.filiacaoPartidaria?.map((filiacao, index) => (
-                        <tr key={index} className="border-b">
-                          <td className="p-3">{filiacao.dataInicio} - {filiacao.dataFim || 'Atual'}</td>
-                          <td className="p-3">
-                            <Badge variant="outline">{filiacao.partido}</Badge>
-                          </td>
-                          <td className="p-3">{filiacao.partido}</td>
+                {perfil.filiacaoPartidaria.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b bg-gray-50">
+                          <th className="text-left p-3 font-semibold">Partido</th>
+                          <th className="text-left p-3 font-semibold">Data Início</th>
+                          <th className="text-left p-3 font-semibold">Data Fim</th>
+                          <th className="text-left p-3 font-semibold">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {perfil.filiacaoPartidaria.map((filiacao) => (
+                          <tr key={filiacao.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3">
+                              <Badge variant="outline">{filiacao.partido}</Badge>
+                            </td>
+                            <td className="p-3">{filiacao.dataInicio}</td>
+                            <td className="p-3">{filiacao.dataFim || 'Atual'}</td>
+                            <td className="p-3">
+                              <Badge className={filiacao.ativa ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                                {filiacao.ativa ? 'Ativa' : 'Encerrada'}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">Nenhuma filiação partidária registrada.</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -723,51 +711,40 @@ export default function ParlamentarPerfilPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 leading-relaxed">
-                    {vereadorFinal?.biografia}
+                {perfil.biografia ? (
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {perfil.biografia}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">
+                    Biografia não disponível para este parlamentar.
                   </p>
-                </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Últimas Agendas */}
-            {vereadorFinal?.ultimasAgendas && vereadorFinal?.ultimasAgendas.length > 0 && (
+            {/* Presenças Recentes */}
+            {perfil.presencasRecentes.length > 0 && (
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center text-camara-primary">
                     <Clock className="mr-2 h-6 w-6" />
-                    Últimas agendas vinculadas
+                    Presenças Recentes
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                     {vereadorFinal?.ultimasAgendas?.map((agenda, index) => (
-                       <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Badge className="bg-purple-100 text-purple-800">
-                                Agenda
-                              </Badge>
-                              <span className="text-sm font-medium text-gray-900">
-                                {agenda.atividade}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                {agenda.data}
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              {agenda.atividade}
-                            </p>
-                          </div>
+                  <div className="space-y-2">
+                    {perfil.presencasRecentes.map((presenca, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div>
+                          <span className="font-medium">Sessão {presenca.sessaoNumero}</span>
+                          <span className="text-sm text-gray-500 ml-2">{presenca.sessaoData}</span>
                         </div>
-                        <div className="flex justify-end">
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-4 w-4 mr-1" />
-                            Acessar
-                          </Button>
-                        </div>
+                        <Badge className={presenca.presente ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {presenca.presente ? 'Presente' : 'Ausente'}
+                        </Badge>
                       </div>
                     ))}
                   </div>
@@ -776,6 +753,11 @@ export default function ParlamentarPerfilPage() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Rodapé com data de atualização */}
+        <div className="mt-8 text-center text-sm text-gray-500">
+          Dados atualizados em: {perfil.estatisticas.legislaturaAtual.dataAtualizacao}
+        </div>
       </div>
     </div>
   )

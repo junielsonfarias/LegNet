@@ -369,6 +369,33 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Pagina de Perfil do Parlamentar com Dados Reais
+- **Problema**: Pagina de perfil do parlamentar exibia dados mockados e campos vazios
+- **Solucao implementada**:
+  - Novo endpoint `/api/parlamentares/[id]/perfil/route.ts`:
+    - Retorna todos os dados relacionados do parlamentar
+    - Calcula estatisticas de presenca em sessoes
+    - Calcula estatisticas de proposicoes apresentadas
+    - Inclui comissoes, mandatos, filiacoes, votacoes, presencas
+    - Distribuicao de proposicoes por tipo e status
+  - Pagina `src/app/parlamentares/[slug]/page.tsx` totalmente reescrita:
+    - Busca dados reais via novo endpoint de perfil
+    - Interface reorganizada com cards de estatisticas
+    - Tabs: Producao, Votacoes, Comissoes, Mandatos, Filiacao, Biografia
+    - Exibe estatisticas calculadas (presencas, proposicoes, aprovadas, em tramitacao)
+    - Grafico de distribuicao de proposicoes por tipo
+    - Listagem de votacoes recentes com voto do parlamentar
+    - Historico completo de mandatos com votos
+    - Historico de filiacao partidaria
+    - Presencas recentes em sessoes
+    - Layout responsivo e acessivel
+    - Estados de loading e erro tratados
+- **Arquivos criados**:
+  - `src/app/api/parlamentares/[id]/perfil/route.ts`
+- **Arquivos modificados**:
+  - `src/app/parlamentares/[slug]/page.tsx`
+- **Resultado**: Perfil do parlamentar agora exibe todos os dados do banco de dados
+
 ### 2026-01-19 - Correcao de Links de Parlamentares e Botoes de Acao (v2)
 - **Problemas identificados**:
   - Cards de parlamentares na home nao eram clicaveis
