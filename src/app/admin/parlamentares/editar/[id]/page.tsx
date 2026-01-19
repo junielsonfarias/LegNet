@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Save, Loader2, Plus, X, History, RefreshCcw, BarChart3, Users, Calendar } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Plus, X, History, RefreshCcw, BarChart3, Users, Calendar, Upload, Image as ImageIcon } from 'lucide-react'
 import { useParlamentares, useParlamentar } from '@/lib/hooks/use-parlamentares'
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas'
 import { useParlamentarHistorico } from '@/lib/hooks/use-parlamentar-historico'
@@ -42,6 +42,8 @@ export default function EditarParlamentarPage() {
     telefone: '',
     partido: '',
     biografia: '',
+    foto: '',
+    gabinete: '',
     cargo: 'VEREADOR' as 'PRESIDENTE' | 'VICE_PRESIDENTE' | 'PRIMEIRO_SECRETARIO' | 'SEGUNDO_SECRETARIO' | 'VEREADOR',
     legislatura: '',
     ativo: true
@@ -156,6 +158,8 @@ export default function EditarParlamentarPage() {
         telefone: parlamentar.telefone || '',
         partido: parlamentar.partido || '',
         biografia: parlamentar.biografia || '',
+        foto: parlamentar.foto || '',
+        gabinete: parlamentar.gabinete || '',
         cargo: parlamentar.cargo || 'VEREADOR',
         legislatura: parlamentar.legislatura || '',
         ativo: parlamentar.ativo ?? true
@@ -205,6 +209,8 @@ export default function EditarParlamentarPage() {
         email: formData.email || undefined,
         telefone: formData.telefone || undefined,
         biografia: formData.biografia || undefined,
+        foto: formData.foto || undefined,
+        gabinete: formData.gabinete || undefined,
         ativo: formData.ativo,
         mandatos: mandatos.length > 0 ? mandatos.map(m => ({
           legislaturaId: m.legislaturaId,
@@ -603,6 +609,73 @@ export default function EditarParlamentarPage() {
                   onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                   placeholder="(93) 99999-9999"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="gabinete">Gabinete</Label>
+                <Input
+                  id="gabinete"
+                  value={formData.gabinete}
+                  onChange={(e) => setFormData({ ...formData, gabinete: e.target.value })}
+                  placeholder="Ex: Gabinete 01, Sala 102"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="foto">Foto</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="foto"
+                    value={formData.foto}
+                    onChange={(e) => setFormData({ ...formData, foto: e.target.value })}
+                    placeholder="URL da foto ou faca upload"
+                    className="flex-1"
+                  />
+                  <input
+                    type="file"
+                    id="fotoUploadEdit"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const formDataUpload = new FormData()
+                      formDataUpload.append('file', file)
+                      formDataUpload.append('folder', 'parlamentares')
+                      try {
+                        const response = await fetch('/api/upload', {
+                          method: 'POST',
+                          body: formDataUpload
+                        })
+                        if (response.ok) {
+                          const data = await response.json()
+                          setFormData(prev => ({ ...prev, foto: data.url }))
+                          toast.success('Foto enviada com sucesso')
+                        } else {
+                          toast.error('Erro ao enviar foto')
+                        }
+                      } catch (error) {
+                        console.error('Erro ao enviar foto:', error)
+                        toast.error('Erro ao enviar foto')
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('fotoUploadEdit')?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </div>
+                {formData.foto && (
+                  <div className="mt-2 flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                    <ImageIcon className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600 truncate">{formData.foto}</span>
+                  </div>
+                )}
               </div>
             </div>
 

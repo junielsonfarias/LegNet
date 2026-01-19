@@ -36,6 +36,7 @@ export interface ParlamentarApi {
   partido: string | null
   biografia: string | null
   foto: string | null
+  gabinete: string | null
   cargo: 'PRESIDENTE' | 'VICE_PRESIDENTE' | 'PRIMEIRO_SECRETARIO' | 'SEGUNDO_SECRETARIO' | 'VEREADOR'
   legislatura: string
   ativo: boolean
@@ -109,6 +110,8 @@ export interface ParlamentarCreate {
   email?: string
   telefone?: string
   biografia?: string
+  foto?: string
+  gabinete?: string
   ativo?: boolean
   mandatos?: MandatoCreate[]
   filiacoes?: FiliacaoCreate[]
@@ -123,6 +126,8 @@ export interface ParlamentarUpdate {
   email?: string
   telefone?: string
   biografia?: string
+  foto?: string
+  gabinete?: string
   ativo?: boolean
   mandatos?: MandatoCreate[]
   filiacoes?: FiliacaoCreate[]

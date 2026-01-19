@@ -121,6 +121,7 @@ model Parlamentar {
   partido     String? // Partido atual (mantido para compatibilidade)
   biografia   String?          @db.Text
   foto        String?
+  gabinete    String? // Numero/identificacao do gabinete do parlamentar
   cargo       CargoParlamentar @default(VEREADOR)
   legislatura String // Legislatura atual (mantido para compatibilidade)
   ativo       Boolean          @default(true)

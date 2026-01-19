@@ -6,17 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  FileText, 
-  Search, 
-  Plus, 
-  Edit, 
+import {
+  Calendar,
+  Clock,
+  Users,
+  FileText,
+  Search,
+  Plus,
+  Edit,
   Trash2,
   Loader2,
-  Eye
+  Eye,
+  MapPin
 } from 'lucide-react'
 import { useSessoes } from '@/lib/hooks/use-sessoes'
 import { toast } from 'sonner'
@@ -33,6 +34,7 @@ export default function SessoesAdminPage() {
     numero: '',
     tipo: 'ORDINARIA' as 'ORDINARIA' | 'EXTRAORDINARIA' | 'SOLENE' | 'ESPECIAL',
     data: '',
+    local: '',
     status: 'AGENDADA' as 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA',
     descricao: ''
   })
@@ -149,6 +151,7 @@ export default function SessoesAdminPage() {
           numero: parseInt(formData.numero),
           tipo: formData.tipo,
           data: formData.data,
+          local: formData.local || undefined,
           status: formData.status,
           descricao: formData.descricao || undefined
         })
@@ -162,6 +165,7 @@ export default function SessoesAdminPage() {
           numero: parseInt(formData.numero),
           tipo: formData.tipo,
           data: formData.data,
+          local: formData.local || undefined,
           status: formData.status,
           descricao: formData.descricao || undefined
         }
@@ -180,6 +184,7 @@ export default function SessoesAdminPage() {
               numero: '',
               tipo: 'ORDINARIA',
               data: '',
+              local: '',
               status: 'AGENDADA',
               descricao: ''
             })
@@ -200,6 +205,7 @@ export default function SessoesAdminPage() {
         numero: '',
         tipo: 'ORDINARIA',
         data: '',
+        local: '',
         status: 'AGENDADA',
         descricao: ''
       })
@@ -217,6 +223,7 @@ export default function SessoesAdminPage() {
       numero: sessao.numero.toString(),
       tipo: sessao.tipo,
       data: dataFormatada,
+      local: sessao.local || '',
       status: sessao.status,
       descricao: sessao.descricao || ''
     })
@@ -392,19 +399,31 @@ export default function SessoesAdminPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="data">Data e Hora</Label>
-                <Input
-                  id="data"
-                  name="data"
-                  type="datetime-local"
-                  value={formData.data}
-                  onChange={(e) => {
-                    console.log('📅 Campo data alterado:', e.target.value)
-                    setFormData({...formData, data: e.target.value})
-                  }}
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="data">Data e Hora</Label>
+                  <Input
+                    id="data"
+                    name="data"
+                    type="datetime-local"
+                    value={formData.data}
+                    onChange={(e) => {
+                      console.log('📅 Campo data alterado:', e.target.value)
+                      setFormData({...formData, data: e.target.value})
+                    }}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="local">Local da Sessao</Label>
+                  <Input
+                    id="local"
+                    name="local"
+                    value={formData.local}
+                    onChange={(e) => setFormData({...formData, local: e.target.value})}
+                    placeholder="Ex: Plenario da Camara Municipal"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -439,8 +458,8 @@ export default function SessoesAdminPage() {
                 >
                   {editingId ? 'Atualizar' : 'Salvar'}
                 </Button>
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => {
                     setShowForm(false)
@@ -449,6 +468,7 @@ export default function SessoesAdminPage() {
                       numero: '',
                       tipo: 'ORDINARIA',
                       data: '',
+                      local: '',
                       status: 'AGENDADA',
                       descricao: ''
                     })
@@ -535,8 +555,10 @@ export default function SessoesAdminPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-gray-500" />
-                  <span className="text-gray-600">-</span>
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-gray-600">
+                    {sessao.local || 'Local nao informado'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-gray-500" />

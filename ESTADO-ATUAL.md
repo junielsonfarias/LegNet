@@ -369,6 +369,38 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Correcao de Consistencia Portal/Admin/Banco de Dados
+- **Objetivo**: Corrigir inconsistencias entre Portal Institucional, Painel Administrativo e Banco de Dados
+- **Problemas corrigidos**:
+  1. **Admin de Noticias usando dados mockados**: Reescrito para usar hook `useNoticias` e API real
+  2. **Campo `local` faltando em Sessoes**: Adicionado ao formulario de sessoes (campo ja existia no schema)
+  3. **Campo `gabinete` nao existia no schema**: Adicionado ao modelo Parlamentar e formularios
+  4. **Upload de foto de Parlamentares**: Implementado campo de upload no formulario
+  5. **Upload de imagem de Noticias**: Implementado campo de upload no formulario
+- **Arquivos modificados**:
+  - `src/app/admin/noticias/page.tsx` - Reescrito para usar useNoticias, removido mockNoticias
+  - `src/app/admin/sessoes/page.tsx` - Adicionado campo local no formulario e exibicao
+  - `src/app/admin/parlamentares/novo/page.tsx` - Adicionados campos foto e gabinete com upload
+  - `src/app/admin/parlamentares/editar/[id]/page.tsx` - Adicionados campos foto e gabinete com upload
+  - `prisma/schema.prisma` - Adicionado campo gabinete em Parlamentar
+  - `src/lib/api/parlamentares-api.ts` - Adicionados gabinete e foto nas interfaces
+- **Arquivos criados**:
+  - `src/app/api/upload/route.ts` - API de upload de arquivos (imagens e PDFs)
+- **Funcionalidades da API de Upload**:
+  - Suporta imagens: JPEG, PNG, GIF, WebP
+  - Suporta documentos: PDF
+  - Tamanho maximo: 10MB
+  - Salva em /public/uploads/{folder}/
+  - Nomes unicos com timestamp e sufixo aleatorio
+  - Sanitizacao de path para evitar path traversal
+- **Schema atualizado**:
+  ```prisma
+  model Parlamentar {
+    gabinete String? // Numero/identificacao do gabinete do parlamentar
+  }
+  ```
+- **Resultado**: 100% dos campos do portal agora tem cadastro correspondente no admin
+
 ### 2026-01-19 - Correcao de Paginas com Dados Mock (Comissoes, Sobre, Transparencia)
 - **Problema**: 3 paginas do portal institucional usavam dados hardcoded em vez de buscar do banco de dados
 - **Correcoes aplicadas**:
