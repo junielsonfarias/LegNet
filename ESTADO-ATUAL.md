@@ -368,6 +368,21 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Implementação de Testes E2E com Playwright
+- **Objetivo**: Aumentar cobertura de testes com testes end-to-end
+- **Biblioteca**: `@playwright/test`
+- **Arquivos criados**:
+  - `playwright.config.ts` - Configuração do Playwright
+  - `e2e/home.spec.ts` - Testes da home page
+  - `e2e/login.spec.ts` - Testes de autenticação
+  - `e2e/parlamentares.spec.ts` - Testes de parlamentares
+  - `e2e/transparencia.spec.ts` - Testes de transparência
+  - `e2e/api.spec.ts` - Testes de APIs públicas
+- **Scripts adicionados**:
+  - `npm run test:e2e` - Executa todos os testes
+  - `npm run test:e2e:ui` - Interface visual do Playwright
+  - `npm run test:e2e:report` - Visualiza relatório
+
 ### 2026-01-19 - Implementação de Relatórios Excel
 - **Objetivo**: Permitir exportação de dados legislativos em Excel
 - **Bibliotecas instaladas**: `exceljs`, `jspdf`, `jspdf-autotable`
