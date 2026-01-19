@@ -368,6 +368,20 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Correções de Build para Deploy em Produção
+- **Objetivo**: Corrigir erros de build e preparar para deploy
+- **Erros corrigidos**:
+  1. **Type error em sessoes-utils.ts**: Adicionados campos `dataInicio` e `dataFim` no retorno de `getLegislaturaAtual()`
+  2. **useSearchParams sem Suspense**: Refatorado `/painel-publico` para envolver `useSearchParams()` em Suspense boundary
+  3. **React hooks warnings**: Adicionados comentários eslint-disable para warnings falso-positivos em `confirm-dialog.tsx`
+- **Arquivos modificados**:
+  - `src/lib/utils/sessoes-utils.ts` - Correção de tipos
+  - `src/app/painel-publico/page.tsx` - Suspense boundary
+  - `src/components/ui/confirm-dialog.tsx` - Supressão de warnings
+- **Resultado**:
+  - Build completo: 116 páginas geradas com sucesso
+  - Conexão Supabase: OK (11 parlamentares, 39 sessões, 1 usuário, 1 legislatura)
+
 ### 2026-01-17 - Visualização Histórica de Sessões Concluídas
 - **Objetivo**: Permitir visualizar sessões concluídas no painel público
 - **Arquivo modificado**: `public/painel.html`
