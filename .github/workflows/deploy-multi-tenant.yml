@@ -1,0 +1,159 @@
+name: Deploy Multi-Tenant
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Alvo do deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - single
+      project_name:
+        description: 'Nome do projeto Vercel (se target=single)'
+        required: false
+        type: string
+      environment:
+        description: 'Ambiente'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
+# Disparar automaticamente em push para main (opcional)
+# Descomente as linhas abaixo se quiser deploy automático
+#  push:
+#    branches:
+#      - main
+
+jobs:
+  # Job para listar todas as câmaras configuradas
+  list-tenants:
+    runs-on: ubuntu-latest
+    outputs:
+      tenants: ${{ steps.get-tenants.outputs.tenants }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get tenant list
+        id: get-tenants
+        run: |
+          # Lista de projetos Vercel (câmaras)
+          # Adicione novos projetos aqui conforme necessário
+          # Formato: [{"name": "projeto-vercel", "label": "Nome Amigável"}]
+          TENANTS='[
+            {"name": "camara-mojui", "label": "Câmara de Mojuí dos Campos"}
+          ]'
+
+          if [ "${{ github.event.inputs.target }}" == "single" ] && [ -n "${{ github.event.inputs.project_name }}" ]; then
+            TENANTS='[{"name": "${{ github.event.inputs.project_name }}", "label": "Custom"}]'
+          fi
+
+          echo "tenants=$(echo $TENANTS | jq -c '.')" >> $GITHUB_OUTPUT
+
+  # Job de build e lint (uma vez só)
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint || true
+
+      - name: Type check
+        run: npm run type-check || true
+
+      - name: Build check
+        run: npm run build
+        env:
+          # Variáveis mínimas para build
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'dummy-secret-for-build' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://dummy:dummy@localhost:5432/dummy' }}
+          DIRECT_URL: ${{ secrets.DATABASE_URL || 'postgresql://dummy:dummy@localhost:5432/dummy' }}
+          SITE_NAME: "Build Check"
+          SITE_URL: "https://localhost:3000"
+
+  # Job de deploy para cada tenant
+  deploy:
+    needs: [list-tenants, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tenant: ${{ fromJson(needs.list-tenants.outputs.tenants) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel environment
+        run: |
+          vercel pull --yes --environment=${{ github.event.inputs.environment || 'production' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ matrix.tenant.name }}
+
+      - name: Build project
+        run: |
+          vercel build ${{ github.event.inputs.environment == 'production' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ matrix.tenant.name }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt ${{ github.event.inputs.environment == 'production' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ matrix.tenant.name }}
+
+      - name: Output deployment URL
+        run: |
+          echo "### Deploy: ${{ matrix.tenant.label }}" >> $GITHUB_STEP_SUMMARY
+          echo "URL: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+
+  # Job de notificação (opcional)
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check deployment status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "Todos os deploys foram bem-sucedidos!"
+          else
+            echo "Alguns deploys falharam. Verifique os logs."
+            exit 1
+          fi
+
+      # Adicione notificações personalizadas aqui (Slack, Discord, etc)
+      # - name: Send Slack notification
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ job.status }}

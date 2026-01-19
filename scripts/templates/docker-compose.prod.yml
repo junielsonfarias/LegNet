@@ -1,0 +1,163 @@
+# =============================================================================
+# Docker Compose - Produção
+# Sistema de Câmara Municipal
+# =============================================================================
+#
+# Variáveis a serem substituídas:
+#   {{DB_NAME}}       - Nome do banco de dados
+#   {{DB_USER}}       - Usuário do banco de dados
+#   {{DB_PASSWORD}}   - Senha do banco de dados
+#   {{DOMAIN}}        - Domínio do site
+#
+# Uso:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # Aplicação Next.js
+  # ===========================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: camara-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://{{DB_USER}}:{{DB_PASSWORD}}@db:5432/{{DB_NAME}}?schema=public
+      - DIRECT_URL=postgresql://{{DB_USER}}:{{DB_PASSWORD}}@db:5432/{{DB_NAME}}?schema=public
+    env_file:
+      - .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - camara-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - app_uploads:/app/public/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Banco de Dados PostgreSQL
+  # ===========================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: camara-db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db:/docker-entrypoint-initdb.d:ro
+    environment:
+      POSTGRES_USER: {{DB_USER}}
+      POSTGRES_PASSWORD: {{DB_PASSWORD}}
+      POSTGRES_DB: {{DB_NAME}}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    networks:
+      - camara-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{DB_USER}} -d {{DB_NAME}}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Nginx Reverse Proxy
+  # ===========================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: camara-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+      - app_uploads:/var/www/uploads:ro
+    depends_on:
+      - app
+    networks:
+      - camara-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # Redis (Cache - Opcional)
+  # ===========================================================================
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: camara-redis
+  #   restart: unless-stopped
+  #   command: redis-server --appendonly yes
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - camara-network
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # ===========================================================================
+  # Certbot (Renovação SSL)
+  # ===========================================================================
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: camara-certbot
+  #   volumes:
+  #     - /etc/letsencrypt:/etc/letsencrypt
+  #     - /var/www/certbot:/var/www/certbot
+  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  camara-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  app_uploads:
+    driver: local
+  # redis_data:
+  #   driver: local

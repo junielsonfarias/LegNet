@@ -2,16 +2,23 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { configuracao } = useConfiguracaoInstitucional()
+
+  const nomeCasa = configuracao.nomeCasa
+  const sigla = configuracao.sigla || 'CM'
+  const logoUrl = configuracao.logoUrl
 
   useEffect(() => {
     setIsMounted(true)
@@ -148,12 +155,22 @@ export function Header() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-camara-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">CM</span>
-              </div>
+              {logoUrl ? (
+                <Image
+                  src={logoUrl}
+                  alt={nomeCasa}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-camara-primary rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">{sigla.substring(0, 2)}</span>
+                </div>
+              )}
               <div>
                 <h1 className="text-xl font-bold text-camara-primary">
-                  Câmara Municipal de Mojuí dos Campos
+                  {nomeCasa}
                 </h1>
                 <p className="text-sm text-gray-600">Portal Institucional</p>
               </div>
@@ -240,12 +257,22 @@ export function Header() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-camara-primary rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">CM</span>
-            </div>
+            {logoUrl ? (
+              <Image
+                src={logoUrl}
+                alt={nomeCasa}
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-camara-primary rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-lg">{sigla.substring(0, 2)}</span>
+              </div>
+            )}
             <div>
               <h1 className="text-xl font-bold text-camara-primary">
-                Câmara Municipal de Mojuí dos Campos
+                {nomeCasa}
               </h1>
               <p className="text-sm text-gray-600">Portal Institucional</p>
             </div>

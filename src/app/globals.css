@@ -46,6 +46,12 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Cores do Tenant (padrão - serão sobrescritas pelo TenantStyles) */
+    --tenant-primary: #1e40af;
+    --tenant-secondary: #3b82f6;
+    --tenant-primary-rgb: 30 64 175;
+    --tenant-secondary-rgb: 59 130 246;
   }
 
   .dark {

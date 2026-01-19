@@ -8,7 +8,8 @@ import { prisma } from '@/lib/prisma'
 import { generateTotpSecret, createOtpAuthUri, verifyTotpToken } from '@/lib/security/totp'
 import { logAudit } from '@/lib/audit'
 
-const ISSUER = 'Câmara Municipal de Mojuí dos Campos'
+// ISSUER dinâmico via variável de ambiente (Multi-Tenant)
+const ISSUER = process.env.SITE_NAME || 'Câmara Municipal'
 
 const generateBackupCodes = (quantity = 8) =>
   Array.from({ length: quantity }).map(() => crypto.randomBytes(4).toString('hex'))

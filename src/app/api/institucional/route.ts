@@ -110,11 +110,14 @@ export async function GET() {
       } : null
     }
 
+    // Fonte dinâmica via variável de ambiente ou dados do banco
+    const fonteDados = dados.configuracao?.nome || process.env.SITE_NAME || 'Câmara Municipal'
+
     return NextResponse.json({
       dados,
       metadados: {
         atualizacao: new Date().toISOString(),
-        fonte: 'Camara Municipal de Mojui dos Campos'
+        fonte: fonteDados
       }
     })
   } catch (error) {

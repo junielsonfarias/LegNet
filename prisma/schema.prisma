@@ -85,10 +85,63 @@ enum UserRole {
   SECRETARIA
 }
 
+// =============================================================================
+// Modelo de Tenant (Multi-Tenant)
+// =============================================================================
+
+model Tenant {
+  id          String       @id @default(cuid())
+  slug        String       @unique // Identificador único (ex: "santarem", "mojui-dos-campos")
+  nome        String // Nome da Câmara Municipal
+  sigla       String? // Sigla (ex: "CMS", "CMM")
+  cnpj        String?
+  dominio     String?      @unique // Domínio customizado (ex: "camara.santarem.pa.gov.br")
+  subdominio  String?      @unique // Subdomínio (ex: "santarem" para santarem.camaras.gov.br)
+  ativo       Boolean      @default(true)
+  plano       PlanoTenant  @default(BASICO)
+  // Configurações visuais
+  logoUrl     String?
+  faviconUrl  String?
+  corPrimaria String?      @default("#1e40af") // Azul padrão
+  corSecundaria String?    @default("#3b82f6")
+  // Localização
+  cidade      String?
+  estado      String?
+  // Configurações
+  timezone    String       @default("America/Sao_Paulo")
+  idioma      String       @default("pt-BR")
+  // Limites do plano
+  maxUsuarios Int          @default(10)
+  maxParlamentares Int     @default(20)
+  maxArmazenamentoMb Int   @default(1024) // 1GB padrão
+  // Metadados
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  expiraEm    DateTime? // Data de expiração do plano
+
+  // Relacionamento com configuração institucional detalhada
+  configuracao ConfiguracaoInstitucional?
+
+  @@index([ativo])
+  @@index([dominio])
+  @@index([subdominio])
+  @@index([slug])
+  @@map("tenants")
+}
+
+enum PlanoTenant {
+  BASICO // Funcionalidades básicas
+  PROFISSIONAL // Funcionalidades avançadas
+  ENTERPRISE // Todas as funcionalidades + suporte prioritário
+}
+
 model ConfiguracaoInstitucional {
   id                 String   @id @default(cuid())
   slug               String   @unique
   nomeCasa           String
+  // Relacionamento com Tenant
+  tenantId           String?  @unique
+  tenant             Tenant?  @relation(fields: [tenantId], references: [id])
   sigla              String?
   cnpj               String?
   enderecoLogradouro String?

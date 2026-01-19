@@ -11,13 +11,14 @@
 
 | Metrica | Valor |
 |---------|-------|
-| **Modelos Prisma** | 34 |
-| **Endpoints API** | 68+ |
-| **Componentes React** | 51+ |
-| **Servicos de Negocio** | 31 |
-| **Hooks Customizados** | 21 |
+| **Modelos Prisma** | 35 |
+| **Endpoints API** | 72+ |
+| **Componentes React** | 53+ |
+| **Servicos de Negocio** | 32 |
+| **Hooks Customizados** | 27 |
 | **Paginas Admin** | 15+ |
 | **Paginas Publicas** | 25+ |
+| **Multi-Tenant** | Implementado |
 
 ---
 
@@ -252,6 +253,326 @@
 | E-SIC | Implementado | /institucional/e-sic |
 | Dicionario | Implementado | /institucional/dicionario |
 
+### 21. Sistema Multi-Tenant
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| Modelo Tenant | Implementado | Prisma model com slug, dominio, subdominio |
+| Identificacao por hostname | Implementado | Middleware extrai tenant automaticamente |
+| Identificacao por dominio | Implementado | Dominio customizado (ex: camara.cidade.gov.br) |
+| Identificacao por subdominio | Implementado | Subdominio (ex: cidade.sistema.com.br) |
+| Identificacao por slug | Implementado | Fallback para desenvolvimento |
+| Cache de tenants | Implementado | 5 minutos TTL em memoria |
+| TenantProvider (Context) | Implementado | Provider React para cliente |
+| useTenant hook | Implementado | Acesso a dados do tenant |
+| Cores dinamicas | Implementado | CSS variables por tenant |
+| API /api/tenant/current | Implementado | Retorna tenant atual |
+| API /api/tenant/[slug] | Implementado | Busca tenant por slug |
+| API /api/tenants (CRUD) | Implementado | Admin: listar, criar tenants |
+| API /api/tenants/[id] | Implementado | Admin: GET/PUT/DELETE tenant |
+| Validacao Zod | Implementado | Schemas para criar/atualizar |
+| Soft delete | Implementado | Tenants desativados, nao excluidos |
+| Headers propagados | Implementado | x-tenant-slug via middleware |
+
+---
+
+## Guia de Instalacao
+
+### Requisitos por Tipo de Instalacao
+
+#### Cenario 1: VPS Completa (PostgreSQL Local)
+
+**Requisitos de Hardware:**
+| Recurso | Minimo | Recomendado |
+|---------|--------|-------------|
+| CPU | 1 vCPU | 2+ vCPU |
+| RAM | 1 GB | 2+ GB |
+| Disco | 20 GB SSD | 40+ GB SSD |
+| Banda | 1 TB/mes | Ilimitado |
+
+**Requisitos de Software:**
+- Sistema Operacional: Ubuntu 22.04 LTS ou Debian 12
+- Acesso root ou usuario com sudo
+- Porta 80 (HTTP) e 443 (HTTPS) abertas
+
+**O que sera instalado automaticamente:**
+- Node.js 20 LTS
+- PostgreSQL 15
+- Nginx (proxy reverso)
+- PM2 (gerenciador de processos)
+- Certbot (SSL gratuito)
+
+**Ideal para:**
+- Producao simples (1 Camara)
+- Controle total sobre os dados
+- Baixo custo (~R$50-100/mes)
+
+---
+
+#### Cenario 2: VPS + Supabase (Banco na Nuvem)
+
+**Requisitos de Hardware (VPS):**
+| Recurso | Minimo | Recomendado |
+|---------|--------|-------------|
+| CPU | 1 vCPU | 2 vCPU |
+| RAM | 512 MB | 1 GB |
+| Disco | 10 GB SSD | 20 GB SSD |
+| Banda | 1 TB/mes | Ilimitado |
+
+**Requisitos Externos:**
+- Conta no Supabase (https://supabase.com)
+- Projeto criado no Supabase
+- DATABASE_URL do projeto (pooling)
+- DIRECT_URL do projeto
+
+**O que sera instalado na VPS:**
+- Node.js 20 LTS
+- Nginx (proxy reverso)
+- PM2 (gerenciador de processos)
+- Certbot (SSL gratuito)
+
+**Ideal para:**
+- Multi-tenant (multiplas Camaras)
+- Escalabilidade automatica
+- Backups automaticos do banco
+- Custo: VPS (~R$30-50/mes) + Supabase (gratis ate 500MB)
+
+---
+
+#### Cenario 3: Docker Compose
+
+**Requisitos de Hardware:**
+| Recurso | Minimo | Recomendado |
+|---------|--------|-------------|
+| CPU | 2 vCPU | 4 vCPU |
+| RAM | 2 GB | 4+ GB |
+| Disco | 30 GB SSD | 60+ GB SSD |
+| Banda | 1 TB/mes | Ilimitado |
+
+**Requisitos de Software:**
+- Sistema Operacional: Ubuntu 22.04 LTS ou Debian 12
+- Docker e Docker Compose instalados (ou sera instalado)
+- Acesso root ou usuario com sudo
+- Portas 80, 443 abertas
+
+**Containers criados:**
+- App (Next.js)
+- PostgreSQL 15
+- Nginx (proxy reverso)
+
+**Ideal para:**
+- Ambientes DevOps
+- Portabilidade entre servidores
+- Isolamento de dependencias
+- CI/CD pipelines
+
+---
+
+### Passo a Passo de Instalacao
+
+#### Metodo 1: Script Automatizado (Recomendado)
+
+```bash
+# 1. Conectar na VPS via SSH
+ssh usuario@seu-servidor
+
+# 2. Baixar e executar o instalador
+curl -fsSL https://raw.githubusercontent.com/seu-repo/camara/main/scripts/install.sh | sudo bash
+
+# 3. Seguir os prompts interativos:
+#    - Escolher tipo de instalacao (1, 2 ou 3)
+#    - Informar dados da Camara (nome, sigla, cidade, estado)
+#    - Informar dominio e email para SSL
+#    - Configurar credenciais do banco
+#    - Criar usuario administrador
+```
+
+#### Metodo 2: Instalacao Manual
+
+**Passo 1: Preparar a VPS**
+```bash
+# Atualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# Instalar dependencias basicas
+sudo apt install -y curl git build-essential
+
+# Instalar Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verificar instalacao
+node --version  # v20.x.x
+npm --version   # 10.x.x
+```
+
+**Passo 2: Instalar PostgreSQL (se Cenario 1)**
+```bash
+# Instalar PostgreSQL 15
+sudo apt install -y postgresql postgresql-contrib
+
+# Criar usuario e banco
+sudo -u postgres psql <<EOF
+CREATE USER camara_user WITH PASSWORD 'sua_senha_segura';
+CREATE DATABASE camara_db OWNER camara_user;
+GRANT ALL PRIVILEGES ON DATABASE camara_db TO camara_user;
+EOF
+
+# Testar conexao
+psql -h localhost -U camara_user -d camara_db -c "SELECT 1"
+```
+
+**Passo 3: Clonar e Configurar Aplicacao**
+```bash
+# Criar diretorio
+sudo mkdir -p /var/www/camara
+sudo chown $USER:$USER /var/www/camara
+
+# Clonar repositorio
+git clone https://github.com/seu-repo/camara.git /var/www/camara
+cd /var/www/camara
+
+# Instalar dependencias
+npm install
+
+# Criar arquivo .env
+cat > .env << 'EOF'
+# Banco de Dados
+DATABASE_URL="postgresql://camara_user:sua_senha@localhost:5432/camara_db"
+DIRECT_URL="postgresql://camara_user:sua_senha@localhost:5432/camara_db"
+
+# Autenticacao
+NEXTAUTH_URL="https://seu-dominio.gov.br"
+NEXTAUTH_SECRET="gerar_com_openssl_rand_base64_32"
+
+# Site
+SITE_NAME="Camara Municipal de Sua Cidade"
+SITE_URL="https://seu-dominio.gov.br"
+NEXT_PUBLIC_SITE_NAME="Camara Municipal de Sua Cidade"
+NEXT_PUBLIC_SITE_URL="https://seu-dominio.gov.br"
+
+# Ambiente
+NODE_ENV="production"
+EOF
+
+# Gerar NEXTAUTH_SECRET
+openssl rand -base64 32
+# Cole o resultado no .env
+
+# Aplicar migrations e build
+npm run db:push
+npm run build
+```
+
+**Passo 4: Configurar PM2**
+```bash
+# Instalar PM2
+sudo npm install -g pm2
+
+# Iniciar aplicacao
+pm2 start npm --name "camara" -- start
+
+# Configurar inicializacao automatica
+pm2 startup
+pm2 save
+```
+
+**Passo 5: Configurar Nginx**
+```bash
+# Instalar Nginx
+sudo apt install -y nginx
+
+# Criar configuracao
+sudo tee /etc/nginx/sites-available/camara << 'EOF'
+server {
+    listen 80;
+    server_name seu-dominio.gov.br;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+EOF
+
+# Ativar site
+sudo ln -s /etc/nginx/sites-available/camara /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+**Passo 6: Configurar SSL**
+```bash
+# Instalar Certbot
+sudo apt install -y certbot python3-certbot-nginx
+
+# Obter certificado
+sudo certbot --nginx -d seu-dominio.gov.br --email seu-email@gov.br --agree-tos --non-interactive
+
+# Verificar renovacao automatica
+sudo certbot renew --dry-run
+```
+
+**Passo 7: Criar Usuario Admin**
+```bash
+cd /var/www/camara
+
+# Executar seed ou criar via API
+npm run db:seed
+
+# Ou criar manualmente via Prisma Studio
+npx prisma studio
+```
+
+---
+
+### Comandos de Manutencao
+
+```bash
+# Ver status da aplicacao
+pm2 status
+
+# Ver logs
+pm2 logs camara
+
+# Reiniciar aplicacao
+pm2 restart camara
+
+# Atualizar aplicacao
+cd /var/www/camara
+git pull origin main
+npm install
+npm run build
+npm run db:push
+pm2 restart camara
+
+# Backup do banco (PostgreSQL local)
+pg_dump -h localhost -U camara_user camara_db > backup_$(date +%Y%m%d).sql
+
+# Restaurar backup
+psql -h localhost -U camara_user camara_db < backup_20260119.sql
+```
+
+---
+
+### Troubleshooting
+
+| Problema | Causa Provavel | Solucao |
+|----------|----------------|---------|
+| Erro 502 Bad Gateway | Aplicacao nao rodando | `pm2 restart camara` |
+| Erro de conexao DB | Credenciais incorretas | Verificar DATABASE_URL no .env |
+| SSL nao funciona | Certbot falhou | `sudo certbot --nginx -d dominio` |
+| Porta 3000 ocupada | Outra aplicacao | `sudo lsof -i :3000` e matar processo |
+| Build falha | Falta de memoria | Adicionar swap: `sudo fallocate -l 2G /swapfile` |
+| Migrations falham | Schema desatualizado | `npx prisma generate && npm run db:push` |
+
 ---
 
 ## Erros Conhecidos e Status
@@ -367,7 +688,339 @@
 
 ---
 
+## Scripts de Instalacao (Completos)
+
+### Estrutura dos Scripts
+
+```
+scripts/
+├── install.sh              # Script principal interativo (659 linhas)
+├── update.sh               # Atualizacao com backup (290 linhas)
+├── uninstall.sh            # Desinstalacao completa (363 linhas)
+├── lib/
+│   ├── colors.sh           # Cores e UI do terminal (413 linhas)
+│   ├── utils.sh            # Funcoes utilitarias (618 linhas)
+│   ├── validations.sh      # Validacoes de entrada (610 linhas)
+│   ├── install-deps.sh     # Instalacao de dependencias (533 linhas)
+│   ├── setup-postgresql.sh # Configuracao PostgreSQL (374 linhas)
+│   ├── setup-supabase.sh   # Configuracao Supabase (357 linhas)
+│   ├── setup-docker.sh     # Configuracao Docker (591 linhas)
+│   ├── setup-nginx.sh      # Configuracao Nginx (532 linhas)
+│   ├── setup-ssl.sh        # Configuracao SSL/Certbot (438 linhas)
+│   ├── setup-pm2.sh        # Configuracao PM2 (426 linhas)
+│   └── setup-app.sh        # Instalacao da aplicacao (672 linhas)
+└── templates/
+    ├── nginx-http.conf     # Template Nginx sem SSL
+    ├── nginx-https.conf    # Template Nginx com SSL (161 linhas)
+    ├── pm2.ecosystem.config.js  # Template PM2
+    ├── .env.production     # Template variaveis ambiente (65 linhas)
+    └── docker-compose.prod.yml  # Docker Compose producao
+```
+
+**Total**: ~5.800+ linhas de codigo Bash bem documentado
+
+### Detalhamento dos Scripts
+
+#### install.sh (Script Principal)
+| Funcionalidade | Descricao |
+|----------------|-----------|
+| Menu de tipo | 3 cenarios: VPS Local, VPS+Supabase, Docker |
+| Coleta de dados | Nome da Camara, dominio, credenciais, admin |
+| Verificacao | Requisitos de sistema, dependencias |
+| Fluxo completo | Instalacao -> Configuracao -> Verificacao |
+| Tratamento de erros | Trap com mensagem e log |
+| Logging | Salva em /var/log/camara-install/install.log |
+
+#### lib/colors.sh (UI do Terminal)
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Cores ANSI | RED, GREEN, YELLOW, BLUE, CYAN, etc |
+| Mensagens | info(), success(), error(), warning() |
+| Boxes | print_header(), print_section(), print_box() |
+| Spinners | start_spinner(), stop_spinner() |
+| Progresso | progress_bar(), progress_item() |
+| Prompts | prompt_input(), prompt_password(), confirm() |
+| Menu | menu_select() com navegacao por setas |
+
+#### lib/utils.sh (Utilitarios)
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Deteccao SO | detect_os(), is_supported_os(), detect_arch() |
+| Verificacoes | check_root(), check_ram(), check_disk_space() |
+| Geracao segura | generate_password(), generate_nextauth_secret() |
+| Arquivos | backup_file(), render_template() |
+| Servicos | service_is_active(), restart_service() |
+| Logging | init_logging(), log(), log_cmd() |
+| Rede | get_public_ip(), get_local_ip(), test_connection() |
+| Git | clone_repo(), update_repo() |
+| Firewall | setup_ufw(), open_port() |
+
+#### lib/validations.sh (Validacoes)
+| Validacao | Funcoes |
+|-----------|---------|
+| Dominio | validate_domain(), validate_domain_dns(), validate_domain_points_here() |
+| Email | validate_email() |
+| Senha | validate_password_strength(), validate_passwords_match() |
+| Banco | validate_postgres_url(), validate_supabase_url(), test_postgres_connection() |
+| CNPJ | validate_cnpj_format(), validate_cnpj() (digitos verificadores) |
+| UF | validate_uf() (27 estados brasileiros) |
+| Nome | validate_name(), validate_db_name(), validate_username() |
+| Requisitos | check_system_requirements(), display_requirements_status() |
+
+#### lib/install-deps.sh (Dependencias)
+| Componente | Funcoes |
+|------------|---------|
+| Sistema | update_system(), install_essential_packages() |
+| Node.js | install_nodejs() (v20 LTS via NodeSource) |
+| PostgreSQL | install_postgresql() (v15 via PGDG) |
+| Nginx | install_nginx() |
+| Certbot | install_certbot() (via snap ou apt) |
+| Docker | install_docker(), install_docker_compose() |
+| UFW | install_ufw() |
+| Completos | install_all_vps_deps(), install_supabase_deps(), install_docker_deps() |
+
+#### lib/setup-postgresql.sh
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Configuracao | setup_postgresql_database(), configure_postgresql_access() |
+| Conexao | test_postgresql_connection(), generate_database_url() |
+| Coleta | collect_postgresql_info() (interativo) |
+| Backup | backup_postgresql_database() |
+| Diagnostico | diagnose_postgresql() |
+
+#### lib/setup-supabase.sh
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Validacao | validate_supabase_urls() |
+| Conexao | test_supabase_connection() |
+| Coleta | collect_supabase_info(), show_supabase_instructions() |
+| Diagnostico | diagnose_supabase_connection() |
+
+#### lib/setup-nginx.sh
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Configuracao HTTP | generate_nginx_http_config() |
+| Configuracao HTTPS | generate_nginx_https_config() |
+| Gerenciamento | enable_nginx_site(), disable_nginx_site() |
+| Validacao | test_nginx_config() |
+| Operacoes | reload_nginx(), restart_nginx() |
+| Upgrade | upgrade_nginx_to_https() |
+| Diagnostico | diagnose_nginx() |
+
+#### lib/setup-ssl.sh
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Verificacao | certificate_exists(), certificate_valid(), get_certificate_expiry() |
+| Geracao | generate_ssl_certificate_webroot(), generate_ssl_certificate_standalone() |
+| Renovacao | renew_certificates(), setup_auto_renewal(), setup_auto_renewal_systemd() |
+| Coleta | collect_ssl_info() |
+| Revogacao | revoke_certificate() |
+| Diagnostico | diagnose_ssl() |
+
+#### lib/setup-pm2.sh
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Instalacao | install_pm2() |
+| Configuracao | generate_pm2_ecosystem() |
+| Processos | pm2_start(), pm2_stop(), pm2_restart(), pm2_reload() |
+| Startup | pm2_setup_startup(), pm2_remove_startup(), pm2_save() |
+| Logs | setup_pm2_logs(), pm2_logs() |
+| Monitoramento | pm2_status(), pm2_show(), pm2_monitor() |
+| Diagnostico | diagnose_pm2() |
+
+#### lib/setup-app.sh
+| Funcionalidade | Funcoes |
+|----------------|---------|
+| Repositorio | clone_or_update_repo() |
+| Dependencias | install_npm_dependencies() |
+| Ambiente | generate_env_file() |
+| Prisma | generate_prisma_client(), run_prisma_migrations(), push_prisma_schema() |
+| Build | build_nextjs() |
+| Admin | create_admin_user() |
+| Coleta | collect_camara_info(), collect_domain_info(), collect_admin_info() |
+| Verificacao | verify_app_health() |
+
+#### update.sh (Atualizacao)
+| Funcionalidade | Descricao |
+|----------------|-----------|
+| Backup | Backup de .env, banco de dados e uploads |
+| Codigo | git fetch, checkout, pull |
+| Dependencias | npm ci ou npm install |
+| Migrations | prisma generate, migrate deploy ou db push |
+| Build | npm run build |
+| Reinicio | PM2 reload ou Docker Compose up --build |
+| Verificacao | Testa se aplicacao esta respondendo |
+| Opcoes | --skip-backup para pular backup |
+
+#### uninstall.sh (Desinstalacao)
+| Funcionalidade | Descricao |
+|----------------|-----------|
+| Backup final | Backup de .env, banco e uploads antes de remover |
+| PM2 | Para e remove processos, remove startup |
+| Docker | Para containers, remove volumes (se --full) |
+| Nginx | Remove configuracoes de sites |
+| SSL | Remove certificados (se --full) |
+| Banco | Remove database e usuario (exceto --keep-database) |
+| Arquivos | Remove /var/www/camara |
+| Logs | Remove logs (se --full) |
+| Opcoes | --keep-database, --full |
+
+### Templates
+
+#### nginx-https.conf
+- Upstream com keepalive
+- Redirect HTTP -> HTTPS
+- SSL moderno (TLS 1.2/1.3)
+- Headers de seguranca (HSTS, X-Frame-Options, CSP)
+- OCSP Stapling
+- Gzip configurado
+- Cache para arquivos estaticos
+- Proxy para API e aplicacao
+- Healthcheck endpoint
+- Bloqueio de arquivos sensiveis
+
+#### .env.production
+- DATABASE_URL e DIRECT_URL
+- NEXTAUTH_URL e NEXTAUTH_SECRET
+- SITE_NAME e SITE_URL
+- NEXT_PUBLIC_* variaveis
+- Placeholders para email
+- Configuracoes de upload
+
+### Uso dos Scripts
+
+```bash
+# Instalacao interativa
+sudo ./scripts/install.sh
+
+# Atualizacao (com backup automatico)
+sudo ./scripts/update.sh
+
+# Atualizacao (sem backup)
+sudo ./scripts/update.sh --skip-backup
+
+# Desinstalacao (mantendo banco)
+sudo ./scripts/uninstall.sh --keep-database
+
+# Desinstalacao completa
+sudo ./scripts/uninstall.sh --full
+```
+
+---
+
 ## Historico de Atualizacoes
+
+### 2026-01-19 - Revisao e Documentacao Completa dos Scripts de Instalacao
+- **Objetivo**: Revisar todos os scripts de instalacao e documentar completamente
+- **Scripts revisados** (total ~5.800 linhas):
+  - `install.sh` (659 linhas) - Fluxo principal interativo
+  - `update.sh` (290 linhas) - Atualizacao com backup
+  - `uninstall.sh` (363 linhas) - Desinstalacao segura
+  - 11 scripts de biblioteca em `lib/`
+  - 5 templates em `templates/`
+- **Funcionalidades verificadas**:
+  - 3 cenarios de instalacao funcionais
+  - Validacoes robustas (dominio, email, senha, CNPJ, UF)
+  - Tratamento de erros com fallbacks
+  - Logging completo
+  - Backup automatico em update/uninstall
+  - Templates Nginx com seguranca moderna
+- **Documentacao adicionada**:
+  - Secao "Scripts de Instalacao" no ESTADO-ATUAL.md
+  - Tabelas detalhadas de funcoes por script
+  - Estrutura de diretorios com linhas de codigo
+
+### 2026-01-19 - Implementacao Completa do Sistema Multi-Tenant
+- **Objetivo**: Permitir que uma unica instalacao atenda multiplas Camaras Municipais
+- **Arquivos criados/modificados**:
+  - `prisma/schema.prisma` - Modelo Tenant adicionado
+  - `src/lib/tenant/tenant-resolver.ts` - Logica de identificacao de tenant
+  - `src/lib/tenant/tenant-service.ts` - Servico de banco com cache
+  - `src/lib/tenant/tenant-context.tsx` - React Context provider
+  - `src/lib/tenant/index.ts` - Exports centralizados
+  - `src/lib/hooks/use-tenant.ts` - Hooks para acessar tenant
+  - `src/middleware.ts` - Middleware de identificacao por hostname
+  - `src/app/api/tenant/current/route.ts` - API tenant atual
+  - `src/app/api/tenant/[slug]/route.ts` - API busca por slug
+  - `src/app/api/tenants/route.ts` - CRUD de tenants (admin)
+  - `src/app/api/tenants/[id]/route.ts` - Operacoes em tenant (admin)
+  - `src/components/tenant/tenant-styles.tsx` - Cores dinamicas CSS
+  - `src/components/providers.tsx` - Integracao TenantProvider
+- **Funcionalidades implementadas**:
+  - Identificacao automatica de tenant por hostname
+  - Suporte a dominio customizado (camara.cidade.gov.br)
+  - Suporte a subdominio (cidade.sistema.com.br)
+  - Suporte a slug para desenvolvimento
+  - Cache de tenants em memoria (5 min TTL)
+  - Cores dinamicas por tenant (CSS variables)
+  - APIs CRUD completas com validacao Zod
+  - Protecao de rotas admin (apenas ADMIN)
+  - Soft delete de tenants
+  - Headers propagados via middleware
+- **Arquitetura**:
+  - Middleware identifica tenant e propaga via headers
+  - TenantProvider busca tenant uma unica vez
+  - useTenant consome contexto (sem requests duplicados)
+  - TenantStyles injeta CSS variables dinamicas
+- **Resultado**: Sistema pronto para multi-tenancy em producao
+
+### 2026-01-19 - Documentacao Multi-Tenant e Guia Detalhado de Instalacao VPS
+- **Objetivo**: Criar documentacao completa para implantacao em multiplas Camaras Municipais
+- **Arquivos criados**:
+  - `docs/GUIA-MULTI-TENANT.md` - Guia completo de arquitetura multi-tenant
+    - 4 estrategias de multi-tenancy (DB separado, Schema separado, tenant_id, Instancias separadas)
+    - Arquitetura recomendada para 5-50 camaras
+    - Configuracao por estrategia (multiplas instancias, aplicacao unica)
+    - Script de provisionamento automatico
+    - Row Level Security (RLS) no PostgreSQL
+    - Estimativas de custos e escalabilidade
+    - Stack de monitoramento (Grafana, Prometheus, Loki)
+    - Estrategia de backup e disaster recovery
+    - Checklist de implantacao por tenant
+  - `docs/INSTALACAO-VPS-DETALHADA.md` - Passo a passo completo de instalacao
+    - Pre-requisitos detalhados (hardware, software, informacoes)
+    - Preparacao da VPS (atualizacao, timezone, swap, firewall, usuario deploy)
+    - Cenario 1: PostgreSQL Local (passo a passo completo)
+    - Cenario 2: Supabase Cloud (integracao com Supabase)
+    - Cenario 3: Docker Compose (containerizado)
+    - Cenario 4: PostgreSQL Remoto (AWS RDS, Cloud SQL)
+    - Configuracao de dominio e SSL com Certbot
+    - Pos-instalacao (verificacoes, configuracao inicial, backup automatico)
+    - Troubleshooting (erros comuns e solucoes)
+    - Comandos de manutencao (PM2, Docker, atualizacao)
+- **Resultado**: Documentacao completa para implantacao profissional do sistema
+
+### 2026-01-19 - Scripts de Instalacao Automatizada para VPS
+- **Objetivo**: Criar scripts Bash interativos para instalacao automatizada
+- **Arquivos criados**:
+  - `scripts/install.sh` - Script principal de instalacao (659 linhas)
+  - `scripts/lib/colors.sh` - Formatacao de terminal e UI
+  - `scripts/lib/utils.sh` - Funcoes utilitarias
+  - `scripts/lib/validations.sh` - Validacoes de entrada
+  - `scripts/lib/install-deps.sh` - Instalacao de dependencias
+  - `scripts/lib/setup-postgresql.sh` - Configuracao PostgreSQL local
+  - `scripts/lib/setup-supabase.sh` - Configuracao Supabase
+  - `scripts/lib/setup-docker.sh` - Configuracao Docker
+  - `scripts/lib/setup-nginx.sh` - Configuracao Nginx
+  - `scripts/lib/setup-ssl.sh` - Configuracao SSL/Certbot
+  - `scripts/lib/setup-pm2.sh` - Configuracao PM2
+  - `scripts/lib/setup-app.sh` - Instalacao da aplicacao
+  - `scripts/update.sh` - Script de atualizacao com backup
+  - `scripts/uninstall.sh` - Script de desinstalacao
+  - `docs/INSTALACAO-VPS.md` - Documentacao resumida de instalacao
+- **Cenarios suportados**:
+  - VPS Completa (PostgreSQL Local)
+  - VPS + Supabase (Banco na Nuvem)
+  - Docker Compose
+- **Funcionalidades**:
+  - Fluxo interativo com menus e prompts
+  - Validacao de entradas (dominio, email, senha, CNPJ, UF)
+  - Deteccao automatica de SO e requisitos
+  - Instalacao automatica de dependencias
+  - Configuracao automatica de SSL com Let's Encrypt
+  - Criacao automatica de usuario administrador
+  - Tratamento de erros com fallbacks
+  - Logs de instalacao em /var/log/camara-install/
 
 ### 2026-01-19 - Implementacao Completa da Area de Transparencia (5 FASES)
 - **Objetivo**: Tornar a area de transparencia 100% funcional com dados reais do banco de dados
@@ -1300,6 +1953,130 @@
 - Identificados 34 modelos Prisma
 - Mapeados 68+ endpoints de API
 - Catalogados 51+ componentes React
+
+### 2026-01-19 - Script de Instalacao Interativo para VPS
+- **Objetivo**: Permitir que pessoas nao-desenvolvedoras instalem o sistema em VPS
+- **Estrutura criada**:
+  - `scripts/install.sh` - Script principal (entry point)
+  - `scripts/lib/colors.sh` - Cores e formatacao do terminal
+  - `scripts/lib/utils.sh` - Funcoes utilitarias gerais
+  - `scripts/lib/validations.sh` - Validacoes de entrada
+  - `scripts/lib/install-deps.sh` - Instalacao de dependencias
+  - `scripts/lib/setup-postgresql.sh` - Configuracao PostgreSQL local
+  - `scripts/lib/setup-supabase.sh` - Configuracao Supabase
+  - `scripts/lib/setup-docker.sh` - Configuracao Docker Compose
+  - `scripts/lib/setup-nginx.sh` - Configuracao Nginx
+  - `scripts/lib/setup-ssl.sh` - Configuracao SSL/Certbot
+  - `scripts/lib/setup-pm2.sh` - Configuracao PM2
+  - `scripts/lib/setup-app.sh` - Instalacao da aplicacao
+  - `scripts/update.sh` - Script de atualizacao
+  - `scripts/uninstall.sh` - Script de desinstalacao
+- **Templates criados**:
+  - `scripts/templates/nginx-http.conf` - Template Nginx sem SSL
+  - `scripts/templates/nginx-https.conf` - Template Nginx com SSL
+  - `scripts/templates/pm2.ecosystem.config.js` - Template PM2
+  - `scripts/templates/.env.production` - Template variaveis de ambiente
+  - `scripts/templates/docker-compose.prod.yml` - Docker Compose para producao
+- **Documentacao**:
+  - `docs/INSTALACAO-VPS.md` - Guia completo de instalacao manual e automatica
+- **Cenarios suportados**:
+  1. VPS Completa (PostgreSQL Local) - Nginx + PM2 + PostgreSQL na mesma maquina
+  2. VPS + Supabase (Banco na Nuvem) - Nginx + PM2, banco no Supabase
+  3. Docker Compose - Tudo em containers isolados
+- **Funcionalidades do instalador**:
+  - Interface interativa com cores e spinners
+  - Verificacao automatica de requisitos do sistema
+  - Deteccao de SO (Ubuntu 20.04+, Debian 11+)
+  - Validacao de dominio, email, senha, CNPJ, UF
+  - Geracao automatica de NEXTAUTH_SECRET
+  - Configuracao automatica de firewall (UFW)
+  - Geracao de certificado SSL com Let's Encrypt
+  - Configuracao de startup automatico com PM2
+  - Verificacao pos-instalacao
+- **Resultado**: Instalacao completa com um unico comando:
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/seu-repo/main/scripts/install.sh | sudo bash
+  ```
+
+### 2026-01-19 - Middleware de Identificacao de Tenant (Multi-Tenancy Completo)
+- **Objetivo**: Implementar sistema completo de identificacao de tenant via hostname
+- **Arquivos criados**:
+  - `src/lib/tenant/tenant-resolver.ts` - Logica de identificacao de tenant via hostname
+  - `src/lib/tenant/tenant-service.ts` - Operacoes de banco para tenants (com cache)
+  - `src/lib/tenant/tenant-context.tsx` - Contexto React para tenant
+  - `src/lib/tenant/index.ts` - Exports do modulo tenant
+  - `src/lib/hooks/use-tenant.ts` - Hook customizado para acessar tenant
+  - `src/app/api/tenant/current/route.ts` - API para tenant atual
+  - `src/app/api/tenant/[slug]/route.ts` - API para buscar tenant por slug
+  - `src/app/api/tenants/route.ts` - CRUD de tenants (admin)
+  - `src/app/api/tenants/[id]/route.ts` - GET/PUT/DELETE de tenant especifico
+  - `src/components/tenant/tenant-styles.tsx` - Componente para cores dinamicas
+  - `src/components/tenant/index.ts` - Exports de componentes tenant
+- **Arquivos modificados**:
+  - `prisma/schema.prisma` - Modelo Tenant com PlanoTenant enum
+  - `src/middleware.ts` - Middleware com identificacao de tenant
+  - `src/components/providers.tsx` - TenantProvider e TenantStyles
+  - `src/app/globals.css` - Variaveis CSS do tenant
+  - `tailwind.config.js` - Cores dinamicas via variaveis CSS
+- **Funcionalidades implementadas**:
+  - Identificacao de tenant por dominio customizado (camara.santarem.pa.gov.br)
+  - Identificacao de tenant por subdominio (santarem.camarasys.com.br)
+  - Identificacao de tenant por slug em desenvolvimento
+  - Cache em memoria (5 min) para evitar queries repetidas
+  - Cores dinamicas do tenant via CSS variables
+  - Hooks para acessar: useTenant, useTenantColors, useTenantName, useTenantSlug
+  - API completa para CRUD de tenants (admin only)
+  - Validacao de slug, dominio e subdominio unicos
+  - Soft delete de tenants
+- **Modelo Tenant no Prisma**:
+  - id, slug, nome, sigla, cnpj
+  - dominio, subdominio (unicos)
+  - logoUrl, faviconUrl
+  - corPrimaria, corSecundaria
+  - cidade, estado, timezone, idioma
+  - plano (BASICO, PROFISSIONAL, ENTERPRISE)
+  - maxUsuarios, maxParlamentares, maxArmazenamentoMb
+  - ativo, expiraEm, createdAt, updatedAt
+- **Proximos passos**:
+  - Integrar com ConfiguracaoInstitucional existente
+  - Implementar RLS (Row Level Security) para isolamento de dados
+  - Criar pagina de gerenciamento de tenants no admin
+
+### 2026-01-19 - Implementacao de Multi-Tenancy para Multiplas Camaras
+- **Objetivo**: Permitir que o sistema seja implantado para multiplas Camaras Municipais
+- **Estrategia**: Database por Tenant (cada Camara tem seu proprio banco de dados)
+- **Arquivos criados**:
+  - `src/lib/services/configuracao-institucional-service.ts` - Servico para buscar configuracao do banco
+  - `src/lib/hooks/use-configuracao-institucional.ts` - Hook client-side para dados dinamicos
+  - `docs/NOVA-CAMARA.md` - Documentacao completa para implantar nova Camara
+  - `.github/workflows/deploy-multi-tenant.yml` - GitHub Actions para deploy automatico
+- **Arquivos modificados**:
+  - `src/app/layout.tsx` - Metadata dinamico via variaveis de ambiente (SITE_NAME, SITE_URL)
+  - `src/components/layout/header.tsx` - Nome e logo dinamicos via hook
+  - `src/components/layout/footer.tsx` - Dados institucionais dinamicos via hook
+  - `src/app/api/auth/2fa/route.ts` - ISSUER dinamico via env
+  - `src/app/api/institucional/route.ts` - Fonte dinamica
+  - `next.config.js` - remotePatterns genericos para multi-tenant
+  - `.env.example` - Documentacao completa de variaveis de ambiente
+- **Variaveis de ambiente adicionadas**:
+  - `SITE_NAME` - Nome da Camara (usado em titulos, 2FA, etc)
+  - `SITE_URL` - URL do site
+  - `SITE_DESCRIPTION` - Descricao para SEO
+  - `GOOGLE_SITE_VERIFICATION` - Verificacao Google Search Console
+  - `NEXT_PUBLIC_SITE_NAME` - Fallback client-side
+  - `NEXT_PUBLIC_SITE_URL` - Fallback client-side
+- **Fluxo para nova Camara**:
+  1. Criar projeto no Supabase (novo banco de dados)
+  2. Criar deploy na Vercel (mesmo repositorio, novas env vars)
+  3. Configurar variaveis de ambiente
+  4. Executar `npm run db:push`
+  5. Acessar /admin e configurar dados institucionais
+- **Beneficios**:
+  - Isolamento total de dados entre Camaras
+  - Codigo compartilhado via GitHub
+  - Atualizacoes centralizadas
+  - Cada Camara pode usar free tier do Supabase
+- **Resultado**: Sistema 100% configuravel para qualquer Camara Municipal
 
 ---
 

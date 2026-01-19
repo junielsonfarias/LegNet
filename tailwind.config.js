@@ -53,12 +53,17 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Cores específicas da Câmara
+        // Cores específicas da Câmara (dinâmicas via tenant)
         camara: {
-          primary: "#1e40af", // Azul institucional
-          secondary: "#dc2626", // Vermelho
+          primary: "var(--tenant-primary, #1e40af)", // Azul institucional (padrão)
+          secondary: "var(--tenant-secondary, #3b82f6)", // Azul secundário (padrão)
           accent: "#059669", // Verde
           gold: "#d97706", // Dourado
+        },
+        // Cores do tenant (acesso direto)
+        tenant: {
+          primary: "var(--tenant-primary, #1e40af)",
+          secondary: "var(--tenant-secondary, #3b82f6)",
         },
       },
       borderRadius: {

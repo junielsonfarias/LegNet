@@ -8,16 +8,10 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 
-  // Configurações de imagem otimizadas para Vercel + Supabase
+  // Configurações de imagem otimizadas para Vercel + Supabase (Multi-Tenant)
   images: {
     remotePatterns: [
-      // Dominio do site
-      {
-        protocol: 'https',
-        hostname: 'camaramojuidoscampos.pa.gov.br',
-        pathname: '/**',
-      },
-      // Supabase Storage (todos os projetos)
+      // Supabase Storage (todos os projetos - Multi-Tenant)
       {
         protocol: 'https',
         hostname: '**.supabase.co',
@@ -27,6 +21,18 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.supabase.in',
         pathname: '/storage/v1/object/public/**',
+      },
+      // Vercel Blob Storage
+      {
+        protocol: 'https',
+        hostname: '**.public.blob.vercel-storage.com',
+        pathname: '/**',
+      },
+      // Domínios governamentais genéricos (.gov.br)
+      {
+        protocol: 'https',
+        hostname: '**.gov.br',
+        pathname: '/**',
       },
       // Localhost para desenvolvimento
       {

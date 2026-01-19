@@ -10,15 +10,19 @@ const inter = Inter({
   display: 'swap'
 })
 
+// Dados dinâmicos via variáveis de ambiente (configurável por tenant)
+const siteName = process.env.SITE_NAME || 'Câmara Municipal'
+const siteUrl = process.env.SITE_URL || 'https://camara.gov.br'
+const siteDescription = process.env.SITE_DESCRIPTION || `Portal Institucional da ${siteName} - Transparência, Democracia e Cidadania. Acesse leis, decretos, sessões, licitações e muito mais.`
+
 export const metadata: Metadata = {
   title: {
-    default: 'Câmara Municipal de Mojuí dos Campos',
-    template: '%s | Câmara Municipal de Mojuí dos Campos'
+    default: siteName,
+    template: `%s | ${siteName}`
   },
-  description: 'Portal Institucional da Câmara Municipal de Mojuí dos Campos - Transparência, Democracia e Cidadania. Acesse leis, decretos, sessões, licitações e muito mais.',
+  description: siteDescription,
   keywords: [
     'Câmara Municipal',
-    'Mojuí dos Campos',
     'Vereadores',
     'Legislativo',
     'Transparência',
@@ -29,20 +33,20 @@ export const metadata: Metadata = {
     'Democracia',
     'Cidadania'
   ],
-  authors: [{ name: 'Câmara Municipal de Mojuí dos Campos' }],
-  creator: 'Câmara Municipal de Mojuí dos Campos',
-  publisher: 'Câmara Municipal de Mojuí dos Campos',
+  authors: [{ name: siteName }],
+  creator: siteName,
+  publisher: siteName,
   openGraph: {
-    title: 'Câmara Municipal de Mojuí dos Campos',
-    description: 'Portal Institucional da Câmara Municipal de Mojuí dos Campos - Transparência, Democracia e Cidadania',
+    title: siteName,
+    description: siteDescription,
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Câmara Municipal de Mojuí dos Campos'
+    siteName: siteName
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Câmara Municipal de Mojuí dos Campos',
-    description: 'Portal Institucional da Câmara Municipal de Mojuí dos Campos'
+    title: siteName,
+    description: siteDescription
   },
   robots: {
     index: true,
@@ -56,10 +60,10 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'google-site-verification-code',
+    google: process.env.GOOGLE_SITE_VERIFICATION || '',
   },
   alternates: {
-    canonical: 'https://camaramojuidoscampos.pa.gov.br',
+    canonical: siteUrl,
   },
 }
 
