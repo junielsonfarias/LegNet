@@ -1,7 +1,6 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 
@@ -11,24 +10,14 @@ interface ConditionalLayoutProps {
 
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
 
-  // Evitar problemas de hidratação
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Durante a hidratação, renderizar apenas o conteúdo para evitar diferenças
-  if (!mounted) {
-    return <>{children}</>
-  }
-
-  // Verificar se é rota administrativa ou painel
+  // Verificar se é rota administrativa, painel ou login
   const isAdminRoute = pathname?.startsWith('/admin')
   const isPainelRoute = pathname?.startsWith('/painel')
+  const isLoginRoute = pathname === '/login'
 
-  // Se for rota administrativa ou painel, renderizar apenas o conteúdo
-  if (isAdminRoute || isPainelRoute) {
+  // Se for rota administrativa, painel ou login, renderizar apenas o conteúdo
+  if (isAdminRoute || isPainelRoute || isLoginRoute) {
     return <>{children}</>
   }
 

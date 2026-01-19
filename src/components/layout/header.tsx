@@ -123,7 +123,7 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
         <div className="bg-camara-primary text-white py-2">
           <div className="container mx-auto px-4 flex justify-between items-center text-sm">
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <span>Transparência</span>
               <span>•</span>
               <span>Fale conosco</span>
@@ -134,11 +134,14 @@ export function Header() {
               <span>•</span>
               <span>Acessibilidade</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-                <User className="h-4 w-4 mr-1" />
-                Área Restrita
-              </Button>
+            <div className="flex items-center space-x-2 ml-auto">
+              <Link
+                href="/login"
+                className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors font-medium"
+              >
+                <User className="h-4 w-4" />
+                <span>Área Restrita</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -201,7 +204,8 @@ export function Header() {
       {/* Barra superior */}
       <div className="bg-camara-primary text-white py-2">
         <div className="container mx-auto px-4 flex justify-between items-center text-sm">
-          <div className="flex items-center space-x-4">
+          {/* Links escondidos no mobile */}
+          <div className="hidden md:flex items-center space-x-4">
             <Link href="/transparencia" className="hover:text-blue-200 transition-colors">
               Transparência
             </Link>
@@ -218,13 +222,15 @@ export function Header() {
             <span>•</span>
             <span className="cursor-pointer hover:text-blue-200 transition-colors">Acessibilidade</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/20">
-              <Link href="/admin">
-                <User className="h-4 w-4 mr-1" />
-                Área Restrita
-              </Link>
-            </Button>
+          {/* Área Restrita - sempre visível */}
+          <div className="flex items-center space-x-2 ml-auto">
+            <Link
+              href="/login"
+              className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors font-medium"
+            >
+              <User className="h-4 w-4" />
+              <span>Área Restrita</span>
+            </Link>
           </div>
         </div>
       </div>
@@ -273,7 +279,17 @@ export function Header() {
                       className="pl-10 pr-4"
                     />
                   </div>
-                  
+
+                  {/* Link Área Restrita no mobile */}
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-2 px-4 py-3 bg-camara-primary text-white rounded-lg hover:bg-camara-primary/90 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="font-medium">Área Restrita</span>
+                  </Link>
+
                   {menuItems.map((section, sectionIndex) => (
                     <div key={section.title} className="animate-in slide-in-from-right duration-300" style={{ animationDelay: `${sectionIndex * 100}ms` }}>
                       {section.items.length === 0 && section.href ? (

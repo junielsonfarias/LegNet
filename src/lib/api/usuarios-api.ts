@@ -45,10 +45,10 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const usuariosApi = {
-  getAll: async (): Promise<{ data: UsuarioApi[] }> => {
+  getAll: async (): Promise<UsuarioApi[]> => {
     return withRetry(async () => {
       const response = await fetch(API_BASE_URL)
-      return handleResponse<{ data: UsuarioApi[] }>(response)
+      return handleResponse<UsuarioApi[]>(response)
     })
   },
 

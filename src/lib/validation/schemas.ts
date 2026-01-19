@@ -231,6 +231,128 @@ export const ConfiguracaoSchema = z.object({
   periodoMesaAtual: z.number().min(1, 'Período da mesa deve ser pelo menos 1').max(4, 'Período da mesa deve ser no máximo 4')
 })
 
+// Schema para Votação
+export const VotacaoSchema = z.object({
+  proposicaoId: z.string().min(1, 'ID da proposição é obrigatório'),
+  sessaoId: z.string().min(1, 'ID da sessão é obrigatório'),
+  parlamentarId: z.string().min(1, 'ID do parlamentar é obrigatório'),
+  voto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'AUSENTE'], {
+    errorMap: () => ({ message: 'Voto deve ser SIM, NAO, ABSTENCAO ou AUSENTE' })
+  }),
+  justificativa: z.string().max(500, 'Justificativa deve ter no máximo 500 caracteres').optional()
+})
+
+// Schema para Tramitação
+export const TramitacaoSchema = z.object({
+  proposicaoId: z.string().min(1, 'ID da proposição é obrigatório'),
+  tipoId: z.string().min(1, 'ID do tipo de tramitação é obrigatório'),
+  unidadeOrigemId: z.string().min(1, 'ID da unidade de origem é obrigatório'),
+  unidadeDestinoId: z.string().min(1, 'ID da unidade de destino é obrigatório'),
+  dataEnvio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de envio deve estar no formato YYYY-MM-DD'),
+  prazo: z.number().min(1, 'Prazo deve ser pelo menos 1 dia').max(365, 'Prazo máximo é 365 dias').optional(),
+  observacao: z.string().max(1000, 'Observação deve ter no máximo 1000 caracteres').optional(),
+  urgente: z.boolean().default(false)
+})
+
+// Schema para criação de Tramitação
+export const CreateTramitacaoSchema = TramitacaoSchema
+
+// Schema para Notícia
+export const NoticiaSchema = z.object({
+  titulo: z.string().min(5, 'Título deve ter pelo menos 5 caracteres').max(200, 'Título deve ter no máximo 200 caracteres'),
+  resumo: z.string().min(10, 'Resumo deve ter pelo menos 10 caracteres').max(500, 'Resumo deve ter no máximo 500 caracteres'),
+  conteudo: z.string().min(50, 'Conteúdo deve ter pelo menos 50 caracteres'),
+  categoria: z.string().min(1, 'Categoria é obrigatória'),
+  imagemDestaque: z.string().url('Imagem de destaque deve ser uma URL válida').optional(),
+  autor: z.string().min(1, 'Autor é obrigatório'),
+  tags: z.array(z.string().min(1, 'Tag não pode ser vazia')).max(10, 'Máximo de 10 tags').optional(),
+  destaque: z.boolean().default(false),
+  publicada: z.boolean().default(false),
+  dataPublicacao: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de publicação deve estar no formato YYYY-MM-DD').optional()
+})
+
+// Schema para Comissão
+export const ComissaoSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres').max(200, 'Nome deve ter no máximo 200 caracteres'),
+  sigla: z.string().min(2, 'Sigla deve ter pelo menos 2 caracteres').max(10, 'Sigla deve ter no máximo 10 caracteres'),
+  tipo: z.enum(['PERMANENTE', 'TEMPORARIA', 'ESPECIAL', 'INQUERITO'], {
+    errorMap: () => ({ message: 'Tipo deve ser PERMANENTE, TEMPORARIA, ESPECIAL ou INQUERITO' })
+  }),
+  descricao: z.string().max(1000, 'Descrição deve ter no máximo 1000 caracteres').optional(),
+  dataInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de início deve estar no formato YYYY-MM-DD'),
+  dataFim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de fim deve estar no formato YYYY-MM-DD').optional(),
+  ativa: z.boolean().default(true)
+})
+
+// Schema para Membro de Comissão
+export const MembroComissaoSchema = z.object({
+  comissaoId: z.string().min(1, 'ID da comissão é obrigatório'),
+  parlamentarId: z.string().min(1, 'ID do parlamentar é obrigatório'),
+  cargo: z.enum(['PRESIDENTE', 'VICE_PRESIDENTE', 'RELATOR', 'MEMBRO'], {
+    errorMap: () => ({ message: 'Cargo deve ser PRESIDENTE, VICE_PRESIDENTE, RELATOR ou MEMBRO' })
+  }),
+  dataInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de início deve estar no formato YYYY-MM-DD'),
+  dataFim: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de fim deve estar no formato YYYY-MM-DD').optional(),
+  ativo: z.boolean().default(true)
+})
+
+// Schema para Usuário
+export const UsuarioSchema = z.object({
+  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').max(100, 'Nome deve ter no máximo 100 caracteres'),
+  email: z.string().email('Email deve ser válido'),
+  senha: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres').max(100, 'Senha deve ter no máximo 100 caracteres')
+    .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
+    .regex(/[0-9]/, 'Senha deve conter pelo menos um número'),
+  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA'], {
+    errorMap: () => ({ message: 'Role deve ser um dos valores válidos' })
+  }).default('USER'),
+  ativo: z.boolean().default(true),
+  parlamentarId: z.string().optional()
+})
+
+// Schema para criação de Usuário (senha obrigatória)
+export const CreateUsuarioSchema = UsuarioSchema
+
+// Schema para atualização de Usuário (senha opcional)
+export const UpdateUsuarioSchema = UsuarioSchema.partial().omit({ senha: true }).extend({
+  senha: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres').max(100, 'Senha deve ter no máximo 100 caracteres')
+    .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
+    .regex(/[0-9]/, 'Senha deve conter pelo menos um número')
+    .optional()
+})
+
+// Schema para Sessão (Prisma)
+export const SessaoSchema = z.object({
+  numero: z.number().min(1, 'Número da sessão é obrigatório'),
+  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'SOLENE', 'ESPECIAL'], {
+    errorMap: () => ({ message: 'Tipo deve ser ORDINARIA, EXTRAORDINARIA, SOLENE ou ESPECIAL' })
+  }),
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
+  horario: z.string().regex(/^\d{2}:\d{2}$/, 'Horário deve estar no formato HH:MM'),
+  local: z.string().min(1, 'Local é obrigatório').max(200, 'Local deve ter no máximo 200 caracteres'),
+  descricao: z.string().max(1000, 'Descrição deve ter no máximo 1000 caracteres').optional(),
+  legislaturaId: z.string().min(1, 'ID da legislatura é obrigatório'),
+  periodoId: z.string().optional(),
+  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA', 'SUSPENSA'], {
+    errorMap: () => ({ message: 'Status deve ser um dos valores válidos' })
+  }).default('AGENDADA')
+})
+
+// Schema para Item de Pauta
+export const PautaItemSchema = z.object({
+  pautaSessaoId: z.string().min(1, 'ID da pauta é obrigatório'),
+  secao: z.enum(['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'], {
+    errorMap: () => ({ message: 'Seção deve ser uma das opções válidas' })
+  }),
+  ordem: z.number().min(1, 'Ordem deve ser pelo menos 1'),
+  titulo: z.string().min(1, 'Título é obrigatório').max(500, 'Título deve ter no máximo 500 caracteres'),
+  descricao: z.string().max(2000, 'Descrição deve ter no máximo 2000 caracteres').optional(),
+  proposicaoId: z.string().optional(),
+  tempoEstimado: z.number().min(1, 'Tempo estimado deve ser pelo menos 1 minuto').max(480, 'Tempo máximo é 8 horas').optional()
+})
+
 // Schema para validação de ID
 export const IdSchema = z.object({
   id: z.string().min(1, 'ID é obrigatório')

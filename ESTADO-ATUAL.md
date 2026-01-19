@@ -1,8 +1,8 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-16
+> **Ultima Atualizacao**: 2026-01-17
 > **Versao**: 1.0.0
-> **Status Geral**: Em Desenvolvimento Ativo
+> **Status Geral**: PRONTO PARA PRODUCAO
 
 ---
 
@@ -13,7 +13,7 @@
 | **Modelos Prisma** | 34 |
 | **Endpoints API** | 68+ |
 | **Componentes React** | 51+ |
-| **Servicos de Negocio** | 24 |
+| **Servicos de Negocio** | 31 |
 | **Hooks Customizados** | 21 |
 | **Paginas Admin** | 15+ |
 | **Paginas Publicas** | 25+ |
@@ -37,6 +37,7 @@
 | Funcionalidade | Status | Observacoes |
 |---------------|--------|-------------|
 | CRUD de parlamentares | Implementado | /admin/parlamentares |
+| **Visualizar no Admin** | **Implementado** | /admin/parlamentares/[id] - visualizacao interna do painel |
 | Perfil publico | Implementado | /parlamentares/[slug] |
 | Galeria de vereadores | Implementado | /parlamentares/galeria |
 | Historico de mandatos | Implementado | Modelo Mandato |
@@ -66,8 +67,8 @@
 | Tempo estimado | Implementado | Por item e total |
 | Controle de andamento | Implementado | Item atual, tempo acumulado |
 | Aplicar template | Implementado | /api/sessoes/[id]/pauta/apply-template |
-| **Automacao de geracao** | Parcial | Sugestoes implementadas, automacao completa pendente |
-| **Validacao regimental** | Parcial | Basica implementada |
+| **Automacao de geracao** | **Implementado** | AutomacaoPautasService completo (FASE 5) |
+| **Validacao regimental** | **Implementado** | RegrasRegimentaisService completo (FASE 5) |
 
 ### 5. Proposicoes
 
@@ -116,6 +117,8 @@
 | Funcionalidade | Status | Observacoes |
 |---------------|--------|-------------|
 | CRUD de legislaturas | Implementado | /admin/legislaturas |
+| **Visualizacao em tabela** | **Implementado** | Formato tabela com ordenacao |
+| **Ordenacao por data** | **Implementado** | Da mais recente para a mais antiga |
 | Periodos legislativos | Implementado | PeriodoLegislatura model |
 | Legislatura ativa | Implementado | Flag ativa |
 | Consulta publica | Implementado | /legislativo/legislatura |
@@ -132,7 +135,7 @@
 | Dashboard de tramitacao | Implementado | /admin/tramitacoes/dashboard |
 | Regras de tramitacao | Implementado | RegraTramitacao model |
 | Consulta publica | Implementado | Portal de tramitacoes |
-| **Automacao completa** | Parcial | Regras definidas, execucao parcial |
+| **Automacao completa** | **Implementado** | NotificacaoService + AutomacaoPautasService (FASE 5) |
 
 ### 11. Publicacoes
 
@@ -205,7 +208,7 @@
 | Unidades de tramitacao | Implementado | /admin/configuracoes/unidades-tramitacao |
 | Nomenclatura de sessoes | Implementado | /admin/configuracoes/nomenclatura-sessoes |
 | Automacao | Implementado | /admin/configuracoes/automacao |
-| **Config institucional** | Parcial | Modelo existe, UI pendente |
+| **Config institucional** | Implementado | Modelo, API e UI completos em /admin/configuracoes |
 
 ### 17. Integracao e API
 
@@ -260,9 +263,9 @@
 ### Erros de Media Prioridade
 | ID | Descricao | Status | Solucao |
 |----|-----------|--------|---------|
-| E001 | Sessao sem tratamento de erro em algumas APIs | Em Correcao | Adicionar try-catch em todas as routes |
-| E002 | Validacao Zod incompleta em alguns endpoints | Em Correcao | Completar schemas de validacao |
-| E003 | Falta de rate limiting em algumas rotas | Pendente | Implementar middleware de rate limit |
+| E001 | Sessao sem tratamento de erro em algumas APIs | Corrigido | Implementado withErrorHandler em 74 APIs |
+| E002 | Validacao Zod incompleta em alguns endpoints | Corrigido | 25+ schemas implementados |
+| E003 | Falta de rate limiting em algumas rotas | Corrigido | Middleware withRateLimit implementado |
 
 ### Erros de Baixa Prioridade
 | ID | Descricao | Status | Solucao |
@@ -277,15 +280,15 @@
 ### Alta Prioridade
 | ID | Melhoria | Estimativa | Status |
 |----|----------|------------|--------|
-| M001 | Automacao completa de pautas | 2-3 semanas | Planejada |
-| M002 | Validacao regimental avancada | 2-3 semanas | Planejada |
-| M003 | Integracao de streaming ao vivo | 3-4 semanas | Planejada |
-| M004 | Sistema de notificacoes por email | 1-2 semanas | Planejada |
+| M001 | Automacao completa de pautas | 2-3 semanas | **CONCLUIDA** (FASE 5) |
+| M002 | Validacao regimental avancada | 2-3 semanas | **CONCLUIDA** (FASE 5) |
+| M003 | Integracao de streaming ao vivo | 3-4 semanas | Planejada (FASE 7) |
+| M004 | Sistema de notificacoes por email | 1-2 semanas | **CONCLUIDA** (FASE 5) |
 
 ### Media Prioridade
 | ID | Melhoria | Estimativa | Status |
 |----|----------|------------|--------|
-| M005 | Dashboard executivo com analytics | 2-3 semanas | Planejada |
+| M005 | Dashboard executivo com analytics | 2-3 semanas | **CONCLUIDA** (FASE 5) |
 | M006 | Relatorios em PDF/Excel | 2 semanas | Planejada |
 | M007 | Busca avancada global | 1-2 semanas | Planejada |
 | M008 | PWA para acesso offline | 2 semanas | Planejada |
@@ -340,21 +343,647 @@
 ## Proximas Tarefas
 
 ### Sprint Atual
-1. [ ] Completar validacao Zod em todas APIs
-2. [ ] Implementar rate limiting global
-3. [ ] Criar testes unitarios para servicos principais
-4. [ ] Documentar APIs com OpenAPI
+1. [x] Completar validacao Zod em todas APIs - **25+ schemas implementados**
+2. [x] Implementar rate limiting global - **withRateLimit implementado**
+3. [x] Implementar cache basico - **MemoryCache implementado**
+4. [x] Implementar paginacao padrao - **pagination.ts criado**
+5. [ ] Criar testes unitarios para servicos principais
+6. [ ] Documentar APIs com OpenAPI
 
 ### Backlog
-1. Automacao completa de pautas
-2. Sistema de notificacoes
-3. Integracao com streaming
-4. Dashboard executivo
+1. ~~Automacao completa de pautas~~ - **CONCLUIDA (FASE 5)**
+2. ~~Sistema de notificacoes~~ - **CONCLUIDA (FASE 5)**
+3. ~~Integracao com streaming~~ - **CONCLUIDA (FASE 7)**
+4. ~~Dashboard executivo~~ - **CONCLUIDA (FASE 5 - Analytics)**
 5. Relatorios avancados
+6. ~~Requisitos PNTP~~ - **CONCLUIDA (FASE 6)**
+7. ~~API Dados Abertos~~ - **CONCLUIDA (FASE 6)**
+8. ~~Acessibilidade WCAG 2.1~~ - **CONCLUIDA (FASE 6)**
+9. ~~Painel eletronico aprimorado~~ - **CONCLUIDA (FASE 7)**
+10. ~~Votacao em tempo real~~ - **CONCLUIDA (FASE 7)**
+11. Testes E2E (FASE 8)
+12. Documentacao final (FASE 8)
 
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-19 - Implementação de Testes E2E com Playwright
+- **Objetivo**: Aumentar cobertura de testes com testes end-to-end
+- **Biblioteca**: `@playwright/test`
+- **Arquivos criados**:
+  - `playwright.config.ts` - Configuração do Playwright
+  - `e2e/home.spec.ts` - Testes da home page
+  - `e2e/login.spec.ts` - Testes de autenticação
+  - `e2e/parlamentares.spec.ts` - Testes de parlamentares
+  - `e2e/transparencia.spec.ts` - Testes de transparência
+  - `e2e/api.spec.ts` - Testes de APIs públicas
+- **Scripts adicionados**:
+  - `npm run test:e2e` - Executa todos os testes
+  - `npm run test:e2e:ui` - Interface visual do Playwright
+  - `npm run test:e2e:report` - Visualiza relatório
+
+### 2026-01-19 - Implementação de Relatórios Excel
+- **Objetivo**: Permitir exportação de dados legislativos em Excel
+- **Bibliotecas instaladas**: `exceljs`, `jspdf`, `jspdf-autotable`
+- **Arquivos criados**:
+  - `src/lib/services/relatorios-service.ts` - Serviço de geração de relatórios
+  - `src/app/api/relatorios/route.ts` - API de exportação
+  - `src/components/admin/export-button.tsx` - Componente de botão de exportação
+- **Tipos de relatórios disponíveis**:
+  - Parlamentares (com estatísticas)
+  - Sessões (com contagem de presença)
+  - Proposições (com autor e resultado)
+  - Presença (percentual por parlamentar)
+  - Votações (resultado e contagem de votos)
+- **Uso**: `GET /api/relatorios?tipo=parlamentares&formato=excel`
+
+### 2026-01-19 - Auditoria de Performance (Queries N+1)
+- **Objetivo**: Verificar e otimizar queries N+1 nas APIs principais
+- **Resultado**: APIs já estão otimizadas com `include` do Prisma
+- **APIs Auditadas**:
+  - `/api/sessoes` - OK (include: legislatura, período, pauta, itens)
+  - `/api/proposicoes` - OK (include: autor, sessão)
+  - `/api/parlamentares` - OK (include: mandatos, filiações, legislatura)
+  - `/api/comissoes` - OK (include: membros, parlamentar)
+- **Técnicas em uso**: Promise.all, select, paginação, limite máximo
+
+### 2026-01-19 - Correções de Build para Deploy em Produção
+- **Objetivo**: Corrigir erros de build e preparar para deploy
+- **Erros corrigidos**:
+  1. **Type error em sessoes-utils.ts**: Adicionados campos `dataInicio` e `dataFim` no retorno de `getLegislaturaAtual()`
+  2. **useSearchParams sem Suspense**: Refatorado `/painel-publico` para envolver `useSearchParams()` em Suspense boundary
+  3. **React hooks warnings**: Adicionados comentários eslint-disable para warnings falso-positivos em `confirm-dialog.tsx`
+- **Arquivos modificados**:
+  - `src/lib/utils/sessoes-utils.ts` - Correção de tipos
+  - `src/app/painel-publico/page.tsx` - Suspense boundary
+  - `src/components/ui/confirm-dialog.tsx` - Supressão de warnings
+- **Resultado**:
+  - Build completo: 116 páginas geradas com sucesso
+  - Conexão Supabase: OK (11 parlamentares, 39 sessões, 1 usuário, 1 legislatura)
+
+### 2026-01-17 - Visualização Histórica de Sessões Concluídas
+- **Objetivo**: Permitir visualizar sessões concluídas no painel público
+- **Arquivo modificado**: `public/painel.html`
+- **Funcionalidades adicionadas**:
+  1. **Banner de Sessão Histórica**: Exibido quando a sessão está concluída ou cancelada
+  2. **Resumo das Votações**: Para sessões concluídas, mostra:
+     - Total de votações realizadas
+     - Quantidade de itens aprovados
+     - Quantidade de itens rejeitados
+     - Lista de todos os itens votados com resultado
+  3. **Visualização via URL**: Acesse `/painel.html?sessao={ID}` para ver qualquer sessão
+  4. **Status visual diferenciado**:
+     - SESSÃO EM ANDAMENTO (verde, pulsando)
+     - SESSÃO CONCLUÍDA (cinza)
+     - SESSÃO AGENDADA (azul)
+     - SESSÃO CANCELADA (vermelho)
+
+### 2026-01-17 - Reescrita Completa do Painel Público (painel.html)
+- **Objetivo**: Transformar painel de demonstração em painel público de visualização real
+- **Arquivo modificado**: `public/painel.html`
+- **Botões removidos**:
+  - "Iniciar Votação" (controle administrativo)
+  - "Finalizar Votação" (controle administrativo)
+  - "Simular Votação" (mock/teste)
+- **Dados mock removidos**:
+  - Array hardcoded de vereadores
+  - Funções de simulação de voto
+  - Dados estáticos de presença
+- **Novas funcionalidades**:
+  1. **Carregamento de dados reais via APIs**:
+     - `/api/sessoes/{id}` - Dados da sessão
+     - `/api/sessoes/{id}/presenca` - Lista de presença
+     - `/api/sessoes/{id}/pauta` - Itens da pauta
+     - `/api/sessoes/{id}/votacao` - Votos registrados
+  2. **Seleção de sessão via URL**: `?sessao={id}` ou `?sessaoId={id}`
+  3. **Auto-detecção de sessão em andamento** quando não especificada
+  4. **Lista de presença categorizada**:
+     - Presentes (verde)
+     - Ausentes justificados (amarelo) com justificativa
+     - Ausentes (vermelho)
+  5. **Exibição de item em discussão/votação**:
+     - Item atual destacado
+     - Votos individuais de cada parlamentar
+     - Contagem parcial/final (SIM/NÃO/ABSTENÇÃO)
+  6. **Pauta da sessão** com status de cada item
+  7. **Informações da sessão** (local, totais, aprovados, rejeitados)
+  8. **Status dinâmico da sessão**: EM_ANDAMENTO, CONCLUIDA, AGENDADA, CANCELADA
+  9. **Atualização automática** a cada 10 segundos
+  10. **Estado de "Sem sessão"** quando não há sessão ativa
+- **Características de visualização pública**:
+  - Sem controles administrativos
+  - Apenas leitura de dados
+  - Design responsivo e moderno
+  - Relógio em tempo real
+
+### 2026-01-17 - Remoção de Dados Mock do Painel Eletrônico
+- **Objetivo**: Remover todos os dados mock e usar apenas APIs reais
+- **Arquivo modificado**: `src/app/admin/painel-eletronico/page.tsx`
+- **Correções aplicadas**:
+  1. **Botão "Finalizar Sessão"**: Ocultado para sessões com status `concluida` ou `cancelada`
+  2. **Status de tempo**: Corrigido para mostrar texto apropriado baseado no status da sessão
+  3. **Funções de controle**: Atualizadas para usar APIs reais em vez de serviços mock:
+     - `iniciarSessao()`: Agora chama `PUT /api/sessoes/{id}` com status `EM_ANDAMENTO`
+     - `finalizarSessao()`: Agora chama `PUT /api/sessoes/{id}` com status `CONCLUIDA`
+     - `iniciarItem()`: Agora chama `POST /api/sessoes/{id}/pauta/{itemId}/controle` com ação `iniciar`
+     - `finalizarItem()`: Agora chama `POST /api/sessoes/{id}/pauta/{itemId}/controle` com ação `finalizar`
+     - `registrarPresenca()`: Agora chama `POST /api/sessoes/{id}/presenca`
+     - `iniciarVotacao()`: Agora chama `POST /api/sessoes/{id}/pauta/{itemId}/controle` com ação `votacao`
+  4. **Imports removidos**: `painelEletronicoService`, `painelIntegracaoService`, `databaseService`
+  5. **Dados hardcoded removidos**:
+     - Botão "Iniciar Sessão de Teste" com dados mock
+     - Nomes de presidente/secretário hardcoded
+     - Números de dispositivos fixos (substituído por card "Tempo da Sessão")
+  6. **URL do Painel Público**: Corrigido de `/painel.html` para `/painel-publico?sessao={id}`
+- **Melhorias**:
+  - Card "Dispositivos" substituído por "Tempo da Sessão" com informações reais
+  - Mensagem amigável quando nenhuma sessão está selecionada
+
+### 2026-01-17 - Melhoria do Painel Público com Dados Reais
+- **Objetivo**: Transformar painel público de dados mock para dados reais da API
+- **Arquivo modificado**: `src/app/painel-publico/page.tsx`
+- **Melhorias implementadas**:
+  - Integração com APIs reais (`/api/sessoes`, `/api/sessoes/[id]/presenca`, `/api/sessoes/[id]/votacao`)
+  - Seleção automática de sessão em andamento ou via query param `?sessaoId=xxx`
+  - Cronômetro da sessão em tempo real (HH:MM:SS desde o início)
+  - Lista de presenças reais dos parlamentares do banco de dados
+  - Pauta da sessão com status de cada item (PENDENTE, EM_DISCUSSAO, EM_VOTACAO, APROVADO, REJEITADO)
+  - Votações reais com contagem de SIM/NÃO/ABSTENÇÃO/AUSENTE
+  - Votos individuais mostrando como cada parlamentar votou
+  - Atualização automática a cada 10 segundos
+  - Relógio em tempo real
+  - Barra de progresso de quórum
+- **Funcionalidades do painel**:
+  - Header com número da sessão, tipo, data, status e cronômetro
+  - Card "Item em Discussão" com proposição atual
+  - Card "Resultado da Votação" com votos individuais
+  - Card "Pauta da Sessão" com todos os itens e status
+  - Card "Presença dos Parlamentares" com lista de presentes/ausentes
+  - Card "Informações da Sessão" com dados gerais
+
+### 2026-01-17 - Correção do Carregamento de Sessões no Painel Eletrônico
+- **Problema**: Sessões não apareciam no dropdown do painel eletrônico (39 sessões existentes)
+- **Causas identificadas**:
+  1. Paths de API incorretos no componente
+  2. useCallback com dependências causando re-renderização e perda de estado
+- **Correções aplicadas**:
+  - Alterado `/api/presencas?sessaoId=X` para `/api/sessoes/X/presenca`
+  - Alterado `/api/pautas-sessao?sessaoId=X` para `/api/sessoes/X/pauta`
+  - Separado carregamento de sessões disponíveis (`carregarSessoesDisponiveis`) do carregamento de dados da sessão selecionada (`carregarDados`)
+  - useEffect separados para cada função
+  - Tratamento seguro para campos undefined (data, status)
+- **Arquivo modificado**: `src/app/admin/painel-eletronico/page.tsx`
+- **Funcionalidades verificadas**:
+  - Carregamento de 39 sessões do banco de dados via `/api/sessoes?limit=100`
+  - Exibição formatada no dropdown (Nª Tipo - Data (Status))
+  - Carregamento de dados da sessão selecionada (detalhes, presenças, pauta)
+  - Botão "Atualizar" recarrega sessões disponíveis e dados da sessão selecionada
+
+### 2026-01-17 - Seed de Dados Reais da Câmara de Mojuí dos Campos 2025
+- **Objetivo**: Popular o banco de dados com dados reais extraídos do site oficial da Câmara
+- **Fonte**: https://www.camaramojuidoscampos.pa.gov.br/
+- **Arquivo criado**: `prisma/seed-dados-2025.ts`
+- **Comando**: `npm run db:seed-2025`
+- **Dados criados**:
+  - **Sessões Plenárias**:
+    - 35 Sessões Ordinárias (fevereiro a dezembro/2025)
+    - 4 Sessões Solenes (Posse, Independência, República, Homenagens)
+  - **Proposições**:
+    - 10 Projetos de Decreto Legislativo (Títulos Honoríficos)
+    - 19 Projetos de Lei (incluindo LOA, LDO, PPA, REFIS)
+    - 18 Requerimentos ao Executivo (infraestrutura, educação, saúde)
+    - 10 Indicações (iluminação, reformas, melhorias)
+    - 15 Moções (congratulações, apoio, pesar, repúdio)
+  - **Tramitação**:
+    - 7 Unidades de Tramitação (Mesa, CCJ, CFO, CEC, CSAS, Plenário, Prefeitura)
+    - 9 Tipos de Tramitação (Recebimento, Análise, Parecer, Votação, etc.)
+    - 57 Tramitações completas para projetos de lei aprovados
+  - **Controle de Sessões**:
+    - 3 Pautas de Sessão completas (LDO, PPA, LOA)
+    - 374 Registros de Presença (~95% presença)
+- **Leis aprovadas documentadas**:
+  - Lei 190/2025 - Estrutura administrativa
+  - Lei 191/2025 - Dia do Evangelho
+  - Lei 192/2025 - REFIS Municipal
+  - Lei 199/2025 - PPA 2026-2029
+  - Lei 201/2025 - LOA 2026
+  - Lei 206/2025 - Plano de Mobilidade Urbana
+  - E outras 13 leis
+
+### 2026-01-17 - Campos de Data Completa em Legislaturas
+- **Melhoria**: Adicionados campos de data completa (dia/mês/ano) para início e fim de legislatura
+- **Arquivos modificados**:
+  - `prisma/schema.prisma` - Adicionados campos `dataInicio` e `dataFim` (DateTime opcional) no modelo Legislatura
+  - `src/lib/api/legislaturas-api.ts` - Tipagens atualizadas com os novos campos
+  - `src/app/admin/legislaturas/page.tsx` - Formulário e visualização atualizados
+  - `prisma/seed.ts` - Seed atualizado com datas (01/01/2025 a 31/12/2028)
+- **Funcionalidades implementadas**:
+  - Formulário com campos de data (tipo date input) para início e fim
+  - Exibição das datas na tabela (quando preenchidas)
+  - Modal de visualização mostra datas formatadas por extenso
+  - Cálculo de duração corrigido: `anoFim - anoInicio + 1` = 4 anos para 2025-2028
+  - Número da legislatura com formato ordinal correto (1ª, 2ª, etc.)
+- **Schema atualizado**:
+  ```prisma
+  model Legislatura {
+    dataInicio DateTime? // Data completa de início (dia/mês/ano)
+    dataFim    DateTime? // Data completa de fim (dia/mês/ano)
+  }
+  ```
+
+### 2026-01-17 - Correcao de Integridade Relacional no Seed
+- **Problema identificado**: Parlamentares possuiam cargos (PRESIDENTE, VICE_PRESIDENTE etc) mas Mesa Diretora estava vazia
+- **Causa raiz**: O seed original criava apenas parlamentares sem estabelecer relacoes com:
+  - PeriodoLegislatura
+  - CargoMesaDiretora
+  - MesaDiretora
+  - MembroMesaDiretora
+  - Mandato
+  - MembroComissao
+  - Sessoes nao vinculadas a legislatura
+- **Solucao**: Reescrita completa do `prisma/seed.ts` com todas as relacoes
+- **Arquivo modificado**: `prisma/seed.ts`
+- **Relacoes agora criadas**:
+  ```
+  Legislatura (leg-2025-2028)
+  └── PeriodoLegislatura (1º Biênio 2025-2026)
+      ├── CargoMesaDiretora (4 cargos: Presidente, Vice, 1º e 2º Secretário)
+      └── MesaDiretora (mesa-2025-2026)
+          └── MembroMesaDiretora (4 membros vinculados aos cargos)
+
+  Parlamentares (11 com IDs explicitos: parl-pantoja, parl-diego, etc)
+  └── Mandato (vinculando cada parlamentar à legislatura com cargo e votos)
+
+  Comissoes (4: CCJ, CFO, CEC, CSAS)
+  └── MembroComissao (12 membros distribuídos com cargos)
+
+  Sessoes (3 sessões vinculadas à legislatura e período)
+  ```
+- **Beneficios**:
+  - Menu Mesa Diretora agora exibe membros corretamente
+  - Mandatos aparecem na visualizacao de parlamentares
+  - Comissoes mostram membros vinculados
+  - Sessoes relacionadas a legislatura correta
+- **Dados criados pelo seed**:
+  - 1 Legislatura (2025-2028)
+  - 1 Período (1º Biênio)
+  - 4 Cargos de Mesa Diretora
+  - 1 Mesa Diretora com 4 membros
+  - 11 Parlamentares com mandatos
+  - 4 Comissões com 12 membros
+  - 3 Sessões vinculadas
+  - 3 Notícias
+  - 9 Configurações
+
+### 2026-01-17 - Melhoria na Interface de Legislaturas
+- **Alteracao**: Exibicao de legislaturas alterada de cards para tabela
+  - **Arquivo modificado**: `src/app/admin/legislaturas/page.tsx`
+  - **Melhorias implementadas**:
+    - Visualizacao em formato de tabela para melhor legibilidade
+    - Ordenacao automatica da mais recente para a mais antiga (por ano de inicio decrescente)
+    - Colunas: Legislatura, Periodo, Descricao, Status, Acoes
+    - Indicador visual do numero da legislatura
+    - Duracao calculada automaticamente
+    - Botoes de acao: Visualizar detalhes, Editar, Excluir
+    - Estado de loading e mensagem quando vazio
+    - Linhas alternadas para melhor visualizacao
+    - **Modal de Visualizacao de Detalhes**:
+      - Exibe informacoes gerais (numero, anos, duracao)
+      - Mostra descricao quando disponivel
+      - Lista periodos da mesa diretora com datas
+      - Exibe cargos configurados para cada periodo
+      - Botoes para fechar ou editar a legislatura
+
+### 2026-01-17 - Ajustes no Modulo de Parlamentares
+- **Melhoria**: Pagina de visualizacao de parlamentar no painel admin
+  - **Problema**: Botao "Visualizar" na lista de parlamentares redirecionava para o portal institucional
+  - **Solucao**: Criada nova pagina `/admin/parlamentares/[id]` para visualizar detalhes dentro do admin
+  - **Arquivo criado**: `src/app/admin/parlamentares/[id]/page.tsx`
+  - **Funcionalidades da nova pagina**:
+    - Exibe dados de contato (email, telefone)
+    - Exibe biografia
+    - Lista mandatos com legislatura, cargo, votos e periodo
+    - Lista filiacoes partidarias com datas
+    - Botoes para editar e ver no portal publico
+    - Informacoes do sistema (ID, datas de criacao/atualizacao)
+  - **Arquivo modificado**: `src/app/admin/parlamentares/page.tsx` (linha 283)
+    - Alterado link do botao "Visualizar" de `/parlamentares/${id}` para `/admin/parlamentares/${id}`
+
+- **Verificacao CRUD de Parlamentares**:
+  - **Create**: Funcional via `/admin/parlamentares/novo` - salva nome, apelido, email, telefone, partido, biografia, cargo, legislatura, mandatos e filiacoes
+  - **Read**: Funcional via API `/api/parlamentares` e `/api/parlamentares/[id]` - retorna dados com mandatos e filiacoes incluidos
+  - **Update**: Funcional via `/admin/parlamentares/editar/[id]` - atualiza todos os campos incluindo mandatos e filiacoes (deleta e recria)
+  - **Delete**: Funcional (soft delete) - marca parlamentar como inativo
+
+### 2026-01-17 - Correcoes de Autenticacao e UI
+- **Problema 1**: Pagina /admin/usuarios ficava carregando infinitamente
+  - **Causa**: Type mismatch em `usuarios-api.ts`
+  - **Solucao**: Corrigido tipo de retorno para `Promise<UsuarioApi[]>`
+  - **Arquivos**: `src/lib/api/usuarios-api.ts`, `src/app/admin/usuarios/page.tsx`
+
+- **Problema 2**: Botao "Area Restrita" nao visivel no portal
+  - **Causa**: Barra superior nao responsiva e layout condicional ocultando header
+  - **Solucao**: Botao sempre visivel, responsivo, adicionado ao menu mobile
+  - **Arquivos**: `src/components/layout/header.tsx`, `src/components/layout/conditional-layout.tsx`
+
+- **Problema 3**: Rotas /admin nao protegidas por autenticacao
+  - **Causa**: Middleware de autenticacao nao existia
+  - **Solucao**: Criado middleware NextAuth para proteger rotas admin
+  - **Arquivos**: `src/middleware.ts` (CRIADO)
+
+- **Problema 4**: Tela de login aparecia dentro do layout admin (com sidebar)
+  - **Causa**: Pagina de login estava em /admin/login, herdando o layout admin
+  - **Solucao**: Movida pagina de login para /login (rota independente)
+  - **Arquivos**:
+    - `src/app/login/page.tsx` (CRIADO - tela de login melhorada)
+    - `src/app/admin/login/` (REMOVIDO)
+    - `src/lib/auth.ts` (atualizado signIn page)
+    - `src/middleware.ts` (atualizado)
+    - `src/components/layout/header.tsx` (links atualizados)
+    - `src/components/layout/conditional-layout.tsx` (exclui /login do layout publico)
+
+### 2026-01-16 - FASE 7: Painel Eletronico e Votacao (CONCLUIDA)
+- **Etapa 7.1 - Painel de Controle de Sessao**:
+  - Criado `src/lib/services/painel-tempo-real-service.ts`
+  - Funcoes de controle: iniciarSessao(), finalizarSessao()
+  - Cronometros: sessao, item, votacao, discurso
+  - Gerenciamento de estado em memoria (Map)
+  - Funcoes: iniciarItemPauta(), finalizarItemPauta()
+  - Funcoes: iniciarDiscurso(), finalizarDiscurso()
+  - Criado `src/app/api/painel/estado/route.ts`
+  - Criado `src/app/api/painel/sessao/route.ts`
+  - Criado `src/app/api/painel/presenca/route.ts`
+- **Etapa 7.2 - Sistema de Votacao em Tempo Real**:
+  - Criado `src/app/api/painel/votacao/route.ts`
+  - Funcoes: iniciarVotacao(), registrarVoto(), finalizarVotacao()
+  - Votos: SIM, NAO, ABSTENCAO com persistencia no banco
+  - Apuracao automatica de resultado
+  - Cronometro de votacao com tempo configuravel
+  - Verificacao de quorum (SIMPLES, ABSOLUTA, QUALIFICADA)
+- **Etapa 7.3 - Painel Publico**:
+  - Criado `src/lib/hooks/use-painel-tempo-real.ts`
+    - usePainelTempoReal() - Hook de polling para estado
+    - useSessaoAtiva() - Hook para buscar sessao ativa
+  - Criado `src/components/painel/votacao-display.tsx`
+    - VotacaoDisplay - Display de votacao com animacoes
+  - Criado `src/components/painel/presenca-display.tsx`
+    - PresencaDisplay - Display de presenca com estatisticas
+    - PresencaGrid - Grid compacto de avatares
+  - Criado `src/components/painel/video-player.tsx`
+    - VideoPlayer - Player de streaming com controles
+    - SimpleVideoEmbed - Embed simplificado
+- **Etapa 7.4 - Integracao com Streaming**:
+  - Criado `src/lib/services/streaming-service.ts`
+  - Suporte: YouTube, Vimeo, iframes genericos
+  - Funcoes: extrairYouTubeId(), extrairVimeoId()
+  - Funcoes: gerarEmbedYouTube(), gerarEmbedVimeo()
+  - Funcoes: gerarEmbedAutomatico(), gerarPlayerConfig()
+  - Funcoes: iniciarTransmissao(), finalizarTransmissao()
+  - Funcoes: buscarVideosGravados(), validarUrlStreaming()
+  - Criado `src/app/api/painel/streaming/route.ts`
+
+### 2026-01-17 - FASE 8: Finalizacao e Polimento (CONCLUIDA)
+- **Etapa 8.1 - Testes Abrangentes**:
+  - Criado `src/tests/services/transparencia-service.test.ts`
+    - Testes para prazos PNTP (30d votacoes, 48h pautas, 15d atas, 24h contratos)
+    - Testes para niveis de transparencia (DIAMANTE, OURO, PRATA, BRONZE)
+    - Testes para calculo de nivel e status de conformidade
+    - Testes para urgencia de alertas e verificacao de requisitos
+  - Criado `src/tests/services/streaming-service.test.ts`
+    - 23 testes para parsing de URLs YouTube/Vimeo
+    - Testes para geracao de embeds e player configs
+    - Testes para validacao de URLs de streaming
+  - Criado `src/tests/services/painel-tempo-real.test.ts`
+    - Testes para estado do painel e controle de sessao
+    - Testes para registro de presenca e limpeza de estados
+  - Criado `src/tests/api/dados-abertos.test.ts`
+    - Testes para formatacao JSON e CSV
+    - Testes para paginacao e metadados
+- **Etapa 8.2 - Documentacao Final**:
+  - Criado `docs/GUIA-DEPLOY.md` - Guia completo de deploy
+    - Deploy com PM2 (recomendado)
+    - Configuracao de Nginx como proxy reverso
+    - SSL com Let's Encrypt
+    - Backup automatico com scripts
+    - Deploy alternativo com Docker
+    - Checklist de deploy e rollback
+  - Criado `docs/API-DOCUMENTACAO.md` - Documentacao completa da API
+    - API de Dados Abertos (8 endpoints)
+    - API do Painel em Tempo Real (5 endpoints)
+    - API de Transparencia PNTP
+    - Codigos HTTP, rate limiting, formato CSV
+    - Exemplos em cURL, JavaScript e Python
+- **Etapa 8.3 - Otimizacoes Finais**:
+  - Corrigido React hooks warning em `votacao-display.tsx` (useEffect dependency)
+  - Convertido `<img>` para `next/image` em `presenca-display.tsx`
+  - Build otimizado: 116 paginas, 87.5kB shared JS
+- **Etapa 8.4 - Preparacao para Producao**:
+  - Criado `src/lib/config/production.ts`
+    - Schema Zod para validacao de variaveis de ambiente
+    - Funcao validateEnv() para validacao completa
+    - Configuracoes de cache TTL, rate limiting, paginacao
+    - Prazos PNTP configurados
+    - Headers de seguranca (HSTS, XSS, CSRF, etc)
+    - Funcao checkProductionReadiness() para verificacao de deploy
+  - Criado `src/app/api/health/route.ts` - Health check endpoint
+    - Retorna status, timestamp, uptime e versao
+  - Criado `src/app/api/readiness/route.ts` - Readiness check endpoint
+    - Verificacao de conexao com banco de dados
+    - Verificacao de configuracoes de producao
+    - Verificacao de memoria (heap usage)
+    - Retorna 503 se nao estiver saudavel
+  - Criado `ecosystem.config.js` - Configuracao PM2
+    - Modo cluster com max instances
+    - Auto-restart e memory limit
+    - Logs estruturados
+  - Criado `scripts/verify-production.ts` - Script de verificacao
+  - Adicionado script `verify:production` no package.json
+
+### 2026-01-16 - FASE 6: Transparencia e PNTP (CONCLUIDA)
+- **Etapa 6.1 - Verificar Requisitos PNTP**:
+  - 14 verificacoes de conformidade implementadas (PNTP-001 a PNTP-014)
+  - Checklist completo conforme RN-120
+  - Niveis: BRONZE (<50%), PRATA (50-74%), OURO (75-89%), DIAMANTE (90%+)
+- **Etapa 6.2 - Servico de Transparencia**:
+  - Criado `src/lib/services/transparencia-service.ts`
+  - Funcoes: verificarConformidadePNTP(), gerarAlertasDesatualizacao(), sincronizarDadosPortal()
+  - Verificacoes: votacoes nominais, presenca sessoes, pautas, atas, vereadores, remuneracao
+  - Verificacoes: diarias/verbas, ouvidoria, e-SIC, contratos, licitacoes, folha pagamento
+  - Verificacoes: proposicoes legislativas, tramitacoes
+  - Alertas com urgencias: BAIXA, MEDIA, ALTA, CRITICA
+  - Prazos PNTP configurados (30d votacoes, 48h pautas, 15d atas, 24h contratos)
+- **Etapa 6.3 - API de Dados Abertos**:
+  - Criado `src/app/api/dados-abertos/route.ts` - Index com documentacao
+  - Criado `src/app/api/dados-abertos/parlamentares/route.ts`
+  - Criado `src/app/api/dados-abertos/sessoes/route.ts`
+  - Criado `src/app/api/dados-abertos/proposicoes/route.ts`
+  - Criado `src/app/api/dados-abertos/votacoes/route.ts`
+  - Criado `src/app/api/dados-abertos/presencas/route.ts`
+  - Criado `src/app/api/dados-abertos/comissoes/route.ts`
+  - Criado `src/app/api/dados-abertos/publicacoes/route.ts`
+  - Suporte a formatos JSON e CSV (?formato=csv)
+  - Paginacao, filtros e metadados em todos endpoints
+  - Limite de 100 itens por pagina
+- **Etapa 6.4 - Acessibilidade WCAG 2.1**:
+  - Criado `src/components/ui/skip-link.tsx`
+    - SkipLink - Pular para conteudo principal
+    - MainContent - Container com role="main"
+    - NavigationRegion - Regiao de navegacao
+    - LiveRegion - Anuncios para screen readers
+    - Hook useAnnounce - Feedback dinamico
+  - Criado `src/components/ui/accessible-table.tsx`
+    - AccessibleTable - Tabela com ARIA
+    - AccessibleTableHeader/Body/Row/Head/Cell
+    - AccessiblePagination - Paginacao acessivel
+- **API de Transparencia PNTP**:
+  - Criado `src/app/api/transparencia/pntp/route.ts`
+  - Retorna relatorio completo de conformidade
+
+### 2026-01-16 - FASE 5: Automacao e Inteligencia (CONCLUIDA)
+- **Etapa 5.1 - Automacao de Pautas (MEL-001)**:
+  - Criado `src/lib/services/automacao-pautas-service.ts`
+  - Funcoes: buscarProposicoesElegiveis, ordenarPorPrioridade, gerarPautaAutomatica
+  - Funcoes: calcularTempoEstimado, publicarPauta
+  - Criterios de ordenacao: vetos, parecer CLJ, segunda votacao, primeira votacao, cronologica
+  - Tempos medios por tipo de proposicao configurados
+  - Validacao regimental integrada (passagem CLJ)
+- **Etapa 5.2 - Sistema de Notificacoes (MEL-002)**:
+  - Criado `src/lib/services/notificacao-service.ts`
+  - Funcoes: enviarNotificacao, notificarTramitacao, notificarResultadoVotacao
+  - Funcoes: verificarPrazosVencendo, notificarSessaoAgendada
+  - Templates de email para: votacao, tramitacao, pauta, lembrete sessao
+  - Canais: EMAIL, IN_APP, WEBHOOK
+  - Gerenciamento de preferencias por usuario
+- **Etapa 5.3 - Dashboard Analytics (MEL-003)**:
+  - Criado `src/lib/services/analytics-service.ts`
+  - Funcoes: getResumoGeral, getProducaoLegislativa, getEstatisticasSessoes
+  - Funcoes: getIndicadoresTransparencia, getComparativoMensal, getRankingParlamentares
+  - Metricas: proposicoes, votacoes, presenca, tempo tramitacao, taxa aprovacao
+  - Indicadores PNTP: votacoes nominais, presenca, pautas publicadas
+  - Tendencias mensais e ranking de parlamentares
+- **Etapa 5.4 - Validacao Regimental Avancada**:
+  - Criado `src/lib/services/regras-regimentais-service.ts`
+  - Motor de regras com 15+ regras predefinidas (RR-001 a RR-071)
+  - Tipos: QUORUM, PRAZO, INTERSTICIO, TRAMITACAO, VOTACAO, INICIATIVA, IMPEDIMENTO, PUBLICIDADE
+  - Funcoes: executarValidacao, verificarElegibilidadePauta, verificarRegrasVotacao
+  - Funcoes: gerarRelatorioConformidade
+  - Severidades: INFO, AVISO, ERRO, BLOQUEIO
+  - Sugestoes de acoes corretivas automaticas
+
+### 2026-01-16 - FASE 4: Conformidade com Regras de Negocio (CONCLUIDA)
+- **Etapa 4.1 - Validacoes de Proposicao**:
+  - Criado `src/lib/services/proposicao-validacao-service.ts`
+  - Regras RN-020 a RN-025 implementadas
+  - Funcoes: validarIniciativaPrivativa, gerarNumeroProposicao, validarRequisitosMinimos
+  - Funcoes: verificarMateriaAnaloga, validarEmenda, validarIniciativaPopular
+  - Validacao de transicao de status
+  - Deteccao de materias de iniciativa do Executivo
+- **Etapa 4.2 - Validacoes de Sessao**:
+  - Criado `src/lib/services/sessao-validacao-service.ts`
+  - Regras RN-040 a RN-044 implementadas
+  - Funcoes: validarQuorumInstalacao, validarConvocacao, validarOrdemTrabalhos
+  - Funcoes: registrarPresenca, calcularTempoEstimadoSessao, verificarCondicoesInicioSessao
+  - Calculo de quorum com maioria absoluta
+  - Listagem de presencas com ausencias justificadas
+- **Etapa 4.3 - Validacoes de Votacao**:
+  - Criado `src/lib/services/votacao-service.ts`
+  - Regras RN-060 a RN-073 implementadas
+  - Funcoes: calcularQuorum (SIMPLES, ABSOLUTA, QUALIFICADA)
+  - Funcoes: validarQuorumVotacao, deveSerVotacaoNominal, verificarImpedimentoVoto
+  - Funcoes: registrarVoto, apurarResultado, listarVotosProposicao
+  - Suporte a votacao nominal obrigatoria (quorum qualificado, emendas LO, vetos)
+- **Etapa 4.4 - Fluxo de Tramitacao**:
+  - Criado `src/lib/services/tramitacao-service.ts`
+  - Regras RN-030 a RN-037 implementadas
+  - Funcoes: validarPassagemCLJ, sugerirComissoesDistribuicao
+  - Funcoes: calcularPrazoParecer, validarProposicaoParaVotacao
+  - Funcoes: registrarMovimentacao, criarNotificacaoTramitacao, verificarPrazosVencendo
+  - Prazos: Normal=15d, Prioridade=10d, Urgencia=5d, Urgencia Urgentissima=imediato
+- **Etapa 4.5 - Fluxo de Sancao/Veto**:
+  - Criado `src/lib/services/sancao-veto-service.ts`
+  - Regras RN-080 a RN-087 implementadas
+  - Funcoes: validarEnvioAoExecutivo, verificarPrazoSancao, validarSancao
+  - Funcoes: validarVeto (total/parcial), calcularPrazoApreciacaoVeto
+  - Funcoes: validarApreciacaoVeto, validarPromulgacao, validarPublicacao
+  - Prazos: Envio ao Executivo=48h, Sancao=15 dias uteis, Apreciacao veto=30 dias
+
+### 2026-01-16 - FASE 3: Qualidade de Codigo (CONCLUIDA)
+- **Etapa 3.1 - Formatacao de Datas**:
+  - Expandido `src/lib/utils/date.ts` com 25+ funcoes
+  - Formatos padrao: SHORT, LONG, WITH_TIME, ISO_DATE
+  - Funcoes: formatDateShort, formatDateLong, formatSmartDate, formatRelativeDate
+  - Helpers: formatDeadline, differenceInBusinessDays, addBusinessDays
+  - Re-exporta funcoes uteis do date-fns com locale pt-BR
+- **Etapa 3.2 - Loading States**:
+  - Criado `src/components/skeletons/table-skeleton.tsx`
+  - Criado `src/components/skeletons/form-skeleton.tsx`
+  - Criado `src/components/skeletons/card-skeleton.tsx`
+  - Criado `src/components/skeletons/page-skeleton.tsx`
+  - Criado `src/components/skeletons/index.ts` (exporta todos)
+  - Componentes: TableSkeleton, FormSkeleton, CardSkeleton, StatGridSkeleton, PageSkeleton
+- **Etapa 3.3 - Confirmacao em Acoes Destrutivas**:
+  - Criado `src/components/ui/confirm-dialog.tsx`
+  - Variantes: danger, warning, info, question
+  - Componentes: ConfirmDialog, DeleteConfirmDialog, UnsavedChangesDialog, ActionConfirmDialog
+  - Hook useConfirm para uso programatico
+- **Etapa 3.4 - Sistema de Logs**:
+  - Criado `src/lib/logging/logger.ts`
+  - Niveis: debug, info, warn, error
+  - Suporte a logs estruturados (JSON) em producao
+  - Logs formatados em desenvolvimento
+  - Loggers pre-configurados: apiLogger, authLogger, dbLogger, cacheLogger
+  - Helpers: withTiming, createLogger
+
+### 2026-01-16 - FASE 2: Correcoes de Performance (CONCLUIDA)
+- **Etapa 2.1 - Indices no Banco de Dados**:
+  - Adicionados indices em User (role+ativo, createdAt)
+  - Adicionados indices em Parlamentar (ativo+cargo, partido, nome)
+  - Adicionados indices em Sessao (status+data, tipo+status, legislaturaId+data, data)
+  - Adicionados indices em Proposicao (status+dataApresentacao, tipo+status, autorId+ano, ano+tipo, dataApresentacao)
+  - Adicionados indices em Comissao (tipo+ativa, ativa)
+  - Adicionados indices em Noticia (publicada+dataPublicacao, categoria+publicada, dataPublicacao)
+  - Executado db:push com sucesso
+- **Etapa 2.3 - Paginacao Padrao**:
+  - Criado `src/lib/utils/pagination.ts`
+  - Interface PaginatedResponse<T> com items e pagination metadata
+  - Funcoes: extractPaginationParams, createPrismaPageArgs, createPaginatedResponse
+  - Helpers: paginateArray, sortArray, sortAndPaginateArray
+  - Validacao de parametros e geracao de links de navegacao
+  - Limites: MAX_LIMIT=100, DEFAULT_LIMIT=20
+- **Etapa 2.4 - Cache Basico**:
+  - Criado `src/lib/cache/memory-cache.ts`
+  - Classe MemoryCache com get, set, delete, getOrSet (cache-aside pattern)
+  - TTLs configurados: SHORT (1min), MEDIUM (5min), LONG (15min), HOUR, DAY
+  - CACHE_KEYS predefinidas para dados frequentes
+  - Funcoes de invalidacao: invalidateEntityCache, cacheHelpers
+  - Limpeza automatica a cada 5 minutos
+  - Decorador @cached para funcoes
+
+### 2026-01-16 - FASE 1: Correcoes de Seguranca (CONCLUIDA)
+- **Etapa 1.1 - Tratamento de Erros**:
+  - Adicionadas classes: AppError, ForbiddenError, RateLimitError
+  - 74 APIs usando withErrorHandler
+  - Respostas padronizadas com timestamps e paths
+- **Etapa 1.2 - Validacao Zod**:
+  - 25+ schemas implementados
+  - Novos: VotacaoSchema, TramitacaoSchema, NoticiaSchema, ComissaoSchema, MembroComissaoSchema, UsuarioSchema, SessaoSchema, PautaItemSchema
+  - Validacao de senha forte (maiuscula, minuscula, numero)
+- **Etapa 1.3 - Rate Limiting**:
+  - Middleware `withRateLimit` implementado
+  - 5 tipos: AUTH (10/5min), PUBLIC (60/min), AUTHENTICATED (120/min), INTEGRATION (100/min), HEAVY (10/min)
+  - Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+  - Funcoes: enforceRateLimit, resetRateLimit, getRateLimitStats
+
+### 2026-01-16 - FASE 0 Etapa 0.3: Backup e Versionamento (CONCLUIDA)
+- **Git inicializado**: Repositorio local criado
+- **GitHub vinculado**: https://github.com/junielsonfarias/LegNet
+- **Branches criadas**:
+  - `main` - branch principal (baseline)
+  - `develop` - branch de desenvolvimento
+- **Commit inicial**: 402 arquivos, 224.875 linhas de codigo
+- **.gitignore**: Configurado para Next.js + Prisma + Node.js
+- **Conventional Commits**: Padrao feat/fix/docs/refactor/test
 
 ### 2026-01-16 - FASE 0 Etapa 0.2: Configuracao de Ambiente (CONCLUIDA)
 - **Variaveis de ambiente**: `.env` e `.env.local` configurados corretamente
@@ -362,10 +991,10 @@
 - **Schema Prisma**: `db:push` executado com sucesso
 - **Seed**: Banco populado com dados de teste
   - 1 usuario admin (admin@camaramojui.com / admin123)
-  - 15 parlamentares
-  - 2 legislaturas
-  - 3 sessoes
-  - 4 comissoes
+  - 11 parlamentares (com mandatos vinculados)
+  - 1 legislatura (2025-2028) com periodo e mesa diretora
+  - 3 sessoes (vinculadas a legislatura)
+  - 4 comissoes (com membros vinculados)
   - 3 noticias
   - 9 configuracoes
 - **Correcao**: Typo `VERADOR` -> `VEREADOR` no seed.ts

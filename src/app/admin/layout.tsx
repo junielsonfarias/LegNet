@@ -1,4 +1,3 @@
-import { ConsoleSuppressor } from '@/components/console-suppressor'
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { AdminSearch } from '@/components/admin/admin-search'
@@ -10,7 +9,6 @@ export default function AdminLayout({
 }) {
   return (
     <div className="min-h-screen bg-gray-50">
-      <ConsoleSuppressor />
       <div className="flex">
         <AdminSidebar />
         <div className="flex-1">

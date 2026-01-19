@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
-import { 
-  Calendar, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Calendar,
+  Plus,
+  Edit,
+  Trash2,
   Search,
   Clock,
   CheckCircle,
@@ -22,7 +22,9 @@ import {
   ChevronDown,
   ChevronRight,
   Users,
-  Briefcase
+  Briefcase,
+  Eye,
+  ArrowUpDown
 } from 'lucide-react'
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas'
 import { usePeriodosLegislatura, type PeriodoLegislaturaCreate } from '@/lib/hooks/use-periodos-legislatura'
@@ -36,10 +38,14 @@ export default function LegislaturasAdminPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [expandedLegislaturas, setExpandedLegislaturas] = useState<string[]>([])
+  const [viewingLegislatura, setViewingLegislatura] = useState<any | null>(null)
+  const [loadingDetalhes, setLoadingDetalhes] = useState(false)
   const [formData, setFormData] = useState({
     numero: '',
     anoInicio: '',
     anoFim: '',
+    dataInicio: '',
+    dataFim: '',
     descricao: '',
     ativa: true
   })
@@ -56,12 +62,15 @@ export default function LegislaturasAdminPage() {
   }>>([])
   const [loadingSave, setLoadingSave] = useState(false)
 
-  const filteredLegislaturas = legislaturas.filter(legislatura =>
-    legislatura.numero.toString().includes(searchTerm) ||
-    legislatura.anoInicio.toString().includes(searchTerm) ||
-    legislatura.anoFim.toString().includes(searchTerm) ||
-    (legislatura.descricao && legislatura.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+  // Filtrar e ordenar legislaturas (mais recente primeiro)
+  const filteredLegislaturas = legislaturas
+    .filter(legislatura =>
+      legislatura.numero.toString().includes(searchTerm) ||
+      legislatura.anoInicio.toString().includes(searchTerm) ||
+      legislatura.anoFim.toString().includes(searchTerm) ||
+      (legislatura.descricao && legislatura.descricao.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .sort((a, b) => b.anoInicio - a.anoInicio) // Ordenar por ano de inicio decrescente
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +99,8 @@ export default function LegislaturasAdminPage() {
           numero: parseInt(formData.numero),
           anoInicio: parseInt(formData.anoInicio),
           anoFim: parseInt(formData.anoFim),
+          dataInicio: formData.dataInicio ? new Date(formData.dataInicio).toISOString() : undefined,
+          dataFim: formData.dataFim ? new Date(formData.dataFim).toISOString() : undefined,
           descricao: formData.descricao || undefined,
           ativa: formData.ativa
         })
@@ -104,6 +115,8 @@ export default function LegislaturasAdminPage() {
           numero: parseInt(formData.numero),
           anoInicio: parseInt(formData.anoInicio),
           anoFim: parseInt(formData.anoFim),
+          dataInicio: formData.dataInicio ? new Date(formData.dataInicio).toISOString() : undefined,
+          dataFim: formData.dataFim ? new Date(formData.dataFim).toISOString() : undefined,
           descricao: formData.descricao || undefined,
           ativa: formData.ativa
         })
@@ -214,10 +227,26 @@ export default function LegislaturasAdminPage() {
   }
 
   const handleEdit = async (legislatura: any) => {
+    // Converter datas para formato input date
+    let dataInicioStr = ''
+    let dataFimStr = ''
+
+    if (legislatura.dataInicio) {
+      const d = new Date(legislatura.dataInicio)
+      dataInicioStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+    }
+
+    if (legislatura.dataFim) {
+      const d = new Date(legislatura.dataFim)
+      dataFimStr = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+    }
+
     setFormData({
       numero: legislatura.numero.toString(),
       anoInicio: legislatura.anoInicio.toString(),
       anoFim: legislatura.anoFim.toString(),
+      dataInicio: dataInicioStr,
+      dataFim: dataFimStr,
       descricao: legislatura.descricao || '',
       ativa: legislatura.ativa
     })
@@ -287,6 +316,8 @@ export default function LegislaturasAdminPage() {
       numero: '',
       anoInicio: '',
       anoFim: '',
+      dataInicio: '',
+      dataFim: '',
       descricao: '',
       ativa: true
     })
@@ -342,11 +373,44 @@ export default function LegislaturasAdminPage() {
   }
 
   const toggleLegislatura = (legislaturaId: string) => {
-    setExpandedLegislaturas(prev => 
-      prev.includes(legislaturaId) 
+    setExpandedLegislaturas(prev =>
+      prev.includes(legislaturaId)
         ? prev.filter(id => id !== legislaturaId)
         : [...prev, legislaturaId]
     )
+  }
+
+  const handleView = async (legislatura: any) => {
+    setLoadingDetalhes(true)
+    try {
+      // Carregar periodos da legislatura
+      const response = await fetch(`/api/periodos-legislatura?legislaturaId=${legislatura.id}`)
+      const data = await response.json()
+
+      let periodosComCargos: any[] = []
+      if (data.success && data.data) {
+        periodosComCargos = await Promise.all(
+          data.data.map(async (periodo: any) => {
+            const cargosResponse = await fetch(`/api/cargos-mesa-diretora?periodoId=${periodo.id}`)
+            const cargosData = await cargosResponse.json()
+            return {
+              ...periodo,
+              cargos: cargosData.success ? cargosData.data : []
+            }
+          })
+        )
+      }
+
+      setViewingLegislatura({
+        ...legislatura,
+        periodos: periodosComCargos
+      })
+    } catch (error) {
+      console.error('Erro ao carregar detalhes:', error)
+      toast.error('Erro ao carregar detalhes da legislatura')
+    } finally {
+      setLoadingDetalhes(false)
+    }
   }
 
   const getStatusBadge = (ativa: boolean) => {
@@ -444,82 +508,125 @@ export default function LegislaturasAdminPage() {
         </CardContent>
       </Card>
 
-      {/* Lista de Legislaturas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredLegislaturas.map((legislatura) => (
-          <Card key={legislatura.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">{legislatura.numero}ª Legislatura</CardTitle>
-                  <p className="text-gray-600">{legislatura.anoInicio}-{legislatura.anoFim}</p>
-                </div>
-                {getStatusBadge(legislatura.ativa)}
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600">Ano Início</p>
-                  <p className="font-semibold">{legislatura.anoInicio}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Ano Fim</p>
-                  <p className="font-semibold">{legislatura.anoFim}</p>
-                </div>
-              </div>
-              {legislatura.descricao && (
-                <div className="text-sm">
-                  <p className="text-gray-600">Descrição</p>
-                  <p className="font-semibold">{legislatura.descricao}</p>
-                </div>
-              )}
-              
-              <div className="flex justify-between items-center pt-4 border-t">
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{legislatura.anoInicio}-{legislatura.anoFim}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(legislatura)}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(legislatura.id)}
-                    className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Excluir
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredLegislaturas.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma legislatura encontrada</h3>
-            <p className="text-gray-600">
-              {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Comece cadastrando a primeira legislatura.'}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Lista de Legislaturas em Tabela */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Lista de Legislaturas
+            <Badge variant="secondary" className="ml-2">{filteredLegislaturas.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
+              <span className="ml-2 text-gray-600">Carregando legislaturas...</span>
+            </div>
+          ) : filteredLegislaturas.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma legislatura encontrada</h3>
+              <p className="text-gray-600">
+                {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Comece cadastrando a primeira legislatura.'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-4 font-semibold text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <ArrowUpDown className="h-4 w-4" />
+                        Legislatura
+                      </div>
+                    </th>
+                    <th className="text-left p-4 font-semibold text-gray-700">Periodo</th>
+                    <th className="text-left p-4 font-semibold text-gray-700">Descricao</th>
+                    <th className="text-center p-4 font-semibold text-gray-700">Status</th>
+                    <th className="text-right p-4 font-semibold text-gray-700">Acoes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLegislaturas.map((legislatura, index) => (
+                    <tr
+                      key={legislatura.id}
+                      className={`border-b hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-camara-primary/10 rounded-full flex items-center justify-center">
+                            <span className="text-camara-primary font-bold">{legislatura.numero}</span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{legislatura.numero}ª Legislatura</p>
+                            <p className="text-sm text-gray-500">ID: {legislatura.id.slice(0, 8)}...</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span className="font-medium">{legislatura.anoInicio} - {legislatura.anoFim}</span>
+                        </div>
+                        {(legislatura.dataInicio || legislatura.dataFim) && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            {legislatura.dataInicio ? new Date(legislatura.dataInicio).toLocaleDateString('pt-BR') : '?'}
+                            {' → '}
+                            {legislatura.dataFim ? new Date(legislatura.dataFim).toLocaleDateString('pt-BR') : 'Em andamento'}
+                          </p>
+                        )}
+                        <p className="text-sm text-gray-500 mt-1">
+                          {legislatura.anoFim - legislatura.anoInicio + 1} anos de duração
+                        </p>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-gray-700 max-w-xs truncate">
+                          {legislatura.descricao || <span className="text-gray-400 italic">Sem descricao</span>}
+                        </p>
+                      </td>
+                      <td className="p-4 text-center">
+                        {getStatusBadge(legislatura.ativa)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleView(legislatura)}
+                            disabled={loadingDetalhes}
+                            title="Ver detalhes"
+                          >
+                            {loadingDetalhes ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(legislatura)}
+                            title="Editar"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(legislatura.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Modal de Formulário */}
       {showForm && (
@@ -545,7 +652,7 @@ export default function LegislaturasAdminPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Dados Básicos */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <Label htmlFor="numero">Número da Legislatura *</Label>
                     <Input
@@ -553,7 +660,7 @@ export default function LegislaturasAdminPage() {
                       type="number"
                       value={formData.numero}
                       onChange={(e) => setFormData({ ...formData, numero: e.target.value })}
-                      placeholder="Ex: 19"
+                      placeholder="Ex: 1"
                       required
                     />
                   </div>
@@ -565,7 +672,7 @@ export default function LegislaturasAdminPage() {
                       type="number"
                       value={formData.anoInicio}
                       onChange={(e) => setFormData({ ...formData, anoInicio: e.target.value })}
-                      placeholder="Ex: 2021"
+                      placeholder="Ex: 2025"
                       required
                     />
                   </div>
@@ -577,20 +684,46 @@ export default function LegislaturasAdminPage() {
                       type="number"
                       value={formData.anoFim}
                       onChange={(e) => setFormData({ ...formData, anoFim: e.target.value })}
-                      placeholder="Ex: 2024"
+                      placeholder="Ex: 2028"
                       required
                     />
                   </div>
+                </div>
+
+                {/* Datas Completas */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="dataInicio">Data de Início (dia/mês/ano)</Label>
+                    <Input
+                      id="dataInicio"
+                      type="date"
+                      value={formData.dataInicio}
+                      onChange={(e) => setFormData({ ...formData, dataInicio: e.target.value })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Opcional - Data exata do início da legislatura</p>
+                  </div>
 
                   <div>
-                    <Label htmlFor="descricao">Descrição</Label>
+                    <Label htmlFor="dataFim">Data de Fim (dia/mês/ano)</Label>
                     <Input
-                      id="descricao"
-                      value={formData.descricao}
-                      onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                      placeholder="Descrição opcional"
+                      id="dataFim"
+                      type="date"
+                      value={formData.dataFim}
+                      onChange={(e) => setFormData({ ...formData, dataFim: e.target.value })}
                     />
+                    <p className="text-xs text-gray-500 mt-1">Opcional - Data exata do fim da legislatura</p>
                   </div>
+                </div>
+
+                {/* Descrição */}
+                <div>
+                  <Label htmlFor="descricao">Descrição</Label>
+                  <Input
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                    placeholder="Descrição opcional da legislatura"
+                  />
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -769,6 +902,162 @@ export default function LegislaturasAdminPage() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Visualizacao */}
+      {viewingLegislatura && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl">
+                    {viewingLegislatura.numero}ª Legislatura
+                  </CardTitle>
+                  <p className="text-gray-600 mt-1">
+                    Periodo: {viewingLegislatura.anoInicio} - {viewingLegislatura.anoFim}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(viewingLegislatura.ativa)}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewingLegislatura(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Informacoes Gerais */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Número</p>
+                  <p className="text-xl font-bold">{viewingLegislatura.numero}ª</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Ano Início</p>
+                  <p className="text-xl font-bold">{viewingLegislatura.anoInicio}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Ano Fim</p>
+                  <p className="text-xl font-bold">{viewingLegislatura.anoFim}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-500">Duração</p>
+                  <p className="text-xl font-bold">{viewingLegislatura.anoFim - viewingLegislatura.anoInicio + 1} anos</p>
+                </div>
+              </div>
+
+              {/* Datas Completas */}
+              {(viewingLegislatura.dataInicio || viewingLegislatura.dataFim) && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-600 font-medium">Data de Início</p>
+                    <p className="text-lg font-bold text-blue-800">
+                      {viewingLegislatura.dataInicio
+                        ? new Date(viewingLegislatura.dataInicio).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+                        : 'Não informada'}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-600 font-medium">Data de Fim</p>
+                    <p className="text-lg font-bold text-blue-800">
+                      {viewingLegislatura.dataFim
+                        ? new Date(viewingLegislatura.dataFim).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+                        : 'Em andamento'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Descricao */}
+              {viewingLegislatura.descricao && (
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-600 font-medium mb-1">Descricao</p>
+                  <p className="text-gray-700">{viewingLegislatura.descricao}</p>
+                </div>
+              )}
+
+              {/* Periodos */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Periodos da Mesa Diretora
+                </h3>
+                {viewingLegislatura.periodos && viewingLegislatura.periodos.length > 0 ? (
+                  <div className="space-y-4">
+                    {viewingLegislatura.periodos.map((periodo: any) => (
+                      <Card key={periodo.id} className="border-l-4 border-l-camara-primary">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">
+                            Periodo {periodo.numero}
+                            {periodo.descricao && ` - ${periodo.descricao}`}
+                          </CardTitle>
+                          <p className="text-sm text-gray-500">
+                            {new Date(periodo.dataInicio).toLocaleDateString('pt-BR')}
+                            {periodo.dataFim ? ` ate ${new Date(periodo.dataFim).toLocaleDateString('pt-BR')}` : ' - Em andamento'}
+                          </p>
+                        </CardHeader>
+                        <CardContent>
+                          {periodo.cargos && periodo.cargos.length > 0 ? (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-gray-600">Cargos da Mesa:</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {periodo.cargos
+                                  .sort((a: any, b: any) => a.ordem - b.ordem)
+                                  .map((cargo: any) => (
+                                    <div key={cargo.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                                      <span className="w-6 h-6 bg-camara-primary text-white rounded-full flex items-center justify-center text-xs">
+                                        {cargo.ordem}
+                                      </span>
+                                      <span className="font-medium">{cargo.nome}</span>
+                                      {cargo.obrigatorio && (
+                                        <Badge variant="outline" className="text-xs">Obrigatorio</Badge>
+                                      )}
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 italic">Nenhum cargo configurado para este periodo.</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-6 bg-gray-50 rounded-lg text-center">
+                    <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500">Nenhum periodo cadastrado para esta legislatura.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Botoes de Acao */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setViewingLegislatura(null)}
+                >
+                  Fechar
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleEdit(viewingLegislatura)
+                    setViewingLegislatura(null)
+                  }}
+                  className="bg-camara-primary hover:bg-camara-primary/90"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Legislatura
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

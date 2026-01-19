@@ -19,6 +19,8 @@ export async function getLegislaturaAtual(): Promise<LegislaturaApi | null> {
       numero: legislatura.numero,
       anoInicio: legislatura.anoInicio,
       anoFim: legislatura.anoFim,
+      dataInicio: legislatura.dataInicio?.toISOString() || null,
+      dataFim: legislatura.dataFim?.toISOString() || null,
       ativa: legislatura.ativa,
       descricao: legislatura.descricao || null,
       createdAt: legislatura.createdAt.toISOString(),
