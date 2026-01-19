@@ -368,6 +368,16 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Auditoria de Performance (Queries N+1)
+- **Objetivo**: Verificar e otimizar queries N+1 nas APIs principais
+- **Resultado**: APIs já estão otimizadas com `include` do Prisma
+- **APIs Auditadas**:
+  - `/api/sessoes` - OK (include: legislatura, período, pauta, itens)
+  - `/api/proposicoes` - OK (include: autor, sessão)
+  - `/api/parlamentares` - OK (include: mandatos, filiações, legislatura)
+  - `/api/comissoes` - OK (include: membros, parlamentar)
+- **Técnicas em uso**: Promise.all, select, paginação, limite máximo
+
 ### 2026-01-19 - Correções de Build para Deploy em Produção
 - **Objetivo**: Corrigir erros de build e preparar para deploy
 - **Erros corrigidos**:
