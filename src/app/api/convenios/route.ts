@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { licitacoesDbService } from '@/lib/services/licitacoes-db-service'
-import type { ModalidadeLicitacao, SituacaoLicitacao } from '@prisma/client'
+import { conveniosDbService } from '@/lib/services/convenios-db-service'
+import type { SituacaoConvenio } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const modalidade = searchParams.get('modalidade') as ModalidadeLicitacao | null
-    const situacao = searchParams.get('situacao') as SituacaoLicitacao | null
+    const situacao = searchParams.get('situacao') as SituacaoConvenio | null
     const ano = searchParams.get('ano')
+    const convenente = searchParams.get('convenente')
+    const orgaoConcedente = searchParams.get('orgaoConcedente')
     const objeto = searchParams.get('objeto')
     const dataInicio = searchParams.get('dataInicio')
     const dataFim = searchParams.get('dataFim')
@@ -18,11 +19,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    const result = await licitacoesDbService.paginate(
+    const result = await conveniosDbService.paginate(
       {
-        modalidade: modalidade || undefined,
         situacao: situacao || undefined,
         ano: ano ? parseInt(ano) : undefined,
+        convenente: convenente || undefined,
+        orgaoConcedente: orgaoConcedente || undefined,
         objeto: objeto || undefined,
         dataInicio: dataInicio || undefined,
         dataFim: dataFim || undefined,
@@ -42,9 +44,8 @@ export async function GET(request: NextRequest) {
         'X-Total-Count': result.pagination.total.toString()
       }
     })
-
   } catch (error) {
-    console.error('Erro ao buscar licitacoes:', error)
+    console.error('Erro ao buscar convenios:', error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
@@ -56,39 +57,42 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Validacao basica
-    if (!body.numero || !body.objeto || !body.modalidade || !body.dataAbertura) {
+    if (!body.numero || !body.convenente || !body.orgaoConcedente || !body.objeto || !body.valorTotal) {
       return NextResponse.json(
-        { success: false, error: 'Campos obrigatorios nao fornecidos (numero, objeto, modalidade, dataAbertura)' },
+        { success: false, error: 'Campos obrigatorios nao fornecidos' },
         { status: 400 }
       )
     }
 
-    const novaLicitacao = await licitacoesDbService.create({
+    const novoConvenio = await conveniosDbService.create({
       numero: body.numero,
-      ano: body.ano || new Date(body.dataAbertura).getFullYear(),
-      modalidade: body.modalidade,
-      tipo: body.tipo,
+      ano: body.ano || new Date().getFullYear(),
+      convenente: body.convenente,
+      cnpjConvenente: body.cnpjConvenente,
+      orgaoConcedente: body.orgaoConcedente,
       objeto: body.objeto,
-      valorEstimado: body.valorEstimado ? parseFloat(body.valorEstimado) : null,
-      dataPublicacao: body.dataPublicacao,
-      dataAbertura: body.dataAbertura,
-      horaAbertura: body.horaAbertura,
-      dataEntregaPropostas: body.dataEntregaPropostas,
+      programa: body.programa,
+      acao: body.acao,
+      valorTotal: parseFloat(body.valorTotal),
+      valorRepasse: body.valorRepasse ? parseFloat(body.valorRepasse) : null,
+      valorContrapartida: body.valorContrapartida ? parseFloat(body.valorContrapartida) : null,
+      dataCelebracao: body.dataCelebracao || new Date().toISOString(),
+      vigenciaInicio: body.vigenciaInicio || body.dataCelebracao,
+      vigenciaFim: body.vigenciaFim,
+      responsavelTecnico: body.responsavelTecnico,
       situacao: body.situacao,
-      unidadeGestora: body.unidadeGestora,
-      linkEdital: body.linkEdital,
+      fonteRecurso: body.fonteRecurso,
+      arquivo: body.arquivo,
       observacoes: body.observacoes
     })
 
     return NextResponse.json({
       success: true,
-      data: novaLicitacao,
-      message: 'Licitacao criada com sucesso'
+      data: novoConvenio,
+      message: 'Convenio criado com sucesso'
     }, { status: 201 })
-
   } catch (error) {
-    console.error('Erro ao criar licitacao:', error)
+    console.error('Erro ao criar convenio:', error)
     return NextResponse.json(
       { success: false, error: 'Erro interno do servidor' },
       { status: 500 }

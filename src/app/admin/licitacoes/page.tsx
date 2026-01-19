@@ -6,402 +6,324 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { 
-  FileText, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  FileText,
+  Plus,
+  Edit,
+  Trash2,
   Search,
   Calendar,
   DollarSign,
-  Users,
-  AlertCircle,
-  CheckCircle
+  Loader2,
+  X
 } from 'lucide-react'
+import { useLicitacoes, Licitacao } from '@/lib/hooks/use-licitacoes'
+import { toast } from 'sonner'
 
-// Dados mock para desenvolvimento
-const mockLicitacoes = [
-  {
-    id: 1,
-    numero: '001/2025',
-    objeto: 'Contratação de serviços de limpeza e conservação',
-    modalidade: 'Pregão Eletrônico',
-    status: 'Em Andamento',
-    dataAbertura: '2025-01-15',
-    dataEncerramento: '2025-02-15',
-    valorEstimado: '45000.00',
-    participantes: 3,
-    arquivo: 'edital-001-2025.pdf'
-  },
-  {
-    id: 2,
-    numero: '002/2025',
-    objeto: 'Aquisição de material de escritório',
-    modalidade: 'Pregão Eletrônico',
-    status: 'Homologada',
-    dataAbertura: '2025-01-10',
-    dataEncerramento: '2025-01-25',
-    valorEstimado: '12500.00',
-    participantes: 5,
-    arquivo: 'edital-002-2025.pdf'
-  },
-  {
-    id: 3,
-    numero: '003/2025',
-    objeto: 'Contratação de serviços de manutenção de equipamentos',
-    modalidade: 'Tomada de Preços',
-    status: 'Cancelada',
-    dataAbertura: '2025-01-05',
-    dataEncerramento: '2025-01-20',
-    valorEstimado: '28000.00',
-    participantes: 2,
-    arquivo: 'edital-003-2025.pdf'
-  }
+const modalidades = [
+  'PREGAO_ELETRONICO',
+  'PREGAO_PRESENCIAL',
+  'CONCORRENCIA',
+  'TOMADA_DE_PRECOS',
+  'CONVITE',
+  'CONCURSO',
+  'LEILAO',
+  'DISPENSA',
+  'INEXIGIBILIDADE'
+]
+
+const situacoes = [
+  'EM_ANDAMENTO',
+  'HOMOLOGADA',
+  'DESERTA',
+  'FRACASSADA',
+  'REVOGADA',
+  'ANULADA',
+  'SUSPENSA'
+]
+
+const tiposLicitacao = [
+  'MENOR_PRECO',
+  'MELHOR_TECNICA',
+  'TECNICA_E_PRECO',
+  'MAIOR_LANCE'
 ]
 
 export default function LicitacoesAdminPage() {
-  const [licitacoes, setLicitacoes] = useState(mockLicitacoes)
+  const { licitacoes, loading, create, update, remove } = useLicitacoes()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+
   const [formData, setFormData] = useState({
     numero: '',
+    ano: new Date().getFullYear(),
+    modalidade: 'PREGAO_ELETRONICO',
+    tipo: 'MENOR_PRECO',
     objeto: '',
-    modalidade: 'Pregão Eletrônico',
-    status: 'Em Andamento',
-    dataAbertura: '',
-    dataEncerramento: '',
     valorEstimado: '',
-    participantes: 0,
-    arquivo: ''
+    dataPublicacao: '',
+    dataAbertura: '',
+    horaAbertura: '',
+    dataEntregaPropostas: '',
+    situacao: 'EM_ANDAMENTO',
+    unidadeGestora: 'Camara Municipal',
+    linkEdital: '',
+    observacoes: ''
   })
 
-  const getModalidadeColor = (modalidade: string) => {
-    switch (modalidade) {
-      case 'Pregão Eletrônico':
-        return 'bg-purple-100 text-purple-800'
-      case 'Concorrência':
-        return 'bg-blue-100 text-blue-800'
-      case 'Tomada de Preços':
-        return 'bg-green-100 text-green-800'
-      case 'Convite':
-        return 'bg-orange-100 text-orange-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Em Andamento':
-        return 'bg-blue-100 text-blue-800'
-      case 'Homologada':
-        return 'bg-green-100 text-green-800'
-      case 'Cancelada':
-        return 'bg-red-100 text-red-800'
-      case 'Suspensa':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Fracassada':
-        return 'bg-gray-100 text-gray-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Em Andamento':
-        return AlertCircle
-      case 'Homologada':
-        return CheckCircle
-      case 'Cancelada':
-        return AlertCircle
-      default:
-        return AlertCircle
-    }
-  }
-
-  const formatCurrency = (value: string) => {
-    const numValue = parseFloat(value)
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(numValue)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (editingId) {
-      // Editar licitação existente
-      setLicitacoes(prev => prev.map(l => 
-        l.id === editingId ? { ...l, ...formData, valorEstimado: formData.valorEstimado, participantes: parseInt(formData.participantes.toString()) } : l
-      ))
-    } else {
-      // Adicionar nova licitação
-      const newLicitacao = {
-        ...formData,
-        id: Date.now(),
-        valorEstimado: formData.valorEstimado,
-        participantes: parseInt(formData.participantes.toString())
-      }
-      setLicitacoes(prev => [...prev, newLicitacao])
-    }
-    
-    // Limpar formulário
+  const resetForm = () => {
     setFormData({
       numero: '',
+      ano: new Date().getFullYear(),
+      modalidade: 'PREGAO_ELETRONICO',
+      tipo: 'MENOR_PRECO',
       objeto: '',
-      modalidade: 'Pregão Eletrônico',
-      status: 'Em Andamento',
-      dataAbertura: '',
-      dataEncerramento: '',
       valorEstimado: '',
-      participantes: 0,
-      arquivo: ''
+      dataPublicacao: '',
+      dataAbertura: '',
+      horaAbertura: '',
+      dataEntregaPropostas: '',
+      situacao: 'EM_ANDAMENTO',
+      unidadeGestora: 'Camara Municipal',
+      linkEdital: '',
+      observacoes: ''
     })
-    setShowForm(false)
     setEditingId(null)
+    setShowForm(false)
   }
 
-  const handleEdit = (licitacao: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!formData.numero || !formData.objeto || !formData.dataAbertura) {
+      toast.error('Preencha os campos obrigatorios')
+      return
+    }
+
+    const data = {
+      ...formData,
+      valorEstimado: formData.valorEstimado ? parseFloat(formData.valorEstimado) : null
+    }
+
+    if (editingId) {
+      await update(editingId, data)
+    } else {
+      await create(data)
+    }
+
+    resetForm()
+  }
+
+  const handleEdit = (licitacao: Licitacao) => {
     setFormData({
-      ...licitacao,
-      participantes: licitacao.participantes.toString()
+      numero: licitacao.numero,
+      ano: licitacao.ano,
+      modalidade: licitacao.modalidade,
+      tipo: licitacao.tipo,
+      objeto: licitacao.objeto,
+      valorEstimado: licitacao.valorEstimado?.toString() || '',
+      dataPublicacao: licitacao.dataPublicacao ? licitacao.dataPublicacao.split('T')[0] : '',
+      dataAbertura: licitacao.dataAbertura.split('T')[0],
+      horaAbertura: licitacao.horaAbertura || '',
+      dataEntregaPropostas: licitacao.dataEntregaPropostas ? licitacao.dataEntregaPropostas.split('T')[0] : '',
+      situacao: licitacao.situacao,
+      unidadeGestora: licitacao.unidadeGestora || '',
+      linkEdital: licitacao.linkEdital || '',
+      observacoes: licitacao.observacoes || ''
     })
     setEditingId(licitacao.id)
     setShowForm(true)
   }
 
-  const handleDelete = (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta licitação?')) {
-      setLicitacoes(prev => prev.filter(l => l.id !== id))
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta licitacao?')) {
+      await remove(id)
     }
   }
 
-  const filteredLicitacoes = licitacoes.filter(licitacao =>
-    licitacao.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    licitacao.objeto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    licitacao.modalidade.toLowerCase().includes(searchTerm.toLowerCase())
+  const getSituacaoColor = (situacao: string) => {
+    switch (situacao) {
+      case 'HOMOLOGADA': return 'bg-green-100 text-green-800'
+      case 'EM_ANDAMENTO': return 'bg-blue-100 text-blue-800'
+      case 'DESERTA':
+      case 'FRACASSADA': return 'bg-yellow-100 text-yellow-800'
+      case 'REVOGADA':
+      case 'ANULADA': return 'bg-red-100 text-red-800'
+      case 'SUSPENSA': return 'bg-orange-100 text-orange-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const filteredLicitacoes = licitacoes.filter(l =>
+    l.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    l.objeto.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="h-8 w-8 text-blue-600" />
-            Gerenciar Licitações
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Cadastre e gerencie as licitações da Câmara Municipal
-          </p>
+          <h1 className="text-2xl font-bold">Licitacoes</h1>
+          <p className="text-muted-foreground">Gerencie as licitacoes da Camara</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Licitação
+        <Button onClick={() => setShowForm(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nova Licitacao
         </Button>
       </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">
-              {licitacoes.length}
-            </div>
-            <p className="text-sm text-gray-600">Total de Licitações</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">
-              {licitacoes.filter(l => l.status === 'Homologada').length}
-            </div>
-            <p className="text-sm text-gray-600">Homologadas</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-orange-600">
-              {licitacoes.filter(l => l.status === 'Em Andamento').length}
-            </div>
-            <p className="text-sm text-gray-600">Em Andamento</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-purple-600">
-              {formatCurrency(licitacoes.reduce((acc, l) => acc + parseFloat(l.valorEstimado), 0).toString())}
-            </div>
-            <p className="text-sm text-gray-600">Valor Total</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Busca */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar licitações..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Formulário */}
       {showForm && (
         <Card>
-          <CardHeader>
-            <CardTitle>
-              {editingId ? 'Editar Licitação' : 'Nova Licitação'}
-            </CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>{editingId ? 'Editar Licitacao' : 'Nova Licitacao'}</CardTitle>
+            <Button variant="ghost" size="icon" onClick={resetForm}>
+              <X className="h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="numero">Número da Licitação</Label>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>Numero *</Label>
                   <Input
-                    id="numero"
                     value={formData.numero}
-                    onChange={(e) => setFormData({...formData, numero: e.target.value})}
-                    placeholder="Ex: 001/2025"
-                    required
+                    onChange={e => setFormData({ ...formData, numero: e.target.value })}
+                    placeholder="001/2025"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="modalidade">Modalidade</Label>
+                <div>
+                  <Label>Ano</Label>
+                  <Input
+                    type="number"
+                    value={formData.ano}
+                    onChange={e => setFormData({ ...formData, ano: parseInt(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <Label>Modalidade</Label>
                   <select
-                    id="modalidade"
+                    className="w-full px-3 py-2 border rounded-md"
                     value={formData.modalidade}
-                    onChange={(e) => setFormData({...formData, modalidade: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    onChange={e => setFormData({ ...formData, modalidade: e.target.value })}
                   >
-                    <option value="Pregão Eletrônico">Pregão Eletrônico</option>
-                    <option value="Concorrência">Concorrência</option>
-                    <option value="Tomada de Preços">Tomada de Preços</option>
-                    <option value="Convite">Convite</option>
+                    {modalidades.map(m => (
+                      <option key={m} value={m}>{m.replace(/_/g, ' ')}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Tipo</Label>
+                  <select
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.tipo}
+                    onChange={e => setFormData({ ...formData, tipo: e.target.value })}
+                  >
+                    {tiposLicitacao.map(t => (
+                      <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="objeto">Objeto da Licitação</Label>
+              <div>
+                <Label>Objeto *</Label>
                 <textarea
-                  id="objeto"
+                  className="w-full px-3 py-2 border rounded-md min-h-[100px]"
                   value={formData.objeto}
-                  onChange={(e) => setFormData({...formData, objeto: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md h-20 resize-none"
-                  placeholder="Descreva o objeto da licitação..."
-                  required
+                  onChange={e => setFormData({ ...formData, objeto: e.target.value })}
+                  placeholder="Descricao do objeto da licitacao"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dataAbertura">Data de Abertura</Label>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>Valor Estimado (R$)</Label>
                   <Input
-                    id="dataAbertura"
-                    type="date"
-                    value={formData.dataAbertura}
-                    onChange={(e) => setFormData({...formData, dataAbertura: e.target.value})}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dataEncerramento">Data de Encerramento</Label>
-                  <Input
-                    id="dataEncerramento"
-                    type="date"
-                    value={formData.dataEncerramento}
-                    onChange={(e) => setFormData({...formData, dataEncerramento: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="valorEstimado">Valor Estimado (R$)</Label>
-                  <Input
-                    id="valorEstimado"
                     type="number"
                     step="0.01"
                     value={formData.valorEstimado}
-                    onChange={(e) => setFormData({...formData, valorEstimado: e.target.value})}
-                    placeholder="0.00"
-                    required
+                    onChange={e => setFormData({ ...formData, valorEstimado: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="participantes">Número de Participantes</Label>
+                <div>
+                  <Label>Data Publicacao</Label>
                   <Input
-                    id="participantes"
-                    type="number"
-                    value={formData.participantes}
-                    onChange={(e) => setFormData({...formData, participantes: parseInt(e.target.value)})}
-                    min="0"
+                    type="date"
+                    value={formData.dataPublicacao}
+                    onChange={e => setFormData({ ...formData, dataPublicacao: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Data Abertura *</Label>
+                  <Input
+                    type="date"
+                    value={formData.dataAbertura}
+                    onChange={e => setFormData({ ...formData, dataAbertura: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Hora Abertura</Label>
+                  <Input
+                    type="time"
+                    value={formData.horaAbertura}
+                    onChange={e => setFormData({ ...formData, horaAbertura: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Situacao</Label>
                   <select
-                    id="status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.situacao}
+                    onChange={e => setFormData({ ...formData, situacao: e.target.value })}
                   >
-                    <option value="Em Andamento">Em Andamento</option>
-                    <option value="Homologada">Homologada</option>
-                    <option value="Cancelada">Cancelada</option>
-                    <option value="Suspensa">Suspensa</option>
-                    <option value="Fracassada">Fracassada</option>
+                    {situacoes.map(s => (
+                      <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                    ))}
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="arquivo">Nome do Arquivo</Label>
+                <div>
+                  <Label>Unidade Gestora</Label>
                   <Input
-                    id="arquivo"
-                    value={formData.arquivo}
-                    onChange={(e) => setFormData({...formData, arquivo: e.target.value})}
-                    placeholder="Ex: edital-001-2025.pdf"
+                    value={formData.unidadeGestora}
+                    onChange={e => setFormData({ ...formData, unidadeGestora: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Link do Edital</Label>
+                  <Input
+                    value={formData.linkEdital}
+                    onChange={e => setFormData({ ...formData, linkEdital: e.target.value })}
+                    placeholder="URL do edital"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
+              <div>
+                <Label>Observacoes</Label>
+                <textarea
+                  className="w-full px-3 py-2 border rounded-md"
+                  value={formData.observacoes}
+                  onChange={e => setFormData({ ...formData, observacoes: e.target.value })}
+                />
+              </div>
+
+              <div className="flex gap-2">
                 <Button type="submit">
-                  {editingId ? 'Atualizar' : 'Salvar'}
+                  {editingId ? 'Atualizar' : 'Criar'} Licitacao
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => {
-                    setShowForm(false)
-                    setEditingId(null)
-                    setFormData({
-                      numero: '',
-                      objeto: '',
-                      modalidade: 'Pregão Eletrônico',
-                      status: 'Em Andamento',
-                      dataAbertura: '',
-                      dataEncerramento: '',
-                      valorEstimado: '',
-                      participantes: 0,
-                      arquivo: ''
-                    })
-                  }}
-                >
+                <Button type="button" variant="outline" onClick={resetForm}>
                   Cancelar
                 </Button>
               </div>
@@ -410,100 +332,70 @@ export default function LicitacoesAdminPage() {
         </Card>
       )}
 
-      {/* Lista de Licitações */}
-      <div className="space-y-4">
-        {filteredLicitacoes.map((licitacao) => {
-          const StatusIcon = getStatusIcon(licitacao.status)
-          return (
-            <Card key={licitacao.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Licitação {licitacao.numero}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge className={getModalidadeColor(licitacao.modalidade)}>
-                          {licitacao.modalidade}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por numero ou objeto..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredLicitacoes.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Nenhuma licitacao encontrada
+              </p>
+            ) : (
+              filteredLicitacoes.map(licitacao => (
+                <Card key={licitacao.id} className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="font-semibold">{licitacao.numero}</span>
+                        <Badge className={getSituacaoColor(licitacao.situacao)}>
+                          {licitacao.situacao.replace(/_/g, ' ')}
                         </Badge>
-                        <Badge className={getStatusColor(licitacao.status)}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {licitacao.status}
+                        <Badge variant="outline">
+                          {licitacao.modalidade.replace(/_/g, ' ')}
                         </Badge>
                       </div>
+                      <p className="text-sm text-muted-foreground mb-2">{licitacao.objeto}</p>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Abertura: {new Date(licitacao.dataAbertura).toLocaleDateString('pt-BR')}
+                        </span>
+                        {licitacao.valorEstimado && (
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            R$ {Number(licitacao.valorEstimado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(licitacao)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(licitacao.id)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
                     </div>
                   </div>
-                  
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(licitacao)}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(licitacao.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-
-                <p className="text-gray-700 mb-4">
-                  {licitacao.objeto}
-                </p>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-gray-600">Abertura</p>
-                      <p className="font-medium text-gray-900">
-                        {new Date(licitacao.dataAbertura).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-gray-600">Encerramento</p>
-                      <p className="font-medium text-gray-900">
-                        {new Date(licitacao.dataEncerramento).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-gray-600">Valor Estimado</p>
-                      <p className="font-medium text-gray-900">
-                        {formatCurrency(licitacao.valorEstimado)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-gray-600">Participantes</p>
-                      <p className="font-medium text-gray-900">
-                        {licitacao.participantes}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                </Card>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

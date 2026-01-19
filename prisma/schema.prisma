@@ -964,3 +964,383 @@ model ConfiguracaoTramitacao {
 
   @@map("configuracoes_tramitacao")
 }
+
+// ============================================
+// MODELOS DE TRANSPARENCIA PUBLICA
+// ============================================
+
+// Enums para Transparencia
+enum ModalidadeLicitacao {
+  PREGAO_ELETRONICO
+  PREGAO_PRESENCIAL
+  CONCORRENCIA
+  TOMADA_DE_PRECOS
+  CONVITE
+  CONCURSO
+  LEILAO
+  DISPENSA
+  INEXIGIBILIDADE
+}
+
+enum TipoLicitacao {
+  MENOR_PRECO
+  MELHOR_TECNICA
+  TECNICA_E_PRECO
+  MAIOR_LANCE
+}
+
+enum SituacaoLicitacao {
+  EM_ANDAMENTO
+  HOMOLOGADA
+  ADJUDICADA
+  REVOGADA
+  ANULADA
+  DESERTA
+  FRACASSADA
+  SUSPENSA
+}
+
+enum ModalidadeContrato {
+  CONTRATO_ORIGINAL
+  ADITIVO
+  APOSTILAMENTO
+  RESCISAO
+}
+
+enum SituacaoContrato {
+  VIGENTE
+  ENCERRADO
+  RESCINDIDO
+  SUSPENSO
+}
+
+enum SituacaoConvenio {
+  EM_EXECUCAO
+  CONCLUIDO
+  RESCINDIDO
+  SUSPENSO
+  PRESTACAO_CONTAS
+}
+
+enum CategoriaReceita {
+  RECEITA_CORRENTE
+  RECEITA_CAPITAL
+  RECEITA_INTRAORCAMENTARIA
+}
+
+enum OrigemReceita {
+  TRIBUTARIA
+  CONTRIBUICOES
+  PATRIMONIAL
+  SERVICOS
+  TRANSFERENCIAS
+  OUTRAS
+}
+
+enum SituacaoReceita {
+  PREVISTA
+  ARRECADADA
+  PARCIALMENTE_ARRECADADA
+  CANCELADA
+}
+
+enum SituacaoDespesa {
+  EMPENHADA
+  LIQUIDADA
+  PAGA
+  ANULADA
+  PARCIALMENTE_PAGA
+}
+
+enum SituacaoServidor {
+  ATIVO
+  APOSENTADO
+  AFASTADO
+  CEDIDO
+  LICENCIADO
+  EXONERADO
+  FALECIDO
+}
+
+enum VinculoServidor {
+  EFETIVO
+  COMISSIONADO
+  TEMPORARIO
+  ESTAGIARIO
+  TERCEIRIZADO
+}
+
+enum TipoBem {
+  MOVEL
+  IMOVEL
+}
+
+enum SituacaoBem {
+  EM_USO
+  OCIOSO
+  INSERVIVEL
+  BAIXADO
+  CEDIDO
+  EM_MANUTENCAO
+}
+
+// Modelo de Licitacao
+model Licitacao {
+  id                    String             @id @default(cuid())
+  numero                String
+  ano                   Int
+  modalidade            ModalidadeLicitacao
+  tipo                  TipoLicitacao      @default(MENOR_PRECO)
+  objeto                String             @db.Text
+  valorEstimado         Decimal?           @db.Decimal(15, 2)
+  dataPublicacao        DateTime?
+  dataAbertura          DateTime
+  horaAbertura          String?
+  dataEntregaPropostas  DateTime?
+  horaEntregaPropostas  String?
+  situacao              SituacaoLicitacao  @default(EM_ANDAMENTO)
+  unidadeGestora        String?
+  linkEdital            String?
+  linkAta               String?
+  arquivo               String?
+  observacoes           String?            @db.Text
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  contratos  Contrato[]
+  despesas   Despesa[]
+  documentos LicitacaoDocumento[]
+
+  @@unique([numero, ano])
+  @@index([situacao])
+  @@index([modalidade])
+  @@index([dataAbertura])
+  @@map("licitacoes")
+}
+
+model LicitacaoDocumento {
+  id           String   @id @default(cuid())
+  licitacaoId  String
+  titulo       String
+  tipo         String?  // edital, ata, anexo, etc
+  arquivo      String
+  tamanho      String?
+  dataUpload   DateTime @default(now())
+
+  licitacao Licitacao @relation(fields: [licitacaoId], references: [id], onDelete: Cascade)
+
+  @@map("licitacoes_documentos")
+}
+
+// Modelo de Contrato
+model Contrato {
+  id                String            @id @default(cuid())
+  numero            String
+  ano               Int
+  modalidade        ModalidadeContrato @default(CONTRATO_ORIGINAL)
+  objeto            String            @db.Text
+  contratado        String
+  cnpjCpf           String
+  valorTotal        Decimal           @db.Decimal(15, 2)
+  dataAssinatura    DateTime
+  vigenciaInicio    DateTime
+  vigenciaFim       DateTime
+  fiscalContrato    String?
+  situacao          SituacaoContrato  @default(VIGENTE)
+  licitacaoId       String?
+  contratoOrigemId  String?           // Para aditivos, referência ao contrato original
+  arquivo           String?
+  observacoes       String?           @db.Text
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  licitacao       Licitacao? @relation(fields: [licitacaoId], references: [id], onDelete: SetNull)
+  contratoOrigem  Contrato?  @relation("ContratoAditivos", fields: [contratoOrigemId], references: [id], onDelete: SetNull)
+  aditivos        Contrato[] @relation("ContratoAditivos")
+  despesas        Despesa[]
+
+  @@unique([numero, ano])
+  @@index([situacao])
+  @@index([contratado])
+  @@index([vigenciaFim])
+  @@map("contratos")
+}
+
+// Modelo de Convenio
+model Convenio {
+  id                  String           @id @default(cuid())
+  numero              String
+  ano                 Int
+  convenente          String
+  cnpjConvenente      String
+  orgaoConcedente     String
+  objeto              String           @db.Text
+  programa            String?
+  acao                String?
+  valorTotal          Decimal          @db.Decimal(15, 2)
+  valorRepasse        Decimal          @db.Decimal(15, 2)
+  valorContrapartida  Decimal          @db.Decimal(15, 2) @default(0)
+  dataCelebracao      DateTime
+  vigenciaInicio      DateTime
+  vigenciaFim         DateTime
+  responsavelTecnico  String?
+  situacao            SituacaoConvenio @default(EM_EXECUCAO)
+  fonteRecurso        String?
+  arquivo             String?
+  observacoes         String?          @db.Text
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  despesas Despesa[]
+
+  @@unique([numero, ano])
+  @@index([situacao])
+  @@index([convenente])
+  @@index([vigenciaFim])
+  @@map("convenios")
+}
+
+// Modelo de Receita
+model Receita {
+  id               String          @id @default(cuid())
+  numero           String?
+  ano              Int
+  mes              Int
+  data             DateTime
+  contribuinte     String?
+  cnpjCpf          String?
+  unidade          String?
+  categoria        CategoriaReceita @default(RECEITA_CORRENTE)
+  origem           OrigemReceita   @default(OUTRAS)
+  especie          String?
+  rubrica          String?
+  subrubrica       String?
+  alinea           String?
+  subalinea        String?
+  valorPrevisto    Decimal         @db.Decimal(15, 2) @default(0)
+  valorArrecadado  Decimal         @db.Decimal(15, 2) @default(0)
+  situacao         SituacaoReceita @default(PREVISTA)
+  fonteRecurso     String?
+  observacoes      String?         @db.Text
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([ano, mes])
+  @@index([categoria])
+  @@index([situacao])
+  @@map("receitas")
+}
+
+// Modelo de Despesa
+model Despesa {
+  id              String          @id @default(cuid())
+  numeroEmpenho   String
+  ano             Int
+  mes             Int
+  data            DateTime
+  credor          String
+  cnpjCpf         String
+  unidade         String?
+  elemento        String?
+  funcao          String?
+  subfuncao       String?
+  programa        String?
+  acao            String?
+  valorEmpenhado  Decimal         @db.Decimal(15, 2)
+  valorLiquidado  Decimal         @db.Decimal(15, 2) @default(0)
+  valorPago       Decimal         @db.Decimal(15, 2) @default(0)
+  situacao        SituacaoDespesa @default(EMPENHADA)
+  fonteRecurso    String?
+  modalidade      String?
+  licitacaoId     String?
+  contratoId      String?
+  convenioId      String?
+  observacoes     String?         @db.Text
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  licitacao Licitacao? @relation(fields: [licitacaoId], references: [id], onDelete: SetNull)
+  contrato  Contrato?  @relation(fields: [contratoId], references: [id], onDelete: SetNull)
+  convenio  Convenio?  @relation(fields: [convenioId], references: [id], onDelete: SetNull)
+
+  @@unique([numeroEmpenho, ano])
+  @@index([ano, mes])
+  @@index([credor])
+  @@index([situacao])
+  @@map("despesas")
+}
+
+// Modelo de Servidor
+model Servidor {
+  id              String          @id @default(cuid())
+  nome            String
+  cpf             String          @unique
+  matricula       String          @unique
+  cargo           String
+  funcao          String?
+  unidade         String?
+  lotacao         String?
+  vinculo         VinculoServidor @default(EFETIVO)
+  dataAdmissao    DateTime
+  dataDesligamento DateTime?
+  cargaHoraria    Int?            @default(40)
+  salarioBruto    Decimal         @db.Decimal(15, 2)
+  situacao        SituacaoServidor @default(ATIVO)
+  observacoes     String?         @db.Text
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([situacao])
+  @@index([vinculo])
+  @@index([unidade])
+  @@map("servidores")
+}
+
+// Modelo de Folha de Pagamento
+model FolhaPagamento {
+  id                String   @id @default(cuid())
+  competencia       String   // Ex: "2025/01"
+  mes               Int
+  ano               Int
+  totalServidores   Int      @default(0)
+  totalBruto        Decimal  @db.Decimal(15, 2) @default(0)
+  totalDeducoes     Decimal  @db.Decimal(15, 2) @default(0)
+  totalLiquido      Decimal  @db.Decimal(15, 2) @default(0)
+  dataProcessamento DateTime?
+  situacao          String   @default("PROCESSADA")
+  arquivo           String?
+  observacoes       String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([mes, ano])
+  @@index([ano])
+  @@map("folhas_pagamento")
+}
+
+// Modelo de Bem Patrimonial (Moveis e Imoveis)
+model BemPatrimonial {
+  id               String       @id @default(cuid())
+  tipo             TipoBem
+  tombamento       String       @unique
+  descricao        String
+  especificacao    String?      @db.Text
+  dataAquisicao    DateTime
+  valorAquisicao   Decimal      @db.Decimal(15, 2)
+  valorAtual       Decimal?     @db.Decimal(15, 2)
+  localizacao      String?
+  responsavel      String?
+  situacao         SituacaoBem  @default(EM_USO)
+  // Campos especificos para imoveis
+  matriculaImovel  String?
+  enderecoImovel   String?
+  areaImovel       Decimal?     @db.Decimal(15, 2)
+  // Comum
+  observacoes      String?      @db.Text
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([tipo])
+  @@index([situacao])
+  @@map("bens_patrimoniais")
+}
