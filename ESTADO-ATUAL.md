@@ -369,6 +369,21 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Correcao de Paginas com Dados Mock
+- **Problema**: 3 paginas usavam dados fictícios em vez do banco de dados
+- **Correcoes**:
+  - `/legislativo/sessoes` - Alterado de `/api/sessoes` (autenticada) para `/api/dados-abertos/sessoes` (pública)
+  - `/legislativo/proposicoes` - Removido array mock, agora usa `/api/dados-abertos/proposicoes`
+  - `/transparencia/leis` - Removido array mock, agora usa `/api/dados-abertos/publicacoes?tipo=LEI`
+- **Resultado**: Paginas agora exibem dados reais do banco de dados
+  - 39 sessoes cadastradas
+  - 72 proposicoes cadastradas
+  - 0 publicacoes (tabela vazia - necessita cadastro)
+- **Arquivos modificados**:
+  - `src/app/legislativo/sessoes/page.tsx`
+  - `src/app/legislativo/proposicoes/page.tsx`
+  - `src/app/transparencia/leis/page.tsx`
+
 ### 2026-01-19 - Deploy para Producao (Vercel + Supabase)
 - **Ambiente**: Vercel (plano Hobby)
 - **Banco de Dados**: Supabase PostgreSQL
