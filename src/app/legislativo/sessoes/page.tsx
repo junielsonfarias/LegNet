@@ -7,35 +7,57 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Calendar, Clock, Users, FileText, Play, CheckCircle, XCircle, AlertCircle, Search, Filter, X, Download, Loader2, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
-import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 import { toast } from 'sonner'
+
+// Interface para sessão da API pública
+interface SessaoPublica {
+  id: string
+  numero: number
+  tipo: string
+  data: string
+  horario: string | null
+  local: string | null
+  status: string
+  descricao: string | null
+  ata: string | null
+  presentes: number
+  legislatura: {
+    numero: number
+    anoInicio: number
+    anoFim: number
+  } | null
+}
 
 export default function SessoesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [tipoFilter, setTipoFilter] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [anoFilter, setAnoFilter] = useState<number | null>(null)
-  const [sessoes, setSessoes] = useState<SessaoApi[]>([])
+  const [sessoes, setSessoes] = useState<SessaoPublica[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   const breadcrumbs = useBreadcrumbs()
 
-  // Função para carregar dados da API
+  // Função para carregar dados da API pública (sem autenticação)
   const fetchSessoes = async () => {
     try {
       setLoading(true)
-      const { data } = await sessoesApi.getAll()
-      console.log('Sessões carregadas da API:', data)
-      console.log('Total de sessões:', data.length)
-      if (data.length > 0) {
-        console.log('Primeira sessão:', data[0])
+      const response = await fetch('/api/dados-abertos/sessoes?limit=100')
+      const result = await response.json()
+
+      if (result.dados) {
+        console.log('Sessões carregadas da API pública:', result.dados.length)
+        setSessoes(result.dados)
+      } else {
+        console.error('Formato de resposta inesperado:', result)
+        setSessoes([])
       }
-      setSessoes(data)
     } catch (error) {
       console.error('Erro ao carregar sessões:', error)
       toast.error('Erro ao carregar sessões')
+      setSessoes([])
     } finally {
       setLoading(false)
     }
