@@ -8,7 +8,7 @@ async function main() {
 
   // Criar usuário administrador
   const hashedPassword = await bcrypt.hash('admin123', 12)
-  
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@camaramojui.com' },
     update: {},
@@ -22,12 +22,22 @@ async function main() {
 
   console.log('✅ Usuário administrador criado:', admin.email)
 
-  // Criar legislatura atual
-  const legislatura = await prisma.legislatura.create({
-    data: {
+  // ========================================
+  // 1. CRIAR LEGISLATURA
+  // ========================================
+  const legislatura = await prisma.legislatura.upsert({
+    where: { id: 'leg-2025-2028' },
+    update: {
+      dataInicio: new Date('2025-01-01'),
+      dataFim: new Date('2028-12-31'),
+    },
+    create: {
+      id: 'leg-2025-2028',
       numero: 1,
       anoInicio: 2025,
       anoFim: 2028,
+      dataInicio: new Date('2025-01-01'),
+      dataFim: new Date('2028-12-31'),
       ativa: true,
       descricao: 'Legislatura 2025/2028 - Câmara Municipal de Mojuí dos Campos',
     },
@@ -35,205 +45,606 @@ async function main() {
 
   console.log('✅ Legislatura criada:', legislatura.descricao)
 
-  // Criar parlamentares (baseado nos dados do site original)
-  const parlamentares = [
+  // ========================================
+  // 2. CRIAR PERÍODO DA LEGISLATURA (Biênio)
+  // ========================================
+  const periodo = await prisma.periodoLegislatura.upsert({
+    where: {
+      legislaturaId_numero: {
+        legislaturaId: legislatura.id,
+        numero: 1
+      }
+    },
+    update: {},
+    create: {
+      legislaturaId: legislatura.id,
+      numero: 1,
+      dataInicio: new Date('2025-01-01'),
+      dataFim: new Date('2026-12-31'),
+      descricao: '1º Biênio (2025-2026)',
+    },
+  })
+
+  console.log('✅ Período criado:', periodo.descricao)
+
+  // ========================================
+  // 3. CRIAR CARGOS DA MESA DIRETORA
+  // ========================================
+  const cargosDefinicao = [
+    { nome: 'Presidente', ordem: 1, obrigatorio: true },
+    { nome: 'Vice-Presidente', ordem: 2, obrigatorio: true },
+    { nome: '1º Secretário', ordem: 3, obrigatorio: true },
+    { nome: '2º Secretário', ordem: 4, obrigatorio: true },
+  ]
+
+  const cargosCriados: { [key: string]: any } = {}
+
+  for (const cargoData of cargosDefinicao) {
+    const cargo = await prisma.cargoMesaDiretora.upsert({
+      where: {
+        periodoId_nome: {
+          periodoId: periodo.id,
+          nome: cargoData.nome
+        }
+      },
+      update: {},
+      create: {
+        periodoId: periodo.id,
+        nome: cargoData.nome,
+        ordem: cargoData.ordem,
+        obrigatorio: cargoData.obrigatorio,
+      },
+    })
+    cargosCriados[cargoData.nome] = cargo
+  }
+
+  console.log('✅ Cargos da Mesa Diretora criados:', Object.keys(cargosCriados).length)
+
+  // ========================================
+  // 4. CRIAR PARLAMENTARES
+  // ========================================
+  const parlamentaresData = [
     {
+      id: 'parl-pantoja',
       nome: 'Francisco Pereira Pantoja',
       apelido: 'Pantoja do Cartório',
       email: 'pantoja@camaramojui.com',
       telefone: '(93) 99999-0001',
       partido: 'Partido A',
-      cargo: 'PRESIDENTE',
-      legislatura: '2025/2028',
+      cargo: 'PRESIDENTE' as const,
+      cargoMesa: 'Presidente',
       biografia: 'Presidente da Câmara Municipal de Mojuí dos Campos para a legislatura 2025/2028.',
     },
     {
+      id: 'parl-diego',
       nome: 'Diego Oliveira da Silva',
       apelido: 'Diego do Zé Neto',
       email: 'diego@camaramojui.com',
       telefone: '(93) 99999-0002',
       partido: 'Partido B',
-      cargo: 'VICE_PRESIDENTE',
-      legislatura: '2025/2028',
+      cargo: 'VICE_PRESIDENTE' as const,
+      cargoMesa: 'Vice-Presidente',
       biografia: 'Vice-presidente da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-mickael',
       nome: 'Mickael Christyan Alves de Aguiar',
       apelido: 'Mickael Aguiar',
       email: 'mickael@camaramojui.com',
       telefone: '(93) 99999-0003',
       partido: 'Partido C',
-      cargo: 'PRIMEIRO_SECRETARIO',
-      legislatura: '2025/2028',
+      cargo: 'PRIMEIRO_SECRETARIO' as const,
+      cargoMesa: '1º Secretário',
       biografia: '1º Secretário da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-jesa',
       nome: 'Jesanias da Silva Pessoa',
       apelido: 'Jesa do Palhalzinho',
       email: 'jesa@camaramojui.com',
       telefone: '(93) 99999-0004',
       partido: 'Partido D',
-      cargo: 'SEGUNDO_SECRETARIO',
-      legislatura: '2025/2028',
+      cargo: 'SEGUNDO_SECRETARIO' as const,
+      cargoMesa: '2º Secretário',
       biografia: '2º Secretário da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-arnaldo',
       nome: 'Antonio Arnaldo Oliveira de Lima',
       apelido: 'Arnaldo Galvão',
       email: 'arnaldo@camaramojui.com',
       telefone: '(93) 99999-0005',
       partido: 'Partido E',
-      cargo: 'VEREADOR',
-      legislatura: '2025/2028',
+      cargo: 'VEREADOR' as const,
+      cargoMesa: null,
       biografia: 'Vereador da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-clei',
       nome: 'Antonio Everaldo da Silva',
       apelido: 'Clei do Povo',
       email: 'clei@camaramojui.com',
       telefone: '(93) 99999-0006',
       partido: 'Partido F',
-      cargo: 'VEREADOR',
-      legislatura: '2025/2028',
+      cargo: 'VEREADOR' as const,
+      cargoMesa: null,
       biografia: 'Vereador da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-frank',
       nome: 'Franklin Benjamin Portela Machado',
       apelido: 'Enfermeiro Frank',
       email: 'frank@camaramojui.com',
       telefone: '(93) 99999-0007',
       partido: 'Partido G',
-      cargo: 'VEREADOR',
-      legislatura: '2025/2028',
+      cargo: 'VEREADOR' as const,
+      cargoMesa: null,
       biografia: 'Vereador da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-everaldo',
       nome: 'Joilson Nogueira Xavier',
       apelido: 'Everaldo Camilo',
       email: 'everaldo@camaramojui.com',
       telefone: '(93) 99999-0008',
       partido: 'Partido H',
-      cargo: 'VEREADOR',
-      legislatura: '2025/2028',
+      cargo: 'VEREADOR' as const,
+      cargoMesa: null,
       biografia: 'Vereador da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-joilson',
       nome: 'José Josiclei Silva de Oliveira',
       apelido: 'Joilson da Santa Júlia',
       email: 'joilson@camaramojui.com',
       telefone: '(93) 99999-0009',
       partido: 'Partido I',
-      cargo: 'VEREADOR',
-      legislatura: '2025/2028',
+      cargo: 'VEREADOR' as const,
+      cargoMesa: null,
       biografia: 'Vereador da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-reges',
       nome: 'Reginaldo Emanuel Rabelo da Silva',
       apelido: 'Reges Rabelo',
       email: 'reges@camaramojui.com',
       telefone: '(93) 99999-0010',
       partido: 'Partido J',
-      cargo: 'VEREADOR',
-      legislatura: '2025/2028',
+      cargo: 'VEREADOR' as const,
+      cargoMesa: null,
       biografia: 'Vereador da Câmara Municipal de Mojuí dos Campos.',
     },
     {
+      id: 'parl-wallace',
       nome: 'Wallace Pessoa Oliveira',
       apelido: 'Wallace Lalá',
       email: 'wallace@camaramojui.com',
       telefone: '(93) 99999-0011',
       partido: 'Partido K',
-      cargo: 'VEREADOR',
-      legislatura: '2025/2028',
+      cargo: 'VEREADOR' as const,
+      cargoMesa: null,
       biografia: 'Vereador da Câmara Municipal de Mojuí dos Campos.',
     },
   ]
 
-  for (const parlamentar of parlamentares) {
-    await prisma.parlamentar.create({
-      data: {
-        ...parlamentar,
-        cargo: parlamentar.cargo as any,
+  const parlamentaresCriados: { [key: string]: any } = {}
+
+  for (const parlamentarData of parlamentaresData) {
+    const parlamentar = await prisma.parlamentar.upsert({
+      where: { id: parlamentarData.id },
+      update: {
+        nome: parlamentarData.nome,
+        apelido: parlamentarData.apelido,
+        email: parlamentarData.email,
+        telefone: parlamentarData.telefone,
+        partido: parlamentarData.partido,
+        cargo: parlamentarData.cargo,
+        biografia: parlamentarData.biografia,
+      },
+      create: {
+        id: parlamentarData.id,
+        nome: parlamentarData.nome,
+        apelido: parlamentarData.apelido,
+        email: parlamentarData.email,
+        telefone: parlamentarData.telefone,
+        partido: parlamentarData.partido,
+        cargo: parlamentarData.cargo,
+        legislatura: '2025/2028',
+        biografia: parlamentarData.biografia,
+      },
+    })
+    parlamentaresCriados[parlamentarData.id] = { ...parlamentar, cargoMesa: parlamentarData.cargoMesa }
+  }
+
+  console.log('✅ Parlamentares criados:', Object.keys(parlamentaresCriados).length)
+
+  // ========================================
+  // 5. CRIAR MANDATOS
+  // ========================================
+  for (const email of Object.keys(parlamentaresCriados)) {
+    const parlamentar = parlamentaresCriados[email]
+    await prisma.mandato.upsert({
+      where: {
+        parlamentarId_legislaturaId: {
+          parlamentarId: parlamentar.id,
+          legislaturaId: legislatura.id
+        }
+      },
+      update: {},
+      create: {
+        parlamentarId: parlamentar.id,
+        legislaturaId: legislatura.id,
+        cargo: parlamentar.cargo,
+        dataInicio: new Date('2025-01-01'),
+        ativo: true,
+        numeroVotos: Math.floor(Math.random() * 500) + 100, // Votos aleatórios para exemplo
       },
     })
   }
 
-  console.log('✅ Parlamentares criados:', parlamentares.length)
+  console.log('✅ Mandatos criados:', Object.keys(parlamentaresCriados).length)
 
-  // Criar comissões
-  const comissoes = [
+  // ========================================
+  // 6. CRIAR MESA DIRETORA
+  // ========================================
+  const mesaDiretora = await prisma.mesaDiretora.upsert({
+    where: { id: 'mesa-2025-2026' },
+    update: {},
+    create: {
+      id: 'mesa-2025-2026',
+      periodoId: periodo.id,
+      ativa: true,
+      descricao: 'Mesa Diretora do 1º Biênio (2025-2026)',
+    },
+  })
+
+  console.log('✅ Mesa Diretora criada:', mesaDiretora.descricao)
+
+  // ========================================
+  // 7. CRIAR MEMBROS DA MESA DIRETORA
+  // ========================================
+  for (const email of Object.keys(parlamentaresCriados)) {
+    const parlamentar = parlamentaresCriados[email]
+    if (parlamentar.cargoMesa && cargosCriados[parlamentar.cargoMesa]) {
+      await prisma.membroMesaDiretora.upsert({
+        where: {
+          mesaDiretoraId_cargoId_ativo: {
+            mesaDiretoraId: mesaDiretora.id,
+            cargoId: cargosCriados[parlamentar.cargoMesa].id,
+            ativo: true
+          }
+        },
+        update: {},
+        create: {
+          mesaDiretoraId: mesaDiretora.id,
+          parlamentarId: parlamentar.id,
+          cargoId: cargosCriados[parlamentar.cargoMesa].id,
+          dataInicio: new Date('2025-01-01'),
+          ativo: true,
+        },
+      })
+    }
+  }
+
+  console.log('✅ Membros da Mesa Diretora vinculados')
+
+  // ========================================
+  // 8. CRIAR COMISSÕES
+  // ========================================
+  const comissoesData = [
     {
       nome: 'Comissão de Constituição e Justiça',
+      sigla: 'CCJ',
       descricao: 'Comissão responsável pela análise de constitucionalidade e legalidade das proposições.',
-      tipo: 'PERMANENTE',
+      tipo: 'PERMANENTE' as const,
     },
     {
       nome: 'Comissão de Finanças e Orçamento',
+      sigla: 'CFO',
       descricao: 'Comissão responsável pela análise de matérias financeiras e orçamentárias.',
-      tipo: 'PERMANENTE',
+      tipo: 'PERMANENTE' as const,
     },
     {
       nome: 'Comissão de Educação e Cultura',
+      sigla: 'CEC',
       descricao: 'Comissão responsável por matérias relacionadas à educação e cultura.',
-      tipo: 'PERMANENTE',
+      tipo: 'PERMANENTE' as const,
     },
     {
       nome: 'Comissão de Saúde e Assistência Social',
+      sigla: 'CSAS',
       descricao: 'Comissão responsável por matérias de saúde e assistência social.',
-      tipo: 'PERMANENTE',
+      tipo: 'PERMANENTE' as const,
     },
   ]
 
-  for (const comissao of comissoes) {
-    await prisma.comissao.create({
-      data: {
-        ...comissao,
-        tipo: comissao.tipo as any,
+  const comissoesCriadas: { [key: string]: any } = {}
+
+  for (const comissaoData of comissoesData) {
+    const comissao = await prisma.comissao.upsert({
+      where: { id: `comissao-${comissaoData.sigla}` },
+      update: {},
+      create: {
+        id: `comissao-${comissaoData.sigla}`,
+        nome: comissaoData.nome,
+        descricao: comissaoData.descricao,
+        tipo: comissaoData.tipo,
+        ativa: true,
       },
     })
+    comissoesCriadas[comissaoData.sigla] = comissao
   }
 
-  console.log('✅ Comissões criadas:', comissoes.length)
+  console.log('✅ Comissões criadas:', Object.keys(comissoesCriadas).length)
 
-  // Criar algumas sessões de exemplo
-  const sessoes = [
+  // ========================================
+  // 9. CRIAR MEMBROS DAS COMISSÕES
+  // ========================================
+  const parlamentaresArray = Object.values(parlamentaresCriados)
+
+  // CCJ - Presidente: Pantoja, Membros: Diego, Arnaldo
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CCJ'].id,
+        parlamentarId: parlamentaresCriados['parl-pantoja'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CCJ'].id,
+      parlamentarId: parlamentaresCriados['parl-pantoja'].id,
+      cargo: 'PRESIDENTE',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CCJ'].id,
+        parlamentarId: parlamentaresCriados['parl-diego'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CCJ'].id,
+      parlamentarId: parlamentaresCriados['parl-diego'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CCJ'].id,
+        parlamentarId: parlamentaresCriados['parl-arnaldo'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CCJ'].id,
+      parlamentarId: parlamentaresCriados['parl-arnaldo'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  // CFO - Presidente: Diego, Membros: Mickael, Clei
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CFO'].id,
+        parlamentarId: parlamentaresCriados['parl-diego'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CFO'].id,
+      parlamentarId: parlamentaresCriados['parl-diego'].id,
+      cargo: 'PRESIDENTE',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CFO'].id,
+        parlamentarId: parlamentaresCriados['parl-mickael'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CFO'].id,
+      parlamentarId: parlamentaresCriados['parl-mickael'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CFO'].id,
+        parlamentarId: parlamentaresCriados['parl-clei'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CFO'].id,
+      parlamentarId: parlamentaresCriados['parl-clei'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  // CEC - Presidente: Mickael, Membros: Jesa, Frank
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CEC'].id,
+        parlamentarId: parlamentaresCriados['parl-mickael'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CEC'].id,
+      parlamentarId: parlamentaresCriados['parl-mickael'].id,
+      cargo: 'PRESIDENTE',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CEC'].id,
+        parlamentarId: parlamentaresCriados['parl-jesa'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CEC'].id,
+      parlamentarId: parlamentaresCriados['parl-jesa'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CEC'].id,
+        parlamentarId: parlamentaresCriados['parl-frank'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CEC'].id,
+      parlamentarId: parlamentaresCriados['parl-frank'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  // CSAS - Presidente: Jesa, Membros: Everaldo, Joilson
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CSAS'].id,
+        parlamentarId: parlamentaresCriados['parl-jesa'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CSAS'].id,
+      parlamentarId: parlamentaresCriados['parl-jesa'].id,
+      cargo: 'PRESIDENTE',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CSAS'].id,
+        parlamentarId: parlamentaresCriados['parl-everaldo'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CSAS'].id,
+      parlamentarId: parlamentaresCriados['parl-everaldo'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  await prisma.membroComissao.upsert({
+    where: {
+      comissaoId_parlamentarId: {
+        comissaoId: comissoesCriadas['CSAS'].id,
+        parlamentarId: parlamentaresCriados['parl-joilson'].id
+      }
+    },
+    update: {},
+    create: {
+      comissaoId: comissoesCriadas['CSAS'].id,
+      parlamentarId: parlamentaresCriados['parl-joilson'].id,
+      cargo: 'MEMBRO',
+      dataInicio: new Date('2025-01-01'),
+      ativo: true,
+    },
+  })
+
+  console.log('✅ Membros das Comissões vinculados')
+
+  // ========================================
+  // 10. CRIAR SESSÕES VINCULADAS À LEGISLATURA
+  // ========================================
+  const sessoesData = [
     {
       numero: 1,
-      tipo: 'ORDINARIA',
+      tipo: 'ORDINARIA' as const,
       data: new Date('2025-01-15T14:00:00Z'),
-      status: 'CONCLUIDA',
+      status: 'CONCLUIDA' as const,
       descricao: 'Primeira sessão ordinária da legislatura 2025/2028',
     },
     {
       numero: 2,
-      tipo: 'ORDINARIA',
+      tipo: 'ORDINARIA' as const,
       data: new Date('2025-01-29T14:00:00Z'),
-      status: 'CONCLUIDA',
+      status: 'CONCLUIDA' as const,
       descricao: 'Segunda sessão ordinária da legislatura 2025/2028',
     },
     {
       numero: 3,
-      tipo: 'ORDINARIA',
+      tipo: 'ORDINARIA' as const,
       data: new Date('2025-02-12T14:00:00Z'),
-      status: 'CONCLUIDA',
+      status: 'CONCLUIDA' as const,
       descricao: 'Terceira sessão ordinária da legislatura 2025/2028',
     },
   ]
 
-  for (const sessao of sessoes) {
-    await prisma.sessao.create({
-      data: {
-        ...sessao,
-        tipo: sessao.tipo as any,
-        status: sessao.status as any,
+  for (let i = 0; i < sessoesData.length; i++) {
+    const sessaoData = sessoesData[i]
+    await prisma.sessao.upsert({
+      where: { id: `sessao-${sessaoData.numero}-2025` },
+      update: {},
+      create: {
+        id: `sessao-${sessaoData.numero}-2025`,
+        numero: sessaoData.numero,
+        tipo: sessaoData.tipo,
+        data: sessaoData.data,
+        status: sessaoData.status,
+        descricao: sessaoData.descricao,
+        legislaturaId: legislatura.id,
+        periodoId: periodo.id,
+        horario: '14:00',
+        local: 'Plenário da Câmara Municipal',
       },
     })
   }
 
-  console.log('✅ Sessões criadas:', sessoes.length)
+  console.log('✅ Sessões criadas e vinculadas à legislatura:', sessoesData.length)
 
-  // Criar algumas notícias de exemplo
-  const noticias = [
+  // ========================================
+  // 11. CRIAR NOTÍCIAS
+  // ========================================
+  const noticiasData = [
     {
       titulo: 'Dia Mundial da Lei: Câmara Municipal de Mojuí dos Campos destaca papel do Legislativo na construção da cidadania',
       resumo: 'A data, celebrada nesta quinta-feira (10), destaca a importância do Estado de Direito como base para a justiça, a igualdade e a democracia.',
@@ -263,15 +674,22 @@ async function main() {
     },
   ]
 
-  for (const noticia of noticias) {
-    await prisma.noticia.create({
-      data: noticia,
+  for (let i = 0; i < noticiasData.length; i++) {
+    await prisma.noticia.upsert({
+      where: { id: `noticia-${i + 1}` },
+      update: {},
+      create: {
+        id: `noticia-${i + 1}`,
+        ...noticiasData[i],
+      },
     })
   }
 
-  console.log('✅ Notícias criadas:', noticias.length)
+  console.log('✅ Notícias criadas:', noticiasData.length)
 
-  // Criar configurações iniciais
+  // ========================================
+  // 12. CRIAR CONFIGURAÇÕES
+  // ========================================
   const configuracoes = [
     {
       chave: 'site_nome',
@@ -321,14 +739,37 @@ async function main() {
   ]
 
   for (const config of configuracoes) {
-    await prisma.configuracao.create({
-      data: config,
+    await prisma.configuracao.upsert({
+      where: { chave: config.chave },
+      update: { valor: config.valor, descricao: config.descricao },
+      create: config,
     })
   }
 
-  console.log('✅ Configurações criadas:', configuracoes.length)
+  console.log('✅ Configurações criadas/atualizadas:', configuracoes.length)
 
+  // ========================================
+  // RESUMO FINAL
+  // ========================================
+  console.log('')
   console.log('🎉 Seed concluído com sucesso!')
+  console.log('')
+  console.log('📊 Resumo das relações criadas:')
+  console.log('   └── Legislatura: 1ª (2025-2028)')
+  console.log('       └── Período: 1º Biênio (2025-2026)')
+  console.log('           └── Mesa Diretora')
+  console.log('               ├── Presidente: Pantoja do Cartório')
+  console.log('               ├── Vice-Presidente: Diego do Zé Neto')
+  console.log('               ├── 1º Secretário: Mickael Aguiar')
+  console.log('               └── 2º Secretário: Jesa do Palhalzinho')
+  console.log('           └── Cargos da Mesa: 4')
+  console.log('       └── Mandatos: 11 parlamentares')
+  console.log('       └── Sessões: 3 (vinculadas)')
+  console.log('   └── Comissões: 4')
+  console.log('       ├── CCJ: 3 membros')
+  console.log('       ├── CFO: 3 membros')
+  console.log('       ├── CEC: 3 membros')
+  console.log('       └── CSAS: 3 membros')
 }
 
 main()

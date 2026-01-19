@@ -69,8 +69,8 @@ export default function UsuariosPage() {
   const carregarUsuarios = async () => {
     try {
       setLoading(true)
-      const { data } = await usuariosApi.getAll()
-      setUsuarios(Array.isArray(data) ? data : [])
+      const usuarios = await usuariosApi.getAll()
+      setUsuarios(Array.isArray(usuarios) ? usuarios : [])
     } catch (error) {
       console.error('Erro ao carregar usuários:', error)
       toast.error('Erro ao carregar usuários')

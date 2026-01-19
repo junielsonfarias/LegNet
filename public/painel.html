@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Eletrônico - Câmara Municipal</title>
+    <title>Painel Eletrônico - Câmara Municipal de Mojuí dos Campos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        * { box-sizing: border-box; }
+        html, body {
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
         .animate-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
@@ -19,333 +26,204 @@
         .backdrop-blur-lg {
             backdrop-filter: blur(16px);
         }
-        .bg-white\/10 {
-            background-color: rgba(255, 255, 255, 0.1);
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
         }
-        .bg-white\/20 {
-            background-color: rgba(255, 255, 255, 0.2);
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
         }
-        .bg-green-500\/20 {
-            background-color: rgba(34, 197, 94, 0.2);
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
         }
-        .bg-green-500\/30 {
-            background-color: rgba(34, 197, 94, 0.3);
+        .main-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .bg-red-500\/20 {
-            background-color: rgba(239, 68, 68, 0.2);
+        .content-area {
+            flex: 1;
+            overflow: hidden;
+            padding: 0.75rem;
         }
-        .bg-red-500\/30 {
-            background-color: rgba(239, 68, 68, 0.3);
+        .content-grid {
+            height: 100%;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 0.75rem;
         }
-        .bg-blue-500\/20 {
-            background-color: rgba(59, 130, 246, 0.2);
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow: hidden;
         }
-        .bg-blue-500\/30 {
-            background-color: rgba(59, 130, 246, 0.3);
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow: hidden;
         }
-        .bg-yellow-500\/30 {
-            background-color: rgba(234, 179, 8, 0.3);
+        .card-votacao {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
         }
-        .bg-purple-500\/20 {
-            background-color: rgba(147, 51, 234, 0.2);
+        .card-pauta {
+            height: 180px;
+            overflow: hidden;
         }
-        .border-white\/20 {
-            border-color: rgba(255, 255, 255, 0.2);
+        .card-presenca {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
         }
-        .border-green-400\/30 {
-            border-color: rgba(74, 222, 128, 0.3);
-        }
-        .border-red-400\/30 {
-            border-color: rgba(248, 113, 113, 0.3);
-        }
-        .border-blue-400\/30 {
-            border-color: rgba(96, 165, 250, 0.3);
-        }
-        .border-yellow-400\/30 {
-            border-color: rgba(250, 204, 21, 0.3);
-        }
-        .text-green-300 {
-            color: rgb(134, 239, 172);
-        }
-        .text-green-200 {
-            color: rgb(187, 247, 208);
-        }
-        .text-red-300 {
-            color: rgb(252, 165, 165);
-        }
-        .text-red-200 {
-            color: rgb(254, 202, 202);
-        }
-        .text-blue-300 {
-            color: rgb(147, 197, 253);
-        }
-        .text-blue-200 {
-            color: rgb(191, 219, 254);
-        }
-        .text-yellow-300 {
-            color: rgb(253, 224, 71);
-        }
-        .text-yellow-200 {
-            color: rgb(254, 240, 138);
-        }
-        .text-purple-300 {
-            color: rgb(196, 181, 253);
-        }
-        .text-purple-200 {
-            color: rgb(221, 214, 254);
+        .card-info {
+            height: auto;
+            flex-shrink: 0;
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
-    <!-- Header do Painel -->
-    <div class="bg-white/10 backdrop-blur-lg border-b border-white/20 shadow-2xl">
-        <div class="px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="relative">
-                        <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                            <i data-lucide="monitor" class="h-6 w-6 text-white"></i>
+<body class="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 overflow-hidden">
+    <!-- Loading State -->
+    <div id="loadingState" class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 z-50">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-white text-lg">Carregando painel...</p>
+        </div>
+    </div>
+
+    <!-- No Session State -->
+    <div id="noSessionState" class="hidden fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 z-40">
+        <div class="text-center max-w-md mx-auto p-8">
+            <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="monitor-off" class="h-10 w-10 text-blue-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-4">Nenhuma Sessão Ativa</h2>
+            <p class="text-blue-200 mb-6">Não há sessão em andamento no momento. O painel será atualizado automaticamente quando uma sessão for iniciada.</p>
+            <div class="text-sm text-blue-300">
+                <i data-lucide="refresh-cw" class="h-4 w-4 inline mr-1"></i>
+                Atualizando a cada 10 segundos...
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner de Sessão Histórica -->
+    <div id="historicBanner" class="hidden bg-gradient-to-r from-amber-600 to-orange-600 text-white py-2 px-4 text-center z-30">
+        <div class="flex items-center justify-center gap-2 text-sm">
+            <i data-lucide="archive" class="h-4 w-4"></i>
+            <span class="font-semibold">Visualização Histórica</span>
+            <span class="text-amber-100">- Esta sessão já foi concluída.</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden main-container">
+        <!-- Header do Painel -->
+        <div class="bg-white/10 backdrop-blur-lg border-b border-white/20 shadow-xl flex-shrink-0">
+            <div class="px-4 py-2">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                                <i data-lucide="monitor" class="h-5 w-5 text-white"></i>
+                            </div>
+                            <div id="statusIndicator" class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                         </div>
-                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-bold text-white">ORDINARIA - 001/2025</h1>
-                        <p class="text-blue-200">Câmara Municipal de Mojuí dos Campos</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="inline-flex items-center rounded-full font-semibold bg-green-500/20 text-green-300 text-base px-4 py-2 border border-green-400/30 mb-2">
-                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-                        SESSÃO EM ANDAMENTO
-                    </div>
-                    <div class="flex items-center gap-4 text-sm text-blue-300">
-                        <div class="flex items-center gap-1">
-                            <i data-lucide="calendar" class="h-4 w-4"></i>
-                            24/01/2025
+                        <div>
+                            <h1 id="sessaoTitulo" class="text-xl font-bold text-white">Carregando...</h1>
+                            <p class="text-blue-200 text-sm">Câmara Municipal de Mojuí dos Campos</p>
                         </div>
-                        <div class="flex items-center gap-1">
-                            <i data-lucide="clock" class="h-4 w-4"></i>
-                            09:00 - 12:00
+                    </div>
+                    <div class="text-right">
+                        <div id="statusBadge" class="inline-flex items-center rounded-full font-semibold bg-green-500/20 text-green-300 text-sm px-3 py-1 border border-green-400/30 mb-1">
+                            <div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                            <span id="statusText">CARREGANDO</span>
                         </div>
-                        <div class="flex items-center gap-1">
-                            <i data-lucide="activity" class="h-4 w-4"></i>
-                            <span id="currentTime">18:01:57</span>
+                        <div class="flex items-center gap-3 text-xs text-blue-300">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="calendar" class="h-3 w-3"></i>
+                                <span id="sessaoData">--/--/----</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="clock" class="h-3 w-3"></i>
+                                <span id="sessaoHorario">--:--</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="activity" class="h-3 w-3"></i>
+                                <span id="currentTime">00:00:00</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Conteúdo Principal -->
-    <div class="p-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Resultados da Votação -->
-            <div id="containerVotacao" class="lg:col-span-2 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
-                <div class="p-6">
-                    <h2 class="text-3xl font-bold flex items-center justify-center mb-6">
-                        <i data-lucide="vote" class="h-8 w-8 mr-3 text-green-400"></i>
-                        Votação Finalizada
-                    </h2>
-                    
-                    <!-- Título da Proposição -->
-                    <div class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-6 rounded-xl border border-blue-400/30 mb-6">
-                        <h3 class="text-2xl font-bold text-white mb-2">
-                            Projeto de Lei nº 001/2024
-                        </h3>
-                        <p class="text-lg text-blue-200 mb-4">
-                            Dispõe sobre a criação do programa de incentivo à agricultura familiar no município
-                        </p>
-                        <div class="flex items-center gap-4">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="user" class="h-4 w-4 text-blue-300"></i>
-                                <span class="text-white">Autor: <span class="font-semibold text-blue-300">Francisco Pantoja</span></span>
+        <!-- Conteúdo Principal -->
+        <div class="content-area">
+            <div class="content-grid">
+                <!-- Coluna Principal - Item em Discussão e Votação -->
+                <div class="left-column">
+                    <!-- Item em Discussão / Votação -->
+                    <div id="containerVotacao" class="card-votacao bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl flex flex-col">
+                        <div class="p-3 flex-1 overflow-y-auto scrollbar-thin">
+                            <div id="votacaoContent">
+                                <!-- Conteúdo dinâmico -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pauta da Sessão -->
+                    <div class="card-pauta bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl flex flex-col">
+                        <div class="p-3 flex-1 overflow-hidden flex flex-col">
+                            <h2 class="text-sm font-bold flex items-center mb-2 flex-shrink-0">
+                                <i data-lucide="list" class="h-4 w-4 mr-2 text-blue-400"></i>
+                                Pauta da Sessão
+                            </h2>
+                            <div id="pautaContent" class="space-y-1 flex-1 overflow-y-auto scrollbar-thin">
+                                <!-- Conteúdo dinâmico -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Lateral - Presença -->
+                <div class="right-column">
+                    <!-- Presença dos Parlamentares -->
+                    <div id="presencaContainer" class="card-presenca bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl flex flex-col">
+                        <div class="p-3 flex-1 overflow-hidden flex flex-col">
+                            <h2 class="text-sm font-bold flex items-center justify-center mb-2 flex-shrink-0">
+                                <i data-lucide="users" class="h-4 w-4 mr-2 text-blue-400"></i>
+                                Presença dos Parlamentares
+                            </h2>
+                            <div id="presencaContent" class="flex-1 overflow-y-auto scrollbar-thin">
+                                <!-- Conteúdo dinâmico -->
                             </div>
                         </div>
                     </div>
 
-                    <!-- Resultados da Votação -->
-                    <div class="grid grid-cols-3 gap-4 text-center mb-6">
-                        <div class="p-6 bg-green-600/30 rounded-xl border border-green-400/30">
-                            <div class="text-5xl font-extrabold text-green-300 mb-2">7</div>
-                            <div class="text-xl text-green-200 font-semibold">SIM</div>
-                            <div class="text-sm text-green-300 mt-2">63.6%</div>
-                        </div>
-                        <div class="p-6 bg-red-600/30 rounded-xl border border-red-400/30">
-                            <div class="text-5xl font-extrabold text-red-300 mb-2">2</div>
-                            <div class="text-xl text-red-200 font-semibold">NÃO</div>
-                            <div class="text-sm text-red-300 mt-2">18.2%</div>
-                        </div>
-                        <div class="p-6 bg-yellow-600/30 rounded-xl border border-yellow-400/30">
-                            <div class="text-5xl font-extrabold text-yellow-300 mb-2">2</div>
-                            <div class="text-xl text-yellow-200 font-semibold">ABSTENÇÕES</div>
-                            <div class="text-sm text-yellow-300 mt-2">18.2%</div>
-                        </div>
-                    </div>
-
-                    <!-- Status da Votação -->
-                    <div class="text-center p-4 bg-green-500/20 rounded-lg border border-green-400/30">
-                        <i data-lucide="check-circle" class="h-8 w-8 inline mr-2 text-green-400"></i>
-                        <span class="text-xl font-bold text-green-300">Votação Finalizada - APROVADO</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Presença dos Parlamentares -->
-            <div id="presencaParlamentares" class="lg:col-span-1 bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
-                <div class="p-4">
-                    <h2 class="text-xl font-bold flex items-center justify-center mb-4">
-                        <i data-lucide="users" class="h-6 w-6 mr-2 text-blue-400"></i>
-                        Presença dos Parlamentares
-                    </h2>
-                    
-                    <!-- Estatísticas de Presença -->
-                    <div class="grid grid-cols-3 gap-2 text-center mb-4">
-                        <div class="p-2 bg-green-600/30 rounded-lg border border-green-400/30">
-                            <div class="text-xl font-bold text-green-300">8</div>
-                            <div class="text-xs text-green-200">Presentes</div>
-                        </div>
-                        <div class="p-2 bg-red-600/30 rounded-lg border border-red-400/30">
-                            <div class="text-xl font-bold text-red-300">3</div>
-                            <div class="text-xs text-red-200">Ausentes</div>
-                        </div>
-                        <div class="p-2 bg-blue-600/30 rounded-lg border border-blue-400/30">
-                            <div class="text-xl font-bold text-blue-300">73%</div>
-                            <div class="text-xs text-blue-200">Presença</div>
-                        </div>
-                    </div>
-
-                    <!-- Lista de Presentes -->
-                    <div class="mb-3">
-                        <h3 class="text-sm font-bold text-green-300 mb-2 flex items-center">
-                            <i data-lucide="check-circle" class="h-4 w-4 mr-1"></i>
-                            Presentes (8)
-                        </h3>
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Francisco Pantoja</p>
-                                    <p class="text-xs text-green-300">MDB</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Diego Silva</p>
-                                    <p class="text-xs text-green-300">PTB</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Mickael Aguiar</p>
-                                    <p class="text-xs text-green-300">PSD</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Jesanias Pessoa</p>
-                                    <p class="text-xs text-green-300">MDB</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Arnaldo Galvão</p>
-                                    <p class="text-xs text-green-300">PT</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Clei do Povo</p>
-                                    <p class="text-xs text-green-300">PSDB</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Enfermeiro Frank</p>
-                                    <p class="text-xs text-green-300">DEM</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Everaldo Camilo</p>
-                                    <p class="text-xs text-green-300">PP</p>
-                                </div>
-                                <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Lista de Ausentes -->
-                    <div>
-                        <h3 class="text-sm font-bold text-red-300 mb-2 flex items-center">
-                            <i data-lucide="x-circle" class="h-4 w-4 mr-1"></i>
-                            Ausentes (3)
-                        </h3>
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
-                                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Joilson Santa Júlia</p>
-                                    <p class="text-xs text-red-300">PCdoB</p>
-                                </div>
-                                <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
-                                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Reges Rabelo</p>
-                                    <p class="text-xs text-red-300">PSB</p>
-                                </div>
-                                <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
-                            </div>
-                            <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
-                                <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                                    <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-white text-sm">Wallace Lalá</p>
-                                    <p class="text-xs text-red-300">PV</p>
-                                </div>
-                                <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
+                    <!-- Informações da Sessão -->
+                    <div class="card-info bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
+                        <div class="p-3">
+                            <h2 class="text-sm font-bold flex items-center mb-2">
+                                <i data-lucide="info" class="h-4 w-4 mr-2 text-blue-400"></i>
+                                Informações
+                            </h2>
+                            <div id="infoContent" class="space-y-1 text-xs">
+                                <!-- Conteúdo dinâmico -->
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="flex-shrink-0 bg-white/5 backdrop-blur border-t border-white/10 px-4 py-1">
+            <div class="flex items-center justify-between text-xs text-blue-300">
+                <span>Câmara Municipal de Mojuí dos Campos - Painel Eletrônico</span>
+                <span id="lastUpdate">Última atualização: --:--:--</span>
             </div>
         </div>
     </div>
@@ -353,70 +231,24 @@
     <script>
         // Inicializar ícones Lucide
         lucide.createIcons();
-        
-        // Dados dos vereadores (sincronizados com o sistema administrativo)
-        let vereadores = [
-            { id: 1, nome: "Francisco Pantoja", partido: "MDB", presente: true, voto: null },
-            { id: 2, nome: "Diego Silva", partido: "PTB", presente: true, voto: null },
-            { id: 3, nome: "Mickael Aguiar", partido: "PSD", presente: true, voto: null },
-            { id: 4, nome: "Jesanias Pessoa", partido: "MDB", presente: true, voto: null },
-            { id: 5, nome: "Arnaldo Galvão", partido: "PT", presente: true, voto: null },
-            { id: 6, nome: "Clei do Povo", partido: "PSDB", presente: true, voto: null },
-            { id: 7, nome: "Enfermeiro Frank", partido: "DEM", presente: true, voto: null },
-            { id: 8, nome: "Everaldo Camilo", partido: "PP", presente: true, voto: null },
-            { id: 9, nome: "Joilson Santa Júlia", partido: "PCdoB", presente: false, voto: null },
-            { id: 10, nome: "Reges Rabelo", partido: "PSB", presente: false, voto: null },
-            { id: 11, nome: "Wallace Lalá", partido: "PV", presente: false, voto: null }
-        ];
 
-        // Função para sincronizar dados com o sistema administrativo
-        async function sincronizarDados() {
-            try {
-                // Buscar dados da sessão ativa
-                const response = await fetch('/api/sessoes?status=em_andamento')
-                if (response.ok) {
-                    const sessoes = await response.json()
-                    if (sessoes.length > 0) {
-                        const sessaoAtiva = sessoes[0]
-                        
-                        // Atualizar informações da sessão
-                        document.getElementById('tituloSessao').textContent = sessaoAtiva.titulo
-                        document.getElementById('dataSessao').textContent = new Date(sessaoAtiva.data).toLocaleDateString('pt-BR')
-                        
-                        // Buscar presença dos parlamentares
-                        const presencaResponse = await fetch(`/api/sessoes/${sessaoAtiva.id}/presenca`)
-                        if (presencaResponse.ok) {
-                            const presenca = await presencaResponse.json()
-                            
-                            // Atualizar dados dos vereadores com presença real
-                            vereadores = vereadores.map(vereador => {
-                                const presencaData = presenca.find(p => p.parlamentarId === vereador.id)
-                                return {
-                                    ...vereador,
-                                    presente: presencaData ? presencaData.presente : false,
-                                    ausente: presencaData ? presencaData.ausente : true,
-                                    justificada: presencaData ? presencaData.justificada : false,
-                                    justificativa: presencaData ? presencaData.justificativa : null
-                                }
-                            })
-                            
-                            atualizarPainelVotacao()
-                            atualizarPresencaParlamentares()
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao sincronizar dados:', error)
-            }
+        // Estado global
+        let sessaoAtual = null;
+        let presencas = [];
+        let pautaItens = [];
+        let votacoes = [];
+        let itemAtual = null;
+
+        // Obter ID da sessão da URL (se houver)
+        function getSessaoIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('sessao') || params.get('sessaoId');
         }
-
-        let votacaoAtiva = false;
-        let votacaoIniciada = false;
 
         // Atualizar horário em tempo real
         function updateTime() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('pt-BR', { 
+            const timeString = now.toLocaleTimeString('pt-BR', {
                 hour12: false,
                 hour: '2-digit',
                 minute: '2-digit',
@@ -425,320 +257,313 @@
             document.getElementById('currentTime').textContent = timeString;
         }
 
-        // Iniciar votação
-        function iniciarVotacao() {
-            votacaoAtiva = true;
-            votacaoIniciada = true;
-            atualizarPainelVotacao();
-            atualizarStatusVotacao();
+        // Formatar data
+        function formatDate(dateStr) {
+            if (!dateStr) return '--/--/----';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-BR');
         }
 
-        // Finalizar votação
-        function finalizarVotacao() {
-            votacaoAtiva = false;
-            atualizarPainelVotacao();
-            atualizarStatusVotacao();
-        }
+        // Carregar dados da sessão
+        async function carregarDados() {
+            try {
+                const sessaoId = getSessaoIdFromUrl();
+                let sessao = null;
 
-        // Simular voto de um vereador
-        function simularVoto(vereadorId, tipoVoto) {
-            const vereador = vereadores.find(v => v.id === vereadorId);
-            if (vereador && vereador.presente) {
-                vereador.voto = tipoVoto;
-                atualizarPainelVotacao();
+                if (sessaoId) {
+                    // Carregar sessão específica
+                    const response = await fetch(`/api/sessoes/${sessaoId}`);
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        sessao = data.data;
+                    }
+                } else {
+                    // Buscar sessão em andamento
+                    const response = await fetch('/api/sessoes?status=EM_ANDAMENTO&limit=1');
+                    const data = await response.json();
+                    if (data.success && data.data && data.data.length > 0) {
+                        sessao = data.data[0];
+                    }
+                }
+
+                if (!sessao) {
+                    mostrarSemSessao();
+                    return;
+                }
+
+                sessaoAtual = sessao;
+
+                // Carregar presenças
+                await carregarPresencas(sessao.id);
+
+                // Carregar pauta
+                await carregarPauta(sessao.id);
+
+                // Carregar votações
+                await carregarVotacoes(sessao.id);
+
+                // Atualizar interface
+                atualizarInterface();
+                mostrarPainel();
+
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
             }
         }
 
-        // Atualizar painel de votação
-        function atualizarPainelVotacao() {
-            const containerVotacao = document.getElementById('containerVotacao');
-            if (!containerVotacao) return;
-
-            if (votacaoAtiva) {
-                containerVotacao.innerHTML = `
-                    <div class="bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
-                        <div class="p-6">
-                            <h2 class="text-3xl font-bold flex items-center justify-center mb-6">
-                                <i data-lucide="vote" class="h-8 w-8 mr-3 text-yellow-400 animate-pulse"></i>
-                                Votação em Andamento
-                            </h2>
-                            
-                            <!-- Título da Proposição -->
-                            <div class="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-6 rounded-xl border border-yellow-400/30 mb-6">
-                                <h3 class="text-2xl font-bold text-white mb-2">
-                                    Projeto de Lei nº 001/2024
-                                </h3>
-                                <p class="text-lg text-yellow-200 mb-4">
-                                    Dispõe sobre a criação do programa de incentivo à agricultura familiar no município
-                                </p>
-                                <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="user" class="h-4 w-4 text-yellow-300"></i>
-                                        <span class="text-white">Autor: <span class="font-semibold text-yellow-300">Francisco Pantoja</span></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Vereadores Presentes para Votação -->
-                            <div class="mb-6">
-                                <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                                    <i data-lucide="users" class="h-5 w-5 mr-2"></i>
-                                    Vereadores Presentes (${vereadores.filter(v => v.presente).length})
-                                </h3>
-                                ${vereadores.filter(v => v.presente).length > 0 ? `
-                                <div class="grid grid-cols-2 gap-3">
-                                    ${vereadores.filter(v => v.presente).map(vereador => `
-                                        <div class="flex items-center gap-3 p-3 rounded-lg border ${
-                                            vereador.voto === null ? 'bg-gray-600/20 border-gray-400/30' :
-                                            vereador.voto === 'SIM' ? 'bg-green-500/20 border-green-400/30' :
-                                            vereador.voto === 'NAO' ? 'bg-red-500/20 border-red-400/30' :
-                                            'bg-orange-500/20 border-orange-400/30'
-                                        }">
-                                            <div class="w-10 h-10 rounded-full flex items-center justify-center ${
-                                                vereador.voto === null ? 'bg-gray-600' :
-                                                vereador.voto === 'SIM' ? 'bg-green-600' :
-                                                vereador.voto === 'NAO' ? 'bg-red-600' :
-                                                'bg-orange-600'
-                                            }">
-                                                <i data-lucide="user" class="h-5 w-5 text-white"></i>
-                                            </div>
-                                            <div class="flex-1">
-                                                <p class="font-semibold text-white text-sm">${vereador.nome}</p>
-                                                <p class="text-xs ${
-                                                    vereador.voto === null ? 'text-gray-300' :
-                                                    vereador.voto === 'SIM' ? 'text-green-300' :
-                                                    vereador.voto === 'NAO' ? 'text-red-300' :
-                                                    'text-orange-300'
-                                                }">${vereador.partido}</p>
-                                            </div>
-                                            ${vereador.voto ? `
-                                                <span class="px-3 py-1 rounded-full text-xs font-bold ${
-                                                    vereador.voto === 'SIM' ? 'bg-green-600 text-green-100' :
-                                                    vereador.voto === 'NAO' ? 'bg-red-600 text-red-100' :
-                                                    'bg-orange-600 text-orange-100'
-                                                }">${vereador.voto}</span>
-                                            ` : `
-                                                <span class="px-3 py-1 rounded-full text-xs bg-gray-600 text-gray-300">Aguardando</span>
-                                            `}
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                ` : `
-                                <div class="text-center py-8">
-                                    <div class="bg-gray-600/20 border border-gray-400/30 rounded-lg p-8">
-                                        <i data-lucide="users" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
-                                        <p class="text-white text-lg mb-2">Nenhum parlamentar presente</p>
-                                        <p class="text-gray-300 text-sm">A lista será preenchida conforme os parlamentares forem marcando presença</p>
-                                    </div>
-                                </div>
-                                `}
-                            </div>
-
-                            <!-- Resultados Parciais -->
-                            <div class="grid grid-cols-3 gap-4 text-center">
-                                <div class="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
-                                    <div class="text-3xl font-bold text-green-300">${vereadores.filter(v => v.voto === 'SIM').length}</div>
-                                    <div class="text-sm text-green-200">SIM</div>
-                                </div>
-                                <div class="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
-                                    <div class="text-3xl font-bold text-red-300">${vereadores.filter(v => v.voto === 'NAO').length}</div>
-                                    <div class="text-sm text-red-200">NÃO</div>
-                                </div>
-                                <div class="p-4 bg-orange-600/30 rounded-xl border border-orange-400/30">
-                                    <div class="text-3xl font-bold text-orange-300">${vereadores.filter(v => v.voto === 'ABSTENCAO').length}</div>
-                                    <div class="text-sm text-orange-200">ABSTENÇÕES</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (votacaoIniciada) {
-                // Mostrar resultados finais
-                const votosSim = vereadores.filter(v => v.voto === 'SIM').length;
-                const votosNao = vereadores.filter(v => v.voto === 'NAO').length;
-                const votosAbstencao = vereadores.filter(v => v.voto === 'ABSTENCAO').length;
-                const totalVotos = votosSim + votosNao + votosAbstencao;
-                const aprovado = votosSim > votosNao;
-
-                containerVotacao.innerHTML = `
-                    <div class="bg-white/10 backdrop-blur-lg border border-white/20 text-white rounded-lg shadow-xl">
-                        <div class="p-6">
-                            <h2 class="text-3xl font-bold flex items-center justify-center mb-6">
-                                <i data-lucide="vote" class="h-8 w-8 mr-3 text-green-400"></i>
-                                Votação Finalizada
-                            </h2>
-                            
-                            <!-- Título da Proposição -->
-                            <div class="bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-6 rounded-xl border border-blue-400/30 mb-6">
-                                <h3 class="text-2xl font-bold text-white mb-2">
-                                    Projeto de Lei nº 001/2024
-                                </h3>
-                                <p class="text-lg text-blue-200 mb-4">
-                                    Dispõe sobre a criação do programa de incentivo à agricultura familiar no município
-                                </p>
-                                <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="user" class="h-4 w-4 text-blue-300"></i>
-                                        <span class="text-white">Autor: <span class="font-semibold text-blue-300">Francisco Pantoja</span></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Resultados da Votação -->
-                            <div class="grid grid-cols-3 gap-4 text-center mb-6">
-                                <div class="p-6 bg-green-600/30 rounded-xl border border-green-400/30">
-                                    <div class="text-5xl font-extrabold text-green-300 mb-2">${votosSim}</div>
-                                    <div class="text-xl text-green-200 font-semibold">SIM</div>
-                                    <div class="text-sm text-green-300 mt-2">${totalVotos > 0 ? ((votosSim / totalVotos) * 100).toFixed(1) : 0}%</div>
-                                </div>
-                                <div class="p-6 bg-red-600/30 rounded-xl border border-red-400/30">
-                                    <div class="text-5xl font-extrabold text-red-300 mb-2">${votosNao}</div>
-                                    <div class="text-xl text-red-200 font-semibold">NÃO</div>
-                                    <div class="text-sm text-red-300 mt-2">${totalVotos > 0 ? ((votosNao / totalVotos) * 100).toFixed(1) : 0}%</div>
-                                </div>
-                                <div class="p-6 bg-orange-600/30 rounded-xl border border-orange-400/30">
-                                    <div class="text-5xl font-extrabold text-orange-300 mb-2">${votosAbstencao}</div>
-                                    <div class="text-xl text-orange-200 font-semibold">ABSTENÇÕES</div>
-                                    <div class="text-sm text-orange-300 mt-2">${totalVotos > 0 ? ((votosAbstencao / totalVotos) * 100).toFixed(1) : 0}%</div>
-                                </div>
-                            </div>
-
-                            <!-- Status da Votação -->
-                            <div class="text-center p-4 rounded-lg border ${aprovado ? 'bg-green-500/20 border-green-400/30' : 'bg-red-500/20 border-red-400/30'}">
-                                <i data-lucide="${aprovado ? 'check-circle' : 'x-circle'}" class="h-8 w-8 inline mr-2 ${aprovado ? 'text-green-400' : 'text-red-400'}"></i>
-                                <span class="text-xl font-bold ${aprovado ? 'text-green-300' : 'text-red-300'}">Votação Finalizada - ${aprovado ? 'APROVADO' : 'REJEITADO'}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
+        // Carregar presenças
+        async function carregarPresencas(sessaoId) {
+            try {
+                const response = await fetch(`/api/sessoes/${sessaoId}/presenca`);
+                const data = await response.json();
+                if (data.success && data.data) {
+                    presencas = data.data;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar presenças:', error);
             }
+        }
 
-            // Reinicializar ícones Lucide
+        // Carregar pauta
+        async function carregarPauta(sessaoId) {
+            try {
+                const response = await fetch(`/api/sessoes/${sessaoId}/pauta`);
+                const data = await response.json();
+                if (data.success && data.data && data.data.itens) {
+                    pautaItens = data.data.itens;
+                    // Identificar item atual (em discussão ou votação)
+                    itemAtual = pautaItens.find(item =>
+                        item.status === 'EM_DISCUSSAO' ||
+                        item.status === 'EM_VOTACAO'
+                    ) || null;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar pauta:', error);
+            }
+        }
+
+        // Carregar votações
+        async function carregarVotacoes(sessaoId) {
+            try {
+                const response = await fetch(`/api/sessoes/${sessaoId}/votacao`);
+                const data = await response.json();
+                if (data.success && data.data) {
+                    votacoes = data.data;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar votações:', error);
+            }
+        }
+
+        // Mostrar estado sem sessão
+        function mostrarSemSessao() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+            document.getElementById('historicBanner').classList.add('hidden');
+            document.getElementById('noSessionState').classList.remove('hidden');
             lucide.createIcons();
         }
 
-        // Atualizar status da votação no header
-        function atualizarStatusVotacao() {
-            const statusElement = document.querySelector('.inline-flex.items-center.rounded-full');
-            if (statusElement) {
-                if (votacaoAtiva) {
-                    statusElement.className = 'inline-flex items-center rounded-full font-semibold bg-yellow-500/20 text-yellow-300 text-base px-4 py-2 border border-yellow-400/30 mb-2';
-                    statusElement.innerHTML = '<div class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></div>VOTAÇÃO EM ANDAMENTO';
-                } else if (votacaoIniciada) {
-                    statusElement.className = 'inline-flex items-center rounded-full font-semibold bg-blue-500/20 text-blue-300 text-base px-4 py-2 border border-blue-400/30 mb-2';
-                    statusElement.innerHTML = '<div class="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>VOTAÇÃO FINALIZADA';
-                } else {
-                    statusElement.className = 'inline-flex items-center rounded-full font-semibold bg-green-500/20 text-green-300 text-base px-4 py-2 border border-green-400/30 mb-2';
-                    statusElement.innerHTML = '<div class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>SESSÃO EM ANDAMENTO';
-                }
+        // Mostrar painel
+        function mostrarPainel() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('noSessionState').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+
+            // Mostrar banner histórico se sessão concluída ou cancelada
+            const historicBanner = document.getElementById('historicBanner');
+            if (sessaoAtual && (sessaoAtual.status === 'CONCLUIDA' || sessaoAtual.status === 'CANCELADA')) {
+                historicBanner.classList.remove('hidden');
+                // Atualizar texto do banner
+                const bannerText = sessaoAtual.status === 'CONCLUIDA'
+                    ? 'Esta sessão já foi concluída. Você está visualizando o registro histórico.'
+                    : 'Esta sessão foi cancelada. Você está visualizando o registro.';
+                historicBanner.querySelector('.text-amber-100').textContent = '- ' + bannerText;
+            } else {
+                historicBanner.classList.add('hidden');
             }
+
+            lucide.createIcons();
         }
 
-        function atualizarPresencaParlamentares() {
-            const containerPresenca = document.getElementById('presencaParlamentares');
-            if (!containerPresenca) return;
+        // Atualizar interface
+        function atualizarInterface() {
+            if (!sessaoAtual) return;
 
-            const presentes = vereadores.filter(v => v.presente);
-            const justificados = vereadores.filter(v => v.justificada);
-            const ausentes = vereadores.filter(v => v.ausente && !v.justificada);
-            const total = vereadores.length;
-            const percentualPresenca = total > 0 ? Math.round((presentes.length / total) * 100) : 0;
+            // Header
+            const tipoLabel = {
+                'ORDINARIA': 'ORDINÁRIA',
+                'EXTRAORDINARIA': 'EXTRAORDINÁRIA',
+                'SOLENE': 'SOLENE',
+                'ESPECIAL': 'ESPECIAL'
+            };
 
-            containerPresenca.innerHTML = `
-                <div class="p-4">
-                    <h2 class="text-xl font-bold flex items-center justify-center mb-4">
-                        <i data-lucide="users" class="h-6 w-6 mr-2 text-blue-400"></i>
-                        Presença dos Parlamentares
-                    </h2>
-                    
-                    <!-- Estatísticas de Presença -->
-                    <div class="grid grid-cols-3 gap-2 text-center mb-4">
-                        <div class="p-2 bg-green-600/30 rounded-lg border border-green-400/30">
-                            <div class="text-xl font-bold text-green-300">${presentes.length}</div>
-                            <div class="text-xs text-green-200">Presentes</div>
-                        </div>
-                        <div class="p-2 bg-red-600/30 rounded-lg border border-red-400/30">
-                            <div class="text-xl font-bold text-red-300">${ausentes.length}</div>
-                            <div class="text-xs text-red-200">Ausentes</div>
-                        </div>
-                        <div class="p-2 bg-blue-600/30 rounded-lg border border-blue-400/30">
-                            <div class="text-xl font-bold text-blue-300">${percentualPresenca}%</div>
-                            <div class="text-xs text-blue-200">Presença</div>
-                        </div>
+            document.getElementById('sessaoTitulo').textContent =
+                `${tipoLabel[sessaoAtual.tipo] || sessaoAtual.tipo} - ${String(sessaoAtual.numero).padStart(3, '0')}/${new Date(sessaoAtual.data).getFullYear()}`;
+
+            document.getElementById('sessaoData').textContent = formatDate(sessaoAtual.data);
+            document.getElementById('sessaoHorario').textContent = sessaoAtual.horario || '14:00';
+
+            // Status
+            atualizarStatus();
+
+            // Presença
+            atualizarPresenca();
+
+            // Votação/Discussão
+            atualizarVotacao();
+
+            // Pauta
+            atualizarPauta();
+
+            // Informações
+            atualizarInfo();
+
+            // Última atualização
+            document.getElementById('lastUpdate').textContent =
+                `Última atualização: ${new Date().toLocaleTimeString('pt-BR')}`;
+
+            lucide.createIcons();
+        }
+
+        // Atualizar status
+        function atualizarStatus() {
+            const statusBadge = document.getElementById('statusBadge');
+            const statusText = document.getElementById('statusText');
+            const statusIndicator = document.getElementById('statusIndicator');
+
+            const statusConfig = {
+                'EM_ANDAMENTO': {
+                    text: 'SESSÃO EM ANDAMENTO',
+                    bgClass: 'bg-green-500/20',
+                    textClass: 'text-green-300',
+                    borderClass: 'border-green-400/30',
+                    indicatorClass: 'bg-green-500',
+                    pulse: true
+                },
+                'AGENDADA': {
+                    text: 'SESSÃO AGENDADA',
+                    bgClass: 'bg-blue-500/20',
+                    textClass: 'text-blue-300',
+                    borderClass: 'border-blue-400/30',
+                    indicatorClass: 'bg-blue-500',
+                    pulse: false
+                },
+                'CONCLUIDA': {
+                    text: 'SESSÃO CONCLUÍDA',
+                    bgClass: 'bg-gray-500/20',
+                    textClass: 'text-gray-300',
+                    borderClass: 'border-gray-400/30',
+                    indicatorClass: 'bg-gray-500',
+                    pulse: false
+                },
+                'CANCELADA': {
+                    text: 'SESSÃO CANCELADA',
+                    bgClass: 'bg-red-500/20',
+                    textClass: 'text-red-300',
+                    borderClass: 'border-red-400/30',
+                    indicatorClass: 'bg-red-500',
+                    pulse: false
+                }
+            };
+
+            const config = statusConfig[sessaoAtual.status] || statusConfig['AGENDADA'];
+
+            statusBadge.className = `inline-flex items-center rounded-full font-semibold ${config.bgClass} ${config.textClass} text-sm px-3 py-1 border ${config.borderClass} mb-1`;
+            statusText.textContent = config.text;
+            statusIndicator.className = `absolute -top-1 -right-1 w-3 h-3 ${config.indicatorClass} rounded-full ${config.pulse ? 'animate-pulse' : ''}`;
+        }
+
+        // Atualizar presença
+        function atualizarPresenca() {
+            const container = document.getElementById('presencaContent');
+
+            const presentes = presencas.filter(p => p.presente);
+            const justificados = presencas.filter(p => !p.presente && p.justificativa);
+            const ausentes = presencas.filter(p => !p.presente && !p.justificativa);
+            const total = presencas.length;
+            const percentual = total > 0 ? Math.round((presentes.length / total) * 100) : 0;
+
+            container.innerHTML = `
+                <!-- Estatísticas -->
+                <div class="grid grid-cols-3 gap-1 text-center mb-2">
+                    <div class="p-1.5 bg-green-600/30 rounded border border-green-400/30">
+                        <div class="text-lg font-bold text-green-300">${presentes.length}</div>
+                        <div class="text-[10px] text-green-200">Presentes</div>
                     </div>
+                    <div class="p-1.5 bg-red-600/30 rounded border border-red-400/30">
+                        <div class="text-lg font-bold text-red-300">${ausentes.length + justificados.length}</div>
+                        <div class="text-[10px] text-red-200">Ausentes</div>
+                    </div>
+                    <div class="p-1.5 bg-blue-600/30 rounded border border-blue-400/30">
+                        <div class="text-lg font-bold text-blue-300">${percentual}%</div>
+                        <div class="text-[10px] text-blue-200">Presença</div>
+                    </div>
+                </div>
 
-                    <!-- Lista de Presentes -->
-                    <div class="mb-3">
-                        <h3 class="text-sm font-bold text-green-300 mb-2 flex items-center">
-                            <i data-lucide="check-circle" class="h-4 w-4 mr-1"></i>
+                <div class="space-y-2">
+                    <!-- Presentes -->
+                    ${presentes.length > 0 ? `
+                    <div>
+                        <h3 class="text-xs font-bold text-green-300 mb-1 flex items-center">
+                            <i data-lucide="check-circle" class="h-3 w-3 mr-1"></i>
                             Presentes (${presentes.length})
                         </h3>
-                        <div class="space-y-1">
-                            ${presentes.length > 0 ? presentes.map(vereador => `
-                                <div class="flex items-center gap-2 p-2 bg-green-500/20 rounded border border-green-400/30">
-                                    <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                                        <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                        <div class="space-y-0.5">
+                            ${presentes.map(p => `
+                                <div class="flex items-center gap-1.5 p-1 bg-green-500/20 rounded border border-green-400/30">
+                                    <div class="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i data-lucide="user" class="h-3 w-3 text-white"></i>
                                     </div>
-                                    <div class="flex-1">
-                                        <p class="font-semibold text-white text-sm">${vereador.nome}</p>
-                                        <p class="text-xs text-green-300">${vereador.partido}</p>
-                                    </div>
-                                    <span class="bg-green-600/30 text-green-200 border border-green-400/50 px-2 py-1 rounded text-xs">Presente</span>
+                                    <span class="font-medium text-white text-xs truncate flex-1">${p.parlamentar?.apelido || p.parlamentar?.nome || 'Parlamentar'}</span>
+                                    <span class="text-[10px] text-green-300 flex-shrink-0">${p.parlamentar?.partido || ''}</span>
                                 </div>
-                            `).join('') : `
-                                <div class="text-center py-4">
-                                    <i data-lucide="users" class="h-8 w-8 text-gray-400 mx-auto mb-2"></i>
-                                    <p class="text-gray-400 text-sm">Nenhum parlamentar presente</p>
-                                </div>
-                            `}
-                        </div>
-                    </div>
-
-                    <!-- Lista de Ausentes Justificados -->
-                    ${justificados.length > 0 ? `
-                    <div class="mb-3">
-                        <h3 class="text-sm font-bold text-yellow-300 mb-2 flex items-center">
-                            <i data-lucide="user-minus" class="h-4 w-4 mr-1"></i>
-                            Ausentes Justificados (${justificados.length})
-                        </h3>
-                        <div class="space-y-1">
-                            ${justificados.map(vereador => `
-                                <div class="flex items-center gap-2 p-2 bg-yellow-500/20 rounded border border-yellow-400/30">
-                                    <div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center">
-                                        <i data-lucide="user" class="h-4 w-4 text-white"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-semibold text-white text-sm">${vereador.nome}</p>
-                                        <p class="text-xs text-yellow-300">${vereador.partido}</p>
-                                    </div>
-                                    <span class="bg-yellow-600/30 text-yellow-200 border border-yellow-400/50 px-2 py-1 rounded text-xs">Justificada</span>
-                                </div>
-                                ${vereador.justificativa ? `
-                                    <div class="text-xs text-yellow-200 ml-10 mb-1">
-                                        ${vereador.justificativa}
-                                    </div>
-                                ` : ''}
                             `).join('')}
                         </div>
                     </div>
                     ` : ''}
 
-                    <!-- Lista de Ausentes -->
+                    <!-- Ausentes Justificados -->
+                    ${justificados.length > 0 ? `
+                    <div>
+                        <h3 class="text-xs font-bold text-yellow-300 mb-1 flex items-center">
+                            <i data-lucide="alert-circle" class="h-3 w-3 mr-1"></i>
+                            Justificados (${justificados.length})
+                        </h3>
+                        <div class="space-y-0.5">
+                            ${justificados.map(p => `
+                                <div class="flex items-center gap-1.5 p-1 bg-yellow-500/20 rounded border border-yellow-400/30">
+                                    <div class="w-5 h-5 bg-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-white text-sm">${p.parlamentar?.apelido || p.parlamentar?.nome || 'Parlamentar'}</p>
+                                        <p class="text-xs text-yellow-300">${p.parlamentar?.partido || ''}</p>
+                                        ${p.justificativa ? `<p class="text-xs text-yellow-200 mt-1">${p.justificativa}</p>` : ''}
+                                    </div>
+                                    <span class="bg-yellow-600/30 text-yellow-200 border border-yellow-400/50 px-2 py-1 rounded text-xs">Justificada</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Ausentes -->
                     ${ausentes.length > 0 ? `
-                    <div class="mb-3">
+                    <div>
                         <h3 class="text-sm font-bold text-red-300 mb-2 flex items-center">
-                            <i data-lucide="user-x" class="h-4 w-4 mr-1"></i>
+                            <i data-lucide="x-circle" class="h-4 w-4 mr-1"></i>
                             Ausentes (${ausentes.length})
                         </h3>
                         <div class="space-y-1">
-                            ${ausentes.map(vereador => `
+                            ${ausentes.map(p => `
                                 <div class="flex items-center gap-2 p-2 bg-red-500/20 rounded border border-red-400/30">
                                     <div class="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
                                         <i data-lucide="user" class="h-4 w-4 text-white"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <p class="font-semibold text-white text-sm">${vereador.nome}</p>
-                                        <p class="text-xs text-red-300">${vereador.partido}</p>
+                                        <p class="font-semibold text-white text-sm">${p.parlamentar?.apelido || p.parlamentar?.nome || 'Parlamentar'}</p>
+                                        <p class="text-xs text-red-300">${p.parlamentar?.partido || ''}</p>
                                     </div>
                                     <span class="bg-red-600/30 text-red-200 border border-red-400/50 px-2 py-1 rounded text-xs">Ausente</span>
                                 </div>
@@ -746,61 +571,325 @@
                         </div>
                     </div>
                     ` : ''}
+
+                    ${presencas.length === 0 ? `
+                    <div class="text-center py-8">
+                        <i data-lucide="users" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                        <p class="text-gray-300">Nenhum registro de presença</p>
+                    </div>
+                    ` : ''}
                 </div>
             `;
         }
 
-        // Simular votação automática para demonstração
-        function simularVotacaoCompleta() {
-            iniciarVotacao();
-            
-            // Simular votos com delay
-            setTimeout(() => simularVoto(1, 'SIM'), 1000);
-            setTimeout(() => simularVoto(2, 'SIM'), 2000);
-            setTimeout(() => simularVoto(3, 'NAO'), 3000);
-            setTimeout(() => simularVoto(4, 'SIM'), 4000);
-            setTimeout(() => simularVoto(5, 'ABSTENCAO'), 5000);
-            setTimeout(() => simularVoto(6, 'SIM'), 6000);
-            setTimeout(() => simularVoto(7, 'SIM'), 7000);
-            setTimeout(() => simularVoto(8, 'SIM'), 8000);
-            
-            setTimeout(() => finalizarVotacao(), 10000);
-        }
+        // Atualizar votação/discussão
+        function atualizarVotacao() {
+            const container = document.getElementById('votacaoContent');
+            const isSessaoConcluida = sessaoAtual && (sessaoAtual.status === 'CONCLUIDA' || sessaoAtual.status === 'CANCELADA');
 
-        // Adicionar controles de votação
-        function adicionarControlesVotacao() {
-            const header = document.querySelector('.px-6.py-4 .flex.items-center.justify-between .text-right');
-            if (header) {
-                const controles = document.createElement('div');
-                controles.className = 'mt-4 flex gap-2';
-                controles.innerHTML = `
-                    <button onclick="iniciarVotacao()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                        Iniciar Votação
-                    </button>
-                    <button onclick="finalizarVotacao()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                        Finalizar Votação
-                    </button>
-                    <button onclick="simularVotacaoCompleta()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                        Simular Votação
-                    </button>
+            // Para sessões concluídas, mostrar resumo das votações
+            if (isSessaoConcluida) {
+                const itensVotados = pautaItens.filter(item =>
+                    item.status === 'APROVADO' || item.status === 'REJEITADO'
+                );
+                const itensAprovados = itensVotados.filter(i => i.status === 'APROVADO');
+                const itensRejeitados = itensVotados.filter(i => i.status === 'REJEITADO');
+
+                container.innerHTML = `
+                    <h2 class="text-2xl font-bold flex items-center justify-center mb-6">
+                        <i data-lucide="archive" class="h-7 w-7 mr-3 text-amber-400"></i>
+                        Resumo das Votações
+                    </h2>
+
+                    <!-- Estatísticas Gerais -->
+                    <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                        <div class="p-4 bg-blue-600/30 rounded-xl border border-blue-400/30">
+                            <div class="text-3xl font-bold text-blue-300">${itensVotados.length}</div>
+                            <div class="text-sm text-blue-200">Votações</div>
+                        </div>
+                        <div class="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
+                            <div class="text-3xl font-bold text-green-300">${itensAprovados.length}</div>
+                            <div class="text-sm text-green-200">Aprovados</div>
+                        </div>
+                        <div class="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
+                            <div class="text-3xl font-bold text-red-300">${itensRejeitados.length}</div>
+                            <div class="text-sm text-red-200">Rejeitados</div>
+                        </div>
+                    </div>
+
+                    ${itensVotados.length > 0 ? `
+                    <!-- Lista de Itens Votados -->
+                    <div class="space-y-3 max-h-80 overflow-y-auto scrollbar-thin">
+                        <h3 class="text-lg font-bold text-white mb-3">Itens Votados</h3>
+                        ${itensVotados.map(item => {
+                            const aprovado = item.status === 'APROVADO';
+                            return `
+                                <div class="p-4 rounded-lg border ${aprovado ? 'bg-green-500/20 border-green-400/30' : 'bg-red-500/20 border-red-400/30'}">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-xs font-bold text-white bg-white/20 px-2 py-0.5 rounded">${item.ordem || '#'}</span>
+                                                <span class="text-xs ${aprovado ? 'text-green-300' : 'text-red-300'}">${item.secao || ''}</span>
+                                            </div>
+                                            <p class="text-sm font-medium text-white">${item.titulo || 'Item'}</p>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <i data-lucide="${aprovado ? 'check-circle' : 'x-circle'}" class="h-5 w-5 ${aprovado ? 'text-green-400' : 'text-red-400'}"></i>
+                                            <span class="text-sm font-bold ${aprovado ? 'text-green-300' : 'text-red-300'}">${aprovado ? 'APROVADO' : 'REJEITADO'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    ` : `
+                    <div class="text-center py-8">
+                        <i data-lucide="vote" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                        <p class="text-gray-300">Nenhuma votação registrada nesta sessão</p>
+                    </div>
+                    `}
                 `;
-                header.appendChild(controles);
+                return;
+            }
+
+            // Para sessões em andamento, verificar item atual
+            if (itemAtual) {
+                const isVotacao = itemAtual.status === 'EM_VOTACAO';
+                const votosItem = obterVotosDoItem(itemAtual);
+
+                container.innerHTML = `
+                    <h2 class="text-2xl font-bold flex items-center justify-center mb-6">
+                        <i data-lucide="${isVotacao ? 'vote' : 'message-circle'}" class="h-7 w-7 mr-3 ${isVotacao ? 'text-yellow-400 animate-pulse' : 'text-blue-400'}"></i>
+                        ${isVotacao ? 'Votação em Andamento' : 'Em Discussão'}
+                    </h2>
+
+                    <!-- Item -->
+                    <div class="bg-gradient-to-r ${isVotacao ? 'from-yellow-500/20 to-orange-500/20 border-yellow-400/30' : 'from-blue-500/20 to-purple-500/20 border-blue-400/30'} p-6 rounded-xl border mb-6">
+                        <div class="flex items-start gap-2 mb-2">
+                            <span class="bg-white/20 text-white px-2 py-1 rounded text-xs">${itemAtual.ordem || '#'}</span>
+                            <span class="bg-white/20 text-white px-2 py-1 rounded text-xs">${itemAtual.secao || 'ORDEM DO DIA'}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">${itemAtual.titulo || 'Item da Pauta'}</h3>
+                        ${itemAtual.descricao ? `<p class="text-blue-200 mb-3">${itemAtual.descricao}</p>` : ''}
+                        ${itemAtual.proposicao ? `
+                            <div class="flex items-center gap-2 text-sm text-blue-300">
+                                <i data-lucide="file-text" class="h-4 w-4"></i>
+                                <span>${itemAtual.proposicao.tipo || ''} nº ${itemAtual.proposicao.numero || ''}/${itemAtual.proposicao.ano || ''}</span>
+                            </div>
+                        ` : ''}
+                        ${itemAtual.autor ? `
+                            <div class="flex items-center gap-2 text-sm text-blue-300 mt-2">
+                                <i data-lucide="user" class="h-4 w-4"></i>
+                                <span>Autor: ${itemAtual.autor}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${isVotacao && votosItem.length > 0 ? `
+                    <!-- Votos Individuais -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-white mb-3">Votos dos Parlamentares</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            ${votosItem.map(v => `
+                                <div class="flex items-center gap-2 p-2 rounded border ${
+                                    v.voto === 'SIM' ? 'bg-green-500/20 border-green-400/30' :
+                                    v.voto === 'NAO' ? 'bg-red-500/20 border-red-400/30' :
+                                    'bg-orange-500/20 border-orange-400/30'
+                                }">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center ${
+                                        v.voto === 'SIM' ? 'bg-green-600' :
+                                        v.voto === 'NAO' ? 'bg-red-600' :
+                                        'bg-orange-600'
+                                    }">
+                                        <i data-lucide="user" class="h-4 w-4 text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-white text-sm">${v.parlamentar?.apelido || v.parlamentar?.nome || 'Parlamentar'}</p>
+                                    </div>
+                                    <span class="px-2 py-1 rounded text-xs font-bold ${
+                                        v.voto === 'SIM' ? 'bg-green-600 text-white' :
+                                        v.voto === 'NAO' ? 'bg-red-600 text-white' :
+                                        'bg-orange-600 text-white'
+                                    }">${v.voto}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Resultado Parcial -->
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
+                            <div class="text-3xl font-bold text-green-300">${votosItem.filter(v => v.voto === 'SIM').length}</div>
+                            <div class="text-sm text-green-200">SIM</div>
+                        </div>
+                        <div class="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
+                            <div class="text-3xl font-bold text-red-300">${votosItem.filter(v => v.voto === 'NAO').length}</div>
+                            <div class="text-sm text-red-200">NÃO</div>
+                        </div>
+                        <div class="p-4 bg-orange-600/30 rounded-xl border border-orange-400/30">
+                            <div class="text-3xl font-bold text-orange-300">${votosItem.filter(v => v.voto === 'ABSTENCAO').length}</div>
+                            <div class="text-sm text-orange-200">ABSTENÇÃO</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+            } else {
+                // Verificar último item votado
+                const ultimoVotado = pautaItens.find(item =>
+                    item.status === 'APROVADO' ||
+                    item.status === 'REJEITADO'
+                );
+
+                if (ultimoVotado) {
+                    const aprovado = ultimoVotado.status === 'APROVADO';
+                    const votosItem = obterVotosDoItem(ultimoVotado);
+
+                    container.innerHTML = `
+                        <h2 class="text-2xl font-bold flex items-center justify-center mb-6">
+                            <i data-lucide="${aprovado ? 'check-circle' : 'x-circle'}" class="h-7 w-7 mr-3 ${aprovado ? 'text-green-400' : 'text-red-400'}"></i>
+                            Última Votação - ${aprovado ? 'APROVADO' : 'REJEITADO'}
+                        </h2>
+
+                        <div class="bg-gradient-to-r ${aprovado ? 'from-green-500/20 to-emerald-500/20 border-green-400/30' : 'from-red-500/20 to-rose-500/20 border-red-400/30'} p-6 rounded-xl border mb-6">
+                            <h3 class="text-xl font-bold text-white mb-2">${ultimoVotado.titulo || 'Item da Pauta'}</h3>
+                            ${ultimoVotado.descricao ? `<p class="text-gray-200 mb-3">${ultimoVotado.descricao}</p>` : ''}
+                        </div>
+
+                        ${votosItem.length > 0 ? `
+                        <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                            <div class="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
+                                <div class="text-3xl font-bold text-green-300">${votosItem.filter(v => v.voto === 'SIM').length}</div>
+                                <div class="text-sm text-green-200">SIM</div>
+                            </div>
+                            <div class="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
+                                <div class="text-3xl font-bold text-red-300">${votosItem.filter(v => v.voto === 'NAO').length}</div>
+                                <div class="text-sm text-red-200">NÃO</div>
+                            </div>
+                            <div class="p-4 bg-orange-600/30 rounded-xl border border-orange-400/30">
+                                <div class="text-3xl font-bold text-orange-300">${votosItem.filter(v => v.voto === 'ABSTENCAO').length}</div>
+                                <div class="text-sm text-orange-200">ABSTENÇÃO</div>
+                            </div>
+                        </div>
+
+                        <div class="text-center p-4 rounded-lg border ${aprovado ? 'bg-green-500/20 border-green-400/30' : 'bg-red-500/20 border-red-400/30'}">
+                            <i data-lucide="${aprovado ? 'check-circle' : 'x-circle'}" class="h-6 w-6 inline mr-2 ${aprovado ? 'text-green-400' : 'text-red-400'}"></i>
+                            <span class="text-lg font-bold ${aprovado ? 'text-green-300' : 'text-red-300'}">${aprovado ? 'APROVADO' : 'REJEITADO'}</span>
+                        </div>
+                        ` : ''}
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <i data-lucide="file-text" class="h-16 w-16 text-gray-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold text-white mb-2">Aguardando Pauta</h3>
+                            <p class="text-gray-300">Nenhum item em discussão ou votação no momento</p>
+                        </div>
+                    `;
+                }
             }
         }
 
-        // Atualizar a cada segundo
-        setInterval(updateTime, 1000);
-        updateTime(); // Chamar imediatamente
+        // Obter votos de um item
+        function obterVotosDoItem(item) {
+            if (!item || !item.proposicao) return [];
 
-        // Inicializar quando a página carregar
+            const proposicao = votacoes.find(v => v.id === item.proposicao?.id);
+            if (proposicao && proposicao.votacoes) {
+                return proposicao.votacoes;
+            }
+            return [];
+        }
+
+        // Atualizar pauta
+        function atualizarPauta() {
+            const container = document.getElementById('pautaContent');
+
+            if (pautaItens.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i data-lucide="list" class="h-12 w-12 text-gray-400 mx-auto mb-4"></i>
+                        <p class="text-gray-300">Nenhum item na pauta</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const statusConfig = {
+                'PENDENTE': { bg: 'bg-gray-500/20', border: 'border-gray-400/30', text: 'text-gray-300', label: 'Pendente' },
+                'EM_DISCUSSAO': { bg: 'bg-blue-500/20', border: 'border-blue-400/30', text: 'text-blue-300', label: 'Em Discussão' },
+                'EM_VOTACAO': { bg: 'bg-yellow-500/20', border: 'border-yellow-400/30', text: 'text-yellow-300', label: 'Em Votação' },
+                'APROVADO': { bg: 'bg-green-500/20', border: 'border-green-400/30', text: 'text-green-300', label: 'Aprovado' },
+                'REJEITADO': { bg: 'bg-red-500/20', border: 'border-red-400/30', text: 'text-red-300', label: 'Rejeitado' },
+                'ADIADO': { bg: 'bg-orange-500/20', border: 'border-orange-400/30', text: 'text-orange-300', label: 'Adiado' },
+                'RETIRADO': { bg: 'bg-purple-500/20', border: 'border-purple-400/30', text: 'text-purple-300', label: 'Retirado' }
+            };
+
+            container.innerHTML = pautaItens.map(item => {
+                const config = statusConfig[item.status] || statusConfig['PENDENTE'];
+                const isAtivo = item.status === 'EM_DISCUSSAO' || item.status === 'EM_VOTACAO';
+
+                return `
+                    <div class="p-3 rounded-lg border ${config.bg} ${config.border} ${isAtivo ? 'ring-2 ring-yellow-400/50' : ''}">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-bold text-white bg-white/20 px-2 py-0.5 rounded">${item.ordem || '#'}</span>
+                                    <span class="text-xs ${config.text}">${item.secao || ''}</span>
+                                </div>
+                                <p class="text-sm font-medium text-white">${item.titulo || 'Item'}</p>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded ${config.bg} ${config.text} border ${config.border} whitespace-nowrap">
+                                ${config.label}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Atualizar informações
+        function atualizarInfo() {
+            const container = document.getElementById('infoContent');
+
+            const itensAprovados = pautaItens.filter(i => i.status === 'APROVADO').length;
+            const itensRejeitados = pautaItens.filter(i => i.status === 'REJEITADO').length;
+            const itensPendentes = pautaItens.filter(i => i.status === 'PENDENTE').length;
+
+            container.innerHTML = `
+                <div class="flex justify-between items-center py-2 border-b border-white/10">
+                    <span class="text-blue-300">Local:</span>
+                    <span class="text-white font-medium">${sessaoAtual.local || 'Plenário'}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-white/10">
+                    <span class="text-blue-300">Total de Itens:</span>
+                    <span class="text-white font-medium">${pautaItens.length}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-white/10">
+                    <span class="text-blue-300">Aprovados:</span>
+                    <span class="text-green-300 font-medium">${itensAprovados}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-white/10">
+                    <span class="text-blue-300">Rejeitados:</span>
+                    <span class="text-red-300 font-medium">${itensRejeitados}</span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-blue-300">Pendentes:</span>
+                    <span class="text-gray-300 font-medium">${itensPendentes}</span>
+                </div>
+            `;
+        }
+
+        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            sincronizarDados(); // Sincronizar dados iniciais
-            atualizarPainelVotacao();
-            atualizarPresencaParlamentares();
-            adicionarControlesVotacao();
-            
-            // Sincronizar dados a cada 30 segundos
-            setInterval(sincronizarDados, 30000);
+            // Atualizar relógio
+            setInterval(updateTime, 1000);
+            updateTime();
+
+            // Carregar dados iniciais
+            carregarDados();
+
+            // Atualizar a cada 10 segundos
+            setInterval(carregarDados, 10000);
         });
     </script>
 </body>

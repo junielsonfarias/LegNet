@@ -38,9 +38,6 @@ import {
   Maximize,
   Minimize
 } from 'lucide-react'
-import { painelEletronicoService } from '@/lib/painel-eletronico-service'
-import { painelIntegracaoService } from '@/lib/painel-integracao-service'
-import { databaseService } from '@/lib/database-service'
 import { PainelSessao, PautaItem, Presenca } from '@/lib/types/painel-eletronico'
 import { toast } from 'sonner'
 
@@ -68,48 +65,157 @@ export default function PainelEletronicoPage() {
   const [tempoDiscursoConfigurado, setTempoDiscursoConfigurado] = useState(300) // 5 minutos padrão
   const [discursoParlamentar, setDiscursoParlamentar] = useState<string | null>(null)
 
+  // Carregar lista de sessões disponíveis (separado do carregamento de dados da sessão)
+  const carregarSessoesDisponiveis = useCallback(async () => {
+    try {
+      const response = await fetch('/api/sessoes?limit=100')
+      const data = await response.json()
+
+      if (data.success && data.data) {
+        // Ordenar por data decrescente (mais recentes primeiro)
+        const sessoesOrdenadas = data.data.sort((a: any, b: any) => {
+          const dataA = a.data ? new Date(a.data).getTime() : 0
+          const dataB = b.data ? new Date(b.data).getTime() : 0
+          return dataB - dataA
+        })
+        setSessoesDisponiveis(sessoesOrdenadas)
+        return sessoesOrdenadas
+      }
+      return []
+    } catch (error) {
+      console.error('Erro ao carregar sessões disponíveis:', error)
+      return []
+    }
+  }, [])
+
   const carregarDados = useCallback(async () => {
     try {
       setLoading(true)
-      
-      // Carrega sessões disponíveis
-      const sessoes = databaseService.getSessoes()
-      setSessoesDisponiveis(sessoes)
-      
-      // Se há uma sessão selecionada, carrega dados integrados
+
+      // Se há uma sessão selecionada, carrega seus dados
       if (sessaoSelecionada) {
-        const dadosIntegrados = await painelIntegracaoService.getDadosIntegrados(sessaoSelecionada)
-        
-        // Define sessão ativa (primeira sessão em andamento)
-        const sessaoAtivaIntegrada = dadosIntegrados.sessoes.find(s => s.status === 'em_andamento')
-        setSessaoAtiva(sessaoAtivaIntegrada || null)
-        
-        // Define pauta
-        setPauta(dadosIntegrados.pauta)
-        
-        // Define presença
-        setPresenca(dadosIntegrados.parlamentares.map(p => ({
-          id: p.id,
-          parlamentarId: p.id,
-          parlamentarNome: p.nome,
-          parlamentarPartido: p.partido,
-          presente: p.presente,
-          ausente: p.ausente,
-          justificada: p.justificada,
-          horarioEntrada: p.presente ? new Date() : null,
-          justificativa: null
-        })))
-      } else {
-        // Carrega dados padrão se não há sessão selecionada
-        const sessao = painelEletronicoService.getSessaoAtiva()
-        setSessaoAtiva(sessao)
-        
-        if (sessao) {
-          const pautaData = painelEletronicoService.getPautaSessao(sessao.id)
-          const presencaData = painelEletronicoService.getPresencaSessao(sessao.id)
-          setPauta(pautaData)
-          setPresenca(presencaData)
+        // Buscar dados da sessão selecionada
+        const sessaoResponse = await fetch(`/api/sessoes/${sessaoSelecionada}`)
+        const sessaoData = await sessaoResponse.json()
+
+        if (sessaoData.success && sessaoData.data) {
+          const sessao = sessaoData.data
+
+          // Converter para formato do painel
+          const sessaoFormatada = {
+            id: sessao.id,
+            numeroSessao: `${String(sessao.numero).padStart(3, '0')}/${new Date(sessao.data).getFullYear()}`,
+            tipo: sessao.tipo.toLowerCase(),
+            data: new Date(sessao.data),
+            horarioInicio: sessao.horario || '14:00',
+            horarioFim: sessao.status === 'CONCLUIDA' ? 'Finalizada' : null,
+            status: sessao.status === 'CONCLUIDA' ? 'concluida' :
+                   sessao.status === 'EM_ANDAMENTO' ? 'em_andamento' :
+                   sessao.status === 'CANCELADA' ? 'cancelada' : 'agendada',
+            presidente: sessao.presidente || 'Não definido',
+            secretario: sessao.secretario || 'Não definido',
+            local: sessao.local || 'Plenário da Câmara Municipal',
+            transmissao: {
+              ativa: false,
+              url: '',
+              plataforma: 'youtube'
+            },
+            votacoes: [],
+            estatisticas: {
+              totalParlamentares: 0,
+              presentes: 0,
+              ausentes: 0,
+              percentualPresenca: 0
+            },
+            informacoes: {
+              totalItens: sessao.pautaSessao?.itens?.length || 0,
+              itemAtual: 0,
+              tempoEstimado: 180
+            },
+            descricao: sessao.descricao
+          }
+
+          setSessaoAtiva(sessaoFormatada as any)
+
+          // Carregar presenças da sessão
+          const presencasResponse = await fetch(`/api/sessoes/${sessaoSelecionada}/presenca`)
+          const presencasData = await presencasResponse.json()
+
+          if (presencasData.success && presencasData.data) {
+            const presencasFormatadas = presencasData.data.map((p: any) => ({
+              id: p.id,
+              parlamentarId: p.parlamentarId,
+              parlamentarNome: p.parlamentar?.nome || p.parlamentar?.apelido || 'Parlamentar',
+              parlamentarPartido: p.parlamentar?.partido || '',
+              presente: p.presente,
+              ausente: !p.presente && !p.justificativa,
+              justificada: !p.presente && !!p.justificativa,
+              horarioEntrada: p.presente ? new Date() : null,
+              justificativa: p.justificativa
+            }))
+            setPresenca(presencasFormatadas)
+
+            // Atualizar estatísticas
+            const presentes = presencasFormatadas.filter((p: any) => p.presente).length
+            sessaoFormatada.estatisticas = {
+              totalParlamentares: presencasFormatadas.length || 11,
+              presentes: presentes,
+              ausentes: (presencasFormatadas.length || 11) - presentes,
+              percentualPresenca: presencasFormatadas.length > 0
+                ? Math.round((presentes / presencasFormatadas.length) * 100)
+                : 0
+            }
+            setSessaoAtiva(sessaoFormatada as any)
+          } else {
+            // Se não tem presenças, carregar parlamentares
+            const parlResponse = await fetch('/api/parlamentares?ativo=true')
+            const parlData = await parlResponse.json()
+
+            if (parlData.success && parlData.data) {
+              const presencasVazias = parlData.data.map((p: any) => ({
+                id: `temp-${p.id}`,
+                parlamentarId: p.id,
+                parlamentarNome: p.apelido || p.nome,
+                parlamentarPartido: p.partido || '',
+                presente: false,
+                ausente: true,
+                justificada: false,
+                horarioEntrada: null,
+                justificativa: null
+              }))
+              setPresenca(presencasVazias)
+            }
+          }
+
+          // Carregar pauta da sessão (se existir)
+          const pautaResponse = await fetch(`/api/sessoes/${sessaoSelecionada}/pauta`)
+          const pautaData = await pautaResponse.json()
+
+          if (pautaData.success && pautaData.data && pautaData.data.itens) {
+            const itensFormatados = pautaData.data.itens.map((item: any) => ({
+              id: item.id,
+              titulo: item.titulo,
+              descricao: item.descricao || '',
+              autor: item.autor || 'Mesa Diretora',
+              ordem: item.ordem,
+              status: item.status?.toLowerCase() || 'pendente',
+              tempoEstimado: item.tempoEstimado || 15,
+              prioridade: 'media',
+              votacao: null
+            }))
+            setPauta(itensFormatados)
+
+            // Atualizar informações da sessão
+            sessaoFormatada.informacoes.totalItens = itensFormatados.length
+            setSessaoAtiva(sessaoFormatada as any)
+          } else {
+            setPauta([])
+          }
         }
+      } else {
+        setSessaoAtiva(null)
+        setPauta([])
+        setPresenca([])
       }
     } catch (error) {
       console.error('Erro ao carregar dados do painel:', error)
@@ -119,14 +225,20 @@ export default function PainelEletronicoPage() {
     }
   }, [sessaoSelecionada])
 
+  // Carregar sessões disponíveis na montagem inicial (apenas uma vez)
+  useEffect(() => {
+    carregarSessoesDisponiveis()
+  }, [carregarSessoesDisponiveis])
+
+  // Carregar dados da sessão selecionada quando mudar
   useEffect(() => {
     carregarDados()
-    
-    if (autoRefresh) {
+
+    if (autoRefresh && sessaoSelecionada) {
       const interval = setInterval(carregarDados, 30000) // Atualizar a cada 30 segundos
       return () => clearInterval(interval)
     }
-  }, [autoRefresh, carregarDados])
+  }, [autoRefresh, carregarDados, sessaoSelecionada])
 
   // Cronômetro da sessão
   useEffect(() => {
@@ -192,42 +304,24 @@ export default function PainelEletronicoPage() {
 
   const iniciarSessao = async (sessaoId: string) => {
     try {
-      // Criar uma sessão de teste simples
-      const sessaoTeste = {
-        id: sessaoId,
-        numeroSessao: '001/2025',
-        tipo: 'ordinaria' as const,
-        data: new Date(),
-        horarioInicio: '19:00',
-        horarioFim: '22:00',
-        status: 'em_andamento' as const,
-        presidente: 'Francisco Pantoja',
-        secretario: 'Diego Silva',
-        local: 'Plenário da Câmara Municipal',
-        transmissao: {
-          ativa: true,
-          url: 'https://youtube.com/watch?v=exemplo',
-          plataforma: 'youtube'
-        },
-        pauta: [],
-        presenca: [],
-        votacoes: [],
-        estatisticas: {
-          totalParlamentares: 11,
-          presentes: 0,
-          ausentes: 11,
-          percentualPresenca: 0
-        }
+      // Atualizar status da sessão para EM_ANDAMENTO via API
+      const response = await fetch(`/api/sessoes/${sessaoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'EM_ANDAMENTO' })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao iniciar sessão')
       }
-      
-      setSessaoAtiva(sessaoTeste as any)
+
       setTempoInicioSessao(new Date())
       setCronometroAtivo(true)
       setTempoSessao(0)
-      
+
       toast.success('Sessão iniciada com sucesso!')
-      carregarDados()
-      
+      await carregarDados()
+
     } catch (error) {
       console.error('Erro ao iniciar sessão:', error)
       toast.error('Erro ao iniciar sessão')
@@ -236,17 +330,26 @@ export default function PainelEletronicoPage() {
 
   const finalizarSessao = async () => {
     if (!sessaoAtiva) return
-    
+
     try {
-      await painelIntegracaoService.finalizarSessao(sessaoAtiva.id)
-      setSessaoAtiva(null)
+      // Atualizar status da sessão para CONCLUIDA via API
+      const response = await fetch(`/api/sessoes/${sessaoAtiva.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CONCLUIDA' })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao finalizar sessão')
+      }
+
       setCronometroAtivo(false)
       setTempoInicioSessao(null)
       setTempoSessao(0)
       setVotacaoAtiva(false)
       setVotacaoItemAtivo(null)
       toast.success('Sessão finalizada com sucesso!')
-      carregarDados()
+      await carregarDados()
     } catch (error) {
       console.error('Erro ao finalizar sessão:', error)
       toast.error('Erro ao finalizar sessão')
@@ -254,12 +357,21 @@ export default function PainelEletronicoPage() {
   }
 
   const iniciarItem = async (itemId: string) => {
+    if (!sessaoAtiva) return
+
     try {
-      const item = painelEletronicoService.iniciarItem(itemId)
-      if (item) {
-        toast.success(`Item "${item.titulo}" iniciado`)
-        carregarDados()
+      const response = await fetch(`/api/sessoes/${sessaoAtiva.id}/pauta/${itemId}/controle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao: 'iniciar' })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao iniciar item')
       }
+
+      toast.success('Item iniciado')
+      await carregarDados()
     } catch (error) {
       console.error('Erro ao iniciar item:', error)
       toast.error('Erro ao iniciar item')
@@ -267,12 +379,24 @@ export default function PainelEletronicoPage() {
   }
 
   const finalizarItem = async (itemId: string, aprovado: boolean) => {
+    if (!sessaoAtiva) return
+
     try {
-      const item = painelEletronicoService.finalizarItem(itemId, aprovado)
-      if (item) {
-        toast.success(`Item "${item.titulo}" ${aprovado ? 'aprovado' : 'rejeitado'}`)
-        carregarDados()
+      const response = await fetch(`/api/sessoes/${sessaoAtiva.id}/pauta/${itemId}/controle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          acao: 'finalizar',
+          resultado: aprovado ? 'APROVADO' : 'REJEITADO'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao finalizar item')
       }
+
+      toast.success(`Item ${aprovado ? 'aprovado' : 'rejeitado'}`)
+      await carregarDados()
     } catch (error) {
       console.error('Erro ao finalizar item:', error)
       toast.error('Erro ao finalizar item')
@@ -280,17 +404,31 @@ export default function PainelEletronicoPage() {
   }
 
   const registrarPresenca = async (parlamentarId: string, tipo: 'presente' | 'ausente' | 'justificada', justificativa?: string) => {
+    if (!sessaoAtiva) return
+
     try {
-      await painelIntegracaoService.registrarPresenca(parlamentarId, tipo, justificativa)
-      
+      const response = await fetch(`/api/sessoes/${sessaoAtiva.id}/presenca`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          parlamentarId,
+          presente: tipo === 'presente',
+          justificativa: tipo === 'justificada' ? justificativa : undefined
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao registrar presença')
+      }
+
       const mensagens = {
         presente: 'Presença registrada',
         ausente: 'Ausência registrada',
         justificada: 'Ausência justificada'
       }
-      
+
       toast.success(mensagens[tipo])
-      carregarDados()
+      await carregarDados()
     } catch (error) {
       console.error('Erro ao registrar presença:', error)
       toast.error('Erro ao registrar presença')
@@ -299,11 +437,11 @@ export default function PainelEletronicoPage() {
 
   const gerarRelatorio = async () => {
     if (!sessaoAtiva) return
-    
+
     try {
-      const relatorio = painelEletronicoService.gerarRelatorioSessao(sessaoAtiva.id, 'Admin')
-      toast.success('Relatório gerado com sucesso!')
-      console.log('Relatório:', relatorio)
+      // Abrir página de relatório da sessão em nova aba
+      window.open(`/admin/sessoes/${sessaoAtiva.id}/relatorio`, '_blank')
+      toast.success('Relatório aberto em nova aba')
     } catch (error) {
       console.error('Erro ao gerar relatório:', error)
       toast.error('Erro ao gerar relatório')
@@ -311,7 +449,8 @@ export default function PainelEletronicoPage() {
   }
 
   const abrirPainelPublico = () => {
-    const url = '/painel.html'
+    // Abrir painel público com a sessão selecionada
+    const url = sessaoAtiva ? `/painel-publico?sessao=${sessaoAtiva.id}` : '/painel-publico'
     window.open(url, '_blank', 'width=1920,height=1080,scrollbars=yes,resizable=yes')
     setPainelPublicoAberto(true)
     toast.success('Painel público aberto em nova guia')
@@ -328,28 +467,41 @@ export default function PainelEletronicoPage() {
   }
 
   const iniciarVotacao = async (itemId: string) => {
+    if (!sessaoAtiva) return
+
     try {
-      await painelIntegracaoService.iniciarVotacao(itemId)
+      // Colocar item em modo de votação via API
+      const response = await fetch(`/api/sessoes/${sessaoAtiva.id}/pauta/${itemId}/controle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao: 'votacao' })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao iniciar votação')
+      }
+
       setVotacaoAtiva(true)
       setVotacaoItemAtivo(itemId)
       // Definir tempo para votação (padrão 5 minutos)
       setTempoRestante(300) // 5 minutos em segundos
       toast.success('Votação iniciada - Tempo: 5 minutos')
-      carregarDados()
+      await carregarDados()
     } catch (error) {
       console.error('Erro ao iniciar votação:', error)
       toast.error('Erro ao iniciar votação')
     }
   }
 
-  const finalizarVotacao = async (votacaoId: string) => {
+  const finalizarVotacao = async (itemId: string) => {
+    if (!sessaoAtiva) return
+
     try {
-      await painelIntegracaoService.finalizarVotacao(votacaoId)
       setVotacaoAtiva(false)
       setVotacaoItemAtivo(null)
       setTempoRestante(0)
       toast.success('Votação finalizada')
-      carregarDados()
+      await carregarDados()
     } catch (error) {
       console.error('Erro ao finalizar votação:', error)
       toast.error('Erro ao finalizar votação')
@@ -443,19 +595,34 @@ export default function PainelEletronicoPage() {
             <select
               value={sessaoSelecionada}
               onChange={(e) => setSessaoSelecionada(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-camara-primary"
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-camara-primary min-w-[300px]"
             >
-              <option value="">Selecione uma sessão</option>
-              {sessoesDisponiveis.map(sessao => (
-                <option key={sessao.id} value={sessao.id}>
-                  {sessao.titulo} - {new Date(sessao.data).toLocaleDateString()}
-                </option>
-              ))}
+              <option value="">Selecione uma sessão ({sessoesDisponiveis.length} disponíveis)</option>
+              {sessoesDisponiveis.map(sessao => {
+                const dataFormatada = sessao.data
+                  ? new Date(sessao.data).toLocaleDateString('pt-BR')
+                  : 'Data não definida'
+                const tipoLabel = sessao.tipo === 'ORDINARIA' ? 'Ordinária' :
+                                  sessao.tipo === 'EXTRAORDINARIA' ? 'Extraordinária' :
+                                  sessao.tipo === 'SOLENE' ? 'Solene' : 'Especial'
+                const statusLabel = sessao.status === 'CONCLUIDA' ? 'Concluída' :
+                                    sessao.status === 'AGENDADA' ? 'Agendada' :
+                                    sessao.status === 'EM_ANDAMENTO' ? 'Em Andamento' :
+                                    sessao.status || 'Sem status'
+                return (
+                  <option key={sessao.id} value={sessao.id}>
+                    {sessao.numero}ª {tipoLabel} - {dataFormatada} ({statusLabel})
+                  </option>
+                )
+              })}
             </select>
             
-            <Button 
-              onClick={carregarDados} 
-              variant="outline" 
+            <Button
+              onClick={() => {
+                carregarSessoesDisponiveis()
+                if (sessaoSelecionada) carregarDados()
+              }}
+              variant="outline"
               size="sm"
               disabled={loading}
             >
@@ -523,10 +690,12 @@ export default function PainelEletronicoPage() {
                 <Badge className={getStatusColor(sessaoAtiva.status)}>
                   {sessaoAtiva.status.replace('_', ' ').toUpperCase()}
                 </Badge>
-                <Button onClick={finalizarSessao} variant="destructive" size="sm">
-                  <Square className="h-4 w-4 mr-2" />
-                  Finalizar Sessão
-                </Button>
+                {sessaoAtiva.status !== 'concluida' && sessaoAtiva.status !== 'cancelada' && (
+                  <Button onClick={finalizarSessao} variant="destructive" size="sm">
+                    <Square className="h-4 w-4 mr-2" />
+                    Finalizar Sessão
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -537,7 +706,17 @@ export default function PainelEletronicoPage() {
                 <div>
                   <p className="text-sm font-medium">{new Date(sessaoAtiva.data).toLocaleDateString()}</p>
                   <p className="text-xs text-gray-500">
-                    {sessaoAtiva.horarioInicio} - {sessaoAtiva.horarioFim || 'Em andamento'}
+                    {sessaoAtiva.horarioInicio} - {
+                      sessaoAtiva.horarioFim
+                        ? sessaoAtiva.horarioFim
+                        : sessaoAtiva.status === 'concluida'
+                          ? 'Concluída'
+                          : sessaoAtiva.status === 'cancelada'
+                            ? 'Cancelada'
+                            : sessaoAtiva.status === 'agendada'
+                              ? 'Agendada'
+                              : 'Em andamento'
+                    }
                   </p>
                 </div>
               </div>
@@ -571,55 +750,14 @@ export default function PainelEletronicoPage() {
             <div className="text-center py-8">
               <Pause className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Nenhuma Sessão Ativa
+                Nenhuma Sessão Selecionada
               </h3>
               <p className="text-gray-600 mb-4">
-                Não há sessões em andamento no momento
+                Selecione uma sessão no menu acima para visualizar ou controlar
               </p>
-              <button 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 font-medium"
-                onClick={() => {
-                  alert('Teste - Botão funcionando!')
-                  setSessaoAtiva({
-                    id: '1',
-                    numeroSessao: '001/2025',
-                    tipo: 'ordinaria',
-                    data: new Date(),
-                    horarioInicio: '19:00',
-                    horarioFim: '22:00',
-                    status: 'em_andamento',
-                    presidente: 'Francisco Pantoja',
-                    secretario: 'Diego Silva',
-                    local: 'Plenário da Câmara Municipal',
-                    transmissao: {
-                      ativa: true,
-                      url: 'https://youtube.com/watch?v=exemplo',
-                      plataforma: 'youtube'
-                    },
-                    // pauta: [],
-                    // presenca: [],
-                    votacoes: [],
-                    estatisticas: {
-                      totalParlamentares: 11,
-                      presentes: 0,
-                      ausentes: 11,
-                      percentualPresenca: 0
-                    },
-                    informacoes: {
-                      totalItens: 0,
-                      itemAtual: 0,
-                      tempoEstimado: 180,
-                      // participantes: 11
-                    }
-                  })
-                  setCronometroAtivo(true)
-                  setTempoSessao(0)
-                  setTempoInicioSessao(new Date())
-                  toast.success('Sessão iniciada com sucesso!')
-                }}
-              >
-                ▶️ Iniciar Sessão de Teste
-              </button>
+              <p className="text-sm text-gray-500">
+                {sessoesDisponiveis.length} sessões disponíveis no sistema
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -711,26 +849,35 @@ export default function PainelEletronicoPage() {
                   </CardContent>
                 </Card>
 
-                {/* Dispositivos */}
+                {/* Status da Sessão */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Wifi className="h-5 w-5 mr-2" />
-                      Dispositivos
+                      <Clock className="h-5 w-5 mr-2" />
+                      Tempo da Sessão
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
-                      <span className="text-sm">Conectados:</span>
-                      <span className="font-semibold text-green-600">8</span>
+                      <span className="text-sm">Status:</span>
+                      <span className="font-semibold">
+                        {sessaoAtiva?.status === 'concluida' ? 'Concluída' :
+                         sessaoAtiva?.status === 'em_andamento' ? 'Em Andamento' :
+                         sessaoAtiva?.status === 'agendada' ? 'Agendada' :
+                         sessaoAtiva?.status === 'cancelada' ? 'Cancelada' : '-'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">Desconectados:</span>
-                      <span className="font-semibold text-red-600">3</span>
+                      <span className="text-sm">Início:</span>
+                      <span className="font-semibold">{sessaoAtiva?.horarioInicio || '-'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm">Total:</span>
-                      <span className="font-semibold">11</span>
+                      <span className="text-sm">Término:</span>
+                      <span className="font-semibold">
+                        {sessaoAtiva?.horarioFim ||
+                         (sessaoAtiva?.status === 'concluida' ? 'Concluída' :
+                          sessaoAtiva?.status === 'em_andamento' ? 'Em andamento' : '-')}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>

@@ -559,14 +559,16 @@ model Noticia {
 }
 
 model Legislatura {
-  id        String   @id @default(cuid())
-  numero    Int
-  anoInicio Int
-  anoFim    Int
-  ativa     Boolean  @default(false)
-  descricao String?  @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String    @id @default(cuid())
+  numero     Int
+  anoInicio  Int
+  anoFim     Int
+  dataInicio DateTime? // Data completa de início (dia/mês/ano)
+  dataFim    DateTime? // Data completa de fim (dia/mês/ano)
+  ativa      Boolean   @default(false)
+  descricao  String?   @db.Text
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relacionamentos
   mandatos              Mandato[]

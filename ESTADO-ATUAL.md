@@ -37,6 +37,7 @@
 | Funcionalidade | Status | Observacoes |
 |---------------|--------|-------------|
 | CRUD de parlamentares | Implementado | /admin/parlamentares |
+| **Visualizar no Admin** | **Implementado** | /admin/parlamentares/[id] - visualizacao interna do painel |
 | Perfil publico | Implementado | /parlamentares/[slug] |
 | Galeria de vereadores | Implementado | /parlamentares/galeria |
 | Historico de mandatos | Implementado | Modelo Mandato |
@@ -116,6 +117,8 @@
 | Funcionalidade | Status | Observacoes |
 |---------------|--------|-------------|
 | CRUD de legislaturas | Implementado | /admin/legislaturas |
+| **Visualizacao em tabela** | **Implementado** | Formato tabela com ordenacao |
+| **Ordenacao por data** | **Implementado** | Da mais recente para a mais antiga |
 | Periodos legislativos | Implementado | PeriodoLegislatura model |
 | Legislatura ativa | Implementado | Flag ativa |
 | Consulta publica | Implementado | /legislativo/legislatura |
@@ -364,6 +367,287 @@
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-17 - Visualização Histórica de Sessões Concluídas
+- **Objetivo**: Permitir visualizar sessões concluídas no painel público
+- **Arquivo modificado**: `public/painel.html`
+- **Funcionalidades adicionadas**:
+  1. **Banner de Sessão Histórica**: Exibido quando a sessão está concluída ou cancelada
+  2. **Resumo das Votações**: Para sessões concluídas, mostra:
+     - Total de votações realizadas
+     - Quantidade de itens aprovados
+     - Quantidade de itens rejeitados
+     - Lista de todos os itens votados com resultado
+  3. **Visualização via URL**: Acesse `/painel.html?sessao={ID}` para ver qualquer sessão
+  4. **Status visual diferenciado**:
+     - SESSÃO EM ANDAMENTO (verde, pulsando)
+     - SESSÃO CONCLUÍDA (cinza)
+     - SESSÃO AGENDADA (azul)
+     - SESSÃO CANCELADA (vermelho)
+
+### 2026-01-17 - Reescrita Completa do Painel Público (painel.html)
+- **Objetivo**: Transformar painel de demonstração em painel público de visualização real
+- **Arquivo modificado**: `public/painel.html`
+- **Botões removidos**:
+  - "Iniciar Votação" (controle administrativo)
+  - "Finalizar Votação" (controle administrativo)
+  - "Simular Votação" (mock/teste)
+- **Dados mock removidos**:
+  - Array hardcoded de vereadores
+  - Funções de simulação de voto
+  - Dados estáticos de presença
+- **Novas funcionalidades**:
+  1. **Carregamento de dados reais via APIs**:
+     - `/api/sessoes/{id}` - Dados da sessão
+     - `/api/sessoes/{id}/presenca` - Lista de presença
+     - `/api/sessoes/{id}/pauta` - Itens da pauta
+     - `/api/sessoes/{id}/votacao` - Votos registrados
+  2. **Seleção de sessão via URL**: `?sessao={id}` ou `?sessaoId={id}`
+  3. **Auto-detecção de sessão em andamento** quando não especificada
+  4. **Lista de presença categorizada**:
+     - Presentes (verde)
+     - Ausentes justificados (amarelo) com justificativa
+     - Ausentes (vermelho)
+  5. **Exibição de item em discussão/votação**:
+     - Item atual destacado
+     - Votos individuais de cada parlamentar
+     - Contagem parcial/final (SIM/NÃO/ABSTENÇÃO)
+  6. **Pauta da sessão** com status de cada item
+  7. **Informações da sessão** (local, totais, aprovados, rejeitados)
+  8. **Status dinâmico da sessão**: EM_ANDAMENTO, CONCLUIDA, AGENDADA, CANCELADA
+  9. **Atualização automática** a cada 10 segundos
+  10. **Estado de "Sem sessão"** quando não há sessão ativa
+- **Características de visualização pública**:
+  - Sem controles administrativos
+  - Apenas leitura de dados
+  - Design responsivo e moderno
+  - Relógio em tempo real
+
+### 2026-01-17 - Remoção de Dados Mock do Painel Eletrônico
+- **Objetivo**: Remover todos os dados mock e usar apenas APIs reais
+- **Arquivo modificado**: `src/app/admin/painel-eletronico/page.tsx`
+- **Correções aplicadas**:
+  1. **Botão "Finalizar Sessão"**: Ocultado para sessões com status `concluida` ou `cancelada`
+  2. **Status de tempo**: Corrigido para mostrar texto apropriado baseado no status da sessão
+  3. **Funções de controle**: Atualizadas para usar APIs reais em vez de serviços mock:
+     - `iniciarSessao()`: Agora chama `PUT /api/sessoes/{id}` com status `EM_ANDAMENTO`
+     - `finalizarSessao()`: Agora chama `PUT /api/sessoes/{id}` com status `CONCLUIDA`
+     - `iniciarItem()`: Agora chama `POST /api/sessoes/{id}/pauta/{itemId}/controle` com ação `iniciar`
+     - `finalizarItem()`: Agora chama `POST /api/sessoes/{id}/pauta/{itemId}/controle` com ação `finalizar`
+     - `registrarPresenca()`: Agora chama `POST /api/sessoes/{id}/presenca`
+     - `iniciarVotacao()`: Agora chama `POST /api/sessoes/{id}/pauta/{itemId}/controle` com ação `votacao`
+  4. **Imports removidos**: `painelEletronicoService`, `painelIntegracaoService`, `databaseService`
+  5. **Dados hardcoded removidos**:
+     - Botão "Iniciar Sessão de Teste" com dados mock
+     - Nomes de presidente/secretário hardcoded
+     - Números de dispositivos fixos (substituído por card "Tempo da Sessão")
+  6. **URL do Painel Público**: Corrigido de `/painel.html` para `/painel-publico?sessao={id}`
+- **Melhorias**:
+  - Card "Dispositivos" substituído por "Tempo da Sessão" com informações reais
+  - Mensagem amigável quando nenhuma sessão está selecionada
+
+### 2026-01-17 - Melhoria do Painel Público com Dados Reais
+- **Objetivo**: Transformar painel público de dados mock para dados reais da API
+- **Arquivo modificado**: `src/app/painel-publico/page.tsx`
+- **Melhorias implementadas**:
+  - Integração com APIs reais (`/api/sessoes`, `/api/sessoes/[id]/presenca`, `/api/sessoes/[id]/votacao`)
+  - Seleção automática de sessão em andamento ou via query param `?sessaoId=xxx`
+  - Cronômetro da sessão em tempo real (HH:MM:SS desde o início)
+  - Lista de presenças reais dos parlamentares do banco de dados
+  - Pauta da sessão com status de cada item (PENDENTE, EM_DISCUSSAO, EM_VOTACAO, APROVADO, REJEITADO)
+  - Votações reais com contagem de SIM/NÃO/ABSTENÇÃO/AUSENTE
+  - Votos individuais mostrando como cada parlamentar votou
+  - Atualização automática a cada 10 segundos
+  - Relógio em tempo real
+  - Barra de progresso de quórum
+- **Funcionalidades do painel**:
+  - Header com número da sessão, tipo, data, status e cronômetro
+  - Card "Item em Discussão" com proposição atual
+  - Card "Resultado da Votação" com votos individuais
+  - Card "Pauta da Sessão" com todos os itens e status
+  - Card "Presença dos Parlamentares" com lista de presentes/ausentes
+  - Card "Informações da Sessão" com dados gerais
+
+### 2026-01-17 - Correção do Carregamento de Sessões no Painel Eletrônico
+- **Problema**: Sessões não apareciam no dropdown do painel eletrônico (39 sessões existentes)
+- **Causas identificadas**:
+  1. Paths de API incorretos no componente
+  2. useCallback com dependências causando re-renderização e perda de estado
+- **Correções aplicadas**:
+  - Alterado `/api/presencas?sessaoId=X` para `/api/sessoes/X/presenca`
+  - Alterado `/api/pautas-sessao?sessaoId=X` para `/api/sessoes/X/pauta`
+  - Separado carregamento de sessões disponíveis (`carregarSessoesDisponiveis`) do carregamento de dados da sessão selecionada (`carregarDados`)
+  - useEffect separados para cada função
+  - Tratamento seguro para campos undefined (data, status)
+- **Arquivo modificado**: `src/app/admin/painel-eletronico/page.tsx`
+- **Funcionalidades verificadas**:
+  - Carregamento de 39 sessões do banco de dados via `/api/sessoes?limit=100`
+  - Exibição formatada no dropdown (Nª Tipo - Data (Status))
+  - Carregamento de dados da sessão selecionada (detalhes, presenças, pauta)
+  - Botão "Atualizar" recarrega sessões disponíveis e dados da sessão selecionada
+
+### 2026-01-17 - Seed de Dados Reais da Câmara de Mojuí dos Campos 2025
+- **Objetivo**: Popular o banco de dados com dados reais extraídos do site oficial da Câmara
+- **Fonte**: https://www.camaramojuidoscampos.pa.gov.br/
+- **Arquivo criado**: `prisma/seed-dados-2025.ts`
+- **Comando**: `npm run db:seed-2025`
+- **Dados criados**:
+  - **Sessões Plenárias**:
+    - 35 Sessões Ordinárias (fevereiro a dezembro/2025)
+    - 4 Sessões Solenes (Posse, Independência, República, Homenagens)
+  - **Proposições**:
+    - 10 Projetos de Decreto Legislativo (Títulos Honoríficos)
+    - 19 Projetos de Lei (incluindo LOA, LDO, PPA, REFIS)
+    - 18 Requerimentos ao Executivo (infraestrutura, educação, saúde)
+    - 10 Indicações (iluminação, reformas, melhorias)
+    - 15 Moções (congratulações, apoio, pesar, repúdio)
+  - **Tramitação**:
+    - 7 Unidades de Tramitação (Mesa, CCJ, CFO, CEC, CSAS, Plenário, Prefeitura)
+    - 9 Tipos de Tramitação (Recebimento, Análise, Parecer, Votação, etc.)
+    - 57 Tramitações completas para projetos de lei aprovados
+  - **Controle de Sessões**:
+    - 3 Pautas de Sessão completas (LDO, PPA, LOA)
+    - 374 Registros de Presença (~95% presença)
+- **Leis aprovadas documentadas**:
+  - Lei 190/2025 - Estrutura administrativa
+  - Lei 191/2025 - Dia do Evangelho
+  - Lei 192/2025 - REFIS Municipal
+  - Lei 199/2025 - PPA 2026-2029
+  - Lei 201/2025 - LOA 2026
+  - Lei 206/2025 - Plano de Mobilidade Urbana
+  - E outras 13 leis
+
+### 2026-01-17 - Campos de Data Completa em Legislaturas
+- **Melhoria**: Adicionados campos de data completa (dia/mês/ano) para início e fim de legislatura
+- **Arquivos modificados**:
+  - `prisma/schema.prisma` - Adicionados campos `dataInicio` e `dataFim` (DateTime opcional) no modelo Legislatura
+  - `src/lib/api/legislaturas-api.ts` - Tipagens atualizadas com os novos campos
+  - `src/app/admin/legislaturas/page.tsx` - Formulário e visualização atualizados
+  - `prisma/seed.ts` - Seed atualizado com datas (01/01/2025 a 31/12/2028)
+- **Funcionalidades implementadas**:
+  - Formulário com campos de data (tipo date input) para início e fim
+  - Exibição das datas na tabela (quando preenchidas)
+  - Modal de visualização mostra datas formatadas por extenso
+  - Cálculo de duração corrigido: `anoFim - anoInicio + 1` = 4 anos para 2025-2028
+  - Número da legislatura com formato ordinal correto (1ª, 2ª, etc.)
+- **Schema atualizado**:
+  ```prisma
+  model Legislatura {
+    dataInicio DateTime? // Data completa de início (dia/mês/ano)
+    dataFim    DateTime? // Data completa de fim (dia/mês/ano)
+  }
+  ```
+
+### 2026-01-17 - Correcao de Integridade Relacional no Seed
+- **Problema identificado**: Parlamentares possuiam cargos (PRESIDENTE, VICE_PRESIDENTE etc) mas Mesa Diretora estava vazia
+- **Causa raiz**: O seed original criava apenas parlamentares sem estabelecer relacoes com:
+  - PeriodoLegislatura
+  - CargoMesaDiretora
+  - MesaDiretora
+  - MembroMesaDiretora
+  - Mandato
+  - MembroComissao
+  - Sessoes nao vinculadas a legislatura
+- **Solucao**: Reescrita completa do `prisma/seed.ts` com todas as relacoes
+- **Arquivo modificado**: `prisma/seed.ts`
+- **Relacoes agora criadas**:
+  ```
+  Legislatura (leg-2025-2028)
+  └── PeriodoLegislatura (1º Biênio 2025-2026)
+      ├── CargoMesaDiretora (4 cargos: Presidente, Vice, 1º e 2º Secretário)
+      └── MesaDiretora (mesa-2025-2026)
+          └── MembroMesaDiretora (4 membros vinculados aos cargos)
+
+  Parlamentares (11 com IDs explicitos: parl-pantoja, parl-diego, etc)
+  └── Mandato (vinculando cada parlamentar à legislatura com cargo e votos)
+
+  Comissoes (4: CCJ, CFO, CEC, CSAS)
+  └── MembroComissao (12 membros distribuídos com cargos)
+
+  Sessoes (3 sessões vinculadas à legislatura e período)
+  ```
+- **Beneficios**:
+  - Menu Mesa Diretora agora exibe membros corretamente
+  - Mandatos aparecem na visualizacao de parlamentares
+  - Comissoes mostram membros vinculados
+  - Sessoes relacionadas a legislatura correta
+- **Dados criados pelo seed**:
+  - 1 Legislatura (2025-2028)
+  - 1 Período (1º Biênio)
+  - 4 Cargos de Mesa Diretora
+  - 1 Mesa Diretora com 4 membros
+  - 11 Parlamentares com mandatos
+  - 4 Comissões com 12 membros
+  - 3 Sessões vinculadas
+  - 3 Notícias
+  - 9 Configurações
+
+### 2026-01-17 - Melhoria na Interface de Legislaturas
+- **Alteracao**: Exibicao de legislaturas alterada de cards para tabela
+  - **Arquivo modificado**: `src/app/admin/legislaturas/page.tsx`
+  - **Melhorias implementadas**:
+    - Visualizacao em formato de tabela para melhor legibilidade
+    - Ordenacao automatica da mais recente para a mais antiga (por ano de inicio decrescente)
+    - Colunas: Legislatura, Periodo, Descricao, Status, Acoes
+    - Indicador visual do numero da legislatura
+    - Duracao calculada automaticamente
+    - Botoes de acao: Visualizar detalhes, Editar, Excluir
+    - Estado de loading e mensagem quando vazio
+    - Linhas alternadas para melhor visualizacao
+    - **Modal de Visualizacao de Detalhes**:
+      - Exibe informacoes gerais (numero, anos, duracao)
+      - Mostra descricao quando disponivel
+      - Lista periodos da mesa diretora com datas
+      - Exibe cargos configurados para cada periodo
+      - Botoes para fechar ou editar a legislatura
+
+### 2026-01-17 - Ajustes no Modulo de Parlamentares
+- **Melhoria**: Pagina de visualizacao de parlamentar no painel admin
+  - **Problema**: Botao "Visualizar" na lista de parlamentares redirecionava para o portal institucional
+  - **Solucao**: Criada nova pagina `/admin/parlamentares/[id]` para visualizar detalhes dentro do admin
+  - **Arquivo criado**: `src/app/admin/parlamentares/[id]/page.tsx`
+  - **Funcionalidades da nova pagina**:
+    - Exibe dados de contato (email, telefone)
+    - Exibe biografia
+    - Lista mandatos com legislatura, cargo, votos e periodo
+    - Lista filiacoes partidarias com datas
+    - Botoes para editar e ver no portal publico
+    - Informacoes do sistema (ID, datas de criacao/atualizacao)
+  - **Arquivo modificado**: `src/app/admin/parlamentares/page.tsx` (linha 283)
+    - Alterado link do botao "Visualizar" de `/parlamentares/${id}` para `/admin/parlamentares/${id}`
+
+- **Verificacao CRUD de Parlamentares**:
+  - **Create**: Funcional via `/admin/parlamentares/novo` - salva nome, apelido, email, telefone, partido, biografia, cargo, legislatura, mandatos e filiacoes
+  - **Read**: Funcional via API `/api/parlamentares` e `/api/parlamentares/[id]` - retorna dados com mandatos e filiacoes incluidos
+  - **Update**: Funcional via `/admin/parlamentares/editar/[id]` - atualiza todos os campos incluindo mandatos e filiacoes (deleta e recria)
+  - **Delete**: Funcional (soft delete) - marca parlamentar como inativo
+
+### 2026-01-17 - Correcoes de Autenticacao e UI
+- **Problema 1**: Pagina /admin/usuarios ficava carregando infinitamente
+  - **Causa**: Type mismatch em `usuarios-api.ts`
+  - **Solucao**: Corrigido tipo de retorno para `Promise<UsuarioApi[]>`
+  - **Arquivos**: `src/lib/api/usuarios-api.ts`, `src/app/admin/usuarios/page.tsx`
+
+- **Problema 2**: Botao "Area Restrita" nao visivel no portal
+  - **Causa**: Barra superior nao responsiva e layout condicional ocultando header
+  - **Solucao**: Botao sempre visivel, responsivo, adicionado ao menu mobile
+  - **Arquivos**: `src/components/layout/header.tsx`, `src/components/layout/conditional-layout.tsx`
+
+- **Problema 3**: Rotas /admin nao protegidas por autenticacao
+  - **Causa**: Middleware de autenticacao nao existia
+  - **Solucao**: Criado middleware NextAuth para proteger rotas admin
+  - **Arquivos**: `src/middleware.ts` (CRIADO)
+
+- **Problema 4**: Tela de login aparecia dentro do layout admin (com sidebar)
+  - **Causa**: Pagina de login estava em /admin/login, herdando o layout admin
+  - **Solucao**: Movida pagina de login para /login (rota independente)
+  - **Arquivos**:
+    - `src/app/login/page.tsx` (CRIADO - tela de login melhorada)
+    - `src/app/admin/login/` (REMOVIDO)
+    - `src/lib/auth.ts` (atualizado signIn page)
+    - `src/middleware.ts` (atualizado)
+    - `src/components/layout/header.tsx` (links atualizados)
+    - `src/components/layout/conditional-layout.tsx` (exclui /login do layout publico)
 
 ### 2026-01-16 - FASE 7: Painel Eletronico e Votacao (CONCLUIDA)
 - **Etapa 7.1 - Painel de Controle de Sessao**:
@@ -653,10 +937,10 @@
 - **Schema Prisma**: `db:push` executado com sucesso
 - **Seed**: Banco populado com dados de teste
   - 1 usuario admin (admin@camaramojui.com / admin123)
-  - 15 parlamentares
-  - 2 legislaturas
-  - 3 sessoes
-  - 4 comissoes
+  - 11 parlamentares (com mandatos vinculados)
+  - 1 legislatura (2025-2028) com periodo e mesa diretora
+  - 3 sessoes (vinculadas a legislatura)
+  - 4 comissoes (com membros vinculados)
   - 3 noticias
   - 9 configuracoes
 - **Correcao**: Typo `VERADOR` -> `VEREADOR` no seed.ts

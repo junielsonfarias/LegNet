@@ -171,11 +171,13 @@ export function useConfirm() {
   const handleConfirm = React.useCallback(() => {
     state.resolve?.(true)
     setState({ open: false, options: null, resolve: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.resolve])
 
   const handleCancel = React.useCallback(() => {
     state.resolve?.(false)
     setState({ open: false, options: null, resolve: null })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.resolve])
 
   const handleOpenChange = React.useCallback((open: boolean) => {
@@ -183,6 +185,7 @@ export function useConfirm() {
       state.resolve?.(false)
       setState({ open: false, options: null, resolve: null })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.resolve])
 
   const ConfirmDialogComponent = React.useCallback(() => {

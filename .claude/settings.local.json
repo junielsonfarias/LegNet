@@ -11,7 +11,9 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(npm test:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:www.camaramojuidoscampos.pa.gov.br)",
+      "Bash(npm run db:seed-2025:*)"
     ]
   }
 }

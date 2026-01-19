@@ -5,6 +5,8 @@ export interface LegislaturaApi {
   numero: number
   anoInicio: number
   anoFim: number
+  dataInicio: string | null
+  dataFim: string | null
   ativa: boolean
   descricao: string | null
   createdAt: string
@@ -22,6 +24,8 @@ export interface LegislaturaCreate {
   numero: number
   anoInicio: number
   anoFim: number
+  dataInicio?: string
+  dataFim?: string
   ativa?: boolean
   descricao?: string
 }
@@ -30,6 +34,8 @@ export interface LegislaturaUpdate {
   numero?: number
   anoInicio?: number
   anoFim?: number
+  dataInicio?: string
+  dataFim?: string
   ativa?: boolean
   descricao?: string
 }

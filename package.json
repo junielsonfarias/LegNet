@@ -17,6 +17,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed-2025": "tsx prisma/seed-dados-2025.ts",
     "db:migrate-mock": "tsx prisma/migrate-from-mock.ts",
     "ci:readiness": "tsx scripts/readiness-check.ts",
     "verify:production": "tsx scripts/verify-production.ts",

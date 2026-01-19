@@ -280,7 +280,7 @@ export default function ParlamentaresPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/parlamentares/${parlamentar.id}`)}
+                        onClick={() => router.push(`/admin/parlamentares/${parlamentar.id}`)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Visualizar
