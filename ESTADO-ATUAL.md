@@ -1,8 +1,9 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-17
+> **Ultima Atualizacao**: 2026-01-19
 > **Versao**: 1.0.0
-> **Status Geral**: PRONTO PARA PRODUCAO
+> **Status Geral**: EM PRODUCAO
+> **URL Producao**: https://camara-mojui.vercel.app
 
 ---
 
@@ -309,7 +310,7 @@
 |------|-----------|------|
 | Unitarios | ~30% | 70% |
 | Integracao | ~10% | 50% |
-| E2E | 0% | 30% |
+| E2E | ~20% | 30% |
 
 ### Qualidade de Codigo
 | Metrica | Valor | Status |
@@ -367,6 +368,18 @@
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-19 - Deploy para Producao (Vercel + Supabase)
+- **Ambiente**: Vercel (plano Hobby)
+- **Banco de Dados**: Supabase PostgreSQL
+- **URL Producao**: https://camara-mojui.vercel.app
+- **GitHub Repo**: https://github.com/junielsonfarias/LegNet
+- **Configuracoes**:
+  - Cron job diario as 6h (health check)
+  - Regiao: gru1 (Sao Paulo)
+  - Variaveis de ambiente: DATABASE_URL, DIRECT_URL, NEXTAUTH_URL, NEXTAUTH_SECRET
+- **Build**: 116 paginas geradas com sucesso
+- **Status**: Online e funcional
 
 ### 2026-01-19 - Implementação de Testes E2E com Playwright
 - **Objetivo**: Aumentar cobertura de testes com testes end-to-end
