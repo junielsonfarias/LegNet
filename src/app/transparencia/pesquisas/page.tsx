@@ -1,223 +1,142 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Search, 
-  Filter, 
-  Download, 
+import {
+  Search,
+  Filter,
+  Download,
   Eye,
   FileText,
-  Calendar,
   X,
   RefreshCw,
-  FileDown
+  FileDown,
+  Loader2,
+  AlertCircle
 } from 'lucide-react'
+import { toast } from 'sonner'
+import Link from 'next/link'
 
-// Dados mock baseados no site oficial
-const mockDocumentos = [
-  {
-    id: 1,
-    descricao: 'RGF - RELATÓRIO DE GESTÃO FISCAL',
-    competencia: '1° QUADRIMESTRE/2025',
-    exercicio: '2025',
-    data: '2025-04-30',
-    tipo: 'RGF',
-    arquivo: 'rgf-1q-2025.pdf',
-    tamanho: '2.5 MB',
-    url: '/docs/rgf-1q-2025.pdf'
-  },
-  {
-    id: 2,
-    descricao: 'RGF - RELATÓRIO DE GESTÃO FISCAL',
-    competencia: '3° QUADRIMESTRE/2024',
-    exercicio: '2024',
-    data: '2024-12-31',
-    tipo: 'RGF',
-    arquivo: 'rgf-3q-2024.pdf',
-    tamanho: '2.8 MB',
-    url: '/docs/rgf-3q-2024.pdf'
-  },
-  {
-    id: 3,
-    descricao: 'LOA - LEI ORÇAMENTÁRIA ANUAL',
-    competencia: 'ANUAL/2024',
-    exercicio: '2024',
-    data: '2024-12-09',
-    tipo: 'LOA',
-    arquivo: 'loa-2024.pdf',
-    tamanho: '1.9 MB',
-    url: '/docs/loa-2024.pdf'
-  },
-  {
-    id: 4,
-    descricao: 'RGF - RELATÓRIO DE GESTÃO FISCAL',
-    competencia: '2° QUADRIMESTRE/2024',
-    exercicio: '2024',
-    data: '2024-09-30',
-    tipo: 'RGF',
-    arquivo: 'rgf-2q-2024.pdf',
-    tamanho: '2.3 MB',
-    url: '/docs/rgf-2q-2024.pdf'
-  },
-  {
-    id: 5,
-    descricao: 'LDO - LEI DE DIRETRIZES ORÇAMENTÁRIAS',
-    competencia: 'ANUAL/2023',
-    exercicio: '2023',
-    data: '2023-07-17',
-    tipo: 'LDO',
-    arquivo: 'ldo-2023.pdf',
-    tamanho: '1.7 MB',
-    url: '/docs/ldo-2023.pdf'
-  },
-  {
-    id: 6,
-    descricao: 'RGF - RELATÓRIO DE GESTÃO FISCAL',
-    competencia: '1° QUADRIMESTRE/2024',
-    exercicio: '2024',
-    data: '2024-06-07',
-    tipo: 'RGF',
-    arquivo: 'rgf-1q-2024.pdf',
-    tamanho: '2.1 MB',
-    url: '/docs/rgf-1q-2024.pdf'
-  },
-  {
-    id: 7,
-    descricao: 'RGF - RELATÓRIO DE GESTÃO FISCAL',
-    competencia: '3° QUADRIMESTRE/2023',
-    exercicio: '2023',
-    data: '2024-01-30',
-    tipo: 'RGF',
-    arquivo: 'rgf-3q-2023.pdf',
-    tamanho: '2.4 MB',
-    url: '/docs/rgf-3q-2023.pdf'
-  },
-  {
-    id: 8,
-    descricao: 'RGF - RELATÓRIO DE GESTÃO FISCAL',
-    competencia: '2° QUADRIMESTRE/2023',
-    exercicio: '2023',
-    data: '2023-09-29',
-    tipo: 'RGF',
-    arquivo: 'rgf-2q-2023.pdf',
-    tamanho: '2.2 MB',
-    url: '/docs/rgf-2q-2023.pdf'
+// Interface para documentos da API
+interface DocumentoLRF {
+  id: string
+  titulo: string
+  descricao: string | null
+  tipo: string
+  numero: string | null
+  ano: number
+  data: string
+  conteudo: string
+  arquivo: string | null
+  publicada: boolean
+  visualizacoes: number
+  categoria: {
+    id: string
+    nome: string
+  } | null
+  autor: {
+    tipo: string
+    nome: string
   }
-]
+}
 
 const tiposDocumento = [
-  'LDO - LEI DE DIRETRIZES ORÇAMENTÁRIAS',
-  'LOA - LEI ORÇAMENTÁRIA ANUAL',
-  'PPA - PLANO PLURIANUAL',
-  'RGF - RELATÓRIO DE GESTÃO FISCAL'
-]
-
-const competencias = [
-  'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
-  'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
-  '1º BIMESTRE', '2º BIMESTRE', '3º BIMESTRE', '4º BIMESTRE',
-  '5º BIMESTRE', '6º BIMESTRE', '1° QUADRIMESTRE', '2° QUADRIMESTRE',
-  '3° QUADRIMESTRE', '1° SEMESTRE', '2° SEMESTRE', 'ANUAL',
-  'CONSOLIDADO', 'QUADRIANUAL', 'BIENAL', '1º TRIMESTRE',
-  '2º TRIMESTRE', '3º TRIMESTRE', '4º TRIMESTRE', 'TRIENAL',
-  'QUINQUENAL', 'SEXENAL', 'DECENAL'
+  { value: '', label: 'Todos os tipos' },
+  { value: 'RGF', label: 'RGF - Relatório de Gestão Fiscal' },
+  { value: 'LOA', label: 'LOA - Lei Orçamentária Anual' },
+  { value: 'LDO', label: 'LDO - Lei de Diretrizes Orçamentárias' },
+  { value: 'PPA', label: 'PPA - Plano Plurianual' }
 ]
 
 export default function PesquisasPublicasPage() {
-  const [documentos] = useState(mockDocumentos)
+  const [documentos, setDocumentos] = useState<DocumentoLRF[]>([])
+  const [loading, setLoading] = useState(true)
   const [filtros, setFiltros] = useState({
     tipo: '',
-    competencia: '',
     exercicio: '',
-    descricao: '',
-    dataInicio: '',
-    dataFim: ''
+    descricao: ''
   })
-  const [resultados, setResultados] = useState(mockDocumentos)
-  const [pesquisando, setPesquisando] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
   const itensPorPagina = 10
+
+  // Carregar documentos da API pública
+  const fetchDocumentos = async () => {
+    try {
+      setLoading(true)
+      // Buscar documentos do tipo RELATORIO e PLANEJAMENTO
+      const [relatoriosRes, planejamentoRes] = await Promise.all([
+        fetch('/api/dados-abertos/publicacoes?tipo=RELATORIO&limit=100'),
+        fetch('/api/dados-abertos/publicacoes?tipo=PLANEJAMENTO&limit=100')
+      ])
+
+      const relatorios = await relatoriosRes.json()
+      const planejamento = await planejamentoRes.json()
+
+      const todosDocumentos = [
+        ...(relatorios.dados || []),
+        ...(planejamento.dados || [])
+      ].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+
+      console.log('Documentos LRF carregados:', todosDocumentos.length)
+      setDocumentos(todosDocumentos)
+    } catch (error) {
+      console.error('Erro ao carregar documentos:', error)
+      toast.error('Erro ao carregar documentos')
+      setDocumentos([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDocumentos()
+  }, [])
+
+  // Anos únicos para o filtro
+  const anosDisponiveis = useMemo(() =>
+    Array.from(new Set(documentos.map(d => d.ano))).sort((a, b) => b - a),
+    [documentos]
+  )
+
+  // Filtrar documentos
+  const documentosFiltrados = useMemo(() => {
+    return documentos.filter(doc => {
+      // Extrair tipo do título (RGF, LOA, LDO, PPA)
+      const tipoDoc = doc.titulo.split(' ')[0]?.replace('-', '').toUpperCase()
+
+      const matchesTipo = !filtros.tipo || tipoDoc === filtros.tipo
+      const matchesExercicio = !filtros.exercicio || doc.ano.toString() === filtros.exercicio
+      const matchesDescricao = !filtros.descricao ||
+        doc.titulo.toLowerCase().includes(filtros.descricao.toLowerCase()) ||
+        (doc.descricao && doc.descricao.toLowerCase().includes(filtros.descricao.toLowerCase()))
+
+      return matchesTipo && matchesExercicio && matchesDescricao
+    })
+  }, [documentos, filtros])
 
   const handleFiltroChange = (campo: string, valor: string) => {
     setFiltros(prev => ({
       ...prev,
       [campo]: valor
     }))
-  }
-
-  const pesquisar = () => {
-    setPesquisando(true)
-    
-    // Simular pesquisa
-    setTimeout(() => {
-      let resultadosFiltrados = documentos
-
-      if (filtros.tipo) {
-        resultadosFiltrados = resultadosFiltrados.filter(doc => 
-          doc.tipo === filtros.tipo.split(' - ')[0]
-        )
-      }
-
-      if (filtros.competencia) {
-        resultadosFiltrados = resultadosFiltrados.filter(doc => 
-          doc.competencia.includes(filtros.competencia)
-        )
-      }
-
-      if (filtros.exercicio) {
-        resultadosFiltrados = resultadosFiltrados.filter(doc => 
-          doc.exercicio === filtros.exercicio
-        )
-      }
-
-      if (filtros.descricao) {
-        resultadosFiltrados = resultadosFiltrados.filter(doc => 
-          doc.descricao.toLowerCase().includes(filtros.descricao.toLowerCase())
-        )
-      }
-
-      if (filtros.dataInicio) {
-        resultadosFiltrados = resultadosFiltrados.filter(doc => 
-          new Date(doc.data) >= new Date(filtros.dataInicio)
-        )
-      }
-
-      if (filtros.dataFim) {
-        resultadosFiltrados = resultadosFiltrados.filter(doc => 
-          new Date(doc.data) <= new Date(filtros.dataFim)
-        )
-      }
-
-      setResultados(resultadosFiltrados)
-      setPaginaAtual(1)
-      setPesquisando(false)
-    }, 1000)
+    setPaginaAtual(1)
   }
 
   const limparFiltros = () => {
     setFiltros({
       tipo: '',
-      competencia: '',
       exercicio: '',
-      descricao: '',
-      dataInicio: '',
-      dataFim: ''
+      descricao: ''
     })
-    setResultados(documentos)
     setPaginaAtual(1)
   }
 
-  const exportar = () => {
-    // Simular exportação
-    alert('Exportação iniciada! Os dados serão baixados em breve.')
-  }
-
-  const getTipoColor = (tipo: string) => {
+  const getTipoColor = (titulo: string) => {
+    const tipo = titulo.split(' ')[0]?.replace('-', '').toUpperCase()
     switch (tipo) {
       case 'RGF':
         return 'bg-blue-100 text-blue-800'
@@ -232,11 +151,16 @@ export default function PesquisasPublicasPage() {
     }
   }
 
+  const getTipoLabel = (titulo: string) => {
+    const tipo = titulo.split(' ')[0]?.replace('-', '').toUpperCase()
+    return tipo || 'DOC'
+  }
+
   // Paginação
-  const totalPaginas = Math.ceil(resultados.length / itensPorPagina)
+  const totalPaginas = Math.ceil(documentosFiltrados.length / itensPorPagina)
   const inicio = (paginaAtual - 1) * itensPorPagina
   const fim = inicio + itensPorPagina
-  const resultadosPagina = resultados.slice(inicio, fim)
+  const documentosPagina = documentosFiltrados.slice(inicio, fim)
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -246,9 +170,9 @@ export default function PesquisasPublicasPage() {
           Lei de Responsabilidade Fiscal
         </h1>
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Início</span>
+          <Link href="/" className="hover:text-camara-primary">Início</Link>
           <span>›</span>
-          <span>Acesso a informação</span>
+          <Link href="/transparencia" className="hover:text-camara-primary">Transparência</Link>
           <span>›</span>
           <span className="font-semibold">Lei de responsabilidade fiscal</span>
         </div>
@@ -257,124 +181,79 @@ export default function PesquisasPublicasPage() {
       {/* Filtros */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Opções de filtro
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Opções de filtro
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchDocumentos}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
           <p className="text-sm text-gray-600">
-            Para usar as opções de filtro, escolha o campo para a pesquisa e clique no botão pesquisar
+            Para usar as opções de filtro, escolha o campo para a pesquisa
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Primeira linha */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="tipo">Filtro pelo tipo</Label>
+              <Label htmlFor="tipo">Tipo de Documento</Label>
               <select
                 id="tipo"
                 value={filtros.tipo}
                 onChange={(e) => handleFiltroChange('tipo', e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-camara-primary focus:border-transparent"
               >
-                <option value="">Selecione um tipo</option>
                 {tiposDocumento.map((tipo) => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
+                  <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="competencia">Competência</Label>
+              <Label htmlFor="exercicio">Exercício/Ano</Label>
               <select
-                id="competencia"
-                value={filtros.competencia}
-                onChange={(e) => handleFiltroChange('competencia', e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-camara-primary focus:border-transparent"
-              >
-                <option value="">Selecione uma Competência</option>
-                {competencias.map((competencia) => (
-                  <option key={competencia} value={competencia}>{competencia}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="exercicio">Exercício</Label>
-              <Input
                 id="exercicio"
-                type="number"
-                placeholder="Ex: 2025"
                 value={filtros.exercicio}
                 onChange={(e) => handleFiltroChange('exercicio', e.target.value)}
-              />
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-camara-primary focus:border-transparent"
+              >
+                <option value="">Todos os anos</option>
+                {anosDisponiveis.map((ano) => (
+                  <option key={ano} value={ano.toString()}>{ano}</option>
+                ))}
+              </select>
             </div>
-          </div>
 
-          {/* Segunda linha */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="descricao">Descrição</Label>
               <Input
                 id="descricao"
-                placeholder="Digite a descrição..."
+                placeholder="Digite para buscar..."
                 value={filtros.descricao}
                 onChange={(e) => handleFiltroChange('descricao', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dataInicio">Data Início</Label>
-              <Input
-                id="dataInicio"
-                type="date"
-                value={filtros.dataInicio}
-                onChange={(e) => handleFiltroChange('dataInicio', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dataFim">Data Fim</Label>
-              <Input
-                id="dataFim"
-                type="date"
-                value={filtros.dataFim}
-                onChange={(e) => handleFiltroChange('dataFim', e.target.value)}
               />
             </div>
           </div>
 
           {/* Botões de ação */}
           <div className="flex flex-wrap gap-3 pt-4">
-            <Button 
-              onClick={pesquisar} 
-              disabled={pesquisando}
-              className="flex items-center gap-2 bg-camara-primary hover:bg-camara-secondary"
-            >
-              {pesquisando ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              {pesquisando ? 'Pesquisando...' : 'PESQUISAR'}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={limparFiltros}
-              className="flex items-center gap-2"
-            >
-              <X className="h-4 w-4" />
-              LIMPAR
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={exportar}
-              className="flex items-center gap-2"
-            >
-              <FileDown className="h-4 w-4" />
-              EXPORTAÇÃO
-            </Button>
+            {(filtros.tipo || filtros.exercicio || filtros.descricao) && (
+              <Button
+                variant="outline"
+                onClick={limparFiltros}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Limpar Filtros
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -383,50 +262,64 @@ export default function PesquisasPublicasPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Lista LRF</CardTitle>
+            <CardTitle>Documentos de LRF</CardTitle>
             <Badge variant="outline">
-              Foram encontrados {resultados.length} registros
+              {documentosFiltrados.length} documento(s) encontrado(s)
             </Badge>
           </div>
-          <p className="text-sm text-gray-600">
-            Informações atualizadas em: {new Date().toLocaleDateString('pt-BR')} - {new Date().toLocaleTimeString('pt-BR')}
-          </p>
         </CardHeader>
         <CardContent>
-          {resultados.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Nenhum documento encontrado com os filtros aplicados.</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Carregando documentos...</span>
+            </div>
+          ) : documentosFiltrados.length === 0 ? (
+            <div className="text-center py-12">
+              <AlertCircle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Nenhum documento encontrado
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {filtros.tipo || filtros.exercicio || filtros.descricao
+                  ? 'Tente ajustar os filtros ou realizar uma nova busca.'
+                  : 'Os documentos de LRF ainda não foram cadastrados no sistema.'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Documentos como RGF, LOA, LDO e PPA serão exibidos aqui quando cadastrados.
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b">
+                  <tr className="border-b bg-gray-50">
                     <th className="text-left p-3 font-semibold">Descrição</th>
-                    <th className="text-left p-3 font-semibold">Competência/Exercício</th>
+                    <th className="text-left p-3 font-semibold">Tipo/Ano</th>
                     <th className="text-left p-3 font-semibold">Data</th>
                     <th className="text-left p-3 font-semibold">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {resultadosPagina.map((documento) => (
+                  {documentosPagina.map((documento) => (
                     <tr key={documento.id} className="border-b hover:bg-gray-50">
                       <td className="p-3">
                         <div className="font-medium text-gray-900">
-                          {documento.descricao}
+                          {documento.titulo}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {documento.arquivo} • {documento.tamanho}
-                        </div>
+                        {documento.descricao && (
+                          <div className="text-sm text-gray-500 line-clamp-2">
+                            {documento.descricao}
+                          </div>
+                        )}
                       </td>
                       <td className="p-3">
-                        <div className="text-sm">
-                          {documento.competencia}
-                        </div>
-                        <Badge className={`mt-1 ${getTipoColor(documento.tipo)}`}>
-                          {documento.tipo}
+                        <Badge className={getTipoColor(documento.titulo)}>
+                          {getTipoLabel(documento.titulo)}
                         </Badge>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {documento.ano}
+                        </div>
                       </td>
                       <td className="p-3">
                         <div className="text-sm">
@@ -435,14 +328,14 @@ export default function PesquisasPublicasPage() {
                       </td>
                       <td className="p-3">
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-3 w-3 mr-1" />
-                            Visualizar
-                          </Button>
-                          <Button size="sm" className="bg-camara-primary hover:bg-camara-secondary">
-                            <Download className="h-3 w-3 mr-1" />
-                            Baixar
-                          </Button>
+                          {documento.arquivo && (
+                            <Button asChild size="sm" className="bg-camara-primary hover:bg-camara-secondary">
+                              <a href={documento.arquivo} target="_blank" rel="noopener noreferrer">
+                                <Download className="h-3 w-3 mr-1" />
+                                Baixar
+                              </a>
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -455,18 +348,29 @@ export default function PesquisasPublicasPage() {
       </Card>
 
       {/* Paginação */}
-      {resultados.length > 0 && (
+      {documentosFiltrados.length > itensPorPagina && (
         <div className="flex items-center justify-center gap-2 mt-6">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             disabled={paginaAtual === 1}
             onClick={() => setPaginaAtual(paginaAtual - 1)}
           >
             Anterior
           </Button>
-          
-          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((pagina) => (
+
+          {Array.from({ length: Math.min(totalPaginas, 5) }, (_, i) => {
+            let pageNum = i + 1
+            if (totalPaginas > 5) {
+              if (paginaAtual > 3) {
+                pageNum = paginaAtual - 2 + i
+              }
+              if (paginaAtual > totalPaginas - 2) {
+                pageNum = totalPaginas - 4 + i
+              }
+            }
+            return pageNum
+          }).filter(p => p > 0 && p <= totalPaginas).map((pagina) => (
             <Button
               key={pagina}
               variant={pagina === paginaAtual ? "default" : "outline"}
@@ -477,10 +381,10 @@ export default function PesquisasPublicasPage() {
               {pagina}
             </Button>
           ))}
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
+
+          <Button
+            variant="outline"
+            size="sm"
             disabled={paginaAtual === totalPaginas}
             onClick={() => setPaginaAtual(paginaAtual + 1)}
           >
@@ -488,6 +392,37 @@ export default function PesquisasPublicasPage() {
           </Button>
         </div>
       )}
+
+      {/* Informações sobre LRF */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="text-xl text-camara-primary">
+            Sobre a Lei de Responsabilidade Fiscal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">O que é a LRF?</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li>• Lei Complementar nº 101/2000</li>
+                <li>• Estabelece normas de finanças públicas</li>
+                <li>• Voltada para a responsabilidade na gestão fiscal</li>
+                <li>• Obrigatória para União, Estados e Municípios</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Documentos Disponíveis</h3>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li>• <strong>RGF:</strong> Relatório de Gestão Fiscal</li>
+                <li>• <strong>LOA:</strong> Lei Orçamentária Anual</li>
+                <li>• <strong>LDO:</strong> Lei de Diretrizes Orçamentárias</li>
+                <li>• <strong>PPA:</strong> Plano Plurianual</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

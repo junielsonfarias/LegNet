@@ -1,15 +1,55 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, Crown, Shield, User, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 
+// Interface para estatísticas
+interface EstatisticaParlamentar {
+  id: string
+  nome: string
+  cargo: string
+  partido: string | null
+  sessoes: number
+  materias: number
+}
+
 export function ParliamentariansSection() {
-  const { parlamentares, loading } = useParlamentares({ ativo: true })
-  
+  const { parlamentares, loading: loadingParlamentares } = useParlamentares({ ativo: true })
+  const [estatisticas, setEstatisticas] = useState<EstatisticaParlamentar[]>([])
+  const [loadingStats, setLoadingStats] = useState(true)
+
+  // Buscar estatísticas dos parlamentares
+  useEffect(() => {
+    const fetchEstatisticas = async () => {
+      try {
+        setLoadingStats(true)
+        const response = await fetch('/api/dados-abertos/parlamentares/estatisticas')
+        const result = await response.json()
+        if (result.dados) {
+          setEstatisticas(result.dados)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar estatísticas:', error)
+      } finally {
+        setLoadingStats(false)
+      }
+    }
+    fetchEstatisticas()
+  }, [])
+
+  // Função para obter estatísticas de um parlamentar
+  const getStats = (parlamentarId: string) => {
+    const stats = estatisticas.find(e => e.id === parlamentarId)
+    return {
+      sessions: stats?.sessoes || 0,
+      matters: stats?.materias || 0
+    }
+  }
+
   // Separar mesa diretora e vereadores
   const { mesaDiretora, vereadores } = useMemo(() => {
     const mesa = parlamentares
@@ -22,28 +62,34 @@ export function ParliamentariansSection() {
           'SEGUNDO_SECRETARIO': { role: '2º Secretário', icon: User, color: 'bg-camara-accent' }
         }
         const roleInfo = roleMap[p.cargo] || { role: p.cargo, icon: User, color: 'bg-gray-500' }
+        const stats = getStats(p.id)
         return {
           id: p.id,
           name: p.nome,
           role: roleInfo.role,
           icon: roleInfo.icon,
-          sessions: 0, // TODO: calcular quando tiver dados de sessões
-          matters: 0, // TODO: calcular quando tiver dados de matérias
+          sessions: stats.sessions,
+          matters: stats.matters,
           color: roleInfo.color
         }
       })
-    
+
     const vereadoresList = parlamentares
       .filter(p => p.cargo === 'VEREADOR')
-      .map(p => ({
-        id: p.id,
-        name: p.nome,
-        sessions: 0, // TODO: calcular quando tiver dados de sessões
-        matters: 0 // TODO: calcular quando tiver dados de matérias
-      }))
-    
+      .map(p => {
+        const stats = getStats(p.id)
+        return {
+          id: p.id,
+          name: p.nome,
+          sessions: stats.sessions,
+          matters: stats.matters
+        }
+      })
+
     return { mesaDiretora: mesa, vereadores: vereadoresList }
-  }, [parlamentares])
+  }, [parlamentares, estatisticas])
+
+  const loading = loadingParlamentares || loadingStats
 
   return (
     <section className="py-16 bg-white">
@@ -53,7 +99,7 @@ export function ParliamentariansSection() {
             Parlamentares
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Conheça os vereadores eleitos para a legislatura 2025/2028 e 
+            Conheça os vereadores eleitos para a legislatura 2025/2028 e
             acompanhe sua atuação na Câmara Municipal
           </p>
         </div>
