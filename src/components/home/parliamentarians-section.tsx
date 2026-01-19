@@ -139,31 +139,36 @@ export function ParliamentariansSection() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {mesaDiretora.map((membro) => (
-                    <Card key={membro.id} className="camara-card hover:scale-105 transition-transform duration-200">
-                      <CardHeader className="text-center pb-3">
-                        <div className={`w-16 h-16 ${membro.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                          <membro.icon className="h-8 w-8 text-white" />
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-gray-900">
-                          {membro.name}
-                        </CardTitle>
-                        <p className="text-sm text-camara-primary font-medium">
-                          {membro.role}
-                        </p>
-                      </CardHeader>
-                      <CardContent className="text-center">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <div className="font-semibold text-camara-primary">{membro.sessions}</div>
-                            <div className="text-gray-600">Sessões</div>
+                    <Link
+                      key={membro.id}
+                      href={`/parlamentares/${membro.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <Card className="camara-card hover:scale-105 transition-transform duration-200 cursor-pointer">
+                        <CardHeader className="text-center pb-3">
+                          <div className={`w-16 h-16 ${membro.color} rounded-full flex items-center justify-center mx-auto mb-3`}>
+                            <membro.icon className="h-8 w-8 text-white" />
                           </div>
-                          <div>
-                            <div className="font-semibold text-camara-secondary">{membro.matters}</div>
-                            <div className="text-gray-600">Matérias</div>
+                          <CardTitle className="text-lg font-semibold text-gray-900">
+                            {membro.name}
+                          </CardTitle>
+                          <p className="text-sm text-camara-primary font-medium">
+                            {membro.role}
+                          </p>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <div className="font-semibold text-camara-primary">{membro.sessions}</div>
+                              <div className="text-gray-600">Sessões</div>
+                            </div>
+                            <div>
+                              <div className="font-semibold text-camara-secondary">{membro.matters}</div>
+                              <div className="text-gray-600">Matérias</div>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -177,25 +182,30 @@ export function ParliamentariansSection() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {vereadores.map((vereador, index) => (
-                    <Card key={vereador.id} className="camara-card hover:shadow-lg transition-shadow duration-200">
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-camara-primary rounded-full flex items-center justify-center text-white font-semibold">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 text-sm">
-                              {vereador.name}
-                            </h4>
-                            <div className="flex items-center space-x-4 text-xs text-gray-600">
-                              <span>{vereador.sessions} sessões</span>
-                              <span>•</span>
-                              <span>{vereador.matters} matérias</span>
+                    <Link
+                      key={vereador.id}
+                      href={`/parlamentares/${vereador.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <Card className="camara-card hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-camara-primary rounded-full flex items-center justify-center text-white font-semibold">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-sm">
+                                {vereador.name}
+                              </h4>
+                              <div className="flex items-center space-x-4 text-xs text-gray-600">
+                                <span>{vereador.sessions} sessões</span>
+                                <span>•</span>
+                                <span>{vereador.matters} matérias</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   ))}
                 </div>
               </div>

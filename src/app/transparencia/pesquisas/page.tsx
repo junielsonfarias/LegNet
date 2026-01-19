@@ -61,6 +61,7 @@ export default function PesquisasPublicasPage() {
     descricao: ''
   })
   const [paginaAtual, setPaginaAtual] = useState(1)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const itensPorPagina = 10
 
   // Carregar documentos da API pública
@@ -290,58 +291,61 @@ export default function PesquisasPublicasPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="text-left p-3 font-semibold">Descrição</th>
-                    <th className="text-left p-3 font-semibold">Tipo/Ano</th>
-                    <th className="text-left p-3 font-semibold">Data</th>
-                    <th className="text-left p-3 font-semibold">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {documentosPagina.map((documento) => (
-                    <tr key={documento.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">
-                        <div className="font-medium text-gray-900">
-                          {documento.titulo}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {documentosPagina.map((documento) => (
+                <Card key={documento.id} className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <Badge className={getTipoColor(documento.titulo)}>
+                        {getTipoLabel(documento.titulo)}
+                      </Badge>
+                      <span className="text-sm text-gray-500">
+                        {new Date(documento.data).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                    <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+                      {documento.titulo}
+                    </h3>
+                    {documento.descricao && (
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {documento.descricao}
+                      </p>
+                    )}
+                    <div className="text-xs text-gray-500 mb-3">
+                      Exercício: {documento.ano}
+                    </div>
+
+                    {/* Conteúdo expandido */}
+                    {expandedId === documento.id && documento.conteudo && (
+                      <div className="border-t pt-3 mb-3">
+                        <h4 className="font-semibold text-gray-900 mb-2 text-sm">Conteúdo</h4>
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg max-h-60 overflow-y-auto">
+                          {documento.conteudo}
                         </div>
-                        {documento.descricao && (
-                          <div className="text-sm text-gray-500 line-clamp-2">
-                            {documento.descricao}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        <Badge className={getTipoColor(documento.titulo)}>
-                          {getTipoLabel(documento.titulo)}
-                        </Badge>
-                        <div className="text-sm text-gray-600 mt-1">
-                          {documento.ano}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          {new Date(documento.data).toLocaleDateString('pt-BR')}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          {documento.arquivo && (
-                            <Button asChild size="sm" className="bg-camara-primary hover:bg-camara-secondary">
-                              <a href={documento.arquivo} target="_blank" rel="noopener noreferrer">
-                                <Download className="h-3 w-3 mr-1" />
-                                Baixar
-                              </a>
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setExpandedId(expandedId === documento.id ? null : documento.id)}
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        {expandedId === documento.id ? 'Ocultar' : 'Visualizar'}
+                      </Button>
+                      {documento.arquivo && (
+                        <Button asChild size="sm" className="bg-camara-primary hover:bg-camara-secondary">
+                          <a href={documento.arquivo} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-3 w-3 mr-1" />
+                            PDF
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>

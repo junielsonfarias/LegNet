@@ -369,6 +369,68 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Correcao de Links de Parlamentares e Botoes de Acao
+- **Problemas identificados**:
+  - Cards de parlamentares na home nao eram clicaveis
+  - Botao "Ver Perfil" na mesa diretora nao funcionava
+  - Leis e decretos nao tinham botao para visualizar conteudo
+  - Pagina de pesquisas (LRF) usava tabela nao responsiva
+- **Correcoes aplicadas**:
+  - `src/components/home/parliamentarians-section.tsx`:
+    - Adicionado Link aos cards da Mesa Diretora
+    - Adicionado Link aos cards dos Vereadores
+    - Cards agora redirecionam para `/parlamentares/{slug}`
+  - `src/app/parlamentares/mesa-diretora/page.tsx`:
+    - Corrigido botao "Ver Perfil" com `asChild` e `Link`
+    - Adicionado import de `Link` do next/link
+  - `src/app/transparencia/leis/page.tsx`:
+    - Adicionado estado `expandedId` para controlar expansao
+    - Adicionado botao "Visualizar Conteudo" em cada lei
+    - Conteudo expandido exibido abaixo do card
+  - `src/app/transparencia/decretos/page.tsx`:
+    - Mesmas melhorias da pagina de leis
+  - `src/app/transparencia/pesquisas/page.tsx`:
+    - Substituida tabela por grid responsivo de cards
+    - Adicionado botao "Visualizar" para cada documento
+    - Conteudo expandido dentro do card
+    - Melhor experiencia em dispositivos moveis
+- **Resultado**: Links de parlamentares funcionais, botoes de visualizacao em todas as paginas de transparencia
+
+### 2026-01-19 - Correcao de Erros 404 e Pagina de Noticias
+- **Problema**: Links mockados na home apontavam para paginas inexistentes (404)
+- **Correcoes**:
+  - `transparency-section.tsx` - Removidos dados mockados, busca publicacoes reais da API
+  - Nova pagina `/noticias/[id]` - Detalhes de noticias
+- **Melhorias**:
+  - Estatisticas de transparencia buscadas da API (leis, decretos, sessoes, proposicoes)
+  - Publicacoes recentes buscadas dinamicamente
+  - Links de publicacoes direcionam para listagens corretas
+- **Arquivos criados**: `src/app/noticias/[id]/page.tsx`
+- **Arquivos modificados**: `src/components/home/transparency-section.tsx`
+
+### 2026-01-19 - Correcao de Paginas LRF, Lei Organica e Estatisticas Parlamentares
+- **Paginas corrigidas**:
+  - `/transparencia/pesquisas` - Removido mock, usa `/api/dados-abertos/publicacoes?tipo=RELATORIO|PLANEJAMENTO`
+  - `/institucional/lei-organica` - Removido mock, usa `/api/dados-abertos/publicacoes?tipo=CODIGO`
+  - Secao de parlamentares na home - Corrigido dados zerados (0 Sessoes, 0 Materias)
+- **Nova API**: `/api/dados-abertos/parlamentares/estatisticas` - Retorna contagem de sessoes e materias por parlamentar
+- **Dados cadastrados no banco**:
+  - 4 Relatorios de Gestao Fiscal (RGF)
+  - 5 Documentos de Planejamento (LOA, LDO, PPA)
+  - 2 Documentos da Lei Organica
+- **Script**: `prisma/seed-documentos-lrf.ts`
+
+### 2026-01-19 - Correcao de Paginas de Decretos e Portarias
+- **Problema**: Paginas de decretos e portarias usavam dados mockados
+- **Correcoes**:
+  - `/transparencia/decretos` - Removido array mock, agora usa `/api/dados-abertos/publicacoes?tipo=DECRETO`
+  - `/transparencia/portarias` - Removido array mock, agora usa `/api/dados-abertos/publicacoes?tipo=PORTARIA`
+- **Arquivos modificados**:
+  - `src/app/transparencia/decretos/page.tsx`
+  - `src/app/transparencia/portarias/page.tsx`
+- **Resultado**: Todas as paginas de transparencia agora exibem dados reais do banco de dados
+- **Dados no banco**: 6 decretos legislativos, 8 portarias
+
 ### 2026-01-19 - Cadastro de Leis e Votacoes no Banco
 - **Leis cadastradas**: 10 leis municipais de 2025
   - Lei 001/2025 - Galeria das Legislaturas

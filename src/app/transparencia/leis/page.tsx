@@ -37,6 +37,7 @@ export default function LeisPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [anoFilter, setAnoFilter] = useState<number | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Carregar leis da API pública
   const fetchLeis = async () => {
@@ -297,6 +298,15 @@ export default function LeisPage() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Ações</h3>
                         <div className="space-y-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setExpandedId(expandedId === lei.id ? null : lei.id)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            {expandedId === lei.id ? 'Ocultar Conteúdo' : 'Visualizar Conteúdo'}
+                          </Button>
                           {lei.arquivo && (
                             <Button asChild variant="outline" size="sm" className="w-full">
                               <a href={lei.arquivo} target="_blank" rel="noopener noreferrer">
@@ -309,6 +319,16 @@ export default function LeisPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Conteúdo expandido */}
+                  {expandedId === lei.id && lei.conteudo && (
+                    <div className="border-t mt-6 pt-6 bg-gray-50 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg">
+                      <h3 className="font-semibold text-gray-900 mb-3">Conteúdo da Lei</h3>
+                      <div className="prose max-w-none text-sm text-gray-700 whitespace-pre-wrap bg-white p-4 rounded-lg border">
+                        {lei.conteudo}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

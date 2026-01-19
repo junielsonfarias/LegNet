@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Crown, Shield, Award, User, Mail, Phone, Calendar, Filter, BarChart3, Eye } from 'lucide-react';
+import Link from 'next/link';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 
@@ -451,9 +452,11 @@ export default function MesaDiretoraPage() {
                       {vereador.partido}
                     </Badge>
                     <div className="pt-2">
-                      <Button variant="outline" size="sm" className="w-full text-xs">
-                        <Eye className="h-3 w-3 mr-1" />
-                        Ver Perfil
+                      <Button asChild variant="outline" size="sm" className="w-full text-xs">
+                        <Link href={`/parlamentares/${vereador.apelido?.toLowerCase().replace(/\s+/g, '-') || vereador.id}`}>
+                          <Eye className="h-3 w-3 mr-1" />
+                          Ver Perfil
+                        </Link>
                       </Button>
                     </div>
                   </CardContent>
