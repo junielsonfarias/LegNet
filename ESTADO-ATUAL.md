@@ -369,6 +369,40 @@
 
 ## Historico de Atualizacoes
 
+### 2026-01-19 - Correcao de Paginas com Dados Mock (Comissoes, Sobre, Transparencia)
+- **Problema**: 3 paginas do portal institucional usavam dados hardcoded em vez de buscar do banco de dados
+- **Correcoes aplicadas**:
+  - **Pagina `/legislativo/comissoes`**:
+    - Removido array hardcoded com 5 comissoes fictícias
+    - Adicionada diretiva 'use client' e estado para fetch de dados
+    - Agora busca dados da API `/api/dados-abertos/comissoes?ativa=true`
+    - Exibe presidente, vice-presidente e demais membros de cada comissao
+    - Adicionados estados de loading e tratamento de erro
+  - **Pagina `/institucional/sobre`**:
+    - Removidos dados hardcoded da Mesa Diretora e contatos
+    - Agora busca dados da nova API `/api/institucional`
+    - Exibe dinamicamente: Mesa Diretora, total de parlamentares, comissoes ativas, legislatura
+    - Contatos e endereco buscados do ConfiguracaoInstitucional
+  - **Pagina `/transparencia`**:
+    - Removidos dados hardcoded de municipio e ouvidoria
+    - Agora busca dados da API `/api/institucional`
+    - Nome da casa legislativa, endereco, telefone e email dinamicos
+    - Adicionado estado de loading nas cards de informacoes
+- **Nova API criada**:
+  - `src/app/api/institucional/route.ts`:
+    - Busca ConfiguracaoInstitucional do banco
+    - Busca Mesa Diretora (parlamentares com cargo != VEREADOR)
+    - Conta total de parlamentares e comissoes ativas
+    - Busca legislatura ativa
+    - Retorna dados formatados com labels de cargo
+- **Arquivos criados**:
+  - `src/app/api/institucional/route.ts`
+- **Arquivos modificados**:
+  - `src/app/legislativo/comissoes/page.tsx`
+  - `src/app/institucional/sobre/page.tsx`
+  - `src/app/transparencia/page.tsx`
+- **Resultado**: Todas as paginas do portal institucional agora exibem dados reais do banco de dados
+
 ### 2026-01-19 - Pagina de Perfil do Parlamentar com Dados Reais
 - **Problema**: Pagina de perfil do parlamentar exibia dados mockados e campos vazios
 - **Solucao implementada**:

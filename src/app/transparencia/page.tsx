@@ -1,14 +1,15 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  FileText, 
-  Users, 
-  Building2, 
-  DollarSign, 
-  Shield, 
-  BookOpen, 
+import {
+  FileText,
+  Users,
+  Building2,
+  DollarSign,
+  Shield,
+  BookOpen,
   Scale,
   CheckCircle2,
   FileCheck,
@@ -21,16 +22,62 @@ import {
   Award,
   TrendingUp,
   BarChart3,
-  PieChart,
   Activity,
   Globe,
   Briefcase,
-  ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 
+interface ConfiguracaoInstitucional {
+  nome: string;
+  sigla: string | null;
+  cnpj: string | null;
+  endereco: {
+    logradouro: string | null;
+    numero: string | null;
+    bairro: string | null;
+    cidade: string | null;
+    estado: string | null;
+    cep: string | null;
+  };
+  telefone: string | null;
+  email: string | null;
+  site: string | null;
+}
+
+interface DadosInstitucionais {
+  configuracao: ConfiguracaoInstitucional | null;
+}
+
 export default function TransparenciaPage() {
+  const [dados, setDados] = useState<DadosInstitucionais | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDados = async () => {
+      try {
+        const response = await fetch('/api/institucional');
+        const result = await response.json();
+        if (result.dados) {
+          setDados(result.dados);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar dados institucionais:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDados();
+  }, []);
+
+  const config = dados?.configuracao;
+  const nomeCasa = config?.nome || 'Câmara Municipal de Mojuí dos Campos';
+  const endereco = config?.endereco;
+  const enderecoCompleto = endereco?.logradouro
+    ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', s/nº'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`
+    : 'Rua Deputado José Macêdo, s/nº - Centro';
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
       {/* Hero Section - Visual Melhorado */}
@@ -53,7 +100,7 @@ export default function TransparenciaPage() {
               Bem vindo ao Portal da Transparência
             </h1>
             <h2 className="text-xl md:text-2xl font-semibold mb-6 text-blue-100">
-              Câmara Municipal de Mojuí dos Campos
+              {nomeCasa}
             </h2>
             
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-8 border border-white/20 shadow-2xl">
@@ -669,38 +716,45 @@ export default function TransparenciaPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 relative">
-              <div className="space-y-3">
-                <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <MapPin className="h-5 w-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-bold text-gray-900">Câmara Municipal de Mojuí dos Campos</p>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  <span className="ml-2 text-gray-500">Carregando...</span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <MapPin className="h-5 w-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-bold text-gray-900">{nomeCasa}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <Activity className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Mesorregião:</strong> <span className="text-gray-900">Baixo Amazonas</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <Award className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Código do IBGE:</strong> <span className="text-gray-900">1504752</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <Globe className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Sítio Eletrônico:</strong> <span className="text-blue-600">{config?.site || 'www.camaramojuidoscampos.pa.gov.br'}</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <MapPin className="h-5 w-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Endereço:</strong> <span className="text-gray-900">{enderecoCompleto}</span></p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Activity className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Mesorregião:</strong> <span className="text-gray-900">Baixo Amazonas</span></p>
-                  </div>
-                </div>
-                <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Award className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Código do IBGE:</strong> <span className="text-gray-900">1504752</span></p>
-                  </div>
-                </div>
-                <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Globe className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Sítio Eletrônico:</strong> <span className="text-blue-600">www.camaramojuidoscampos.pa.gov.br</span></p>
-                  </div>
-                </div>
-                <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <MapPin className="h-5 w-5 text-blue-600 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Endereço:</strong> <span className="text-gray-900">Rua Deputado José Macêdo, s/nº - Centro</span></p>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -715,38 +769,45 @@ export default function TransparenciaPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 relative">
-              <div className="space-y-3">
-                <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <MapPin className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Presencial:</strong> <span className="text-gray-900">Rua Dep. José Macêdo, S/N</span></p>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-orange-600" />
+                  <span className="ml-2 text-gray-500">Carregando...</span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <MapPin className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Presencial:</strong> <span className="text-gray-900">{enderecoCompleto}</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <Activity className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Horário:</strong> <span className="text-gray-900">De 08:00h às 14:00h, Segunda à Sexta</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <Phone className="h-5 w-5 text-orange-600 mr-2 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Telefones:</strong> <span className="text-gray-900">{config?.telefone || '(93) 991388426'}</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <Mail className="h-5 w-5 text-orange-600 mr-2 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">E-mail:</strong> <span className="text-orange-600">{config?.email || 'camaramojui@hotmail.com'}</span></p>
+                    </div>
+                  </div>
+                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                    <Users className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm"><strong className="text-gray-700">Ouvidor(a):</strong> <span className="text-gray-900">A definir</span></p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Activity className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Horário:</strong> <span className="text-gray-900">De 08:00h às 14:00h, Segunda à Sexta</span></p>
-                  </div>
-                </div>
-                <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Phone className="h-5 w-5 text-orange-600 mr-2 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Telefones:</strong> <span className="text-gray-900">(93) 991388426</span></p>
-                  </div>
-                </div>
-                <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Mail className="h-5 w-5 text-orange-600 mr-2 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">E-mail:</strong> <span className="text-orange-600">camaramojui@hotmail.com</span></p>
-                  </div>
-                </div>
-                <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <Users className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm"><strong className="text-gray-700">Ouvidor(a):</strong> <span className="text-gray-900">EDER RODRIGO RIKER MARINHO</span></p>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>

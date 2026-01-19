@@ -1,127 +1,176 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, FileText, Calendar, UserCheck } from 'lucide-react'
+import { Users, FileText, UserCheck, Loader2, AlertCircle } from 'lucide-react'
+
+interface Membro {
+  id: string
+  cargo: string
+  parlamentar: {
+    id: string
+    nome: string
+    partido: string | null
+  }
+}
+
+interface Comissao {
+  id: string
+  nome: string
+  tipo: string
+  descricao: string | null
+  ativa: boolean
+  membros: Membro[]
+}
 
 export default function ComissoesPage() {
-  const comissoes = [
-    {
-      id: 1,
-      nome: 'Comissão de Constituição, Justiça e Redação',
-      sigla: 'CCJR',
-      tipo: 'Permanente',
-      presidente: 'Francisco Pereira Pantoja',
-      vicePresidente: 'Diego Oliveira da Silva',
-      membros: [
-        'Francisco Pereira Pantoja (Presidente)',
-        'Diego Oliveira da Silva (Vice-Presidente)',
-        'Mickael Christyan Alves de Aguiar',
-        'Jesanias da Silva Pessoa',
-        'Antonio Arnaldo Oliveira de Lima'
-      ],
-      competencias: [
-        'Análise de constitucionalidade e legalidade',
-        'Redação final de proposições',
-        'Estudo de matérias jurídicas',
-        'Elaboração de pareceres técnicos'
-      ]
-    },
-    {
-      id: 2,
-      nome: 'Comissão de Finanças, Orçamento e Fiscalização',
-      sigla: 'CFOF',
-      tipo: 'Permanente',
-      presidente: 'Mickael Christyan Alves de Aguiar',
-      vicePresidente: 'Jesanias da Silva Pessoa',
-      membros: [
-        'Mickael Christyan Alves de Aguiar (Presidente)',
-        'Jesanias da Silva Pessoa (Vice-Presidente)',
-        'Antonio Everaldo da Silva',
-        'Franklin Benjamin Portela Machado',
-        'Joilson Nogueira Xavier'
-      ],
-      competencias: [
-        'Análise de projetos de lei orçamentária',
-        'Fiscalização financeira',
-        'Estudo de matérias tributárias',
-        'Acompanhamento da execução orçamentária'
-      ]
-    },
-    {
-      id: 3,
-      nome: 'Comissão de Educação, Cultura e Desporto',
-      sigla: 'CECD',
-      tipo: 'Permanente',
-      presidente: 'Antonio Everaldo da Silva',
-      vicePresidente: 'Franklin Benjamin Portela Machado',
-      membros: [
-        'Antonio Everaldo da Silva (Presidente)',
-        'Franklin Benjamin Portela Machado (Vice-Presidente)',
-        'Joilson Nogueira Xavier',
-        'José Josiclei Silva de Oliveira',
-        'Reginaldo Emanuel Rabelo da Silva'
-      ],
-      competencias: [
-        'Análise de matérias educacionais',
-        'Estudo de projetos culturais',
-        'Acompanhamento de políticas esportivas',
-        'Fiscalização da aplicação de recursos'
-      ]
-    },
-    {
-      id: 4,
-      nome: 'Comissão de Saúde e Assistência Social',
-      sigla: 'CSAS',
-      tipo: 'Permanente',
-      presidente: 'Franklin Benjamin Portela Machado',
-      vicePresidente: 'Joilson Nogueira Xavier',
-      membros: [
-        'Franklin Benjamin Portela Machado (Presidente)',
-        'Joilson Nogueira Xavier (Vice-Presidente)',
-        'José Josiclei Silva de Oliveira',
-        'Reginaldo Emanuel Rabelo da Silva',
-        'Wallace Pessoa Oliveira'
-      ],
-      competencias: [
-        'Análise de políticas de saúde',
-        'Estudo de programas assistenciais',
-        'Fiscalização de serviços públicos',
-        'Acompanhamento de indicadores sociais'
-      ]
-    },
-    {
-      id: 5,
-      nome: 'Comissão de Obras, Serviços Públicos e Urbanismo',
-      sigla: 'COSPU',
-      tipo: 'Permanente',
-      presidente: 'José Josiclei Silva de Oliveira',
-      vicePresidente: 'Reginaldo Emanuel Rabelo da Silva',
-      membros: [
-        'José Josiclei Silva de Oliveira (Presidente)',
-        'Reginaldo Emanuel Rabelo da Silva (Vice-Presidente)',
-        'Wallace Pessoa Oliveira',
-        'Francisco Pereira Pantoja',
-        'Diego Oliveira da Silva'
-      ],
-      competencias: [
-        'Análise de projetos de obras públicas',
-        'Estudo de serviços urbanos',
-        'Fiscalização de contratos',
-        'Acompanhamento de licitações'
-      ]
+  const [comissoes, setComissoes] = useState<Comissao[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchComissoes = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/dados-abertos/comissoes?ativa=true')
+        const result = await response.json()
+        if (result.dados) {
+          setComissoes(result.dados)
+        }
+      } catch (err) {
+        console.error('Erro ao buscar comissões:', err)
+        setError('Erro ao carregar comissões')
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
+    fetchComissoes()
+  }, [])
 
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
-      case 'Permanente':
+      case 'PERMANENTE':
         return 'bg-blue-100 text-blue-800'
-      case 'Temporária':
+      case 'TEMPORARIA':
         return 'bg-orange-100 text-orange-800'
-      case 'Especial':
+      case 'ESPECIAL':
         return 'bg-purple-100 text-purple-800'
+      case 'INQUERITO':
+        return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo) {
+      case 'PERMANENTE':
+        return 'Permanente'
+      case 'TEMPORARIA':
+        return 'Temporária'
+      case 'ESPECIAL':
+        return 'Especial'
+      case 'INQUERITO':
+        return 'Inquérito'
+      default:
+        return tipo
+    }
+  }
+
+  const getCargoLabel = (cargo: string) => {
+    switch (cargo) {
+      case 'PRESIDENTE':
+        return 'Presidente'
+      case 'VICE_PRESIDENTE':
+        return 'Vice-Presidente'
+      case 'RELATOR':
+        return 'Relator'
+      case 'MEMBRO':
+        return 'Membro'
+      default:
+        return cargo
+    }
+  }
+
+  const getPresidente = (membros: Membro[]) => {
+    return membros.find(m => m.cargo === 'PRESIDENTE')?.parlamentar.nome || 'Não definido'
+  }
+
+  const getVicePresidente = (membros: Membro[]) => {
+    return membros.find(m => m.cargo === 'VICE_PRESIDENTE')?.parlamentar.nome || 'Não definido'
+  }
+
+  const getOutrosMembros = (membros: Membro[]) => {
+    return membros.filter(m => m.cargo !== 'PRESIDENTE' && m.cargo !== 'VICE_PRESIDENTE')
+  }
+
+  const totalMembros = comissoes.reduce((acc, c) => acc + c.membros.length, 0)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Comissões Legislativas
+            </h1>
+            <p className="text-gray-600">
+              Conheça as comissões da Câmara Municipal de Mojuí dos Campos
+            </p>
+          </div>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Carregando comissões...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Comissões Legislativas
+            </h1>
+          </div>
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="flex items-center gap-3 py-6">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+              <p className="text-red-800">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (comissoes.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Comissões Legislativas
+            </h1>
+            <p className="text-gray-600">
+              Conheça as comissões da Câmara Municipal de Mojuí dos Campos
+            </p>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Users className="h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-600 text-center">
+                Nenhuma comissão cadastrada no momento.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -133,7 +182,7 @@ export default function ComissoesPage() {
             Comissões Legislativas
           </h1>
           <p className="text-gray-600">
-            Conheça as comissões permanentes da Câmara Municipal de Mojuí dos Campos
+            Conheça as comissões da Câmara Municipal de Mojuí dos Campos
           </p>
         </div>
 
@@ -142,7 +191,7 @@ export default function ComissoesPage() {
           <Card className="text-center">
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-blue-600">
-                {comissoes.length}
+                {comissoes.filter(c => c.tipo === 'PERMANENTE').length}
               </div>
               <p className="text-sm text-gray-600">Comissões Permanentes</p>
             </CardContent>
@@ -150,7 +199,7 @@ export default function ComissoesPage() {
           <Card className="text-center">
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-green-600">
-                {comissoes.reduce((acc, comissao) => acc + comissao.membros.length, 0)}
+                {totalMembros}
               </div>
               <p className="text-sm text-gray-600">Total de Membros</p>
             </CardContent>
@@ -158,9 +207,9 @@ export default function ComissoesPage() {
           <Card className="text-center">
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-purple-600">
-                5
+                {comissoes.length}
               </div>
-              <p className="text-sm text-gray-600">Membros por Comissão</p>
+              <p className="text-sm text-gray-600">Comissões Ativas</p>
             </CardContent>
           </Card>
           <Card className="text-center">
@@ -184,12 +233,14 @@ export default function ComissoesPage() {
                       {comissao.nome}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-white/20 text-white border-white/30">
-                        {comissao.sigla}
-                      </Badge>
                       <Badge className={getTipoColor(comissao.tipo)}>
-                        {comissao.tipo}
+                        {getTipoLabel(comissao.tipo)}
                       </Badge>
+                      {comissao.ativa && (
+                        <Badge className="bg-green-100 text-green-800">
+                          Ativa
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <Users className="h-8 w-8 text-white/80" />
@@ -203,43 +254,48 @@ export default function ComissoesPage() {
                       <UserCheck className="h-4 w-4 text-blue-600" />
                       Membros da Comissão
                     </h3>
-                    <div className="space-y-2">
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <p className="font-medium text-blue-900">
-                          Presidente: {comissao.presidente}
-                        </p>
-                      </div>
-                      <div className="bg-green-50 p-3 rounded-lg">
-                        <p className="font-medium text-green-900">
-                          Vice-Presidente: {comissao.vicePresidente}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        {comissao.membros.slice(2).map((membro, index) => (
-                          <p key={index} className="text-sm text-gray-700 pl-4">
-                            • {membro}
+                    {comissao.membros.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <p className="font-medium text-blue-900">
+                            Presidente: {getPresidente(comissao.membros)}
                           </p>
-                        ))}
+                        </div>
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <p className="font-medium text-green-900">
+                            Vice-Presidente: {getVicePresidente(comissao.membros)}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          {getOutrosMembros(comissao.membros).map((membro) => (
+                            <p key={membro.id} className="text-sm text-gray-700 pl-4">
+                              • {membro.parlamentar.nome} ({getCargoLabel(membro.cargo)})
+                            </p>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">
+                        Nenhum membro cadastrado
+                      </p>
+                    )}
                   </div>
 
-                  {/* Competências */}
+                  {/* Descrição/Competências */}
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <FileText className="h-4 w-4 text-blue-600" />
-                      Competências
+                      Descrição
                     </h3>
-                    <div className="space-y-2">
-                      {comissao.competencias.map((competencia, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                          <p className="text-sm text-gray-700">
-                            {competencia}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                    {comissao.descricao ? (
+                      <p className="text-sm text-gray-700">
+                        {comissao.descricao}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">
+                        Descrição não disponível
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -255,8 +311,8 @@ export default function ComissoesPage() {
           <CardContent>
             <div className="prose max-w-none">
               <p className="text-gray-700 mb-4">
-                As comissões permanentes são órgãos técnicos da Câmara Municipal, 
-                responsáveis pelo estudo e análise de matérias legislativas em 
+                As comissões são órgãos técnicos da Câmara Municipal,
+                responsáveis pelo estudo e análise de matérias legislativas em
                 suas respectivas áreas de competência.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -273,13 +329,13 @@ export default function ComissoesPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">
-                    Composição
+                    Tipos de Comissões
                   </h3>
                   <ul className="list-disc list-inside text-gray-700 space-y-1">
-                    <li>5 membros por comissão</li>
-                    <li>1 Presidente e 1 Vice-Presidente</li>
-                    <li>3 membros efetivos</li>
-                    <li>Mandato de 2 anos</li>
+                    <li>Permanentes: funcionam durante toda a legislatura</li>
+                    <li>Temporárias: criadas para fins específicos</li>
+                    <li>Especiais: para assuntos relevantes</li>
+                    <li>Inquérito: para investigações</li>
                   </ul>
                 </div>
               </div>
