@@ -208,7 +208,7 @@
 | Unidades de tramitacao | Implementado | /admin/configuracoes/unidades-tramitacao |
 | Nomenclatura de sessoes | Implementado | /admin/configuracoes/nomenclatura-sessoes |
 | Automacao | Implementado | /admin/configuracoes/automacao |
-| **Config institucional** | Parcial | Modelo existe, UI pendente |
+| **Config institucional** | Implementado | Modelo, API e UI completos em /admin/configuracoes |
 
 ### 17. Integracao e API
 
