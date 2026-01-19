@@ -22,6 +22,140 @@ const PARLAMENTARES = [
   'parl-wallace'
 ]
 
+// Decretos Legislativos
+const DECRETOS = [
+  {
+    numero: '001',
+    ano: 2025,
+    titulo: 'Decreto Legislativo nº 001/2025 - Recesso Parlamentar',
+    descricao: 'Dispõe sobre o recesso parlamentar do período de janeiro de 2025',
+    conteudo: 'Art. 1º - Fica estabelecido o recesso parlamentar da Câmara Municipal de Mojuí dos Campos no período de 1º a 31 de janeiro de 2025.\n\nArt. 2º - Durante o recesso, os trabalhos administrativos funcionarão em regime de plantão.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    data: new Date('2025-01-02'),
+    autorNome: 'Mesa Diretora'
+  },
+  {
+    numero: '002',
+    ano: 2025,
+    titulo: 'Decreto Legislativo nº 002/2025 - Calendário Legislativo',
+    descricao: 'Aprova o Calendário das Sessões Ordinárias para o ano de 2025',
+    conteudo: 'Art. 1º - Fica aprovado o Calendário das Sessões Ordinárias da Câmara Municipal de Mojuí dos Campos para o exercício de 2025.\n\nArt. 2º - As sessões ordinárias serão realizadas às quartas-feiras, às 14h.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    data: new Date('2025-02-05'),
+    autorNome: 'Mesa Diretora'
+  },
+  {
+    numero: '003',
+    ano: 2025,
+    titulo: 'Decreto Legislativo nº 003/2025 - Composição das Comissões',
+    descricao: 'Aprova a composição das Comissões Permanentes para o biênio 2025/2026',
+    conteudo: 'Art. 1º - Ficam designados os membros das Comissões Permanentes da Câmara Municipal conforme anexo.\n\nArt. 2º - Os mandatos terão vigência até dezembro de 2026.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    data: new Date('2025-02-12'),
+    autorNome: 'Mesa Diretora'
+  },
+  {
+    numero: '004',
+    ano: 2025,
+    titulo: 'Decreto Legislativo nº 004/2025 - Convocação Extraordinária',
+    descricao: 'Convoca sessão extraordinária para apreciação da LOA 2026',
+    conteudo: 'Art. 1º - Fica convocada sessão extraordinária para o dia 15 de novembro de 2025, às 9h.\n\nArt. 2º - A pauta será exclusiva para votação da Lei Orçamentária Anual - LOA 2026.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    data: new Date('2025-11-10'),
+    autorNome: 'Mesa Diretora'
+  },
+  {
+    numero: '005',
+    ano: 2025,
+    titulo: 'Decreto Legislativo nº 005/2025 - Homenagem Cidadãos',
+    descricao: 'Aprova a realização de sessão solene para homenagem aos cidadãos eméritos',
+    conteudo: 'Art. 1º - Fica aprovada a realização de Sessão Solene para entrega de títulos de Cidadão Honorário e Cidadão Emérito.\n\nArt. 2º - A sessão será realizada no dia 08 de dezembro de 2025, às 19h.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    data: new Date('2025-11-25'),
+    autorNome: 'Mesa Diretora'
+  },
+  {
+    numero: '006',
+    ano: 2025,
+    titulo: 'Decreto Legislativo nº 006/2025 - Recesso Dezembro',
+    descricao: 'Dispõe sobre o recesso parlamentar de dezembro de 2025',
+    conteudo: 'Art. 1º - Fica estabelecido o recesso parlamentar no período de 18 de dezembro de 2025 a 01 de fevereiro de 2026.\n\nArt. 2º - Os trabalhos legislativos serão retomados em 02 de fevereiro de 2026.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    data: new Date('2025-12-15'),
+    autorNome: 'Mesa Diretora'
+  }
+]
+
+// Portarias da Câmara Municipal
+const PORTARIAS = [
+  {
+    numero: '001',
+    ano: 2025,
+    titulo: 'Portaria nº 001/2025 - Horário de Funcionamento',
+    descricao: 'Estabelece o horário de funcionamento da Câmara Municipal',
+    conteudo: 'Art. 1º - O horário de funcionamento da Câmara Municipal de Mojuí dos Campos será das 8h às 14h, de segunda a sexta-feira.\n\nArt. 2º - O atendimento ao público será realizado das 8h às 12h.\n\nArt. 3º - Esta Portaria entra em vigor na data de sua publicação.',
+    data: new Date('2025-01-06'),
+    autorNome: 'Presidência'
+  },
+  {
+    numero: '002',
+    ano: 2025,
+    titulo: 'Portaria nº 002/2025 - Designação Assessoria',
+    descricao: 'Designa servidores para funções de assessoria parlamentar',
+    conteudo: 'Art. 1º - Ficam designados os servidores constantes do anexo para exercerem funções de assessoria parlamentar.\n\nArt. 2º - As designações terão vigência durante o ano legislativo de 2025.\n\nArt. 3º - Esta Portaria entra em vigor na data de sua publicação.',
+    data: new Date('2025-02-03'),
+    autorNome: 'Presidência'
+  },
+  {
+    numero: '003',
+    ano: 2025,
+    titulo: 'Portaria nº 003/2025 - Comissão de Licitação',
+    descricao: 'Nomeia membros da Comissão Permanente de Licitação',
+    conteudo: 'Art. 1º - Fica nomeada a Comissão Permanente de Licitação da Câmara Municipal, composta por:\nI - Presidente: [Nome do Servidor]\nII - Membro: [Nome do Servidor]\nIII - Membro: [Nome do Servidor]\n\nArt. 2º - Esta Portaria entra em vigor na data de sua publicação.',
+    data: new Date('2025-02-10'),
+    autorNome: 'Presidência'
+  },
+  {
+    numero: '004',
+    ano: 2025,
+    titulo: 'Portaria nº 004/2025 - Férias Coletivas',
+    descricao: 'Estabelece período de férias coletivas dos servidores',
+    conteudo: 'Art. 1º - Ficam concedidas férias coletivas aos servidores da Câmara Municipal no período de 15 a 31 de julho de 2025.\n\nArt. 2º - Os serviços essenciais serão mantidos em regime de escala.\n\nArt. 3º - Esta Portaria entra em vigor na data de sua publicação.',
+    data: new Date('2025-06-15'),
+    autorNome: 'Presidência'
+  },
+  {
+    numero: '005',
+    ano: 2025,
+    titulo: 'Portaria nº 005/2025 - Inventário Patrimonial',
+    descricao: 'Institui Comissão para realização de inventário patrimonial',
+    conteudo: 'Art. 1º - Fica instituída Comissão Especial para realização de inventário dos bens patrimoniais da Câmara Municipal.\n\nArt. 2º - O inventário deverá ser concluído até 30 de novembro de 2025.\n\nArt. 3º - Esta Portaria entra em vigor na data de sua publicação.',
+    data: new Date('2025-09-01'),
+    autorNome: 'Presidência'
+  },
+  {
+    numero: '006',
+    ano: 2025,
+    titulo: 'Portaria nº 006/2025 - Controle de Ponto',
+    descricao: 'Regulamenta o sistema de controle de frequência dos servidores',
+    conteudo: 'Art. 1º - Fica instituído o sistema eletrônico de controle de frequência para os servidores da Câmara Municipal.\n\nArt. 2º - O registro de ponto será obrigatório para todos os servidores.\n\nArt. 3º - Esta Portaria entra em vigor em 1º de outubro de 2025.',
+    data: new Date('2025-09-15'),
+    autorNome: 'Presidência'
+  },
+  {
+    numero: '007',
+    ano: 2025,
+    titulo: 'Portaria nº 007/2025 - Uso de Veículos',
+    descricao: 'Regulamenta o uso de veículos oficiais da Câmara Municipal',
+    conteudo: 'Art. 1º - O uso de veículos oficiais da Câmara Municipal fica restrito a serviços institucionais.\n\nArt. 2º - Todo deslocamento deverá ser registrado em livro próprio.\n\nArt. 3º - Esta Portaria entra em vigor na data de sua publicação.',
+    data: new Date('2025-10-01'),
+    autorNome: 'Presidência'
+  },
+  {
+    numero: '008',
+    ano: 2025,
+    titulo: 'Portaria nº 008/2025 - Diárias e Passagens',
+    descricao: 'Estabelece valores de diárias para deslocamento de servidores e parlamentares',
+    conteudo: 'Art. 1º - Ficam estabelecidos os seguintes valores de diárias:\nI - Deslocamento dentro do Estado: R$ 350,00\nII - Deslocamento para outros Estados: R$ 500,00\nIII - Deslocamento para Brasília: R$ 600,00\n\nArt. 2º - Esta Portaria entra em vigor na data de sua publicação.',
+    data: new Date('2025-10-20'),
+    autorNome: 'Presidência'
+  }
+]
+
 // Leis baseadas nas proposições aprovadas
 const LEIS = [
   {
@@ -159,14 +293,14 @@ function gerarVotos(proposicaoId: string): Array<{ proposicaoId: string; parlame
 }
 
 async function main() {
-  console.log('🚀 Iniciando seed de Leis e Votações...\n')
+  console.log('🚀 Iniciando seed de Leis, Decretos, Portarias e Votações...\n')
 
   // 1. Criar Publicações (Leis)
   console.log('📚 Cadastrando Leis...')
 
   for (const lei of LEIS) {
     try {
-      const publicacao = await prisma.publicacao.create({
+      await prisma.publicacao.create({
         data: {
           titulo: lei.titulo,
           descricao: lei.descricao,
@@ -187,7 +321,59 @@ async function main() {
     }
   }
 
-  // 2. Criar Votações
+  // 2. Criar Decretos Legislativos
+  console.log('\n📜 Cadastrando Decretos Legislativos...')
+
+  for (const decreto of DECRETOS) {
+    try {
+      await prisma.publicacao.create({
+        data: {
+          titulo: decreto.titulo,
+          descricao: decreto.descricao,
+          tipo: 'DECRETO',
+          numero: decreto.numero,
+          ano: decreto.ano,
+          data: decreto.data,
+          conteudo: decreto.conteudo,
+          publicada: true,
+          visualizacoes: Math.floor(Math.random() * 80) + 5,
+          autorTipo: 'ORGAO',
+          autorNome: decreto.autorNome
+        }
+      })
+      console.log(`  ✅ Decreto ${decreto.numero}/${decreto.ano} - ${decreto.titulo.substring(0, 45)}...`)
+    } catch (error: any) {
+      console.log(`  ⚠️ Decreto ${decreto.numero}/${decreto.ano} já existe ou erro: ${error.message}`)
+    }
+  }
+
+  // 3. Criar Portarias
+  console.log('\n📋 Cadastrando Portarias...')
+
+  for (const portaria of PORTARIAS) {
+    try {
+      await prisma.publicacao.create({
+        data: {
+          titulo: portaria.titulo,
+          descricao: portaria.descricao,
+          tipo: 'PORTARIA',
+          numero: portaria.numero,
+          ano: portaria.ano,
+          data: portaria.data,
+          conteudo: portaria.conteudo,
+          publicada: true,
+          visualizacoes: Math.floor(Math.random() * 50) + 5,
+          autorTipo: 'ORGAO',
+          autorNome: portaria.autorNome
+        }
+      })
+      console.log(`  ✅ Portaria ${portaria.numero}/${portaria.ano} - ${portaria.titulo.substring(0, 42)}...`)
+    } catch (error: any) {
+      console.log(`  ⚠️ Portaria ${portaria.numero}/${portaria.ano} já existe ou erro: ${error.message}`)
+    }
+  }
+
+  // 4. Criar Votações
   console.log('\n🗳️ Cadastrando Votações...')
 
   let votacoesCount = 0
@@ -212,12 +398,16 @@ async function main() {
 
   console.log(`\n📊 Total de votos cadastrados: ${votacoesCount}`)
 
-  // 3. Resumo
+  // 5. Resumo
   const totalLeis = await prisma.publicacao.count({ where: { tipo: 'LEI' } })
+  const totalDecretos = await prisma.publicacao.count({ where: { tipo: 'DECRETO' } })
+  const totalPortarias = await prisma.publicacao.count({ where: { tipo: 'PORTARIA' } })
   const totalVotacoes = await prisma.votacao.count()
 
   console.log('\n✨ Seed concluído!')
   console.log(`   📚 Total de Leis: ${totalLeis}`)
+  console.log(`   📜 Total de Decretos: ${totalDecretos}`)
+  console.log(`   📋 Total de Portarias: ${totalPortarias}`)
   console.log(`   🗳️ Total de Votações: ${totalVotacoes}`)
 }
 
