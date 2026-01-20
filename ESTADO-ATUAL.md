@@ -2221,6 +2221,25 @@ sudo ./scripts/uninstall.sh --full
   - Permite que paginas de transparencia carreguem legislaturas corretamente
 - **Resultado**: Todas as paginas de transparencia funcionando sem erros de API
 
+### 2026-01-20 - Sistema de Pareceres das Comissões
+
+- **Modelos Prisma criados**:
+  - `Parecer`: parecer de comissão sobre proposição (tipo, status, fundamentacao, conclusao, ementa, votos)
+  - `VotoParecerComissao`: registro individual de votos dos membros da comissão
+  - `TipoParecer`: FAVORAVEL, FAVORAVEL_COM_EMENDAS, CONTRARIO, PELA_INCONSTITUCIONALIDADE, etc
+  - `StatusParecer`: RASCUNHO, AGUARDANDO_VOTACAO, APROVADO_COMISSAO, REJEITADO_COMISSAO, EMITIDO, ARQUIVADO
+- **APIs implementadas**:
+  - GET/POST `/api/pareceres` - listar e criar pareceres
+  - GET/PUT/DELETE `/api/pareceres/[id]` - operações por ID
+  - GET/POST `/api/pareceres/[id]/votar` - votação na comissão
+- **Frontend**:
+  - Página admin completa `/admin/pareceres` com CRUD, filtros, estatísticas
+  - Hook `usePareceres` com todas operações
+  - Sidebar atualizado com link para Pareceres e Comissões
+- **Fluxo completo**: RASCUNHO → AGUARDANDO_VOTACAO → APROVADO/REJEITADO → EMITIDO → ARQUIVADO
+
+---
+
 ### 2026-01-20 - Reorganizacao do CLAUDE.md para Melhor Performance
 
 - **Problema**: CLAUDE.md com 53.9k caracteres excedia limite de 40k recomendado
