@@ -706,7 +706,7 @@ export default function PareceresAdminPage() {
                 {/* Ementa */}
                 {parecer.ementa && (
                   <p className="text-gray-700 mb-4 italic">
-                    "{parecer.ementa}"
+                    &ldquo;{parecer.ementa}&rdquo;
                   </p>
                 )}
 
@@ -968,7 +968,7 @@ export default function PareceresAdminPage() {
               {selectedParecer.ementa && (
                 <div>
                   <Label className="text-gray-500">Ementa</Label>
-                  <p className="italic">"{selectedParecer.ementa}"</p>
+                  <p className="italic">&ldquo;{selectedParecer.ementa}&rdquo;</p>
                 </div>
               )}
 

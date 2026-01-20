@@ -165,7 +165,7 @@ export default function ProposicaoDetailPage() {
 
                         {parecer.ementa && (
                           <p className="text-sm text-gray-600 italic mb-2">
-                            "{parecer.ementa}"
+                            &ldquo;{parecer.ementa}&rdquo;
                           </p>
                         )}
 

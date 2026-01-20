@@ -22,6 +22,7 @@ export interface MembroComissaoApi {
 export interface ComissaoApi {
   id: string
   nome: string
+  sigla: string | null
   descricao: string | null
   tipo: 'PERMANENTE' | 'TEMPORARIA' | 'ESPECIAL' | 'INQUERITO'
   ativa: boolean
@@ -32,6 +33,7 @@ export interface ComissaoApi {
 
 export interface ComissaoCreate {
   nome: string
+  sigla?: string
   descricao?: string
   tipo: 'PERMANENTE' | 'TEMPORARIA' | 'ESPECIAL' | 'INQUERITO'
   ativa?: boolean
@@ -39,6 +41,7 @@ export interface ComissaoCreate {
 
 export interface ComissaoUpdate {
   nome?: string
+  sigla?: string
   descricao?: string
   tipo?: 'PERMANENTE' | 'TEMPORARIA' | 'ESPECIAL' | 'INQUERITO'
   ativa?: boolean
