@@ -8,30 +8,43 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
 import { useContratos, Contrato } from '@/lib/hooks/use-contratos'
+import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { toast } from 'sonner'
 
-const modalidades = ['LICITACAO', 'DISPENSA', 'INEXIGIBILIDADE', 'ADESAO_ATA', 'OUTROS']
+// Modalidades conforme Prisma schema
+const modalidades = [
+  'PREGAO_ELETRONICO',
+  'PREGAO_PRESENCIAL',
+  'CONCORRENCIA',
+  'TOMADA_DE_PRECOS',
+  'CONVITE',
+  'CONCURSO',
+  'LEILAO',
+  'DISPENSA',
+  'INEXIGIBILIDADE'
+]
 const situacoes = ['VIGENTE', 'ENCERRADO', 'RESCINDIDO', 'SUSPENSO', 'EM_EXECUCAO']
 
 export default function ContratosAdminPage() {
   const { contratos, loading, create, update, remove } = useContratos()
+  const { licitacoes } = useLicitacoes()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
-    numero: '', ano: new Date().getFullYear(), modalidade: 'LICITACAO', objeto: '',
+    numero: '', ano: new Date().getFullYear(), modalidade: 'PREGAO_ELETRONICO', objeto: '',
     contratado: '', cnpjCpf: '', valorTotal: '', dataAssinatura: '',
     vigenciaInicio: '', vigenciaFim: '', fiscalContrato: '', situacao: 'VIGENTE',
-    arquivo: '', observacoes: ''
+    arquivo: '', observacoes: '', licitacaoId: '', contratoOrigemId: ''
   })
 
   const resetForm = () => {
     setFormData({
-      numero: '', ano: new Date().getFullYear(), modalidade: 'LICITACAO', objeto: '',
+      numero: '', ano: new Date().getFullYear(), modalidade: 'PREGAO_ELETRONICO', objeto: '',
       contratado: '', cnpjCpf: '', valorTotal: '', dataAssinatura: '',
       vigenciaInicio: '', vigenciaFim: '', fiscalContrato: '', situacao: 'VIGENTE',
-      arquivo: '', observacoes: ''
+      arquivo: '', observacoes: '', licitacaoId: '', contratoOrigemId: ''
     })
     setEditingId(null)
     setShowForm(false)
@@ -43,7 +56,12 @@ export default function ContratosAdminPage() {
       toast.error('Preencha os campos obrigatorios')
       return
     }
-    const data = { ...formData, valorTotal: parseFloat(formData.valorTotal) }
+    const data = {
+      ...formData,
+      valorTotal: parseFloat(formData.valorTotal),
+      licitacaoId: formData.licitacaoId || null,
+      contratoOrigemId: formData.contratoOrigemId || null
+    }
     if (editingId) { await update(editingId, data) } else { await create(data) }
     resetForm()
   }
@@ -57,7 +75,9 @@ export default function ContratosAdminPage() {
       vigenciaInicio: contrato.vigenciaInicio.split('T')[0],
       vigenciaFim: contrato.vigenciaFim.split('T')[0],
       fiscalContrato: contrato.fiscalContrato || '', situacao: contrato.situacao,
-      arquivo: contrato.arquivo || '', observacoes: contrato.observacoes || ''
+      arquivo: contrato.arquivo || '', observacoes: contrato.observacoes || '',
+      licitacaoId: (contrato as any).licitacaoId || '',
+      contratoOrigemId: (contrato as any).contratoOrigemId || ''
     })
     setEditingId(contrato.id)
     setShowForm(true)
@@ -119,6 +139,34 @@ export default function ContratosAdminPage() {
                 <div><Label>Vigencia Inicio</Label><Input type="date" value={formData.vigenciaInicio} onChange={e => setFormData({ ...formData, vigenciaInicio: e.target.value })} /></div>
                 <div><Label>Vigencia Fim</Label><Input type="date" value={formData.vigenciaFim} onChange={e => setFormData({ ...formData, vigenciaFim: e.target.value })} /></div>
                 <div><Label>Fiscal do Contrato</Label><Input value={formData.fiscalContrato} onChange={e => setFormData({ ...formData, fiscalContrato: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Licitacao de Origem</Label>
+                  <select
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.licitacaoId}
+                    onChange={e => setFormData({ ...formData, licitacaoId: e.target.value })}
+                  >
+                    <option value="">Selecione (opcional)</option>
+                    {licitacoes.map(l => (
+                      <option key={l.id} value={l.id}>{l.numero} - {l.objeto.substring(0, 50)}...</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Contrato de Origem (Aditivo)</Label>
+                  <select
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.contratoOrigemId}
+                    onChange={e => setFormData({ ...formData, contratoOrigemId: e.target.value })}
+                  >
+                    <option value="">Selecione (opcional)</option>
+                    {contratos.filter(c => c.id !== editingId).map(c => (
+                      <option key={c.id} value={c.id}>{c.numero} - {c.contratado.substring(0, 30)}...</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div><Label>Observacoes</Label><textarea className="w-full px-3 py-2 border rounded-md" value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} /></div>
               <div className="flex gap-2">

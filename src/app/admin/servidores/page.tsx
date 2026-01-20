@@ -23,7 +23,7 @@ export default function ServidoresAdminPage() {
     nome: '', cpf: '', matricula: '', cargo: '', funcao: '',
     unidade: '', lotacao: '', vinculo: 'EFETIVO',
     dataAdmissao: '', dataDesligamento: '', salarioBruto: '',
-    situacao: 'ATIVO', observacoes: ''
+    cargaHoraria: '', situacao: 'ATIVO', observacoes: ''
   })
 
   const resetForm = () => {
@@ -31,7 +31,7 @@ export default function ServidoresAdminPage() {
       nome: '', cpf: '', matricula: '', cargo: '', funcao: '',
       unidade: '', lotacao: '', vinculo: 'EFETIVO',
       dataAdmissao: '', dataDesligamento: '', salarioBruto: '',
-      situacao: 'ATIVO', observacoes: ''
+      cargaHoraria: '', situacao: 'ATIVO', observacoes: ''
     })
     setEditingId(null)
     setShowForm(false)
@@ -45,7 +45,8 @@ export default function ServidoresAdminPage() {
     }
     const data = {
       ...formData,
-      salarioBruto: formData.salarioBruto ? parseFloat(formData.salarioBruto) : null
+      salarioBruto: formData.salarioBruto ? parseFloat(formData.salarioBruto) : null,
+      cargaHoraria: formData.cargaHoraria ? parseInt(formData.cargaHoraria) : null
     }
     if (editingId) { await update(editingId, data) } else { await create(data) }
     resetForm()
@@ -58,8 +59,9 @@ export default function ServidoresAdminPage() {
       unidade: servidor.unidade || '', lotacao: servidor.lotacao || '',
       vinculo: servidor.vinculo, dataAdmissao: servidor.dataAdmissao ? servidor.dataAdmissao.split('T')[0] : '',
       dataDesligamento: servidor.dataDesligamento ? servidor.dataDesligamento.split('T')[0] : '',
-      salarioBruto: servidor.salarioBruto?.toString() || '', situacao: servidor.situacao,
-      observacoes: servidor.observacoes || ''
+      salarioBruto: servidor.salarioBruto?.toString() || '',
+      cargaHoraria: (servidor as any).cargaHoraria?.toString() || '',
+      situacao: servidor.situacao, observacoes: servidor.observacoes || ''
     })
     setEditingId(servidor.id)
     setShowForm(true)
@@ -114,11 +116,12 @@ export default function ServidoresAdminPage() {
                 <div><Label>Funcao</Label><Input value={formData.funcao} onChange={e => setFormData({ ...formData, funcao: e.target.value })} /></div>
                 <div><Label>Vinculo *</Label><select className="w-full px-3 py-2 border rounded-md" value={formData.vinculo} onChange={e => setFormData({ ...formData, vinculo: e.target.value })}>{vinculos.map(v => <option key={v} value={v}>{v}</option>)}</select></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div><Label>Unidade</Label><Input value={formData.unidade} onChange={e => setFormData({ ...formData, unidade: e.target.value })} /></div>
                 <div><Label>Lotacao</Label><Input value={formData.lotacao} onChange={e => setFormData({ ...formData, lotacao: e.target.value })} /></div>
                 <div><Label>Situacao</Label><select className="w-full px-3 py-2 border rounded-md" value={formData.situacao} onChange={e => setFormData({ ...formData, situacao: e.target.value })}>{situacoes.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
                 <div><Label>Salario Bruto (R$)</Label><Input type="number" step="0.01" value={formData.salarioBruto} onChange={e => setFormData({ ...formData, salarioBruto: e.target.value })} /></div>
+                <div><Label>Carga Horaria (h)</Label><Input type="number" value={formData.cargaHoraria} onChange={e => setFormData({ ...formData, cargaHoraria: e.target.value })} placeholder="40" /></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div><Label>Data Admissao</Label><Input type="date" value={formData.dataAdmissao} onChange={e => setFormData({ ...formData, dataAdmissao: e.target.value })} /></div>

@@ -8,12 +8,19 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { TrendingDown, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
 import { useDespesas, Despesa } from '@/lib/hooks/use-despesas'
+import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
+import { useContratos } from '@/lib/hooks/use-contratos'
+import { useConvenios } from '@/lib/hooks/use-convenios'
 import { toast } from 'sonner'
 
-const situacoes = ['EMPENHADO', 'LIQUIDADO', 'PAGO', 'ANULADO']
+// Situacoes conforme Prisma schema (inclui INSCRITA_RP)
+const situacoes = ['EMPENHADO', 'LIQUIDADO', 'PAGO', 'ANULADO', 'INSCRITA_RP']
 
 export default function DespesasAdminPage() {
   const { despesas, loading, create, update, remove } = useDespesas()
+  const { licitacoes } = useLicitacoes()
+  const { contratos } = useContratos()
+  const { convenios } = useConvenios()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -23,7 +30,8 @@ export default function DespesasAdminPage() {
     data: '', credor: '', cnpjCpf: '', unidade: '',
     elemento: '', funcao: '', subfuncao: '', programa: '', acao: '',
     valorEmpenhado: '', valorLiquidado: '', valorPago: '',
-    situacao: 'EMPENHADO', fonteRecurso: '', modalidade: '', observacoes: ''
+    situacao: 'EMPENHADO', fonteRecurso: '', modalidade: '', observacoes: '',
+    licitacaoId: '', contratoId: '', convenioId: ''
   })
 
   const resetForm = () => {
@@ -32,7 +40,8 @@ export default function DespesasAdminPage() {
       data: '', credor: '', cnpjCpf: '', unidade: '',
       elemento: '', funcao: '', subfuncao: '', programa: '', acao: '',
       valorEmpenhado: '', valorLiquidado: '', valorPago: '',
-      situacao: 'EMPENHADO', fonteRecurso: '', modalidade: '', observacoes: ''
+      situacao: 'EMPENHADO', fonteRecurso: '', modalidade: '', observacoes: '',
+      licitacaoId: '', contratoId: '', convenioId: ''
     })
     setEditingId(null)
     setShowForm(false)
@@ -48,7 +57,10 @@ export default function DespesasAdminPage() {
       ...formData,
       valorEmpenhado: parseFloat(formData.valorEmpenhado),
       valorLiquidado: formData.valorLiquidado ? parseFloat(formData.valorLiquidado) : null,
-      valorPago: formData.valorPago ? parseFloat(formData.valorPago) : null
+      valorPago: formData.valorPago ? parseFloat(formData.valorPago) : null,
+      licitacaoId: formData.licitacaoId || null,
+      contratoId: formData.contratoId || null,
+      convenioId: formData.convenioId || null
     }
     if (editingId) { await update(editingId, data) } else { await create(data) }
     resetForm()
@@ -65,7 +77,10 @@ export default function DespesasAdminPage() {
       valorLiquidado: despesa.valorLiquidado?.toString() || '',
       valorPago: despesa.valorPago?.toString() || '', situacao: despesa.situacao,
       fonteRecurso: despesa.fonteRecurso || '', modalidade: despesa.modalidade || '',
-      observacoes: despesa.observacoes || ''
+      observacoes: despesa.observacoes || '',
+      licitacaoId: (despesa as any).licitacaoId || '',
+      contratoId: (despesa as any).contratoId || '',
+      convenioId: (despesa as any).convenioId || ''
     })
     setEditingId(despesa.id)
     setShowForm(true)
@@ -125,11 +140,58 @@ export default function DespesasAdminPage() {
                 <div><Label>Valor Liquidado (R$)</Label><Input type="number" step="0.01" value={formData.valorLiquidado} onChange={e => setFormData({ ...formData, valorLiquidado: e.target.value })} /></div>
                 <div><Label>Valor Pago (R$)</Label><Input type="number" step="0.01" value={formData.valorPago} onChange={e => setFormData({ ...formData, valorPago: e.target.value })} /></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div><Label>Funcao</Label><Input value={formData.funcao} onChange={e => setFormData({ ...formData, funcao: e.target.value })} /></div>
                 <div><Label>Subfuncao</Label><Input value={formData.subfuncao} onChange={e => setFormData({ ...formData, subfuncao: e.target.value })} /></div>
                 <div><Label>Programa</Label><Input value={formData.programa} onChange={e => setFormData({ ...formData, programa: e.target.value })} /></div>
+                <div><Label>Acao</Label><Input value={formData.acao} onChange={e => setFormData({ ...formData, acao: e.target.value })} /></div>
                 <div><Label>Elemento</Label><Input value={formData.elemento} onChange={e => setFormData({ ...formData, elemento: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div><Label>Unidade</Label><Input value={formData.unidade} onChange={e => setFormData({ ...formData, unidade: e.target.value })} /></div>
+                <div><Label>Fonte de Recurso</Label><Input value={formData.fonteRecurso} onChange={e => setFormData({ ...formData, fonteRecurso: e.target.value })} /></div>
+                <div><Label>Modalidade</Label><Input value={formData.modalidade} onChange={e => setFormData({ ...formData, modalidade: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label>Licitacao Vinculada</Label>
+                  <select
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.licitacaoId}
+                    onChange={e => setFormData({ ...formData, licitacaoId: e.target.value })}
+                  >
+                    <option value="">Selecione (opcional)</option>
+                    {licitacoes.map(l => (
+                      <option key={l.id} value={l.id}>{l.numero} - {l.objeto.substring(0, 40)}...</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Contrato Vinculado</Label>
+                  <select
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.contratoId}
+                    onChange={e => setFormData({ ...formData, contratoId: e.target.value })}
+                  >
+                    <option value="">Selecione (opcional)</option>
+                    {contratos.map(c => (
+                      <option key={c.id} value={c.id}>{c.numero} - {c.contratado.substring(0, 30)}...</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Convenio Vinculado</Label>
+                  <select
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={formData.convenioId}
+                    onChange={e => setFormData({ ...formData, convenioId: e.target.value })}
+                  >
+                    <option value="">Selecione (opcional)</option>
+                    {convenios.map(cv => (
+                      <option key={cv.id} value={cv.id}>{cv.numero} - {cv.convenente.substring(0, 30)}...</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div><Label>Observacoes</Label><textarea className="w-full px-3 py-2 border rounded-md" value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} /></div>
               <div className="flex gap-2">

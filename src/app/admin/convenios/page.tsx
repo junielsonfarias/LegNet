@@ -23,7 +23,8 @@ export default function ConveniosAdminPage() {
     orgaoConcedente: '', objeto: '', programa: '', acao: '',
     valorTotal: '', valorRepasse: '', valorContrapartida: '',
     dataCelebracao: '', vigenciaInicio: '', vigenciaFim: '',
-    responsavelTecnico: '', situacao: 'EM_EXECUCAO', fonteRecurso: '', observacoes: ''
+    responsavelTecnico: '', situacao: 'EM_EXECUCAO', fonteRecurso: '',
+    arquivo: '', observacoes: ''
   })
 
   const resetForm = () => {
@@ -32,7 +33,8 @@ export default function ConveniosAdminPage() {
       orgaoConcedente: '', objeto: '', programa: '', acao: '',
       valorTotal: '', valorRepasse: '', valorContrapartida: '',
       dataCelebracao: '', vigenciaInicio: '', vigenciaFim: '',
-      responsavelTecnico: '', situacao: 'EM_EXECUCAO', fonteRecurso: '', observacoes: ''
+      responsavelTecnico: '', situacao: 'EM_EXECUCAO', fonteRecurso: '',
+      arquivo: '', observacoes: ''
     })
     setEditingId(null)
     setShowForm(false)
@@ -66,7 +68,8 @@ export default function ConveniosAdminPage() {
       vigenciaInicio: convenio.vigenciaInicio.split('T')[0],
       vigenciaFim: convenio.vigenciaFim.split('T')[0],
       responsavelTecnico: convenio.responsavelTecnico || '', situacao: convenio.situacao,
-      fonteRecurso: convenio.fonteRecurso || '', observacoes: convenio.observacoes || ''
+      fonteRecurso: convenio.fonteRecurso || '', arquivo: (convenio as any).arquivo || '',
+      observacoes: convenio.observacoes || ''
     })
     setEditingId(convenio.id)
     setShowForm(true)
@@ -132,6 +135,15 @@ export default function ConveniosAdminPage() {
                 <div><Label>Data Celebracao</Label><Input type="date" value={formData.dataCelebracao} onChange={e => setFormData({ ...formData, dataCelebracao: e.target.value })} /></div>
                 <div><Label>Vigencia Inicio</Label><Input type="date" value={formData.vigenciaInicio} onChange={e => setFormData({ ...formData, vigenciaInicio: e.target.value })} /></div>
                 <div><Label>Vigencia Fim</Label><Input type="date" value={formData.vigenciaFim} onChange={e => setFormData({ ...formData, vigenciaFim: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><Label>Programa</Label><Input value={formData.programa} onChange={e => setFormData({ ...formData, programa: e.target.value })} placeholder="Ex: Programa Nacional de..." /></div>
+                <div><Label>Acao</Label><Input value={formData.acao} onChange={e => setFormData({ ...formData, acao: e.target.value })} placeholder="Ex: Acao 1234" /></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div><Label>Fonte de Recurso</Label><Input value={formData.fonteRecurso} onChange={e => setFormData({ ...formData, fonteRecurso: e.target.value })} /></div>
+                <div><Label>Responsavel Tecnico</Label><Input value={formData.responsavelTecnico} onChange={e => setFormData({ ...formData, responsavelTecnico: e.target.value })} /></div>
+                <div><Label>Arquivo/Anexo</Label><Input value={formData.arquivo} onChange={e => setFormData({ ...formData, arquivo: e.target.value })} placeholder="URL do arquivo" /></div>
               </div>
               <div><Label>Observacoes</Label><textarea className="w-full px-3 py-2 border rounded-md" value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} /></div>
               <div className="flex gap-2">

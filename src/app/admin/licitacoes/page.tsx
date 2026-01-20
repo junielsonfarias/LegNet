@@ -66,9 +66,12 @@ export default function LicitacoesAdminPage() {
     dataAbertura: '',
     horaAbertura: '',
     dataEntregaPropostas: '',
+    horaEntregaPropostas: '',
     situacao: 'EM_ANDAMENTO',
     unidadeGestora: 'Camara Municipal',
     linkEdital: '',
+    linkAta: '',
+    arquivo: '',
     observacoes: ''
   })
 
@@ -84,9 +87,12 @@ export default function LicitacoesAdminPage() {
       dataAbertura: '',
       horaAbertura: '',
       dataEntregaPropostas: '',
+      horaEntregaPropostas: '',
       situacao: 'EM_ANDAMENTO',
       unidadeGestora: 'Camara Municipal',
       linkEdital: '',
+      linkAta: '',
+      arquivo: '',
       observacoes: ''
     })
     setEditingId(null)
@@ -127,9 +133,12 @@ export default function LicitacoesAdminPage() {
       dataAbertura: licitacao.dataAbertura.split('T')[0],
       horaAbertura: licitacao.horaAbertura || '',
       dataEntregaPropostas: licitacao.dataEntregaPropostas ? licitacao.dataEntregaPropostas.split('T')[0] : '',
+      horaEntregaPropostas: (licitacao as any).horaEntregaPropostas || '',
       situacao: licitacao.situacao,
       unidadeGestora: licitacao.unidadeGestora || '',
       linkEdital: licitacao.linkEdital || '',
+      linkAta: (licitacao as any).linkAta || '',
+      arquivo: (licitacao as any).arquivo || '',
       observacoes: licitacao.observacoes || ''
     })
     setEditingId(licitacao.id)
@@ -280,7 +289,23 @@ export default function LicitacoesAdminPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>Data Entrega Propostas</Label>
+                  <Input
+                    type="date"
+                    value={formData.dataEntregaPropostas}
+                    onChange={e => setFormData({ ...formData, dataEntregaPropostas: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Hora Entrega Propostas</Label>
+                  <Input
+                    type="time"
+                    value={formData.horaEntregaPropostas}
+                    onChange={e => setFormData({ ...formData, horaEntregaPropostas: e.target.value })}
+                  />
+                </div>
                 <div>
                   <Label>Situacao</Label>
                   <select
@@ -300,12 +325,31 @@ export default function LicitacoesAdminPage() {
                     onChange={e => setFormData({ ...formData, unidadeGestora: e.target.value })}
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>Link do Edital</Label>
                   <Input
                     value={formData.linkEdital}
                     onChange={e => setFormData({ ...formData, linkEdital: e.target.value })}
                     placeholder="URL do edital"
+                  />
+                </div>
+                <div>
+                  <Label>Link da Ata</Label>
+                  <Input
+                    value={formData.linkAta}
+                    onChange={e => setFormData({ ...formData, linkAta: e.target.value })}
+                    placeholder="URL da ata"
+                  />
+                </div>
+                <div>
+                  <Label>Arquivo/Anexo</Label>
+                  <Input
+                    value={formData.arquivo}
+                    onChange={e => setFormData({ ...formData, arquivo: e.target.value })}
+                    placeholder="URL do arquivo"
                   />
                 </div>
               </div>

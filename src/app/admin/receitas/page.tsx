@@ -23,7 +23,8 @@ export default function ReceitasAdminPage() {
   const [formData, setFormData] = useState({
     numero: '', ano: new Date().getFullYear(), mes: new Date().getMonth() + 1,
     data: '', contribuinte: '', cnpjCpf: '', unidade: '',
-    categoria: 'CORRENTE', origem: 'TRANSFERENCIAS', especie: '', rubrica: '',
+    categoria: 'CORRENTE', origem: 'TRANSFERENCIAS',
+    especie: '', rubrica: '', subrubrica: '', alinea: '', subalinea: '',
     valorPrevisto: '', valorArrecadado: '', situacao: 'ARRECADADA',
     fonteRecurso: '', observacoes: ''
   })
@@ -32,7 +33,8 @@ export default function ReceitasAdminPage() {
     setFormData({
       numero: '', ano: new Date().getFullYear(), mes: new Date().getMonth() + 1,
       data: '', contribuinte: '', cnpjCpf: '', unidade: '',
-      categoria: 'CORRENTE', origem: 'TRANSFERENCIAS', especie: '', rubrica: '',
+      categoria: 'CORRENTE', origem: 'TRANSFERENCIAS',
+      especie: '', rubrica: '', subrubrica: '', alinea: '', subalinea: '',
       valorPrevisto: '', valorArrecadado: '', situacao: 'ARRECADADA',
       fonteRecurso: '', observacoes: ''
     })
@@ -62,6 +64,9 @@ export default function ReceitasAdminPage() {
       cnpjCpf: receita.cnpjCpf || '', unidade: receita.unidade || '',
       categoria: receita.categoria, origem: receita.origem,
       especie: receita.especie || '', rubrica: receita.rubrica || '',
+      subrubrica: (receita as any).subrubrica || '',
+      alinea: (receita as any).alinea || '',
+      subalinea: (receita as any).subalinea || '',
       valorPrevisto: receita.valorPrevisto?.toString() || '',
       valorArrecadado: receita.valorArrecadado.toString(),
       situacao: receita.situacao, fonteRecurso: receita.fonteRecurso || '',
@@ -115,10 +120,19 @@ export default function ReceitasAdminPage() {
                 <div><Label>Valor Previsto (R$)</Label><Input type="number" step="0.01" value={formData.valorPrevisto} onChange={e => setFormData({ ...formData, valorPrevisto: e.target.value })} /></div>
                 <div><Label>Valor Arrecadado (R$) *</Label><Input type="number" step="0.01" value={formData.valorArrecadado} onChange={e => setFormData({ ...formData, valorArrecadado: e.target.value })} /></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div><Label>Contribuinte</Label><Input value={formData.contribuinte} onChange={e => setFormData({ ...formData, contribuinte: e.target.value })} /></div>
                 <div><Label>CNPJ/CPF</Label><Input value={formData.cnpjCpf} onChange={e => setFormData({ ...formData, cnpjCpf: e.target.value })} /></div>
+                <div><Label>Unidade</Label><Input value={formData.unidade} onChange={e => setFormData({ ...formData, unidade: e.target.value })} /></div>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div><Label>Especie</Label><Input value={formData.especie} onChange={e => setFormData({ ...formData, especie: e.target.value })} placeholder="Ex: 1.1" /></div>
+                <div><Label>Rubrica</Label><Input value={formData.rubrica} onChange={e => setFormData({ ...formData, rubrica: e.target.value })} placeholder="Ex: 1.1.1" /></div>
+                <div><Label>Subrubrica</Label><Input value={formData.subrubrica} onChange={e => setFormData({ ...formData, subrubrica: e.target.value })} placeholder="Ex: 1.1.1.1" /></div>
+                <div><Label>Alinea</Label><Input value={formData.alinea} onChange={e => setFormData({ ...formData, alinea: e.target.value })} placeholder="Ex: 1.1.1.1.01" /></div>
+                <div><Label>Subalinea</Label><Input value={formData.subalinea} onChange={e => setFormData({ ...formData, subalinea: e.target.value })} placeholder="Ex: 1.1.1.1.01.01" /></div>
+              </div>
+              <div><Label>Fonte de Recurso</Label><Input value={formData.fonteRecurso} onChange={e => setFormData({ ...formData, fonteRecurso: e.target.value })} /></div>
               <div><Label>Observacoes</Label><textarea className="w-full px-3 py-2 border rounded-md" value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} /></div>
               <div className="flex gap-2">
                 <Button type="submit">{editingId ? 'Atualizar' : 'Criar'} Receita</Button>

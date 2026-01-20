@@ -11,7 +11,8 @@ import { useBensPatrimoniais, BemPatrimonial } from '@/lib/hooks/use-bens-patrim
 import { toast } from 'sonner'
 
 const tipos = ['MOVEL', 'IMOVEL']
-const situacoes = ['BOM', 'REGULAR', 'RUIM', 'INSERVIVEL', 'BAIXADO']
+// Situacoes conforme Prisma schema (status de disponibilidade)
+const situacoes = ['EM_USO', 'DISPONIVEL', 'CEDIDO', 'BAIXADO', 'EM_MANUTENCAO']
 
 export default function BensPatrimoniaisAdminPage() {
   const { bens, loading, create, update, remove } = useBensPatrimoniais()
@@ -23,7 +24,7 @@ export default function BensPatrimoniaisAdminPage() {
   const [formData, setFormData] = useState({
     tipo: 'MOVEL', tombamento: '', descricao: '', especificacao: '',
     dataAquisicao: '', valorAquisicao: '', valorAtual: '',
-    localizacao: '', responsavel: '', situacao: 'BOM',
+    localizacao: '', responsavel: '', situacao: 'EM_USO',
     matriculaImovel: '', enderecoImovel: '', areaImovel: '', observacoes: ''
   })
 
@@ -31,7 +32,7 @@ export default function BensPatrimoniaisAdminPage() {
     setFormData({
       tipo: 'MOVEL', tombamento: '', descricao: '', especificacao: '',
       dataAquisicao: '', valorAquisicao: '', valorAtual: '',
-      localizacao: '', responsavel: '', situacao: 'BOM',
+      localizacao: '', responsavel: '', situacao: 'EM_USO',
       matriculaImovel: '', enderecoImovel: '', areaImovel: '', observacoes: ''
     })
     setEditingId(null)
@@ -75,10 +76,11 @@ export default function BensPatrimoniaisAdminPage() {
 
   const getSituacaoColor = (situacao: string) => {
     switch (situacao) {
-      case 'BOM': return 'bg-green-100 text-green-800'
-      case 'REGULAR': return 'bg-yellow-100 text-yellow-800'
-      case 'RUIM': return 'bg-orange-100 text-orange-800'
-      case 'INSERVIVEL': case 'BAIXADO': return 'bg-red-100 text-red-800'
+      case 'EM_USO': return 'bg-green-100 text-green-800'
+      case 'DISPONIVEL': return 'bg-blue-100 text-blue-800'
+      case 'CEDIDO': return 'bg-yellow-100 text-yellow-800'
+      case 'EM_MANUTENCAO': return 'bg-orange-100 text-orange-800'
+      case 'BAIXADO': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
