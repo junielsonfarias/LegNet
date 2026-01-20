@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, RefreshCw, X } from 'lucide-react'
+import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, RefreshCw, X, Heart } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { BotaoFavorito } from '@/components/favoritos'
 
 // Interface para proposição da API pública
 interface ProposicaoPublica {
@@ -321,6 +322,12 @@ export default function ProposicoesPage() {
                         {proposicao.ementa}
                       </p>
                     </div>
+                    <BotaoFavorito
+                      tipoItem="PROPOSICAO"
+                      itemId={proposicao.id}
+                      variant="outline"
+                      size="default"
+                    />
                   </div>
                 </CardHeader>
                 <CardContent>

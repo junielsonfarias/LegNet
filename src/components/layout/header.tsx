@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare } from 'lucide-react'
+import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { SearchButton, CommandPalette } from '@/components/busca/command-palette'
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -89,11 +90,12 @@ export function Header() {
       title: 'Legislativo',
       icon: FileText,
       items: [
+        { name: 'Calendario Legislativo', href: '/calendario', status: 'active', badge: 'Novo' },
         { name: 'Sessões', href: '/legislativo/sessoes', status: 'active' },
         { name: 'Pautas das Sessões', href: '/legislativo/pautas-sessoes', status: 'active' },
         { name: 'Audiências Públicas', href: '/legislativo/audiencias-publicas', status: 'active' },
         { name: 'Proposições e Matérias', href: '/legislativo/proposicoes', status: 'active' },
-        { name: 'Tramitações Legislativas', href: '/tramitacoes', status: 'active', badge: 'Novo' },
+        { name: 'Tramitações Legislativas', href: '/tramitacoes', status: 'active' },
         { name: 'Comissões', href: '/legislativo/comissoes', status: 'active' },
         { name: 'Atas de Sessões', href: '/legislativo/atas', status: 'active' },
         { name: 'Legislatura', href: '/legislativo/legislatura', status: 'active' },
@@ -142,6 +144,14 @@ export function Header() {
               <span>Acessibilidade</span>
             </div>
             <div className="flex items-center space-x-2 ml-auto">
+              <Link
+                href="/meus-favoritos"
+                className="flex items-center gap-1 px-3 py-1.5 hover:bg-white/10 rounded-md transition-colors font-medium"
+                title="Meus Favoritos"
+              >
+                <Heart className="h-4 w-4" />
+                <span className="hidden sm:inline">Favoritos</span>
+              </Link>
               <Link
                 href="/login"
                 className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors font-medium"
@@ -242,6 +252,14 @@ export function Header() {
           {/* Área Restrita - sempre visível */}
           <div className="flex items-center space-x-2 ml-auto">
             <Link
+              href="/meus-favoritos"
+              className="flex items-center gap-1 px-3 py-1.5 hover:bg-white/10 rounded-md transition-colors font-medium"
+              title="Meus Favoritos"
+            >
+              <Heart className="h-4 w-4" />
+              <span className="hidden sm:inline">Favoritos</span>
+            </Link>
+            <Link
               href="/login"
               className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors font-medium"
             >
@@ -278,16 +296,13 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Busca */}
-          <div className="hidden lg:flex items-center space-x-4 flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar no portal..."
-                className="pl-10 pr-4"
-              />
-            </div>
+          {/* Busca Global */}
+          <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
+            <SearchButton className="w-full justify-start" />
           </div>
+
+          {/* Command Palette - sempre disponivel via Ctrl+K */}
+          <CommandPalette />
 
           {/* Menu mobile */}
           <div className="lg:hidden">
@@ -299,13 +314,7 @@ export function Header() {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <div className="flex flex-col space-y-6 mt-4 animate-in slide-in-from-right duration-300">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Buscar no portal..."
-                      className="pl-10 pr-4"
-                    />
-                  </div>
+                  <SearchButton className="w-full" />
 
                   {/* Link Área Restrita no mobile */}
                   <Link

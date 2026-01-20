@@ -31,6 +31,7 @@ model User {
   accounts    Account[]
   sessions    Session[]
   parlamentar Parlamentar? @relation(fields: [parlamentarId], references: [id])
+  favoritos   Favorito[]
 
   @@index([role, ativo])
   @@index([createdAt])
@@ -124,6 +125,9 @@ model Tenant {
 
   // Relacionamento com configurações de quorum
   configuracoesQuorum ConfiguracaoQuorum[]
+
+  // Relacionamento com favoritos
+  favoritos Favorito[]
 
   @@index([ativo])
   @@index([dominio])
@@ -1570,4 +1574,52 @@ model ConfiguracaoQuorum {
   @@index([ativo])
   @@index([tenantId])
   @@map("configuracoes_quorum")
+}
+
+// =============================================================================
+// Sistema de Favoritos e Acompanhamento
+// =============================================================================
+
+model Favorito {
+  id              String          @id @default(cuid())
+
+  // Usuario que favoritou
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Tipo e referencia do item favoritado
+  tipoItem        TipoFavorito
+  itemId          String          // ID da proposicao, sessao, parlamentar, etc.
+
+  // Configuracoes de notificacao
+  notificarMudancas  Boolean      @default(true)
+  notificarVotacao   Boolean      @default(true)
+  notificarParecer   Boolean      @default(true)
+
+  // Anotacoes pessoais
+  anotacao        String?         @db.Text
+
+  // Metadados
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Multi-tenant
+  tenantId        String?
+  tenant          Tenant?         @relation(fields: [tenantId], references: [id])
+
+  // Indices
+  @@unique([userId, tipoItem, itemId])
+  @@index([userId])
+  @@index([tipoItem])
+  @@index([itemId])
+  @@index([tenantId])
+  @@map("favoritos")
+}
+
+enum TipoFavorito {
+  PROPOSICAO
+  SESSAO
+  PARLAMENTAR
+  COMISSAO
+  PUBLICACAO
 }
