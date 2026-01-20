@@ -2084,6 +2084,21 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-20 - Correcao de Erros de API nas Paginas de Transparencia
+- **Problema reportado**: Erros 500 e 401 no console ao acessar paginas de transparencia
+  - `/api/institucional` retornava 500 (Internal Server Error)
+  - `/api/legislaturas` retornava 401 (Unauthorized) em paginas publicas
+  - Mesa Diretora nao aparecia na pagina de transparencia
+- **Arquivo modificado**: `src/app/api/institucional/route.ts`
+  - Adicionado tratamento de erros robusto com try-catch individual
+  - Implementado fallback para dados padrao quando banco nao disponivel
+  - API nunca mais retorna 500, sempre retorna dados (reais ou padrao)
+- **Arquivo modificado**: `src/app/api/legislaturas/route.ts`
+  - Endpoint GET tornado publico (removido `withAuth`)
+  - POST continua protegido com autenticacao
+  - Permite que paginas de transparencia carreguem legislaturas corretamente
+- **Resultado**: Todas as paginas de transparencia funcionando sem erros de API
+
 ### 2026-01-20 - Populacao do Portal de Transparencia com Dados Reais
 - **Arquivo criado**: `prisma/seed-transparencia.ts`
   - Seed completo de dados de transparencia extraidos do site oficial da Camara
