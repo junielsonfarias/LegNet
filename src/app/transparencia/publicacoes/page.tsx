@@ -7,6 +7,7 @@ import {
   BookOpen,
   Calendar,
   Download,
+  Eye,
   FileText,
   Filter,
   Loader2,
@@ -26,6 +27,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { PDFModal } from '@/components/pdf'
 
 interface FiltrosPublicacoes {
   categoriaId?: string
@@ -46,6 +48,24 @@ export default function PublicacoesPage() {
     atualizadas: 0,
     tipos: 0
   })
+  const [pdfModal, setPdfModal] = useState<{ isOpen: boolean; url: string; titulo: string }>({
+    isOpen: false,
+    url: '',
+    titulo: ''
+  })
+
+  const isPdf = (arquivo: string | null | undefined) => {
+    if (!arquivo) return false
+    return arquivo.toLowerCase().endsWith('.pdf')
+  }
+
+  const abrirPdf = (url: string, titulo: string) => {
+    setPdfModal({ isOpen: true, url, titulo })
+  }
+
+  const fecharPdf = () => {
+    setPdfModal({ isOpen: false, url: '', titulo: '' })
+  }
 
   const tiposDisponiveis = useMemo(() => {
     const tipos = new Set(publicacoes.map(publicacao => publicacao.tipo))
@@ -309,18 +329,32 @@ export default function PublicacoesPage() {
                       <p>Última atualização: {format(new Date(publicacao.updatedAt), 'dd/MM/yyyy')}</p>
                     </div>
                     {publicacao.arquivo && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        asChild
-                        aria-label={`Download da publicação ${publicacao.titulo}`}
-                      >
-                        <a href={publicacao.arquivo} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4" />
-                          Baixar documento
-                        </a>
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        {isPdf(publicacao.arquivo) && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="flex items-center gap-2"
+                            onClick={() => abrirPdf(publicacao.arquivo!, publicacao.titulo)}
+                            aria-label={`Visualizar ${publicacao.titulo}`}
+                          >
+                            <Eye className="h-4 w-4" />
+                            Visualizar
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2"
+                          asChild
+                          aria-label={`Download da publicação ${publicacao.titulo}`}
+                        >
+                          <a href={publicacao.arquivo} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4" />
+                            Baixar
+                          </a>
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </CardHeader>
@@ -350,6 +384,14 @@ export default function PublicacoesPage() {
           )}
         </div>
       </section>
+
+      {/* Modal para visualização de PDFs */}
+      <PDFModal
+        isOpen={pdfModal.isOpen}
+        onClose={fecharPdf}
+        url={pdfModal.url}
+        titulo={pdfModal.titulo}
+      />
     </div>
   )
 }

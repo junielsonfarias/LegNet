@@ -18,6 +18,7 @@ import {
   Search
 } from 'lucide-react'
 import { useContratos } from '@/lib/hooks/use-contratos'
+import { PDFModal } from '@/components/pdf'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   VIGENTE: { color: 'bg-green-100 text-green-800', icon: <CheckCircle2 className="h-4 w-4" /> },
@@ -32,6 +33,24 @@ export default function ContratosPage() {
   const [filtroSituacao, setFiltroSituacao] = useState('all')
   const [filtroAno, setFiltroAno] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [pdfModal, setPdfModal] = useState<{ isOpen: boolean; url: string; titulo: string }>({
+    isOpen: false,
+    url: '',
+    titulo: ''
+  })
+
+  const isPdf = (arquivo: string | null | undefined) => {
+    if (!arquivo) return false
+    return arquivo.toLowerCase().endsWith('.pdf')
+  }
+
+  const abrirPdf = (url: string, titulo: string) => {
+    setPdfModal({ isOpen: true, url, titulo })
+  }
+
+  const fecharPdf = () => {
+    setPdfModal({ isOpen: false, url: '', titulo: '' })
+  }
 
   const anos = useMemo(() => {
     const anosSet = new Set(contratos.map(c => c.ano.toString()))
@@ -249,17 +268,25 @@ export default function ContratosPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {contrato.arquivo && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={contrato.arquivo} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4 mr-2" />
-                            Contrato
-                          </a>
-                        </Button>
+                        <>
+                          {isPdf(contrato.arquivo) && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => abrirPdf(contrato.arquivo!, `Contrato ${contrato.numero}`)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              Visualizar
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={contrato.arquivo} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4 mr-2" />
+                              Baixar
+                            </a>
+                          </Button>
+                        </>
                       )}
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Detalhes
-                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -268,6 +295,14 @@ export default function ContratosPage() {
           })
         )}
       </div>
+
+      {/* Modal para visualização de PDFs */}
+      <PDFModal
+        isOpen={pdfModal.isOpen}
+        onClose={fecharPdf}
+        url={pdfModal.url}
+        titulo={pdfModal.titulo}
+      />
     </div>
   )
 }

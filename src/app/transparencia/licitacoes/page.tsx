@@ -22,6 +22,7 @@ import {
   Search
 } from 'lucide-react'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
+import { PDFModal } from '@/components/pdf'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   EM_ANDAMENTO: { color: 'bg-blue-100 text-blue-800', icon: <Clock className="h-4 w-4" /> },
@@ -39,6 +40,24 @@ export default function LicitacoesPage() {
   const [filtroSituacao, setFiltroSituacao] = useState('all')
   const [filtroAno, setFiltroAno] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [pdfModal, setPdfModal] = useState<{ isOpen: boolean; url: string; titulo: string }>({
+    isOpen: false,
+    url: '',
+    titulo: ''
+  })
+
+  const isPdf = (arquivo: string | null | undefined) => {
+    if (!arquivo) return false
+    return arquivo.toLowerCase().endsWith('.pdf')
+  }
+
+  const abrirPdf = (url: string, titulo: string) => {
+    setPdfModal({ isOpen: true, url, titulo })
+  }
+
+  const fecharPdf = () => {
+    setPdfModal({ isOpen: false, url: '', titulo: '' })
+  }
 
   const anos = useMemo(() => {
     const anosSet = new Set(licitacoes.map(l => l.ano.toString()))
@@ -261,17 +280,25 @@ export default function LicitacoesPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {licitacao.linkEdital && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={licitacao.linkEdital} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4 mr-2" />
-                            Edital
-                          </a>
-                        </Button>
+                        <>
+                          {isPdf(licitacao.linkEdital) && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => abrirPdf(licitacao.linkEdital!, `Edital ${licitacao.numero}`)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              Visualizar
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={licitacao.linkEdital} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4 mr-2" />
+                              Edital
+                            </a>
+                          </Button>
+                        </>
                       )}
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Detalhes
-                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -280,6 +307,14 @@ export default function LicitacoesPage() {
           })
         )}
       </div>
+
+      {/* Modal para visualização de PDFs */}
+      <PDFModal
+        isOpen={pdfModal.isOpen}
+        onClose={fecharPdf}
+        url={pdfModal.url}
+        titulo={pdfModal.titulo}
+      />
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, RefreshCw, X, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { PDFModal } from '@/components/pdf'
 
 // Interface para publicação da API
 interface PublicacaoLei {
@@ -38,6 +39,24 @@ export default function LeisPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [anoFilter, setAnoFilter] = useState<number | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [pdfModal, setPdfModal] = useState<{ isOpen: boolean; url: string; titulo: string }>({
+    isOpen: false,
+    url: '',
+    titulo: ''
+  })
+
+  const isPdf = (arquivo: string | null | undefined) => {
+    if (!arquivo) return false
+    return arquivo.toLowerCase().endsWith('.pdf')
+  }
+
+  const abrirPdf = (url: string, titulo: string) => {
+    setPdfModal({ isOpen: true, url, titulo })
+  }
+
+  const fecharPdf = () => {
+    setPdfModal({ isOpen: false, url: '', titulo: '' })
+  }
 
   // Carregar leis da API pública
   const fetchLeis = async () => {
@@ -308,12 +327,25 @@ export default function LeisPage() {
                             {expandedId === lei.id ? 'Ocultar Conteúdo' : 'Visualizar Conteúdo'}
                           </Button>
                           {lei.arquivo && (
-                            <Button asChild variant="outline" size="sm" className="w-full">
-                              <a href={lei.arquivo} target="_blank" rel="noopener noreferrer">
-                                <Download className="h-4 w-4 mr-2" />
-                                Download PDF
-                              </a>
-                            </Button>
+                            <>
+                              {isPdf(lei.arquivo) && (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => abrirPdf(lei.arquivo!, `Lei nº ${lei.numero}/${lei.ano}`)}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Visualizar PDF
+                                </Button>
+                              )}
+                              <Button asChild variant="outline" size="sm" className="w-full">
+                                <a href={lei.arquivo} target="_blank" rel="noopener noreferrer">
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Download PDF
+                                </a>
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -387,6 +419,14 @@ export default function LeisPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal para visualização de PDFs */}
+      <PDFModal
+        isOpen={pdfModal.isOpen}
+        onClose={fecharPdf}
+        url={pdfModal.url}
+        titulo={pdfModal.titulo}
+      />
     </div>
   )
 }
