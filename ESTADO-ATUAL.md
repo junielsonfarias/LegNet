@@ -2103,6 +2103,50 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-20 - Documentacao Completa do Fluxo de Documentos da Secretaria
+- **Arquivo modificado**: `CLAUDE.md`
+- **Nova secao**: "FLUXO COMPLETO DE DOCUMENTOS DA SECRETARIA LEGISLATIVA"
+- **Conteudo adicionado**:
+  1. Tipos de documentos legislativos (PL, PLC, PR, PDL, IND, REQ, MOC, VP, VA, EMD)
+  2. Documentos administrativos (oficios, contratos, convites, comunicados)
+  3. Fluxo de entrada e protocolo
+  4. Fluxo completo de proposicoes (13 etapas detalhadas)
+  5. Fluxo nas comissoes (CLJ, CFO, tematicas)
+  6. Fluxo da pauta e sessao (preparacao, eventos, estados)
+  7. Arquivamento de materias (motivos e fluxo)
+  8. Documentos especiais (vetos, regime de urgencia)
+  9. Atribuicoes da secretaria (10 funcoes principais)
+  10. Sistema de alertas e prazos automaticos
+  11. Regras para implementacao e validacoes obrigatorias
+  12. Integracao entre modulos
+- **Diagramas incluidos**: Fluxo de entrada, fluxo de proposicao, tramitacao em comissao, pauta, vetos, urgencia
+- **Objetivo**: Guiar o Claude em todas as implementacoes relacionadas a documentos legislativos
+
+### 2026-01-20 - Analise Comparativa SAPL vs Sistema
+- **Objetivo**: Verificar se todos os campos configuraveis do SAPL tem correspondentes no painel administrativo
+- **Documento gerado**: `docs/analise-comparativa-sapl.md`
+- **Cobertura geral**: ~92% dos requisitos do SAPL atendidos
+- **Areas analisadas**:
+  - Configuracoes Institucionais: **COMPLETO**
+  - Sessoes Legislativas: **COMPLETO**
+  - Templates de Sessao: **COMPLETO**
+  - Nomenclatura/Numeracao: **COMPLETO**
+  - Pauta: **COMPLETO**
+  - Tipos de Proposicao: **COMPLETO**
+  - Tramitacao: **COMPLETO**
+  - Votacao: **PARCIAL** (falta quorum configuravel)
+  - Comissoes: **COMPLETO**
+  - Painel Eletronico: **COMPLETO**
+  - Presenca: **COMPLETO**
+- **Lacunas identificadas**:
+  1. Quorum nao configuravel (regra fixa SIM > NAO)
+  2. Turnos de votacao (1o e 2o turno) nao implementados
+  3. Participacao cidada parcial
+- **Proximos passos recomendados**:
+  - Criar tabela `ConfiguracaoQuorum` para quoruns configuraveis
+  - Adicionar campo `turno` ao modelo de votacao
+- **Paginas admin verificadas**: 20+ paginas de configuracao existentes
+
 ### 2026-01-20 - Calculo Automatico do Resultado da Votacao
 - **Funcionalidade implementada**: Ao encerrar uma votacao, o sistema agora contabiliza automaticamente os votos e atualiza a proposicao
 - **Arquivo modificado**: `src/lib/services/sessao-controle.ts`
@@ -2176,6 +2220,19 @@ sudo ./scripts/uninstall.sh --full
   - POST continua protegido com autenticacao
   - Permite que paginas de transparencia carreguem legislaturas corretamente
 - **Resultado**: Todas as paginas de transparencia funcionando sem erros de API
+
+### 2026-01-20 - Reorganizacao do CLAUDE.md para Melhor Performance
+
+- **Problema**: CLAUDE.md com 53.9k caracteres excedia limite de 40k recomendado
+- **Solucao**: Divisao do conteudo em arquivos menores e especificos
+- **Arquivos criados**:
+  - `docs/PADROES-CODIGO.md` - Nomenclatura, estrutura de componentes, APIs, servicos, Zod, boas praticas
+  - `docs/MODELOS-DADOS.md` - Modelos Prisma, relacionamentos, regras de negocio dos modelos
+  - `docs/FLUXO-LEGISLATIVO.md` - Fluxo completo de tramitacao, sessoes, votacoes, comissoes
+- **CLAUDE.md**: Reduzido de 54k para 8.5k caracteres (84% menor)
+- **Beneficio**: Melhor performance do Claude Code, carregamento mais rapido, contexto mais focado
+
+---
 
 ### 2026-01-20 - Populacao do Portal de Transparencia com Dados Reais
 - **Arquivo criado**: `prisma/seed-transparencia.ts`
