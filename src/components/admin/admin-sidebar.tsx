@@ -218,6 +218,11 @@ const navigation = [
     icon: BarChart3
   },
   {
+    name: 'Analytics',
+    href: '/admin/analytics',
+    icon: Activity
+  },
+  {
     name: 'Auditoria',
     href: '/admin/auditoria',
     icon: Shield
