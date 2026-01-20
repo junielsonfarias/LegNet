@@ -2221,6 +2221,22 @@ sudo ./scripts/uninstall.sh --full
   - Permite que paginas de transparencia carreguem legislaturas corretamente
 - **Resultado**: Todas as paginas de transparencia funcionando sem erros de API
 
+### 2026-01-20 - Melhorias Completas em Transparência e Pareceres
+
+- **Formulários de Transparência melhorados**:
+  - `bens-patrimoniais`: corrigido enum de situação (EM_USO, DISPONIVEL, CEDIDO, etc)
+  - `contratos`: adicionado licitacaoId, contratoOrigemId, modalidades atualizadas
+  - `convenios`: adicionado arquivo, melhorado layout programa/acao/fonte
+  - `despesas`: adicionado licitacaoId, contratoId, convenioId, situação INSCRITA_RP
+  - `licitacoes`: adicionado horaEntregaPropostas, linkAta, arquivo
+  - `receitas`: adicionado subrubrica, alinea, subalinea (classificação completa)
+  - `servidores`: adicionado cargaHoraria
+- **Nova página `/admin/folha-pagamento`**: CRUD completo de folhas de pagamento
+- **Integração de pareceres na proposição**: Seção de pareceres na página `/admin/proposicoes/[id]`
+- **Análise comparativa SAPL**: Documento `docs/analise-comparativa-sapl.md` com status de implementação
+
+---
+
 ### 2026-01-20 - Sistema de Pareceres das Comissões
 
 - **Modelos Prisma criados**:
