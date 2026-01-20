@@ -2537,6 +2537,30 @@ sudo ./scripts/uninstall.sh --full
   - `src/app/painel-publico/page.tsx`
 - **Build verificado**: Compilado com sucesso
 
+### 2026-01-20 - Painel Eletronico: Endpoint Publico e Correcao de Autenticacao
+
+- **Problema identificado**: Painel publico nao carregava dados porque a API `/api/sessoes/[id]` exigia autenticacao
+- **Solucao implementada**:
+  - Criado novo endpoint publico `/api/painel/sessao-completa` que retorna dados completos da sessao sem autenticacao
+  - Atualizado `painel-publico/page.tsx` para usar APIs publicas:
+    - `/api/dados-abertos/sessoes` para listar sessoes
+    - `/api/painel/sessao-completa` para dados da sessao
+    - `/api/sessoes/[id]/presenca` (ja era publico)
+    - `/api/sessoes/[id]/votacao` (ja era publico)
+- **Script de teste criado**: `prisma/seed-teste-painel.ts`
+  - Vincula proposicoes com votacoes aos itens da pauta
+  - Permite testar o painel com dados historicos reais
+- **Arquivos criados/modificados**:
+  - `src/app/api/painel/sessao-completa/route.ts` (novo)
+  - `src/app/painel-publico/page.tsx` (modificado)
+  - `prisma/seed-teste-painel.ts` (novo)
+- **Testes realizados**:
+  - Sessao 34 (CONCLUIDA) com 17 itens na pauta
+  - 5 proposicoes com votacoes (55 votos totais)
+  - 11 presencas registradas
+- **URL de teste**: `http://localhost:3000/painel-publico?sessaoId=sessao-34-2025`
+- **Build verificado**: Compilado com sucesso
+
 ---
 
 ## Instrucoes de Atualizacao
