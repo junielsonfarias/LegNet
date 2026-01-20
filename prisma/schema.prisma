@@ -122,6 +122,9 @@ model Tenant {
   // Relacionamento com configuração institucional detalhada
   configuracao ConfiguracaoInstitucional?
 
+  // Relacionamento com configurações de quorum
+  configuracoesQuorum ConfiguracaoQuorum[]
+
   @@index([ativo])
   @@index([dominio])
   @@index([subdominio])
@@ -1499,4 +1502,72 @@ model VotoParecerComissao {
 
   @@unique([parecerId, parlamentarId]) // Um parlamentar so vota uma vez por parecer
   @@map("votos_parecer_comissao")
+}
+
+// ============================================
+// SISTEMA DE QUORUM CONFIGURAVEL
+// ============================================
+
+enum TipoQuorum {
+  MAIORIA_SIMPLES        // Mais SIMs que NAOs dos presentes
+  MAIORIA_ABSOLUTA       // Mais de 50% do total de membros
+  DOIS_TERCOS            // 2/3 do total de membros
+  TRES_QUINTOS           // 3/5 do total de membros
+  UNANIMIDADE            // 100% dos presentes
+}
+
+enum AplicacaoQuorum {
+  INSTALACAO_SESSAO      // Quorum para iniciar sessao
+  VOTACAO_SIMPLES        // Votacao de materias simples
+  VOTACAO_ABSOLUTA       // PLCs, Regimento Interno
+  VOTACAO_QUALIFICADA    // Emendas a Lei Organica, vetos
+  VOTACAO_URGENCIA       // Regime de urgencia
+  VOTACAO_COMISSAO       // Votacao em comissoes
+  DERRUBADA_VETO         // Derrubar veto do Executivo
+}
+
+model ConfiguracaoQuorum {
+  id                String          @id @default(cuid())
+
+  // Identificacao
+  nome              String          // Ex: "Quorum para PLC"
+  descricao         String?         @db.Text
+  aplicacao         AplicacaoQuorum @unique
+
+  // Tipo de quorum
+  tipoQuorum        TipoQuorum      @default(MAIORIA_SIMPLES)
+
+  // Configuracoes personalizadas (para casos especiais)
+  percentualMinimo  Float?          // Ex: 66.67 para 2/3
+  numeroMinimo      Int?            // Numero absoluto minimo (se aplicavel)
+
+  // Base de calculo
+  baseCalculo       String          @default("PRESENTES") // PRESENTES, TOTAL_MEMBROS, TOTAL_MANDATOS
+
+  // Tipos de proposicao que usam este quorum
+  tiposProposicao   String?         @db.Text // JSON array com tipos: ["PROJETO_LEI_COMPLEMENTAR", "EMENDA_LEI_ORGANICA"]
+
+  // Configuracoes adicionais
+  permitirAbstencao Boolean         @default(true)
+  abstencaoContaContra Boolean      @default(false) // Se abstencao conta como voto contra
+  requererVotacaoNominal Boolean    @default(false)
+
+  // Mensagens personalizadas
+  mensagemAprovacao String?         // Ex: "Aprovado por maioria absoluta"
+  mensagemRejeicao  String?         // Ex: "Rejeitado por nao atingir quorum"
+
+  // Controle
+  ativo             Boolean         @default(true)
+  ordem             Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Multi-tenant
+  tenantId          String?
+  tenant            Tenant?         @relation(fields: [tenantId], references: [id])
+
+  @@index([aplicacao])
+  @@index([ativo])
+  @@index([tenantId])
+  @@map("configuracoes_quorum")
 }

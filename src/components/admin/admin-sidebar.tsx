@@ -35,7 +35,8 @@ import {
   FileSpreadsheet,
   Handshake,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Vote
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -260,6 +261,11 @@ const navigation = [
         name: 'Unidades de Tramitação',
         href: '/admin/configuracoes/unidades-tramitacao',
         icon: Workflow
+      },
+      {
+        name: 'Configuração de Quórum',
+        href: '/admin/configuracoes/quorum',
+        icon: Vote
       },
       {
         name: 'Testes da API',

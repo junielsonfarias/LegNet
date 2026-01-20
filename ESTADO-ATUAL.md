@@ -93,6 +93,7 @@
 | Votacao em sessao | Implementado | /api/sessoes/[id]/votacao |
 | Historico de votacoes | Implementado | Vinculado a proposicao |
 | Painel de votacao | Implementado | /admin/painel-eletronico |
+| **Quorum configuravel** | **Implementado** | /admin/configuracoes/quorum - tipos, bases de calculo, mensagens |
 
 ### 7. Comissoes
 
@@ -2279,6 +2280,34 @@ sudo ./scripts/uninstall.sh --full
   - Excluido diretorio `prisma` do build TypeScript para evitar erros de tipo no seed
 - **Portal de Transparencia**: Agora totalmente funcional com dados reais
 - **Comando para executar seed**: `npx tsx prisma/seed-transparencia.ts`
+
+---
+
+### 2026-01-20 - Sistema de Quorum Configuravel
+
+- **Modelo Prisma criado**: `ConfiguracaoQuorum`
+  - Enums: `TipoQuorum` (MAIORIA_SIMPLES, MAIORIA_ABSOLUTA, DOIS_TERCOS, TRES_QUINTOS, UNANIMIDADE)
+  - Enums: `AplicacaoQuorum` (INSTALACAO_SESSAO, VOTACAO_SIMPLES, VOTACAO_ABSOLUTA, VOTACAO_QUALIFICADA, VOTACAO_URGENCIA, VOTACAO_COMISSAO, DERRUBADA_VETO)
+  - Campos: nome, descricao, tipoQuorum, baseCalculo, percentualMinimo, numeroMinimo
+  - Opcoes: permitirAbstencao, abstencaoContaContra, requererVotacaoNominal
+  - Mensagens customizaveis: mensagemAprovacao, mensagemRejeicao
+- **APIs implementadas**:
+  - GET/POST `/api/quorum` - listar e criar configuracoes
+  - GET/PUT/DELETE `/api/quorum/[id]` - operacoes por ID
+- **Frontend**:
+  - Pagina admin `/admin/configuracoes/quorum` - CRUD completo com formulario avancado
+  - Hook `useQuorum` com CRUD + funcao `calcularResultadoVotacao`
+  - Sidebar atualizado com link "Configuracao de Quorum" no submenu Configuracoes
+- **Servico de integracao**: `quorum-service.ts`
+  - `calcularResultadoVotacao`: calcula resultado usando configuracao de quorum
+  - `determinarAplicacaoQuorum`: determina tipo de quorum com base no tipo de proposicao
+  - `verificarQuorumInstalacao`: verifica quorum para inicio de sessao
+  - `verificarVotacaoNominalObrigatoria`: verifica se votacao nominal e obrigatoria
+  - `criarConfiguracoesPadrao`: seed de configuracoes padrao
+- **Integracao com votacao**:
+  - `sessao-controle.ts`: `contabilizarVotos` agora usa quorum configuravel
+  - Resultado de votacao considera tipo de proposicao e configuracao de quorum
+  - Detalhes de quorum incluidos no log de votacao
 
 ---
 

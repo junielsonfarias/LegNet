@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/lib/error-handler'
+import {
+  calcularResultadoVotacao as calcularResultadoComQuorum,
+  determinarAplicacaoQuorum,
+  type AplicacaoQuorum
+} from '@/lib/services/quorum-service'
 
 type SessaoBasica = Awaited<ReturnType<typeof prisma.sessao.findUnique>>
 
@@ -275,13 +280,25 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
 /**
  * Contabiliza os votos de uma proposição e retorna o resultado
  * Exportado para uso em APIs e outros serviços
+ *
+ * @param proposicaoId - ID da proposição
+ * @param options - Opções adicionais para cálculo de quórum configurável
  */
-export async function contabilizarVotos(proposicaoId: string): Promise<{
+export async function contabilizarVotos(
+  proposicaoId: string,
+  options?: {
+    tipoProposicao?: string
+    regimeUrgencia?: boolean
+    isDerrubadaVeto?: boolean
+    sessaoId?: string
+  }
+): Promise<{
   sim: number
   nao: number
   abstencao: number
   total: number
   resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
+  detalhesQuorum?: string
 }> {
   const votos = await prisma.votacao.groupBy({
     by: ['voto'],
@@ -303,7 +320,65 @@ export async function contabilizarVotos(proposicaoId: string): Promise<{
 
   const total = contagem.sim + contagem.nao + contagem.abstencao
 
-  // Regra: SIM > NAO para aprovação (abstenções não contam contra)
+  // Se tiver tipo de proposição, usar quórum configurável
+  if (options?.tipoProposicao) {
+    try {
+      // Buscar total de membros e presentes
+      let totalMembros = 9 // Valor padrão
+      let totalPresentes = total
+
+      if (options.sessaoId) {
+        const sessao = await prisma.sessao.findUnique({
+          where: { id: options.sessaoId },
+          select: { legislaturaId: true }
+        })
+
+        const whereClause: any = { ativo: true }
+        if (sessao?.legislaturaId) {
+          whereClause.mandatos = {
+            some: {
+              legislaturaId: sessao.legislaturaId,
+              ativo: true
+            }
+          }
+        }
+
+        totalMembros = await prisma.parlamentar.count({ where: whereClause })
+
+        totalPresentes = await prisma.presencaSessao.count({
+          where: {
+            sessaoId: options.sessaoId,
+            presente: true
+          }
+        })
+      }
+
+      const aplicacao = determinarAplicacaoQuorum(
+        options.tipoProposicao,
+        options.regimeUrgencia || false,
+        options.isDerrubadaVeto || false,
+        false
+      )
+
+      const resultadoQuorum = await calcularResultadoComQuorum(
+        aplicacao,
+        contagem,
+        totalMembros,
+        totalPresentes
+      )
+
+      return {
+        ...contagem,
+        total,
+        resultado: resultadoQuorum.aprovado ? 'APROVADA' : 'REJEITADA',
+        detalhesQuorum: resultadoQuorum.detalhes
+      }
+    } catch (error) {
+      console.error('Erro ao calcular quórum configurável, usando regra padrão:', error)
+    }
+  }
+
+  // Regra padrão: SIM > NAO para aprovação (abstenções não contam contra)
   let resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
   if (contagem.sim > contagem.nao) {
     resultado = 'APROVADA'
@@ -371,14 +446,19 @@ export async function finalizarItemPauta(
   let contagemVotos: Awaited<ReturnType<typeof contabilizarVotos>> | null = null
 
   if (eraVotacao && temProposicao && (resultado === 'APROVADO' || resultado === 'REJEITADO')) {
-    contagemVotos = await contabilizarVotos(item.proposicaoId!)
+    // Usar quórum configurável passando o tipo de proposição
+    contagemVotos = await contabilizarVotos(item.proposicaoId!, {
+      tipoProposicao: item.proposicao!.tipo,
+      sessaoId
+    })
 
     // Se o operador escolheu APROVADO/REJEITADO, usar a escolha dele
     // mas também calcular o resultado real baseado nos votos
     console.log(`[Votação] Proposição ${item.proposicao!.numero}/${item.proposicao!.ano}:`, {
       votos: contagemVotos,
       resultadoOperador: resultado,
-      resultadoCalculado: contagemVotos.resultado
+      resultadoCalculado: contagemVotos.resultado,
+      detalhesQuorum: contagemVotos.detalhesQuorum
     })
   }
 
