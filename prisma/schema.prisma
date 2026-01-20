@@ -193,6 +193,8 @@ model Parlamentar {
   usuario                User? // Relacionamento com User (se tiver acesso ao sistema)
   Tramitacao             Tramitacao[]
   Publicacao             Publicacao[]
+  pareceresRelator       Parecer[]              @relation("ParecerRelator")
+  votosParecerComissao   VotoParecerComissao[]  @relation("VotoParecerComissao")
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -390,6 +392,7 @@ model Proposicao {
   votacoes    Votacao[]
   pautaItens  PautaItem[]
   tramitacoes Tramitacao[]
+  pareceres   Parecer[]    // Pareceres das comissões sobre esta proposição
 
   @@unique([numero, ano])
   @@index([status, dataApresentacao])
@@ -450,6 +453,7 @@ enum TipoVoto {
 model Comissao {
   id        String       @id @default(cuid())
   nome      String
+  sigla     String?      // Sigla da comissão (ex: CLJ, CFO)
   descricao String?      @db.Text
   tipo      TipoComissao
   ativa     Boolean      @default(true)
@@ -457,7 +461,8 @@ model Comissao {
   updatedAt DateTime     @updatedAt
 
   // Relacionamentos
-  membros MembroComissao[]
+  membros   MembroComissao[]
+  pareceres Parecer[]    // Pareceres emitidos por esta comissão
 
   @@index([tipo, ativa])
   @@index([ativa])
@@ -1396,4 +1401,102 @@ model BemPatrimonial {
   @@index([tipo])
   @@index([situacao])
   @@map("bens_patrimoniais")
+}
+
+// ============================================
+// SISTEMA DE PARECERES DAS COMISSOES
+// ============================================
+
+enum TipoParecer {
+  FAVORAVEL
+  FAVORAVEL_COM_EMENDAS
+  CONTRARIO
+  PELA_INCONSTITUCIONALIDADE
+  PELA_ILEGALIDADE
+  PELA_PREJUDICIALIDADE
+  PELA_RETIRADA
+}
+
+enum StatusParecer {
+  RASCUNHO                 // Relator esta elaborando
+  AGUARDANDO_VOTACAO       // Pronto para votacao na comissao
+  APROVADO_COMISSAO        // Aprovado pela comissao
+  REJEITADO_COMISSAO       // Rejeitado pela comissao (volta ao relator)
+  EMITIDO                  // Parecer final emitido
+  ARQUIVADO                // Arquivado (materia arquivada)
+}
+
+model Parecer {
+  id                String        @id @default(cuid())
+  // Relacionamentos principais
+  proposicaoId      String
+  comissaoId        String
+  relatorId         String        // Parlamentar designado como relator
+
+  // Dados do parecer
+  numero            String?       // Numero do parecer (ex: 001/2026)
+  ano               Int
+  tipo              TipoParecer
+  status            StatusParecer @default(RASCUNHO)
+
+  // Conteudo
+  fundamentacao     String        @db.Text   // Texto completo do parecer
+  conclusao         String?       @db.Text   // Conclusao/recomendacao
+  ementa            String?                  // Resumo do parecer
+
+  // Emendas propostas (se FAVORAVEL_COM_EMENDAS)
+  emendasPropostas  String?       @db.Text   // JSON com emendas propostas
+
+  // Datas
+  dataDistribuicao  DateTime      // Data em que foi distribuido ao relator
+  prazoEmissao      DateTime?     // Prazo para emitir parecer
+  dataElaboracao    DateTime?     // Data em que o relator finalizou
+  dataVotacao       DateTime?     // Data da votacao na comissao
+  dataEmissao       DateTime?     // Data da emissao oficial
+
+  // Votacao na comissao
+  votosAFavor       Int           @default(0)
+  votosContra       Int           @default(0)
+  votosAbstencao    Int           @default(0)
+
+  // Observacoes e historico
+  observacoes       String?       @db.Text
+  motivoRejeicao    String?       @db.Text   // Se rejeitado pela comissao
+
+  // Arquivo do parecer
+  arquivoUrl        String?
+
+  // Controle
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relacionamentos
+  proposicao        Proposicao    @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  comissao          Comissao      @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
+  relator           Parlamentar   @relation("ParecerRelator", fields: [relatorId], references: [id])
+  votosComissao     VotoParecerComissao[]
+
+  @@unique([proposicaoId, comissaoId]) // Uma proposicao so pode ter um parecer por comissao
+  @@index([proposicaoId])
+  @@index([comissaoId])
+  @@index([relatorId])
+  @@index([status])
+  @@index([dataDistribuicao])
+  @@map("pareceres")
+}
+
+// Registro individual de votos na comissao sobre o parecer
+model VotoParecerComissao {
+  id            String      @id @default(cuid())
+  parecerId     String
+  parlamentarId String
+  voto          TipoVoto    // SIM (aprova parecer), NAO (rejeita), ABSTENCAO
+  dataVoto      DateTime    @default(now())
+  observacoes   String?
+
+  parecer       Parecer     @relation(fields: [parecerId], references: [id], onDelete: Cascade)
+  parlamentar   Parlamentar @relation("VotoParecerComissao", fields: [parlamentarId], references: [id])
+
+  @@unique([parecerId, parlamentarId]) // Um parlamentar so vota uma vez por parecer
+  @@map("votos_parecer_comissao")
 }

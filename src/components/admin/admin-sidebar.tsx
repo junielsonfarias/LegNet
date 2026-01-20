@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  FileText, 
-  Newspaper, 
-  Eye, 
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  FileText,
+  Newspaper,
+  Eye,
   Settings,
   Gavel,
   Building,
@@ -29,7 +29,13 @@ import {
   Activity,
   Shield,
   Key,
-  Database
+  Database,
+  Wallet,
+  Package,
+  FileSpreadsheet,
+  Handshake,
+  TrendingUp,
+  TrendingDown
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -83,6 +89,16 @@ const navigation = [
     name: 'Proposições',
     href: '/admin/proposicoes',
     icon: FileText
+  },
+  {
+    name: 'Comissões',
+    href: '/admin/comissoes',
+    icon: Users
+  },
+  {
+    name: 'Pareceres',
+    href: '/admin/pareceres',
+    icon: ClipboardList
   },
   {
     name: 'Tramitações',
@@ -146,7 +162,49 @@ const navigation = [
   {
     name: 'Transparência',
     href: '/admin/transparencia',
-    icon: Eye
+    icon: Eye,
+    submenu: [
+      {
+        name: 'Visão Geral',
+        href: '/admin/transparencia',
+        icon: Eye
+      },
+      {
+        name: 'Servidores',
+        href: '/admin/servidores',
+        icon: Users
+      },
+      {
+        name: 'Folha de Pagamento',
+        href: '/admin/folha-pagamento',
+        icon: Wallet
+      },
+      {
+        name: 'Contratos',
+        href: '/admin/contratos',
+        icon: FileSpreadsheet
+      },
+      {
+        name: 'Convênios',
+        href: '/admin/convenios',
+        icon: Handshake
+      },
+      {
+        name: 'Receitas',
+        href: '/admin/receitas',
+        icon: TrendingUp
+      },
+      {
+        name: 'Despesas',
+        href: '/admin/despesas',
+        icon: TrendingDown
+      },
+      {
+        name: 'Bens Patrimoniais',
+        href: '/admin/bens-patrimoniais',
+        icon: Package
+      }
+    ]
   },
   {
     name: 'Gestão Fiscal',
