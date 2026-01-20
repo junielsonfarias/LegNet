@@ -2561,6 +2561,39 @@ sudo ./scripts/uninstall.sh --full
 - **URL de teste**: `http://localhost:3000/painel-publico?sessaoId=sessao-34-2025`
 - **Build verificado**: Compilado com sucesso
 
+### 2026-01-20 - Painel Eletronico: Correcao de Loop e Presencas
+
+- **Problemas corrigidos**:
+  - Loop de recarga: Painel ficava recarregando em loop ao navegar entre itens
+  - Presencas nao exibidas: Lista de parlamentares presentes/ausentes nao aparecia
+- **Causa raiz**:
+  - `setLoading(true)` era chamado a cada 10 segundos na atualizacao periodica
+  - Interface `Sessao` nao tinha o campo `presencas` tipado corretamente
+- **Solucoes implementadas**:
+  - Adicionado flag `initialLoadDone` para controlar exibicao do loading
+  - Loading so aparece na carga inicial, atualizacoes periodicas sao silenciosas
+  - Interface `Sessao` atualizada com campo `presencas?: Presenca[]`
+  - Funcao `carregarDados` recebe parametro `isInitialLoad`
+- **Arquivo modificado**: `src/app/painel-publico/page.tsx`
+- **Build verificado**: Compilado com sucesso
+
+---
+
+## Pendencias para Proxima Sessao (Painel Eletronico)
+
+### Melhorias Planejadas
+- [ ] Revisar layout responsivo do painel para dispositivos moveis
+- [ ] Adicionar animacoes de transicao entre itens da pauta
+- [ ] Implementar modo tela cheia para projecao
+- [ ] Adicionar indicador visual de atualizacao silenciosa
+- [ ] Testar navegacao entre proposicoes em diferentes cenarios
+
+### Verificacoes Pendentes
+- [ ] Testar painel com sessao em andamento (status EM_ANDAMENTO)
+- [ ] Verificar comportamento quando nao ha proposicoes na pauta
+- [ ] Testar com diferentes quantidades de parlamentares
+- [ ] Validar exibicao de justificativas de ausencia
+
 ---
 
 ## Instrucoes de Atualizacao
