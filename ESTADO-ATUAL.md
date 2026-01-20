@@ -11,13 +11,13 @@
 
 | Metrica | Valor |
 |---------|-------|
-| **Modelos Prisma** | 35 |
-| **Endpoints API** | 72+ |
-| **Componentes React** | 53+ |
-| **Servicos de Negocio** | 32 |
-| **Hooks Customizados** | 27 |
+| **Modelos Prisma** | 36 |
+| **Endpoints API** | 78+ |
+| **Componentes React** | 62+ |
+| **Servicos de Negocio** | 34 |
+| **Hooks Customizados** | 29 |
 | **Paginas Admin** | 15+ |
-| **Paginas Publicas** | 25+ |
+| **Paginas Publicas** | 28+ |
 | **Multi-Tenant** | Implementado |
 
 ---
@@ -276,6 +276,64 @@
 | Validacao Zod | Implementado | Schemas para criar/atualizar |
 | Soft delete | Implementado | Tenants desativados, nao excluidos |
 | Headers propagados | Implementado | x-tenant-slug via middleware |
+
+### 22. Busca Avancada Global
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| Servico de busca | Implementado | `busca-service.ts` com relevancia |
+| API `/api/busca` | Implementado | GET com filtros, paginacao, facetas |
+| Command Palette | Implementado | Ctrl+K para busca rapida |
+| Pagina de resultados | Implementado | `/busca` com filtros e facetas |
+| Busca em entidades | Implementado | Proposicoes, parlamentares, sessoes, publicacoes, noticias, comissoes |
+| Historico de buscas | Implementado | localStorage |
+| Integracao no header | Implementado | SearchButton no menu principal |
+
+### 23. Calendario Legislativo
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| Servico de calendario | Implementado | `calendario-service.ts` consolida eventos |
+| API `/api/calendario` | Implementado | Periodos: mes, semana, dia, proximos, intervalo |
+| Componente visual | Implementado | Grade mensal + lista + filtros |
+| Pagina publica | Implementado | `/calendario` |
+| Tipos de evento | Implementado | Sessoes (4 tipos), audiencias, reunioes |
+| Filtros por tipo | Implementado | Checkboxes interativos |
+| Exportacao Google Calendar | Implementado | Link direto para adicionar |
+| Exportacao iCal | Implementado | Download .ics |
+| Modal de detalhes | Implementado | Com acoes de exportacao |
+| Integracao no menu | Implementado | Link em Legislativo com badge "Novo" |
+
+### 24. Sistema de Favoritos
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| Modelo Favorito | Implementado | Prisma model com 5 tipos de item |
+| API de favoritos | Implementado | CRUD completo + verificacao batch |
+| Hook useFavoritos | Implementado | Gerencia favoritos no React |
+| Hook useFavoritoItem | Implementado | Verifica/alterna favorito individual |
+| Componente BotaoFavorito | Implementado | Botao com coracao e tooltip |
+| Componente CardFavorito | Implementado | Card com acoes de notificacao |
+| Pagina /meus-favoritos | Implementado | Lista paginada com estatisticas |
+| Integracao Proposicoes | Implementado | Botao de favorito em cada card |
+| Link no header | Implementado | Icone de coracao no topo |
+| Notificacoes configuraveis | Implementado | Mudancas, votacao, parecer |
+
+### 25. Visualizacao de PDFs Inline
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| Componente PDFViewer | Implementado | Iframe com viewer nativo do navegador |
+| Componente PDFModal | Implementado | Modal fullscreen para visualizacao |
+| Controles de PDF | Implementado | Download, nova aba, fullscreen, fechar |
+| Estado de loading | Implementado | Spinner durante carregamento |
+| Tratamento de erros | Implementado | Fallback com opcoes de download |
+| Integracao Publicacoes | Implementado | /transparencia/publicacoes |
+| Integracao Leis | Implementado | /transparencia/leis |
+| Integracao Decretos | Implementado | /transparencia/decretos |
+| Integracao Contratos | Implementado | /transparencia/contratos |
+| Integracao Licitacoes | Implementado | /transparencia/licitacoes |
+| Fechamento com ESC | Implementado | Atalho de teclado |
 
 ---
 
@@ -2308,6 +2366,153 @@ sudo ./scripts/uninstall.sh --full
   - `sessao-controle.ts`: `contabilizarVotos` agora usa quorum configuravel
   - Resultado de votacao considera tipo de proposicao e configuracao de quorum
   - Detalhes de quorum incluidos no log de votacao
+
+---
+
+### 2026-01-20 - Dashboard de Analytics
+
+- **Servico de Analytics existente**: `analytics-service.ts` ja possuia funcoes completas
+  - `gerarDashboard`: gera dashboard para periodo customizado
+  - `gerarDashboardMesAtual`: metricas do mes atual
+  - `gerarDashboardAnoAtual`: metricas do ano atual
+  - `calcularMetricasParlamentares`: metricas por parlamentar
+  - `gerarRelatorioProdutividade`: relatorio de produtividade legislativa
+- **API criada**: `/api/analytics`
+  - GET com parametro `tipo`: mes, ano, periodo, parlamentares, produtividade
+  - Parametros opcionais: inicio, fim, comparativo
+- **Frontend**:
+  - Pagina admin `/admin/analytics` - Dashboard com visualizacoes Recharts
+  - Graficos implementados: PieChart, BarChart, AreaChart, LineChart
+  - Cards de metricas: proposicoes, sessoes, presenca, votacoes
+  - Ranking de parlamentares com estatisticas
+  - Alternancia de periodo (mes/ano)
+  - Comparativo com periodo anterior
+- **Sidebar atualizado**: Link "Analytics" adicionado apos "Relatorios"
+- **Build verificado**: Compilado com sucesso
+
+---
+
+### 2026-01-20 - Sistema de Favoritos e Acompanhamento
+
+- **Modelo Prisma criado**: `Favorito`
+  - Campos: userId, tipoItem, itemId, notificarMudancas, notificarVotacao, notificarParecer, anotacao
+  - Tipos suportados: PROPOSICAO, SESSAO, PARLAMENTAR, COMISSAO, PUBLICACAO
+  - Indice unico por usuario+tipo+item
+  - Suporte a multi-tenant
+- **API de favoritos**:
+  - GET `/api/favoritos`: lista favoritos do usuario com dados dos itens
+  - POST `/api/favoritos`: adiciona item aos favoritos
+  - DELETE `/api/favoritos`: remove item dos favoritos
+  - GET/POST `/api/favoritos/check`: verifica se item(ns) estao nos favoritos
+  - GET/PATCH/DELETE `/api/favoritos/[id]`: operacoes em favorito especifico
+- **Hook React**: `use-favoritos.ts`
+  - `useFavoritos`: gerencia lista de favoritos com paginacao
+  - `useFavoritoItem`: verifica e alterna favorito de item especifico
+  - Funcoes: buscarFavoritos, adicionarFavorito, removerFavorito, toggleFavorito
+- **Componentes**:
+  - `BotaoFavorito`: botao com coracao para favoritar/desfavoritar
+  - `CardFavorito`: card de favorito com acoes (notificacoes, remover)
+  - Tooltip com feedback visual
+- **Pagina de favoritos** (`/meus-favoritos`):
+  - Estatisticas por tipo de favorito
+  - Lista paginada de itens favoritados
+  - Gerenciamento de notificacoes por item
+  - Protecao por autenticacao
+- **Integracoes**:
+  - Botao de favorito na listagem de proposicoes
+  - Link "Favoritos" no header do site
+  - Componente `tooltip.tsx` criado
+- **Build verificado**: Compilado com sucesso
+
+---
+
+### 2026-01-20 - Calendario Legislativo
+
+- **Servico de calendario criado**: `calendario-service.ts`
+  - `buscarEventos`: busca eventos consolidados de sessoes, audiencias e comissoes
+  - `buscarEventosDoDia`, `buscarEventosDaSemana`, `buscarEventosDoMes`: filtros por periodo
+  - `buscarProximosEventos`: proximos 7 dias
+  - `gerarLinkGoogleCalendar`: link para adicionar evento ao Google Calendar
+  - `gerarICalEvento`: exportacao no formato iCal (.ics)
+  - Cores por tipo: sessao_ordinaria (azul), extraordinaria (vermelho), solene (roxo), especial (amarelo), audiencia (verde), reuniao (indigo)
+- **API criada**: `/api/calendario`
+  - GET com parametros: periodo (mes/semana/dia/proximos/intervalo), ano, mes, data, tipos, limite
+  - Suporte a formato iCal com `formato=ical`
+  - Exportacao de eventos para download
+- **Componente de calendario** (`components/calendario/calendario-legislativo.tsx`):
+  - Visualizacao em grade mensal
+  - Visualizacao em lista
+  - Filtros por tipo de evento (checkboxes)
+  - Navegacao entre meses
+  - Modal de detalhes do evento
+  - Botao para adicionar ao Google Calendar
+  - Botao para download iCal
+  - Indicadores visuais de quantidade de eventos por dia
+- **Pagina publica** (`/calendario`):
+  - Calendario interativo principal
+  - Sidebar com proximos eventos (proximo 7 dias)
+  - Links uteis para paginas relacionadas
+  - Secao informativa sobre tipos de eventos
+  - Breadcrumb de navegacao
+- **Integracao no menu**: Link adicionado no menu Legislativo com badge "Novo"
+- **Build verificado**: Compilado com sucesso
+
+### 2026-01-20 - Busca Avancada Global
+
+- **Servico de busca criado**: `busca-service.ts`
+  - `buscarGlobal`: busca em todas as entidades com paginacao e filtros
+  - `buscarRapida`: busca rapida para autocomplete (5 resultados)
+  - Entidades suportadas: proposicoes, parlamentares, sessoes, publicacoes, noticias, comissoes
+  - Calculo de relevancia por match exato, inicio, contem termo
+  - Facetas por tipo e ano
+  - Sugestoes de busca relacionadas
+- **API criada**: `/api/busca`
+  - GET com parametros: q (termo), tipos, dataInicio, dataFim, autorId, status
+  - Suporte a busca rapida com `rapida=true`
+  - Paginacao com `pagina` e `limite`
+- **Command Palette** (`components/busca/command-palette.tsx`):
+  - Atalho Ctrl+K (ou Cmd+K) para abrir busca rapida
+  - Navegacao por teclado (setas, Enter, Escape)
+  - Historico de buscas recentes (localStorage)
+  - Sugestoes visuais de busca
+  - Cores e icones por tipo de resultado
+- **Pagina de resultados** (`/busca`):
+  - Filtros por tipo de conteudo (proposicoes, parlamentares, etc)
+  - Filtros por ano
+  - Ordenacao por relevancia
+  - Sidebar com facetas
+  - Paginacao
+  - Sugestoes de buscas relacionadas
+  - Suspense boundary para useSearchParams
+- **Integracao no header**: SearchButton adicionado no header principal e mobile
+- **Build verificado**: Compilado com sucesso
+
+### 2026-01-20 - Visualizacao de PDFs Inline
+
+- **Componentes criados** (`components/pdf/`):
+  - `pdf-viewer.tsx`: Visualizador de PDF com iframe e controles
+    - Usa viewer nativo do navegador (sem dependencias externas)
+    - Controles: download, abrir em nova aba, fullscreen, fechar
+    - Estados de loading com spinner
+    - Tratamento de erros com fallback e opcoes de download
+    - Props: url, titulo, altura, mostrarControles, mostrarDownload, onClose
+  - `pdf-modal.tsx`: Modal fullscreen para visualizacao de documentos
+    - Overlay com blur
+    - Fechamento com ESC ou clique no overlay
+    - Header com titulo e botao fechar
+    - Bloqueia scroll do body enquanto aberto
+  - `index.ts`: Arquivo de exportacao
+- **Integracoes implementadas**:
+  - `/transparencia/publicacoes`: Botao "Visualizar" para PDFs
+  - `/transparencia/leis`: Botao "Visualizar PDF" em cada lei
+  - `/transparencia/decretos`: Botao "Visualizar PDF" em cada decreto
+  - `/transparencia/contratos`: Botao "Visualizar" em contratos com arquivo
+  - `/transparencia/licitacoes`: Botao "Visualizar" para editais em PDF
+- **Funcionalidades**:
+  - Deteccao automatica de arquivos PDF (por extensao)
+  - Modal com header mostrando titulo do documento
+  - Botao "Visualizar" destacado (variant default) + "Baixar" (outline)
+- **Build verificado**: Compilado com sucesso
 
 ---
 
