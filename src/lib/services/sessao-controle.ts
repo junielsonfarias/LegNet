@@ -272,29 +272,142 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
   return prisma.pautaItem.findUnique({ where: { id: itemId } })
 }
 
+/**
+ * Contabiliza os votos de uma proposição e retorna o resultado
+ * Exportado para uso em APIs e outros serviços
+ */
+export async function contabilizarVotos(proposicaoId: string): Promise<{
+  sim: number
+  nao: number
+  abstencao: number
+  total: number
+  resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
+}> {
+  const votos = await prisma.votacao.groupBy({
+    by: ['voto'],
+    where: { proposicaoId },
+    _count: true
+  })
+
+  const contagem = {
+    sim: 0,
+    nao: 0,
+    abstencao: 0
+  }
+
+  for (const v of votos) {
+    if (v.voto === 'SIM') contagem.sim = v._count
+    else if (v.voto === 'NAO') contagem.nao = v._count
+    else if (v.voto === 'ABSTENCAO') contagem.abstencao = v._count
+  }
+
+  const total = contagem.sim + contagem.nao + contagem.abstencao
+
+  // Regra: SIM > NAO para aprovação (abstenções não contam contra)
+  let resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
+  if (contagem.sim > contagem.nao) {
+    resultado = 'APROVADA'
+  } else if (contagem.nao > contagem.sim) {
+    resultado = 'REJEITADA'
+  } else {
+    resultado = 'EMPATE'
+  }
+
+  return {
+    ...contagem,
+    total,
+    resultado
+  }
+}
+
+/**
+ * Atualiza a proposição com o resultado da votação
+ */
+async function atualizarResultadoProposicao(
+  proposicaoId: string,
+  resultadoVotacao: 'APROVADA' | 'REJEITADA' | 'EMPATE',
+  statusItem: 'APROVADO' | 'REJEITADO'
+) {
+  // Mapear status do item para status da proposição
+  const statusProposicao = statusItem === 'APROVADO' ? 'APROVADA' : 'REJEITADA'
+
+  await prisma.proposicao.update({
+    where: { id: proposicaoId },
+    data: {
+      resultado: resultadoVotacao,
+      dataVotacao: new Date(),
+      status: statusProposicao
+    }
+  })
+}
+
 export async function finalizarItemPauta(
   sessaoId: string,
   itemId: string,
   resultado: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO' = 'CONCLUIDO'
 ) {
-  const item = await obterItemPauta(sessaoId, itemId)
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: true,
+      proposicao: true
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
 
   if (item.status === 'CONCLUIDO') {
     return item
   }
 
   const acumulado = calcularTempoAcumulado(item.iniciadoEm ?? null, item.tempoAcumulado)
+  const eraVotacao = item.status === 'EM_VOTACAO'
+  const temProposicao = !!item.proposicaoId && !!item.proposicao
 
+  // Se o item estava em votação e tem proposição vinculada, contabilizar votos
+  let resultadoCalculado = resultado
+  let contagemVotos: Awaited<ReturnType<typeof contabilizarVotos>> | null = null
+
+  if (eraVotacao && temProposicao && (resultado === 'APROVADO' || resultado === 'REJEITADO')) {
+    contagemVotos = await contabilizarVotos(item.proposicaoId!)
+
+    // Se o operador escolheu APROVADO/REJEITADO, usar a escolha dele
+    // mas também calcular o resultado real baseado nos votos
+    console.log(`[Votação] Proposição ${item.proposicao!.numero}/${item.proposicao!.ano}:`, {
+      votos: contagemVotos,
+      resultadoOperador: resultado,
+      resultadoCalculado: contagemVotos.resultado
+    })
+  }
+
+  // Atualizar o item da pauta
   const atualizado = await prisma.pautaItem.update({
     where: { id: itemId },
     data: {
-      status: resultado,
+      status: resultadoCalculado,
       tempoAcumulado: acumulado,
       tempoReal: acumulado,
       iniciadoEm: null,
       finalizadoEm: new Date()
     }
   })
+
+  // Se teve votação com proposição, atualizar a proposição com o resultado
+  if (eraVotacao && temProposicao && contagemVotos && (resultado === 'APROVADO' || resultado === 'REJEITADO')) {
+    await atualizarResultadoProposicao(
+      item.proposicaoId!,
+      contagemVotos.resultado,
+      resultado
+    )
+
+    console.log(`[Votação] Proposição ${item.proposicao!.numero}/${item.proposicao!.ano} atualizada:`, {
+      resultado: contagemVotos.resultado,
+      status: resultado === 'APROVADO' ? 'APROVADA' : 'REJEITADA',
+      dataVotacao: new Date().toISOString()
+    })
+  }
 
   await prisma.pautaSessao.update({
     where: { id: item.pautaId },

@@ -912,6 +912,25 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes
 
+### 2026-01-20 - Correcao Completa dos Formularios do Modulo de Transparencia
+- **Objetivo**: Corrigir todos os formularios admin do modulo de transparencia para incluir todos os campos do Prisma schema
+- **Pagina criada**:
+  - `src/app/admin/folha-pagamento/page.tsx` - Nova pagina admin para gerenciamento de Folha de Pagamento (CRUD completo)
+- **Arquivos corrigidos**:
+  - `src/app/admin/licitacoes/page.tsx` - Adicionados campos: horaEntregaPropostas, linkAta, arquivo, dataEntregaPropostas
+  - `src/app/admin/contratos/page.tsx` - Adicionados campos: licitacaoId, contratoOrigemId (relacionamentos) + enum modalidade corrigido
+  - `src/app/admin/convenios/page.tsx` - Adicionados campos: programa, acao, fonteRecurso, responsavelTecnico, arquivo
+  - `src/app/admin/receitas/page.tsx` - Adicionados campos: subrubrica, alinea, subalinea, unidade, especie, rubrica, fonteRecurso
+  - `src/app/admin/despesas/page.tsx` - Adicionados campos: licitacaoId, contratoId, convenioId, unidade, acao, fonteRecurso, modalidade + enum situacao com INSCRITA_RP
+  - `src/app/admin/servidores/page.tsx` - Adicionado campo: cargaHoraria
+  - `src/app/admin/bens-patrimoniais/page.tsx` - Enum situacao corrigido para: EM_USO, DISPONIVEL, CEDIDO, BAIXADO, EM_MANUTENCAO
+- **Melhorias implementadas**:
+  - Relacionamentos entre entidades (Despesa -> Licitacao/Contrato/Convenio, Contrato -> Licitacao)
+  - Selects dinamicos com dados reais das licitacoes, contratos e convenios
+  - Enums alinhados com Prisma schema
+  - Campos de classificacao orcamentaria completos em Receitas (especie, rubrica, subrubrica, alinea, subalinea)
+  - Hook e API para Folha de Pagamento ja existiam em use-servidores.ts
+
 ### 2026-01-19 - Revisao e Documentacao Completa dos Scripts de Instalacao
 - **Objetivo**: Revisar todos os scripts de instalacao e documentar completamente
 - **Scripts revisados** (total ~5.800 linhas):
@@ -2083,6 +2102,65 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-20 - Calculo Automatico do Resultado da Votacao
+- **Funcionalidade implementada**: Ao encerrar uma votacao, o sistema agora contabiliza automaticamente os votos e atualiza a proposicao
+- **Arquivo modificado**: `src/lib/services/sessao-controle.ts`
+- **Novas funcoes**:
+  - `contabilizarVotos(proposicaoId)`: Contabiliza votos SIM, NAO, ABSTENCAO e calcula resultado
+  - `atualizarResultadoProposicao(...)`: Atualiza campos `resultado`, `dataVotacao` e `status` da proposicao
+- **Logica de calculo**:
+  - APROVADA: votos SIM > votos NAO
+  - REJEITADA: votos NAO > votos SIM
+  - EMPATE: votos SIM == votos NAO
+  - Abstencoes nao contam contra aprovacao
+- **Fluxo automatico**:
+  1. Operador encerra votacao com resultado (APROVADO/REJEITADO)
+  2. Sistema contabiliza votos registrados
+  3. Sistema calcula resultado baseado na contagem
+  4. Proposicao e atualizada com: `resultado`, `dataVotacao`, `status`
+- **Campos atualizados na Proposicao**:
+  - `resultado`: APROVADA, REJEITADA ou EMPATE (baseado nos votos)
+  - `dataVotacao`: Data/hora do encerramento
+  - `status`: APROVADA ou REJEITADA (baseado na escolha do operador)
+- **Resultado**: Historico completo de votacoes com rastreabilidade automatica
+
+### 2026-01-20 - Correcao Critica na API de Votacao
+- **Problemas identificados na revisao**:
+  1. API aceitava votos mesmo quando item NAO estava em votacao
+  2. Validacao incorreta da proposicao (verificava sessaoId da proposicao ao inves de verificar se estava na pauta)
+- **Arquivo modificado**: `src/app/api/sessoes/[id]/votacao/route.ts`
+- **Correcoes implementadas**:
+  - Agora verifica se proposicao esta em um `PautaItem` da sessao atual
+  - Valida que o status do item e `EM_VOTACAO` antes de aceitar o voto
+  - Mensagens de erro especificas para cada situacao:
+    - "A votacao ainda nao foi iniciada" (quando item esta EM_DISCUSSAO)
+    - "Esta proposicao ainda nao foi colocada em discussao" (quando PENDENTE)
+    - "Esta proposicao ja foi aprovada/rejeitada" (quando ja finalizada)
+- **Impacto na seguranca**: Parlamentares nao conseguem mais votar antes do operador iniciar a votacao
+- **Resultado**: Sistema de votacao agora respeita o fluxo correto controlado pelo operador
+
+### 2026-01-20 - Melhorias na Area do Parlamentar (Painel de Votacao)
+- **Problema identificado**: A pagina do parlamentar (`/parlamentar/votacao`) so mostrava proposicao quando estava em votacao. Nao exibia a "Ordem do Dia" completa nem o status dos itens.
+- **Requisito**: Apos ter presenca confirmada e fazer login, o parlamentar deve ver automaticamente o que esta na ordem do dia, com status de cada item (em discussao, em votacao, pendente, aprovado, etc).
+- **Arquivo modificado**: `src/app/parlamentar/votacao/page.tsx`
+- **Melhorias implementadas**:
+  - Busca dados completos da sessao incluindo pauta via `/api/sessoes/${sessaoId}`
+  - Exibe lista completa da "Ordem do Dia" com status de cada item
+  - Card destacado para item "Em Discussao" (amarelo) mostrando: numero, ementa, autor
+  - Card destacado para item "Em Votacao" (laranja) com botoes SIM/NAO/ABSTENCAO
+  - Indicadores visuais de status: icones e cores para cada estado (pendente, em discussao, em votacao, aprovado, rejeitado)
+  - Polling automatico a cada 5 segundos para sincronizacao em tempo real com operador
+  - Timer da sessao exibido no header
+  - Indicador de "Aguardando confirmacao de presenca" com spinner animado
+- **Fluxo do Parlamentar**:
+  1. Parlamentar faz login
+  2. Se presenca nao confirmada: mostra mensagem aguardando com animacao
+  3. Com presenca confirmada: mostra Ordem do Dia completa
+  4. Quando item esta "Em Discussao": mostra detalhes sem botoes de voto
+  5. Quando item esta "Em Votacao": mostra botoes SIM/NAO/ABSTENCAO
+  6. Apos votar: mostra confirmacao e permite alterar voto
+- **Resultado**: Area do parlamentar agora acompanha em tempo real a sessao legislativa
 
 ### 2026-01-20 - Correcao de Erros de API nas Paginas de Transparencia
 - **Problema reportado**: Erros 500 e 401 no console ao acessar paginas de transparencia

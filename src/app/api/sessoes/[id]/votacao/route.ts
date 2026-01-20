@@ -74,7 +74,7 @@ export const POST = withErrorHandler(async (
   // Verificar se parlamentar está presente na sessão
   await ensureParlamentarPresente(sessaoId, validatedData.parlamentarId)
 
-  // Verificar se proposição pertence à sessão
+  // Verificar se proposição existe
   const proposicao = await prisma.proposicao.findUnique({
     where: { id: validatedData.proposicaoId }
   })
@@ -83,8 +83,32 @@ export const POST = withErrorHandler(async (
     throw new NotFoundError('Proposição')
   }
 
-  if (proposicao.sessaoId !== sessaoId) {
-    throw new ValidationError('Proposição não pertence a esta sessão')
+  // Verificar se a proposição está em um item da pauta desta sessão
+  // E se esse item está com status EM_VOTACAO
+  const pautaItem = await prisma.pautaItem.findFirst({
+    where: {
+      proposicaoId: validatedData.proposicaoId,
+      pauta: {
+        sessaoId: sessaoId
+      }
+    },
+    include: {
+      pauta: true
+    }
+  })
+
+  if (!pautaItem) {
+    throw new ValidationError('Esta proposição não está na pauta desta sessão')
+  }
+
+  if (pautaItem.status !== 'EM_VOTACAO') {
+    throw new ValidationError(
+      pautaItem.status === 'EM_DISCUSSAO'
+        ? 'A votação ainda não foi iniciada para esta proposição. Aguarde o operador iniciar a votação.'
+        : pautaItem.status === 'PENDENTE'
+          ? 'Esta proposição ainda não foi colocada em discussão.'
+          : `Esta proposição já foi ${pautaItem.status.toLowerCase().replace('_', ' ')}.`
+    )
   }
 
   // Criar ou atualizar voto
