@@ -38,6 +38,7 @@ interface Sessao {
   pautaSessao?: {
     itens: PautaItem[]
   }
+  presencas?: Presenca[]
 }
 
 interface PautaItem {
@@ -95,6 +96,7 @@ function PainelPublicoContent() {
   const [presencas, setPresencas] = useState<Presenca[]>([])
   const [votacoes, setVotacoes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [initialLoadDone, setInitialLoadDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [tempoSessao, setTempoSessao] = useState(0)
@@ -122,9 +124,12 @@ function PainelPublicoContent() {
   }, [sessao?.tempoInicio, sessao?.status])
 
   // Carregar dados da sessão
-  const carregarDados = useCallback(async () => {
+  const carregarDados = useCallback(async (isInitialLoad = false) => {
     try {
-      setLoading(true)
+      // Só mostrar loading na carga inicial
+      if (isInitialLoad) {
+        setLoading(true)
+      }
       setError(null)
 
       let sessaoId = sessaoIdParam
@@ -166,13 +171,14 @@ function PainelPublicoContent() {
 
       if (sessaoData.success && sessaoData.data) {
         setSessao(sessaoData.data)
-        // Também extrair presenças da sessão se disponível
-        if (sessaoData.data.presencas) {
+        // Extrair presenças da sessão completa (já vem incluído)
+        if (sessaoData.data.presencas && sessaoData.data.presencas.length > 0) {
           setPresencas(sessaoData.data.presencas)
         }
       }
 
-      if (presencaData.success && presencaData.data) {
+      // Se presencas da sessão-completa estiver vazio, usar a API de presença
+      if (presencaData.success && presencaData.data && presencaData.data.length > 0) {
         setPresencas(presencaData.data)
       }
 
@@ -182,18 +188,25 @@ function PainelPublicoContent() {
 
     } catch (err) {
       console.error('Erro ao carregar dados:', err)
-      setError('Erro ao carregar dados do painel')
+      if (!initialLoadDone) {
+        setError('Erro ao carregar dados do painel')
+      }
     } finally {
-      setLoading(false)
+      if (!initialLoadDone) {
+        setLoading(false)
+        setInitialLoadDone(true)
+      }
     }
-  }, [sessaoIdParam])
+  }, [sessaoIdParam, initialLoadDone])
 
   // Carregar dados inicialmente e atualizar a cada 10 segundos
   useEffect(() => {
-    carregarDados()
-    const interval = setInterval(carregarDados, 10000)
+    // Carga inicial com loading
+    carregarDados(true)
+    // Atualizações periódicas sem loading (silent refresh)
+    const interval = setInterval(() => carregarDados(false), 10000)
     return () => clearInterval(interval)
-  }, [carregarDados])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Formatar tempo
   const formatarTempo = (segundos: number) => {
