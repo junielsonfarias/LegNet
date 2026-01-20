@@ -129,20 +129,20 @@ function PainelPublicoContent() {
 
       let sessaoId = sessaoIdParam
 
-      // Se não tem sessaoId, buscar sessão em andamento ou a mais recente
+      // Se não tem sessaoId, buscar sessão em andamento ou a mais recente via API pública
       if (!sessaoId) {
-        // Primeiro tenta em andamento
-        let response = await fetch('/api/sessoes?status=EM_ANDAMENTO&limit=1')
-        let data = await response.json()
+        // Usar dados-abertos que é público
+        const response = await fetch('/api/dados-abertos/sessoes')
+        const data = await response.json()
 
-        if (data.success && data.data && data.data.length > 0) {
-          sessaoId = data.data[0].id
-        } else {
-          // Se não tem em andamento, busca a mais recente concluída
-          response = await fetch('/api/sessoes?limit=1')
-          data = await response.json()
-          if (data.success && data.data && data.data.length > 0) {
-            sessaoId = data.data[0].id
+        if (data.dados && data.dados.length > 0) {
+          // Primeiro tenta encontrar sessão em andamento
+          const sessaoEmAndamento = data.dados.find((s: any) => s.status === 'EM_ANDAMENTO')
+          if (sessaoEmAndamento) {
+            sessaoId = sessaoEmAndamento.id
+          } else {
+            // Senão usa a primeira (mais recente)
+            sessaoId = data.dados[0].id
           }
         }
       }
@@ -153,9 +153,9 @@ function PainelPublicoContent() {
         return
       }
 
-      // Carregar dados da sessão
+      // Carregar dados da sessão usando endpoints públicos
       const [sessaoRes, presencaRes, votacaoRes] = await Promise.all([
-        fetch(`/api/sessoes/${sessaoId}`),
+        fetch(`/api/painel/sessao-completa?sessaoId=${sessaoId}`),
         fetch(`/api/sessoes/${sessaoId}/presenca`),
         fetch(`/api/sessoes/${sessaoId}/votacao`)
       ])
@@ -166,6 +166,10 @@ function PainelPublicoContent() {
 
       if (sessaoData.success && sessaoData.data) {
         setSessao(sessaoData.data)
+        // Também extrair presenças da sessão se disponível
+        if (sessaoData.data.presencas) {
+          setPresencas(sessaoData.data.presencas)
+        }
       }
 
       if (presencaData.success && presencaData.data) {
