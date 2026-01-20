@@ -32,6 +32,31 @@ export const GET = withErrorHandler(async (
   const sessao = await prisma.sessao.findUnique({
     where: { id: sessaoId },
     include: {
+      // Buscar proposições via pauta da sessão (principal fonte de votações)
+      pautaSessao: {
+        include: {
+          itens: {
+            include: {
+              proposicao: {
+                include: {
+                  votacoes: {
+                    include: {
+                      parlamentar: {
+                        select: {
+                          id: true,
+                          nome: true,
+                          apelido: true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      // Também buscar proposições diretamente vinculadas à sessão
       proposicoes: {
         include: {
           votacoes: {
@@ -54,7 +79,28 @@ export const GET = withErrorHandler(async (
     throw new NotFoundError('Sessão')
   }
 
-  return createSuccessResponse(sessao.proposicoes, 'Votações listadas com sucesso')
+  // Consolidar proposições de ambas as fontes (pauta + diretas)
+  const proposicoesMap = new Map<string, any>()
+
+  // Adicionar proposições da pauta
+  if (sessao.pautaSessao?.itens) {
+    for (const item of sessao.pautaSessao.itens) {
+      if (item.proposicao) {
+        proposicoesMap.set(item.proposicao.id, item.proposicao)
+      }
+    }
+  }
+
+  // Adicionar proposições diretas (caso não estejam na pauta)
+  for (const prop of sessao.proposicoes) {
+    if (!proposicoesMap.has(prop.id)) {
+      proposicoesMap.set(prop.id, prop)
+    }
+  }
+
+  const proposicoesConsolidadas = Array.from(proposicoesMap.values())
+
+  return createSuccessResponse(proposicoesConsolidadas, 'Votações listadas com sucesso')
 })
 
 // POST - Registrar voto

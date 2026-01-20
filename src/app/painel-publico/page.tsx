@@ -47,6 +47,8 @@ interface PautaItem {
   secao: string
   ordem: number
   status: string
+  iniciadoEm?: string | null
+  finalizadoEm?: string | null
   proposicao?: {
     id: string
     numero: number
@@ -56,6 +58,7 @@ interface PautaItem {
     status: string
     votacoes?: VotacaoRegistro[]
     autor?: {
+      id: string
       nome: string
       apelido: string | null
     }
@@ -197,9 +200,18 @@ function PainelPublicoContent() {
   }
 
   // Obter votações de uma proposição específica
-  const getVotacoesProposicao = (proposicaoId: string) => {
+  // Primeiro tenta do estado de votações carregado, depois dos dados embutidos na sessão
+  const getVotacoesProposicao = (proposicaoId: string, itemProposicao?: PautaItem['proposicao']) => {
+    // Tentar do estado de votações carregado separadamente
     const prop = votacoes.find(v => v.id === proposicaoId)
-    return prop?.votacoes || []
+    if (prop?.votacoes && prop.votacoes.length > 0) {
+      return prop.votacoes
+    }
+    // Se não encontrou, usar votações embutidas na proposição do item
+    if (itemProposicao?.votacoes && itemProposicao.votacoes.length > 0) {
+      return itemProposicao.votacoes
+    }
+    return []
   }
 
   // Calcular estatísticas de votação
@@ -290,7 +302,7 @@ function PainelPublicoContent() {
 
   // Votações do item atual
   const votacoesItemAtual = itemAtual?.proposicao
-    ? getVotacoesProposicao(itemAtual.proposicao.id)
+    ? getVotacoesProposicao(itemAtual.proposicao.id, itemAtual.proposicao)
     : []
   const estatisticasVotacao = calcularVotacao(votacoesItemAtual)
 
@@ -352,15 +364,58 @@ function PainelPublicoContent() {
         </div>
       </div>
 
-      {/* Banner de Sessão Concluída */}
+      {/* Banner de Sessão Concluída com Resumo */}
       {sessaoConcluida && (
-        <div className="bg-blue-600/30 border-b border-blue-400/30 px-6 py-3">
-          <div className="flex items-center justify-center gap-3 text-blue-200">
+        <div className="bg-blue-600/30 border-b border-blue-400/30 px-6 py-4">
+          <div className="flex items-center justify-center gap-3 text-blue-200 mb-3">
             <History className="h-5 w-5" />
             <span className="font-medium">
               Esta sessão foi finalizada. Você está visualizando o histórico de votações.
             </span>
           </div>
+          {/* Resumo da Sessão */}
+          {(() => {
+            const itensVotados = itens.filter(i =>
+              i.status === 'APROVADO' || i.status === 'REJEITADO' || i.status === 'CONCLUIDO'
+            )
+            const aprovados = itens.filter(i => i.status === 'APROVADO' || i.status === 'CONCLUIDO').length
+            const rejeitados = itens.filter(i => i.status === 'REJEITADO').length
+            const adiados = itens.filter(i => i.status === 'ADIADO').length
+            const retirados = itens.filter(i => i.status === 'RETIRADO').length
+
+            return (
+              <div className="flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-300">Total na Pauta:</span>
+                  <span className="font-bold text-white">{totalItens}</span>
+                </div>
+                {aprovados > 0 && (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                    <span className="text-green-300">{aprovados} aprovado(s)</span>
+                  </div>
+                )}
+                {rejeitados > 0 && (
+                  <div className="flex items-center gap-2">
+                    <XCircle className="h-4 w-4 text-red-400" />
+                    <span className="text-red-300">{rejeitados} rejeitado(s)</span>
+                  </div>
+                )}
+                {adiados > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-yellow-400" />
+                    <span className="text-yellow-300">{adiados} adiado(s)</span>
+                  </div>
+                )}
+                {retirados > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Minus className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-300">{retirados} retirado(s)</span>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
       )}
 

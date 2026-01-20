@@ -80,7 +80,25 @@ export const GET = withAuth(async (
                   ano: true,
                   titulo: true,
                   tipo: true,
-                  status: true
+                  status: true,
+                  autor: {
+                    select: {
+                      id: true,
+                      nome: true,
+                      apelido: true
+                    }
+                  },
+                  votacoes: {
+                    include: {
+                      parlamentar: {
+                        select: {
+                          id: true,
+                          nome: true,
+                          apelido: true
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }

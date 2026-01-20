@@ -2514,6 +2514,29 @@ sudo ./scripts/uninstall.sh --full
   - Botao "Visualizar" destacado (variant default) + "Baixar" (outline)
 - **Build verificado**: Compilado com sucesso
 
+### 2026-01-20 - Painel Eletronico: Visualizacao de Sessoes Concluidas
+
+- **Problema corrigido**: Sessoes concluidas nao mostravam dados de votacoes no painel
+- **Causa**: APIs buscavam votacoes apenas de proposicoes diretamente vinculadas a sessao, ignorando proposicoes vinculadas via pauta
+- **Correcoes implementadas**:
+  - **API `/api/sessoes/[id]`**: Agora inclui votacoes e autor nas proposicoes dos itens da pauta
+  - **API `/api/sessoes/[id]/votacao`**: Consolidacao de proposicoes de ambas as fontes (pauta + diretas)
+  - **Painel Publico**: Funcao `getVotacoesProposicao` atualizada para usar votacoes embutidas quando disponiveis
+- **Novas funcionalidades**:
+  - Banner de sessao concluida com resumo estatistico:
+    - Total de itens na pauta
+    - Quantidade de itens aprovados
+    - Quantidade de itens rejeitados
+    - Quantidade de itens adiados
+    - Quantidade de itens retirados
+  - Navegacao entre itens da pauta para visualizar votacoes historicas
+  - Votos individuais exibidos para cada proposicao votada
+- **Arquivos modificados**:
+  - `src/app/api/sessoes/[id]/route.ts`
+  - `src/app/api/sessoes/[id]/votacao/route.ts`
+  - `src/app/painel-publico/page.tsx`
+- **Build verificado**: Compilado com sucesso
+
 ---
 
 ## Instrucoes de Atualizacao
