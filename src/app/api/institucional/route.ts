@@ -1,6 +1,8 @@
 /**
  * API de Configuracao Institucional
  * Retorna dados da casa legislativa
+ *
+ * Esta API e PUBLICA e nao requer autenticacao
  */
 
 import { NextResponse } from 'next/server'
@@ -8,53 +10,98 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
+// Dados padrao quando nao ha configuracao no banco
+const dadosPadrao = {
+  nome: process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME || 'Camara Municipal de Mojui dos Campos',
+  sigla: 'CMMJC',
+  cnpj: null,
+  endereco: {
+    logradouro: 'Rua Deputado Jose Macedo',
+    numero: 's/n',
+    bairro: 'Centro',
+    cidade: 'Mojui dos Campos',
+    estado: 'PA',
+    cep: '68135-000'
+  },
+  telefone: '(93) 99138-8426',
+  email: 'camaramojui@hotmail.com',
+  site: 'www.camaramojuidoscampos.pa.gov.br',
+  logoUrl: null,
+  descricao: null
+}
+
 export async function GET() {
   try {
     // Buscar configuracao institucional
-    const configuracao = await prisma.configuracaoInstitucional.findFirst({
-      orderBy: { createdAt: 'desc' }
-    })
+    let configuracao: Awaited<ReturnType<typeof prisma.configuracaoInstitucional.findFirst>> = null
+    try {
+      configuracao = await prisma.configuracaoInstitucional.findFirst({
+        orderBy: { createdAt: 'desc' }
+      })
+    } catch (dbError) {
+      console.warn('Aviso: Nao foi possivel buscar ConfiguracaoInstitucional:', dbError)
+    }
 
     // Buscar Mesa Diretora (parlamentares com cargos diferentes de VEREADOR)
-    const mesaDiretora = await prisma.parlamentar.findMany({
-      where: {
-        ativo: true,
-        cargo: {
-          not: 'VEREADOR'
+    let mesaDiretora: any[] = []
+    try {
+      mesaDiretora = await prisma.parlamentar.findMany({
+        where: {
+          ativo: true,
+          cargo: {
+            not: 'VEREADOR'
+          }
+        },
+        select: {
+          id: true,
+          nome: true,
+          apelido: true,
+          cargo: true,
+          partido: true,
+          foto: true
+        },
+        orderBy: {
+          cargo: 'asc'
         }
-      },
-      select: {
-        id: true,
-        nome: true,
-        apelido: true,
-        cargo: true,
-        partido: true,
-        foto: true
-      },
-      orderBy: {
-        cargo: 'asc'
-      }
-    })
+      })
+    } catch (dbError) {
+      console.warn('Aviso: Nao foi possivel buscar Mesa Diretora:', dbError)
+    }
 
     // Contar total de parlamentares ativos
-    const totalParlamentares = await prisma.parlamentar.count({
-      where: { ativo: true }
-    })
+    let totalParlamentares = 0
+    try {
+      totalParlamentares = await prisma.parlamentar.count({
+        where: { ativo: true }
+      })
+    } catch (dbError) {
+      console.warn('Aviso: Nao foi possivel contar parlamentares:', dbError)
+    }
 
     // Buscar legislatura ativa
-    const legislaturaAtiva = await prisma.legislatura.findFirst({
-      where: { ativa: true },
-      select: {
-        numero: true,
-        anoInicio: true,
-        anoFim: true
-      }
-    })
+    let legislaturaAtiva: { numero: number; anoInicio: number; anoFim: number } | null = null
+    try {
+      legislaturaAtiva = await prisma.legislatura.findFirst({
+        where: { ativa: true },
+        select: {
+          numero: true,
+          anoInicio: true,
+          anoFim: true
+        }
+      })
+    } catch (dbError) {
+      console.warn('Aviso: Nao foi possivel buscar legislatura ativa:', dbError)
+    }
 
     // Contar comissoes ativas
-    const totalComissoes = await prisma.comissao.count({
-      where: { ativa: true }
-    })
+    let totalComissoes = 0
+    try {
+      totalComissoes = await prisma.comissao.count({
+        where: { ativa: true }
+      })
+    } catch (dbError) {
+      console.warn('Aviso: Nao foi possivel contar comissoes:', dbError)
+    }
 
     // Mapear cargos para labels
     const cargoLabels: Record<string, string> = {
@@ -80,25 +127,28 @@ export async function GET() {
       return ordemCargos.indexOf(a.cargo) - ordemCargos.indexOf(b.cargo)
     })
 
+    // Usar dados do banco ou dados padrao
+    const configData = configuracao ? {
+      nome: configuracao.nomeCasa,
+      sigla: configuracao.sigla,
+      cnpj: configuracao.cnpj,
+      endereco: {
+        logradouro: configuracao.enderecoLogradouro,
+        numero: configuracao.enderecoNumero,
+        bairro: configuracao.enderecoBairro,
+        cidade: configuracao.enderecoCidade,
+        estado: configuracao.enderecoEstado,
+        cep: configuracao.enderecoCep
+      },
+      telefone: configuracao.telefone,
+      email: configuracao.email,
+      site: configuracao.site,
+      logoUrl: configuracao.logoUrl,
+      descricao: configuracao.descricao
+    } : dadosPadrao
+
     const dados = {
-      configuracao: configuracao ? {
-        nome: configuracao.nomeCasa,
-        sigla: configuracao.sigla,
-        cnpj: configuracao.cnpj,
-        endereco: {
-          logradouro: configuracao.enderecoLogradouro,
-          numero: configuracao.enderecoNumero,
-          bairro: configuracao.enderecoBairro,
-          cidade: configuracao.enderecoCidade,
-          estado: configuracao.enderecoEstado,
-          cep: configuracao.enderecoCep
-        },
-        telefone: configuracao.telefone,
-        email: configuracao.email,
-        site: configuracao.site,
-        logoUrl: configuracao.logoUrl,
-        descricao: configuracao.descricao
-      } : null,
+      configuracao: configData,
       mesaDiretora: mesaDiretoraFormatada,
       estatisticas: {
         totalParlamentares,
@@ -110,8 +160,8 @@ export async function GET() {
       } : null
     }
 
-    // Fonte dinâmica via variável de ambiente ou dados do banco
-    const fonteDados = dados.configuracao?.nome || process.env.SITE_NAME || 'Câmara Municipal'
+    // Fonte dinâmica via dados do banco ou variavel de ambiente
+    const fonteDados = configData.nome
 
     return NextResponse.json({
       dados,
@@ -122,9 +172,23 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Erro ao buscar configuracao institucional:', error)
-    return NextResponse.json(
-      { error: 'Erro ao buscar dados institucionais' },
-      { status: 500 }
-    )
+
+    // Retornar dados padrao em caso de erro total
+    return NextResponse.json({
+      dados: {
+        configuracao: dadosPadrao,
+        mesaDiretora: [],
+        estatisticas: {
+          totalParlamentares: 0,
+          totalComissoes: 0
+        },
+        legislatura: null
+      },
+      metadados: {
+        atualizacao: new Date().toISOString(),
+        fonte: dadosPadrao.nome,
+        aviso: 'Dados parciais devido a erro temporario'
+      }
+    })
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { createSuccessResponse, ConflictError } from '@/lib/error-handler'
+import { withErrorHandler, createSuccessResponse, ConflictError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 
@@ -25,8 +25,8 @@ const LegislaturaSchema = z.object({
   descricao: z.string().optional()
 })
 
-// GET - Listar legislaturas
-export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
+// GET - Listar legislaturas (PUBLICO - usado em paginas de transparencia)
+export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const ativa = searchParams.get('ativa')
   const search = searchParams.get('search')
@@ -35,11 +35,11 @@ export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
 
   // Construir filtros
   const where: any = {}
-  
+
   if (ativa !== null) {
     where.ativa = ativa === 'true'
   }
-  
+
   if (search) {
     where.OR = [
       { numero: { equals: parseInt(search) || 0 } },
@@ -72,7 +72,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
       totalPages: Math.ceil(total / limit)
     }
   )
-}, { permissions: 'legislatura.view' })
+})
 
 // POST - Criar legislatura
 export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
