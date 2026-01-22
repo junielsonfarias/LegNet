@@ -28,7 +28,9 @@
       "WebFetch(domain:listas.interlegis.gov.br)",
       "WebFetch(domain:oficinas.interlegis.leg.br)",
       "Bash(npm run lint:*)",
-      "Bash(timeout 30 npm run dev)"
+      "Bash(timeout 30 npm run dev)",
+      "Bash(npx vitest:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

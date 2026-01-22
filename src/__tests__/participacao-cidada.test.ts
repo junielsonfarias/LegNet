@@ -224,7 +224,7 @@ describe('Sugestao Legislativa Service', () => {
 
       await expect(
         apoiarSugestao('sugestao-1', 'Apoiador', 'apoiador@teste.com', '12345678901')
-      ).rejects.toThrow('ja apoiou')
+      ).rejects.toThrow('Você já apoiou esta sugestão')
     })
   })
 
