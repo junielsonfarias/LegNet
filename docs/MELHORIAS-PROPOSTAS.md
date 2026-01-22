@@ -587,11 +587,16 @@ export class StreamingService {
 
 ---
 
-### MEL-018: Visualizacao de Documentos Inline
+### MEL-018: Visualizacao de Documentos Inline - **IMPLEMENTADO**
 
 **Descricao**: Visualizar PDFs sem baixar.
 
-**Estimativa**: 3-5 dias
+**Status**: IMPLEMENTADO
+
+**Implementacao**:
+- Componentes `PDFViewer` e `PDFModal` em `/components/pdf/`
+- Integrado em transparencia: leis, decretos, contratos, licitacoes, publicacoes
+- Controles: download, nova aba, fullscreen, fechar com ESC
 
 ---
 
