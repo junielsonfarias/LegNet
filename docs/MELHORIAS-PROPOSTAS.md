@@ -451,17 +451,19 @@ export class StreamingService {
 
 ---
 
-### MEL-007: Sistema de Favoritos e Acompanhamento
+### MEL-007: Sistema de Favoritos e Acompanhamento - **IMPLEMENTADO**
 
 **Descricao**: Permitir que usuarios marquem proposicoes para acompanhar.
 
-**Funcionalidades**:
-- Marcar proposicao como favorita
-- Receber notificacoes de mudancas
-- Painel de favoritos pessoal
-- Compartilhar listas
+**Status**: IMPLEMENTADO
 
-**Estimativa**: 1 semana
+**Implementacao**:
+- Modelo Favorito no Prisma (5 tipos de item)
+- API de favoritos completa (CRUD + verificacao batch)
+- Hooks `useFavoritos` e `useFavoritoItem`
+- Componentes `BotaoFavorito` e `CardFavorito`
+- Pagina `/meus-favoritos` com lista paginada
+- Notificacoes configuraveis
 
 ---
 
@@ -618,11 +620,17 @@ export class StreamingService {
 
 ## Melhorias de Seguranca
 
-### MEL-021: Audit Trail Completo
+### MEL-021: Audit Trail Completo - **IMPLEMENTADO**
 
 **Descricao**: Registrar todas as acoes com detalhes.
 
-**Estimativa**: 1 semana
+**Status**: IMPLEMENTADO
+
+**Implementacao**:
+- Funcao `logAudit()` em `/lib/audit.ts`
+- Modelo `AuditLog` no Prisma
+- Pagina admin `/admin/auditoria`
+- Integrado em todas as APIs principais
 
 ---
 
