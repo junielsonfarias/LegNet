@@ -2480,19 +2480,31 @@ sudo ./scripts/uninstall.sh --full
   - Listagem de itens aguardando segundo turno
   - Acoes na API: `iniciar-turno`, `finalizar-turno`, `verificar-intersticio`, `segundo-turno`, `listar-intersticio`
 
-#### FASE 2: Modulo de Protocolo Administrativo
-- **Arquivos criados**:
-  - `src/lib/services/protocolo-service.ts`: Servico completo de protocolo
-  - `src/app/api/protocolo/route.ts`: Endpoints de protocolo
-  - `src/app/api/protocolo/[id]/route.ts`: Operacoes por ID
-  - `src/app/admin/protocolo/page.tsx`: Listagem de protocolos
-  - `src/app/admin/protocolo/novo/page.tsx`: Novo protocolo
-- **Funcionalidades**:
+#### FASE 2: Modulo de Protocolo Administrativo [IMPLEMENTADO 22/01/2026]
+- **Modelos Prisma**:
+  - `Protocolo`: Controle de documentos com numero, ano, tipo, remetente, situacao, prioridade
+  - `ProtocoloAnexo`: Anexos de documentos
+  - `ProtocoloTramitacao`: Historico de tramitacoes
+  - Enums: `TipoProtocolo`, `SituacaoProtocolo`, `PrioridadeProtocolo`, `TipoRemetente`
+- **Arquivos criados/atualizados**:
+  - `src/lib/services/protocolo-service.ts`: Servico completo (550 linhas, 15 funcoes)
+  - `src/lib/api/protocolo-api.ts`: Cliente API com 12 funcoes exportadas
+  - `src/app/api/protocolo/route.ts`: Endpoints (GET listar/estatisticas, POST criar)
+  - `src/app/api/protocolo/[id]/route.ts`: Operacoes por ID (GET, PUT, POST com acoes)
+  - `src/app/admin/protocolo/page.tsx`: Listagem com filtros e estatisticas
+  - `src/app/admin/protocolo/novo/page.tsx`: Formulario completo de cadastro
+  - `src/app/admin/protocolo/[id]/page.tsx`: Detalhes e edicao com tramitacao
+- **Funcionalidades implementadas**:
   - Registro de documentos entrada/saida/interno
-  - Geracao de codigo de etiqueta (QR/barcode)
-  - Sistema de tramitacao interna
-  - Conversao para proposicao
+  - Numeracao automatica sequencial por ano
+  - Geracao de codigo de etiqueta unico (formato PROT + ano + numero + timestamp)
+  - Sistema de tramitacao interna com historico
+  - Conversao de protocolo para proposicao
   - Controle de prazos e prioridades
+  - Anexos de documentos
+  - Dashboard com estatisticas por tipo, situacao e prioridade
+  - Listagem de protocolos pendentes e vencidos
+  - Arquivamento com registro de motivo
 
 #### FASE 3: Sistema de Emendas Completo [IMPLEMENTADO 22/01/2026]
 - **Modelos Prisma criados**:
@@ -2523,46 +2535,100 @@ sudo ./scripts/uninstall.sh --full
   - Controle de prazo para apresentacao
   - Registro de votos individuais com parlamentar e sessao
 
-#### FASE 4: Compilacao de Textos Legislativos
+#### FASE 4: Compilacao de Textos Legislativos [IMPLEMENTADO 22/01/2026]
 - **Arquivos criados**:
-  - `src/lib/services/norma-juridica-service.ts`: Gestao de normas
-  - `src/lib/services/compilacao-service.ts`: Compilacao de textos
-  - `src/app/api/normas/route.ts`: API de normas
-  - `src/app/api/normas/[id]/route.ts`: Operacoes por norma
-  - `src/app/admin/normas/page.tsx`: Gestao de normas
-  - `src/app/legislativo/normas/page.tsx`: Consulta publica
-- **Funcionalidades**:
-  - Versionamento de legislacao
-  - Texto compilado com alteracoes
-  - Registro de alteracoes entre normas
-  - Busca full-text
-  - Historico de versoes
+  - `src/lib/services/norma-juridica-service.ts`: Gestao de normas (527 linhas)
+  - `src/lib/services/compilacao-service.ts`: Compilacao de textos (421 linhas)
+  - `src/lib/api/normas-api.ts`: Cliente API com 15 funcoes exportadas
+  - `src/app/api/normas/route.ts`: API de normas (GET, POST)
+  - `src/app/api/normas/[id]/route.ts`: Operacoes por norma (GET, PUT, POST)
+  - `src/app/admin/normas/page.tsx`: Listagem de normas
+  - `src/app/admin/normas/nova/page.tsx`: Cadastro de nova norma
+  - `src/app/admin/normas/[id]/page.tsx`: Detalhes e edicao de norma
+  - `src/app/legislativo/normas/page.tsx`: Consulta publica de normas
+  - `src/app/legislativo/normas/[id]/page.tsx`: Visualizacao de norma publica
+- **Modelos Prisma**:
+  - `NormaJuridica`: Tipos (LEI_ORDINARIA, LEI_COMPLEMENTAR, DECRETO_LEGISLATIVO, RESOLUCAO, EMENDA_LEI_ORGANICA, LEI_ORGANICA, REGIMENTO_INTERNO)
+  - `ArtigoNorma`: Artigos com caput, vigencia, alteracoes
+  - `ParagrafoNorma`: Paragrafos, incisos, alineas
+  - `AlteracaoNorma`: Registro de alteracoes entre normas
+  - `VersaoNorma`: Historico de versoes
+- **Funcionalidades implementadas**:
+  - Cadastro completo de normas juridicas com tipos e situacoes
+  - Estruturacao em artigos, paragrafos, incisos e alineas
+  - Versionamento automatico de legislacao
+  - Compilacao de texto com alteracoes incorporadas
+  - Registro de alteracoes entre normas (revogacao, alteracao, acrescimo)
+  - Comparacao entre versoes (diff)
+  - Busca full-text em normas
+  - Indexacao automatica por palavras-chave
+  - Historico completo de versoes
+  - Estatisticas de normas por ano e tipo
+  - Interface publica para consulta cidada
 
-#### FASE 5: Participacao Cidada Expandida
+#### FASE 5: Participacao Cidada Expandida [IMPLEMENTADO 22/01/2026]
 - **Arquivos criados**:
-  - `src/lib/services/consulta-publica-service.ts`: Consultas publicas
-  - `src/lib/services/sugestao-legislativa-service.ts`: Sugestoes
-  - `src/app/api/participacao/consultas/route.ts`: API de consultas
-  - `src/app/api/participacao/consultas/[id]/route.ts`: Operacoes por consulta
-  - `src/app/api/participacao/sugestoes/route.ts`: API de sugestoes
-  - `src/app/api/participacao/sugestoes/[id]/route.ts`: Operacoes por sugestao
-- **Funcionalidades**:
+  - `src/lib/services/consulta-publica-service.ts`: Consultas publicas (411 linhas)
+  - `src/lib/services/sugestao-legislativa-service.ts`: Sugestoes legislativas (418 linhas)
+  - `src/lib/api/participacao-api.ts`: Cliente API com 18 funcoes exportadas
+  - `src/app/api/participacao/consultas/route.ts`: API de consultas (GET, POST)
+  - `src/app/api/participacao/consultas/[id]/route.ts`: Operacoes por consulta (GET, PUT, POST, DELETE)
+  - `src/app/api/participacao/sugestoes/route.ts`: API de sugestoes (GET, POST)
+  - `src/app/api/participacao/sugestoes/[id]/route.ts`: Operacoes por sugestao (GET, PUT, POST)
+  - `src/app/participacao-cidada/page.tsx`: Portal publico de participacao
+  - `src/app/participacao-cidada/consultas/page.tsx`: Listagem de consultas
+  - `src/app/participacao-cidada/consultas/[id]/page.tsx`: Participacao em consulta
+  - `src/app/participacao-cidada/sugestoes/nova/page.tsx`: Nova sugestao
+  - `src/app/admin/participacao-cidada/page.tsx`: Gestao administrativa
+- **Modelos Prisma**:
+  - `ConsultaPublica`: Consultas com titulo, descricao, perguntas, datas
+  - `PerguntaConsulta`: Perguntas (TEXTO_LIVRE, MULTIPLA_ESCOLHA, ESCALA, SIM_NAO)
+  - `ParticipacaoConsulta`: Participacoes com hash de CPF
+  - `RespostaConsulta`: Respostas individuais
+  - `SugestaoLegislativa`: Sugestoes com categoria, status, apoios
+  - `ApoioSugestao`: Apoios com validacao por CPF
+- **Funcionalidades implementadas**:
   - Consultas publicas com perguntas configuraveis
-  - Sistema de apoios com validacao por CPF
-  - Moderacao de sugestoes
+  - Tipos de pergunta: texto livre, multipla escolha, escala, sim/nao
+  - Sistema de apoios com validacao por CPF (hash para privacidade)
+  - Moderacao de sugestoes pelo admin
+  - Atribuicao de parlamentar responsavel
   - Conversao de sugestao em proposicao
-  - Resultados e estatisticas
+  - Publicacao e encerramento de consultas
+  - Resultados agregados com graficos por bairro
+  - Estatisticas de sugestoes por status e categoria
+  - Interface publica para envio de sugestoes
+  - Validacao de participacao unica por CPF
 
-#### FASE 6: Analytics e Business Intelligence
+#### FASE 6: Analytics e Business Intelligence [IMPLEMENTADO 22/01/2026]
 - **Arquivos criados**:
-  - `src/lib/services/relatorio-agendado-service.ts`: Relatorios agendados
+  - `src/lib/services/analytics-service.ts`: Dashboard e metricas (685 linhas)
+  - `src/lib/services/relatorio-agendado-service.ts`: Relatorios agendados (590 linhas)
+  - `src/lib/services/relatorios-service.ts`: Geracao de relatorios Excel
+  - `src/lib/api/analytics-api.ts`: Cliente API com 15 funcoes exportadas
+  - `src/app/api/analytics/route.ts`: API de metricas e dashboard
+  - `src/app/api/relatorios/route.ts`: API de relatorios sob demanda
   - `src/app/api/relatorios/agendados/route.ts`: API de agendamentos
   - `src/app/api/relatorios/agendados/[id]/route.ts`: Operacoes por relatorio
-- **Funcionalidades**:
-  - Relatorios: producao legislativa, presenca, votacoes, tramitacao, protocolo, comissoes
-  - Agendamento automatico (diario, semanal, mensal)
-  - Exportacao em PDF, Excel, CSV
-  - Metricas e dashboards
+  - `src/app/admin/analytics/page.tsx`: Dashboard interativo com graficos (609 linhas)
+- **Modelos Prisma**:
+  - `RelatorioAgendado`: Configuracao de relatorios agendados
+  - `ExecucaoRelatorio`: Historico de execucoes
+  - `DashboardPersonalizado`: Dashboards customizados por usuario
+- **Funcionalidades implementadas**:
+  - Dashboard completo com graficos interativos (Recharts)
+  - Metricas de proposicoes: total, por tipo, status, autor, taxa de aprovacao
+  - Metricas de sessoes: total, presenca media, duracao media
+  - Metricas de votacoes: aprovadas, rejeitadas, participacao media
+  - Metricas de parlamentares: proposicoes, presenca, participacao
+  - Comparativo com periodo anterior (variacao percentual)
+  - Tendencias mensais com graficos de area e barras
+  - Ranking de parlamentares mais ativos
+  - Relatorios sob demanda: parlamentares, sessoes, proposicoes, presenca, votacoes
+  - Relatorios agendados: diario, semanal, mensal
+  - Exportacao em Excel (PDF e CSV planejados)
+  - Tipos de relatorio: producao legislativa, presenca, votacoes, tramitacao, protocolo, comissoes
+  - Historico de execucoes de relatorios
 
 #### Atualizacoes no Sidebar Admin
 - Adicionado item "Protocolo" (`/admin/protocolo`)
