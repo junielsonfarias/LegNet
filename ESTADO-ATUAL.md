@@ -2353,6 +2353,58 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-22 - Melhorias de UX e Layout do Admin por Tipo de Usuario
+
+- **Objetivo**: Personalizar painel administrativo por role de usuario com cores, dashboard e navegacao especificos
+- **Fases implementadas**: 4 fases completas
+
+#### Sistema de Temas por Role (Fase 1)
+- **Arquivo criado**: `src/lib/themes/role-themes.ts`
+  - Paleta de cores para cada role: ADMIN (violet), SECRETARIA (cyan), EDITOR (blue), OPERADOR (emerald), PARLAMENTAR (amber), USER (gray)
+  - Interface `RoleTheme` com propriedades: primary, secondary, gradient, badge, hover, etc.
+  - Funcoes: `getRoleTheme()`, `getThemeClasses()`, `getThemeCSSVariables()`
+- **Sidebar reorganizado** (`admin-sidebar.tsx`):
+  - 8 categorias colapsaveis: Visao Geral, Pessoas, Processo Legislativo, Comissoes, Comunicacao, Transparencia, Relatorios, Configuracoes
+  - Header com badge de role e descricao
+  - Cores dinamicas baseadas no role do usuario
+
+#### Dashboard Personalizado por Role (Fase 2)
+- **Componentes criados em** `src/components/admin/dashboard/`:
+  - `stat-card.tsx`: Cards de estatisticas com cores tematizadas e indicadores de tendencia
+  - `quick-actions.tsx`: Acoes rapidas especificas por role (ex: OPERADOR ve "Painel Eletronico", PARLAMENTAR ve "Minhas Proposicoes")
+  - `recent-activity.tsx`: Timeline de atividades recentes com accent colors por role
+  - `upcoming-events.tsx`: Eventos proximos (sessoes, reunioes, audiencias)
+  - `loading-spinner.tsx`: Spinners tematizados em 3 tamanhos (sm/md/lg)
+  - `index.ts`: Exports centralizados
+- **Pagina admin atualizada** (`src/app/admin/page.tsx`):
+  - Header com saudacao e gradiente do role
+  - Stats diferentes para cada role:
+    - ADMIN: parlamentares, sessoes, proposicoes, noticias, pendentes, votacoes
+    - SECRETARIA: parlamentares, usuarios, protocolos, publicacoes
+    - EDITOR: proposicoes, sessoes, noticias, pautas
+    - OPERADOR: sessao atual, presentes, itens pauta, votacoes
+    - PARLAMENTAR: minhas proposicoes, aprovadas, tramitacao, proxima sessao
+  - Card de status do sistema
+  - Alertas contextuais para ADMIN/OPERADOR
+
+#### Responsividade Mobile (Fase 3/4)
+- **Arquivo criado**: `src/components/admin/admin-sidebar-mobile.tsx`
+  - Menu hamburger para telas < lg
+  - Drawer lateral com animacao slide
+  - Overlay com fade e prevencao de scroll
+  - Navegacao simplificada para mobile
+  - Header com gradiente e badge de role
+- **Layout atualizado** (`src/app/admin/layout.tsx`):
+  - Header sticky com notificacoes e dropdown de usuario
+  - Avatar com borda colorida por role
+  - Breadcrumbs e busca na barra secundaria
+  - Footer com status do sistema
+  - Integracao mobile sidebar
+
+#### Commits realizados:
+- `feat: implementa sistema de temas e dashboard por tipo de usuario` (Fases 1 e 2)
+- `feat: adiciona responsividade mobile e componentes de loading ao admin` (Fases 3 e 4)
+
 ### 2026-01-22 - Sistema de Email Completo com Resend (Verificado)
 
 - **Status**: IMPLEMENTADO E VERIFICADO
