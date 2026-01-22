@@ -420,32 +420,34 @@ export class StreamingService {
 
 ## Melhorias de Media Prioridade
 
-### MEL-005: Sistema de Relatorios Avancados
+### MEL-005: Sistema de Relatorios Avancados - **IMPLEMENTADO**
 
 **Descricao**: Gerar relatorios em PDF/Excel com templates configurados.
 
-**Tipos de Relatorio**:
-- Ata de sessao
-- Resumo de legislatura
-- Producao parlamentar
-- Tramitacoes pendentes
-- Transparencia mensal
+**Status**: IMPLEMENTADO
 
-**Estimativa**: 2-3 semanas
+**Implementacao**:
+- API `/api/relatorios` com geracao real de arquivos Excel
+- Servico `relatorios-service.ts` com 5 tipos de relatorio
+- Servico `relatorio-agendado-service.ts` para agendamento
+- Pagina admin `/admin/relatorios` com interface completa
+- Tipos: Parlamentares, Sessoes, Proposicoes, Presenca, Votacoes
 
 ---
 
-### MEL-006: Busca Avancada Global
+### MEL-006: Busca Avancada Global - **IMPLEMENTADO**
 
 **Descricao**: Implementar busca unificada em todo o sistema com filtros avancados.
 
-**Funcionalidades**:
-- Busca por texto livre
-- Filtros por tipo, data, autor
-- Ordenacao por relevancia
-- Sugestoes de busca
+**Status**: IMPLEMENTADO
 
-**Estimativa**: 1-2 semanas
+**Implementacao**:
+- API `/api/busca` com busca full-text e filtros
+- Servico `busca-service.ts` com relevancia
+- Hooks `use-search.ts` e `use-debounce.ts`
+- Command Palette (Ctrl+K) no admin
+- Pagina `/admin/busca` com facetas e paginacao
+- 6 tipos de entidades buscaveis
 
 ---
 
@@ -491,17 +493,11 @@ export class StreamingService {
 
 ---
 
-### MEL-010: Portal Mobile Responsivo Avancado
+### MEL-010: Portal Mobile Responsivo Avancado - **REMOVIDO**
 
 **Descricao**: Otimizar experiencia mobile com recursos nativos.
 
-**Funcionalidades**:
-- PWA completo
-- Notificacoes push
-- Modo offline
-- Atalhos na home screen
-
-**Estimativa**: 2-3 semanas
+**Status**: REMOVIDO do roadmap - O sistema ja e responsivo e funcional em dispositivos moveis.
 
 ---
 
@@ -693,9 +689,8 @@ export class StreamingService {
 
 ### Trimestre 2 (Semanas 13-24)
 1. MEL-004: Streaming ao Vivo
-2. MEL-005: Relatorios Avancados
-3. MEL-006: Busca Avancada
-4. MEL-010: PWA Mobile
+2. MEL-005: Relatorios Avancados - **CONCLUIDO**
+3. MEL-006: Busca Avancada - **CONCLUIDO**
 
 ### Trimestre 3 (Semanas 25-36)
 1. MEL-011: Assinatura Digital
