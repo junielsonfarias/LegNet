@@ -56,12 +56,15 @@ const TIPO_LABELS: Record<string, string> = {
   'MODIFICATIVA': 'Modificativa',
   'SUPRESSIVA': 'Supressiva',
   'SUBSTITUTIVA': 'Substitutiva',
-  'EMENDA_DE_REDACAO': 'De Redacao'
+  'EMENDA_DE_REDACAO': 'De Redacao',
+  'AGLUTINATIVA': 'Aglutinativa'
 }
 
 const STATUS_LABELS: Record<string, string> = {
   'APRESENTADA': 'Apresentada',
   'EM_ANALISE': 'Em Analise',
+  'PARECER_EMITIDO': 'Parecer Emitido',
+  'EM_VOTACAO': 'Em Votacao',
   'APROVADA': 'Aprovada',
   'REJEITADA': 'Rejeitada',
   'PREJUDICADA': 'Prejudicada',
@@ -72,6 +75,8 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   'APRESENTADA': 'bg-blue-100 text-blue-700',
   'EM_ANALISE': 'bg-yellow-100 text-yellow-700',
+  'PARECER_EMITIDO': 'bg-cyan-100 text-cyan-700',
+  'EM_VOTACAO': 'bg-amber-100 text-amber-700',
   'APROVADA': 'bg-green-100 text-green-700',
   'REJEITADA': 'bg-red-100 text-red-700',
   'PREJUDICADA': 'bg-gray-100 text-gray-700',
@@ -477,6 +482,7 @@ export default function EmendasProposicaoPage() {
                 <SelectItem value="SUPRESSIVA">Supressiva</SelectItem>
                 <SelectItem value="SUBSTITUTIVA">Substitutiva</SelectItem>
                 <SelectItem value="EMENDA_DE_REDACAO">De Redacao</SelectItem>
+                <SelectItem value="AGLUTINATIVA">Aglutinativa</SelectItem>
               </SelectContent>
             </Select>
 
@@ -488,10 +494,13 @@ export default function EmendasProposicaoPage() {
                 <SelectItem value="todos">Todos os status</SelectItem>
                 <SelectItem value="APRESENTADA">Apresentada</SelectItem>
                 <SelectItem value="EM_ANALISE">Em Analise</SelectItem>
+                <SelectItem value="PARECER_EMITIDO">Parecer Emitido</SelectItem>
+                <SelectItem value="EM_VOTACAO">Em Votacao</SelectItem>
                 <SelectItem value="APROVADA">Aprovada</SelectItem>
                 <SelectItem value="REJEITADA">Rejeitada</SelectItem>
                 <SelectItem value="PREJUDICADA">Prejudicada</SelectItem>
                 <SelectItem value="RETIRADA">Retirada</SelectItem>
+                <SelectItem value="INCORPORADA">Incorporada</SelectItem>
               </SelectContent>
             </Select>
 

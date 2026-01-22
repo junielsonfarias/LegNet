@@ -8,40 +8,47 @@ import { createLogger } from '@/lib/logging/logger'
 import type {
   TipoEmenda,
   StatusEmenda,
-  TipoVoto
+  TipoVoto,
+  ResultadoEmenda,
+  TipoParecerEmenda
 } from '@prisma/client'
 
 const logger = createLogger('emenda')
 
 // Tipos exportados
-export type { TipoEmenda, StatusEmenda }
+export type { TipoEmenda, StatusEmenda, ResultadoEmenda, TipoParecerEmenda }
 
 export interface CriarEmendaInput {
   proposicaoId: string
   autorId: string
   coautores?: string[]
   tipo: TipoEmenda
-  numero?: string
   artigo?: string
   paragrafo?: string
   inciso?: string
   alinea?: string
+  dispositivo?: string
   textoOriginal?: string
   textoNovo: string
   justificativa: string
   turnoApresentacao?: number
+  prazoEmenda?: Date
 }
 
 export interface AtualizarEmendaInput {
   status?: StatusEmenda
   parecerComissao?: string
-  parecerTipo?: 'FAVORAVEL' | 'CONTRARIO' | 'FAVORAVEL_COM_RESSALVAS'
+  parecerTipo?: TipoParecerEmenda
   parecerTexto?: string
+  parecerData?: Date
+  parecerRelatorId?: string
+  observacoes?: string
 }
 
 export interface VotarEmendaInput {
   parlamentarId: string
   voto: TipoVoto
+  sessaoId?: string
 }
 
 export interface FiltrosEmenda {
@@ -55,40 +62,46 @@ export interface FiltrosEmenda {
 /**
  * Gera número sequencial de emenda para a proposição
  */
-async function gerarNumeroEmenda(proposicaoId: string): Promise<string> {
+async function gerarNumeroEmenda(proposicaoId: string): Promise<number> {
   const count = await prisma.emenda.count({
     where: { proposicaoId }
   })
-  return (count + 1).toString().padStart(3, '0')
+  return count + 1
 }
 
 /**
  * Cria nova emenda a uma proposição
  */
 export async function criarEmenda(input: CriarEmendaInput) {
-  const numero = input.numero || await gerarNumeroEmenda(input.proposicaoId)
+  const numero = await gerarNumeroEmenda(input.proposicaoId)
 
-  const ano = new Date().getFullYear()
   const emenda = await prisma.emenda.create({
     data: {
       proposicaoId: input.proposicaoId,
       autorId: input.autorId,
       coautores: input.coautores ? JSON.stringify(input.coautores) : null,
       tipo: input.tipo,
-      numero: parseInt(numero),
-      ano,
+      numero,
       artigo: input.artigo,
       paragrafo: input.paragrafo,
       inciso: input.inciso,
       alinea: input.alinea,
+      dispositivo: input.dispositivo,
       textoOriginal: input.textoOriginal,
       textoNovo: input.textoNovo,
       justificativa: input.justificativa,
       turnoApresentacao: input.turnoApresentacao || 1,
+      prazoEmenda: input.prazoEmenda,
       status: 'APRESENTADA'
     },
     include: {
-      votos: true
+      autor: {
+        select: { id: true, nome: true, partido: true, foto: true }
+      },
+      proposicao: {
+        select: { id: true, numero: true, ano: true, tipo: true, titulo: true }
+      },
+      votosEmenda: true
     }
   })
 
@@ -110,28 +123,49 @@ export async function buscarEmendaPorId(id: string) {
   const emenda = await prisma.emenda.findUnique({
     where: { id },
     include: {
-      votos: true
+      autor: {
+        select: { id: true, nome: true, apelido: true, partido: true, foto: true }
+      },
+      proposicao: {
+        select: { id: true, numero: true, ano: true, tipo: true, titulo: true, ementa: true }
+      },
+      parecerRelator: {
+        select: { id: true, nome: true, apelido: true, partido: true }
+      },
+      sessaoVotacao: {
+        select: { id: true, numero: true, tipo: true, data: true }
+      },
+      votosEmenda: {
+        include: {
+          parlamentar: {
+            select: { id: true, nome: true, apelido: true, partido: true }
+          }
+        }
+      },
+      emendaAglutinada: {
+        select: { id: true, numero: true, tipo: true }
+      },
+      emendasAglutinadas: {
+        select: { id: true, numero: true, tipo: true, status: true }
+      }
     }
   })
 
   if (!emenda) return null
 
-  // Buscar dados do autor
-  const autor = await prisma.parlamentar.findUnique({
-    where: { id: emenda.autorId },
-    select: { id: true, nome: true, partido: true, foto: true }
-  })
-
-  // Buscar dados da proposição
-  const proposicao = await prisma.proposicao.findUnique({
-    where: { id: emenda.proposicaoId },
-    select: { id: true, numero: true, ano: true, titulo: true, tipo: true, ementa: true }
-  })
+  // Parse coautores
+  let coautoresParsed: string[] = []
+  if (emenda.coautores) {
+    try {
+      coautoresParsed = JSON.parse(emenda.coautores)
+    } catch {
+      coautoresParsed = []
+    }
+  }
 
   return {
     ...emenda,
-    autor,
-    proposicao
+    coautoresParsed
   }
 }
 
@@ -148,17 +182,22 @@ export async function listarEmendasProposicao(
     where.turnoApresentacao = turno
   }
 
-  return prisma.emenda.findMany({
+  const emendas = await prisma.emenda.findMany({
     where,
     include: {
+      autor: {
+        select: { id: true, nome: true, apelido: true, partido: true, foto: true }
+      },
       _count: {
-        select: { votos: true }
+        select: { votosEmenda: true }
       }
     },
     orderBy: [
       { numero: 'asc' }
     ]
   })
+
+  return emendas
 }
 
 /**
@@ -195,8 +234,14 @@ export async function listarEmendas(
     prisma.emenda.findMany({
       where,
       include: {
+        autor: {
+          select: { id: true, nome: true, apelido: true, partido: true }
+        },
+        proposicao: {
+          select: { id: true, numero: true, ano: true, tipo: true, titulo: true }
+        },
         _count: {
-          select: { votos: true }
+          select: { votosEmenda: true }
         }
       },
       orderBy: [
@@ -223,13 +268,26 @@ export async function atualizarEmenda(
   id: string,
   input: AtualizarEmendaInput
 ) {
+  const updateData: any = {}
+
+  if (input.status !== undefined) updateData.status = input.status
+  if (input.parecerComissao !== undefined) updateData.parecerComissao = input.parecerComissao
+  if (input.parecerTipo !== undefined) updateData.parecerTipo = input.parecerTipo
+  if (input.parecerTexto !== undefined) updateData.parecerTexto = input.parecerTexto
+  if (input.parecerData !== undefined) updateData.parecerData = input.parecerData
+  if (input.parecerRelatorId !== undefined) updateData.parecerRelatorId = input.parecerRelatorId
+  if (input.observacoes !== undefined) updateData.observacoes = input.observacoes
+
   const emenda = await prisma.emenda.update({
     where: { id },
-    data: {
-      status: input.status,
-      parecerComissao: input.parecerComissao,
-      parecerTipo: input.parecerTipo,
-      parecerTexto: input.parecerTexto
+    data: updateData,
+    include: {
+      autor: {
+        select: { id: true, nome: true, apelido: true, partido: true }
+      },
+      proposicao: {
+        select: { id: true, numero: true, ano: true, tipo: true, titulo: true }
+      }
     }
   })
 
@@ -237,6 +295,27 @@ export async function atualizarEmenda(
     action: 'atualizar_emenda',
     emendaId: id,
     status: input.status
+  })
+
+  return emenda
+}
+
+/**
+ * Inicia votação de uma emenda
+ */
+export async function iniciarVotacaoEmenda(emendaId: string, sessaoId: string) {
+  const emenda = await prisma.emenda.update({
+    where: { id: emendaId },
+    data: {
+      status: 'EM_VOTACAO',
+      sessaoVotacaoId: sessaoId
+    }
+  })
+
+  logger.info('Votação de emenda iniciada', {
+    action: 'iniciar_votacao_emenda',
+    emendaId,
+    sessaoId
   })
 
   return emenda
@@ -263,7 +342,10 @@ export async function votarEmenda(
     // Atualizar voto existente
     const voto = await prisma.votoEmenda.update({
       where: { id: votoExistente.id },
-      data: { voto: input.voto }
+      data: {
+        voto: input.voto,
+        sessaoId: input.sessaoId
+      }
     })
 
     logger.info('Voto em emenda atualizado', {
@@ -281,7 +363,8 @@ export async function votarEmenda(
     data: {
       emendaId,
       parlamentarId: input.parlamentarId,
-      voto: input.voto
+      voto: input.voto,
+      sessaoId: input.sessaoId
     }
   })
 
@@ -296,11 +379,31 @@ export async function votarEmenda(
 }
 
 /**
+ * Registra votos de múltiplos parlamentares em uma emenda
+ */
+export async function registrarVotosEmenda(
+  emendaId: string,
+  votos: Array<{ parlamentarId: string; voto: TipoVoto }>,
+  sessaoId?: string
+) {
+  const results = await Promise.all(
+    votos.map(v => votarEmenda(emendaId, { ...v, sessaoId }))
+  )
+
+  return results
+}
+
+/**
  * Apura resultado da votação de uma emenda
  */
 export async function apurarVotacaoEmenda(emendaId: string) {
   const votos = await prisma.votoEmenda.findMany({
-    where: { emendaId }
+    where: { emendaId },
+    include: {
+      parlamentar: {
+        select: { id: true, nome: true, apelido: true, partido: true }
+      }
+    }
   })
 
   const contagem = {
@@ -325,7 +428,8 @@ export async function apurarVotacaoEmenda(emendaId: string) {
     votosValidos,
     contagem,
     aprovada,
-    resultado: aprovada ? 'APROVADA' : 'REJEITADA'
+    resultado: aprovada ? 'APROVADA' as ResultadoEmenda : 'REJEITADA' as ResultadoEmenda,
+    votos
   }
 }
 
@@ -340,10 +444,18 @@ export async function finalizarVotacaoEmenda(emendaId: string) {
     data: {
       status: apuracao.aprovada ? 'APROVADA' : 'REJEITADA',
       dataVotacao: new Date(),
-      resultado: apuracao.resultado as any,
+      resultado: apuracao.resultado,
       votosSim: apuracao.contagem.SIM,
       votosNao: apuracao.contagem.NAO,
       votosAbstencao: apuracao.contagem.ABSTENCAO
+    },
+    include: {
+      autor: {
+        select: { id: true, nome: true, apelido: true, partido: true }
+      },
+      proposicao: {
+        select: { id: true, numero: true, ano: true, tipo: true, titulo: true }
+      }
     }
   })
 
@@ -363,7 +475,9 @@ export async function retirarEmenda(id: string, motivo?: string) {
   const emenda = await prisma.emenda.update({
     where: { id },
     data: {
-      status: 'RETIRADA'
+      status: 'RETIRADA',
+      resultado: 'RETIRADA',
+      observacoes: motivo
     }
   })
 
@@ -383,7 +497,9 @@ export async function prejudicarEmenda(id: string, motivo?: string) {
   const emenda = await prisma.emenda.update({
     where: { id },
     data: {
-      status: 'PREJUDICADA'
+      status: 'PREJUDICADA',
+      resultado: 'PREJUDICADA',
+      observacoes: motivo
     }
   })
 
@@ -391,6 +507,25 @@ export async function prejudicarEmenda(id: string, motivo?: string) {
     action: 'prejudicar_emenda',
     emendaId: id,
     motivo
+  })
+
+  return emenda
+}
+
+/**
+ * Marca emenda como incorporada ao texto (após aprovação)
+ */
+export async function incorporarEmenda(id: string) {
+  const emenda = await prisma.emenda.update({
+    where: { id },
+    data: {
+      status: 'INCORPORADA'
+    }
+  })
+
+  logger.info('Emenda incorporada ao texto', {
+    action: 'incorporar_emenda',
+    emendaId: id
   })
 
   return emenda
@@ -419,19 +554,25 @@ export async function aglutinarEmendas(
     throw new Error('Uma ou mais emendas não pertencem à proposição')
   }
 
+  // Verificar status das emendas
+  const emendasInvalidas = emendas.filter(e =>
+    !['APRESENTADA', 'EM_ANALISE', 'PARECER_EMITIDO'].includes(e.status)
+  )
+  if (emendasInvalidas.length > 0) {
+    throw new Error('Uma ou mais emendas não podem ser aglutinadas (status inválido)')
+  }
+
   // Criar emenda aglutinada
   const numero = await gerarNumeroEmenda(proposicaoId)
-  const ano = new Date().getFullYear()
 
   const emendaAglutinada = await prisma.$transaction(async (tx) => {
-    // Criar nova emenda
+    // Criar nova emenda aglutinativa
     const novaEmenda = await tx.emenda.create({
       data: {
         proposicaoId,
         autorId,
-        tipo: 'SUBSTITUTIVA',
-        numero: parseInt(numero),
-        ano,
+        tipo: 'AGLUTINATIVA',
+        numero,
         textoNovo,
         justificativa,
         turnoApresentacao: emendas[0].turnoApresentacao,
@@ -445,8 +586,7 @@ export async function aglutinarEmendas(
       where: { id: { in: emendasIds } },
       data: {
         aglutinada: true,
-        emendaAglutinadaId: novaEmenda.id,
-        status: 'AGLUTINADA'
+        emendaAglutinadaId: novaEmenda.id
       }
     })
 
@@ -463,6 +603,47 @@ export async function aglutinarEmendas(
 }
 
 /**
+ * Emite parecer sobre emenda
+ */
+export async function emitirParecerEmenda(
+  emendaId: string,
+  parecerTipo: TipoParecerEmenda,
+  parecerTexto: string,
+  comissaoId: string,
+  relatorId: string
+) {
+  const emenda = await prisma.emenda.update({
+    where: { id: emendaId },
+    data: {
+      status: 'PARECER_EMITIDO',
+      parecerTipo,
+      parecerTexto,
+      parecerComissao: comissaoId,
+      parecerRelatorId: relatorId,
+      parecerData: new Date()
+    },
+    include: {
+      autor: {
+        select: { id: true, nome: true, apelido: true, partido: true }
+      },
+      parecerRelator: {
+        select: { id: true, nome: true, apelido: true, partido: true }
+      }
+    }
+  })
+
+  logger.info('Parecer emitido sobre emenda', {
+    action: 'emitir_parecer_emenda',
+    emendaId,
+    parecerTipo,
+    comissaoId,
+    relatorId
+  })
+
+  return emenda
+}
+
+/**
  * Gera texto consolidado da proposição com emendas aprovadas
  */
 export async function gerarTextoConsolidado(proposicaoId: string) {
@@ -474,7 +655,8 @@ export async function gerarTextoConsolidado(proposicaoId: string) {
       ano: true,
       titulo: true,
       ementa: true,
-      texto: true
+      texto: true,
+      tipo: true
     }
   })
 
@@ -482,12 +664,17 @@ export async function gerarTextoConsolidado(proposicaoId: string) {
     throw new Error('Proposição não encontrada')
   }
 
-  // Buscar emendas aprovadas
+  // Buscar emendas aprovadas (não aglutinadas)
   const emendasAprovadas = await prisma.emenda.findMany({
     where: {
       proposicaoId,
-      status: 'APROVADA',
+      status: { in: ['APROVADA', 'INCORPORADA'] },
       aglutinada: false
+    },
+    include: {
+      autor: {
+        select: { id: true, nome: true, apelido: true, partido: true }
+      }
     },
     orderBy: [
       { artigo: 'asc' },
@@ -501,22 +688,32 @@ export async function gerarTextoConsolidado(proposicaoId: string) {
   const alteracoes = emendasAprovadas.map(emenda => ({
     numero: emenda.numero,
     tipo: emenda.tipo,
+    autor: emenda.autor,
     referencia: [
       emenda.artigo ? `Art. ${emenda.artigo}` : null,
       emenda.paragrafo ? `§ ${emenda.paragrafo}` : null,
       emenda.inciso ? `Inc. ${emenda.inciso}` : null,
-      emenda.alinea ? `Alínea ${emenda.alinea}` : null
+      emenda.alinea ? `Alínea ${emenda.alinea}` : null,
+      emenda.dispositivo
     ].filter(Boolean).join(', ') || 'Texto geral',
     textoOriginal: emenda.textoOriginal,
     textoNovo: emenda.textoNovo,
-    justificativa: emenda.justificativa
+    justificativa: emenda.justificativa,
+    dataAprovacao: emenda.dataVotacao
   }))
+
+  // Resumo por tipo de emenda
+  const resumoPorTipo = emendasAprovadas.reduce((acc, emenda) => {
+    acc[emenda.tipo] = (acc[emenda.tipo] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
 
   return {
     proposicao,
     textoOriginal: proposicao.texto,
     emendasAprovadas: emendasAprovadas.length,
     alteracoes,
+    resumoPorTipo,
     geradoEm: new Date()
   }
 }
@@ -525,16 +722,31 @@ export async function gerarTextoConsolidado(proposicaoId: string) {
  * Verifica prazo para apresentação de emendas
  */
 export async function verificarPrazoEmendas(proposicaoId: string) {
+  // Buscar proposição para verificar se há prazo configurado
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: proposicaoId },
+    select: { id: true }
+  })
+
+  if (!proposicao) {
+    return {
+      prazoDeterminado: false,
+      podeCadastrar: false,
+      erro: 'Proposição não encontrada'
+    }
+  }
+
   // Buscar emenda mais recente da proposição para verificar prazo
-  const emendaRecente = await prisma.emenda.findFirst({
+  const emendaComPrazo = await prisma.emenda.findFirst({
     where: {
       proposicaoId,
       prazoEmenda: { not: null }
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { prazoEmenda: 'desc' },
+    select: { prazoEmenda: true }
   })
 
-  if (!emendaRecente || !emendaRecente.prazoEmenda) {
+  if (!emendaComPrazo || !emendaComPrazo.prazoEmenda) {
     return {
       prazoDeterminado: false,
       podeCadastrar: true
@@ -542,7 +754,7 @@ export async function verificarPrazoEmendas(proposicaoId: string) {
   }
 
   const agora = new Date()
-  const prazo = new Date(emendaRecente.prazoEmenda)
+  const prazo = new Date(emendaComPrazo.prazoEmenda)
 
   return {
     prazoDeterminado: true,
@@ -553,28 +765,115 @@ export async function verificarPrazoEmendas(proposicaoId: string) {
 }
 
 /**
+ * Define prazo para apresentação de emendas
+ */
+export async function definirPrazoEmendas(
+  proposicaoId: string,
+  prazo: Date
+) {
+  // Atualizar todas as emendas existentes com o novo prazo
+  await prisma.emenda.updateMany({
+    where: { proposicaoId },
+    data: { prazoEmenda: prazo }
+  })
+
+  logger.info('Prazo para emendas definido', {
+    action: 'definir_prazo_emendas',
+    proposicaoId,
+    prazo
+  })
+
+  return { proposicaoId, prazo }
+}
+
+/**
  * Estatísticas de emendas por proposição
  */
 export async function getEstatisticasEmendas(proposicaoId: string) {
-  const emendas = await prisma.emenda.groupBy({
-    by: ['status'],
-    where: { proposicaoId },
-    _count: true
-  })
-
-  const porTipo = await prisma.emenda.groupBy({
-    by: ['tipo'],
-    where: { proposicaoId },
-    _count: true
-  })
-
-  const total = await prisma.emenda.count({
-    where: { proposicaoId }
-  })
+  const [
+    porStatus,
+    porTipo,
+    total,
+    votadasAprovadas,
+    votadasRejeitadas
+  ] = await Promise.all([
+    prisma.emenda.groupBy({
+      by: ['status'],
+      where: { proposicaoId },
+      _count: true
+    }),
+    prisma.emenda.groupBy({
+      by: ['tipo'],
+      where: { proposicaoId },
+      _count: true
+    }),
+    prisma.emenda.count({
+      where: { proposicaoId }
+    }),
+    prisma.emenda.count({
+      where: { proposicaoId, status: 'APROVADA' }
+    }),
+    prisma.emenda.count({
+      where: { proposicaoId, status: 'REJEITADA' }
+    })
+  ])
 
   return {
     total,
-    porStatus: emendas.map(e => ({ status: e.status, quantidade: e._count })),
+    aprovadas: votadasAprovadas,
+    rejeitadas: votadasRejeitadas,
+    porStatus: porStatus.map(e => ({ status: e.status, quantidade: e._count })),
     porTipo: porTipo.map(t => ({ tipo: t.tipo, quantidade: t._count }))
   }
+}
+
+/**
+ * Lista votos de uma emenda
+ */
+export async function listarVotosEmenda(emendaId: string) {
+  const votos = await prisma.votoEmenda.findMany({
+    where: { emendaId },
+    include: {
+      parlamentar: {
+        select: {
+          id: true,
+          nome: true,
+          apelido: true,
+          partido: true,
+          foto: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'asc' }
+  })
+
+  return votos
+}
+
+/**
+ * Excluir emenda (apenas se APRESENTADA ou EM_ANALISE)
+ */
+export async function excluirEmenda(id: string) {
+  const emenda = await prisma.emenda.findUnique({
+    where: { id }
+  })
+
+  if (!emenda) {
+    throw new Error('Emenda não encontrada')
+  }
+
+  if (!['APRESENTADA', 'EM_ANALISE'].includes(emenda.status)) {
+    throw new Error(`Não é possível excluir emenda com status ${emenda.status}`)
+  }
+
+  await prisma.emenda.delete({
+    where: { id }
+  })
+
+  logger.info('Emenda excluída', {
+    action: 'excluir_emenda',
+    emendaId: id
+  })
+
+  return { success: true }
 }

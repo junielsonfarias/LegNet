@@ -48,22 +48,27 @@ export interface EmendaApi {
 export interface CriarEmendaInput {
   autorId: string
   coautores?: string[]
-  tipo: 'ADITIVA' | 'MODIFICATIVA' | 'SUPRESSIVA' | 'SUBSTITUTIVA' | 'EMENDA_DE_REDACAO'
+  tipo: 'ADITIVA' | 'MODIFICATIVA' | 'SUPRESSIVA' | 'SUBSTITUTIVA' | 'EMENDA_DE_REDACAO' | 'AGLUTINATIVA'
   artigo?: string
   paragrafo?: string
   inciso?: string
   alinea?: string
+  dispositivo?: string
   textoOriginal?: string
   textoNovo: string
   justificativa: string
   turnoApresentacao?: number
+  prazoEmenda?: string
 }
 
 export interface AtualizarEmendaInput {
-  status?: 'APRESENTADA' | 'EM_ANALISE' | 'APROVADA' | 'REJEITADA' | 'PREJUDICADA' | 'RETIRADA' | 'INCORPORADA'
+  status?: 'APRESENTADA' | 'EM_ANALISE' | 'PARECER_EMITIDO' | 'EM_VOTACAO' | 'APROVADA' | 'REJEITADA' | 'PREJUDICADA' | 'RETIRADA' | 'INCORPORADA'
   parecerComissao?: string
-  parecerTipo?: 'FAVORAVEL' | 'CONTRARIO' | 'FAVORAVEL_COM_RESSALVAS'
+  parecerTipo?: 'FAVORAVEL' | 'FAVORAVEL_COM_RESSALVAS' | 'CONTRARIO' | 'PELA_REJEICAO' | 'PELA_APROVACAO_PARCIAL'
   parecerTexto?: string
+  parecerData?: string
+  parecerRelatorId?: string
+  observacoes?: string
 }
 
 export interface VotoEmendaInput {
@@ -316,4 +321,59 @@ export async function excluirEmenda(id: string): Promise<void> {
     method: 'DELETE'
   })
   await handleResponse(response)
+}
+
+/**
+ * Inicia votação de emenda
+ */
+export async function iniciarVotacaoEmenda(
+  emendaId: string,
+  sessaoId: string
+): Promise<EmendaApi> {
+  const response = await fetch(`${BASE_URL}/emendas/${emendaId}?acao=iniciar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessaoId })
+  })
+  return handleResponse(response)
+}
+
+/**
+ * Incorpora emenda ao texto
+ */
+export async function incorporarEmenda(emendaId: string): Promise<EmendaApi> {
+  const response = await fetch(`${BASE_URL}/emendas/${emendaId}?acao=incorporar`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  return handleResponse(response)
+}
+
+/**
+ * Emite parecer sobre emenda
+ */
+export async function emitirParecerEmenda(
+  emendaId: string,
+  parecerTipo: string,
+  parecerTexto: string,
+  comissaoId: string,
+  relatorId: string
+): Promise<EmendaApi> {
+  const response = await fetch(`${BASE_URL}/emendas/${emendaId}?acao=parecer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ parecerTipo, parecerTexto, comissaoId, relatorId })
+  })
+  return handleResponse(response)
+}
+
+/**
+ * Lista votos de uma emenda
+ */
+export async function listarVotosEmenda(emendaId: string): Promise<any[]> {
+  const response = await fetch(`${BASE_URL}/emendas/${emendaId}?acao=votos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  return handleResponse(response)
 }

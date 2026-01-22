@@ -202,6 +202,9 @@ model Parlamentar {
   Publicacao             Publicacao[]
   pareceresRelator       Parecer[]              @relation("ParecerRelator")
   votosParecerComissao   VotoParecerComissao[]  @relation("VotoParecerComissao")
+  emendasAutor           Emenda[]               @relation("EmendaAutor")
+  emendasParecerRelator  Emenda[]               @relation("EmendaParecerRelator")
+  votosEmenda            VotoEmenda[]
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -242,6 +245,7 @@ model Sessao {
   proposicoes         Proposicao[]        @relation("ProposicaoApresentacao") // Proposições APRESENTADAS nesta sessão
   proposicoesVotadas  Proposicao[]        @relation("ProposicaoVotacao")      // Proposições VOTADAS nesta sessão
   pautaSessao         PautaSessao?
+  emendasVotadas      Emenda[]            @relation("EmendaVotacao")          // Emendas VOTADAS nesta sessão
 
   @@index([status, data])
   @@index([tipo, status])
@@ -411,6 +415,7 @@ model Proposicao {
   tramitacoes   Tramitacao[]
   pareceres     Parecer[]    // Pareceres das comissões sobre esta proposição
   pautasReuniaoComissao PautaReuniaoComissao[] // Itens de pauta de reunioes de comissao
+  emendas       Emenda[]     // Emendas apresentadas a esta proposicao
 
   @@unique([numero, ano])
   @@index([status, dataApresentacao])
@@ -531,6 +536,138 @@ enum TipoVoto {
   NAO
   ABSTENCAO
   AUSENTE
+}
+
+// =============================================================================
+// SISTEMA DE EMENDAS
+// =============================================================================
+
+model Emenda {
+  id              String          @id @default(cuid())
+  proposicaoId    String          // Proposicao que esta sendo emendada
+
+  // Numeracao
+  numero          Int             // Numero sequencial da emenda na proposicao
+
+  // Tipo de emenda
+  tipo            TipoEmenda
+
+  // Status
+  status          StatusEmenda    @default(APRESENTADA)
+
+  // Autor
+  autorId         String          // Parlamentar autor da emenda
+  coautores       String?         @db.Text  // JSON com IDs dos coautores
+
+  // Referencia ao texto original (onde a emenda incide)
+  artigo          String?         // Ex: "Art. 1"
+  paragrafo       String?         // Ex: "§ 1º"
+  inciso          String?         // Ex: "I"
+  alinea          String?         // Ex: "a"
+  dispositivo     String?         @db.Text  // Descricao livre do dispositivo
+
+  // Conteudo da emenda
+  textoOriginal   String?         @db.Text  // Texto original que sera alterado
+  textoNovo       String          @db.Text  // Novo texto proposto
+  justificativa   String          @db.Text  // Justificativa da emenda
+
+  // Votacao
+  turnoApresentacao   Int         @default(1)  // Turno em que foi apresentada
+  sessaoVotacaoId     String?     // Sessao onde foi votada
+  dataVotacao         DateTime?
+  resultado           ResultadoEmenda?
+  votosSim            Int?        // Contagem de votos SIM
+  votosNao            Int?        // Contagem de votos NAO
+  votosAbstencao      Int?        // Contagem de abstencoes
+  prazoEmenda         DateTime?   // Prazo para apresentacao da emenda
+
+  // Parecer
+  parecerComissao     String?     // ID da comissao que emitiu parecer
+  parecerTipo         TipoParecerEmenda?
+  parecerTexto        String?     @db.Text
+  parecerData         DateTime?
+  parecerRelatorId    String?     // Parlamentar relator do parecer
+
+  // Aglutinacao (quando varias emendas sao unidas)
+  aglutinada          Boolean     @default(false)
+  emendaAglutinadaId  String?     // ID da emenda resultante da aglutinacao
+
+  // Observacoes
+  observacoes         String?     @db.Text
+
+  // Controle
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relacionamentos
+  proposicao          Proposicao  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  autor               Parlamentar @relation("EmendaAutor", fields: [autorId], references: [id])
+  parecerRelator      Parlamentar? @relation("EmendaParecerRelator", fields: [parecerRelatorId], references: [id])
+  sessaoVotacao       Sessao?     @relation("EmendaVotacao", fields: [sessaoVotacaoId], references: [id])
+  emendaAglutinada    Emenda?     @relation("EmendaAglutinacao", fields: [emendaAglutinadaId], references: [id])
+  emendasAglutinadas  Emenda[]    @relation("EmendaAglutinacao")
+  votosEmenda         VotoEmenda[]
+
+  @@unique([proposicaoId, numero])
+  @@index([proposicaoId])
+  @@index([autorId])
+  @@index([status])
+  @@index([sessaoVotacaoId])
+  @@map("emendas")
+}
+
+enum TipoEmenda {
+  ADITIVA           // Acrescenta texto novo
+  MODIFICATIVA      // Altera texto existente
+  SUPRESSIVA        // Remove texto existente
+  SUBSTITUTIVA      // Substitui integralmente o texto
+  EMENDA_DE_REDACAO // Corrige redacao sem alterar conteudo
+  AGLUTINATIVA      // Une varias emendas em uma
+}
+
+enum StatusEmenda {
+  APRESENTADA       // Emenda apresentada
+  EM_ANALISE        // Em analise pela comissao
+  PARECER_EMITIDO   // Parecer da comissao emitido
+  EM_VOTACAO        // Em votacao no plenario
+  APROVADA          // Aprovada
+  REJEITADA         // Rejeitada
+  PREJUDICADA       // Prejudicada por aprovacao de outra
+  RETIRADA          // Retirada pelo autor
+  INCORPORADA       // Incorporada ao texto (apos aprovacao)
+}
+
+enum ResultadoEmenda {
+  APROVADA
+  REJEITADA
+  PREJUDICADA
+  RETIRADA
+}
+
+enum TipoParecerEmenda {
+  FAVORAVEL
+  FAVORAVEL_COM_RESSALVAS
+  CONTRARIO
+  PELA_REJEICAO
+  PELA_APROVACAO_PARCIAL
+}
+
+// Votos individuais em emendas
+model VotoEmenda {
+  id            String      @id @default(cuid())
+  emendaId      String
+  parlamentarId String
+  voto          TipoVoto
+  sessaoId      String?     // Sessao onde o voto foi registrado
+  createdAt     DateTime    @default(now())
+
+  emenda        Emenda      @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  parlamentar   Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@unique([emendaId, parlamentarId])
+  @@index([emendaId])
+  @@index([parlamentarId])
+  @@map("votos_emenda")
 }
 
 model Comissao {
@@ -2011,100 +2148,6 @@ model ProtocoloTramitacao {
 
   @@index([protocoloId, data])
   @@map("protocolo_tramitacoes")
-}
-
-// =============================================================================
-// FASE 3: SISTEMA DE EMENDAS
-// =============================================================================
-
-enum TipoEmenda {
-  ADITIVA          // Acrescenta dispositivo
-  MODIFICATIVA     // Altera dispositivo existente
-  SUPRESSIVA       // Remove dispositivo
-  SUBSTITUTIVA     // Substitui todo o texto
-  EMENDA_DE_REDACAO // Correção de redação sem alterar conteúdo
-}
-
-enum StatusEmenda {
-  APRESENTADA
-  EM_ANALISE
-  APROVADA
-  REJEITADA
-  PREJUDICADA      // Quando outra emenda afeta o mesmo dispositivo
-  RETIRADA
-  INCORPORADA      // Incorporada ao texto final
-  AGLUTINADA       // Fundida com outra emenda
-}
-
-model Emenda {
-  id              String        @id @default(cuid())
-  numero          Int
-  ano             Int
-  proposicaoId    String
-  tipo            TipoEmenda
-  status          StatusEmenda  @default(APRESENTADA)
-
-  // Autor
-  autorId         String
-  coautores       String?       @db.Text // JSON array de IDs de parlamentares
-
-  // Referência ao texto original
-  artigo          String?
-  paragrafo       String?
-  inciso          String?
-  alinea          String?
-
-  // Conteúdo
-  textoOriginal   String?       @db.Text // Texto que será alterado
-  textoNovo       String        @db.Text // Texto proposto
-  justificativa   String        @db.Text
-
-  // Votação
-  turnoApresentacao Int         @default(1)
-  dataVotacao     DateTime?
-  resultado       ResultadoVotacaoAgrupada?
-  votosSim        Int           @default(0)
-  votosNao        Int           @default(0)
-  votosAbstencao  Int           @default(0)
-
-  // Parecer da comissão
-  parecerComissaoId String?
-  parecerTipo     TipoParecer?
-  parecerTexto    String?       @db.Text
-
-  // Aglutinação
-  aglutinada      Boolean       @default(false)
-  emendaAglutinadaId String?    // ID da emenda resultante da aglutinação
-
-  // Datas
-  dataApresentacao DateTime     @default(now())
-  prazoEmenda     DateTime?
-
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  // Relacionamentos
-  votos           VotoEmenda[]
-
-  @@unique([numero, ano, proposicaoId])
-  @@index([proposicaoId])
-  @@index([autorId])
-  @@index([status])
-  @@map("emendas")
-}
-
-model VotoEmenda {
-  id            String   @id @default(cuid())
-  emendaId      String
-  parlamentarId String
-  voto          TipoVoto
-  createdAt     DateTime @default(now())
-
-  emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
-
-  @@unique([emendaId, parlamentarId])
-  @@index([emendaId])
-  @@map("votos_emenda")
 }
 
 // =============================================================================

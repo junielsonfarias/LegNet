@@ -17,24 +17,35 @@ import {
   finalizarVotacaoEmenda,
   retirarEmenda,
   prejudicarEmenda,
-  apurarVotacaoEmenda
+  apurarVotacaoEmenda,
+  iniciarVotacaoEmenda,
+  incorporarEmenda,
+  emitirParecerEmenda,
+  listarVotosEmenda
 } from '@/lib/services/emenda-service'
 
 export const dynamic = 'force-dynamic'
 
 const AtualizarEmendaSchema = z.object({
   status: z.enum([
-    'APRESENTADA', 'EM_ANALISE', 'APROVADA', 'REJEITADA',
-    'PREJUDICADA', 'RETIRADA', 'INCORPORADA'
+    'APRESENTADA', 'EM_ANALISE', 'PARECER_EMITIDO', 'EM_VOTACAO',
+    'APROVADA', 'REJEITADA', 'PREJUDICADA', 'RETIRADA', 'INCORPORADA'
   ]).optional(),
   parecerComissao: z.string().optional(),
-  parecerTipo: z.enum(['FAVORAVEL', 'CONTRARIO', 'FAVORAVEL_COM_RESSALVAS']).optional(),
-  parecerTexto: z.string().optional()
+  parecerTipo: z.enum([
+    'FAVORAVEL', 'FAVORAVEL_COM_RESSALVAS', 'CONTRARIO',
+    'PELA_REJEICAO', 'PELA_APROVACAO_PARCIAL'
+  ]).optional(),
+  parecerTexto: z.string().optional(),
+  parecerData: z.string().datetime().optional(),
+  parecerRelatorId: z.string().optional(),
+  observacoes: z.string().optional()
 })
 
 const VotarEmendaSchema = z.object({
   parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
-  voto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'AUSENTE'])
+  voto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'AUSENTE']),
+  sessaoId: z.string().optional()
 })
 
 /**
@@ -104,6 +115,14 @@ export const POST = withErrorHandler(async (
       return createSuccessResponse(voto, 'Voto registrado')
     }
 
+    case 'iniciar': {
+      if (!body.sessaoId) {
+        throw new ValidationError('sessaoId é obrigatório para iniciar votação')
+      }
+      const emenda = await iniciarVotacaoEmenda(id, body.sessaoId)
+      return createSuccessResponse(emenda, 'Votação iniciada')
+    }
+
     case 'finalizar': {
       const resultado = await finalizarVotacaoEmenda(id)
       return createSuccessResponse(resultado, 'Votação finalizada')
@@ -119,13 +138,32 @@ export const POST = withErrorHandler(async (
       return createSuccessResponse(emenda, 'Emenda prejudicada')
     }
 
+    case 'incorporar': {
+      const emenda = await incorporarEmenda(id)
+      return createSuccessResponse(emenda, 'Emenda incorporada ao texto')
+    }
+
+    case 'parecer': {
+      const { parecerTipo, parecerTexto, comissaoId, relatorId } = body
+      if (!parecerTipo || !parecerTexto || !comissaoId || !relatorId) {
+        throw new ValidationError('parecerTipo, parecerTexto, comissaoId e relatorId são obrigatórios')
+      }
+      const emenda = await emitirParecerEmenda(id, parecerTipo, parecerTexto, comissaoId, relatorId)
+      return createSuccessResponse(emenda, 'Parecer emitido')
+    }
+
     case 'apurar': {
       const resultado = await apurarVotacaoEmenda(id)
       return createSuccessResponse(resultado, 'Apuração realizada')
     }
 
+    case 'votos': {
+      const votos = await listarVotosEmenda(id)
+      return createSuccessResponse(votos, 'Votos da emenda')
+    }
+
     default:
-      throw new ValidationError('Ação inválida. Use: votar, finalizar, retirar, prejudicar ou apurar')
+      throw new ValidationError('Ação inválida. Use: votar, iniciar, finalizar, retirar, prejudicar, incorporar, parecer, apurar ou votos')
   }
 })
 

@@ -123,6 +123,20 @@ Fluxo Validado:
 | Numeracao automatica | Implementado | NUMERO/ANO |
 | Consulta publica | Implementado | /legislativo/proposicoes |
 | **Rastreabilidade completa** | **Implementado** | Ciclo: apresentacao -> pauta -> votacao |
+| **Sistema de Emendas** | **Implementado** | Tipos, votacao, aglutinacao, texto consolidado |
+
+### 5.1 Emendas a Proposicoes
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| Cadastro de emendas | Implementado | 6 tipos: ADITIVA, MODIFICATIVA, SUPRESSIVA, SUBSTITUTIVA, EMENDA_DE_REDACAO, AGLUTINATIVA |
+| Status de emendas | Implementado | 9 status: APRESENTADA, EM_ANALISE, PARECER_EMITIDO, EM_VOTACAO, APROVADA, REJEITADA, PREJUDICADA, RETIRADA, INCORPORADA |
+| Votacao de emendas | Implementado | Votacao em separado com registro de votos individuais |
+| Parecer sobre emendas | Implementado | Com relator e comissao |
+| Aglutinacao | Implementado | Unificacao de emendas com nova emenda resultante |
+| Texto consolidado | Implementado | Geracao com emendas aprovadas incorporadas |
+| Prazo de emendas | Implementado | Controle de prazo para apresentacao |
+| Gestao no admin | Implementado | /admin/proposicoes/[id]/emendas |
 
 ### 6. Votacoes
 
@@ -2463,22 +2477,34 @@ sudo ./scripts/uninstall.sh --full
   - Conversao para proposicao
   - Controle de prazos e prioridades
 
-#### FASE 3: Sistema de Emendas Completo
-- **Arquivos criados**:
-  - `src/lib/services/emenda-service.ts`: Servico de emendas
-  - `src/lib/api/emendas-api.ts`: Cliente API
-  - `src/lib/utils/texto-consolidado.ts`: Consolidacao de textos
-  - `src/app/api/proposicoes/[id]/emendas/route.ts`: API de emendas por proposicao
-  - `src/app/api/emendas/[id]/route.ts`: Operacoes por emenda
-  - `src/app/api/emendas/aglutinar/route.ts`: Aglutinacao
-  - `src/app/admin/proposicoes/[id]/emendas/page.tsx`: Gestao de emendas
-  - `src/app/admin/emendas/[id]/page.tsx`: Detalhes da emenda
-- **Funcionalidades**:
-  - Tipos: ADITIVA, MODIFICATIVA, SUPRESSIVA, SUBSTITUTIVA, EMENDA_DE_REDACAO
-  - Votacao de emendas em separado
-  - Aglutinacao de emendas
-  - Geracao de texto consolidado
-  - Parecer de comissoes sobre emendas
+#### FASE 3: Sistema de Emendas Completo [IMPLEMENTADO 22/01/2026]
+- **Modelos Prisma criados**:
+  - `Emenda`: Emendas a proposicoes com campos completos
+  - `VotoEmenda`: Registro de votos individuais em emendas
+- **Enums criados**:
+  - `TipoEmenda`: ADITIVA, MODIFICATIVA, SUPRESSIVA, SUBSTITUTIVA, EMENDA_DE_REDACAO, AGLUTINATIVA
+  - `StatusEmenda`: APRESENTADA, EM_ANALISE, PARECER_EMITIDO, EM_VOTACAO, APROVADA, REJEITADA, PREJUDICADA, RETIRADA, INCORPORADA
+  - `ResultadoEmenda`: APROVADA, REJEITADA, PREJUDICADA, RETIRADA
+  - `TipoParecerEmenda`: FAVORAVEL, FAVORAVEL_COM_RESSALVAS, CONTRARIO, PELA_REJEICAO, PELA_APROVACAO_PARCIAL
+- **Arquivos criados/atualizados**:
+  - `src/lib/services/emenda-service.ts`: Servico completo de emendas (26 funcoes)
+  - `src/lib/api/emendas-api.ts`: Cliente API com 16 funcoes exportadas
+  - `src/app/api/proposicoes/[id]/emendas/route.ts`: API de emendas por proposicao (GET, POST)
+  - `src/app/api/emendas/[id]/route.ts`: Operacoes por emenda (GET, PUT, POST, DELETE)
+  - `src/app/api/emendas/aglutinar/route.ts`: Aglutinacao de emendas
+  - `src/app/admin/proposicoes/[id]/emendas/page.tsx`: Pagina de gestao de emendas completa
+- **Funcionalidades implementadas**:
+  - Cadastro de emendas com referencia a artigos, paragrafos, incisos, alineas
+  - Numeracao automatica sequencial por proposicao
+  - Votacao de emendas em separado (iniciar, votar, finalizar, apurar)
+  - Emissao de parecer por comissoes com relator
+  - Aglutinacao de multiplas emendas em uma
+  - Geracao de texto consolidado com emendas aprovadas
+  - Retirada e prejudicialidade de emendas
+  - Incorporacao de emendas ao texto final
+  - Estatisticas de emendas por proposicao
+  - Controle de prazo para apresentacao
+  - Registro de votos individuais com parlamentar e sessao
 
 #### FASE 4: Compilacao de Textos Legislativos
 - **Arquivos criados**:
