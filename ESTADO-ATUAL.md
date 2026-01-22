@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-21
+> **Ultima Atualizacao**: 2026-01-22
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -11,15 +11,46 @@
 
 | Metrica | Valor |
 |---------|-------|
-| **Modelos Prisma** | 52+ |
-| **Endpoints API** | 95+ |
-| **Componentes React** | 70+ |
-| **Servicos de Negocio** | 42 |
+| **Modelos Prisma** | 55+ |
+| **Endpoints API** | 100+ |
+| **Componentes React** | 75+ |
+| **Servicos de Negocio** | 45 |
 | **Hooks Customizados** | 29 |
-| **Paginas Admin** | 20+ |
-| **Paginas Publicas** | 32+ |
+| **Paginas Admin** | 22+ |
+| **Paginas Publicas** | 35+ |
 | **Multi-Tenant** | Implementado |
-| **Cobertura SAPL** | ~98% |
+| **Cobertura SAPL** | ~96% |
+
+---
+
+## Teste de Fluxo Completo (22/01/2026)
+
+### Resultado do Teste de Votacao
+
+```
+TESTE DE VOTACAO COMPLETA: 21 passos - 100% SUCESSO
+
+Proposicao: PL 002/2026
+Sessao: ORDINARIA 36
+Resultado: APROVADA (5 SIM, 1 NAO, 1 ABSTENCAO, 2 AUSENTE)
+
+Fluxo Validado:
+✓ Criacao de proposicao com auto-numeracao
+✓ Criacao de sessao e pauta
+✓ Registro de presencas e verificacao de quorum
+✓ Inclusao de materia na pauta
+✓ Sincronizacao com painel eletronico
+✓ Votacao nominal por parlamentares
+✓ Calculo automatico de resultado
+✓ Persistencia de votos individuais
+✓ Atualizacao de status da proposicao
+✓ Disponibilizacao em APIs publicas
+```
+
+### Scripts de Teste
+
+- `scripts/teste-fluxo-completo.ts` - Fluxo legislativo completo
+- `scripts/teste-votacao-completa.ts` - Votacao e sincronizacao com painel
 
 ---
 
