@@ -2291,6 +2291,25 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-22 - Paginas de UI Faltantes para Participacao Cidada, Normas e Protocolo
+
+- **Objetivo**: Criar paginas de UI publicas e admin para completar modulos de participacao cidada, normas juridicas e protocolo
+- **Arquivos criados**:
+  - `src/app/participacao-cidada/consultas/page.tsx`: Listagem publica de consultas abertas
+  - `src/app/participacao-cidada/consultas/[id]/page.tsx`: Formulario de participacao em consulta
+  - `src/app/participacao-cidada/sugestoes/nova/page.tsx`: Formulario de nova sugestao legislativa
+  - `src/app/legislativo/normas/[id]/page.tsx`: Visualizacao publica de norma juridica
+  - `src/app/admin/normas/nova/page.tsx`: Criacao de nova norma no admin
+  - `src/app/admin/normas/[id]/page.tsx`: Edicao de norma com abas (dados, texto, artigos, alteracoes, versoes)
+  - `src/app/admin/protocolo/[id]/page.tsx`: Detalhes e tramitacao de protocolo
+- **Funcionalidades implementadas**:
+  - Portal de consultas publicas com contagem de participacoes e dias restantes
+  - Formulario de participacao com tipos de perguntas: TEXTO, ESCOLHA_UNICA, MULTIPLA_ESCOLHA, ESCALA
+  - Formulario de sugestoes com validacao de campos e formatacao de CPF/telefone
+  - Visualizacao de normas com abas: texto original, compilado, artigos, alteracoes
+  - Interface admin de normas com compilacao de texto e gerenciamento de versoes
+  - Interface admin de protocolo com tramitacao e arquivamento
+
 ### 2026-01-21 - Configuracao de Testes e Paginas Admin Adicionais
 
 - **Objetivo**: Configurar ambiente de testes e criar paginas de UI faltantes para modulos de participacao cidada e relatorios
