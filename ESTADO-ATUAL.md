@@ -2353,6 +2353,49 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-22 - Busca Global Avancada (MEL-006) e Testes E2E
+
+- **Objetivo**: Implementar busca unificada no sistema e expandir cobertura de testes E2E
+
+#### Busca Global Avancada (MEL-006)
+- **Hooks criados**:
+  - `src/lib/hooks/use-search.ts`: Hook completo para integracao com API de busca
+    - Debounce automatico, paginacao, filtros, facetas
+    - Funcoes: search(), searchRapida(), limpar(), proximaPagina()
+  - `src/lib/hooks/use-debounce.ts`: Hook utilitario para debounce de valores
+- **AdminSearch atualizado** (`src/components/admin/admin-search.tsx`):
+  - Busca real na API ao inves de dados estaticos
+  - Atalho Ctrl+K para abrir busca
+  - Resultados divididos em "Dados do Sistema" e "Paginas"
+  - Loading state e tratamento de erros
+- **Pagina de busca criada** (`src/app/admin/busca/page.tsx`):
+  - Busca full-text com filtros por tipo e ano
+  - Facetas mostrando contagem por tipo de entidade
+  - Paginacao completa com navegacao
+  - Sugestoes de busca
+  - 6 tipos de entidades: proposicao, parlamentar, sessao, publicacao, noticia, comissao
+
+#### Testes E2E Adicionados
+- **e2e/busca.spec.ts** (9 testes):
+  - Estrutura de resposta da API
+  - Facetas por tipo e ano
+  - Filtros e paginacao
+  - Sugestoes de busca
+  - Modo de busca rapida
+- **e2e/admin.spec.ts** (8 testes):
+  - Redirecionamento para login sem autenticacao
+  - Validacao de formulario de login
+  - Fluxo de recuperacao de senha
+  - Endpoints protegidos
+- **e2e/legislativo.spec.ts** (11 testes):
+  - Paginas publicas de proposicoes, sessoes, comissoes, normas
+  - APIs de proposicoes com filtros
+  - APIs publicas de integracao
+
+#### Commits realizados:
+- `feat(MEL-006): implementa busca global avancada no admin`
+- `test: adiciona testes E2E para busca, admin e legislativo`
+
 ### 2026-01-22 - Melhorias de UX e Layout do Admin por Tipo de Usuario
 
 - **Objetivo**: Personalizar painel administrativo por role de usuario com cores, dashboard e navegacao especificos
