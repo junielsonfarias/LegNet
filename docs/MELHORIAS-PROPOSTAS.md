@@ -549,11 +549,21 @@ export class StreamingService {
 
 ---
 
-### MEL-014: Modo Escuro Completo
+### MEL-014: Modo Escuro Completo - **IMPLEMENTADO**
 
 **Descricao**: Implementar tema escuro em toda a aplicacao.
 
 **Estimativa**: 1 semana
+
+**Status**: IMPLEMENTADO (22/01/2026)
+
+**Implementacao**:
+- Componente `ThemeToggle` com variantes simple e dropdown
+- Componente `AdminHeaderActions` com toggle integrado
+- Classes dark: em todo o layout admin
+- Sidebar e sidebar mobile adaptados
+- Persistencia via next-themes (localStorage)
+- Suporte a preferencia do sistema
 
 ---
 
@@ -676,10 +686,10 @@ export class StreamingService {
 ## Roadmap Sugerido
 
 ### Trimestre 1 (Semanas 1-12)
-1. MEL-001: Automacao de Pautas
-2. MEL-002: Notificacoes Multicanal
-3. MEL-003: Dashboard Analytics
-4. MEL-014: Modo Escuro
+1. MEL-001: Automacao de Pautas - **CONCLUIDO**
+2. MEL-002: Notificacoes Multicanal - **CONCLUIDO**
+3. MEL-003: Dashboard Analytics - **CONCLUIDO**
+4. MEL-014: Modo Escuro - **CONCLUIDO**
 
 ### Trimestre 2 (Semanas 13-24)
 1. MEL-004: Streaming ao Vivo

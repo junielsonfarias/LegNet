@@ -2,12 +2,13 @@ import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { AdminSidebarMobile } from '@/components/admin/admin-sidebar-mobile'
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { AdminSearch } from '@/components/admin/admin-search'
+import { AdminHeaderActions } from '@/components/admin/admin-header-actions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { UserRole } from '@prisma/client'
 import { getRoleTheme } from '@/lib/themes/role-themes'
 import { cn } from '@/lib/utils'
-import { Bell, Moon, Sun, Building } from 'lucide-react'
+import { Building } from 'lucide-react'
 import Link from 'next/link'
 import {
   DropdownMenu,
@@ -66,17 +67,17 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="flex">
         {/* Sidebar Desktop - escondida em mobile */}
         <div className="hidden lg:block">
           <AdminSidebar userRole={userRole} />
         </div>
 
-        {/* Área principal */}
+        {/* Area principal */}
         <div className="flex-1 flex flex-col min-h-screen w-full lg:w-auto">
           {/* Header */}
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+          <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
             <div className="px-4 lg:px-6 py-3">
               <div className="flex items-center justify-between gap-4">
                 {/* Lado esquerdo - Menu Mobile + Título */}
@@ -97,50 +98,43 @@ export default async function AdminLayout({
                     )}>
                       <Building className="h-4 w-4 text-white" />
                     </div>
-                    <span className="font-semibold text-gray-900 text-sm">Admin</span>
+                    <span className="font-semibold text-gray-900 dark:text-white text-sm">Admin</span>
                   </div>
 
-                  {/* Título Desktop */}
+                  {/* Titulo Desktop */}
                   <div className="hidden lg:block">
-                    <h1 className="text-lg font-semibold text-gray-900">
+                    <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
                       Painel Administrativo
                     </h1>
-                    <p className="text-xs text-gray-500">
-                      Câmara Municipal de Mojuí dos Campos
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Camara Municipal de Mojui dos Campos
                     </p>
                   </div>
                 </div>
 
-                {/* Lado direito - Ações */}
+                {/* Lado direito - Acoes */}
                 <div className="flex items-center gap-2 lg:gap-3">
-                  {/* Notificações */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative text-gray-500 hover:text-gray-700 h-9 w-9"
-                  >
-                    <Bell className="h-5 w-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                  </Button>
+                  {/* Toggle de Tema e Notificacoes */}
+                  <AdminHeaderActions />
 
                   {/* Separador - apenas desktop */}
-                  <div className="hidden lg:block h-8 w-px bg-gray-200" />
+                  <div className="hidden lg:block h-8 w-px bg-gray-200 dark:bg-gray-700" />
 
                   {/* Avatar e Menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="flex items-center gap-2 px-2 py-1.5 h-auto hover:bg-gray-50"
+                        className="flex items-center gap-2 px-2 py-1.5 h-auto hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         <Avatar className={cn('h-8 w-8', getAvatarBorderClass())}>
                           <AvatarImage src={userImage} alt={userName} />
-                          <AvatarFallback className="bg-gray-100 text-gray-600 text-xs font-medium">
+                          <AvatarFallback className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium">
                             {getInitials(userName)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="hidden md:block text-left">
-                          <p className="text-sm font-medium text-gray-900 leading-tight truncate max-w-[120px]">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight truncate max-w-[120px]">
                             {userName.split(' ')[0]}
                           </p>
                           <span className={cn(
@@ -184,8 +178,8 @@ export default async function AdminLayout({
               </div>
             </div>
 
-            {/* Barra de navegação secundária */}
-            <div className="bg-gray-50/80 border-t border-gray-100 px-4 lg:px-6 py-2">
+            {/* Barra de navegacao secundaria */}
+            <div className="bg-gray-50/80 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 px-4 lg:px-6 py-2">
               <div className="flex items-center justify-between gap-4">
                 <AdminBreadcrumbs />
                 <div className="hidden sm:block">
@@ -195,18 +189,18 @@ export default async function AdminLayout({
             </div>
           </header>
 
-          {/* Conteúdo principal */}
+          {/* Conteudo principal */}
           <main className="flex-1 p-4 lg:p-6 overflow-auto">
             {children}
           </main>
 
           {/* Footer do admin */}
-          <footer className="bg-white border-t border-gray-100 px-4 lg:px-6 py-3">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
-              <span>Câmara Municipal de Mojuí dos Campos</span>
+          <footer className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 px-4 lg:px-6 py-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <span>Camara Municipal de Mojui dos Campos</span>
               <span className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
-                Sistema Online • v1.0.0
+                Sistema Online - v1.0.0
               </span>
             </div>
           </footer>

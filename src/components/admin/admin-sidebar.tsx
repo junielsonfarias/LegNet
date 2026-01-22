@@ -454,36 +454,36 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
   // Classes dinâmicas baseadas no tema
   const getSidebarActiveClass = () => {
     const activeClasses: Record<UserRole, string> = {
-      ADMIN: 'bg-violet-600 text-white shadow-md shadow-violet-200',
-      SECRETARIA: 'bg-cyan-600 text-white shadow-md shadow-cyan-200',
-      EDITOR: 'bg-blue-600 text-white shadow-md shadow-blue-200',
-      OPERADOR: 'bg-emerald-600 text-white shadow-md shadow-emerald-200',
-      PARLAMENTAR: 'bg-amber-500 text-white shadow-md shadow-amber-200',
-      USER: 'bg-gray-600 text-white shadow-md shadow-gray-200'
+      ADMIN: 'bg-violet-600 text-white shadow-md shadow-violet-200 dark:shadow-violet-900/30',
+      SECRETARIA: 'bg-cyan-600 text-white shadow-md shadow-cyan-200 dark:shadow-cyan-900/30',
+      EDITOR: 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30',
+      OPERADOR: 'bg-emerald-600 text-white shadow-md shadow-emerald-200 dark:shadow-emerald-900/30',
+      PARLAMENTAR: 'bg-amber-500 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/30',
+      USER: 'bg-gray-600 text-white shadow-md shadow-gray-200 dark:shadow-gray-900/30'
     }
     return activeClasses[userRole]
   }
 
   const getSidebarHoverClass = () => {
     const hoverClasses: Record<UserRole, string> = {
-      ADMIN: 'hover:bg-violet-50 hover:text-violet-700',
-      SECRETARIA: 'hover:bg-cyan-50 hover:text-cyan-700',
-      EDITOR: 'hover:bg-blue-50 hover:text-blue-700',
-      OPERADOR: 'hover:bg-emerald-50 hover:text-emerald-700',
-      PARLAMENTAR: 'hover:bg-amber-50 hover:text-amber-700',
-      USER: 'hover:bg-gray-100 hover:text-gray-700'
+      ADMIN: 'hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-900/30 dark:hover:text-violet-300',
+      SECRETARIA: 'hover:bg-cyan-50 hover:text-cyan-700 dark:hover:bg-cyan-900/30 dark:hover:text-cyan-300',
+      EDITOR: 'hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-300',
+      OPERADOR: 'hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300',
+      PARLAMENTAR: 'hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-300',
+      USER: 'hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-200'
     }
     return hoverClasses[userRole]
   }
 
   const getGradientClass = () => {
     const gradients: Record<UserRole, string> = {
-      ADMIN: 'from-violet-50 via-purple-50 to-white',
-      SECRETARIA: 'from-cyan-50 via-teal-50 to-white',
-      EDITOR: 'from-blue-50 via-indigo-50 to-white',
-      OPERADOR: 'from-emerald-50 via-green-50 to-white',
-      PARLAMENTAR: 'from-amber-50 via-orange-50 to-white',
-      USER: 'from-gray-50 via-slate-50 to-white'
+      ADMIN: 'from-violet-50 via-purple-50 to-white dark:from-gray-900 dark:via-violet-950/20 dark:to-gray-900',
+      SECRETARIA: 'from-cyan-50 via-teal-50 to-white dark:from-gray-900 dark:via-cyan-950/20 dark:to-gray-900',
+      EDITOR: 'from-blue-50 via-indigo-50 to-white dark:from-gray-900 dark:via-blue-950/20 dark:to-gray-900',
+      OPERADOR: 'from-emerald-50 via-green-50 to-white dark:from-gray-900 dark:via-emerald-950/20 dark:to-gray-900',
+      PARLAMENTAR: 'from-amber-50 via-orange-50 to-white dark:from-gray-900 dark:via-amber-950/20 dark:to-gray-900',
+      USER: 'from-gray-50 via-slate-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900'
     }
     return gradients[userRole]
   }
@@ -514,7 +514,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
 
   return (
     <div className={cn(
-      'w-64 min-h-screen flex flex-col border-r border-gray-200 shadow-lg',
+      'w-64 min-h-screen flex flex-col border-r border-gray-200 dark:border-gray-700 shadow-lg',
       `bg-gradient-to-b ${getGradientClass()}`
     )}>
       {/* Cabeçalho da Sidebar com cor do role */}
@@ -561,12 +561,12 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                   className={cn(
                     'w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all duration-200',
                     hasActiveItem
-                      ? `${getCategoryIconClass()} bg-white/80`
-                      : 'text-gray-500 hover:bg-white/60'
+                      ? `${getCategoryIconClass()} bg-white/80 dark:bg-gray-800/80`
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60'
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <CategoryIcon className={cn('h-4 w-4', hasActiveItem ? getCategoryIconClass() : 'text-gray-400')} />
+                    <CategoryIcon className={cn('h-4 w-4', hasActiveItem ? getCategoryIconClass() : 'text-gray-400 dark:text-gray-500')} />
                     <span>{category.name}</span>
                   </div>
                   {isExpanded ? (
@@ -596,14 +596,14 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                                   'group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
                                   isActive || submenuActive
                                     ? getSidebarActiveClass()
-                                    : `text-gray-600 ${getSidebarHoverClass()}`
+                                    : `text-gray-600 dark:text-gray-300 ${getSidebarHoverClass()}`
                                 )}
                               >
                                 <div className="flex items-center">
                                   <item.icon
                                     className={cn(
                                       'mr-2.5 h-4 w-4 flex-shrink-0 transition-colors',
-                                      isActive || submenuActive ? 'text-white' : 'text-gray-400 group-hover:text-current'
+                                      isActive || submenuActive ? 'text-white' : 'text-gray-400 dark:text-gray-500 group-hover:text-current'
                                     )}
                                   />
                                   {item.name}
@@ -615,7 +615,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                                 )}
                               </button>
                               {isSubmenuExpanded && (
-                                <ul className="ml-5 mt-1 space-y-0.5 border-l-2 border-gray-200 pl-3">
+                                <ul className="ml-5 mt-1 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-700 pl-3">
                                   {filteredSubmenu.map((subItem) => {
                                     const isSubActive = pathname === subItem.href
                                     return (
@@ -626,13 +626,13 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                                             'group flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
                                             isSubActive
                                               ? getSidebarActiveClass()
-                                              : `text-gray-500 ${getSidebarHoverClass()}`
+                                              : `text-gray-500 dark:text-gray-400 ${getSidebarHoverClass()}`
                                           )}
                                         >
                                           <subItem.icon
                                             className={cn(
                                               'mr-2 h-3.5 w-3.5 flex-shrink-0',
-                                              isSubActive ? 'text-white' : 'text-gray-400'
+                                              isSubActive ? 'text-white' : 'text-gray-400 dark:text-gray-500'
                                             )}
                                           />
                                           {subItem.name}
@@ -650,13 +650,13 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                                 'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
                                 isActive
                                   ? getSidebarActiveClass()
-                                  : `text-gray-600 ${getSidebarHoverClass()}`
+                                  : `text-gray-600 dark:text-gray-300 ${getSidebarHoverClass()}`
                               )}
                             >
                               <item.icon
                                 className={cn(
                                   'mr-2.5 h-4 w-4 flex-shrink-0 transition-colors',
-                                  isActive ? 'text-white' : 'text-gray-400 group-hover:text-current'
+                                  isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500 group-hover:text-current'
                                 )}
                               />
                               {item.name}
@@ -675,7 +675,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
 
       {/* Footer da Sidebar */}
       <div className={cn(
-        'p-4 border-t border-gray-200 bg-white/50'
+        'p-4 border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50'
       )}>
         <div className="flex items-center space-x-2">
           <div className={cn(
@@ -685,8 +685,8 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
             <Building className="h-4 w-4 text-white" />
           </div>
           <div className="text-xs">
-            <div className="font-semibold text-gray-800">Mojuí dos Campos</div>
-            <div className="text-gray-500">Legislatura 2025/2028</div>
+            <div className="font-semibold text-gray-800 dark:text-gray-200">Mojuí dos Campos</div>
+            <div className="text-gray-500 dark:text-gray-400">Legislatura 2025/2028</div>
           </div>
         </div>
       </div>

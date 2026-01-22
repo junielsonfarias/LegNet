@@ -404,6 +404,20 @@ Fluxo Validado:
 | Integracao Licitacoes | Implementado | /transparencia/licitacoes |
 | Fechamento com ESC | Implementado | Atalho de teclado |
 
+### 26. Modo Escuro (Dark Mode)
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| Provider next-themes | Implementado | ThemeProvider com defaultTheme="system" |
+| Toggle de tema | Implementado | Dropdown com light/dark/system |
+| Toggle simples | Implementado | Botao unico para alternar |
+| Admin Layout | Implementado | Todas classes dark: aplicadas |
+| Admin Sidebar | Implementado | Gradientes e cores adaptados |
+| Admin Sidebar Mobile | Implementado | Menu mobile com dark mode |
+| Header Actions | Implementado | Componente cliente com toggle |
+| CSS Variables | Implementado | Ja existiam no globals.css |
+| Persistencia | Implementado | localStorage via next-themes |
+
 ---
 
 ## Guia de Instalacao
@@ -743,13 +757,13 @@ psql -h localhost -U camara_user camara_db < backup_20260119.sql
 |----|----------|------------|--------|
 | M005 | Dashboard executivo com analytics | 2-3 semanas | **CONCLUIDA** (FASE 5) |
 | M006 | Relatorios em PDF/Excel | 2 semanas | Planejada |
-| M007 | Busca avancada global | 1-2 semanas | Planejada |
+| M007 | Busca avancada global | 1-2 semanas | **IMPLEMENTADA** |
 | M008 | PWA para acesso offline | 2 semanas | Planejada |
 
 ### Baixa Prioridade
 | ID | Melhoria | Estimativa | Status |
 |----|----------|------------|--------|
-| M009 | Tema escuro completo | 1 semana | Planejada |
+| M009 | Tema escuro completo | 1 semana | **IMPLEMENTADA** |
 | M010 | Internacionalizacao | 2-3 semanas | Planejada |
 | M011 | App mobile nativo | 8+ semanas | Futura |
 
@@ -2352,6 +2366,35 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-22 - Modo Escuro Completo (MEL-014)
+
+- **Objetivo**: Implementar modo escuro completo no painel administrativo
+- **Arquivos criados**:
+  - `src/components/ui/theme-toggle.tsx`: Componente de toggle de tema
+    - Variante 'simple': Botao unico para alternar light/dark
+    - Variante 'default': Dropdown com opcoes light/dark/system
+    - Hook `useCurrentTheme()` para usar em componentes
+    - Tratamento de hydration mismatch
+  - `src/components/admin/admin-header-actions.tsx`: Componente cliente para acoes do header
+    - ThemeToggle integrado
+    - Botao de notificacoes
+- **Arquivos modificados**:
+  - `src/app/admin/layout.tsx`: Classes dark: em todas backgrounds e borders
+  - `src/components/admin/admin-sidebar.tsx`:
+    - Gradientes adaptados para dark mode
+    - Cores de hover e active dinamicas
+    - Footer com suporte a dark
+  - `src/components/admin/admin-sidebar-mobile.tsx`:
+    - Background dark para sidebar mobile
+    - Cores de navegacao adaptadas
+    - Footer com border dark
+- **Funcionalidades**:
+  - Toggle de tema acessivel via botao no header
+  - Persistencia de preferencia no localStorage
+  - Respeita preferencia do sistema (prefers-color-scheme)
+  - Transicoes suaves entre temas
+  - Gradientes personalizados por role mantidos em dark mode
 
 ### 2026-01-22 - Busca Global Avancada (MEL-006) e Testes E2E
 

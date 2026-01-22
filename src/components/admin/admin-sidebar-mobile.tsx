@@ -114,12 +114,12 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
 
   const getButtonColor = () => {
     const colors: Record<UserRole, string> = {
-      ADMIN: 'text-violet-600 hover:bg-violet-50',
-      SECRETARIA: 'text-cyan-600 hover:bg-cyan-50',
-      EDITOR: 'text-blue-600 hover:bg-blue-50',
-      OPERADOR: 'text-emerald-600 hover:bg-emerald-50',
-      PARLAMENTAR: 'text-amber-600 hover:bg-amber-50',
-      USER: 'text-gray-600 hover:bg-gray-50'
+      ADMIN: 'text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/30',
+      SECRETARIA: 'text-cyan-600 hover:bg-cyan-50 dark:text-cyan-400 dark:hover:bg-cyan-900/30',
+      EDITOR: 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30',
+      OPERADOR: 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30',
+      PARLAMENTAR: 'text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30',
+      USER: 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'
     }
     return colors[userRole]
   }
@@ -148,7 +148,7 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
       {/* Sidebar Mobile */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 w-72 bg-white z-50 lg:hidden transform transition-transform duration-300 ease-in-out shadow-2xl',
+          'fixed inset-y-0 left-0 w-72 bg-white dark:bg-gray-900 z-50 lg:hidden transform transition-transform duration-300 ease-in-out shadow-2xl',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -197,12 +197,12 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
                       'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200',
                       isActive
                         ? getActiveClass()
-                        : 'text-gray-600 hover:bg-gray-50'
+                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                     )}
                   >
                     <item.icon className={cn(
                       'h-5 w-5',
-                      isActive ? 'text-white' : 'text-gray-400'
+                      isActive ? 'text-white' : 'text-gray-400 dark:text-gray-500'
                     )} />
                     <span className="font-medium">{item.name}</span>
                     {isActive && <ChevronRight className="h-4 w-4 ml-auto" />}
@@ -214,8 +214,8 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <Building className="h-4 w-4" />
             <span>Mojuí dos Campos • 2025/2028</span>
           </div>
