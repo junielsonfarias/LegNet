@@ -2291,6 +2291,25 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-21 - Configuracao de Testes e Paginas Admin Adicionais
+
+- **Objetivo**: Configurar ambiente de testes e criar paginas de UI faltantes para modulos de participacao cidada e relatorios
+- **Arquivos criados**:
+  - `vitest.config.ts`: Configuracao do Vitest com aliases de path (@/)
+  - `src/app/admin/participacao/consultas/page.tsx`: Pagina admin de consultas publicas
+  - `src/app/admin/participacao/sugestoes/page.tsx`: Pagina admin de sugestoes legislativas
+  - `src/app/admin/relatorios/agendados/page.tsx`: Pagina admin de relatorios agendados
+  - `src/__tests__/participacao-cidada.test.ts`: Testes automatizados para servicos de participacao
+  - `src/__tests__/emendas-normas.test.ts`: Testes automatizados para servicos de emendas e normas
+- **Funcionalidades implementadas**:
+  - Interface completa para gerenciamento de consultas publicas (criar, listar, filtrar)
+  - Interface de moderacao de sugestoes legislativas (status, categorias, apoios)
+  - Interface de agendamento de relatorios (tipos, frequencias, formatos)
+  - 21 testes automatizados passando para validacao dos servicos
+- **Dependencias adicionadas**:
+  - `vitest` instalado como dev dependency
+- **Status de testes**: 21/21 testes passando
+
 ### 2026-01-21 - Correcoes de Tipos e Sincronizacao do Schema
 
 - **Objetivo**: Corrigir erros de TypeScript e sincronizar schema Prisma com banco de dados

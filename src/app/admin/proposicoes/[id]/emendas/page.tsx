@@ -105,8 +105,8 @@ export default function EmendasProposicaoPage() {
   const [loading, setLoading] = useState(true)
   const [showDialog, setShowDialog] = useState(false)
   const [editingEmenda, setEditingEmenda] = useState<EmendaApi | null>(null)
-  const [filtroTipo, setFiltroTipo] = useState<string>('')
-  const [filtroStatus, setFiltroStatus] = useState<string>('')
+  const [filtroTipo, setFiltroTipo] = useState<string>('todos')
+  const [filtroStatus, setFiltroStatus] = useState<string>('todos')
 
   const [formData, setFormData] = useState<CriarEmendaInput>({
     autorId: '',
@@ -229,8 +229,8 @@ export default function EmendasProposicaoPage() {
   }
 
   const emendasFiltradas = emendas.filter(e => {
-    if (filtroTipo && e.tipo !== filtroTipo) return false
-    if (filtroStatus && e.status !== filtroStatus) return false
+    if (filtroTipo && filtroTipo !== 'todos' && e.tipo !== filtroTipo) return false
+    if (filtroStatus && filtroStatus !== 'todos' && e.status !== filtroStatus) return false
     return true
   })
 
@@ -471,7 +471,7 @@ export default function EmendasProposicaoPage() {
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
                 <SelectItem value="ADITIVA">Aditiva</SelectItem>
                 <SelectItem value="MODIFICATIVA">Modificativa</SelectItem>
                 <SelectItem value="SUPRESSIVA">Supressiva</SelectItem>
@@ -485,7 +485,7 @@ export default function EmendasProposicaoPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="todos">Todos os status</SelectItem>
                 <SelectItem value="APRESENTADA">Apresentada</SelectItem>
                 <SelectItem value="EM_ANALISE">Em Analise</SelectItem>
                 <SelectItem value="APROVADA">Aprovada</SelectItem>
@@ -498,8 +498,8 @@ export default function EmendasProposicaoPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setFiltroTipo('')
-                setFiltroStatus('')
+                setFiltroTipo('todos')
+                setFiltroStatus('todos')
               }}
             >
               Limpar Filtros

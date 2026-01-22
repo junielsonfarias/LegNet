@@ -104,9 +104,9 @@ export default function ProtocoloListPage() {
   const [estatisticas, setEstatisticas] = useState<Estatisticas | null>(null)
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState<string>('')
-  const [filtroSituacao, setFiltroSituacao] = useState<string>('')
-  const [filtroPrioridade, setFiltroPrioridade] = useState<string>('')
+  const [filtroTipo, setFiltroTipo] = useState<string>('todos')
+  const [filtroSituacao, setFiltroSituacao] = useState<string>('todos')
+  const [filtroPrioridade, setFiltroPrioridade] = useState<string>('todos')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -118,9 +118,9 @@ export default function ProtocoloListPage() {
       params.set('limit', '20')
 
       if (busca) params.set('busca', busca)
-      if (filtroTipo) params.set('tipo', filtroTipo)
-      if (filtroSituacao) params.set('situacao', filtroSituacao)
-      if (filtroPrioridade) params.set('prioridade', filtroPrioridade)
+      if (filtroTipo && filtroTipo !== 'todos') params.set('tipo', filtroTipo)
+      if (filtroSituacao && filtroSituacao !== 'todos') params.set('situacao', filtroSituacao)
+      if (filtroPrioridade && filtroPrioridade !== 'todos') params.set('prioridade', filtroPrioridade)
 
       const response = await fetch(`/api/protocolo?${params.toString()}`)
       const data = await response.json()
@@ -272,7 +272,7 @@ export default function ProtocoloListPage() {
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="ENTRADA">Entrada</SelectItem>
                 <SelectItem value="SAIDA">Saída</SelectItem>
                 <SelectItem value="INTERNO">Interno</SelectItem>
@@ -284,7 +284,7 @@ export default function ProtocoloListPage() {
                 <SelectValue placeholder="Situação" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="todos">Todas</SelectItem>
                 <SelectItem value="ABERTO">Aberto</SelectItem>
                 <SelectItem value="EM_TRAMITACAO">Em Tramitação</SelectItem>
                 <SelectItem value="RESPONDIDO">Respondido</SelectItem>
@@ -297,7 +297,7 @@ export default function ProtocoloListPage() {
                 <SelectValue placeholder="Prioridade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="todos">Todas</SelectItem>
                 <SelectItem value="BAIXA">Baixa</SelectItem>
                 <SelectItem value="NORMAL">Normal</SelectItem>
                 <SelectItem value="ALTA">Alta</SelectItem>
@@ -309,9 +309,9 @@ export default function ProtocoloListPage() {
               variant="outline"
               onClick={() => {
                 setBusca('')
-                setFiltroTipo('')
-                setFiltroSituacao('')
-                setFiltroPrioridade('')
+                setFiltroTipo('todos')
+                setFiltroSituacao('todos')
+                setFiltroPrioridade('todos')
                 setPage(1)
               }}
             >

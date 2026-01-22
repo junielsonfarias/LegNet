@@ -90,9 +90,9 @@ export default function NormasListPage() {
   const [estatisticas, setEstatisticas] = useState<Estatisticas | null>(null)
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState<string>('')
-  const [filtroSituacao, setFiltroSituacao] = useState<string>('')
-  const [filtroAno, setFiltroAno] = useState<string>('')
+  const [filtroTipo, setFiltroTipo] = useState<string>('todos')
+  const [filtroSituacao, setFiltroSituacao] = useState<string>('todos')
+  const [filtroAno, setFiltroAno] = useState<string>('todos')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -104,9 +104,9 @@ export default function NormasListPage() {
       params.set('limit', '20')
 
       if (busca) params.set('busca', busca)
-      if (filtroTipo) params.set('tipo', filtroTipo)
-      if (filtroSituacao) params.set('situacao', filtroSituacao)
-      if (filtroAno) params.set('ano', filtroAno)
+      if (filtroTipo && filtroTipo !== 'todos') params.set('tipo', filtroTipo)
+      if (filtroSituacao && filtroSituacao !== 'todos') params.set('situacao', filtroSituacao)
+      if (filtroAno && filtroAno !== 'todos') params.set('ano', filtroAno)
 
       const response = await fetch(`/api/normas?${params.toString()}`)
       const data = await response.json()
@@ -257,7 +257,7 @@ export default function NormasListPage() {
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="LEI_ORDINARIA">Lei Ordinaria</SelectItem>
                 <SelectItem value="LEI_COMPLEMENTAR">Lei Complementar</SelectItem>
                 <SelectItem value="DECRETO_LEGISLATIVO">Decreto Legislativo</SelectItem>
@@ -271,7 +271,7 @@ export default function NormasListPage() {
                 <SelectValue placeholder="Situacao" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="todos">Todas</SelectItem>
                 <SelectItem value="VIGENTE">Vigente</SelectItem>
                 <SelectItem value="COM_ALTERACOES">Com Alteracoes</SelectItem>
                 <SelectItem value="REVOGADA">Revogada</SelectItem>
@@ -285,7 +285,7 @@ export default function NormasListPage() {
                 <SelectValue placeholder="Ano" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
                 {anos.map(ano => (
                   <SelectItem key={ano} value={ano.toString()}>{ano}</SelectItem>
                 ))}
@@ -296,9 +296,9 @@ export default function NormasListPage() {
               variant="outline"
               onClick={() => {
                 setBusca('')
-                setFiltroTipo('')
-                setFiltroSituacao('')
-                setFiltroAno('')
+                setFiltroTipo('todos')
+                setFiltroSituacao('todos')
+                setFiltroAno('todos')
                 setPage(1)
               }}
             >
