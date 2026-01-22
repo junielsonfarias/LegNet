@@ -273,7 +273,8 @@ export async function verificarImpedimentoVoto(
 export async function registrarVoto(
   proposicaoId: string,
   parlamentarId: string,
-  voto: OpcaoVoto
+  voto: OpcaoVoto,
+  turno: number = 1
 ): Promise<ValidationResult> {
   const errors: string[] = []
   const warnings: string[] = []
@@ -306,9 +307,10 @@ export async function registrarVoto(
     // Registra ou atualiza voto (upsert)
     await prisma.votacao.upsert({
       where: {
-        proposicaoId_parlamentarId: {
+        proposicaoId_parlamentarId_turno: {
           proposicaoId,
-          parlamentarId
+          parlamentarId,
+          turno
         }
       },
       update: {
@@ -317,7 +319,8 @@ export async function registrarVoto(
       create: {
         proposicaoId,
         parlamentarId,
-        voto: voto as TipoVoto
+        voto: voto as TipoVoto,
+        turno
       }
     })
 

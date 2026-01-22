@@ -21,7 +21,7 @@ const CriarNormaSchema = z.object({
     'LEI_ORDINARIA', 'LEI_COMPLEMENTAR', 'DECRETO_LEGISLATIVO',
     'RESOLUCAO', 'EMENDA_LEI_ORGANICA', 'LEI_ORGANICA', 'REGIMENTO_INTERNO'
   ]),
-  numero: z.string().min(1, 'Número é obrigatório'),
+  numero: z.number().int().positive('Número é obrigatório'),
   ano: z.number().int().min(1900).max(2100),
   data: z.string().datetime(),
   dataPublicacao: z.string().datetime().optional(),

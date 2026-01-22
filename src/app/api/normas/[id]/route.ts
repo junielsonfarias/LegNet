@@ -54,7 +54,7 @@ const ParagrafoSchema = z.object({
 
 const AlteracaoSchema = z.object({
   normaAlteradoraId: z.string().min(1, 'Norma alteradora é obrigatória'),
-  tipoAlteracao: z.enum(['REVOGACAO_TOTAL', 'REVOGACAO_PARCIAL', 'ALTERACAO', 'ACRESCIMO']),
+  tipoAlteracao: z.enum(['REVOGACAO', 'REVOGACAO_PARCIAL', 'ALTERACAO', 'ACRESCIMO', 'NOVA_REDACAO']),
   artigoAlterado: z.string().optional(),
   descricao: z.string().min(1, 'Descrição é obrigatória')
 })

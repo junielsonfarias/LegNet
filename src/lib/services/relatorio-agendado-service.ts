@@ -11,9 +11,9 @@ const logger = createLogger('relatorio-agendado')
 export interface CriarRelatorioAgendadoInput {
   nome: string
   descricao?: string
-  tipo: string
+  tipo: 'PRODUCAO_LEGISLATIVA' | 'PRESENCA_SESSOES' | 'VOTACOES' | 'TRAMITACAO' | 'COMISSOES' | 'TRANSPARENCIA' | 'PERSONALIZADO'
   filtros?: Record<string, any>
-  frequencia: 'DIARIO' | 'SEMANAL' | 'MENSAL' | 'SOB_DEMANDA'
+  frequencia: 'DIARIO' | 'SEMANAL' | 'QUINZENAL' | 'MENSAL' | 'TRIMESTRAL' | 'SEMESTRAL' | 'ANUAL'
   diaSemana?: number
   diaHora?: string
   destinatarios: string[]
@@ -47,11 +47,11 @@ export async function criarRelatorioAgendado(input: CriarRelatorioAgendadoInput)
       nome: input.nome,
       descricao: input.descricao,
       tipo: input.tipo,
-      filtros: input.filtros || {},
+      filtros: JSON.stringify(input.filtros || {}),
       frequencia: input.frequencia,
       diaSemana: input.diaSemana,
       diaHora: input.diaHora,
-      destinatarios: input.destinatarios,
+      destinatarios: JSON.stringify(input.destinatarios),
       formato: input.formato
     }
   })
@@ -101,9 +101,13 @@ export async function atualizarRelatorioAgendado(
   id: string,
   input: Partial<CriarRelatorioAgendadoInput>
 ) {
+  const data: Record<string, any> = { ...input }
+  if (input.filtros) data.filtros = JSON.stringify(input.filtros)
+  if (input.destinatarios) data.destinatarios = JSON.stringify(input.destinatarios)
+
   const relatorio = await prisma.relatorioAgendado.update({
     where: { id },
-    data: input
+    data
   })
 
   logger.info('Relatório agendado atualizado', {
@@ -148,9 +152,10 @@ export async function executarRelatorio(
     }
 
     // Gerar dados do relatório
+    const filtros = relatorio.filtros ? JSON.parse(relatorio.filtros) : {}
     const dados = await gerarDadosRelatorio(
       relatorio.tipo,
-      relatorio.filtros as Record<string, any> || {}
+      filtros
     )
 
     // Simular geração de arquivo (em produção, gerar PDF/Excel/CSV real)
@@ -318,7 +323,7 @@ async function gerarRelatorioPresencaParlamentar(ano: number, filtros: any) {
         status: 'CONCLUIDA'
       }
     }),
-    prisma.presenca.groupBy({
+    prisma.presencaSessao.groupBy({
       by: ['parlamentarId', 'presente'],
       where: {
         sessao: {
@@ -443,16 +448,16 @@ async function gerarRelatorioTramitacao(ano: number, filtros: any) {
   ] = await Promise.all([
     prisma.tramitacao.count({
       where: {
-        data: {
+        dataEntrada: {
           gte: new Date(`${ano}-01-01`),
           lte: new Date(`${ano}-12-31`)
         }
       }
     }),
     prisma.tramitacao.groupBy({
-      by: ['unidadeAtualId'],
+      by: ['unidadeId'],
       where: {
-        data: {
+        dataEntrada: {
           gte: new Date(`${ano}-01-01`),
           lte: new Date(`${ano}-12-31`)
         }
@@ -528,7 +533,7 @@ async function gerarRelatorioComissoes(ano: number, filtros: any) {
     prisma.comissao.count({ where: { ativa: true } }),
     prisma.parecer.count({
       where: {
-        data: {
+        createdAt: {
           gte: new Date(`${ano}-01-01`),
           lte: new Date(`${ano}-12-31`)
         }
@@ -537,7 +542,7 @@ async function gerarRelatorioComissoes(ano: number, filtros: any) {
     prisma.parecer.groupBy({
       by: ['comissaoId'],
       where: {
-        data: {
+        createdAt: {
           gte: new Date(`${ano}-01-01`),
           lte: new Date(`${ano}-12-31`)
         }

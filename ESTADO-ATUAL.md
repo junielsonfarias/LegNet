@@ -19,7 +19,7 @@
 | **Paginas Admin** | 22+ |
 | **Paginas Publicas** | 35+ |
 | **Multi-Tenant** | Implementado |
-| **Cobertura SAPL** | ~96% |
+| **Cobertura SAPL** | 100% |
 
 ---
 
@@ -715,6 +715,7 @@ psql -h localhost -U camara_user camara_db < backup_20260119.sql
 | E001 | Sessao sem tratamento de erro em algumas APIs | Corrigido | Implementado withErrorHandler em 74 APIs |
 | E002 | Validacao Zod incompleta em alguns endpoints | Corrigido | 25+ schemas implementados |
 | E003 | Falta de rate limiting em algumas rotas | Corrigido | Middleware withRateLimit implementado |
+| E006 | Erros TypeScript nas Fases 5 e 6 do SAPL | Corrigido (22/01/2026) | Correcoes de tipos em servicos (turno, votacao, sugestao, relatorios, normas) |
 
 ### Erros de Baixa Prioridade
 | ID | Descricao | Status | Solucao |

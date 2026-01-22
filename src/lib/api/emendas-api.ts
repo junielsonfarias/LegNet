@@ -26,6 +26,15 @@ export interface EmendaApi {
   parecerTexto?: string
   aglutinada: boolean
   emendaAglutinadaId?: string
+  emendaAglutinada?: {
+    id: string
+    numero: string
+  }
+  emendasAglutinadas?: Array<{
+    id: string
+    numero: string
+    tipo: string
+  }>
   createdAt: string
   autor?: {
     id: string

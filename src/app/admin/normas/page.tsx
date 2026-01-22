@@ -146,7 +146,7 @@ export default function NormasListPage() {
   }, [])
 
   // Gerar lista de anos
-  const anos = []
+  const anos: number[] = []
   const anoAtual = new Date().getFullYear()
   for (let i = anoAtual; i >= anoAtual - 20; i--) {
     anos.push(i)

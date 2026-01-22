@@ -665,7 +665,7 @@ export default function DetalhesProtocoloPage() {
                         </p>
                         {tram.despacho && (
                           <p className="mt-1 text-sm text-gray-600 italic">
-                            "{tram.despacho}"
+                            &ldquo;{tram.despacho}&rdquo;
                           </p>
                         )}
                       </div>

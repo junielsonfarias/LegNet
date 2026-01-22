@@ -67,6 +67,7 @@ export interface VotacaoAtiva {
   resultado?: 'APROVADA' | 'REJEITADA' | 'EMPATE'
   quorumNecessario: number
   tipoQuorum: 'SIMPLES' | 'ABSOLUTA' | 'QUALIFICADA'
+  turno: number
 }
 
 export interface VotoIndividual {
@@ -369,7 +370,8 @@ export async function iniciarVotacao(
       horaVoto: undefined
     })),
     quorumNecessario: Math.floor(parlamentaresPresentes.length / 2) + 1,
-    tipoQuorum: 'SIMPLES'
+    tipoQuorum: 'SIMPLES',
+    turno: 1
   }
 
   estado.votacaoAtiva = votacaoAtiva
@@ -434,15 +436,17 @@ export async function registrarVoto(
   // Persistir no banco
   await prisma.votacao.upsert({
     where: {
-      proposicaoId_parlamentarId: {
+      proposicaoId_parlamentarId_turno: {
         proposicaoId: estado.votacaoAtiva.proposicaoId,
-        parlamentarId
+        parlamentarId,
+        turno: estado.votacaoAtiva.turno
       }
     },
     create: {
       proposicaoId: estado.votacaoAtiva.proposicaoId,
       parlamentarId,
-      voto
+      voto,
+      turno: estado.votacaoAtiva.turno
     },
     update: {
       voto

@@ -37,7 +37,7 @@ const AtualizarEmendaSchema = z.object({
     'PELA_REJEICAO', 'PELA_APROVACAO_PARCIAL'
   ]).optional(),
   parecerTexto: z.string().optional(),
-  parecerData: z.string().datetime().optional(),
+  parecerData: z.string().datetime().transform(val => new Date(val)).optional(),
   parecerRelatorId: z.string().optional(),
   observacoes: z.string().optional()
 })

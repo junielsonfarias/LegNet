@@ -96,7 +96,12 @@ export async function buscarSugestao(id: string) {
   if (!sugestao) return null
 
   // Buscar dados do parlamentar responsável, se houver
-  let parlamentarResponsavel = null
+  let parlamentarResponsavel: {
+    id: string
+    nome: string
+    partido: string | null
+    foto: string | null
+  } | null = null
   if (sugestao.parlamentarResponsavelId) {
     parlamentarResponsavel = await prisma.parlamentar.findUnique({
       where: { id: sugestao.parlamentarResponsavelId },
@@ -105,7 +110,13 @@ export async function buscarSugestao(id: string) {
   }
 
   // Buscar dados da proposição, se houver
-  let proposicao = null
+  let proposicao: {
+    id: string
+    numero: string
+    ano: number
+    titulo: string
+    tipo: string
+  } | null = null
   if (sugestao.proposicaoId) {
     proposicao = await prisma.proposicao.findUnique({
       where: { id: sugestao.proposicaoId },
@@ -376,7 +387,6 @@ export async function getEstatisticasSugestoes() {
     }),
     prisma.sugestaoLegislativa.groupBy({
       by: ['categoria'],
-      where: { categoria: { not: null } },
       _count: true
     }),
     prisma.sugestaoLegislativa.findMany({
@@ -408,7 +418,7 @@ export async function verificarSugestaoPendente(cpf: string): Promise<boolean> {
 
   const sugestao = await prisma.sugestaoLegislativa.findFirst({
     where: {
-      cpf: cpfHash,
+      cpfHash: cpfHash,
       status: 'PENDENTE'
     }
   })

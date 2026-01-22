@@ -188,12 +188,16 @@ export const POST = withErrorHandler(async (
     )
   }
 
+  // Usar turno atual do item da pauta (default 1)
+  const turnoAtual = pautaItem.turnoAtual || 1
+
   // Criar ou atualizar voto
   const voto = await prisma.votacao.upsert({
     where: {
-      proposicaoId_parlamentarId: {
+      proposicaoId_parlamentarId_turno: {
         proposicaoId: validatedData.proposicaoId,
-        parlamentarId: validatedData.parlamentarId
+        parlamentarId: validatedData.parlamentarId,
+        turno: turnoAtual
       }
     },
     update: {
@@ -202,7 +206,8 @@ export const POST = withErrorHandler(async (
     create: {
       proposicaoId: validatedData.proposicaoId,
       parlamentarId: validatedData.parlamentarId,
-      voto: validatedData.voto
+      voto: validatedData.voto,
+      turno: turnoAtual
     },
     include: {
       parlamentar: {

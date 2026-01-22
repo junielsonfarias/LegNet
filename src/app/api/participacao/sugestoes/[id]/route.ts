@@ -20,7 +20,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 const ModerarSchema = z.object({
-  status: z.enum(['PENDENTE', 'EM_ANALISE', 'APROVADA', 'REJEITADA', 'CONVERTIDA', 'ARQUIVADA']),
+  status: z.enum(['PENDENTE', 'EM_ANALISE', 'ACEITA', 'RECUSADA', 'CONVERTIDA_PROPOSICAO']),
   motivoRecusa: z.string().optional(),
   parlamentarResponsavelId: z.string().optional()
 })

@@ -22,7 +22,7 @@ const AtualizarSchema = z.object({
   nome: z.string().min(3).optional(),
   descricao: z.string().optional(),
   filtros: z.record(z.any()).optional(),
-  frequencia: z.enum(['DIARIO', 'SEMANAL', 'MENSAL', 'SOB_DEMANDA']).optional(),
+  frequencia: z.enum(['DIARIO', 'SEMANAL', 'QUINZENAL', 'MENSAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL']).optional(),
   diaSemana: z.number().int().min(0).max(6).optional(),
   diaHora: z.string().optional(),
   destinatarios: z.array(z.string().email()).optional(),

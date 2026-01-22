@@ -7,18 +7,19 @@
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import type {
-  TipoNorma,
+  TipoNormaJuridica,
   SituacaoNorma
 } from '@prisma/client'
 
 const logger = createLogger('norma-juridica')
 
 // Tipos exportados
-export type { TipoNorma, SituacaoNorma }
+export type TipoNorma = TipoNormaJuridica
+export type { SituacaoNorma }
 
 export interface CriarNormaInput {
   tipo: TipoNorma
-  numero: string
+  numero: number
   ano: number
   data: Date
   dataPublicacao?: Date
@@ -60,7 +61,7 @@ export interface CriarParagrafoInput {
 export interface RegistrarAlteracaoInput {
   normaAlteradaId: string
   normaAlteradoraId: string
-  tipoAlteracao: 'REVOGACAO_TOTAL' | 'REVOGACAO_PARCIAL' | 'ALTERACAO' | 'ACRESCIMO'
+  tipoAlteracao: 'REVOGACAO' | 'REVOGACAO_PARCIAL' | 'ALTERACAO' | 'ACRESCIMO' | 'NOVA_REDACAO'
   artigoAlterado?: string
   descricao: string
 }
@@ -102,7 +103,8 @@ export async function criarNorma(input: CriarNormaInput) {
       normaId: norma.id,
       versao: 1,
       textoCompleto: input.texto,
-      motivoAlteracao: 'Versão original'
+      motivoAlteracao: 'Versão original',
+      dataVersao: new Date()
     }
   })
 
@@ -140,7 +142,7 @@ export async function buscarNormaPorId(id: string) {
         },
         orderBy: { createdAt: 'desc' }
       },
-      alteracoesRealizadas: {
+      alteracoesFeitas: {
         include: {
           normaAlterada: {
             select: { id: true, tipo: true, numero: true, ano: true, ementa: true }
@@ -150,9 +152,6 @@ export async function buscarNormaPorId(id: string) {
       },
       versoes: {
         orderBy: { versao: 'desc' }
-      },
-      proposicaoOrigem: {
-        select: { id: true, numero: true, ano: true, titulo: true, tipo: true }
       }
     }
   })
@@ -163,7 +162,7 @@ export async function buscarNormaPorId(id: string) {
  */
 export async function buscarNormaPorIdentificacao(
   tipo: TipoNorma,
-  numero: string,
+  numero: number,
   ano: number
 ) {
   return prisma.normaJuridica.findUnique({
@@ -272,7 +271,8 @@ export async function atualizarNorma(
         normaId: id,
         versao: (ultimaVersao?.versao || 0) + 1,
         textoCompleto: input.texto,
-        motivoAlteracao: 'Atualização de texto'
+        motivoAlteracao: 'Atualização de texto',
+        dataVersao: new Date()
       }
     })
   }
@@ -343,18 +343,19 @@ export async function registrarAlteracao(input: RegistrarAlteracaoInput) {
       normaAlteradoraId: input.normaAlteradoraId,
       tipoAlteracao: input.tipoAlteracao,
       artigoAlterado: input.artigoAlterado,
-      descricao: input.descricao
+      descricao: input.descricao,
+      dataAlteracao: new Date()
     }
   })
 
   // Atualizar situação da norma alterada
   let novaSituacao: SituacaoNorma = 'VIGENTE'
 
-  if (input.tipoAlteracao === 'REVOGACAO_TOTAL') {
+  if (input.tipoAlteracao === 'REVOGACAO') {
     novaSituacao = 'REVOGADA'
   } else if (input.tipoAlteracao === 'REVOGACAO_PARCIAL') {
     novaSituacao = 'REVOGADA_PARCIALMENTE'
-  } else if (input.tipoAlteracao === 'ALTERACAO' || input.tipoAlteracao === 'ACRESCIMO') {
+  } else if (input.tipoAlteracao === 'ALTERACAO' || input.tipoAlteracao === 'ACRESCIMO' || input.tipoAlteracao === 'NOVA_REDACAO') {
     novaSituacao = 'COM_ALTERACOES'
   }
 
@@ -372,7 +373,7 @@ export async function registrarAlteracao(input: RegistrarAlteracaoInput) {
       },
       data: {
         alteradoPor: input.normaAlteradoraId,
-        vigente: input.tipoAlteracao !== 'REVOGACAO_TOTAL'
+        vigente: input.tipoAlteracao !== 'REVOGACAO'
       }
     })
   }
@@ -426,7 +427,7 @@ export async function converterProposicaoEmNorma(
       ano: true,
       titulo: true,
       ementa: true,
-      textoIntegral: true
+      texto: true
     }
   })
 
@@ -436,12 +437,12 @@ export async function converterProposicaoEmNorma(
 
   const norma = await criarNorma({
     tipo: tipoNorma,
-    numero,
+    numero: parseInt(numero, 10),
     ano: new Date().getFullYear(),
     data: dataPublicacao,
     dataPublicacao,
     ementa: proposicao.ementa || proposicao.titulo,
-    texto: proposicao.textoIntegral || proposicao.ementa || '',
+    texto: proposicao.texto || proposicao.ementa || '',
     proposicaoOrigemId: proposicaoId
   })
 

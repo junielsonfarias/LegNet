@@ -32,7 +32,7 @@ const CriarEmendaSchema = z.object({
   textoNovo: z.string().min(1, 'Texto novo é obrigatório'),
   justificativa: z.string().min(1, 'Justificativa é obrigatória'),
   turnoApresentacao: z.number().optional(),
-  prazoEmenda: z.string().datetime().optional()
+  prazoEmenda: z.string().datetime().transform(val => new Date(val)).optional()
 })
 
 /**

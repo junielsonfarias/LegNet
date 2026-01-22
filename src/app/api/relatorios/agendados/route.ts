@@ -18,9 +18,9 @@ export const dynamic = 'force-dynamic'
 const CriarRelatorioSchema = z.object({
   nome: z.string().min(3, 'Nome e obrigatorio'),
   descricao: z.string().optional(),
-  tipo: z.string().min(1, 'Tipo e obrigatorio'),
+  tipo: z.enum(['PRODUCAO_LEGISLATIVA', 'PRESENCA_SESSOES', 'VOTACOES', 'TRAMITACAO', 'COMISSOES', 'TRANSPARENCIA', 'PERSONALIZADO']),
   filtros: z.record(z.any()).optional(),
-  frequencia: z.enum(['DIARIO', 'SEMANAL', 'MENSAL', 'SOB_DEMANDA']),
+  frequencia: z.enum(['DIARIO', 'SEMANAL', 'QUINZENAL', 'MENSAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL']),
   diaSemana: z.number().int().min(0).max(6).optional(),
   diaHora: z.string().optional(),
   destinatarios: z.array(z.string().email()),

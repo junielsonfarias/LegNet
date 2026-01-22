@@ -241,17 +241,36 @@ export async function registrarResultadoTurno(
         proximoTurno: false,
         mensagem: 'Matéria rejeitada em 1º turno.'
       }
-    } else {
-      // Turno único - resultado final
-      const statusFinal = resultado === 'APROVADA' ? 'APROVADO' :
-                         resultado === 'REJEITADA' ? 'REJEITADO' : 'CONCLUIDO'
-
+    } else if (resultado === 'APROVADA') {
+      // Turno único aprovado (matérias que não precisam de 2º turno)
       await prisma.pautaItem.update({
         where: { id: itemId },
         data: {
           resultadoTurno1: resultado,
           dataVotacaoTurno1: agora,
-          status: statusFinal,
+          status: 'APROVADO',
+          finalizadoEm: agora
+        }
+      })
+
+      logger.info('Votação de turno único finalizada - APROVADA', {
+        action: 'turno_unico_aprovado',
+        itemId,
+        resultado
+      })
+
+      return {
+        proximoTurno: false,
+        mensagem: 'Matéria aprovada em turno único.'
+      }
+    } else {
+      // Outros resultados (EMPATE, SEM_QUORUM, ADIADA, PREJUDICADA)
+      await prisma.pautaItem.update({
+        where: { id: itemId },
+        data: {
+          resultadoTurno1: resultado,
+          dataVotacaoTurno1: agora,
+          status: 'CONCLUIDO',
           finalizadoEm: agora
         }
       })
