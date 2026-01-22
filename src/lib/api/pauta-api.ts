@@ -12,10 +12,24 @@ export interface PautaItemApi {
   tempoReal?: number | null
   tempoAcumulado?: number
   status: string
+  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
   autor?: string | null
   observacoes?: string | null
   iniciadoEm?: string | null
   finalizadoEm?: string | null
+  tipoVotacao?: 'NOMINAL' | 'SECRETA' | null
+
+  // === CAMPOS DE TURNO (SAPL) ===
+  turnoAtual?: number
+  turnoFinal?: number | null
+  resultadoTurno1?: string | null
+  resultadoTurno2?: string | null
+  dataVotacaoTurno1?: string | null
+  dataVotacaoTurno2?: string | null
+  intersticio?: boolean
+  dataIntersticio?: string | null
+  prazoIntersticio?: string | null
+
   createdAt: string
   updatedAt: string
   proposicao?: {
@@ -48,9 +62,16 @@ export interface PautaSugestaoApi {
   titulo: string
   descricao?: string | null
   secao: 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS'
+  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
   tempoEstimado?: number | null
   prioridade: 'ALTA' | 'MEDIA' | 'BAIXA'
   tipoProposicao?: string | null
+  requisitos?: {
+    requerParecerCLJ: boolean
+    temParecerCLJ: boolean
+    podeOrdemDoDia: boolean
+    totalPareceres: number
+  } | null
   proposicao?: {
     id: string
     numero: string

@@ -8,14 +8,19 @@ import {
   pausarItemPauta,
   retomarItemPauta,
   iniciarVotacaoItem,
-  finalizarItemPauta
+  finalizarItemPauta,
+  pedirVistaItem,
+  retomarItemVista,
+  reordenarItemPauta
 } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
 
 const ControleItemSchema = z.object({
-  acao: z.enum(['iniciar', 'pausar', 'retomar', 'votacao', 'finalizar']),
-  resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO']).optional()
+  acao: z.enum(['iniciar', 'pausar', 'retomar', 'votacao', 'finalizar', 'vista', 'retomarVista', 'subir', 'descer']),
+  resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO']).optional(),
+  parlamentarId: z.string().optional(), // Para pedido de vista
+  prazoDias: z.number().optional()      // Prazo para devolução da vista
 })
 
 export const POST = withAuth(withErrorHandler(async (
@@ -30,7 +35,7 @@ export const POST = withAuth(withErrorHandler(async (
   }
 
   const body = await request.json()
-  const { acao, resultado } = ControleItemSchema.parse(body)
+  const { acao, resultado, parlamentarId, prazoDias } = ControleItemSchema.parse(body)
 
   switch (acao) {
     case 'iniciar':
@@ -57,6 +62,29 @@ export const POST = withAuth(withErrorHandler(async (
       return createSuccessResponse(
         await finalizarItemPauta(sessaoId, itemId, resultado),
         'Item finalizado com sucesso'
+      )
+    case 'vista':
+      if (!parlamentarId) {
+        throw new ValidationError('ID do parlamentar é obrigatório para pedido de vista')
+      }
+      return createSuccessResponse(
+        await pedirVistaItem(sessaoId, itemId, parlamentarId, prazoDias),
+        'Pedido de vista registrado com sucesso'
+      )
+    case 'retomarVista':
+      return createSuccessResponse(
+        await retomarItemVista(sessaoId, itemId),
+        'Item retomado após vista'
+      )
+    case 'subir':
+      return createSuccessResponse(
+        await reordenarItemPauta(sessaoId, itemId, 'subir'),
+        'Item reordenado com sucesso'
+      )
+    case 'descer':
+      return createSuccessResponse(
+        await reordenarItemPauta(sessaoId, itemId, 'descer'),
+        'Item reordenado com sucesso'
       )
     default:
       throw new ValidationError('Ação inválida')

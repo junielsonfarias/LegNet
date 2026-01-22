@@ -477,6 +477,271 @@ export async function validarProposicaoCompleta(
   }
 }
 
+/**
+ * RN-030: Valida se proposição pode ser incluída na Ordem do Dia
+ * Requer parecer da CLJ para projetos que precisam de votação
+ */
+export async function validarInclusaoOrdemDoDia(
+  proposicaoId: string
+): Promise<ValidationResult> {
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  // Busca proposição com pareceres
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: proposicaoId },
+    include: {
+      pareceres: {
+        include: {
+          comissao: {
+            select: { sigla: true, nome: true }
+          }
+        }
+      }
+    }
+  })
+
+  if (!proposicao) {
+    return {
+      valid: false,
+      errors: ['Proposição não encontrada'],
+      warnings: [],
+      rule: 'RN-030'
+    }
+  }
+
+  // Tipos que NÃO precisam de parecer (aprovação simbólica/leitura apenas)
+  const tiposSemParecer = ['VOTO_PESAR', 'VOTO_APLAUSO', 'INDICACAO']
+  if (tiposSemParecer.includes(proposicao.tipo)) {
+    return {
+      valid: true,
+      errors: [],
+      warnings: ['Este tipo de proposição não requer parecer para votação'],
+      rule: 'RN-030'
+    }
+  }
+
+  // Tipos que PRECISAM de parecer da CLJ
+  const tiposComParecerCLJ = [
+    'PROJETO_LEI',
+    'PROJETO_RESOLUCAO',
+    'PROJETO_DECRETO'
+  ]
+
+  if (tiposComParecerCLJ.includes(proposicao.tipo)) {
+    // Verifica parecer da CLJ
+    const parecerCLJ = proposicao.pareceres.find(
+      p => p.comissao?.sigla === 'CLJ' || p.comissao?.nome?.includes('Legislação')
+    )
+
+    if (!parecerCLJ) {
+      errors.push(
+        'RN-030: Proposição deve ter parecer da Comissão de Legislação e Justiça (CLJ) ' +
+        'para ser incluída na Ordem do Dia.'
+      )
+    } else if (parecerCLJ.tipo === 'PELA_INCONSTITUCIONALIDADE' || parecerCLJ.tipo === 'PELA_ILEGALIDADE') {
+      errors.push(
+        `RN-030: Proposição recebeu parecer ${parecerCLJ.tipo === 'PELA_INCONSTITUCIONALIDADE' ? 'PELA INCONSTITUCIONALIDADE' : 'PELA ILEGALIDADE'} da CLJ. ` +
+        'Não pode ser incluída na Ordem do Dia para votação.'
+      )
+    } else {
+      logger.info('Parecer CLJ encontrado para proposição', {
+        action: 'validar_ordem_dia',
+        proposicaoId,
+        parecerTipo: parecerCLJ.tipo
+      })
+    }
+
+    // Verifica se envolve despesas (precisa de parecer CFO)
+    const textoCompleto = `${proposicao.ementa} ${proposicao.texto || ''}`.toLowerCase()
+    const palavrasDespesa = [
+      'despesa', 'crédito', 'dotação', 'orçament', 'recurso financeiro',
+      'aumento salar', 'reajuste', 'subsídio', 'gratifica', 'cargo', 'função'
+    ]
+
+    const envolveDespesa = palavrasDespesa.some(p => textoCompleto.includes(p))
+
+    if (envolveDespesa) {
+      const parecerCFO = proposicao.pareceres.find(
+        p => p.comissao?.sigla === 'CFO' || p.comissao?.nome?.includes('Finanças')
+      )
+
+      if (!parecerCFO) {
+        warnings.push(
+          'Atenção: Esta proposição parece envolver despesas. ' +
+          'Recomenda-se parecer da Comissão de Finanças e Orçamento (CFO).'
+        )
+      }
+    }
+  }
+
+  // Requerimentos podem precisar de parecer dependendo do tipo
+  if (proposicao.tipo === 'REQUERIMENTO') {
+    // Alguns requerimentos são votados diretamente
+    warnings.push(
+      'Requerimento será votado conforme regimento. ' +
+      'Alguns tipos podem ser aprovados por aclamação.'
+    )
+  }
+
+  // Moções precisam de votação
+  if (proposicao.tipo === 'MOCAO') {
+    if (proposicao.pareceres.length === 0) {
+      warnings.push(
+        'Moção será submetida a votação simples do plenário.'
+      )
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    rule: 'RN-030'
+  }
+}
+
+/**
+ * Determina o tipo de ação apropriado para um item da pauta
+ * baseado no tipo de proposição e seção
+ */
+export function determinarTipoAcaoPauta(
+  tipoProposicao: string,
+  secao: string,
+  isPrimeiraLeitura: boolean = false
+): 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' {
+  // Se é primeira leitura no Expediente
+  if (isPrimeiraLeitura && secao === 'EXPEDIENTE') {
+    return 'LEITURA'
+  }
+
+  // Mapeamento por tipo de proposição
+  switch (tipoProposicao) {
+    case 'VOTO_PESAR':
+    case 'VOTO_APLAUSO':
+      return 'HOMENAGEM'
+
+    case 'INDICACAO':
+      return secao === 'EXPEDIENTE' ? 'LEITURA' : 'COMUNICADO'
+
+    case 'PROJETO_LEI':
+    case 'PROJETO_RESOLUCAO':
+    case 'PROJETO_DECRETO':
+    case 'REQUERIMENTO':
+    case 'MOCAO':
+      return secao === 'ORDEM_DO_DIA' ? 'VOTACAO' : 'LEITURA'
+
+    default:
+      return 'LEITURA'
+  }
+}
+
+/**
+ * Mapeamento de tipo de proposição para seção da pauta
+ */
+export const MAPEAMENTO_TIPO_SECAO: Record<string, {
+  secaoPrimeira: string
+  secaoVotacao: string | null
+  tipoAcaoPrimeira: string
+  tipoAcaoVotacao: string | null
+  requerParecerCLJ: boolean
+}> = {
+  PROJETO_LEI: {
+    secaoPrimeira: 'EXPEDIENTE',
+    secaoVotacao: 'ORDEM_DO_DIA',
+    tipoAcaoPrimeira: 'LEITURA',
+    tipoAcaoVotacao: 'VOTACAO',
+    requerParecerCLJ: true
+  },
+  PROJETO_RESOLUCAO: {
+    secaoPrimeira: 'EXPEDIENTE',
+    secaoVotacao: 'ORDEM_DO_DIA',
+    tipoAcaoPrimeira: 'LEITURA',
+    tipoAcaoVotacao: 'VOTACAO',
+    requerParecerCLJ: true
+  },
+  PROJETO_DECRETO: {
+    secaoPrimeira: 'EXPEDIENTE',
+    secaoVotacao: 'ORDEM_DO_DIA',
+    tipoAcaoPrimeira: 'LEITURA',
+    tipoAcaoVotacao: 'VOTACAO',
+    requerParecerCLJ: true
+  },
+  REQUERIMENTO: {
+    secaoPrimeira: 'EXPEDIENTE',
+    secaoVotacao: 'ORDEM_DO_DIA',
+    tipoAcaoPrimeira: 'LEITURA',
+    tipoAcaoVotacao: 'VOTACAO',
+    requerParecerCLJ: false
+  },
+  INDICACAO: {
+    secaoPrimeira: 'EXPEDIENTE',
+    secaoVotacao: null, // Não vai para votação, apenas leitura
+    tipoAcaoPrimeira: 'LEITURA',
+    tipoAcaoVotacao: null,
+    requerParecerCLJ: false
+  },
+  MOCAO: {
+    secaoPrimeira: 'HONRAS',
+    secaoVotacao: 'HONRAS',
+    tipoAcaoPrimeira: 'LEITURA',
+    tipoAcaoVotacao: 'VOTACAO',
+    requerParecerCLJ: false
+  },
+  VOTO_PESAR: {
+    secaoPrimeira: 'HONRAS',
+    secaoVotacao: null, // Aprovação simbólica
+    tipoAcaoPrimeira: 'HOMENAGEM',
+    tipoAcaoVotacao: null,
+    requerParecerCLJ: false
+  },
+  VOTO_APLAUSO: {
+    secaoPrimeira: 'HONRAS',
+    secaoVotacao: null, // Aprovação simbólica
+    tipoAcaoPrimeira: 'HOMENAGEM',
+    tipoAcaoVotacao: null,
+    requerParecerCLJ: false
+  }
+}
+
+/**
+ * Atualiza as transições válidas de status para incluir novos estados
+ */
+export function validarTransicaoStatusCompleta(
+  statusAtual: string,
+  novoStatus: string
+): ValidationResult {
+  const errors: string[] = []
+
+  // Define transições válidas com novos estados
+  const transicoesValidas: Record<string, string[]> = {
+    APRESENTADA: ['EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'ARQUIVADA'],
+    EM_TRAMITACAO: ['AGUARDANDO_PAUTA', 'ARQUIVADA'],
+    AGUARDANDO_PAUTA: ['EM_PAUTA', 'ARQUIVADA', 'EM_TRAMITACAO'], // Pode voltar para tramitação
+    EM_PAUTA: ['APROVADA', 'REJEITADA', 'AGUARDANDO_PAUTA', 'ARQUIVADA'], // Pode ser retirada da pauta
+    APROVADA: ['VETADA', 'ARQUIVADA'],
+    REJEITADA: ['ARQUIVADA'],
+    VETADA: ['APROVADA', 'ARQUIVADA'], // Veto pode ser derrubado
+    ARQUIVADA: []
+  }
+
+  const transicoesPermitidas = transicoesValidas[statusAtual] || []
+
+  if (!transicoesPermitidas.includes(novoStatus)) {
+    errors.push(
+      `Transição de status inválida: ${statusAtual} -> ${novoStatus}. ` +
+      `Transições permitidas: ${transicoesPermitidas.join(', ') || 'nenhuma'}.`
+    )
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings: [],
+    rule: 'TRANSICAO_STATUS'
+  }
+}
+
 // Funções auxiliares
 
 function normalizarTexto(texto: string): string {

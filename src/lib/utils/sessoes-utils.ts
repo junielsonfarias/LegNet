@@ -190,7 +190,20 @@ export async function gerarPautaAutomatica(
 }
 
 /**
+ * Formata tempo em segundos para string legível
+ */
+function formatarTempoAta(segundos: number): string {
+  const h = Math.floor(segundos / 3600)
+  const m = Math.floor((segundos % 3600) / 60)
+  if (h > 0) {
+    return `${h} hora(s) e ${m} minuto(s)`
+  }
+  return `${m} minuto(s)`
+}
+
+/**
  * Gera a ata da sessão baseada nas informações e resultados das votações
+ * Versão melhorada com detalhes completos da pauta, votos nominais e timeline
  */
 export async function gerarAtaSessao(sessaoId: string): Promise<string> {
   try {
@@ -202,97 +215,211 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
         presencas: {
           include: {
             parlamentar: true
+          },
+          orderBy: {
+            parlamentar: { nome: 'asc' }
           }
         },
-        proposicoes: {
+        pautaSessao: {
           include: {
-            autor: true,
-            votacoes: {
+            itens: {
+              orderBy: [{ secao: 'asc' }, { ordem: 'asc' }],
               include: {
-                parlamentar: true
+                proposicao: {
+                  include: {
+                    autor: true,
+                    votacoes: {
+                      include: {
+                        parlamentar: true
+                      }
+                    }
+                  }
+                }
               }
             }
           }
         }
       }
     })
-    
+
     if (!sessao) {
       throw new Error('Sessão não encontrada')
     }
-    
+
     const dataFormatada = new Date(sessao.data).toLocaleDateString('pt-BR', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     })
-    
-    const horaFormatada = sessao.horario || '14:00'
-    
+
+    const horaInicio = sessao.tempoInicio
+      ? new Date(sessao.tempoInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      : sessao.horario || '14:00'
+
+    const tipoSessaoLabel = {
+      'ORDINARIA': 'ORDINÁRIA',
+      'EXTRAORDINARIA': 'EXTRAORDINÁRIA',
+      'SOLENE': 'SOLENE',
+      'ESPECIAL': 'ESPECIAL'
+    }[sessao.tipo] || sessao.tipo
+
     // Contar presenças
     const presentes = sessao.presencas.filter(p => p.presente)
     const ausentes = sessao.presencas.filter(p => !p.presente)
-    
-    // Gerar texto da ata
-    let ata = `ATA DA ${sessao.numero}ª SESSÃO ${sessao.tipo}\n\n`
-    ata += `Realizada em ${dataFormatada}, às ${horaFormatada} horas, no ${sessao.local || 'Plenário da Câmara Municipal'}.\n\n`
-    
+
+    // Calcular duração total
+    const duracaoTotal = sessao.pautaSessao?.tempoTotalReal || 0
+
+    // =========== INÍCIO DA ATA ===========
+    let ata = `═══════════════════════════════════════════════════════════════════════════════\n`
+    ata += `                        CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS\n`
+    ata += `                              ESTADO DO PARÁ\n`
+    ata += `═══════════════════════════════════════════════════════════════════════════════\n\n`
+
+    ata += `                    ATA DA ${sessao.numero}ª SESSÃO ${tipoSessaoLabel}\n\n`
+
     if (sessao.legislatura) {
-      ata += `Legislatura: ${sessao.legislatura.numero}ª (${sessao.legislatura.anoInicio}/${sessao.legislatura.anoFim})\n`
+      ata += `                    ${sessao.legislatura.numero}ª Legislatura (${sessao.legislatura.anoInicio}-${sessao.legislatura.anoFim})\n`
     }
-    
     if (sessao.periodo) {
-      ata += `Período: ${sessao.periodo.numero}º Período\n\n`
+      ata += `                              ${sessao.periodo.numero}º Período Legislativo\n`
     }
-    
-    ata += `PRESENTES (${presentes.length}):\n`
-    presentes.forEach(p => {
-      ata += `- ${p.parlamentar.nome}${p.parlamentar.apelido ? ` (${p.parlamentar.apelido})` : ''}\n`
+    ata += `\n───────────────────────────────────────────────────────────────────────────────\n\n`
+
+    // ABERTURA
+    ata += `Aos ${dataFormatada}, às ${horaInicio} horas, no ${sessao.local || 'Plenário da Câmara Municipal de Mojuí dos Campos'}, `
+    ata += `reuniram-se os Vereadores abaixo relacionados para a realização da ${sessao.numero}ª Sessão ${tipoSessaoLabel}.\n\n`
+
+    // PRESENÇAS
+    ata += `─── VERIFICAÇÃO DE QUÓRUM ───────────────────────────────────────────────────────\n\n`
+    ata += `PRESENTES (${presentes.length} Vereador${presentes.length !== 1 ? 'es' : ''}):\n`
+    presentes.forEach((p, idx) => {
+      ata += `   ${idx + 1}. ${p.parlamentar.nome}`
+      if (p.parlamentar.partido) ata += ` (${p.parlamentar.partido})`
+      ata += '\n'
     })
-    
+
     if (ausentes.length > 0) {
-      ata += `\nAUSENTES (${ausentes.length}):\n`
-      ausentes.forEach(p => {
-        ata += `- ${p.parlamentar.nome}${p.parlamentar.apelido ? ` (${p.parlamentar.apelido})` : ''}`
-        if (p.justificativa) {
-          ata += ` - Justificativa: ${p.justificativa}`
-        }
+      ata += `\nAUSENTES (${ausentes.length} Vereador${ausentes.length !== 1 ? 'es' : ''}):\n`
+      ausentes.forEach((p, idx) => {
+        ata += `   ${idx + 1}. ${p.parlamentar.nome}`
+        if (p.parlamentar.partido) ata += ` (${p.parlamentar.partido})`
+        if (p.justificativa) ata += ` - ${p.justificativa}`
         ata += '\n'
       })
     }
-    
-    if (sessao.descricao) {
-      ata += `\n${sessao.descricao}\n\n`
-    }
-    
-    // Adicionar proposições e resultados
-    if (sessao.proposicoes.length > 0) {
-      ata += `\nMATÉRIAS APRECIADAS:\n\n`
-      sessao.proposicoes.forEach((proposicao, index) => {
-        ata += `${index + 1}. ${proposicao.tipo} ${proposicao.numero}/${proposicao.ano}\n`
-        ata += `   Autor: ${proposicao.autor.nome}\n`
-        ata += `   Ementa: ${proposicao.ementa}\n`
-        
-        if (proposicao.resultado) {
-          ata += `   Resultado: ${proposicao.resultado}\n`
-          
-          // Contar votos
-          const votosSim = proposicao.votacoes.filter(v => v.voto === 'SIM').length
-          const votosNao = proposicao.votacoes.filter(v => v.voto === 'NAO').length
-          const abstencoes = proposicao.votacoes.filter(v => v.voto === 'ABSTENCAO').length
-          
-          ata += `   Votos: ${votosSim} a favor, ${votosNao} contra, ${abstencoes} abstenções\n`
+
+    ata += `\nVerificado o quórum regimental com ${presentes.length} parlamentar${presentes.length !== 1 ? 'es' : ''} `
+    ata += `presente${presentes.length !== 1 ? 's' : ''}, a sessão foi declarada aberta.\n\n`
+
+    // PAUTA DA SESSÃO
+    const itens = sessao.pautaSessao?.itens || []
+    if (itens.length > 0) {
+      ata += `─── ORDEM DOS TRABALHOS ─────────────────────────────────────────────────────────\n\n`
+
+      // Agrupar por seção
+      const secoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS']
+      const secaoLabels: Record<string, string> = {
+        'EXPEDIENTE': 'EXPEDIENTE',
+        'ORDEM_DO_DIA': 'ORDEM DO DIA',
+        'COMUNICACOES': 'COMUNICAÇÕES',
+        'HONRAS': 'HONRAS DO DIA',
+        'OUTROS': 'OUTROS ASSUNTOS'
+      }
+
+      for (const secao of secoes) {
+        const itensSecao = itens.filter(i => i.secao === secao)
+        if (itensSecao.length === 0) continue
+
+        ata += `── ${secaoLabels[secao] || secao} ${'─'.repeat(60 - (secaoLabels[secao] || secao).length)}\n\n`
+
+        for (const item of itensSecao) {
+          const statusLabel = {
+            'APROVADO': '✓ APROVADO',
+            'REJEITADO': '✗ REJEITADO',
+            'CONCLUIDO': '✓ CONCLUÍDO',
+            'ADIADO': '⏸ ADIADO',
+            'RETIRADO': '⊘ RETIRADO',
+            'VISTA': '👁 EM VISTA',
+            'PENDENTE': '○ PENDENTE'
+          }[item.status] || item.status
+
+          ata += `${item.ordem}. ${item.titulo}\n`
+          if (item.descricao) {
+            ata += `   ${item.descricao}\n`
+          }
+
+          // Se tem proposição vinculada
+          if (item.proposicao) {
+            const prop = item.proposicao
+            ata += `   Proposição: ${prop.tipo} nº ${prop.numero}/${prop.ano}\n`
+            ata += `   Autor: ${prop.autor.nome}\n`
+
+            // Votação nominal
+            if (prop.votacoes && prop.votacoes.length > 0) {
+              const votosSim = prop.votacoes.filter(v => v.voto === 'SIM')
+              const votosNao = prop.votacoes.filter(v => v.voto === 'NAO')
+              const votosAbst = prop.votacoes.filter(v => v.voto === 'ABSTENCAO')
+
+              ata += `\n   VOTAÇÃO NOMINAL:\n`
+              ata += `   Resultado: ${votosSim.length} FAVORÁVEL(IS), ${votosNao.length} CONTRÁRIO(S), ${votosAbst.length} ABSTENÇÃO(ÕES)\n`
+
+              if (votosSim.length > 0) {
+                ata += `   SIM: ${votosSim.map(v => v.parlamentar.apelido || v.parlamentar.nome.split(' ')[0]).join(', ')}\n`
+              }
+              if (votosNao.length > 0) {
+                ata += `   NÃO: ${votosNao.map(v => v.parlamentar.apelido || v.parlamentar.nome.split(' ')[0]).join(', ')}\n`
+              }
+              if (votosAbst.length > 0) {
+                ata += `   ABSTENÇÃO: ${votosAbst.map(v => v.parlamentar.apelido || v.parlamentar.nome.split(' ')[0]).join(', ')}\n`
+              }
+            }
+          }
+
+          ata += `   Status: ${statusLabel}`
+          if (item.tempoReal && item.tempoReal > 0) {
+            ata += ` (Duração: ${formatarTempoAta(item.tempoReal)})`
+          }
+          ata += '\n\n'
         }
-        
-        ata += '\n'
-      })
+      }
     }
-    
-    ata += `\nA sessão foi encerrada às ${horaFormatada} horas.\n\n`
-    ata += `Mojuí dos Campos, ${new Date().toLocaleDateString('pt-BR')}.\n\n`
-    ata += `Secretaria da Câmara Municipal`
-    
+
+    // ENCERRAMENTO
+    ata += `─── ENCERRAMENTO ────────────────────────────────────────────────────────────────\n\n`
+
+    if (duracaoTotal > 0) {
+      ata += `A sessão teve duração total de ${formatarTempoAta(duracaoTotal)}.\n\n`
+    }
+
+    ata += `Nada mais havendo a tratar, o Senhor Presidente declarou encerrada a sessão, `
+    ata += `da qual eu, Secretário(a), lavrei a presente ata que, após lida e aprovada, `
+    ata += `será assinada pelo Presidente e demais Vereadores presentes.\n\n`
+
+    ata += `Mojuí dos Campos - PA, ${new Date().toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })}.\n\n`
+
+    ata += `\n\n`
+    ata += `___________________________________\n`
+    ata += `Presidente da Câmara Municipal\n\n`
+    ata += `___________________________________\n`
+    ata += `1º Secretário(a)\n\n`
+
+    // Assinaturas dos presentes
+    ata += `\n─── ASSINATURAS DOS PRESENTES ───────────────────────────────────────────────────\n\n`
+    presentes.forEach(p => {
+      ata += `___________________________________\n`
+      ata += `${p.parlamentar.nome}\n\n`
+    })
+
+    ata += `\n═══════════════════════════════════════════════════════════════════════════════\n`
+    ata += `              Documento gerado automaticamente pelo Sistema Legislativo\n`
+    ata += `═══════════════════════════════════════════════════════════════════════════════\n`
+
     return ata
   } catch (error) {
     console.error('Erro ao gerar ata da sessão:', error)

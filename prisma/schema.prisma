@@ -231,15 +231,17 @@ model Sessao {
   legislaturaId String? // Relacionamento com Legislatura
   periodoId     String? // Relacionamento com PeriodoLegislatura
   pauta         String?      @db.Text // JSON da pauta da sessão
+  tempoInicio   DateTime?    // Data/hora real em que a sessão foi iniciada (para cronômetro)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   // Relacionamentos
-  legislatura Legislatura?        @relation(fields: [legislaturaId], references: [id])
-  periodo     PeriodoLegislatura? @relation(fields: [periodoId], references: [id])
-  presencas   PresencaSessao[]
-  proposicoes Proposicao[]
-  pautaSessao PautaSessao?
+  legislatura         Legislatura?        @relation(fields: [legislaturaId], references: [id])
+  periodo             PeriodoLegislatura? @relation(fields: [periodoId], references: [id])
+  presencas           PresencaSessao[]
+  proposicoes         Proposicao[]        @relation("ProposicaoApresentacao") // Proposições APRESENTADAS nesta sessão
+  proposicoesVotadas  Proposicao[]        @relation("ProposicaoVotacao")      // Proposições VOTADAS nesta sessão
+  pautaSessao         PautaSessao?
 
   @@index([status, data])
   @@index([tipo, status])
@@ -286,6 +288,12 @@ enum PautaItemStatus {
   RETIRADO
   ADIADO
   CONCLUIDO
+  VISTA             // Pedido de vista - matéria retirada para análise
+}
+
+enum TipoVotacao {
+  NOMINAL           // Votação aberta - votos individuais são registrados
+  SECRETA           // Votação secreta - apenas totais são registrados
 }
 
 model ApiToken {
@@ -388,18 +396,20 @@ model Proposicao {
   dataApresentacao DateTime
   dataVotacao      DateTime?
   resultado        ResultadoVotacao?
-  sessaoId         String?
+  sessaoId         String?           // Sessão onde foi APRESENTADA/LIDA
+  sessaoVotacaoId  String?           // Sessão onde foi VOTADA
   autorId          String
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
   // Relacionamentos
-  sessao      Sessao?      @relation(fields: [sessaoId], references: [id])
-  autor       Parlamentar  @relation(fields: [autorId], references: [id])
-  votacoes    Votacao[]
-  pautaItens  PautaItem[]
-  tramitacoes Tramitacao[]
-  pareceres   Parecer[]    // Pareceres das comissões sobre esta proposição
+  sessao        Sessao?      @relation("ProposicaoApresentacao", fields: [sessaoId], references: [id])
+  sessaoVotacao Sessao?      @relation("ProposicaoVotacao", fields: [sessaoVotacaoId], references: [id])
+  autor         Parlamentar  @relation(fields: [autorId], references: [id])
+  votacoes      Votacao[]
+  pautaItens    PautaItem[]
+  tramitacoes   Tramitacao[]
+  pareceres     Parecer[]    // Pareceres das comissões sobre esta proposição
 
   @@unique([numero, ano])
   @@index([status, dataApresentacao])
@@ -407,6 +417,7 @@ model Proposicao {
   @@index([autorId, ano])
   @@index([ano, tipo])
   @@index([dataApresentacao])
+  @@index([sessaoVotacaoId])
   @@map("proposicoes")
 }
 
@@ -424,10 +435,21 @@ enum TipoProposicao {
 enum StatusProposicao {
   APRESENTADA
   EM_TRAMITACAO
+  AGUARDANDO_PAUTA  // Com pareceres, pronta para inclusão na pauta
+  EM_PAUTA          // Incluída na ordem do dia de uma sessão
   APROVADA
   REJEITADA
   ARQUIVADA
   VETADA
+}
+
+// Tipo de ação do item na pauta (LEITURA vs VOTAÇÃO)
+enum TipoAcaoPauta {
+  LEITURA       // Apenas leitura no Expediente (primeira apresentação)
+  DISCUSSAO     // Discussão sem votação
+  VOTACAO       // Discussão e votação na Ordem do Dia
+  COMUNICADO    // Informes e comunicações
+  HOMENAGEM     // Votos de pesar, aplauso, moções
 }
 
 enum ResultadoVotacao {
@@ -441,13 +463,66 @@ model Votacao {
   proposicaoId  String
   parlamentarId String
   voto          TipoVoto
+  turno         Int      @default(1) // Turno da votação (1º ou 2º turno)
+  sessaoId      String?              // Sessão onde o voto foi registrado
   createdAt     DateTime @default(now())
 
   proposicao  Proposicao  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
   parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
 
-  @@unique([proposicaoId, parlamentarId])
+  @@unique([proposicaoId, parlamentarId, turno]) // Permite votos diferentes por turno
+  @@index([proposicaoId, turno])
+  @@index([sessaoId])
   @@map("votacoes")
+}
+
+// =============================================================================
+// VOTAÇÃO AGRUPADA - Consolida resultado de votação por turno
+// =============================================================================
+
+model VotacaoAgrupada {
+  id              String              @id @default(cuid())
+  proposicaoId    String
+  sessaoId        String
+  turno           Int                 @default(1)
+  tipoQuorum      TipoQuorum          @default(MAIORIA_SIMPLES)
+  tipoVotacao     TipoVotacao         @default(NOMINAL)
+
+  // Contagem de votos
+  votosSim        Int                 @default(0)
+  votosNao        Int                 @default(0)
+  votosAbstencao  Int                 @default(0)
+  votosAusente    Int                 @default(0)
+
+  // Quorum e resultado
+  totalMembros    Int                 @default(0)
+  totalPresentes  Int                 @default(0)
+  quorumNecessario Int                @default(0)
+  resultado       ResultadoVotacaoAgrupada?
+
+  // Controle de tempo
+  iniciadaEm      DateTime?
+  finalizadaEm    DateTime?
+
+  // Observações
+  observacoes     String?             @db.Text
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@unique([proposicaoId, sessaoId, turno])
+  @@index([sessaoId, turno])
+  @@index([resultado])
+  @@map("votacoes_agrupadas")
+}
+
+enum ResultadoVotacaoAgrupada {
+  APROVADA
+  REJEITADA
+  EMPATE
+  SEM_QUORUM
+  ADIADA
+  PREJUDICADA
 }
 
 enum TipoVoto {
@@ -779,20 +854,64 @@ model PautaItem {
   tempoEstimado  Int?
   tempoReal      Int?
   status         PautaItemStatus @default(PENDENTE)
+  tipoAcao       TipoAcaoPauta   @default(VOTACAO)  // Tipo de ação: LEITURA, VOTACAO, etc.
   autor          String?
   observacoes    String?         @db.Text
   tempoAcumulado Int             @default(0)
   iniciadoEm     DateTime?
   finalizadoEm   DateTime?
+  tipoVotacao    TipoVotacao     @default(NOMINAL)  // Tipo de votação: nominal ou secreta
+  vistaRequestedBy String?                           // ID do parlamentar que pediu vista
+  vistaRequestedAt DateTime?                         // Data/hora do pedido de vista
+  vistaPrazo     DateTime?                           // Prazo para devolução da matéria
+
+  // === CAMPOS DE TURNO (SAPL) ===
+  turnoAtual           Int                @default(1)   // Turno atual (1 ou 2)
+  turnoFinal           Int?                             // Número total de turnos necessários (1 ou 2)
+  resultadoTurno1      ResultadoVotacaoAgrupada?        // Resultado do 1º turno
+  resultadoTurno2      ResultadoVotacaoAgrupada?        // Resultado do 2º turno
+  dataVotacaoTurno1    DateTime?                        // Data/hora da votação do 1º turno
+  dataVotacaoTurno2    DateTime?                        // Data/hora da votação do 2º turno
+  intersticio          Boolean            @default(false) // Se aguarda interstício entre turnos
+  dataIntersticio      DateTime?                        // Data em que o interstício foi iniciado
+  prazoIntersticio     DateTime?                        // Data limite para votação em 2º turno
+
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
   pauta       PautaSessao  @relation(fields: [pautaId], references: [id], onDelete: Cascade)
   proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
   sessaoAtual PautaSessao? @relation("SessaoItemAtual")
+  destaques   DestaquePautaItem[]
 
   @@index([pautaId, secao, ordem])
+  @@index([tipoAcao])
+  @@index([turnoAtual])
   @@map("pauta_itens")
+}
+
+// Destaque para votação em separado de parte de uma proposição
+model DestaquePautaItem {
+  id              String   @id @default(cuid())
+  pautaItemId     String
+  titulo          String                              // Ex: "Artigo 3º", "Emenda nº 1"
+  descricao       String?  @db.Text
+  status          PautaItemStatus @default(PENDENTE)  // Status do destaque
+  resultado       String?                              // Resultado da votação do destaque
+  votosSim        Int      @default(0)
+  votosNao        Int      @default(0)
+  votosAbstencao  Int      @default(0)
+  tipoVotacao     TipoVotacao @default(NOMINAL)
+  solicitadoPor   String?                              // ID do parlamentar que solicitou
+  solicitadoEm    DateTime @default(now())
+  votadoEm        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  pautaItem       PautaItem @relation(fields: [pautaItemId], references: [id], onDelete: Cascade)
+
+  @@index([pautaItemId])
+  @@map("destaques_pauta_item")
 }
 
 model Configuracao {
@@ -1622,4 +1741,635 @@ enum TipoFavorito {
   PARLAMENTAR
   COMISSAO
   PUBLICACAO
+}
+
+// =============================================================================
+// FASE 2: MÓDULO DE PROTOCOLO ADMINISTRATIVO
+// =============================================================================
+
+enum TipoProtocolo {
+  ENTRADA
+  SAIDA
+  INTERNO
+}
+
+enum SituacaoProtocolo {
+  ABERTO
+  EM_TRAMITACAO
+  RESPONDIDO
+  ARQUIVADO
+  DEVOLVIDO
+  CANCELADO
+}
+
+enum PrioridadeProtocolo {
+  BAIXA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+enum TipoRemetente {
+  PESSOA_FISICA
+  PESSOA_JURIDICA
+  ORGAO_PUBLICO
+  PARLAMENTAR
+  EXECUTIVO
+}
+
+model Protocolo {
+  id                String              @id @default(cuid())
+  numero            Int
+  ano               Int
+  tipo              TipoProtocolo       @default(ENTRADA)
+
+  // Remetente
+  nomeRemetente     String
+  cpfCnpjRemetente  String?
+  tipoRemetente     TipoRemetente       @default(PESSOA_FISICA)
+  enderecoRemetente String?
+  telefoneRemetente String?
+  emailRemetente    String?
+
+  // Conteúdo
+  assunto           String
+  descricao         String?             @db.Text
+  tipoDocumento     String?             // Ofício, Requerimento, Solicitação, etc.
+  numeroDocOrigem   String?             // Número do documento original
+
+  // Controle
+  situacao          SituacaoProtocolo   @default(ABERTO)
+  prazoResposta     DateTime?
+  prioridade        PrioridadeProtocolo @default(NORMAL)
+  sigiloso          Boolean             @default(false)
+
+  // Rastreamento
+  etiquetaCodigo    String?             @unique // Código de barras/QR
+
+  // Datas
+  dataRecebimento   DateTime            @default(now())
+  dataResposta      DateTime?
+
+  // Controle
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relacionamentos
+  anexos            ProtocoloAnexo[]
+  tramitacoes       ProtocoloTramitacao[]
+
+  @@unique([numero, ano])
+  @@index([situacao])
+  @@index([tipo])
+  @@index([dataRecebimento])
+  @@index([prioridade])
+  @@map("protocolos")
+}
+
+model ProtocoloAnexo {
+  id           String   @id @default(cuid())
+  protocoloId  String
+  titulo       String
+  arquivo      String
+  tamanho      Int?
+  tipoMime     String?
+  dataUpload   DateTime @default(now())
+
+  protocolo Protocolo @relation(fields: [protocoloId], references: [id], onDelete: Cascade)
+
+  @@index([protocoloId])
+  @@map("protocolo_anexos")
+}
+
+model ProtocoloTramitacao {
+  id              String   @id @default(cuid())
+  protocoloId     String
+  data            DateTime @default(now())
+  unidadeOrigem   String
+  unidadeDestino  String
+  acao            String   // Encaminhado, Recebido, Devolvido, etc.
+  despacho        String?  @db.Text
+  usuarioId       String?
+
+  protocolo Protocolo @relation(fields: [protocoloId], references: [id], onDelete: Cascade)
+
+  @@index([protocoloId, data])
+  @@map("protocolo_tramitacoes")
+}
+
+// =============================================================================
+// FASE 3: SISTEMA DE EMENDAS
+// =============================================================================
+
+enum TipoEmenda {
+  ADITIVA          // Acrescenta dispositivo
+  MODIFICATIVA     // Altera dispositivo existente
+  SUPRESSIVA       // Remove dispositivo
+  SUBSTITUTIVA     // Substitui todo o texto
+  EMENDA_DE_REDACAO // Correção de redação sem alterar conteúdo
+}
+
+enum StatusEmenda {
+  APRESENTADA
+  EM_ANALISE
+  APROVADA
+  REJEITADA
+  PREJUDICADA      // Quando outra emenda afeta o mesmo dispositivo
+  RETIRADA
+  INCORPORADA      // Incorporada ao texto final
+  AGLUTINADA       // Fundida com outra emenda
+}
+
+model Emenda {
+  id              String        @id @default(cuid())
+  numero          Int
+  ano             Int
+  proposicaoId    String
+  tipo            TipoEmenda
+  status          StatusEmenda  @default(APRESENTADA)
+
+  // Autor
+  autorId         String
+  coautores       String?       @db.Text // JSON array de IDs de parlamentares
+
+  // Referência ao texto original
+  artigo          String?
+  paragrafo       String?
+  inciso          String?
+  alinea          String?
+
+  // Conteúdo
+  textoOriginal   String?       @db.Text // Texto que será alterado
+  textoNovo       String        @db.Text // Texto proposto
+  justificativa   String        @db.Text
+
+  // Votação
+  turnoApresentacao Int         @default(1)
+  dataVotacao     DateTime?
+  resultado       ResultadoVotacaoAgrupada?
+  votosSim        Int           @default(0)
+  votosNao        Int           @default(0)
+  votosAbstencao  Int           @default(0)
+
+  // Parecer da comissão
+  parecerComissaoId String?
+  parecerTipo     TipoParecer?
+  parecerTexto    String?       @db.Text
+
+  // Aglutinação
+  aglutinada      Boolean       @default(false)
+  emendaAglutinadaId String?    // ID da emenda resultante da aglutinação
+
+  // Datas
+  dataApresentacao DateTime     @default(now())
+  prazoEmenda     DateTime?
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relacionamentos
+  votos           VotoEmenda[]
+
+  @@unique([numero, ano, proposicaoId])
+  @@index([proposicaoId])
+  @@index([autorId])
+  @@index([status])
+  @@map("emendas")
+}
+
+model VotoEmenda {
+  id            String   @id @default(cuid())
+  emendaId      String
+  parlamentarId String
+  voto          TipoVoto
+  createdAt     DateTime @default(now())
+
+  emenda Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+
+  @@unique([emendaId, parlamentarId])
+  @@index([emendaId])
+  @@map("votos_emenda")
+}
+
+// =============================================================================
+// FASE 4: COMPILAÇÃO DE TEXTOS LEGISLATIVOS (NORMAS JURÍDICAS)
+// =============================================================================
+
+enum TipoNormaJuridica {
+  LEI_ORDINARIA
+  LEI_COMPLEMENTAR
+  DECRETO_LEGISLATIVO
+  RESOLUCAO
+  EMENDA_LEI_ORGANICA
+  LEI_ORGANICA
+  REGIMENTO_INTERNO
+}
+
+enum SituacaoNorma {
+  VIGENTE
+  REVOGADA
+  REVOGADA_PARCIALMENTE
+  COM_ALTERACOES
+  SUSPENSA
+}
+
+model NormaJuridica {
+  id              String            @id @default(cuid())
+  tipo            TipoNormaJuridica
+  numero          Int
+  ano             Int
+  data            DateTime          // Data de aprovação
+  dataPublicacao  DateTime?
+  dataVigencia    DateTime?         // Data em que entra em vigor
+
+  // Conteúdo
+  ementa          String            @db.Text
+  preambulo       String?           @db.Text
+  texto           String            @db.Text
+  textoCompilado  String?           @db.Text // Texto com todas as alterações incorporadas
+
+  // Situação
+  situacao        SituacaoNorma     @default(VIGENTE)
+
+  // Indexação
+  assunto         String?
+  indexacao       String?           @db.Text // Palavras-chave para busca
+  observacao      String?           @db.Text
+
+  // Origem (se veio de proposição)
+  proposicaoOrigemId String?
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relacionamentos
+  artigos         ArtigoNorma[]
+  versoes         VersaoNorma[]
+  alteracoesRecebidas AlteracaoNorma[] @relation("NormaAlterada")
+  alteracoesFeitas    AlteracaoNorma[] @relation("NormaAlteradora")
+
+  @@unique([tipo, numero, ano])
+  @@index([situacao])
+  @@index([tipo])
+  @@index([dataPublicacao])
+  @@map("normas_juridicas")
+}
+
+model ArtigoNorma {
+  id            String   @id @default(cuid())
+  normaId       String
+  numero        String   // "1", "1-A", etc.
+  caput         String   @db.Text
+  vigente       Boolean  @default(true)
+  revogadoPor   String?  // ID da norma que revogou
+  alteradoPor   String?  // ID da norma que alterou
+  textoOriginal String?  @db.Text
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  norma      NormaJuridica   @relation(fields: [normaId], references: [id], onDelete: Cascade)
+  paragrafos ParagrafoNorma[]
+
+  @@index([normaId])
+  @@index([vigente])
+  @@map("artigos_norma")
+}
+
+enum TipoParagrafoNorma {
+  PARAGRAFO_UNICO
+  PARAGRAFO
+  INCISO
+  ALINEA
+}
+
+model ParagrafoNorma {
+  id        String             @id @default(cuid())
+  artigoId  String
+  tipo      TipoParagrafoNorma
+  numero    String?            // "§1º", "I", "a", etc.
+  texto     String             @db.Text
+  vigente   Boolean            @default(true)
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  artigo ArtigoNorma @relation(fields: [artigoId], references: [id], onDelete: Cascade)
+
+  @@index([artigoId])
+  @@map("paragrafos_norma")
+}
+
+enum TipoAlteracaoNorma {
+  ALTERACAO
+  REVOGACAO
+  REVOGACAO_PARCIAL
+  ACRESCIMO
+  NOVA_REDACAO
+}
+
+model AlteracaoNorma {
+  id               String             @id @default(cuid())
+  normaAlteradaId  String
+  normaAlteradoraId String
+  tipoAlteracao    TipoAlteracaoNorma
+  artigoAlterado   String?            // Referência ao artigo alterado
+  descricao        String?            @db.Text
+  dataAlteracao    DateTime
+
+  createdAt        DateTime           @default(now())
+
+  normaAlterada    NormaJuridica @relation("NormaAlterada", fields: [normaAlteradaId], references: [id], onDelete: Cascade)
+  normaAlteradora  NormaJuridica @relation("NormaAlteradora", fields: [normaAlteradoraId], references: [id], onDelete: Cascade)
+
+  @@index([normaAlteradaId])
+  @@index([normaAlteradoraId])
+  @@map("alteracoes_norma")
+}
+
+model VersaoNorma {
+  id              String   @id @default(cuid())
+  normaId         String
+  versao          Int
+  textoCompleto   String   @db.Text
+  motivoAlteracao String?
+  dataVersao      DateTime
+
+  createdAt       DateTime @default(now())
+
+  norma NormaJuridica @relation(fields: [normaId], references: [id], onDelete: Cascade)
+
+  @@unique([normaId, versao])
+  @@index([normaId])
+  @@map("versoes_norma")
+}
+
+// =============================================================================
+// FASE 5: PARTICIPAÇÃO CIDADÃ EXPANDIDA
+// =============================================================================
+
+enum StatusConsultaPublica {
+  RASCUNHO
+  ABERTA
+  ENCERRADA
+  EM_ANALISE
+  PUBLICADA
+}
+
+enum TipoPerguntaConsulta {
+  MULTIPLA_ESCOLHA
+  ESCOLHA_UNICA
+  TEXTO_LIVRE
+  ESCALA           // 1-5, 1-10
+  SIM_NAO
+}
+
+model ConsultaPublica {
+  id              String                @id @default(cuid())
+  titulo          String
+  descricao       String                @db.Text
+  proposicaoId    String?               // Se relacionada a uma proposição
+  status          StatusConsultaPublica @default(RASCUNHO)
+
+  // Período
+  dataInicio      DateTime
+  dataFim         DateTime
+
+  // Configuração
+  permitirAnonimo Boolean               @default(false)
+  requerCadastro  Boolean               @default(true)
+  moderacao       Boolean               @default(true) // Moderar respostas antes de publicar
+
+  // Estatísticas
+  totalParticipacoes Int               @default(0)
+
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  // Relacionamentos
+  perguntas       PerguntaConsulta[]
+  participacoes   ParticipacaoConsulta[]
+
+  @@index([status])
+  @@index([dataInicio, dataFim])
+  @@map("consultas_publicas")
+}
+
+model PerguntaConsulta {
+  id            String               @id @default(cuid())
+  consultaId    String
+  ordem         Int
+  texto         String
+  tipo          TipoPerguntaConsulta @default(ESCOLHA_UNICA)
+  obrigatoria   Boolean              @default(true)
+  opcoes        String?              @db.Text // JSON array de opções
+
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  consulta ConsultaPublica    @relation(fields: [consultaId], references: [id], onDelete: Cascade)
+  respostas RespostaConsulta[]
+
+  @@index([consultaId, ordem])
+  @@map("perguntas_consulta")
+}
+
+model ParticipacaoConsulta {
+  id          String   @id @default(cuid())
+  consultaId  String
+  nome        String?
+  email       String?
+  cpfHash     String?  // Hash do CPF para evitar duplicação
+  bairro      String?
+  dataParticipacao DateTime @default(now())
+
+  consulta ConsultaPublica @relation(fields: [consultaId], references: [id], onDelete: Cascade)
+  respostas RespostaConsulta[]
+
+  @@index([consultaId])
+  @@index([cpfHash])
+  @@map("participacoes_consulta")
+}
+
+model RespostaConsulta {
+  id             String   @id @default(cuid())
+  participacaoId String
+  perguntaId     String
+  resposta       String   @db.Text
+
+  createdAt      DateTime @default(now())
+
+  participacao ParticipacaoConsulta @relation(fields: [participacaoId], references: [id], onDelete: Cascade)
+  pergunta     PerguntaConsulta     @relation(fields: [perguntaId], references: [id], onDelete: Cascade)
+
+  @@unique([participacaoId, perguntaId])
+  @@map("respostas_consulta")
+}
+
+enum StatusSugestaoLegislativa {
+  PENDENTE
+  EM_ANALISE
+  ACEITA
+  RECUSADA
+  CONVERTIDA_PROPOSICAO
+}
+
+enum CategoriaSugestao {
+  INFRAESTRUTURA
+  SAUDE
+  EDUCACAO
+  SEGURANCA
+  MEIO_AMBIENTE
+  TRANSPORTE
+  CULTURA
+  ESPORTE
+  ASSISTENCIA_SOCIAL
+  ECONOMIA
+  OUTROS
+}
+
+model SugestaoLegislativa {
+  id                String                    @id @default(cuid())
+
+  // Autor
+  nome              String
+  email             String
+  cpfHash           String?                   // Hash do CPF
+  bairro            String?
+  telefone          String?
+
+  // Conteúdo
+  titulo            String
+  descricao         String                    @db.Text
+  justificativa     String                    @db.Text
+  categoria         CategoriaSugestao         @default(OUTROS)
+
+  // Status
+  status            StatusSugestaoLegislativa @default(PENDENTE)
+  motivoRecusa      String?                   @db.Text
+  proposicaoId      String?                   // Se convertida em proposição
+  parlamentarResponsavelId String?            // Parlamentar que assumiu
+
+  // Apoios
+  totalApoios       Int                       @default(0)
+
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  // Relacionamentos
+  apoios            ApoioSugestao[]
+
+  @@index([status])
+  @@index([categoria])
+  @@index([totalApoios])
+  @@map("sugestoes_legislativas")
+}
+
+model ApoioSugestao {
+  id         String   @id @default(cuid())
+  sugestaoId String
+  nome       String
+  email      String
+  cpfHash    String   // Hash do CPF para evitar duplicação
+  createdAt  DateTime @default(now())
+
+  sugestao SugestaoLegislativa @relation(fields: [sugestaoId], references: [id], onDelete: Cascade)
+
+  @@unique([sugestaoId, cpfHash])
+  @@index([sugestaoId])
+  @@map("apoios_sugestao")
+}
+
+// =============================================================================
+// FASE 6: ANALYTICS E BUSINESS INTELLIGENCE
+// =============================================================================
+
+enum FrequenciaRelatorio {
+  DIARIO
+  SEMANAL
+  QUINZENAL
+  MENSAL
+  TRIMESTRAL
+  SEMESTRAL
+  ANUAL
+}
+
+enum FormatoRelatorio {
+  PDF
+  EXCEL
+  CSV
+  JSON
+}
+
+enum TipoRelatorioAgendado {
+  PRODUCAO_LEGISLATIVA
+  PRESENCA_SESSOES
+  VOTACOES
+  TRAMITACAO
+  COMISSOES
+  TRANSPARENCIA
+  PERSONALIZADO
+}
+
+model RelatorioAgendado {
+  id              String               @id @default(cuid())
+  nome            String
+  descricao       String?
+  tipo            TipoRelatorioAgendado @default(PERSONALIZADO)
+  filtros         String?              @db.Text // JSON com filtros do relatório
+
+  // Agendamento
+  frequencia      FrequenciaRelatorio
+  diaSemana       Int?                 // 0-6 para semanal
+  diaHora         String?              // "08:00" horário de execução
+
+  // Destino
+  destinatarios   String?              @db.Text // JSON array de emails
+  formato         FormatoRelatorio     @default(PDF)
+
+  // Controle
+  ativo           Boolean              @default(true)
+  ultimaExecucao  DateTime?
+  proximaExecucao DateTime?
+
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  // Relacionamentos
+  execucoes       ExecucaoRelatorio[]
+
+  @@index([ativo])
+  @@index([proximaExecucao])
+  @@map("relatorios_agendados")
+}
+
+model ExecucaoRelatorio {
+  id             String   @id @default(cuid())
+  relatorioId    String
+  dataExecucao   DateTime @default(now())
+  status         String   @default("EXECUTANDO") // EXECUTANDO, CONCLUIDO, ERRO
+  arquivoUrl     String?
+  erro           String?  @db.Text
+  tempoExecucao  Int?     // Em segundos
+
+  relatorio RelatorioAgendado @relation(fields: [relatorioId], references: [id], onDelete: Cascade)
+
+  @@index([relatorioId, dataExecucao])
+  @@map("execucoes_relatorio")
+}
+
+model DashboardPersonalizado {
+  id        String   @id @default(cuid())
+  userId    String
+  nome      String
+  widgets   String   @db.Text // JSON com configuração dos widgets
+  layout    String?  @db.Text // JSON com layout do dashboard
+  publico   Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([publico])
+  @@map("dashboards_personalizados")
 }

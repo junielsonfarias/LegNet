@@ -14,7 +14,21 @@
       "Bash(ls:*)",
       "WebFetch(domain:www.camaramojuidoscampos.pa.gov.br)",
       "Bash(npm run db:seed-2025:*)",
-      "WebFetch(domain:camara-mojui.vercel.app)"
+      "WebFetch(domain:camara-mojui.vercel.app)",
+      "WebFetch(domain:camaramojuidoscampos.pa.gov.br)",
+      "Bash(curl:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(ping:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:sapl.al.ro.leg.br)",
+      "WebFetch(domain:www12.senado.leg.br)",
+      "WebFetch(domain:sapl31demo.interlegis.leg.br)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:listas.interlegis.gov.br)",
+      "WebFetch(domain:oficinas.interlegis.leg.br)",
+      "Bash(npm run lint:*)",
+      "Bash(timeout 30 npm run dev)"
     ]
   }
 }

@@ -4,10 +4,21 @@ import { StatusProposicao } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { MAPEAMENTO_TIPO_SECAO } from '@/lib/services/proposicao-validacao-service'
 
-const STATUS_SUGESTAO: StatusProposicao[] = ['APRESENTADA', 'EM_TRAMITACAO']
+// Incluir novos status que permitem inclusão na pauta
+const STATUS_SUGESTAO: StatusProposicao[] = ['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA']
 
 const mapTipoToSecao = (tipo: string): 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS' => {
+  // Usar mapeamento do serviço de validação
+  const mapeamento = MAPEAMENTO_TIPO_SECAO[tipo]
+  if (mapeamento) {
+    // Se a proposição tem seção de votação, sugerir ORDEM_DO_DIA
+    // caso contrário, usar seção primeira
+    return (mapeamento.secaoVotacao || mapeamento.secaoPrimeira) as 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS'
+  }
+
+  // Fallback para o comportamento anterior
   switch (tipo) {
     case 'PROJETO_LEI':
     case 'PROJETO_RESOLUCAO':
@@ -21,6 +32,27 @@ const mapTipoToSecao = (tipo: string): 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICA
       return 'HONRAS'
     default:
       return 'EXPEDIENTE'
+  }
+}
+
+const mapTipoToAcao = (tipo: string, secao: string): 'LEITURA' | 'VOTACAO' | 'HOMENAGEM' | 'COMUNICADO' => {
+  const mapeamento = MAPEAMENTO_TIPO_SECAO[tipo]
+  if (mapeamento) {
+    if (secao === 'ORDEM_DO_DIA' && mapeamento.tipoAcaoVotacao) {
+      return mapeamento.tipoAcaoVotacao as 'LEITURA' | 'VOTACAO' | 'HOMENAGEM' | 'COMUNICADO'
+    }
+    return mapeamento.tipoAcaoPrimeira as 'LEITURA' | 'VOTACAO' | 'HOMENAGEM' | 'COMUNICADO'
+  }
+
+  // Fallback
+  switch (tipo) {
+    case 'VOTO_PESAR':
+    case 'VOTO_APLAUSO':
+      return 'HOMENAGEM'
+    case 'INDICACAO':
+      return 'LEITURA'
+    default:
+      return secao === 'ORDEM_DO_DIA' ? 'VOTACAO' : 'LEITURA'
   }
 }
 
@@ -81,6 +113,13 @@ export const GET = withAuth(async (
           apelido: true,
           partido: true
         }
+      },
+      pareceres: {
+        include: {
+          comissao: {
+            select: { sigla: true, nome: true }
+          }
+        }
       }
     },
     orderBy: {
@@ -91,14 +130,34 @@ export const GET = withAuth(async (
 
   const sugestoes = proposicoes.map((proposicao) => {
     const secao = mapTipoToSecao(proposicao.tipo)
+    const tipoAcao = mapTipoToAcao(proposicao.tipo, secao)
+    const mapeamento = MAPEAMENTO_TIPO_SECAO[proposicao.tipo]
+
+    // Verifica se tem parecer da CLJ (necessário para ORDEM_DO_DIA)
+    const temParecerCLJ = proposicao.pareceres.some(
+      p => p.comissao?.sigla === 'CLJ' || p.comissao?.nome?.includes('Legislação')
+    )
+    const requerParecerCLJ = mapeamento?.requerParecerCLJ ?? false
+
+    // Determina se pode ir para Ordem do Dia
+    const podeOrdemDoDia = !requerParecerCLJ || temParecerCLJ
+
     return {
       id: proposicao.id,
       titulo: proposicao.titulo,
       descricao: proposicao.ementa,
       secao,
+      tipoAcao,                      // NOVO - tipo de ação sugerido
       tempoEstimado: tempoEstimadoPorTipo(proposicao.tipo),
       prioridade: prioridadePorTipo(proposicao.tipo),
       tipoProposicao: proposicao.tipo,
+      // NOVO - informações sobre requisitos
+      requisitos: {
+        requerParecerCLJ,
+        temParecerCLJ,
+        podeOrdemDoDia,
+        totalPareceres: proposicao.pareceres.length
+      },
       proposicao: {
         id: proposicao.id,
         numero: proposicao.numero,

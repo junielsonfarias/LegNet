@@ -28,13 +28,20 @@ import {
   Timer,
   Monitor,
   RefreshCw,
-  MoreVertical
+  MoreVertical,
+  Eye,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import type { PautaItemApi } from '@/lib/api/pauta-api'
 import { PresencaControl } from '@/components/admin/presenca-control'
+import { VotacaoAcompanhamento } from '@/components/admin/votacao-acompanhamento'
+import { CronometroOrador } from '@/components/admin/cronometro-orador'
+import { TurnoControl } from '@/components/admin/turno-control'
 
 const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'; label: string }> = [
   { value: 'CONCLUIDO', label: 'Encerrar discussão' },
@@ -114,8 +121,70 @@ const getItemStatusBadge = (status: string) => {
       return 'bg-orange-100 text-orange-700'
     case 'CONCLUIDO':
       return 'bg-emerald-100 text-emerald-700'
+    case 'VISTA':
+      return 'bg-violet-100 text-violet-700'
     default:
       return 'bg-gray-100 text-gray-700'
+  }
+}
+
+// NOVO - Badge para tipo de ação
+const getTipoAcaoBadge = (tipoAcao: string) => {
+  switch (tipoAcao) {
+    case 'LEITURA':
+      return 'bg-sky-100 text-sky-700 border-sky-300'
+    case 'VOTACAO':
+      return 'bg-purple-100 text-purple-700 border-purple-300'
+    case 'DISCUSSAO':
+      return 'bg-blue-100 text-blue-700 border-blue-300'
+    case 'HOMENAGEM':
+      return 'bg-pink-100 text-pink-700 border-pink-300'
+    case 'COMUNICADO':
+      return 'bg-teal-100 text-teal-700 border-teal-300'
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-300'
+  }
+}
+
+const getTipoAcaoLabel = (tipoAcao: string) => {
+  switch (tipoAcao) {
+    case 'LEITURA':
+      return '📖 Leitura'
+    case 'VOTACAO':
+      return '🗳️ Votação'
+    case 'DISCUSSAO':
+      return '💬 Discussão'
+    case 'HOMENAGEM':
+      return '🏆 Homenagem'
+    case 'COMUNICADO':
+      return '📢 Comunicado'
+    default:
+      return tipoAcao
+  }
+}
+
+const getItemStatusLabel = (status: string) => {
+  switch (status) {
+    case 'PENDENTE':
+      return 'Pendente'
+    case 'EM_DISCUSSAO':
+      return 'Em Discussão'
+    case 'EM_VOTACAO':
+      return 'Em Votação'
+    case 'APROVADO':
+      return 'Aprovado'
+    case 'REJEITADO':
+      return 'Rejeitado'
+    case 'RETIRADO':
+      return 'Retirado'
+    case 'ADIADO':
+      return 'Adiado'
+    case 'CONCLUIDO':
+      return 'Concluído'
+    case 'VISTA':
+      return 'Em Vista'
+    default:
+      return status.replace(/_/g, ' ')
   }
 }
 
@@ -290,12 +359,13 @@ export default function PainelEletronicoOperadorPage() {
 
   const executarAcaoItem = async (
     itemId: string,
-    acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar',
-    resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
+    acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar' | 'vista' | 'retomarVista' | 'subir' | 'descer',
+    resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO',
+    parlamentarId?: string
   ) => {
     try {
       setExecutando(true)
-      await sessoesApi.controlItem(sessaoId, itemId, acao, resultado)
+      await sessoesApi.controlItem(sessaoId, itemId, acao, resultado, parlamentarId)
       await carregarSessao(false)
       switch (acao) {
         case 'iniciar':
@@ -312,6 +382,16 @@ export default function PainelEletronicoOperadorPage() {
           break
         case 'finalizar':
           toast.success('Item finalizado')
+          break
+        case 'vista':
+          toast.success('Pedido de vista registrado')
+          break
+        case 'retomarVista':
+          toast.success('Item retomado após vista')
+          break
+        case 'subir':
+        case 'descer':
+          toast.success('Item reordenado')
           break
         default:
           break
@@ -519,6 +599,33 @@ export default function PainelEletronicoOperadorPage() {
           </Card>
         )}
 
+        {/* Controle de Turnos */}
+        {sessao.status === 'EM_ANDAMENTO' && currentItem && currentItem.proposicaoId && (
+          <TurnoControl
+            sessaoId={sessao.id}
+            itemId={currentItem.id}
+            titulo={currentItem.titulo}
+            tipoProposicao={currentItem.proposicao?.tipo || 'PROJETO_LEI'}
+            onTurnoIniciado={() => carregarSessao(false)}
+            onTurnoFinalizado={() => carregarSessao(false)}
+          />
+        )}
+
+        {/* Painel de Acompanhamento de Votação */}
+        {sessao.status === 'EM_ANDAMENTO' && currentItem?.status === 'EM_VOTACAO' && (
+          <VotacaoAcompanhamento
+            sessaoId={sessao.id}
+            itemEmVotacao={currentItem}
+          />
+        )}
+
+        {/* Cronômetro de Pronunciamento */}
+        {sessao.status === 'EM_ANDAMENTO' && currentItem?.status === 'EM_DISCUSSAO' && (
+          <CronometroOrador
+            parlamentares={sessao.presencas?.filter(p => p.presente).map(p => p.parlamentar) || []}
+          />
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-gray-700">
@@ -551,8 +658,32 @@ export default function PainelEletronicoOperadorPage() {
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
                               <Badge className={getItemStatusBadge(item.status)}>{item.status.replace(/_/g, ' ')}</Badge>
+                              {item.tipoAcao && (
+                                <Badge variant="outline" className={getTipoAcaoBadge(item.tipoAcao)}>
+                                  {getTipoAcaoLabel(item.tipoAcao)}
+                                </Badge>
+                              )}
+                              {/* Badge de Turno */}
+                              {item.turnoFinal && item.turnoFinal > 1 && (
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    item.intersticio
+                                      ? 'border-yellow-400 bg-yellow-50 text-yellow-700'
+                                      : item.resultadoTurno2
+                                        ? 'border-green-400 bg-green-50 text-green-700'
+                                        : 'border-purple-400 bg-purple-50 text-purple-700'
+                                  }
+                                >
+                                  {item.intersticio
+                                    ? 'Aguardando 2º Turno'
+                                    : item.resultadoTurno2
+                                      ? '2 Turnos Concluídos'
+                                      : `${item.turnoAtual || 1}º/${item.turnoFinal} Turno`}
+                                </Badge>
+                              )}
                               <span className="text-xs text-gray-500">Ordem {item.ordem}</span>
                             </div>
                             <h3 className="mt-2 text-base font-semibold text-gray-900">{item.titulo}</h3>
@@ -564,6 +695,29 @@ export default function PainelEletronicoOperadorPage() {
 
                           {sessao.status === 'EM_ANDAMENTO' && (
                             <div className="flex flex-wrap items-center gap-2">
+                              {/* Botões de reordenação para itens pendentes */}
+                              {item.status === 'PENDENTE' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    disabled={executando}
+                                    onClick={() => executarAcaoItem(item.id, 'subir' as any)}
+                                    title="Mover para cima"
+                                  >
+                                    <ArrowUp className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    disabled={executando}
+                                    onClick={() => executarAcaoItem(item.id, 'descer' as any)}
+                                    title="Mover para baixo"
+                                  >
+                                    <ArrowDown className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
                               {['PENDENTE', 'ADIADO'].includes(item.status) && (
                                 <Button
                                   size="sm"
@@ -571,6 +725,17 @@ export default function PainelEletronicoOperadorPage() {
                                   onClick={() => executarAcaoItem(item.id, 'iniciar')}
                                 >
                                   <Play className="mr-2 h-4 w-4" /> Iniciar
+                                </Button>
+                              )}
+                              {/* Retomar item de Vista */}
+                              {item.status === 'VISTA' && (
+                                <Button
+                                  size="sm"
+                                  disabled={executando}
+                                  onClick={() => executarAcaoItem(item.id, 'retomarVista' as any)}
+                                  className="bg-violet-600 hover:bg-violet-700"
+                                >
+                                  <RotateCcw className="mr-2 h-4 w-4" /> Retomar Vista
                                 </Button>
                               )}
                               {item.status === 'EM_DISCUSSAO' && item.iniciadoEm && (
@@ -601,6 +766,26 @@ export default function PainelEletronicoOperadorPage() {
                                 >
                                   <Vote className="mr-2 h-4 w-4" /> Iniciar votação
                                 </Button>
+                              )}
+                              {/* Botão de Pedir Vista */}
+                              {['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status) && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" variant="outline" disabled={executando} className="border-violet-400 text-violet-600 hover:bg-violet-50">
+                                      <Eye className="mr-2 h-4 w-4" /> Vista
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    {sessao.presencas?.filter(p => p.presente).map(presenca => (
+                                      <DropdownMenuItem
+                                        key={presenca.parlamentar.id}
+                                        onClick={() => executarAcaoItem(item.id, 'vista' as any, undefined, presenca.parlamentar.id)}
+                                      >
+                                        {presenca.parlamentar.apelido || presenca.parlamentar.nome}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               )}
                               {['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status) && (
                                 <DropdownMenu>

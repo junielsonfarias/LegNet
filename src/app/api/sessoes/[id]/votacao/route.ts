@@ -82,11 +82,15 @@ export const GET = withErrorHandler(async (
   // Consolidar proposições de ambas as fontes (pauta + diretas)
   const proposicoesMap = new Map<string, any>()
 
+  // Mapa de tipoVotacao por proposicaoId
+  const tipoVotacaoMap = new Map<string, string>()
+
   // Adicionar proposições da pauta
   if (sessao.pautaSessao?.itens) {
     for (const item of sessao.pautaSessao.itens) {
       if (item.proposicao) {
         proposicoesMap.set(item.proposicao.id, item.proposicao)
+        tipoVotacaoMap.set(item.proposicao.id, item.tipoVotacao || 'NOMINAL')
       }
     }
   }
@@ -98,7 +102,34 @@ export const GET = withErrorHandler(async (
     }
   }
 
-  const proposicoesConsolidadas = Array.from(proposicoesMap.values())
+  // Processar proposições para respeitar votação secreta
+  const proposicoesConsolidadas = Array.from(proposicoesMap.values()).map(prop => {
+    const tipoVotacao = tipoVotacaoMap.get(prop.id) || 'NOMINAL'
+
+    // Se votação é secreta, não retornar detalhes individuais dos votos
+    if (tipoVotacao === 'SECRETA') {
+      const votosSim = prop.votacoes?.filter((v: any) => v.voto === 'SIM').length || 0
+      const votosNao = prop.votacoes?.filter((v: any) => v.voto === 'NAO').length || 0
+      const votosAbstencao = prop.votacoes?.filter((v: any) => v.voto === 'ABSTENCAO').length || 0
+
+      return {
+        ...prop,
+        tipoVotacao: 'SECRETA',
+        votacoes: [], // Não retorna votos individuais
+        votacaoSecreta: {
+          total: votosSim + votosNao + votosAbstencao,
+          sim: votosSim,
+          nao: votosNao,
+          abstencao: votosAbstencao
+        }
+      }
+    }
+
+    return {
+      ...prop,
+      tipoVotacao: 'NOMINAL'
+    }
+  })
 
   return createSuccessResponse(proposicoesConsolidadas, 'Votações listadas com sucesso')
 })

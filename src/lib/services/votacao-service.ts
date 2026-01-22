@@ -5,11 +5,17 @@
  * NOTA: O modelo Votacao do Prisma é uma tabela simples que registra
  * votos individuais (proposicaoId, parlamentarId, voto).
  * Este serviço fornece validações e cálculos para o processo de votação.
+ *
+ * ATUALIZAÇÃO SAPL: Agora suporta votação em turnos (1º e 2º turno)
  */
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import type { TipoVoto } from '@prisma/client'
+import {
+  getConfiguracaoTurno,
+  requerDoisTurnos
+} from './turno-service'
 
 const logger = createLogger('votacao')
 
@@ -462,6 +468,199 @@ export async function listarVotosProposicao(
 }
 
 /**
+ * RN-074: Registra voto individual com suporte a turno
+ */
+export async function registrarVotoComTurno(
+  proposicaoId: string,
+  parlamentarId: string,
+  voto: OpcaoVoto,
+  turno: number = 1,
+  sessaoId?: string
+): Promise<ValidationResult> {
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  // Verifica se proposição existe
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: proposicaoId }
+  })
+
+  if (!proposicao) {
+    errors.push('Proposição não encontrada.')
+    return { valid: false, errors, warnings, rule: 'RN-074' }
+  }
+
+  // Verifica se parlamentar existe e está ativo
+  const parlamentar = await prisma.parlamentar.findUnique({
+    where: { id: parlamentarId }
+  })
+
+  if (!parlamentar || !parlamentar.ativo) {
+    errors.push('RN-071: Parlamentar não encontrado ou inativo.')
+    return { valid: false, errors, warnings, rule: 'RN-074' }
+  }
+
+  // Verifica impedimentos
+  const impedimento = await verificarImpedimentoVoto(parlamentarId, proposicaoId)
+  warnings.push(...impedimento.warnings)
+
+  try {
+    // Registra ou atualiza voto com turno
+    await prisma.votacao.upsert({
+      where: {
+        proposicaoId_parlamentarId_turno: {
+          proposicaoId,
+          parlamentarId,
+          turno
+        }
+      },
+      update: {
+        voto: voto as TipoVoto,
+        sessaoId
+      },
+      create: {
+        proposicaoId,
+        parlamentarId,
+        voto: voto as TipoVoto,
+        turno,
+        sessaoId
+      }
+    })
+
+    logger.info('Voto registrado com turno', {
+      action: 'registrar_voto_turno',
+      proposicaoId,
+      parlamentarId,
+      voto,
+      turno,
+      sessaoId
+    })
+
+    return {
+      valid: true,
+      errors,
+      warnings,
+      rule: 'RN-074'
+    }
+  } catch (error) {
+    logger.error('Erro ao registrar voto com turno', error)
+    errors.push('Erro ao registrar voto.')
+    return { valid: false, errors, warnings, rule: 'RN-074' }
+  }
+}
+
+/**
+ * RN-075: Apura resultado da votação por turno
+ */
+export async function apurarResultadoPorTurno(
+  proposicaoId: string,
+  turno: number,
+  tipoQuorum: TipoQuorum = 'SIMPLES',
+  totalMembros: number
+): Promise<ApuracaoResult> {
+  // Busca todos os votos da proposição no turno especificado
+  const votos = await prisma.votacao.findMany({
+    where: {
+      proposicaoId,
+      turno
+    }
+  })
+
+  const votosSim = votos.filter(v => v.voto === 'SIM').length
+  const votosNao = votos.filter(v => v.voto === 'NAO').length
+  const abstencoes = votos.filter(v => v.voto === 'ABSTENCAO').length
+  const ausentes = votos.filter(v => v.voto === 'AUSENTE').length
+  const totalVotos = votos.length
+
+  const quorum = calcularQuorum(tipoQuorum, totalMembros, totalVotos - ausentes)
+  const quorumAtingido = quorum.temQuorum
+
+  let resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE' | 'SEM_QUORUM'
+
+  if (!quorumAtingido) {
+    resultado = 'SEM_QUORUM'
+  } else if (votosSim > votosNao && votosSim >= quorum.minVotosAprovacao) {
+    resultado = 'APROVADA'
+  } else if (votosNao > votosSim) {
+    resultado = 'REJEITADA'
+  } else if (votosSim === votosNao) {
+    resultado = 'EMPATE'
+  } else {
+    resultado = 'REJEITADA' // Não atingiu mínimo necessário
+  }
+
+  logger.info('Apuração de resultado por turno', {
+    action: 'apurar_resultado_turno',
+    proposicaoId,
+    turno,
+    tipoQuorum,
+    votosSim,
+    votosNao,
+    abstencoes,
+    resultado
+  })
+
+  return {
+    totalVotos,
+    votosSim,
+    votosNao,
+    abstencoes,
+    ausentes,
+    quorumAtingido,
+    resultado
+  }
+}
+
+/**
+ * Lista votos de uma proposição por turno
+ */
+export async function listarVotosProposicaoPorTurno(
+  proposicaoId: string,
+  turno: number
+): Promise<Array<{
+  parlamentarId: string
+  nome: string
+  voto: string
+  dataVoto: Date
+}>> {
+  const votos = await prisma.votacao.findMany({
+    where: {
+      proposicaoId,
+      turno
+    },
+    include: {
+      parlamentar: {
+        select: {
+          nome: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'asc' }
+  })
+
+  return votos.map(v => ({
+    parlamentarId: v.parlamentarId,
+    nome: v.parlamentar.nome,
+    voto: v.voto,
+    dataVoto: v.createdAt
+  }))
+}
+
+/**
+ * Verifica se proposição requer dois turnos
+ */
+export function verificarDoisTurnos(tipoProposicao: string): {
+  requer: boolean
+  config: ReturnType<typeof getConfiguracaoTurno>
+} {
+  const config = getConfiguracaoTurno(tipoProposicao)
+  return {
+    requer: config.totalTurnos === 2,
+    config
+  }
+}
+
+/**
  * Resumo das regras de votação
  */
 export const REGRAS_VOTACAO = {
@@ -473,5 +672,7 @@ export const REGRAS_VOTACAO = {
   'RN-070': 'Voto é pessoal e intransferível',
   'RN-071': 'Apenas parlamentares presentes podem votar',
   'RN-072': 'Voto só pode ser alterado antes do encerramento',
-  'RN-073': 'Resultado proclamado imediatamente após encerramento'
+  'RN-073': 'Resultado proclamado imediatamente após encerramento',
+  'RN-074': 'Votação por turno: registra votos com indicação do turno (1º ou 2º)',
+  'RN-075': 'Interstício: prazo mínimo entre turnos conforme tipo de matéria'
 }

@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-20
+> **Ultima Atualizacao**: 2026-01-21
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -11,14 +11,15 @@
 
 | Metrica | Valor |
 |---------|-------|
-| **Modelos Prisma** | 36 |
-| **Endpoints API** | 78+ |
-| **Componentes React** | 62+ |
-| **Servicos de Negocio** | 34 |
+| **Modelos Prisma** | 52+ |
+| **Endpoints API** | 95+ |
+| **Componentes React** | 70+ |
+| **Servicos de Negocio** | 42 |
 | **Hooks Customizados** | 29 |
-| **Paginas Admin** | 15+ |
-| **Paginas Publicas** | 28+ |
+| **Paginas Admin** | 20+ |
+| **Paginas Publicas** | 32+ |
 | **Multi-Tenant** | Implementado |
+| **Cobertura SAPL** | ~98% |
 
 ---
 
@@ -33,6 +34,9 @@
 | 2FA (Two-Factor) | Implementado | TOTP opcional para admins |
 | Gerenciamento de usuarios | Implementado | CRUD completo em /admin/usuarios |
 | Recuperacao de senha | Pendente | Necessita implementacao de email |
+| **Permissoes por role** | **Implementado** | Sistema granular de permissoes |
+| **Sidebar filtrado** | **Implementado** | Menu dinamico baseado em permissoes |
+| **Perfil SECRETARIA** | **Redefinido** | Foco administrativo (modelo SAPL) |
 
 ### 2. Parlamentares
 
@@ -71,6 +75,9 @@
 | Aplicar template | Implementado | /api/sessoes/[id]/pauta/apply-template |
 | **Automacao de geracao** | **Implementado** | AutomacaoPautasService completo (FASE 5) |
 | **Validacao regimental** | **Implementado** | RegrasRegimentaisService completo (FASE 5) |
+| **Tipo de acao (tipoAcao)** | **Implementado** | LEITURA, DISCUSSAO, VOTACAO, COMUNICADO, HOMENAGEM |
+| **Validacao parecer CLJ** | **Implementado** | Obrigatorio para ORDEM_DO_DIA com VOTACAO |
+| **Mapeamento tipo -> secao** | **Implementado** | MAPEAMENTO_TIPO_SECAO por tipo de proposicao |
 
 ### 5. Proposicoes
 
@@ -78,11 +85,13 @@
 |---------------|--------|-------------|
 | CRUD de proposicoes | Implementado | /admin/proposicoes |
 | Tipos de proposicao | Implementado | 8 tipos definidos |
-| Status de proposicao | Implementado | 6 status definidos |
+| Status de proposicao | Implementado | 8 status incluindo AGUARDANDO_PAUTA e EM_PAUTA |
 | Vinculacao com autor | Implementado | Parlamentar autor |
-| Vinculacao com sessao | Implementado | Sessao onde foi apresentada |
+| Vinculacao com sessao | Implementado | Sessao onde foi apresentada (sessaoId) |
+| **Vinculacao sessao votacao** | **Implementado** | Sessao onde foi votada (sessaoVotacaoId) |
 | Numeracao automatica | Implementado | NUMERO/ANO |
 | Consulta publica | Implementado | /legislativo/proposicoes |
+| **Rastreabilidade completa** | **Implementado** | Ciclo: apresentacao -> pauta -> votacao |
 
 ### 6. Votacoes
 
@@ -200,6 +209,14 @@
 | Sistema de votacao | Implementado | Interface de votacao |
 | Cronometros | Implementado | Tempo por item |
 | Painel publico | Implementado | /painel-publico |
+| **Cronometro de orador** | **Implementado** | Controle de tempo para pronunciamentos |
+| **Pedido de vista** | **Implementado** | Status VISTA com prazo para devoluçao |
+| **Reordenacao de pauta** | **Implementado** | Subir/descer itens pendentes |
+| **Votacao secreta** | **Implementado** | Nao exibe votos individuais |
+| **Destaques** | **Implementado** | Votacao em separado de partes |
+| **Historico detalhado** | **Implementado** | /admin/sessoes/[id]/historico |
+| **Ata automatica** | **Implementado** | Geracao completa com votos nominais |
+| **Impressao de resultado** | **Implementado** | HTML/texto para impressao |
 | **Streaming ao vivo** | Pendente | Integracao com servicos de video |
 
 ### 16. Configuracoes
@@ -970,6 +987,118 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-21 - Alinhamento Pauta/Sessao/Proposicao com SAPL
+
+- **Objetivo**: Alinhar o modelo de relacionamento entre Pauta, Sessao e Proposicao com o SAPL do Interlegis, distinguindo claramente entre LEITURA e VOTACAO
+- **Alteracoes no Schema Prisma**:
+  - Adicionado `AGUARDANDO_PAUTA` e `EM_PAUTA` ao enum StatusProposicao
+  - Adicionado enum `TipoAcaoPauta` (LEITURA, DISCUSSAO, VOTACAO, COMUNICADO, HOMENAGEM)
+  - Adicionado campo `tipoAcao` no modelo PautaItem
+  - Adicionado campo `sessaoVotacaoId` no modelo Proposicao (distinto de sessaoId que e a sessao de apresentacao)
+  - Adicionada relacao `sessaoVotacao` e `proposicoesVotadas` no modelo Sessao
+- **Validacao de Parecer CLJ (RN-030)**:
+  - Implementada funcao `validarInclusaoOrdemDoDia()` no servico de validacao
+  - Proposicoes que vao para ORDEM_DO_DIA para VOTACAO devem ter parecer favoravel da CLJ
+  - Proposicoes com parecer PELA_INCONSTITUCIONALIDADE ou PELA_ILEGALIDADE nao podem ir para votacao
+- **Mapeamento Tipo -> Secao/Acao**:
+  - Criado `MAPEAMENTO_TIPO_SECAO` com regras para cada tipo de proposicao
+  - PROJETO_LEI: Primeira leitura no EXPEDIENTE, depois ORDEM_DO_DIA para votacao
+  - INDICACAO, MOCAO: Vao direto para HONRAS como HOMENAGEM
+  - Tipos configuraveis por secao e acao
+- **Atualizacoes nas APIs**:
+  - `POST /api/sessoes/[id]/pauta`: Valida parecer antes de adicionar a ORDEM_DO_DIA
+  - `GET /api/sessoes/[id]/pauta/sugestoes`: Retorna tipoAcao e requisitos de parecer
+  - Atualiza status da proposicao para EM_PAUTA ao incluir na Ordem do Dia
+- **Atualizacoes nos Paineis**:
+  - Painel eletronico exibe badge de tipoAcao (Leitura, Votacao, Homenagem, etc)
+  - Painel publico exibe indicador de tipoAcao nos itens da pauta
+- **Rastreabilidade Completa**:
+  - `sessaoId`: Sessao onde a proposicao foi APRESENTADA/LIDA
+  - `sessaoVotacaoId`: Sessao onde a proposicao foi VOTADA
+  - Permite rastrear todo o ciclo de vida da proposicao
+- **Arquivos Modificados**:
+  - `prisma/schema.prisma` - Novos status, enum TipoAcaoPauta, campos sessaoVotacaoId e tipoAcao
+  - `src/lib/services/proposicao-validacao-service.ts` - validarInclusaoOrdemDoDia, MAPEAMENTO_TIPO_SECAO
+  - `src/lib/services/sessao-controle.ts` - Passa sessaoVotacaoId ao atualizar resultado
+  - `src/app/api/sessoes/[id]/pauta/route.ts` - Validacao de parecer e tipoAcao automatico
+  - `src/app/api/sessoes/[id]/pauta/sugestoes/route.ts` - Retorna tipoAcao e requisitos
+  - `src/lib/api/pauta-api.ts` - Interfaces PautaItemApi e PautaSugestaoApi com tipoAcao
+  - `src/app/admin/painel-eletronico/[sessaoId]/page.tsx` - Badge de tipoAcao
+  - `src/app/painel-publico/page.tsx` - Indicador de tipoAcao
+
+### 2026-01-21 - Melhorias Completas do Painel Eletronico (FASE SAPL)
+
+- **Objetivo**: Implementar funcionalidades comparaveis ao SAPL do Interlegis
+- **Alteracoes no Schema Prisma**:
+  - Adicionado `VISTA` ao enum PautaItemStatus
+  - Adicionado enum `TipoVotacao` (NOMINAL, SECRETA)
+  - Adicionado campo `tipoVotacao` no modelo PautaItem
+  - Adicionados campos de vista: `vistaRequestedBy`, `vistaRequestedAt`, `vistaPrazo`
+  - Criado modelo `DestaquePautaItem` para votacao em separado
+- **FASE 1 - Funcionalidades Essenciais**:
+  - **Painel publico melhorado**: Banner de votacao em andamento com animacao, contagem em tempo real, barra de progresso
+  - **Pedido de vista**: Status VISTA, prazo calculado em dias uteis, registro de quem pediu
+  - **Reordenacao de pauta**: Botoes subir/descer para itens pendentes
+- **FASE 2 - Funcionalidades Importantes**:
+  - **Cronometro de pronunciamento**: Componente com tipos configurados (aparte 3min, discussao 5min, etc), alerta sonoro
+  - **Historico detalhado**: Pagina /admin/sessoes/[id]/historico com timeline completa
+  - **Ata automatica melhorada**: Formato regimental completo com votos nominais e assinaturas
+- **FASE 3 - Funcionalidades Desejaveis**:
+  - **Votacao secreta**: API nao retorna votos individuais quando tipoVotacao = SECRETA
+  - **Destaques para votacao em separado**: API completa para gerenciar destaques por item
+  - **Impressao de resultado**: Utilitario para gerar documento HTML/texto
+- **Novos Arquivos Criados**:
+  - `src/components/admin/cronometro-orador.tsx`
+  - `src/app/admin/sessoes/[id]/historico/page.tsx`
+  - `src/app/api/sessoes/[id]/pauta/[itemId]/destaques/route.ts`
+  - `src/lib/utils/impressao-votacao.ts`
+- **Arquivos Modificados**:
+  - `prisma/schema.prisma` - Novos campos e modelos
+  - `src/lib/services/sessao-controle.ts` - Funcoes pedirVistaItem, retomarItemVista, reordenarItemPauta
+  - `src/app/api/sessoes/[id]/pauta/[itemId]/controle/route.ts` - Novas acoes
+  - `src/app/api/sessoes/[id]/votacao/route.ts` - Suporte a votacao secreta
+  - `src/app/painel-publico/page.tsx` - Banner de votacao, status VISTA
+  - `src/app/admin/painel-eletronico/[sessaoId]/page.tsx` - Botoes vista/reordenar, cronometro
+  - `src/lib/api/sessoes-api.ts` - Novos tipos de acao
+  - `src/lib/utils/sessoes-utils.ts` - Ata melhorada
+
+### 2026-01-21 - Melhorias no Painel Eletronico e Controle de Sessao
+- **Objetivo**: Corrigir funcionalidades do painel eletronico para exibir informacoes corretamente durante sessoes em andamento
+- **Alteracoes no Schema Prisma**:
+  - Adicionado campo `tempoInicio` (DateTime?) no modelo Sessao para armazenar o momento exato em que a sessao foi iniciada
+- **Correcoes no Servico sessao-controle.ts**:
+  - Funcao `iniciarSessaoControle` agora salva `tempoInicio` ao iniciar sessao
+  - Permite cronometro da sessao funcionar corretamente no painel do operador e publico
+- **Melhorias na API sessao-completa**:
+  - Inclui parlamentares da legislatura para calcular quorum completo
+  - Retorna lista de presencas com todos os parlamentares (presentes e ausentes)
+  - Adiciona objeto `quorum` com estatisticas: total, presentes, ausentes, percentual
+- **Melhorias no Painel Publico**:
+  - Usa dados de quorum da API para exibir estatisticas corretas
+  - Corrigida logica de carregamento de presencas para usar dados completos
+  - Exibe total de parlamentares da legislatura no calculo de quorum
+- **Novo Componente VotacaoAcompanhamento**:
+  - Exibe votos em tempo real durante votacoes no painel do operador
+  - Mostra estatisticas de SIM, NAO, ABSTENCAO em tempo real
+  - Lista parlamentares que ja votaram e os que faltam votar
+  - Indicador de tendencia (aprovacao/rejeicao/empate)
+  - Barra de progresso da votacao
+  - Atualiza automaticamente a cada 3 segundos
+- **Arquivos modificados**:
+  - `prisma/schema.prisma` - Campo tempoInicio adicionado
+  - `src/lib/services/sessao-controle.ts` - Salva tempoInicio ao iniciar sessao
+  - `src/app/api/painel/sessao-completa/route.ts` - Retorna parlamentares da legislatura e quorum
+  - `src/app/painel-publico/page.tsx` - Interface Sessao com quorum, calculo de presencas corrigido
+  - `src/app/admin/painel-eletronico/[sessaoId]/page.tsx` - Integrado componente VotacaoAcompanhamento
+- **Arquivos criados**:
+  - `src/components/admin/votacao-acompanhamento.tsx` - Componente de acompanhamento de votacao em tempo real
+- **Funcionalidades existentes verificadas**:
+  - Botao "Iniciar Sessao" ja existe e funciona (exibido quando status = AGENDADA)
+  - Botao "Finalizar Sessao" ja existe e funciona (exibido quando status = EM_ANDAMENTO)
+  - Controle de presenca via componente PresencaControl
+  - Controle de itens da pauta: iniciar, pausar, retomar, votacao, finalizar
+  - Pagina de votacao para parlamentares (/parlamentar/votacao) funcional
 
 ### 2026-01-20 - Correcao Completa dos Formularios do Modulo de Transparencia
 - **Objetivo**: Corrigir todos os formularios admin do modulo de transparencia para incluir todos os campos do Prisma schema
@@ -2161,6 +2290,158 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-21 - Correcoes de Tipos e Sincronizacao do Schema
+
+- **Objetivo**: Corrigir erros de TypeScript e sincronizar schema Prisma com banco de dados
+- **Correcoes realizadas**:
+  - Corrigido import de `authOptions` de `@/lib/auth/auth-options` para `@/lib/auth` em 12 arquivos
+  - Corrigido tipos no `emenda-service.ts`: campos coautores, numero, votos
+  - Corrigido tipos no `consulta-publica-service.ts`: StatusConsulta, cpfHash, opcoes
+  - Corrigido tipos no `sugestao-legislativa-service.ts`: StatusSugestao, cpfHash, categoria
+  - Corrigido tipos no `compilacao-service.ts`: numero como string, descricao nullable
+  - Removidos includes de relacionamentos inexistentes (autor, proposicao, parlamentarResponsavel)
+  - Sincronizado schema Prisma com banco de dados via `prisma db push`
+- **Arquivos modificados**:
+  - `src/app/api/emendas/[id]/route.ts`
+  - `src/app/api/emendas/aglutinar/route.ts`
+  - `src/app/api/normas/route.ts`
+  - `src/app/api/normas/[id]/route.ts`
+  - `src/app/api/participacao/consultas/route.ts`
+  - `src/app/api/participacao/consultas/[id]/route.ts`
+  - `src/app/api/participacao/sugestoes/route.ts`
+  - `src/app/api/participacao/sugestoes/[id]/route.ts`
+  - `src/app/api/proposicoes/[id]/emendas/route.ts`
+  - `src/app/api/protocolo/route.ts`
+  - `src/app/api/protocolo/[id]/route.ts`
+  - `src/app/api/relatorios/agendados/route.ts`
+  - `src/app/api/relatorios/agendados/[id]/route.ts`
+  - `src/lib/services/emenda-service.ts`
+  - `src/lib/services/consulta-publica-service.ts`
+  - `src/lib/services/sugestao-legislativa-service.ts`
+  - `src/lib/services/compilacao-service.ts`
+
+### 2026-01-21 - Alinhamento Completo com SAPL do Interlegis (6 Fases)
+
+- **Objetivo**: Implementar todas as funcionalidades para alinhar sistema com padrao SAPL do Interlegis
+- **Cobertura Final**: ~98% dos requisitos SAPL
+
+#### FASE 1: Turnos de Votacao e Quorum Configuravel
+- **Arquivos criados**:
+  - `src/lib/services/turno-service.ts`: Logica de turnos de votacao
+  - `src/app/api/sessoes/[id]/votacao/turno/route.ts`: API de turnos
+  - `src/components/admin/turno-control.tsx`: UI de controle de turnos
+- **Funcionalidades**:
+  - Votacao em 1o e 2o turno
+  - Intersticio configuravel entre turnos (24h ordinarias, 10 dias LO)
+  - Quorum por tipo de materia (simples, absoluta, qualificada)
+  - Campos de turno no modelo PautaItem
+
+#### FASE 2: Modulo de Protocolo Administrativo
+- **Arquivos criados**:
+  - `src/lib/services/protocolo-service.ts`: Servico completo de protocolo
+  - `src/app/api/protocolo/route.ts`: Endpoints de protocolo
+  - `src/app/api/protocolo/[id]/route.ts`: Operacoes por ID
+  - `src/app/admin/protocolo/page.tsx`: Listagem de protocolos
+  - `src/app/admin/protocolo/novo/page.tsx`: Novo protocolo
+- **Funcionalidades**:
+  - Registro de documentos entrada/saida/interno
+  - Geracao de codigo de etiqueta (QR/barcode)
+  - Sistema de tramitacao interna
+  - Conversao para proposicao
+  - Controle de prazos e prioridades
+
+#### FASE 3: Sistema de Emendas Completo
+- **Arquivos criados**:
+  - `src/lib/services/emenda-service.ts`: Servico de emendas
+  - `src/lib/api/emendas-api.ts`: Cliente API
+  - `src/lib/utils/texto-consolidado.ts`: Consolidacao de textos
+  - `src/app/api/proposicoes/[id]/emendas/route.ts`: API de emendas por proposicao
+  - `src/app/api/emendas/[id]/route.ts`: Operacoes por emenda
+  - `src/app/api/emendas/aglutinar/route.ts`: Aglutinacao
+  - `src/app/admin/proposicoes/[id]/emendas/page.tsx`: Gestao de emendas
+  - `src/app/admin/emendas/[id]/page.tsx`: Detalhes da emenda
+- **Funcionalidades**:
+  - Tipos: ADITIVA, MODIFICATIVA, SUPRESSIVA, SUBSTITUTIVA, EMENDA_DE_REDACAO
+  - Votacao de emendas em separado
+  - Aglutinacao de emendas
+  - Geracao de texto consolidado
+  - Parecer de comissoes sobre emendas
+
+#### FASE 4: Compilacao de Textos Legislativos
+- **Arquivos criados**:
+  - `src/lib/services/norma-juridica-service.ts`: Gestao de normas
+  - `src/lib/services/compilacao-service.ts`: Compilacao de textos
+  - `src/app/api/normas/route.ts`: API de normas
+  - `src/app/api/normas/[id]/route.ts`: Operacoes por norma
+  - `src/app/admin/normas/page.tsx`: Gestao de normas
+  - `src/app/legislativo/normas/page.tsx`: Consulta publica
+- **Funcionalidades**:
+  - Versionamento de legislacao
+  - Texto compilado com alteracoes
+  - Registro de alteracoes entre normas
+  - Busca full-text
+  - Historico de versoes
+
+#### FASE 5: Participacao Cidada Expandida
+- **Arquivos criados**:
+  - `src/lib/services/consulta-publica-service.ts`: Consultas publicas
+  - `src/lib/services/sugestao-legislativa-service.ts`: Sugestoes
+  - `src/app/api/participacao/consultas/route.ts`: API de consultas
+  - `src/app/api/participacao/consultas/[id]/route.ts`: Operacoes por consulta
+  - `src/app/api/participacao/sugestoes/route.ts`: API de sugestoes
+  - `src/app/api/participacao/sugestoes/[id]/route.ts`: Operacoes por sugestao
+- **Funcionalidades**:
+  - Consultas publicas com perguntas configuraveis
+  - Sistema de apoios com validacao por CPF
+  - Moderacao de sugestoes
+  - Conversao de sugestao em proposicao
+  - Resultados e estatisticas
+
+#### FASE 6: Analytics e Business Intelligence
+- **Arquivos criados**:
+  - `src/lib/services/relatorio-agendado-service.ts`: Relatorios agendados
+  - `src/app/api/relatorios/agendados/route.ts`: API de agendamentos
+  - `src/app/api/relatorios/agendados/[id]/route.ts`: Operacoes por relatorio
+- **Funcionalidades**:
+  - Relatorios: producao legislativa, presenca, votacoes, tramitacao, protocolo, comissoes
+  - Agendamento automatico (diario, semanal, mensal)
+  - Exportacao em PDF, Excel, CSV
+  - Metricas e dashboards
+
+#### Atualizacoes no Sidebar Admin
+- Adicionado item "Protocolo" (`/admin/protocolo`)
+- Adicionado item "Normas Juridicas" (`/admin/normas`)
+- Icones: FileInput para Protocolo, Scale para Normas
+
+### 2026-01-21 - Implementacao do Acesso da Secretaria (Modelo SAPL)
+- **Objetivo**: Redefinir o perfil SECRETARIA para focar em funcoes administrativas, alinhado com o modelo SAPL do Interlegis
+- **Arquivos modificados**:
+  - `src/lib/auth/permissions.ts`: Novas permissoes e redefinicao de roles
+  - `src/components/admin/admin-sidebar.tsx`: Filtragem de menu por permissoes
+  - `src/app/admin/layout.tsx`: Integracao da sessao com sidebar
+- **Novas permissoes adicionadas**:
+  - `user.view`, `user.manage`: Gerenciamento de usuarios
+  - `transparencia.view`, `transparencia.manage`: Portal da transparencia
+- **Redefinicao do role SECRETARIA**:
+  - Antes: 25/27 permissoes (quase admin)
+  - Depois: 18 permissoes (foco administrativo)
+  - Permissoes mantidas: user.manage, config.manage, parlamentar.manage, legislatura.manage, mesa.manage, comissao.manage, publicacao.manage, transparencia.manage, relatorio.view, monitor.view, sessao.view, tramitacao.view, painel.view
+  - Permissoes removidas: pauta.manage, votacao.manage, painel.manage, presenca.manage, sessao.manage, audit.view, integration.manage, tramitacao.manage
+- **Atualizacao do role OPERADOR**:
+  - Adicionada permissao `pauta.manage` para gerenciar pautas de sessao
+- **Sidebar filtrado por permissoes**:
+  - Cada item do menu tem permissoes associadas
+  - Menus sao filtrados baseado no role do usuario logado
+  - Submenus tambem sao filtrados individualmente
+- **Funcoes helper adicionadas**:
+  - `getPermissions(role)`: Retorna lista de permissoes de um role
+  - `hasAnyPermission(role, permissions[])`: Verifica se tem alguma das permissoes
+- **Alinhamento com SAPL**:
+  - SECRETARIA = operador_administrativo (usuarios, tabelas auxiliares, estrutura)
+  - OPERADOR = operador_sessao + operador_painel (sessoes, votacoes, painel)
+  - EDITOR = operador_materia (proposicoes, tramitacao)
+- **Resultado**: Sistema de permissoes mais granular e sidebar dinamico baseado no perfil do usuario
 
 ### 2026-01-20 - Documentacao Completa do Fluxo de Documentos da Secretaria
 - **Arquivo modificado**: `CLAUDE.md`

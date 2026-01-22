@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { hasAnyPermission, type Permission } from '@/lib/auth/permissions'
+import { UserRole } from '@prisma/client'
 import {
   LayoutDashboard,
   Users,
@@ -21,7 +23,6 @@ import {
   Megaphone,
   ChevronDown,
   ChevronRight,
-  Clock,
   Workflow,
   Zap,
   Monitor,
@@ -36,127 +37,174 @@ import {
   Handshake,
   TrendingUp,
   TrendingDown,
-  Vote
+  Vote,
+  FileInput,
+  Scale,
+  LucideIcon
 } from 'lucide-react'
 import { useState } from 'react'
 
-const navigation = [
+interface NavItem {
+  name: string
+  href: string
+  icon: LucideIcon
+  permissions?: Permission[]
+  submenu?: NavItem[]
+}
+
+// Navegação com permissões associadas a cada item
+const navigation: NavItem[] = [
   {
     name: 'Dashboard',
     href: '/admin',
     icon: LayoutDashboard
+    // Dashboard é visível para todos os roles autenticados
   },
   {
     name: 'Parlamentares',
     href: '/admin/parlamentares',
-    icon: Users
+    icon: Users,
+    permissions: ['parlamentar.view']
   },
   {
     name: 'Usuários',
     href: '/admin/usuarios',
-    icon: Shield
+    icon: Shield,
+    permissions: ['user.manage']
   },
   {
     name: 'Mesa Diretora',
     href: '/admin/mesa-diretora',
-    icon: Gavel
+    icon: Gavel,
+    permissions: ['mesa.view']
   },
   {
     name: 'Legislaturas',
     href: '/admin/legislaturas',
-    icon: BookOpen
+    icon: BookOpen,
+    permissions: ['legislatura.view']
   },
   {
     name: 'Sessões Legislativas',
     href: '/admin/sessoes-legislativas',
-    icon: Calendar
+    icon: Calendar,
+    permissions: ['periodo.view']
   },
   {
     name: 'Templates de Sessão',
     href: '/admin/templates-sessao',
-    icon: Layers
+    icon: Layers,
+    permissions: ['sessao.manage']
   },
   {
     name: 'Integrações',
     href: '/admin/integracoes',
-    icon: Key
+    icon: Key,
+    permissions: ['integration.manage']
   },
   {
     name: 'Painel Eletrônico',
     href: '/admin/painel-eletronico',
-    icon: Monitor
+    icon: Monitor,
+    permissions: ['painel.view']
   },
   {
     name: 'Proposições',
     href: '/admin/proposicoes',
-    icon: FileText
+    icon: FileText,
+    permissions: ['tramitacao.view']
   },
   {
     name: 'Comissões',
     href: '/admin/comissoes',
-    icon: Users
+    icon: Users,
+    permissions: ['comissao.view']
   },
   {
     name: 'Pareceres',
     href: '/admin/pareceres',
-    icon: ClipboardList
+    icon: ClipboardList,
+    permissions: ['tramitacao.view']
   },
   {
     name: 'Tramitações',
     href: '/admin/tramitacoes',
     icon: Workflow,
+    permissions: ['tramitacao.view'],
     submenu: [
       {
         name: 'Tramitações',
         href: '/admin/tramitacoes',
-        icon: Workflow
+        icon: Workflow,
+        permissions: ['tramitacao.view']
       },
       {
         name: 'Regras Automatizadas',
         href: '/admin/tramitacoes/regras',
-        icon: Zap
+        icon: Zap,
+        permissions: ['tramitacao.manage']
       },
       {
         name: 'Dashboard',
         href: '/admin/tramitacoes/dashboard',
-        icon: BarChart3
+        icon: BarChart3,
+        permissions: ['tramitacao.view']
       }
     ]
   },
   {
     name: 'Pautas das Sessões',
     href: '/admin/pautas-sessoes',
-    icon: ClipboardList
+    icon: ClipboardList,
+    permissions: ['pauta.manage']
+  },
+  {
+    name: 'Protocolo',
+    href: '/admin/protocolo',
+    icon: FileInput,
+    permissions: ['tramitacao.view']
+  },
+  {
+    name: 'Normas Juridicas',
+    href: '/admin/normas',
+    icon: Scale,
+    permissions: ['transparencia.view']
   },
   {
     name: 'Audiências Públicas',
     href: '/admin/audiencias-publicas',
-    icon: Megaphone
+    icon: Megaphone,
+    permissions: ['sessao.view']
   },
   {
     name: 'Notícias',
     href: '/admin/noticias',
-    icon: Newspaper
+    icon: Newspaper,
+    permissions: ['publicacao.view']
   },
   {
     name: 'Licitações',
     href: '/admin/licitacoes',
-    icon: Gavel
+    icon: Gavel,
+    permissions: ['transparencia.view']
   },
   {
     name: 'Publicações',
     href: '/admin/publicacoes',
     icon: BookOpen,
+    permissions: ['publicacao.view'],
     submenu: [
       {
         name: 'Gerenciar Publicações',
         href: '/admin/publicacoes',
-        icon: BookOpen
+        icon: BookOpen,
+        permissions: ['publicacao.view']
       },
       {
         name: 'Categorias de Publicações',
         href: '/admin/publicacoes/categorias',
-        icon: Layers
+        icon: Layers,
+        permissions: ['publicacao.manage']
       }
     ]
   },
@@ -164,155 +212,187 @@ const navigation = [
     name: 'Transparência',
     href: '/admin/transparencia',
     icon: Eye,
+    permissions: ['transparencia.view'],
     submenu: [
       {
         name: 'Visão Geral',
         href: '/admin/transparencia',
-        icon: Eye
+        icon: Eye,
+        permissions: ['transparencia.view']
       },
       {
         name: 'Servidores',
         href: '/admin/servidores',
-        icon: Users
+        icon: Users,
+        permissions: ['transparencia.manage']
       },
       {
         name: 'Folha de Pagamento',
         href: '/admin/folha-pagamento',
-        icon: Wallet
+        icon: Wallet,
+        permissions: ['transparencia.manage']
       },
       {
         name: 'Contratos',
         href: '/admin/contratos',
-        icon: FileSpreadsheet
+        icon: FileSpreadsheet,
+        permissions: ['transparencia.manage']
       },
       {
         name: 'Convênios',
         href: '/admin/convenios',
-        icon: Handshake
+        icon: Handshake,
+        permissions: ['transparencia.manage']
       },
       {
         name: 'Receitas',
         href: '/admin/receitas',
-        icon: TrendingUp
+        icon: TrendingUp,
+        permissions: ['transparencia.manage']
       },
       {
         name: 'Despesas',
         href: '/admin/despesas',
-        icon: TrendingDown
+        icon: TrendingDown,
+        permissions: ['transparencia.manage']
       },
       {
         name: 'Bens Patrimoniais',
         href: '/admin/bens-patrimoniais',
-        icon: Package
+        icon: Package,
+        permissions: ['transparencia.manage']
       }
     ]
   },
   {
     name: 'Gestão Fiscal',
     href: '/admin/gestao-fiscal',
-    icon: DollarSign
+    icon: DollarSign,
+    permissions: ['transparencia.manage']
   },
   {
     name: 'Relatórios',
     href: '/admin/relatorios',
-    icon: BarChart3
+    icon: BarChart3,
+    permissions: ['relatorio.view']
   },
   {
     name: 'Analytics',
     href: '/admin/analytics',
-    icon: Activity
+    icon: Activity,
+    permissions: ['monitor.view']
   },
   {
     name: 'Auditoria',
     href: '/admin/auditoria',
-    icon: Shield
+    icon: Shield,
+    permissions: ['audit.view']
   },
   {
     name: 'Participação Cidadã',
     href: '/admin/participacao-cidada',
-    icon: Users
+    icon: Users,
+    permissions: ['publicacao.view']
   },
   {
     name: 'Configurações',
     href: '/admin/configuracoes',
     icon: Settings,
+    permissions: ['config.view'],
     submenu: [
       {
         name: 'Configurações Gerais',
         href: '/admin/configuracoes',
-        icon: Settings
+        icon: Settings,
+        permissions: ['config.view']
       },
       {
         name: 'Tipos de Órgãos',
         href: '/admin/configuracoes/tipos-orgaos',
-        icon: Building
+        icon: Building,
+        permissions: ['config.manage']
       },
       {
         name: 'Tipos de Tramitação',
         href: '/admin/configuracoes/tipos-tramitacao',
-        icon: Workflow
+        icon: Workflow,
+        permissions: ['config.manage']
       },
       {
         name: 'Gestão de Usuários',
         href: '/admin/configuracoes/usuarios',
-        icon: Users
+        icon: Users,
+        permissions: ['user.manage']
       },
       {
         name: 'Automação de Tramitação',
         href: '/admin/configuracoes/automacao',
-        icon: Zap
+        icon: Zap,
+        permissions: ['tramitacao.manage']
       },
       {
         name: 'Unidades de Tramitação',
         href: '/admin/configuracoes/unidades-tramitacao',
-        icon: Workflow
+        icon: Workflow,
+        permissions: ['config.manage']
       },
       {
         name: 'Configuração de Quórum',
         href: '/admin/configuracoes/quorum',
-        icon: Vote
+        icon: Vote,
+        permissions: ['config.manage']
       },
       {
         name: 'Testes da API',
         href: '/admin/testes-api',
-        icon: TestTube
+        icon: TestTube,
+        permissions: ['integration.manage']
       },
       {
         name: 'Segurança e 2FA',
         href: '/admin/configuracoes/seguranca',
-        icon: Shield
+        icon: Shield,
+        permissions: ['config.manage']
       },
       {
         name: 'Backups & Restauração',
         href: '/admin/configuracoes/backups',
-        icon: Database
+        icon: Database,
+        permissions: ['config.manage']
       },
       {
         name: 'Monitoramento',
         href: '/admin/monitoramento',
-        icon: Activity
+        icon: Activity,
+        permissions: ['monitor.view']
       },
       {
         name: 'Health Check',
         href: '/admin/monitoramento/status',
-        icon: Activity
+        icon: Activity,
+        permissions: ['monitor.view']
       },
       {
         name: 'Logs',
         href: '/admin/logs',
-        icon: FileText
+        icon: FileText,
+        permissions: ['audit.view']
       }
     ]
   }
 ]
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  userRole?: UserRole
+}
+
+export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
   const pathname = usePathname()
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
 
   const toggleMenu = (menuName: string) => {
-    setExpandedMenus(prev => 
-      prev.includes(menuName) 
+    setExpandedMenus(prev =>
+      prev.includes(menuName)
         ? prev.filter(name => name !== menuName)
         : [...prev, menuName]
     )
@@ -320,9 +400,38 @@ export function AdminSidebar() {
 
   const isMenuExpanded = (menuName: string) => expandedMenus.includes(menuName)
 
-  const hasActiveSubmenu = (submenu: any[]) => {
+  const hasActiveSubmenu = (submenu: NavItem[]) => {
     return submenu.some(subItem => pathname === subItem.href)
   }
+
+  // Verifica se o usuário tem permissão para ver um item
+  const canViewItem = (item: NavItem): boolean => {
+    // Se não tem permissões definidas, é visível para todos
+    if (!item.permissions || item.permissions.length === 0) {
+      return true
+    }
+    // Verifica se tem pelo menos uma das permissões necessárias
+    return hasAnyPermission(userRole, item.permissions)
+  }
+
+  // Filtra submenus baseado nas permissões
+  const filterSubmenu = (submenu: NavItem[]): NavItem[] => {
+    return submenu.filter(item => canViewItem(item))
+  }
+
+  // Filtra a navegação principal
+  const filteredNavigation = navigation.filter(item => {
+    // Verifica se pode ver o item principal
+    if (!canViewItem(item)) return false
+
+    // Se tem submenu, verifica se pelo menos um item do submenu é visível
+    if (item.submenu && item.submenu.length > 0) {
+      const visibleSubmenu = filterSubmenu(item.submenu)
+      return visibleSubmenu.length > 0
+    }
+
+    return true
+  })
 
   return (
     <div className="w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 min-h-screen flex flex-col shadow-lg">
@@ -341,15 +450,16 @@ export function AdminSidebar() {
 
       <nav className="px-4 py-6 flex-1">
         <ul className="space-y-2">
-          {navigation.map((item, index) => {
+          {filteredNavigation.map((item, index) => {
             const isActive = pathname === item.href
             const hasSubmenu = item.submenu && item.submenu.length > 0
-            const submenuActive = hasSubmenu && hasActiveSubmenu(item.submenu)
+            const filteredSubmenu = hasSubmenu ? filterSubmenu(item.submenu!) : []
+            const submenuActive = hasSubmenu && hasActiveSubmenu(filteredSubmenu)
             const isExpanded = hasSubmenu && isMenuExpanded(item.name)
 
             return (
               <li key={`${item.name}-${index}`}>
-                {hasSubmenu ? (
+                {hasSubmenu && filteredSubmenu.length > 0 ? (
                   <>
                     <button
                       onClick={() => toggleMenu(item.name)}
@@ -377,10 +487,10 @@ export function AdminSidebar() {
                     </button>
                     {isExpanded && (
                       <ul className="ml-6 mt-2 space-y-1">
-                        {item.submenu.map((subItem, index) => {
+                        {filteredSubmenu.map((subItem, subIndex) => {
                           const isSubActive = pathname === subItem.href
                           return (
-                            <li key={`${item.name}-${subItem.name}-${index}`}>
+                            <li key={`${item.name}-${subItem.name}-${subIndex}`}>
                               <Link
                                 href={subItem.href}
                                 className={cn(

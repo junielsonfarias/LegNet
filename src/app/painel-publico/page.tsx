@@ -39,6 +39,12 @@ interface Sessao {
     itens: PautaItem[]
   }
   presencas?: Presenca[]
+  quorum?: {
+    total: number
+    presentes: number
+    ausentes: number
+    percentual: number
+  }
 }
 
 interface PautaItem {
@@ -48,6 +54,7 @@ interface PautaItem {
   secao: string
   ordem: number
   status: string
+  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
   iniciadoEm?: string | null
   finalizadoEm?: string | null
   proposicao?: {
@@ -171,15 +178,13 @@ function PainelPublicoContent() {
 
       if (sessaoData.success && sessaoData.data) {
         setSessao(sessaoData.data)
-        // Extrair presenças da sessão completa (já vem incluído)
+        // Extrair presenças da sessão completa (já vem incluído com todos os parlamentares)
         if (sessaoData.data.presencas && sessaoData.data.presencas.length > 0) {
           setPresencas(sessaoData.data.presencas)
+        } else if (presencaData.success && presencaData.data && presencaData.data.length > 0) {
+          // Fallback para API de presença se sessão-completa não tiver presenças
+          setPresencas(presencaData.data)
         }
-      }
-
-      // Se presencas da sessão-completa estiver vazio, usar a API de presença
-      if (presencaData.success && presencaData.data && presencaData.data.length > 0) {
-        setPresencas(presencaData.data)
       }
 
       if (votacaoData.success && votacaoData.data) {
@@ -294,12 +299,15 @@ function PainelPublicoContent() {
   const sessaoConcluida = sessao.status === 'CONCLUIDA'
   const sessaoEmAndamento = sessao.status === 'EM_ANDAMENTO'
 
-  // Calcular presenças
+  // Calcular presenças - usar dados do quórum se disponível
   const presentes = presencas.filter(p => p.presente)
   const ausentes = presencas.filter(p => !p.presente)
-  const percentualPresenca = presencas.length > 0
-    ? Math.round((presentes.length / presencas.length) * 100)
-    : 0
+  const totalParlamentares = sessao.quorum?.total || presencas.length
+  const percentualPresenca = sessao.quorum?.percentual ?? (
+    totalParlamentares > 0
+      ? Math.round((presentes.length / totalParlamentares) * 100)
+      : 0
+  )
 
   // Formatar tipo de sessão
   const tipoSessaoLabel = {
@@ -381,6 +389,77 @@ function PainelPublicoContent() {
         </div>
       </div>
 
+      {/* Banner de Votação em Andamento */}
+      {sessaoEmAndamento && itemAtual?.status === 'EM_VOTACAO' && (
+        <div className="bg-gradient-to-r from-orange-600/40 to-red-600/40 border-b border-orange-400/50 px-6 py-6 animate-pulse">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="relative">
+                <Vote className="h-8 w-8 text-orange-300" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+              </div>
+              <h2 className="text-3xl font-bold text-white tracking-wider">
+                VOTAÇÃO EM ANDAMENTO
+              </h2>
+              <div className="relative">
+                <Vote className="h-8 w-8 text-orange-300" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+              </div>
+            </div>
+
+            {/* Matéria em votação */}
+            <div className="text-center mb-4">
+              <p className="text-lg text-orange-200">
+                {itemAtual.proposicao
+                  ? `${itemAtual.proposicao.tipo} nº ${itemAtual.proposicao.numero}/${itemAtual.proposicao.ano}`
+                  : itemAtual.titulo
+                }
+              </p>
+              <p className="text-sm text-orange-300 mt-1">
+                {itemAtual.proposicao?.titulo || itemAtual.descricao || ''}
+              </p>
+            </div>
+
+            {/* Contagem de votos em tempo real */}
+            <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-4">
+              <div className="bg-green-600/50 rounded-xl p-4 text-center border border-green-400/50">
+                <div className="text-4xl font-extrabold text-green-200">{estatisticasVotacao.sim}</div>
+                <div className="text-green-300 font-semibold">SIM</div>
+              </div>
+              <div className="bg-red-600/50 rounded-xl p-4 text-center border border-red-400/50">
+                <div className="text-4xl font-extrabold text-red-200">{estatisticasVotacao.nao}</div>
+                <div className="text-red-300 font-semibold">NÃO</div>
+              </div>
+              <div className="bg-yellow-600/50 rounded-xl p-4 text-center border border-yellow-400/50">
+                <div className="text-4xl font-extrabold text-yellow-200">{estatisticasVotacao.abstencao}</div>
+                <div className="text-yellow-300 font-semibold">ABSTENÇÃO</div>
+              </div>
+            </div>
+
+            {/* Barra de progresso de quem votou */}
+            <div className="max-w-md mx-auto">
+              <div className="flex items-center justify-between text-sm text-orange-200 mb-2">
+                <span>Parlamentares que votaram</span>
+                <span className="font-bold">{estatisticasVotacao.total} / {presentes.length}</span>
+              </div>
+              <div className="h-3 bg-gray-700/50 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-500 relative"
+                  style={{ width: `${presentes.length > 0 ? (estatisticasVotacao.total / presentes.length) * 100 : 0}%` }}
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                </div>
+              </div>
+              {presentes.length > 0 && estatisticasVotacao.total < presentes.length && (
+                <p className="text-center text-sm text-orange-300 mt-2">
+                  Aguardando {presentes.length - estatisticasVotacao.total} voto(s)...
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Banner de Sessão Concluída com Resumo */}
       {sessaoConcluida && (
         <div className="bg-blue-600/30 border-b border-blue-400/30 px-6 py-4">
@@ -399,9 +478,10 @@ function PainelPublicoContent() {
             const rejeitados = itens.filter(i => i.status === 'REJEITADO').length
             const adiados = itens.filter(i => i.status === 'ADIADO').length
             const retirados = itens.filter(i => i.status === 'RETIRADO').length
+            const vistas = itens.filter(i => i.status === 'VISTA').length
 
             return (
-              <div className="flex items-center justify-center gap-6 text-sm">
+              <div className="flex items-center justify-center gap-6 text-sm flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="text-blue-300">Total na Pauta:</span>
                   <span className="font-bold text-white">{totalItens}</span>
@@ -428,6 +508,12 @@ function PainelPublicoContent() {
                   <div className="flex items-center gap-2">
                     <Minus className="h-4 w-4 text-gray-400" />
                     <span className="text-gray-300">{retirados} retirado(s)</span>
+                  </div>
+                )}
+                {vistas > 0 && (
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-purple-400" />
+                    <span className="text-purple-300">{vistas} com vista</span>
                   </div>
                 )}
               </div>
@@ -497,6 +583,8 @@ function PainelPublicoContent() {
                         ? 'bg-orange-600/30 text-orange-200 border-orange-400/50' :
                       itemAtual.status === 'EM_DISCUSSAO'
                         ? 'bg-yellow-600/30 text-yellow-200 border-yellow-400/50' :
+                      itemAtual.status === 'VISTA'
+                        ? 'bg-purple-600/30 text-purple-200 border-purple-400/50' :
                       'bg-gray-600/30 text-gray-200 border-gray-400/50'
                     }>
                       {itemAtual.status === 'APROVADO' || itemAtual.status === 'CONCLUIDO' ? 'Aprovado' :
@@ -504,6 +592,7 @@ function PainelPublicoContent() {
                        itemAtual.status === 'EM_VOTACAO' ? 'Em Votação' :
                        itemAtual.status === 'EM_DISCUSSAO' ? 'Em Discussão' :
                        itemAtual.status === 'PENDENTE' ? 'Pendente' :
+                       itemAtual.status === 'VISTA' ? 'Vista' :
                        itemAtual.status}
                     </Badge>
                   </CardTitle>
@@ -700,16 +789,29 @@ function PainelPublicoContent() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-white truncate">{item.titulo}</p>
-                          <p className="text-xs text-blue-300">{item.secao}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-blue-300">{item.secao}</span>
+                            {item.tipoAcao && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                item.tipoAcao === 'VOTACAO' ? 'bg-purple-500/40 text-purple-200' :
+                                item.tipoAcao === 'LEITURA' ? 'bg-sky-500/40 text-sky-200' :
+                                item.tipoAcao === 'HOMENAGEM' ? 'bg-pink-500/40 text-pink-200' :
+                                'bg-gray-500/40 text-gray-200'
+                              }`}>
+                                {item.tipoAcao === 'VOTACAO' ? '🗳️' : item.tipoAcao === 'LEITURA' ? '📖' : item.tipoAcao === 'HOMENAGEM' ? '🏆' : '📢'} {item.tipoAcao}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <Badge className={`text-xs flex-shrink-0 ${
                           item.status === 'APROVADO' || item.status === 'CONCLUIDO' ? 'bg-green-600/30 text-green-200' :
                           item.status === 'REJEITADO' ? 'bg-red-600/30 text-red-200' :
                           item.status === 'EM_VOTACAO' ? 'bg-orange-600/30 text-orange-200' :
                           item.status === 'EM_DISCUSSAO' ? 'bg-yellow-600/30 text-yellow-200' :
+                          item.status === 'VISTA' ? 'bg-purple-600/30 text-purple-200' :
                           'bg-gray-600/30 text-gray-200'
                         }`}>
-                          {item.status}
+                          {item.status === 'VISTA' ? 'Vista' : item.status}
                         </Badge>
                       </div>
                     ))
@@ -759,7 +861,7 @@ function PainelPublicoContent() {
                     />
                   </div>
                   <p className="text-xs text-center text-blue-300 mt-1">
-                    Quórum: {presentes.length}/{presencas.length} parlamentares
+                    Quórum: {presentes.length}/{totalParlamentares} parlamentares
                   </p>
                 </div>
 

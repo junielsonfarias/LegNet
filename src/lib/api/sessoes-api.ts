@@ -31,6 +31,17 @@ export interface SessaoApi {
     dataInicio: string
     dataFim: string | null
   }
+  presencas?: Array<{
+    id: string
+    presente: boolean
+    justificativa?: string | null
+    parlamentar: {
+      id: string
+      nome: string
+      apelido?: string | null
+      partido?: string | null
+    }
+  }>
 }
 
 export interface SessaoFilters {
@@ -224,15 +235,16 @@ class SessoesApiService {
   async controlItem(
     sessaoId: string,
     itemId: string,
-    acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar',
-    resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
+    acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar' | 'vista' | 'retomarVista' | 'subir' | 'descer',
+    resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO',
+    parlamentarId?: string
   ): Promise<PautaItemApi> {
     const response = await fetch(`${this.baseUrl}/${sessaoId}/pauta/${itemId}/controle`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ acao, resultado })
+      body: JSON.stringify({ acao, resultado, parlamentarId })
     })
 
     return this.handleResponse<PautaItemApi>(response)

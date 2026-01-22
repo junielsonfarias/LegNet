@@ -5,8 +5,14 @@ import { createSuccessResponse, NotFoundError, ValidationError, validateId } fro
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { gerarPautaAutomatica } from '@/lib/utils/sessoes-utils'
+import {
+  validarInclusaoOrdemDoDia,
+  determinarTipoAcaoPauta,
+  MAPEAMENTO_TIPO_SECAO
+} from '@/lib/services/proposicao-validacao-service'
 
 const PAUTA_SECAO_ORDER = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
+const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
 
 const PautaItemCreateSchema = z.object({
   secao: z.enum(PAUTA_SECAO_ORDER),
@@ -15,7 +21,9 @@ const PautaItemCreateSchema = z.object({
   proposicaoId: z.string().optional(),
   tempoEstimado: z.number().min(0).optional(),
   autor: z.string().optional(),
-  observacoes: z.string().optional()
+  observacoes: z.string().optional(),
+  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional(), // NOVO - se não informado, será determinado automaticamente
+  validarParecer: z.boolean().optional().default(true) // NOVO - permite ignorar validação em casos especiais
 })
 
 const sortItens = <T extends { secao: string; ordem: number }>(itens: T[]) => {
@@ -152,6 +160,78 @@ export const POST = withAuth(async (
     throw new NotFoundError('Pauta da sessão')
   }
 
+  // Determinar tipoAcao automaticamente se não informado
+  let tipoAcao = payload.data.tipoAcao
+  let proposicaoTipo: string | null = null
+
+  // Se tem proposição vinculada, buscar informações
+  if (payload.data.proposicaoId) {
+    const proposicao = await prisma.proposicao.findUnique({
+      where: { id: payload.data.proposicaoId },
+      select: { tipo: true, status: true }
+    })
+
+    if (proposicao) {
+      proposicaoTipo = proposicao.tipo
+
+      // Determinar tipoAcao baseado no tipo da proposição e seção
+      if (!tipoAcao) {
+        const mapeamento = MAPEAMENTO_TIPO_SECAO[proposicao.tipo]
+        if (mapeamento) {
+          // Se está indo para ORDEM_DO_DIA e tem tipoAcaoVotacao, usar esse
+          if (payload.data.secao === 'ORDEM_DO_DIA' && mapeamento.tipoAcaoVotacao) {
+            tipoAcao = mapeamento.tipoAcaoVotacao as typeof TIPO_ACAO_PAUTA[number]
+          } else {
+            tipoAcao = mapeamento.tipoAcaoPrimeira as typeof TIPO_ACAO_PAUTA[number]
+          }
+        } else {
+          tipoAcao = determinarTipoAcaoPauta(proposicao.tipo, payload.data.secao) as typeof TIPO_ACAO_PAUTA[number]
+        }
+      }
+
+      // RN-030: Validar parecer se está adicionando à ORDEM_DO_DIA para VOTAÇÃO
+      if (
+        payload.data.secao === 'ORDEM_DO_DIA' &&
+        (tipoAcao === 'VOTACAO' || tipoAcao === 'DISCUSSAO') &&
+        payload.data.validarParecer !== false
+      ) {
+        const validacao = await validarInclusaoOrdemDoDia(payload.data.proposicaoId)
+
+        if (!validacao.valid) {
+          throw new ValidationError(validacao.errors.join('; '))
+        }
+
+        // Se passou na validação, atualizar status da proposição para EM_PAUTA
+        if (proposicao.status !== 'EM_PAUTA') {
+          await prisma.proposicao.update({
+            where: { id: payload.data.proposicaoId },
+            data: { status: 'EM_PAUTA' }
+          })
+        }
+      }
+    }
+  }
+
+  // Se ainda não tem tipoAcao, usar padrão baseado na seção
+  if (!tipoAcao) {
+    switch (payload.data.secao) {
+      case 'ORDEM_DO_DIA':
+        tipoAcao = 'VOTACAO'
+        break
+      case 'EXPEDIENTE':
+        tipoAcao = 'LEITURA'
+        break
+      case 'HONRAS':
+        tipoAcao = 'HOMENAGEM'
+        break
+      case 'COMUNICACOES':
+        tipoAcao = 'COMUNICADO'
+        break
+      default:
+        tipoAcao = 'LEITURA'
+    }
+  }
+
   const maiorOrdem = await prisma.pautaItem.findFirst({
     where: {
       pautaId: pautaSessao.id,
@@ -172,6 +252,7 @@ export const POST = withAuth(async (
       proposicaoId: payload.data.proposicaoId ?? null,
       tempoEstimado: payload.data.tempoEstimado ?? null,
       status: 'PENDENTE',
+      tipoAcao: tipoAcao,
       autor: payload.data.autor ?? null,
       observacoes: payload.data.observacoes ?? null
     }
@@ -193,7 +274,9 @@ export const POST = withAuth(async (
     metadata: {
       sessaoId,
       secao: payload.data.secao,
-      titulo: payload.data.titulo
+      titulo: payload.data.titulo,
+      tipoAcao,
+      proposicaoTipo
     }
   })
 

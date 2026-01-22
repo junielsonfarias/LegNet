@@ -104,7 +104,8 @@ export async function iniciarSessaoControle(sessaoId: string) {
       where: { id: sessaoId },
       data: {
         status: 'EM_ANDAMENTO',
-        data: sessao.data ?? agora
+        data: sessao.data ?? agora,
+        tempoInicio: agora // Salva o momento exato em que a sessão foi iniciada
       }
     }),
     prisma.pautaSessao.update({
@@ -401,7 +402,8 @@ export async function contabilizarVotos(
 async function atualizarResultadoProposicao(
   proposicaoId: string,
   resultadoVotacao: 'APROVADA' | 'REJEITADA' | 'EMPATE',
-  statusItem: 'APROVADO' | 'REJEITADO'
+  statusItem: 'APROVADO' | 'REJEITADO',
+  sessaoVotacaoId?: string
 ) {
   // Mapear status do item para status da proposição
   const statusProposicao = statusItem === 'APROVADO' ? 'APROVADA' : 'REJEITADA'
@@ -411,8 +413,219 @@ async function atualizarResultadoProposicao(
     data: {
       resultado: resultadoVotacao,
       dataVotacao: new Date(),
-      status: statusProposicao
+      status: statusProposicao,
+      // Registra a sessão onde a proposição foi votada
+      ...(sessaoVotacaoId && { sessaoVotacaoId })
     }
+  })
+}
+
+/**
+ * Registra pedido de vista em um item da pauta
+ * @param sessaoId - ID da sessão
+ * @param itemId - ID do item da pauta
+ * @param parlamentarId - ID do parlamentar que pede vista
+ * @param prazoDias - Prazo em dias para devolução (padrão: 2 dias úteis)
+ */
+export async function pedirVistaItem(
+  sessaoId: string,
+  itemId: string,
+  parlamentarId: string,
+  prazoDias: number = 2
+) {
+  const sessao = await obterSessaoParaControle(sessaoId)
+
+  if (sessao.status !== 'EM_ANDAMENTO') {
+    throw new ValidationError('A sessão deve estar em andamento para pedir vista')
+  }
+
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: true
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
+  if (!['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status)) {
+    throw new ValidationError('Só é possível pedir vista de item em discussão ou votação')
+  }
+
+  // Calcular prazo (dias úteis)
+  const prazo = new Date()
+  let diasAdicionados = 0
+  while (diasAdicionados < prazoDias) {
+    prazo.setDate(prazo.getDate() + 1)
+    // Pular sábado (6) e domingo (0)
+    if (prazo.getDay() !== 0 && prazo.getDay() !== 6) {
+      diasAdicionados++
+    }
+  }
+
+  // Buscar nome do parlamentar para log
+  const parlamentar = await prisma.parlamentar.findUnique({
+    where: { id: parlamentarId },
+    select: { nome: true, apelido: true }
+  })
+
+  if (!parlamentar) {
+    throw new ValidationError('Parlamentar não encontrado')
+  }
+
+  const acumulado = calcularTempoAcumulado(item.iniciadoEm ?? null, item.tempoAcumulado)
+
+  await prisma.$transaction([
+    prisma.pautaItem.update({
+      where: { id: itemId },
+      data: {
+        status: 'VISTA',
+        tempoAcumulado: acumulado,
+        iniciadoEm: null,
+        vistaRequestedBy: parlamentarId,
+        vistaRequestedAt: new Date(),
+        vistaPrazo: prazo,
+        observacoes: item.observacoes
+          ? `${item.observacoes}\n\nPedido de vista por ${parlamentar.apelido || parlamentar.nome} em ${new Date().toLocaleString('pt-BR')}. Prazo: ${prazo.toLocaleDateString('pt-BR')}`
+          : `Pedido de vista por ${parlamentar.apelido || parlamentar.nome} em ${new Date().toLocaleString('pt-BR')}. Prazo: ${prazo.toLocaleDateString('pt-BR')}`
+      }
+    }),
+    prisma.pautaSessao.update({
+      where: { id: item.pautaId },
+      data: {
+        itemAtualId: null
+      }
+    })
+  ])
+
+  console.log(`[Vista] Item ${item.titulo} - Vista pedida por ${parlamentar.apelido || parlamentar.nome}. Prazo: ${prazo.toLocaleDateString('pt-BR')}`)
+
+  return prisma.pautaItem.findUnique({ where: { id: itemId } })
+}
+
+/**
+ * Retoma um item que estava com pedido de vista
+ */
+export async function retomarItemVista(sessaoId: string, itemId: string) {
+  const sessao = await obterSessaoParaControle(sessaoId)
+
+  if (sessao.status !== 'EM_ANDAMENTO') {
+    throw new ValidationError('A sessão deve estar em andamento para retomar item')
+  }
+
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: true
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
+  if (item.status !== 'VISTA') {
+    throw new ValidationError('Só é possível retomar item que está com pedido de vista')
+  }
+
+  const agora = new Date()
+
+  await prisma.$transaction([
+    prisma.pautaItem.update({
+      where: { id: itemId },
+      data: {
+        status: 'EM_DISCUSSAO',
+        iniciadoEm: agora,
+        observacoes: item.observacoes
+          ? `${item.observacoes}\n\nVista devolvida em ${agora.toLocaleString('pt-BR')}`
+          : `Vista devolvida em ${agora.toLocaleString('pt-BR')}`
+      }
+    }),
+    prisma.pautaSessao.update({
+      where: { id: item.pautaId },
+      data: {
+        itemAtualId: itemId
+      }
+    })
+  ])
+
+  return prisma.pautaItem.findUnique({ where: { id: itemId } })
+}
+
+/**
+ * Reordena itens da pauta
+ * @param sessaoId - ID da sessão
+ * @param itemId - ID do item a mover
+ * @param direcao - 'subir' ou 'descer'
+ */
+export async function reordenarItemPauta(
+  sessaoId: string,
+  itemId: string,
+  direcao: 'subir' | 'descer'
+) {
+  const sessao = await obterSessaoParaControle(sessaoId)
+
+  if (sessao.status !== 'EM_ANDAMENTO' && sessao.status !== 'AGENDADA') {
+    throw new ValidationError('Só é possível reordenar itens de sessão agendada ou em andamento')
+  }
+
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: {
+        include: {
+          itens: {
+            where: { secao: undefined }, // Será definido abaixo
+            orderBy: { ordem: 'asc' }
+          }
+        }
+      }
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
+  if (item.status !== 'PENDENTE') {
+    throw new ValidationError('Só é possível reordenar itens pendentes')
+  }
+
+  // Buscar todos os itens da mesma seção
+  const itensSecao = await prisma.pautaItem.findMany({
+    where: {
+      pautaId: item.pautaId,
+      secao: item.secao
+    },
+    orderBy: { ordem: 'asc' }
+  })
+
+  const indexAtual = itensSecao.findIndex(i => i.id === itemId)
+  const indexAlvo = direcao === 'subir' ? indexAtual - 1 : indexAtual + 1
+
+  if (indexAlvo < 0 || indexAlvo >= itensSecao.length) {
+    throw new ValidationError(`Não é possível ${direcao} mais o item`)
+  }
+
+  const itemTroca = itensSecao[indexAlvo]
+
+  // Trocar ordens
+  await prisma.$transaction([
+    prisma.pautaItem.update({
+      where: { id: itemId },
+      data: { ordem: itemTroca.ordem }
+    }),
+    prisma.pautaItem.update({
+      where: { id: itemTroca.id },
+      data: { ordem: item.ordem }
+    })
+  ])
+
+  return prisma.pautaItem.findMany({
+    where: { pautaId: item.pautaId },
+    orderBy: [{ secao: 'asc' }, { ordem: 'asc' }]
   })
 }
 
@@ -479,13 +692,15 @@ export async function finalizarItemPauta(
     await atualizarResultadoProposicao(
       item.proposicaoId!,
       contagemVotos.resultado,
-      resultado
+      resultado,
+      sessaoId  // Registra a sessão onde a proposição foi votada
     )
 
     console.log(`[Votação] Proposição ${item.proposicao!.numero}/${item.proposicao!.ano} atualizada:`, {
       resultado: contagemVotos.resultado,
       status: resultado === 'APROVADO' ? 'APROVADA' : 'REJEITADA',
-      dataVotacao: new Date().toISOString()
+      dataVotacao: new Date().toISOString(),
+      sessaoVotacaoId: sessaoId
     })
   }
 

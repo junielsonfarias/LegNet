@@ -31,7 +31,21 @@ export const GET = withErrorHandler(async (
           id: true,
           numero: true,
           anoInicio: true,
-          anoFim: true
+          anoFim: true,
+          mandatos: {
+            where: { ativo: true },
+            include: {
+              parlamentar: {
+                select: {
+                  id: true,
+                  nome: true,
+                  apelido: true,
+                  partido: true,
+                  foto: true
+                }
+              }
+            }
+          }
         }
       },
       periodo: {
@@ -112,5 +126,50 @@ export const GET = withErrorHandler(async (
     throw new NotFoundError('Sessão')
   }
 
-  return createSuccessResponse(sessao, 'Sessão encontrada com sucesso')
+  // Montar lista completa de presenças incluindo parlamentares da legislatura
+  // que ainda não têm registro de presença
+  const parlamentaresLegislatura = sessao.legislatura?.mandatos?.map(m => m.parlamentar) || []
+  const presencasRegistradas = sessao.presencas || []
+
+  // Criar mapa de presenças já registradas
+  const presencasMap = new Map(
+    presencasRegistradas.map(p => [p.parlamentar.id, p])
+  )
+
+  // Montar lista completa de presenças
+  const presencasCompletas = parlamentaresLegislatura.map(parlamentar => {
+    const presencaRegistrada = presencasMap.get(parlamentar.id)
+    if (presencaRegistrada) {
+      return presencaRegistrada
+    }
+    // Parlamentar sem registro de presença = ausente
+    return {
+      id: `virtual-${parlamentar.id}`,
+      presente: false,
+      justificativa: null,
+      parlamentar: {
+        id: parlamentar.id,
+        nome: parlamentar.nome,
+        apelido: parlamentar.apelido,
+        partido: parlamentar.partido
+      }
+    }
+  })
+
+  // Retornar sessão com presenças completas
+  const sessaoComPresencasCompletas = {
+    ...sessao,
+    presencas: presencasCompletas,
+    // Adicionar estatísticas de quórum
+    quorum: {
+      total: parlamentaresLegislatura.length,
+      presentes: presencasCompletas.filter(p => p.presente).length,
+      ausentes: presencasCompletas.filter(p => !p.presente).length,
+      percentual: parlamentaresLegislatura.length > 0
+        ? Math.round((presencasCompletas.filter(p => p.presente).length / parlamentaresLegislatura.length) * 100)
+        : 0
+    }
+  }
+
+  return createSuccessResponse(sessaoComPresencasCompletas, 'Sessão encontrada com sucesso')
 })

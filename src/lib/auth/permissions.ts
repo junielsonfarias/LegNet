@@ -8,6 +8,8 @@ import { UserRole } from '@prisma/client'
 export type Permission =
   | 'config.view'
   | 'config.manage'
+  | 'user.view'
+  | 'user.manage'
   | 'parlamentar.view'
   | 'parlamentar.manage'
   | 'comissao.view'
@@ -34,15 +36,20 @@ export type Permission =
   | 'monitor.manage'
   | 'publicacao.view'
   | 'publicacao.manage'
+  | 'transparencia.view'
+  | 'transparencia.manage'
 
 type RolePermissions = Record<UserRole, Set<Permission>>
 
 const buildPermissions = (permissions: Permission[]): Set<Permission> => new Set(permissions)
 
 const rolePermissions: RolePermissions = {
+  // ADMIN: Acesso total ao sistema
   ADMIN: buildPermissions([
     'config.view',
     'config.manage',
+    'user.view',
+    'user.manage',
     'parlamentar.view',
     'parlamentar.manage',
     'comissao.view',
@@ -68,36 +75,46 @@ const rolePermissions: RolePermissions = {
     'monitor.view',
     'monitor.manage',
     'publicacao.view',
-    'publicacao.manage'
+    'publicacao.manage',
+    'transparencia.view',
+    'transparencia.manage'
   ]),
+  // SECRETARIA: Gestor administrativo (baseado no operador_administrativo do SAPL)
+  // Focado em: gerenciamento de usuários, tabelas auxiliares, estrutura organizacional
+  // NÃO deve ter: pauta.manage, votacao.manage, painel.manage, presenca.manage, audit.view
   SECRETARIA: buildPermissions([
+    // Gerenciamento de Usuários
+    'user.view',
+    'user.manage',
+    // Configurações e Tabelas Auxiliares
     'config.view',
     'config.manage',
+    // Parlamentares e Mandatos
     'parlamentar.view',
     'parlamentar.manage',
-    'comissao.view',
-    'comissao.manage',
-    'tramitacao.view',
-    'tramitacao.manage',
-    'relatorio.view',
+    // Estrutura Organizacional
     'legislatura.view',
     'legislatura.manage',
     'periodo.view',
     'periodo.manage',
     'mesa.view',
     'mesa.manage',
-    'sessao.view',
-    'sessao.manage',
-    'pauta.manage',
-    'painel.view',
-    'painel.manage',
-    'presenca.manage',
-    'votacao.manage',
-    'audit.view',
-    'monitor.view',
-    'monitor.manage',
+    'comissao.view',
+    'comissao.manage',
+    // Publicações e Comunicação
     'publicacao.view',
-    'publicacao.manage'
+    'publicacao.manage',
+    // Transparência
+    'transparencia.view',
+    'transparencia.manage',
+    // Relatórios (apenas visualização)
+    'relatorio.view',
+    // Monitoramento (apenas visualização)
+    'monitor.view',
+    // Visualização de Sessões e Proposições (sem gerenciar)
+    'sessao.view',
+    'tramitacao.view',
+    'painel.view'
   ]),
   EDITOR: buildPermissions([
     'config.view',
@@ -123,6 +140,8 @@ const rolePermissions: RolePermissions = {
     'publicacao.view',
     'publicacao.manage'
   ]),
+  // OPERADOR: Operador de Sessão/Painel (baseado no operador_sessao + operador_painel do SAPL)
+  // Focado em: gerenciar sessões, pauta, presenças, votações, painel eletrônico
   OPERADOR: buildPermissions([
     'config.view',
     'parlamentar.view',
@@ -134,6 +153,7 @@ const rolePermissions: RolePermissions = {
     'mesa.view',
     'sessao.view',
     'sessao.manage',
+    'pauta.manage',
     'painel.view',
     'painel.manage',
     'presenca.manage',
@@ -164,6 +184,15 @@ const DEFAULT_ROLE: UserRole = 'USER'
 export function hasPermission(role: UserRole, permission: Permission): boolean {
   const permissions = rolePermissions[role] || rolePermissions[DEFAULT_ROLE]
   return permissions.has(permission)
+}
+
+export function getPermissions(role: UserRole): Permission[] {
+  const permissions = rolePermissions[role] || rolePermissions[DEFAULT_ROLE]
+  return Array.from(permissions)
+}
+
+export function hasAnyPermission(role: UserRole, permissions: Permission[]): boolean {
+  return permissions.some(permission => hasPermission(role, permission))
 }
 
 interface WithAuthOptions {
