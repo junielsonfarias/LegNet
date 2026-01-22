@@ -11,13 +11,22 @@ import {
   finalizarItemPauta,
   pedirVistaItem,
   retomarItemVista,
-  reordenarItemPauta
+  reordenarItemPauta,
+  iniciarTurnoItem,
+  finalizarTurnoItem,
+  verificarIntersticio,
+  iniciarSegundoTurnoItem,
+  listarItensAguardandoSegundoTurno
 } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
 
 const ControleItemSchema = z.object({
-  acao: z.enum(['iniciar', 'pausar', 'retomar', 'votacao', 'finalizar', 'vista', 'retomarVista', 'subir', 'descer']),
+  acao: z.enum([
+    'iniciar', 'pausar', 'retomar', 'votacao', 'finalizar', 'vista', 'retomarVista', 'subir', 'descer',
+    // Ações de turno
+    'iniciar-turno', 'finalizar-turno', 'verificar-intersticio', 'segundo-turno', 'listar-intersticio'
+  ]),
   resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO']).optional(),
   parlamentarId: z.string().optional(), // Para pedido de vista
   prazoDias: z.number().optional()      // Prazo para devolução da vista
@@ -86,6 +95,46 @@ export const POST = withAuth(withErrorHandler(async (
         await reordenarItemPauta(sessaoId, itemId, 'descer'),
         'Item reordenado com sucesso'
       )
+
+    // ==================== AÇÕES DE TURNO ====================
+
+    case 'iniciar-turno':
+      const turnoIniciado = await iniciarTurnoItem(sessaoId, itemId)
+      return createSuccessResponse(
+        turnoIniciado,
+        `Turno de votação iniciado. ${turnoIniciado.configuracao.descricao}`
+      )
+
+    case 'finalizar-turno':
+      if (!resultado || (resultado !== 'APROVADO' && resultado !== 'REJEITADO')) {
+        throw new ValidationError('Resultado deve ser APROVADO ou REJEITADO para finalizar turno')
+      }
+      const turnoFinalizado = await finalizarTurnoItem(sessaoId, itemId, resultado)
+      return createSuccessResponse(
+        turnoFinalizado,
+        turnoFinalizado.resultado.mensagem
+      )
+
+    case 'verificar-intersticio':
+      const intersticio = await verificarIntersticio(sessaoId, itemId)
+      return createSuccessResponse(
+        intersticio,
+        intersticio.motivo
+      )
+
+    case 'segundo-turno':
+      return createSuccessResponse(
+        await iniciarSegundoTurnoItem(sessaoId, itemId),
+        'Segundo turno de votação iniciado'
+      )
+
+    case 'listar-intersticio':
+      const itensEmIntersticio = await listarItensAguardandoSegundoTurno()
+      return createSuccessResponse(
+        itensEmIntersticio,
+        `${itensEmIntersticio.length} item(ns) aguardando segundo turno`
+      )
+
     default:
       throw new ValidationError('Ação inválida')
   }

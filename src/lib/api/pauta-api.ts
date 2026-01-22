@@ -164,6 +164,129 @@ export const pautaApi = {
     }
 
     return handleResponse<PautaSugestaoApi[]>(response)
+  },
+
+  // ==================== AÇÕES DE TURNO ====================
+
+  /**
+   * Inicia turno de votação para um item
+   * Configura campos de turno baseado no tipo da proposição
+   */
+  async iniciarTurno(sessaoId: string, itemId: string): Promise<{
+    item: PautaItemApi
+    configuracao: {
+      totalTurnos: number
+      tipoQuorum: string
+      descricao: string
+    }
+  }> {
+    const response = await fetch(`/api/sessoes/${sessaoId}/pauta/${itemId}/controle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'iniciar-turno' })
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error?.error || 'Erro ao iniciar turno de votação')
+    }
+
+    return handleResponse(response)
+  },
+
+  /**
+   * Finaliza turno de votação e registra resultado
+   */
+  async finalizarTurno(sessaoId: string, itemId: string, resultado: 'APROVADO' | 'REJEITADO'): Promise<{
+    item: PautaItemApi
+    resultado: {
+      proximoTurno: boolean
+      mensagem: string
+      prazoIntersticio?: string
+    }
+    votos: {
+      sim: number
+      nao: number
+      abstencao: number
+      total: number
+    }
+  }> {
+    const response = await fetch(`/api/sessoes/${sessaoId}/pauta/${itemId}/controle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'finalizar-turno', resultado })
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error?.error || 'Erro ao finalizar turno de votação')
+    }
+
+    return handleResponse(response)
+  },
+
+  /**
+   * Verifica se interstício foi cumprido para segundo turno
+   */
+  async verificarIntersticio(sessaoId: string, itemId: string): Promise<{
+    pode: boolean
+    motivo: string
+    prazoIntersticio?: string
+    horasRestantes?: number
+  }> {
+    const response = await fetch(`/api/sessoes/${sessaoId}/pauta/${itemId}/controle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'verificar-intersticio' })
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error?.error || 'Erro ao verificar interstício')
+    }
+
+    return handleResponse(response)
+  },
+
+  /**
+   * Inicia segundo turno de votação após interstício
+   */
+  async iniciarSegundoTurno(sessaoId: string, itemId: string): Promise<PautaItemApi> {
+    const response = await fetch(`/api/sessoes/${sessaoId}/pauta/${itemId}/controle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'segundo-turno' })
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error?.error || 'Erro ao iniciar segundo turno')
+    }
+
+    return handleResponse(response)
+  },
+
+  /**
+   * Lista itens em interstício aguardando segundo turno
+   */
+  async listarItensEmIntersticio(sessaoId: string, itemId: string): Promise<Array<{
+    id: string
+    titulo: string
+    prazoIntersticio: string
+    podeProsseguir: boolean
+  }>> {
+    const response = await fetch(`/api/sessoes/${sessaoId}/pauta/${itemId}/controle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'listar-intersticio' })
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error?.error || 'Erro ao listar itens em interstício')
+    }
+
+    return handleResponse(response)
   }
 }
 

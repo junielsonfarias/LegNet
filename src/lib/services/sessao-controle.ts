@@ -5,6 +5,17 @@ import {
   determinarAplicacaoQuorum,
   type AplicacaoQuorum
 } from '@/lib/services/quorum-service'
+import {
+  getConfiguracaoTurno,
+  requerDoisTurnos,
+  inicializarTurnoPautaItem,
+  registrarResultadoTurno,
+  podeIniciarSegundoTurno,
+  iniciarSegundoTurno as iniciarSegundoTurnoService,
+  registrarVotacaoAgrupada,
+  listarItensEmIntersticio
+} from '@/lib/services/turno-service'
+import type { ResultadoVotacaoAgrupada, TipoQuorum, TipoVotacao } from '@prisma/client'
 
 type SessaoBasica = Awaited<ReturnType<typeof prisma.sessao.findUnique>>
 
@@ -714,5 +725,315 @@ export async function finalizarItemPauta(
   await atualizarTempoTotalReal(item.pautaId)
 
   return atualizado
+}
+
+// ==================== FUNÇÕES DE CONTROLE DE TURNOS ====================
+
+/**
+ * Inicializa turno de votação para um item da pauta
+ * Configura os campos de turno baseado no tipo da proposição
+ */
+export async function iniciarTurnoItem(
+  sessaoId: string,
+  itemId: string
+): Promise<{
+  item: any
+  configuracao: {
+    totalTurnos: number
+    tipoQuorum: TipoQuorum
+    descricao: string
+  }
+}> {
+  const sessao = await obterSessaoParaControle(sessaoId)
+
+  if (sessao.status !== 'EM_ANDAMENTO') {
+    throw new ValidationError('A sessão deve estar em andamento para iniciar turno de votação')
+  }
+
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: true,
+      proposicao: true
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
+  if (!item.proposicaoId || !item.proposicao) {
+    throw new ValidationError('Item deve ter uma proposição vinculada para votação por turnos')
+  }
+
+  // Obter configuração de turnos baseada no tipo da proposição
+  const tipoProposicao = item.proposicao.tipo
+  const config = getConfiguracaoTurno(tipoProposicao)
+
+  // Inicializar campos de turno
+  await inicializarTurnoPautaItem(itemId, tipoProposicao)
+
+  // Iniciar o item (muda status para EM_DISCUSSAO)
+  await prisma.$transaction([
+    prisma.pautaItem.update({
+      where: { id: itemId },
+      data: {
+        status: 'EM_DISCUSSAO',
+        iniciadoEm: new Date()
+      }
+    }),
+    prisma.pautaSessao.update({
+      where: { id: item.pautaId },
+      data: {
+        itemAtualId: itemId
+      }
+    })
+  ])
+
+  const itemAtualizado = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: { proposicao: true }
+  })
+
+  return {
+    item: itemAtualizado,
+    configuracao: {
+      totalTurnos: config.totalTurnos,
+      tipoQuorum: config.tipoQuorum as TipoQuorum,
+      descricao: config.descricao
+    }
+  }
+}
+
+/**
+ * Finaliza turno de votação e registra resultado
+ */
+export async function finalizarTurnoItem(
+  sessaoId: string,
+  itemId: string,
+  resultado: 'APROVADO' | 'REJEITADO'
+): Promise<{
+  item: any
+  resultado: {
+    proximoTurno: boolean
+    mensagem: string
+    prazoIntersticio?: Date
+  }
+  votos: {
+    sim: number
+    nao: number
+    abstencao: number
+    total: number
+  }
+}> {
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: true,
+      proposicao: true
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
+  if (item.status !== 'EM_VOTACAO') {
+    throw new ValidationError('O item deve estar em votação para finalizar o turno')
+  }
+
+  if (!item.proposicaoId || !item.proposicao) {
+    throw new ValidationError('Item deve ter uma proposição vinculada')
+  }
+
+  const turnoAtual = item.turnoAtual || 1
+  const tipoProposicao = item.proposicao.tipo
+
+  // Contabilizar votos
+  const contagem = await contabilizarVotos(item.proposicaoId, {
+    tipoProposicao,
+    sessaoId
+  })
+
+  // Mapear resultado para o enum
+  const resultadoAgrupado: ResultadoVotacaoAgrupada = resultado === 'APROVADO' ? 'APROVADA' : 'REJEITADA'
+
+  // Registrar resultado do turno
+  const resultadoTurno = await registrarResultadoTurno(
+    itemId,
+    turnoAtual,
+    resultadoAgrupado,
+    tipoProposicao
+  )
+
+  // Obter totais para votação agrupada
+  const totalMembros = await prisma.parlamentar.count({ where: { ativo: true } })
+  const totalPresentes = await prisma.presencaSessao.count({
+    where: { sessaoId, presente: true }
+  })
+
+  const config = getConfiguracaoTurno(tipoProposicao)
+
+  // Registrar votação agrupada
+  await registrarVotacaoAgrupada(
+    item.proposicaoId,
+    sessaoId,
+    turnoAtual,
+    {
+      sim: contagem.sim,
+      nao: contagem.nao,
+      abstencao: contagem.abstencao,
+      ausente: totalPresentes - contagem.total
+    },
+    totalMembros,
+    totalPresentes,
+    config.tipoQuorum as TipoQuorum,
+    'NOMINAL' as TipoVotacao,
+    resultadoAgrupado
+  )
+
+  // Se não há próximo turno, atualizar a proposição
+  if (!resultadoTurno.proximoTurno) {
+    await atualizarResultadoProposicao(
+      item.proposicaoId,
+      contagem.resultado,
+      resultado,
+      sessaoId
+    )
+
+    // Atualizar tempo e limpar item atual
+    const acumulado = calcularTempoAcumulado(item.iniciadoEm, item.tempoAcumulado)
+    await prisma.pautaItem.update({
+      where: { id: itemId },
+      data: {
+        tempoAcumulado: acumulado,
+        tempoReal: acumulado,
+        iniciadoEm: null
+      }
+    })
+
+    await prisma.pautaSessao.update({
+      where: { id: item.pautaId },
+      data: { itemAtualId: null }
+    })
+
+    await atualizarTempoTotalReal(item.pautaId)
+  }
+
+  const itemAtualizado = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: { proposicao: true }
+  })
+
+  return {
+    item: itemAtualizado,
+    resultado: resultadoTurno,
+    votos: {
+      sim: contagem.sim,
+      nao: contagem.nao,
+      abstencao: contagem.abstencao,
+      total: contagem.total
+    }
+  }
+}
+
+/**
+ * Verifica se item pode iniciar segundo turno
+ */
+export async function verificarIntersticio(
+  sessaoId: string,
+  itemId: string
+): Promise<{
+  pode: boolean
+  motivo: string
+  prazoIntersticio?: Date
+  horasRestantes?: number
+}> {
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: { pauta: true }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
+  const verificacao = await podeIniciarSegundoTurno(itemId)
+
+  const resultado: {
+    pode: boolean
+    motivo: string
+    prazoIntersticio?: Date
+    horasRestantes?: number
+  } = {
+    pode: verificacao.pode,
+    motivo: verificacao.motivo
+  }
+
+  if (item.prazoIntersticio) {
+    resultado.prazoIntersticio = item.prazoIntersticio
+    if (!verificacao.pode && item.prazoIntersticio > new Date()) {
+      resultado.horasRestantes = Math.ceil(
+        (item.prazoIntersticio.getTime() - Date.now()) / (1000 * 60 * 60)
+      )
+    }
+  }
+
+  return resultado
+}
+
+/**
+ * Inicia segundo turno de votação após interstício
+ */
+export async function iniciarSegundoTurnoItem(
+  sessaoId: string,
+  itemId: string
+): Promise<any> {
+  const sessao = await obterSessaoParaControle(sessaoId)
+
+  if (sessao.status !== 'EM_ANDAMENTO') {
+    throw new ValidationError('A sessão deve estar em andamento para iniciar o segundo turno')
+  }
+
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: { pauta: true }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
+  // Verificar se pode iniciar segundo turno
+  const verificacao = await podeIniciarSegundoTurno(itemId)
+  if (!verificacao.pode) {
+    throw new ValidationError(verificacao.motivo)
+  }
+
+  // Iniciar segundo turno
+  await iniciarSegundoTurnoService(itemId)
+
+  // Atualizar item atual da pauta
+  await prisma.pautaSessao.update({
+    where: { id: item.pautaId },
+    data: { itemAtualId: itemId }
+  })
+
+  return prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: { proposicao: true }
+  })
+}
+
+/**
+ * Lista todos os itens em interstício aguardando segundo turno
+ */
+export async function listarItensAguardandoSegundoTurno(): Promise<Array<{
+  id: string
+  titulo: string
+  prazoIntersticio: Date
+  podeProsseguir: boolean
+}>> {
+  return listarItensEmIntersticio()
 }
 

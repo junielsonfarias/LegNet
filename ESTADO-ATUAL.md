@@ -148,6 +148,10 @@ Fluxo Validado:
 | Historico de votacoes | Implementado | Vinculado a proposicao |
 | Painel de votacao | Implementado | /admin/painel-eletronico |
 | **Quorum configuravel** | **Implementado** | /admin/configuracoes/quorum - tipos, bases de calculo, mensagens |
+| **Turnos de votacao** | **Implementado** | 1o e 2o turno com intersticio configuravel |
+| **VotacaoAgrupada** | **Implementado** | Consolidacao de votos por turno/sessao |
+| **Controle de intersticio** | **Implementado** | 24h PLCs, 10 dias Emendas LO |
+| **API de turnos** | **Implementado** | /api/sessoes/[id]/votacao/turno |
 
 ### 7. Comissoes
 
@@ -2452,16 +2456,29 @@ sudo ./scripts/uninstall.sh --full
 - **Objetivo**: Implementar todas as funcionalidades para alinhar sistema com padrao SAPL do Interlegis
 - **Cobertura Final**: ~98% dos requisitos SAPL
 
-#### FASE 1: Turnos de Votacao e Quorum Configuravel
-- **Arquivos criados**:
-  - `src/lib/services/turno-service.ts`: Logica de turnos de votacao
-  - `src/app/api/sessoes/[id]/votacao/turno/route.ts`: API de turnos
+#### FASE 1: Turnos de Votacao e Quorum Configuravel [IMPLEMENTADO 22/01/2026]
+- **Modelos Prisma**:
+  - `Votacao`: Campo `turno` e `sessaoId` para rastreamento
+  - `VotacaoAgrupada`: Consolidacao de votos por turno com quorum
+  - `PautaItem`: Campos completos de turno (`turnoAtual`, `turnoFinal`, `resultadoTurno1/2`, `dataVotacaoTurno1/2`, `intersticio`, `prazoIntersticio`)
+  - `ConfiguracaoQuorum`: Quorum configuravel por tipo de materia
+- **Arquivos criados/atualizados**:
+  - `src/lib/services/turno-service.ts`: Logica de turnos de votacao (539 linhas, 15 funcoes)
+  - `src/lib/services/quorum-service.ts`: Calculo de quorum configuravel
+  - `src/lib/services/sessao-controle.ts`: Funcoes de controle de turno adicionadas
+  - `src/app/api/sessoes/[id]/votacao/turno/route.ts`: API de turnos (GET, POST, PUT)
+  - `src/app/api/sessoes/[id]/pauta/[itemId]/controle/route.ts`: Acoes de turno adicionadas
+  - `src/lib/api/pauta-api.ts`: Metodos cliente para turno
   - `src/components/admin/turno-control.tsx`: UI de controle de turnos
-- **Funcionalidades**:
-  - Votacao em 1o e 2o turno
-  - Intersticio configuravel entre turnos (24h ordinarias, 10 dias LO)
-  - Quorum por tipo de materia (simples, absoluta, qualificada)
-  - Campos de turno no modelo PautaItem
+- **Funcionalidades implementadas**:
+  - Votacao em 1o e 2o turno com configuracao automatica por tipo de materia
+  - Intersticio configuravel (24h para PLCs/Resolucoes, 10 dias para Emendas a LO)
+  - Quorum por tipo de materia (simples, absoluta, 2/3, 3/5, unanimidade)
+  - Verificacao automatica de cumprimento de intersticio
+  - Registro de votacao agrupada por turno
+  - Historico de votacoes por turno
+  - Listagem de itens aguardando segundo turno
+  - Acoes na API: `iniciar-turno`, `finalizar-turno`, `verificar-intersticio`, `segundo-turno`, `listar-intersticio`
 
 #### FASE 2: Modulo de Protocolo Administrativo
 - **Arquivos criados**:
