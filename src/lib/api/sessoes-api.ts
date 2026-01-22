@@ -237,14 +237,15 @@ class SessoesApiService {
     itemId: string,
     acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar' | 'vista' | 'retomarVista' | 'subir' | 'descer',
     resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO',
-    parlamentarId?: string
+    parlamentarId?: string,
+    observacoes?: string  // Motivo da retirada, etc.
   ): Promise<PautaItemApi> {
     const response = await fetch(`${this.baseUrl}/${sessaoId}/pauta/${itemId}/controle`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ acao, resultado, parlamentarId })
+      body: JSON.stringify({ acao, resultado, parlamentarId, observacoes })
     })
 
     return this.handleResponse<PautaItemApi>(response)

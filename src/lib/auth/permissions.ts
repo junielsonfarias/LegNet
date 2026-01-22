@@ -79,9 +79,9 @@ const rolePermissions: RolePermissions = {
     'transparencia.view',
     'transparencia.manage'
   ]),
-  // SECRETARIA: Gestor administrativo (baseado no operador_administrativo do SAPL)
-  // Focado em: gerenciamento de usuários, tabelas auxiliares, estrutura organizacional
-  // NÃO deve ter: pauta.manage, votacao.manage, painel.manage, presenca.manage, audit.view
+  // SECRETARIA: Gestor legislativo (secretário da Câmara)
+  // Responsável por: cadastro de proposições, tramitação, pauta, gestão de sessões
+  // Conforme fluxo legislativo: cria proposições, tramita entre comissões, inclui na pauta
   SECRETARIA: buildPermissions([
     // Gerenciamento de Usuários
     'user.view',
@@ -107,13 +107,20 @@ const rolePermissions: RolePermissions = {
     // Transparência
     'transparencia.view',
     'transparencia.manage',
-    // Relatórios (apenas visualização)
+    // Relatórios
     'relatorio.view',
-    // Monitoramento (apenas visualização)
+    // Monitoramento
     'monitor.view',
-    // Visualização de Sessões e Proposições (sem gerenciar)
+    // === NOVO: Gestão do Processo Legislativo ===
+    // Sessões: criar, editar, visualizar (não opera o painel)
     'sessao.view',
+    'sessao.manage',
+    // Tramitação: encaminhar proposições entre comissões
     'tramitacao.view',
+    'tramitacao.manage',
+    // Pauta: incluir proposições na pauta, definir momento (leitura/votação)
+    'pauta.manage',
+    // Painel: apenas visualização (operação é do OPERADOR)
     'painel.view'
   ]),
   EDITOR: buildPermissions([

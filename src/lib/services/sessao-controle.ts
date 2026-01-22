@@ -643,7 +643,8 @@ export async function reordenarItemPauta(
 export async function finalizarItemPauta(
   sessaoId: string,
   itemId: string,
-  resultado: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO' = 'CONCLUIDO'
+  resultado: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO' = 'CONCLUIDO',
+  observacoes?: string  // Motivo da retirada ou outras observações
 ) {
   const item = await prisma.pautaItem.findUnique({
     where: { id: itemId },
@@ -694,7 +695,8 @@ export async function finalizarItemPauta(
       tempoAcumulado: acumulado,
       tempoReal: acumulado,
       iniciadoEm: null,
-      finalizadoEm: new Date()
+      finalizadoEm: new Date(),
+      ...(observacoes && { observacoes }) // Registrar observações (motivo de retirada, etc.)
     }
   })
 

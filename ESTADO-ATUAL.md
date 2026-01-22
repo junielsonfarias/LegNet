@@ -70,7 +70,7 @@ Fluxo Validado:
 | **Sistema de email** | **Implementado** | Resend API (email-service.ts) |
 | **Permissoes por role** | **Implementado** | Sistema granular de permissoes |
 | **Sidebar filtrado** | **Implementado** | Menu dinamico baseado em permissoes |
-| **Perfil SECRETARIA** | **Redefinido** | Foco administrativo (modelo SAPL) |
+| **Perfil SECRETARIA** | **Expandido** | Gestao legislativa: proposicoes, tramitacoes, pautas |
 
 ### 2. Parlamentares
 
@@ -93,6 +93,7 @@ Fluxo Validado:
 | Tipos de sessao | Implementado | Ordinaria, Extraordinaria, Solene, Especial |
 | Controle de status | Implementado | Agendada, Em Andamento, Concluida, Cancelada |
 | Controle de presenca | Implementado | PresencaSessao model |
+| **Falta Justificada** | **Implementado** | 3 opcoes: Presente, Ausente, Falta Justificada com motivo |
 | Pauta de sessao | Implementado | PautaSessao + PautaItem |
 | Templates de sessao | Implementado | SessaoTemplate + TemplateItem |
 | Numeracao automatica | Implementado | Sequencial por tipo |
@@ -112,6 +113,9 @@ Fluxo Validado:
 | **Tipo de acao (tipoAcao)** | **Implementado** | LEITURA, DISCUSSAO, VOTACAO, COMUNICADO, HOMENAGEM |
 | **Validacao parecer CLJ** | **Implementado** | Obrigatorio para ORDEM_DO_DIA com VOTACAO |
 | **Mapeamento tipo -> secao** | **Implementado** | MAPEAMENTO_TIPO_SECAO por tipo de proposicao |
+| **Edicao de Momento** | **Implementado** | UI para alterar tipoAcao de itens pendentes |
+| **Materia Lida** | **Implementado** | Botao especial para itens com tipoAcao=LEITURA |
+| **Retirada com motivo** | **Implementado** | Modal com solicitante e motivo da retirada |
 
 ### 5. Proposicoes
 
@@ -268,7 +272,15 @@ Fluxo Validado:
 | **Destaques** | **Implementado** | Votacao em separado de partes |
 | **Historico detalhado** | **Implementado** | /admin/sessoes/[id]/historico |
 | **Ata automatica** | **Implementado** | Geracao completa com votos nominais |
+| **Edicao de Momento** | **Implementado** | Dropdown para alterar tipoAcao de itens |
+| **Botao Materia Lida** | **Implementado** | Finaliza itens LEITURA sem votacao |
+| **Retirada com motivo** | **Implementado** | Modal com solicitante e justificativa |
+| **Tela espera vereador** | **Implementado** | Tela escura aguardando materia |
 | **Impressao de resultado** | **Implementado** | HTML/texto para impressao |
+| **Painel de transmissao** | **Implementado** | /painel-tv/[sessaoId] - Overlay para lives |
+| **API SSE tempo real** | **Implementado** | /api/painel/stream - Server-Sent Events |
+| **Grid de vereadores com fotos** | **Implementado** | VereadorVotoCard component |
+| **Modo chroma key** | **Implementado** | ?transparent=true para overlay em OBS |
 | **Streaming ao vivo** | Pendente | Integracao com servicos de video |
 
 ### 16. Configuracoes
@@ -2366,6 +2378,85 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-22 - Analise de Conformidade: Secretario, Operador e Vereador
+
+- **Objetivo**: Implementar correcoes identificadas na analise de conformidade do fluxo legislativo
+- **FASE 1 - Permissoes do SECRETARIA**:
+  - Modificado `src/lib/auth/permissions.ts`: Expandidas permissoes do SECRETARIA
+  - Adicionado: `sessao.manage`, `tramitacao.manage`, `pauta.manage`
+  - Secretario agora pode gerenciar proposicoes, tramitacoes e pautas
+- **FASE 2 - UI para Momentos (Leitura/Votacao) na Pauta**:
+  - Modificado `src/app/api/pauta/[itemId]/route.ts`: API agora aceita tipoAcao
+  - Modificado `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`:
+    - Dropdown "Momento" para editar tipoAcao de itens pendentes
+    - Opcoes: Leitura, Discussao, Votacao, Comunicado, Homenagem
+- **FASE 3 - Botao "Materia Lida" no Operador**:
+  - Modificado `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`:
+    - Botao verde "Materia Lida" para itens com tipoAcao=LEITURA
+    - Finaliza item como CONCLUIDO sem passar por votacao
+- **FASE 4 - Falta Justificada na Presenca**:
+  - Reescrito `src/components/admin/presenca-control.tsx`:
+    - 3 opcoes: Presente (verde), Falta Justificada (amarelo), Ausente (vermelho)
+    - Modal para informar motivo da justificativa
+    - Estatisticas separadas: Total, Presentes, Justificadas, Ausentes
+    - Badge exibindo motivo da justificativa no card do parlamentar
+- **FASE 5 - Retirar de Pauta com Motivo e Autor**:
+  - Modificado `src/app/api/sessoes/[id]/pauta/[itemId]/controle/route.ts`: Aceita observacoes
+  - Modificado `src/lib/services/sessao-controle.ts`: finalizarItemPauta aceita observacoes
+  - Modificado `src/lib/api/sessoes-api.ts`: controlItem aceita observacoes
+  - Modificado `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`:
+    - Botao separado "Retirar" em amarelo
+    - Modal com campos: Solicitante (dropdown) e Motivo (textarea)
+    - Observacoes salvas no formato "Retirado por: X. Motivo: Y"
+- **FASE 6 - Tela de Espera do Vereador**:
+  - Modificado `src/app/parlamentar/votacao/page.tsx`:
+    - Tela escura (bg-slate-900) quando nao ha item em andamento
+    - Exibe: "Aguardando Materia", numero de itens restantes
+    - Atualiza automaticamente a cada 5 segundos
+- **Arquivos modificados**:
+  - `src/lib/auth/permissions.ts`
+  - `src/app/api/pauta/[itemId]/route.ts`
+  - `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`
+  - `src/components/admin/presenca-control.tsx`
+  - `src/app/api/sessoes/[id]/pauta/[itemId]/controle/route.ts`
+  - `src/lib/services/sessao-controle.ts`
+  - `src/lib/api/sessoes-api.ts`
+  - `src/app/parlamentar/votacao/page.tsx`
+- **Conformidade alcancada**:
+  - SECRETARIO: ~30% -> ~85% (pode gerenciar proposicoes, tramitacoes, pautas)
+  - OPERADOR: ~75% -> ~95% (falta justificada, materia lida, retirar com motivo)
+  - VEREADOR: ~85% -> ~95% (tela de espera escura)
+
+### 2026-01-22 - Painel de Transmissao e SSE Tempo Real
+
+- **Objetivo**: Implementar painel otimizado para transmissao ao vivo e API de tempo real com SSE
+- **FASE 1 - Painel de Transmissao (/painel-tv)**:
+  - Criado `src/app/painel-tv/[sessaoId]/page.tsx` - Pagina do painel para transmissao
+  - Criado `src/components/painel/painel-tv-display.tsx` - Layout otimizado para overlay em OBS
+  - Criado `src/components/painel/vereador-voto-card.tsx` - Card de voto com foto, nome e partido
+  - Modos de exibicao via query params: ?modo=completo|votacao|placar|presenca
+  - Modo transparente para chroma key: ?transparent=true
+  - Fonte grande para legibilidade em telao
+  - Cores padrao: Verde=SIM, Vermelho=NAO, Amarelo=ABSTENCAO
+- **FASE 2 - API SSE Tempo Real**:
+  - Criado `src/app/api/painel/stream/route.ts` - Endpoint SSE
+  - Criado `src/lib/hooks/use-painel-sse.ts` - Hook para consumir SSE
+  - Eventos: estado, voto, presenca, votacao-iniciada, votacao-finalizada
+  - Latencia < 2 segundos para atualizacao de votos
+  - Fallback automatico para polling se SSE falhar
+- **FASE 5 - Exibicao Detalhada dos Votos**:
+  - Atualizado `src/components/admin/votacao-acompanhamento.tsx`
+  - Grid com foto circular, nome, partido e badge de voto
+  - Cores de borda indicando voto (verde/vermelho/amarelo)
+- **Arquivos criados**:
+  - `src/app/painel-tv/[sessaoId]/page.tsx`
+  - `src/components/painel/painel-tv-display.tsx`
+  - `src/components/painel/vereador-voto-card.tsx`
+  - `src/app/api/painel/stream/route.ts`
+  - `src/lib/hooks/use-painel-sse.ts`
+- **Arquivos modificados**:
+  - `src/components/admin/votacao-acompanhamento.tsx` - Usa VereadorVotoCard
 
 ### 2026-01-22 - Modo Escuro Completo (MEL-014)
 

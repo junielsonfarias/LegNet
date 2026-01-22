@@ -8,6 +8,7 @@ import { logAudit } from '@/lib/audit'
 
 const PAUTA_SECAO_ORDER = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
 const PAUTA_STATUS = ['PENDENTE', 'EM_DISCUSSAO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO'] as const
+const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
 
 const PautaItemUpdateSchema = z.object({
   secao: z.enum(PAUTA_SECAO_ORDER).optional(),
@@ -19,7 +20,8 @@ const PautaItemUpdateSchema = z.object({
   status: z.enum(PAUTA_STATUS).optional(),
   autor: z.string().optional(),
   observacoes: z.string().optional(),
-  ordem: z.number().int().min(1).optional()
+  ordem: z.number().int().min(1).optional(),
+  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional() // Tipo de ação: LEITURA, VOTACAO, etc.
 })
 
 const sortItens = <T extends { secao: string; ordem: number }>(itens: T[]) => {
@@ -134,6 +136,7 @@ export const PUT = withAuth(async (
   if (data.status !== undefined) updateData.status = data.status
   if (data.autor !== undefined) updateData.autor = data.autor ?? null
   if (data.observacoes !== undefined) updateData.observacoes = data.observacoes ?? null
+  if (data.tipoAcao !== undefined) updateData.tipoAcao = data.tipoAcao
 
   let novaSecao = existingItem.secao
 

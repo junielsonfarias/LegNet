@@ -29,7 +29,8 @@ const ControleItemSchema = z.object({
   ]),
   resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO']).optional(),
   parlamentarId: z.string().optional(), // Para pedido de vista
-  prazoDias: z.number().optional()      // Prazo para devolução da vista
+  prazoDias: z.number().optional(),     // Prazo para devolução da vista
+  observacoes: z.string().optional()    // Observações (motivo de retirada, etc.)
 })
 
 export const POST = withAuth(withErrorHandler(async (
@@ -44,7 +45,7 @@ export const POST = withAuth(withErrorHandler(async (
   }
 
   const body = await request.json()
-  const { acao, resultado, parlamentarId, prazoDias } = ControleItemSchema.parse(body)
+  const { acao, resultado, parlamentarId, prazoDias, observacoes } = ControleItemSchema.parse(body)
 
   switch (acao) {
     case 'iniciar':
@@ -69,7 +70,7 @@ export const POST = withAuth(withErrorHandler(async (
       )
     case 'finalizar':
       return createSuccessResponse(
-        await finalizarItemPauta(sessaoId, itemId, resultado),
+        await finalizarItemPauta(sessaoId, itemId, resultado, observacoes),
         'Item finalizado com sucesso'
       )
     case 'vista':

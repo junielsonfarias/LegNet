@@ -7,6 +7,23 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -32,7 +49,9 @@ import {
   Eye,
   ArrowUp,
   ArrowDown,
-  RotateCcw
+  RotateCcw,
+  BookOpen,
+  LogOut
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -49,6 +68,14 @@ const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | '
   { value: 'REJEITADO', label: 'Registrar rejeitado' },
   { value: 'RETIRADO', label: 'Registrar retirado' },
   { value: 'ADIADO', label: 'Registrar adiado' }
+]
+
+const TIPO_ACAO_OPTIONS: Array<{ value: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM'; label: string; icon: string }> = [
+  { value: 'LEITURA', label: 'Leitura', icon: '📖' },
+  { value: 'DISCUSSAO', label: 'Discussão', icon: '💬' },
+  { value: 'VOTACAO', label: 'Votação', icon: '🗳️' },
+  { value: 'COMUNICADO', label: 'Comunicado', icon: '📢' },
+  { value: 'HOMENAGEM', label: 'Homenagem', icon: '🏆' }
 ]
 
 const formatSeconds = (seconds: number) => {
@@ -228,6 +255,15 @@ export default function PainelEletronicoOperadorPage() {
   const [cronometroSessao, setCronometroSessao] = useState(0)
   const [cronometroItem, setCronometroItem] = useState(0)
 
+  // Estado para modal de retirada de pauta
+  const [modalRetirada, setModalRetirada] = useState<{
+    open: boolean
+    itemId: string
+    itemTitulo: string
+  }>({ open: false, itemId: '', itemTitulo: '' })
+  const [motivoRetirada, setMotivoRetirada] = useState('')
+  const [autorRetirada, setAutorRetirada] = useState('')
+
   const sessaoIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const itemIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const autoRefreshRef = useRef<NodeJS.Timeout | null>(null)
@@ -399,6 +435,74 @@ export default function PainelEletronicoOperadorPage() {
     } catch (error: any) {
       console.error('Erro ao controlar item da pauta:', error)
       toast.error(error?.message || 'Erro ao controlar item da pauta')
+    } finally {
+      setExecutando(false)
+    }
+  }
+
+  const atualizarTipoAcao = async (
+    itemId: string,
+    tipoAcao: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM'
+  ) => {
+    try {
+      setExecutando(true)
+      const response = await fetch(`/api/pauta/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipoAcao })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Erro ao atualizar tipo de ação')
+      }
+
+      await carregarSessao(false)
+      toast.success('Momento da matéria atualizado')
+    } catch (error: any) {
+      console.error('Erro ao atualizar tipo de ação:', error)
+      toast.error(error?.message || 'Erro ao atualizar momento da matéria')
+    } finally {
+      setExecutando(false)
+    }
+  }
+
+  // Funções para modal de retirada de pauta
+  const abrirModalRetirada = (itemId: string, itemTitulo: string) => {
+    setModalRetirada({ open: true, itemId, itemTitulo })
+    setMotivoRetirada('')
+    setAutorRetirada('')
+  }
+
+  const confirmarRetirada = async () => {
+    if (!motivoRetirada.trim()) {
+      toast.error('Informe o motivo da retirada')
+      return
+    }
+
+    try {
+      setExecutando(true)
+      const observacoes = autorRetirada
+        ? `Retirado por: ${autorRetirada}. Motivo: ${motivoRetirada}`
+        : `Motivo: ${motivoRetirada}`
+
+      await sessoesApi.controlItem(
+        sessaoId,
+        modalRetirada.itemId,
+        'finalizar',
+        'RETIRADO',
+        undefined,
+        observacoes
+      )
+
+      await carregarSessao(false)
+      toast.success('Item retirado da pauta com sucesso')
+      setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
+      setMotivoRetirada('')
+      setAutorRetirada('')
+    } catch (error: any) {
+      console.error('Erro ao retirar item da pauta:', error)
+      toast.error(error?.message || 'Erro ao retirar item da pauta')
     } finally {
       setExecutando(false)
     }
@@ -695,9 +799,36 @@ export default function PainelEletronicoOperadorPage() {
 
                           {sessao.status === 'EM_ANDAMENTO' && (
                             <div className="flex flex-wrap items-center gap-2">
-                              {/* Botões de reordenação para itens pendentes */}
+                              {/* Botões de reordenação e edição de momento para itens pendentes */}
                               {item.status === 'PENDENTE' && (
                                 <>
+                                  {/* Dropdown para alterar Momento (tipoAcao) */}
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={executando}
+                                        className="border-sky-400 text-sky-600 hover:bg-sky-50"
+                                        title="Alterar momento da matéria"
+                                      >
+                                        <BookOpen className="mr-1 h-4 w-4" /> Momento
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      {TIPO_ACAO_OPTIONS.map(opt => (
+                                        <DropdownMenuItem
+                                          key={opt.value}
+                                          onClick={() => atualizarTipoAcao(item.id, opt.value)}
+                                          className={item.tipoAcao === opt.value ? 'bg-sky-50' : ''}
+                                        >
+                                          <span className="mr-2">{opt.icon}</span>
+                                          {opt.label}
+                                          {item.tipoAcao === opt.value && <CheckCircle className="ml-auto h-4 w-4 text-sky-600" />}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -757,7 +888,17 @@ export default function PainelEletronicoOperadorPage() {
                                   <Play className="mr-2 h-4 w-4" /> Retomar
                                 </Button>
                               )}
-                              {item.status === 'EM_DISCUSSAO' && (
+                              {item.status === 'EM_DISCUSSAO' && item.tipoAcao === 'LEITURA' && (
+                                <Button
+                                  size="sm"
+                                  disabled={executando}
+                                  onClick={() => executarAcaoItem(item.id, 'finalizar', 'CONCLUIDO')}
+                                  className="bg-emerald-600 hover:bg-emerald-700"
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4" /> Matéria Lida
+                                </Button>
+                              )}
+                              {item.status === 'EM_DISCUSSAO' && item.tipoAcao !== 'LEITURA' && (
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -788,23 +929,35 @@ export default function PainelEletronicoOperadorPage() {
                                 </DropdownMenu>
                               )}
                               {['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status) && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button size="sm" variant="secondary" disabled={executando}>
-                                      <MoreVertical className="mr-2 h-4 w-4" /> Encerrar
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    {ITEM_RESULTADOS.map(result => (
-                                      <DropdownMenuItem
-                                        key={result.value}
-                                        onClick={() => executarAcaoItem(item.id, 'finalizar', result.value)}
-                                      >
-                                        {result.label}
-                                      </DropdownMenuItem>
-                                    ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <>
+                                  {/* Botão separado para Retirar de Pauta */}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={executando}
+                                    onClick={() => abrirModalRetirada(item.id, item.titulo)}
+                                    className="border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+                                  >
+                                    <LogOut className="mr-2 h-4 w-4" /> Retirar
+                                  </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button size="sm" variant="secondary" disabled={executando}>
+                                        <MoreVertical className="mr-2 h-4 w-4" /> Encerrar
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      {ITEM_RESULTADOS.filter(r => r.value !== 'RETIRADO').map(result => (
+                                        <DropdownMenuItem
+                                          key={result.value}
+                                          onClick={() => executarAcaoItem(item.id, 'finalizar', result.value)}
+                                        >
+                                          {result.label}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </>
                               )}
                             </div>
                           )}
@@ -833,6 +986,82 @@ export default function PainelEletronicoOperadorPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Retirada de Pauta */}
+      <Dialog
+        open={modalRetirada.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
+            setMotivoRetirada('')
+            setAutorRetirada('')
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-yellow-700">
+              <LogOut className="h-5 w-5" />
+              Retirar de Pauta
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800 font-medium">Item a ser retirado:</p>
+              <p className="text-sm text-gray-700 mt-1">{modalRetirada.itemTitulo}</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="autorRetirada">Solicitante da retirada (opcional)</Label>
+              <Select value={autorRetirada} onValueChange={setAutorRetirada}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione quem solicitou" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Não informado</SelectItem>
+                  <SelectItem value="Mesa Diretora">Mesa Diretora</SelectItem>
+                  <SelectItem value="Autor da Proposição">Autor da Proposição</SelectItem>
+                  {sessao?.presencas?.filter(p => p.presente).map(presenca => (
+                    <SelectItem key={presenca.parlamentar.id} value={presenca.parlamentar.apelido || presenca.parlamentar.nome}>
+                      {presenca.parlamentar.apelido || presenca.parlamentar.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="motivoRetirada">Motivo da retirada *</Label>
+              <Textarea
+                id="motivoRetirada"
+                value={motivoRetirada}
+                onChange={(e) => setMotivoRetirada(e.target.value)}
+                placeholder="Descreva o motivo da retirada da pauta..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
+                setMotivoRetirada('')
+                setAutorRetirada('')
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmarRetirada}
+              disabled={executando || !motivoRetirada.trim()}
+              className="bg-yellow-600 hover:bg-yellow-700"
+            >
+              {executando ? 'Retirando...' : 'Confirmar Retirada'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

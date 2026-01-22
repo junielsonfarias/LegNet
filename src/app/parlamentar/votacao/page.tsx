@@ -285,6 +285,42 @@ export default function VotacaoParlamentarPage() {
     item => item.status === 'EM_DISCUSSAO' || item.status === 'EM_VOTACAO'
   )
 
+  // Tela de espera escura quando não há item em andamento
+  if (!itemEmAndamento) {
+    const itensRestantes = itens.filter(item => item.status === 'PENDENTE').length
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-lg">
+          <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center mx-auto">
+            <Clock className="h-12 w-12 text-slate-400 animate-pulse" />
+          </div>
+          <h1 className="text-white text-3xl md:text-4xl font-semibold">
+            Aguardando Matéria
+          </h1>
+          <p className="text-slate-400 text-lg">
+            Nenhuma matéria em votação no momento.
+          </p>
+          <div className="pt-4 border-t border-slate-800">
+            <p className="text-slate-500 text-sm">
+              {sessaoAtiva.numero}ª Sessão {
+                { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
+              }
+            </p>
+            {itensRestantes > 0 && (
+              <p className="text-slate-500 text-sm mt-2">
+                {itensRestantes} {itensRestantes === 1 ? 'item restante' : 'itens restantes'} na pauta
+              </p>
+            )}
+          </div>
+          <div className="flex items-center justify-center gap-2 text-slate-500 text-sm pt-4">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Atualizando automaticamente...
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Formatar tipo de sessão
   const tipoSessaoLabel = {
     'ORDINARIA': 'Ordinária',
