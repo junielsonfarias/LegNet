@@ -13,6 +13,12 @@
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { formatDateLong, differenceInDays, addDays } from '@/lib/utils/date'
+import {
+  sendNotificationEmail,
+  sendSessaoConvocadaEmail,
+  sendResultadoVotacaoEmail,
+  isEmailConfigured
+} from '@/lib/services/email-service'
 
 const logger = createLogger('notificacao')
 
@@ -255,7 +261,7 @@ export async function enviarNotificacao(
 }
 
 /**
- * Envia email (simulado - implementação real usaria serviço de email)
+ * Envia email usando o serviço de email (Resend)
  */
 async function enviarEmail(
   notificacao: Notificacao
@@ -264,14 +270,56 @@ async function enviarEmail(
     return { sucesso: false, erro: 'Email do destinatário não informado' }
   }
 
-  // Aqui seria a integração com serviço de email (SendGrid, SES, etc)
-  logger.info('Email enviado (simulado)', {
-    action: 'enviar_email',
-    para: notificacao.destinatarioEmail,
-    assunto: notificacao.titulo
-  })
+  // Verificar se email está configurado
+  if (!isEmailConfigured()) {
+    logger.warn('Serviço de email não configurado', {
+      action: 'enviar_email_skip',
+      para: notificacao.destinatarioEmail
+    })
+    // Em desenvolvimento, considera como enviado
+    return { sucesso: true }
+  }
 
-  return { sucesso: true }
+  try {
+    // Determinar link de ação
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const actionUrl = notificacao.link ? `${APP_URL}${notificacao.link}` : undefined
+
+    // Enviar via serviço de email
+    const result = await sendNotificationEmail(
+      notificacao.destinatarioEmail,
+      notificacao.titulo,
+      notificacao.titulo,
+      notificacao.mensagem,
+      actionUrl,
+      'Ver Detalhes'
+    )
+
+    if (result.success) {
+      logger.info('Email enviado com sucesso', {
+        action: 'enviar_email',
+        para: notificacao.destinatarioEmail,
+        assunto: notificacao.titulo,
+        messageId: result.messageId
+      })
+      return { sucesso: true }
+    } else {
+      logger.error('Falha ao enviar email', {
+        action: 'enviar_email_error',
+        para: notificacao.destinatarioEmail,
+        erro: result.error
+      })
+      return { sucesso: false, erro: result.error }
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
+    logger.error('Exceção ao enviar email', {
+      action: 'enviar_email_exception',
+      para: notificacao.destinatarioEmail,
+      erro: errorMessage
+    })
+    return { sucesso: false, erro: errorMessage }
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -94,11 +94,7 @@ export default function NormaPublicaPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('texto')
 
-  useEffect(() => {
-    carregarNorma()
-  }, [normaId])
-
-  async function carregarNorma() {
+  const carregarNorma = useCallback(async () => {
     try {
       const response = await fetch(`/api/normas/${normaId}`)
       const data = await response.json()
@@ -111,7 +107,11 @@ export default function NormaPublicaPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [normaId])
+
+  useEffect(() => {
+    carregarNorma()
+  }, [carregarNorma])
 
   if (loading) {
     return (

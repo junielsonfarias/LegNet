@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -162,11 +162,7 @@ export default function DetalhesProtocoloPage() {
     despacho: ''
   })
 
-  useEffect(() => {
-    carregarProtocolo()
-  }, [protocoloId])
-
-  async function carregarProtocolo() {
+  const carregarProtocolo = useCallback(async () => {
     try {
       const response = await fetch(`/api/protocolo/${protocoloId}`)
       const data = await response.json()
@@ -197,7 +193,11 @@ export default function DetalhesProtocoloPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [protocoloId, router])
+
+  useEffect(() => {
+    carregarProtocolo()
+  }, [carregarProtocolo])
 
   async function handleSave() {
     setSaving(true)

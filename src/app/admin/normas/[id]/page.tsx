@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -114,11 +114,7 @@ export default function EditarNormaPage() {
     observacao: ''
   })
 
-  useEffect(() => {
-    carregarNorma()
-  }, [normaId])
-
-  async function carregarNorma() {
+  const carregarNorma = useCallback(async () => {
     try {
       const response = await fetch(`/api/normas/${normaId}`)
       const data = await response.json()
@@ -148,7 +144,11 @@ export default function EditarNormaPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [normaId, router])
+
+  useEffect(() => {
+    carregarNorma()
+  }, [carregarNorma])
 
   async function handleSave() {
     if (!formData.tipo || !formData.numero || !formData.ementa || !formData.data) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -105,11 +105,7 @@ export default function ReunioesComissaoPage() {
     motivoConvocacao: ''
   })
 
-  useEffect(() => {
-    carregarDados()
-  }, [filtroComissao, filtroStatus])
-
-  async function carregarDados() {
+  const carregarDados = useCallback(async () => {
     try {
       // Carregar comissoes
       const resComissoes = await fetch('/api/comissoes')
@@ -134,7 +130,11 @@ export default function ReunioesComissaoPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filtroComissao, filtroStatus])
+
+  useEffect(() => {
+    carregarDados()
+  }, [carregarDados])
 
   async function criarReuniao() {
     if (!novaReuniao.comissaoId || !novaReuniao.data) {

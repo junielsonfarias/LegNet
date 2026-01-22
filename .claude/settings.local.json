@@ -30,7 +30,8 @@
       "Bash(npm run lint:*)",
       "Bash(timeout 30 npm run dev)",
       "Bash(npx vitest:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm update:*)"
     ]
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -85,11 +85,7 @@ export default function ConsultasPage() {
     moderacao: false
   })
 
-  useEffect(() => {
-    carregarConsultas()
-  }, [filtroStatus])
-
-  async function carregarConsultas() {
+  const carregarConsultas = useCallback(async () => {
     try {
       const params = new URLSearchParams()
       if (filtroStatus !== 'todos') {
@@ -107,7 +103,11 @@ export default function ConsultasPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filtroStatus])
+
+  useEffect(() => {
+    carregarConsultas()
+  }, [carregarConsultas])
 
   async function criarConsulta() {
     try {

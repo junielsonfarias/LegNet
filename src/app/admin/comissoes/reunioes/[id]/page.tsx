@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -201,11 +201,7 @@ export default function ReuniaoDetalhesPage() {
   // Ata
   const [ataTexto, setAtaTexto] = useState('')
 
-  useEffect(() => {
-    carregarReuniao()
-  }, [reuniaoId])
-
-  async function carregarReuniao() {
+  const carregarReuniao = useCallback(async () => {
     try {
       const response = await fetch(`/api/reunioes-comissao/${reuniaoId}`)
       const data = await response.json()
@@ -227,7 +223,11 @@ export default function ReuniaoDetalhesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [reuniaoId])
+
+  useEffect(() => {
+    carregarReuniao()
+  }, [carregarReuniao])
 
   async function executarAcao(acao: string, dados?: any) {
     try {

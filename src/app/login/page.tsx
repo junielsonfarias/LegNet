@@ -249,6 +249,17 @@ export default function LoginPage() {
                   </div>
                 )}
 
+                {!requires2FA && (
+                  <div className="text-right">
+                    <Link
+                      href="/forgot-password"
+                      className="text-sm text-camara-primary hover:text-camara-primary/80 font-medium"
+                    >
+                      Esqueceu sua senha?
+                    </Link>
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   className="w-full h-12 bg-camara-primary hover:bg-camara-primary/90 text-white font-medium text-base"

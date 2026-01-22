@@ -11,15 +11,17 @@
 
 | Metrica | Valor |
 |---------|-------|
-| **Modelos Prisma** | 55+ |
-| **Endpoints API** | 100+ |
-| **Componentes React** | 75+ |
-| **Servicos de Negocio** | 45 |
-| **Hooks Customizados** | 29 |
-| **Paginas Admin** | 22+ |
-| **Paginas Publicas** | 35+ |
+| **Modelos Prisma** | 78 |
+| **Endpoints API** | 138 |
+| **Componentes React** | 76 |
+| **Servicos de Negocio** | 37 |
+| **Hooks Customizados** | 34 |
+| **Paginas Admin** | 50+ |
+| **Paginas Publicas** | 93+ |
 | **Multi-Tenant** | Implementado |
 | **Cobertura SAPL** | 100% |
+| **ESLint Warnings** | 0 |
+| **Build Status** | Passing |
 
 ---
 
@@ -64,7 +66,8 @@ Fluxo Validado:
 | Roles de usuario | Implementado | ADMIN, EDITOR, USER, PARLAMENTAR, OPERADOR, SECRETARIA |
 | 2FA (Two-Factor) | Implementado | TOTP opcional para admins |
 | Gerenciamento de usuarios | Implementado | CRUD completo em /admin/usuarios |
-| Recuperacao de senha | Pendente | Necessita implementacao de email |
+| Recuperacao de senha | **Implementado** | Resend + VerificationToken |
+| **Sistema de email** | **Implementado** | Resend API (email-service.ts) |
 | **Permissoes por role** | **Implementado** | Sistema granular de permissoes |
 | **Sidebar filtrado** | **Implementado** | Menu dinamico baseado em permissoes |
 | **Perfil SECRETARIA** | **Redefinido** | Foco administrativo (modelo SAPL) |
@@ -765,28 +768,37 @@ psql -h localhost -U camara_user camara_db < backup_20260119.sql
 | Metrica | Valor | Status |
 |---------|-------|--------|
 | ESLint Errors | 0 | OK |
-| ESLint Warnings | Minimos | OK |
+| ESLint Warnings | 0 | OK |
 | TypeScript Strict | Ativado | OK |
-| Bundle Size | ~200kB | Otimo |
+| Bundle Size | ~88kB (shared) | Otimo |
+| Build Status | Passing | OK |
+
+**Ultima Revisao de Codigo**: 2026-01-22
+- Corrigidos 10 warnings de useEffect dependencies
+- Atualizado @types/jest para testes
+- Pacotes Radix UI atualizados
 
 ---
 
 ## Dependencias e Versoes
 
 ### Principais
-| Pacote | Versao | Ultima Disponivel |
-|--------|--------|-------------------|
-| Next.js | 14.2.5 | Verificar |
-| React | 18.3.1 | Verificar |
-| TypeScript | 5.5.3 | Verificar |
-| Prisma | 5.16.1 | Verificar |
-| NextAuth | 4.24.7 | Verificar |
-| Tailwind CSS | 3.4.4 | Verificar |
+| Pacote | Versao | Status |
+|--------|--------|--------|
+| Next.js | 14.2.35 | Estavel |
+| React | 18.3.1 | Estavel |
+| TypeScript | 5.5.3 | Estavel |
+| Prisma | 5.22.0 | Estavel |
+| NextAuth | 4.24.13 | Atualizado |
+| Resend | 4.x | Novo (email) |
+| Tailwind CSS | 3.4.4 | Estavel |
 
 ### Seguranca
 | Pacote | Vulnerabilidades | Status |
 |--------|-----------------|--------|
-| Dependencias | A verificar | npm audit |
+| npm audit | 9 (4 mod, 5 high) | eslint-config-next* |
+
+*Vulnerabilidades estao em ferramentas de desenvolvimento (ESLint), nao afetam producao.
 
 ---
 
@@ -2340,6 +2352,36 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-22 - Sistema de Email Completo com Resend (Verificado)
+
+- **Status**: IMPLEMENTADO E VERIFICADO
+- **Provedor**: Resend (3000 emails/mes gratis)
+- **Arquivos do sistema**:
+  - `src/lib/services/email-service.ts`: Servico completo (603 linhas)
+    - Templates HTML responsivos com estilos inline
+    - Funcoes: sendEmail, sendPasswordResetEmail, sendWelcomeEmail, sendNotificationEmail, sendSessaoConvocadaEmail, sendResultadoVotacaoEmail
+  - `src/lib/services/notificacao-service.ts`: Integrado com email-service (linhas 16-21)
+- **APIs de recuperacao de senha**:
+  - `src/app/api/auth/forgot-password/route.ts`: Solicitar reset com rate limiting (3 req/hora/email)
+  - `src/app/api/auth/reset-password/route.ts`: Executar reset com validacao de token SHA256
+  - `src/app/api/auth/verify-reset-token/route.ts`: Validar token antes de exibir formulario
+- **Paginas de recuperacao**:
+  - `src/app/(auth)/forgot-password/page.tsx`: UI responsiva para solicitar recuperacao
+  - `src/app/(auth)/reset-password/[token]/page.tsx`: UI com validacao de forca de senha
+- **Pagina de login**: Link "Esqueceu sua senha?" ja implementado (linha 254-260)
+- **Variaveis de ambiente** (em .env.example):
+  - `RESEND_API_KEY`: Chave da API Resend
+  - `EMAIL_FROM`: Remetente dos emails
+  - `NEXT_PUBLIC_APP_URL`: URL base para links
+- **Seguranca implementada**:
+  - Tokens expiram em 24 horas
+  - Token hasheado no banco (SHA256)
+  - Rate limiting: 3 requests por email por hora
+  - Mensagem generica (nao revela se email existe)
+  - Invalidar token apos uso
+  - Audit log de todas as tentativas
+- **Dependencia**: `resend: ^6.8.0` (ja instalado no package.json)
 
 ### 2026-01-22 - Modulo Completo de Reunioes de Comissao
 

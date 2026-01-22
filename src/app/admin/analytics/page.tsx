@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -117,7 +117,7 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null)
   const [periodo, setPeriodo] = useState<'mes' | 'ano'>('ano')
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -133,11 +133,11 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [periodo])
 
   useEffect(() => {
     fetchData()
-  }, [periodo])
+  }, [fetchData])
 
   const formatVariacao = (valor: number) => {
     const formatted = valor.toFixed(1)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -87,12 +87,7 @@ export default function SugestoesPage() {
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todos')
   const [estatisticas, setEstatisticas] = useState<any>(null)
 
-  useEffect(() => {
-    carregarSugestoes()
-    carregarEstatisticas()
-  }, [filtroStatus, filtroCategoria])
-
-  async function carregarSugestoes() {
+  const carregarSugestoes = useCallback(async () => {
     try {
       const params = new URLSearchParams()
       if (filtroStatus !== 'todos') {
@@ -113,9 +108,9 @@ export default function SugestoesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filtroStatus, filtroCategoria])
 
-  async function carregarEstatisticas() {
+  const carregarEstatisticas = useCallback(async () => {
     try {
       const response = await fetch('/api/participacao/sugestoes?acao=estatisticas')
       const data = await response.json()
@@ -126,7 +121,12 @@ export default function SugestoesPage() {
     } catch (error) {
       console.error('Erro ao carregar estatisticas:', error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    carregarSugestoes()
+    carregarEstatisticas()
+  }, [carregarSugestoes, carregarEstatisticas])
 
   async function moderarSugestao(id: string, status: string, motivoRecusa?: string) {
     try {

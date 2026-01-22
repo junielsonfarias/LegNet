@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -56,7 +56,7 @@ export function TurnoControl({
   const [loading, setLoading] = useState(true)
   const [executando, setExecutando] = useState(false)
 
-  const carregarTurnoInfo = async () => {
+  const carregarTurnoInfo = useCallback(async () => {
     try {
       const response = await fetch(
         `/api/sessoes/${sessaoId}/votacao/turno?itemId=${itemId}`
@@ -70,11 +70,11 @@ export function TurnoControl({
     } finally {
       setLoading(false)
     }
-  }
+  }, [sessaoId, itemId])
 
   useEffect(() => {
     carregarTurnoInfo()
-  }, [sessaoId, itemId])
+  }, [carregarTurnoInfo])
 
   const iniciarTurno = async (turno: number) => {
     try {

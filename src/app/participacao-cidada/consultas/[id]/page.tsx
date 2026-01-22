@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,11 +59,7 @@ export default function ParticiparConsultaPage() {
 
   const [respostas, setRespostas] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    carregarConsulta()
-  }, [consultaId])
-
-  async function carregarConsulta() {
+  const carregarConsulta = useCallback(async () => {
     try {
       const response = await fetch(`/api/participacao/consultas/${consultaId}`)
       const data = await response.json()
@@ -80,7 +76,11 @@ export default function ParticiparConsultaPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [consultaId, router])
+
+  useEffect(() => {
+    carregarConsulta()
+  }, [carregarConsulta])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
