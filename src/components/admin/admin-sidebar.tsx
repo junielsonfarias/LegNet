@@ -118,7 +118,21 @@ const navigation: NavItem[] = [
     name: 'Comissões',
     href: '/admin/comissoes',
     icon: Users,
-    permissions: ['comissao.view']
+    permissions: ['comissao.view'],
+    submenu: [
+      {
+        name: 'Comissões',
+        href: '/admin/comissoes',
+        icon: Users,
+        permissions: ['comissao.view']
+      },
+      {
+        name: 'Reuniões',
+        href: '/admin/comissoes/reunioes',
+        icon: Calendar,
+        permissions: ['comissao.view']
+      }
+    ]
   },
   {
     name: 'Pareceres',

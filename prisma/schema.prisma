@@ -410,6 +410,7 @@ model Proposicao {
   pautaItens    PautaItem[]
   tramitacoes   Tramitacao[]
   pareceres     Parecer[]    // Pareceres das comissões sobre esta proposição
+  pautasReuniaoComissao PautaReuniaoComissao[] // Itens de pauta de reunioes de comissao
 
   @@unique([numero, ano])
   @@index([status, dataApresentacao])
@@ -545,6 +546,7 @@ model Comissao {
   // Relacionamentos
   membros   MembroComissao[]
   pareceres Parecer[]    // Pareceres emitidos por esta comissão
+  reunioes  ReuniaoComissao[]  // Reunioes da comissao
 
   @@index([tipo, ativa])
   @@index([ativa])
@@ -569,8 +571,9 @@ model MembroComissao {
   observacoes   String?       @db.Text
   createdAt     DateTime      @default(now())
 
-  comissao    Comissao    @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
-  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  comissao         Comissao    @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
+  parlamentar      Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  presencasReuniao PresencaReuniaoComissao[]
 
   @@unique([comissaoId, parlamentarId])
   @@map("membros_comissao")
@@ -581,6 +584,156 @@ enum CargoComissao {
   VICE_PRESIDENTE
   RELATOR
   MEMBRO
+}
+
+// ==========================================
+// REUNIOES DE COMISSAO
+// ==========================================
+
+model ReuniaoComissao {
+  id            String              @id @default(cuid())
+  comissaoId    String
+
+  // Dados da reuniao
+  numero        Int                 // Numero sequencial da reuniao no ano
+  ano           Int
+  tipo          TipoReuniaoComissao @default(ORDINARIA)
+  status        StatusReuniaoComissao @default(AGENDADA)
+
+  // Data e local
+  data          DateTime
+  horaInicio    DateTime?
+  horaFim       DateTime?
+  local         String?
+
+  // Convocacao
+  dataConvocacao    DateTime?
+  motivoConvocacao  String?         @db.Text
+
+  // Pauta e ata
+  pautaTexto        String?         @db.Text   // Pauta em texto livre (alem dos itens)
+  ataTexto          String?         @db.Text   // Ata da reuniao
+  ataAprovada       Boolean         @default(false)
+  dataAprovacaoAta  DateTime?
+
+  // Quorum
+  quorumMinimo      Int             @default(2)  // Minimo de membros para instalacao
+
+  // Observacoes
+  observacoes       String?         @db.Text
+
+  // Controle
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  criadoPorId       String?
+
+  // Relacionamentos
+  comissao          Comissao        @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
+  itens             PautaReuniaoComissao[]
+  presencas         PresencaReuniaoComissao[]
+  pareceres         Parecer[]       // Pareceres votados nesta reuniao
+
+  @@unique([comissaoId, numero, ano])
+  @@index([comissaoId])
+  @@index([data])
+  @@index([status])
+  @@map("reunioes_comissao")
+}
+
+enum TipoReuniaoComissao {
+  ORDINARIA
+  EXTRAORDINARIA
+  ESPECIAL
+}
+
+enum StatusReuniaoComissao {
+  AGENDADA
+  CONVOCADA
+  EM_ANDAMENTO
+  SUSPENSA
+  CONCLUIDA
+  CANCELADA
+}
+
+// Itens da pauta da reuniao de comissao
+model PautaReuniaoComissao {
+  id            String                    @id @default(cuid())
+  reuniaoId     String
+  proposicaoId  String?                   // Proposicao em analise (opcional)
+  parecerId     String?                   // Parecer a ser votado (opcional)
+
+  // Dados do item
+  ordem         Int                       // Ordem na pauta
+  titulo        String                    // Titulo/descricao do item
+  descricao     String?                   @db.Text
+  tipo          TipoItemPautaReuniao      @default(ANALISE_PROPOSICAO)
+
+  // Resultado
+  status        StatusItemPautaReuniao    @default(PENDENTE)
+  resultado     String?                   // Resultado da deliberacao
+  observacoes   String?                   @db.Text
+
+  // Tempo
+  tempoEstimado Int?                      // Minutos estimados
+  tempoReal     Int?                      // Minutos reais
+
+  // Controle
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  // Relacionamentos
+  reuniao       ReuniaoComissao           @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  proposicao    Proposicao?               @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
+
+  @@unique([reuniaoId, ordem])
+  @@index([reuniaoId])
+  @@index([proposicaoId])
+  @@map("pauta_reuniao_comissao")
+}
+
+enum TipoItemPautaReuniao {
+  ANALISE_PROPOSICAO      // Analise de proposicao
+  VOTACAO_PARECER         // Votacao de parecer
+  DESIGNACAO_RELATOR      // Designar relator
+  COMUNICACAO             // Comunicado/informe
+  OUTROS                  // Outros assuntos
+}
+
+enum StatusItemPautaReuniao {
+  PENDENTE
+  EM_DISCUSSAO
+  EM_VOTACAO
+  APROVADO
+  REJEITADO
+  ADIADO
+  RETIRADO
+}
+
+// Presenca em reuniao de comissao
+model PresencaReuniaoComissao {
+  id                String          @id @default(cuid())
+  reuniaoId         String
+  membroComissaoId  String
+
+  // Status de presenca
+  presente          Boolean         @default(false)
+  justificativa     String?         // Se ausente, justificativa
+
+  // Horarios
+  horaChegada       DateTime?
+  horaSaida         DateTime?
+
+  // Controle
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relacionamentos
+  reuniao           ReuniaoComissao @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  membro            MembroComissao  @relation(fields: [membroComissaoId], references: [id], onDelete: Cascade)
+
+  @@unique([reuniaoId, membroComissaoId])
+  @@index([reuniaoId])
+  @@map("presenca_reuniao_comissao")
 }
 
 enum ParticipacaoTipo {
@@ -1558,6 +1711,7 @@ model Parecer {
   proposicaoId      String
   comissaoId        String
   relatorId         String        // Parlamentar designado como relator
+  reuniaoId         String?       // Reuniao onde o parecer foi votado (opcional)
 
   // Dados do parecer
   numero            String?       // Numero do parecer (ex: 001/2026)
@@ -1600,12 +1754,14 @@ model Parecer {
   proposicao        Proposicao    @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
   comissao          Comissao      @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
   relator           Parlamentar   @relation("ParecerRelator", fields: [relatorId], references: [id])
+  reuniao           ReuniaoComissao? @relation(fields: [reuniaoId], references: [id], onDelete: SetNull)
   votosComissao     VotoParecerComissao[]
 
   @@unique([proposicaoId, comissaoId]) // Uma proposicao so pode ter um parecer por comissao
   @@index([proposicaoId])
   @@index([comissaoId])
   @@index([relatorId])
+  @@index([reuniaoId])
   @@index([status])
   @@index([dataDistribuicao])
   @@map("pareceres")

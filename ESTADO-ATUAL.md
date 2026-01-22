@@ -2291,6 +2291,49 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-22 - Modulo Completo de Reunioes de Comissao
+
+- **Objetivo**: Implementar modulo de reunioes de comissao para completar o fluxo legislativo (proposicao -> comissao -> parecer -> pauta plenaria)
+- **Modelos Prisma criados**:
+  - `ReuniaoComissao`: Reunioes das comissoes (numero, ano, tipo, status, data, local, quorum)
+  - `PautaReuniaoComissao`: Itens da pauta da reuniao (proposicoes, pareceres, comunicados)
+  - `PresencaReuniaoComissao`: Registro de presenca dos membros nas reunioes
+- **Enums criados**:
+  - `TipoReuniaoComissao`: ORDINARIA, EXTRAORDINARIA, ESPECIAL
+  - `StatusReuniaoComissao`: AGENDADA, CONVOCADA, EM_ANDAMENTO, SUSPENSA, CONCLUIDA, CANCELADA
+  - `TipoItemPautaReuniao`: ANALISE_PROPOSICAO, VOTACAO_PARECER, DESIGNACAO_RELATOR, COMUNICACAO, OUTROS
+  - `StatusItemPautaReuniao`: PENDENTE, EM_DISCUSSAO, EM_VOTACAO, APROVADO, REJEITADO, ADIADO, RETIRADO
+- **Servico criado**: `src/lib/services/reuniao-comissao-service.ts`
+  - CRUD de reunioes com numeracao automatica
+  - Controle de status (convocar, iniciar, suspender, retomar, encerrar, cancelar)
+  - Gestao de pauta (adicionar, atualizar, remover, reordenar itens)
+  - Registro de presenca e verificacao de quorum
+  - Votacao de pareceres com atualizacao automatica de proposicao
+  - Gestao de ata (salvar, aprovar)
+- **APIs criadas**:
+  - `src/app/api/reunioes-comissao/route.ts`: GET (listar), POST (criar)
+  - `src/app/api/reunioes-comissao/[id]/route.ts`: GET, PUT, DELETE
+  - `src/app/api/reunioes-comissao/[id]/pauta/route.ts`: POST, PUT, DELETE para itens
+  - `src/app/api/reunioes-comissao/[id]/presenca/route.ts`: GET, POST, PUT
+  - `src/app/api/reunioes-comissao/[id]/controle/route.ts`: POST (acoes de controle)
+- **Paginas admin criadas**:
+  - `src/app/admin/comissoes/reunioes/page.tsx`: Listagem de reunioes com filtros
+  - `src/app/admin/comissoes/reunioes/[id]/page.tsx`: Gestao completa da reuniao (pauta, presenca, pareceres, ata)
+- **Integracao com fluxo existente**:
+  - Campo `reuniaoId` adicionado ao modelo Parecer
+  - API de parecer atualizada para incluir reuniaoId
+  - Ao aprovar parecer da CLJ, proposicao muda automaticamente para AGUARDANDO_PAUTA
+- **Sidebar atualizado**: Submenu em Comissoes com link para Reunioes
+- **Fluxo completo agora suportado**:
+  1. Proposicao criada e numerada automaticamente
+  2. Tramitacao para comissao
+  3. Reuniao de comissao agendada
+  4. Proposicao adicionada na pauta da reuniao
+  5. Parecer votado na reuniao
+  6. Proposicao marcada como AGUARDANDO_PAUTA
+  7. Incluida na pauta da sessao plenaria
+  8. Votacao no painel eletronico
+
 ### 2026-01-22 - Paginas de UI Faltantes para Participacao Cidada, Normas e Protocolo
 
 - **Objetivo**: Criar paginas de UI publicas e admin para completar modulos de participacao cidada, normas juridicas e protocolo

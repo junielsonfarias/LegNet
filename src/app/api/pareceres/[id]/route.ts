@@ -39,7 +39,8 @@ const UpdateParecerSchema = z.object({
   dataEmissao: z.string().optional(),
   observacoes: z.string().optional(),
   motivoRejeicao: z.string().optional(),
-  arquivoUrl: z.string().optional()
+  arquivoUrl: z.string().optional(),
+  reuniaoId: z.string().optional() // Reuniao onde o parecer sera votado
 })
 
 // GET - Obter parecer por ID
@@ -113,6 +114,15 @@ export const GET = withErrorHandler(async (
             }
           }
         }
+      },
+      reuniao: {
+        select: {
+          id: true,
+          numero: true,
+          ano: true,
+          data: true,
+          status: true
+        }
       }
     }
   })
@@ -175,6 +185,7 @@ export const PUT = withErrorHandler(async (
   if (validatedData.observacoes !== undefined) updateData.observacoes = validatedData.observacoes
   if (validatedData.motivoRejeicao !== undefined) updateData.motivoRejeicao = validatedData.motivoRejeicao
   if (validatedData.arquivoUrl !== undefined) updateData.arquivoUrl = validatedData.arquivoUrl
+  if (validatedData.reuniaoId !== undefined) updateData.reuniaoId = validatedData.reuniaoId
 
   if (validatedData.prazoEmissao) {
     updateData.prazoEmissao = new Date(validatedData.prazoEmissao)
