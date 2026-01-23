@@ -514,7 +514,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
 
   return (
     <div className={cn(
-      'w-64 min-h-screen flex flex-col border-r border-gray-200 dark:border-gray-700 shadow-lg',
+      'w-64 h-screen flex flex-col border-r border-gray-200 dark:border-gray-700 shadow-lg sticky top-0',
       `bg-gradient-to-b ${getGradientClass()}`
     )}>
       {/* Cabeçalho da Sidebar com cor do role */}

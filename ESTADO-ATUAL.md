@@ -92,8 +92,11 @@ Fluxo Validado:
 | CRUD de sessoes | Implementado | /admin/sessoes |
 | Tipos de sessao | Implementado | Ordinaria, Extraordinaria, Solene, Especial |
 | Controle de status | Implementado | Agendada, Em Andamento, Concluida, Cancelada |
+| **Transicoes de status** | **Implementado** | Permite mudar status com atualizacao automatica de finalizada/tempoInicio/tempoFim |
 | Controle de presenca | Implementado | PresencaSessao model |
 | **Falta Justificada** | **Implementado** | 3 opcoes: Presente, Ausente, Falta Justificada com motivo |
+| **Dados Preteritos** | **Implementado** | Permite editar presencas/votacoes em sessoes CONCLUIDAS (lancamento retroativo) |
+| **Botao Editar Dados** | **Implementado** | Botao destacado (amarelo pulsante) nos paineis para sessoes concluidas |
 | Pauta de sessao | Implementado | PautaSessao + PautaItem |
 | Templates de sessao | Implementado | SessaoTemplate + TemplateItem |
 | Numeracao automatica | Implementado | Sequencial por tipo |
@@ -281,6 +284,12 @@ Fluxo Validado:
 | **API SSE tempo real** | **Implementado** | /api/painel/stream - Server-Sent Events |
 | **Grid de vereadores com fotos** | **Implementado** | VereadorVotoCard component |
 | **Modo chroma key** | **Implementado** | ?transparent=true para overlay em OBS |
+| **Tema escuro completo** | **Implementado** | Layout dark profissional bg-slate-900 |
+| **Sidebar de presença** | **Implementado** | Lista TODOS parlamentares na sidebar |
+| **Header compacto** | **Implementado** | Informações da sessão integradas no header |
+| **Painel operador standalone** | **Implementado** | /painel-operador/[sessaoId] - nova aba sem menu lateral |
+| **Dropdown de status** | **Implementado** | Alterar status da sessao (AGENDADA, EM_ANDAMENTO, CONCLUIDA, CANCELADA) |
+| **Cronometro de sessao** | **Implementado** | Duracao total da sessao no header HH:MM:SS |
 | **Streaming ao vivo** | Pendente | Integracao com servicos de video |
 
 ### 16. Configuracoes
@@ -2378,6 +2387,274 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-23 - Revisao Completa e Correcoes de Fluxos
+
+**Objetivo**: Revisar consistencia entre APIs, componentes e fluxos + corrigir sidebar
+
+**Correcoes Implementadas**:
+
+1. **Sidebar Fixo (Sticky)**
+   - Problema: Menu lateral rolava junto com a pagina
+   - Solucao: Adicionado `sticky top-0 h-screen` na sidebar e `overflow-y-auto` no container principal
+   - Arquivos: `admin-sidebar.tsx`, `admin/layout.tsx`
+
+2. **PresencaControl - Alerta de Dados Preteritos**
+   - Problema: Componente nao mostrava aviso quando editando sessao CONCLUIDA (inconsistencia com VotacaoEdicao)
+   - Solucao: Adicionado prop `sessaoStatus` e alerta visual para sessoes CONCLUIDAS
+   - Arquivo: `presenca-control.tsx`
+
+3. **Integracao PresencaControl nos Paineis**
+   - Atualizado `painel-operador/[sessaoId]/page.tsx` para passar `sessaoStatus`
+   - Atualizado `admin/painel-eletronico/[sessaoId]/page.tsx` para passar `sessaoStatus`
+   - Removido alerta duplicado (agora centralizado no componente)
+
+**Analise de Consistencia de Fluxos**:
+
+| Componente | Status CONCLUIDA | Alerta Visual | Validacao API |
+|------------|------------------|---------------|---------------|
+| PresencaControl | ✅ Aceito | ✅ Corrigido | ✅ sessao-controle.ts |
+| VotacaoEdicao | ✅ Aceito | ✅ OK | ✅ votacao/route.ts |
+| VotacaoAcompanhamento | ✅ OK | N/A | ✅ OK |
+
+**Fluxo de Dados Preteritos Validado**:
+- Service Layer: `assertSessaoPermitePresenca()` e `assertSessaoPermiteVotacao()` permitem CONCLUIDA
+- API Layer: Herda validacoes do service
+- UI Layer: Mostra alertas visuais para modo de edicao retroativa
+
+**Build Status**: ✅ Passou (147 paginas)
+
+---
+
+### 2026-01-22/23 - Testes de Verificacao de Dados Preteritos
+
+**Objetivo**: Validar funcionamento das funcionalidades de edicao de dados em sessoes concluidas
+
+**Testes Executados**:
+1. **Teste de Presenca em Sessao Concluida** (`scripts/test-dados-preteritos.ts`)
+   - Status: ✅ PASSOU
+   - Verificou registro de presencas via Prisma em sessoes CONCLUIDAS
+   - Validou que presenças podem ser registradas/editadas retroativamente
+
+2. **Teste de Votacao em Sessao Concluida** (`scripts/test-votacao-preterita.ts`)
+   - Status: ✅ PASSOU
+   - Verificou registro de votos (SIM, NAO, ABSTENCAO) em sessoes CONCLUIDAS
+   - Validou contagem correta de votos por tipo
+
+3. **Build de Producao** (`npm run build`)
+   - Status: ✅ PASSOU
+   - Todos os 147 paginas compiladas sem erros de tipo
+   - Middleware e rotas dinamicas funcionando
+
+**Correcoes de Tipo Durante Build**:
+- `votacao-edicao.tsx`: Adicionado `| null` em campos opcionais (descricao, tipoAcao, ementa)
+- `votacao-edicao.tsx`: Corrigido iteracao de Map (forEach em vez de for...of)
+- `pauta-api.ts`: Adicionado campo `ementa` no tipo proposicao
+- `painel-operador`: Corrigido props de VotacaoAcompanhamento
+
+**Scripts de Teste Criados**:
+- `scripts/test-dados-preteritos.ts` - Teste de presenca retroativa
+- `scripts/test-votacao-preterita.ts` - Teste de votacao retroativa
+- `scripts/check-proposicoes.ts` - Utilitario para verificar sessoes com proposicoes
+
+---
+
+### 2026-01-22 - Edicao de Votacao em Sessoes Concluidas
+
+- **Objetivo**: Permitir editar votos de proposicoes em sessoes ja concluidas
+- **Implementacao**:
+  - Criado componente `VotacaoEdicao` (`src/components/admin/votacao-edicao.tsx`)
+  - Mostra lista de parlamentares presentes com botoes SIM, NAO, ABSTENCAO
+  - Permite editar/registrar votos para cada parlamentar
+  - Exibe estatisticas em tempo real (votos sim, nao, abstencao, sem voto)
+  - API de votacao modificada para permitir votos em sessoes CONCLUIDAS
+  - Botao de editar votacao adicionado nos itens da pauta (icone Vote + Pencil amarelo)
+- **Arquivos modificados**:
+  - `src/app/api/sessoes/[id]/votacao/route.ts` - Permite votar em sessoes CONCLUIDAS
+  - `src/components/admin/votacao-edicao.tsx` - Novo componente
+  - `src/app/painel-operador/[sessaoId]/page.tsx` - Integracao do componente
+
+### 2026-01-22 - Correcao de Validacao Zod na API de Presenca
+
+- **Objetivo**: Corrigir erro 400 ao registrar presenca
+- **Problema**: Schema Zod rejeitava `null` no campo `justificativa`
+- **Causa raiz**: `z.string().optional()` aceita `undefined` mas NAO aceita `null`
+- **Solucao**: Alterado para `z.string().nullable().optional()` que aceita ambos
+- **Arquivo modificado**: `src/app/api/sessoes/[id]/presenca/route.ts`
+
+### 2026-01-22 - Edicao de Presencas em Sessoes Concluidas
+
+- **Objetivo**: Permitir ao admin/operador editar presencas de sessoes ja concluidas (dados preteritos)
+- **Problema**: Controle de presenca (PresencaControl) so aparecia para sessoes EM_ANDAMENTO
+- **Solucao**:
+  - PresencaControl agora aparece para sessoes EM_ANDAMENTO e CONCLUIDA
+  - Alerta visual "Modo de edicao de dados preteritos" para sessoes concluidas
+  - Botao "Editar Dados" no painel-eletronico admin abre painel-operador (amarelo pulsante)
+  - Botao "Dados da Sessao" no painel-operador abre pagina de detalhes
+- **Arquivos modificados**:
+  - `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`
+  - `src/app/painel-operador/[sessaoId]/page.tsx`
+
+### 2026-01-22 - Suporte a Dados Preteritos (Sessoes Concluidas)
+
+- **Objetivo**: Permitir registro de presencas e votacoes em sessoes ja concluidas
+- **Problema**: Validacoes bloqueavam edicao de sessoes com status CONCLUIDA
+- **Solucao**:
+  - Modificada funcao `assertSessaoPermitePresenca()` para aceitar sessoes CONCLUIDAS
+  - Modificada funcao `assertSessaoPermiteVotacao()` para aceitar sessoes CONCLUIDAS
+  - Apenas sessoes CANCELADAS ficam bloqueadas para alteracoes
+  - Permite lancamento retroativo de dados de sessoes antigas
+- **Arquivo modificado**: `src/lib/services/sessao-controle.ts`
+
+### 2026-01-22 - Resolucao de Slug em Todas as APIs de Sessao
+
+- **Objetivo**: Permitir uso de slug (sessao-{numero}-{ano}) em todas as APIs de sessao
+- **Alteracoes**:
+  - Funcao `resolverSessaoId()` aplicada em todas as rotas:
+    - `/api/sessoes/[id]/route.ts` (GET, PUT, DELETE)
+    - `/api/sessoes/[id]/presenca/route.ts`
+    - `/api/sessoes/[id]/pauta/route.ts`
+    - `/api/sessoes/[id]/votacao/route.ts`
+    - `/api/sessoes/[id]/controle/route.ts`
+    - `/api/sessoes/[id]/votacao/turno/route.ts`
+    - `/api/sessoes/[id]/pauta/[itemId]/destaques/route.ts`
+  - URLs podem usar CUID ou slug interchangeably
+- **Arquivos modificados**: Listados acima
+
+### 2026-01-22 - Controle de Status da Sessao pelo Administrador
+
+- **Objetivo**: Permitir alteracao manual do status da sessao pelo administrador
+- **Alteracoes**:
+  - Badge de status agora e um dropdown clicavel
+  - Permite alterar entre: AGENDADA, EM_ANDAMENTO, CONCLUIDA, CANCELADA
+  - Indicadores visuais coloridos para cada status
+  - Status atual fica desabilitado no menu
+  - Funcao `alterarStatusSessao()` para fazer a requisicao PUT
+- **Arquivo modificado**: `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`
+
+### 2026-01-22 - Correcao de Presenca e Abertura Automatica do Painel
+
+- **Objetivo**: Corrigir erro ao registrar presenca e melhorar fluxo de iniciar sessao
+- **Problema**: API de presenca retornava erro 400 quando sessaoId era slug (ex: `sessao-35-2025`)
+- **Solucao**:
+  - Criada funcao `resolverSessaoId()` em `sessao-controle.ts`
+  - Funcao aceita tanto CUID quanto slug no formato `sessao-{numero}-{ano}`
+  - Atualizada API de presenca para usar a nova funcao
+- **Abertura automatica**:
+  - Quando operador clica em "Iniciar sessao", o painel de controle abre em nova aba
+  - URL: `/admin/painel-eletronico/{sessaoId}`
+- **Arquivos modificados**:
+  - `src/lib/services/sessao-controle.ts`
+  - `src/app/api/sessoes/[id]/presenca/route.ts`
+  - `src/app/admin/painel-eletronico/page.tsx`
+
+### 2026-01-22 - Transicoes de Status de Sessao com Persistencia
+
+- **Objetivo**: Permitir alteracao de status de sessao com atualizacao correta no banco de dados
+- **Alteracoes**:
+  - API PUT/GET/DELETE `/api/sessoes/[id]` agora aceita slug (sessao-{numero}-{ano}) ou CUID
+  - Funcao `resolverSessaoId()` usada em todas as operacoes
+  - Transicoes de status tratadas automaticamente:
+    - **AGENDADA**: Reseta `finalizada=false`, `tempoInicio=null` - permite reiniciar sessao
+    - **EM_ANDAMENTO**: Define `finalizada=false`, `tempoInicio=now()` (se nao existir)
+    - **CONCLUIDA**: Define `finalizada=true`
+    - **CANCELADA**: Define `finalizada=true`
+  - Validacao de data futura ajustada: so exige para sessoes AGENDADAS sendo editadas
+- **Arquivo modificado**: `src/app/api/sessoes/[id]/route.ts`
+
+### 2026-01-22 - Painel Operador Standalone (Nova Aba)
+
+- **Objetivo**: Criar painel de controle de sessao em nova aba sem menu lateral
+- **Alteracoes**:
+  - Criada nova rota `/painel-operador/[sessaoId]` com layout independente
+  - Layout sem menu lateral administrativo (apenas bg-slate-900)
+  - Autenticacao obrigatoria (OPERADOR, SECRETARIA ou ADMIN)
+  - Funcionalidades completas de controle de sessao:
+    - Dropdown de alteracao de status (AGENDADA, EM_ANDAMENTO, CONCLUIDA, CANCELADA)
+    - Cronometro de duracao da sessao (HH:MM:SS)
+    - Controle de pauta (iniciar, pausar, votacao, finalizar itens)
+    - Lista de presenca com controle em tempo real
+    - Links para Painel Publico e Painel TV
+  - Quando sessao e iniciada, abre automaticamente em nova aba
+- **Arquivos criados**:
+  - `src/app/painel-operador/[sessaoId]/layout.tsx`
+  - `src/app/painel-operador/[sessaoId]/page.tsx`
+- **Arquivos modificados**:
+  - `src/app/admin/painel-eletronico/page.tsx` (abre `/painel-operador/` em vez de `/admin/painel-eletronico/`)
+
+### 2026-01-22 - Cronometro de Duracao no Painel TV
+
+- **Objetivo**: Exibir duracao da sessao em tempo real no Painel TV
+- **Alteracoes**:
+  - Adicionado campo `tempoInicio` na API de stream (`/api/painel/stream`)
+  - Adicionado cronometro no header do Painel TV (formato HH:MM:SS)
+  - Cronometro calcula duracao desde `tempoInicio` da sessao
+  - Exibido ao lado do quorum com icone de Timer
+  - Funciona para sessoes em andamento e concluidas
+- **Arquivos modificados**:
+  - `src/app/api/painel/stream/route.ts`
+  - `src/lib/hooks/use-painel-sse.ts`
+  - `src/components/painel/painel-tv-display.tsx`
+  - `src/app/painel-tv/[sessaoId]/page.tsx`
+
+### 2026-01-22 - Botoes de Acesso aos Paineis Externos
+
+- **Objetivo**: Facilitar acesso aos paineis publicos a partir do painel eletronico
+- **Alteracoes**:
+  - Adicionado botao "Painel Publico" no header do painel eletronico (ambas paginas)
+    - Abre `/painel-publico?sessaoId={id}` em nova aba
+    - Icone: Monitor/ExternalLink
+  - Adicionado botao "Painel TV" no header do painel eletronico (ambas paginas)
+    - Abre `/painel-tv/{sessaoId}` em nova aba
+    - Icone: Tv + ExternalLink
+    - Destaque visual em roxo/azul
+  - Botoes posicionados apos o badge de status da sessao
+- **Arquivos modificados**:
+  - `src/app/admin/painel-eletronico/page.tsx`
+  - `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`
+
+### 2026-01-22 - Simplificacao do Painel Publico
+
+- **Objetivo**: Reorganizar layout do painel publico para melhor visualizacao
+- **Alteracoes**:
+  - Removida secao "Informacoes da Sessao" (informacoes ja presentes no header)
+  - Removida secao "Pauta Completa da Sessao" separada
+  - Lista de parlamentares agora exibe TODOS em lista unica
+    - Presentes aparecem primeiro (com icone verde)
+    - Ausentes aparecem depois (com icone vermelho e opacidade reduzida)
+    - Ordenacao alfabetica dentro de cada grupo
+  - Titulo alterado de "Presenca dos Parlamentares" para "Parlamentares"
+  - Cards maiores (w-10 h-10) para melhor visualizacao
+  - Altura maxima da lista aumentada para 500px
+- **Arquivo modificado**: `src/app/painel-publico/page.tsx`
+
+### 2026-01-22 - Redesign do Painel Eletronico (Tema Escuro Profissional)
+
+- **Objetivo**: Reestruturar o layout do painel eletronico conforme design de referencia
+- **Alteracoes visuais**:
+  - Tema escuro completo (bg-slate-900) em todos os elementos
+  - Badges de status adaptados para tema dark
+  - Cards com bordas e fundos em slate-700/800
+  - Texto adaptado para legibilidade em fundo escuro
+- **Reestruturacao do header**:
+  - Informacoes da sessao integradas no header superior
+  - Data, horario e quantidade de itens exibidos inline
+  - Cronometro da sessao e controles em destaque
+- **Nova sidebar de presenca (1/3 da tela)**:
+  - Cards de estatisticas: Presentes, Ausentes, % Presenca
+  - Barra de quorum visual
+  - Lista de TODOS os parlamentares (nao apenas presentes)
+  - Separacao visual: Presentes (verde) e Ausentes (vermelho)
+  - Exibicao de justificativas para faltas justificadas
+  - Componente PresencaControl integrado para sessoes em andamento
+- **Coluna principal (2/3 da tela)**:
+  - Pauta da sessao com itens em cards dark
+  - Destaque visual para item atual (borda azul)
+  - Todos os botoes e dropdowns adaptados para tema escuro
+- **Elementos removidos** (conforme solicitado):
+  - Area "Pauta Completa da Sessao" separada
+  - Area "Informacoes da Sessao" duplicada
+- **Arquivo modificado**: `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`
 
 ### 2026-01-22 - Analise de Conformidade: Secretario, Operador e Vereador
 

@@ -5,11 +5,10 @@ import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError,
-  NotFoundError,
-  validateId
+  NotFoundError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
-import { obterSessaoParaControle } from '@/lib/services/sessao-controle'
+import { obterSessaoParaControle, resolverSessaoId } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,8 +31,8 @@ export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string; itemId: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
-  const itemId = validateId(params.itemId, 'Item')
+  const sessaoId = await resolverSessaoId(params.id)
+  const itemId = params.itemId
 
   const item = await prisma.pautaItem.findFirst({
     where: {
@@ -61,8 +60,8 @@ export const POST = withAuth(withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string; itemId: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
-  const itemId = validateId(params.itemId, 'Item')
+  const sessaoId = await resolverSessaoId(params.id)
+  const itemId = params.itemId
 
   const body = await request.json()
   const data = DestaqueSchema.parse(body)
@@ -109,8 +108,8 @@ export const PATCH = withAuth(withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string; itemId: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
-  const itemId = validateId(params.itemId, 'Item')
+  const sessaoId = await resolverSessaoId(params.id)
+  const itemId = params.itemId
 
   const url = new URL(request.url)
   const destaqueId = url.searchParams.get('destaqueId')
@@ -164,8 +163,8 @@ export const DELETE = withAuth(withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string; itemId: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
-  const itemId = validateId(params.itemId, 'Item')
+  const sessaoId = await resolverSessaoId(params.id)
+  const itemId = params.itemId
 
   const url = new URL(request.url)
   const destaqueId = url.searchParams.get('destaqueId')

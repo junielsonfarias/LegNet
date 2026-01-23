@@ -36,7 +36,8 @@ import {
   CameraOff,
   Share2,
   Maximize,
-  Minimize
+  Minimize,
+  Tv
 } from 'lucide-react'
 import { PainelSessao, PautaItem, Presenca } from '@/lib/types/painel-eletronico'
 import { toast } from 'sonner'
@@ -321,6 +322,9 @@ export default function PainelEletronicoPage() {
 
       toast.success('Sessão iniciada com sucesso!')
       await carregarDados()
+
+      // Abrir painel do operador em nova aba (versão sem menu lateral)
+      window.open(`/painel-operador/${sessaoId}`, '_blank')
 
     } catch (error) {
       console.error('Erro ao iniciar sessão:', error)
@@ -636,7 +640,19 @@ export default function PainelEletronicoPage() {
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Painel Público
               </Button>
-              
+
+              <Button
+                onClick={() => {
+                  if (sessaoAtiva?.id) {
+                    window.open(`/painel-tv/${sessaoAtiva.id}`, '_blank')
+                  }
+                }}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Tv className="h-4 w-4 mr-2" />
+                Painel TV
+              </Button>
+
               <Button 
                 onClick={transmissaoAtiva ? pararTransmissao : iniciarTransmissao}
                 variant={transmissaoAtiva ? "destructive" : "outline"}

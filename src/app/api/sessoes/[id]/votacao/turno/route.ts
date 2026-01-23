@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError,
-  NotFoundError,
-  validateId
+  NotFoundError
 } from '@/lib/error-handler'
 import {
   assertSessaoPermiteVotacao,
   obterSessaoParaControle,
-  contabilizarVotos
+  contabilizarVotos,
+  resolverSessaoId
 } from '@/lib/services/sessao-controle'
 import {
   getConfiguracaoTurno,
@@ -46,7 +46,7 @@ export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  const sessaoId = await resolverSessaoId(params.id)
   const { searchParams } = new URL(request.url)
   const itemId = searchParams.get('itemId')
   const proposicaoId = searchParams.get('proposicaoId')
@@ -149,7 +149,7 @@ export const POST = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  const sessaoId = await resolverSessaoId(params.id)
   const body = await request.json()
 
   const { itemId, turno } = IniciarTurnoSchema.parse(body)
@@ -221,7 +221,7 @@ export const PUT = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  const sessaoId = await resolverSessaoId(params.id)
   const body = await request.json()
 
   const { itemId, turno, resultado: resultadoManual } = FinalizarTurnoSchema.parse(body)

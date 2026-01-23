@@ -1,21 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
-  ValidationError,
-  NotFoundError,
-  validateId
+  NotFoundError
 } from '@/lib/error-handler'
-import { assertSessaoPermitePresenca, obterSessaoParaControle } from '@/lib/services/sessao-controle'
+import { assertSessaoPermitePresenca, obterSessaoParaControle, resolverSessaoId } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
 
 const PresencaSchema = z.object({
   parlamentarId: z.string(),
   presente: z.boolean(),
-  justificativa: z.string().optional()
+  justificativa: z.string().nullable().optional()
 })
 
 // GET - Listar presenças da sessão
@@ -23,7 +21,8 @@ export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
+  const sessaoId = await resolverSessaoId(params.id)
 
   await obterSessaoParaControle(sessaoId)
 
@@ -40,7 +39,7 @@ export const GET = withErrorHandler(async (
       }
     }
   })
-  
+
   // Ordenar manualmente para evitar problemas com orderBy em relacionamentos no mock
   presencas.sort((a, b) => {
     const nomeA = a.parlamentar?.nome || ''
@@ -56,7 +55,8 @@ export const POST = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
+  const sessaoId = await resolverSessaoId(params.id)
   const body = await request.json()
 
   const validatedData = PresencaSchema.parse(body)

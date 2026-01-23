@@ -39,7 +39,48 @@ const atualizarTempoTotalReal = async (pautaId: string) => {
   })
 }
 
-export async function obterSessaoParaControle(sessaoId: string) {
+/**
+ * Resolve o ID da sessão, aceitando CUID ou slug no formato "sessao-{numero}-{ano}"
+ */
+export async function resolverSessaoId(sessaoIdOrSlug: string): Promise<string> {
+  // Primeiro tenta buscar diretamente pelo ID
+  const sessaoPorId = await prisma.sessao.findUnique({
+    where: { id: sessaoIdOrSlug },
+    select: { id: true }
+  })
+
+  if (sessaoPorId) {
+    return sessaoPorId.id
+  }
+
+  // Tenta extrair número e ano do slug (formato: sessao-{numero}-{ano})
+  const slugMatch = sessaoIdOrSlug.match(/^sessao-(\d+)-(\d{4})$/)
+
+  if (slugMatch) {
+    const numero = parseInt(slugMatch[1], 10)
+    const ano = parseInt(slugMatch[2], 10)
+
+    const sessaoPorSlug = await prisma.sessao.findFirst({
+      where: {
+        numero,
+        data: {
+          gte: new Date(`${ano}-01-01`),
+          lt: new Date(`${ano + 1}-01-01`)
+        }
+      },
+      select: { id: true }
+    })
+
+    if (sessaoPorSlug) {
+      return sessaoPorSlug.id
+    }
+  }
+
+  throw new NotFoundError('Sessão')
+}
+
+export async function obterSessaoParaControle(sessaoIdOrSlug: string) {
+  const sessaoId = await resolverSessaoId(sessaoIdOrSlug)
   const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
 
   if (!sessao) {
@@ -49,15 +90,27 @@ export async function obterSessaoParaControle(sessaoId: string) {
   return sessao
 }
 
-export function assertSessaoPermitePresenca(sessao: { status: string }) {
-  if (sessao.status === 'CONCLUIDA' || sessao.status === 'CANCELADA') {
-    throw new ValidationError('Não é possível alterar presenças para sessões finalizadas ou canceladas')
+export function assertSessaoPermitePresenca(sessao: { status: string; finalizada?: boolean }) {
+  // Permite registro de presenças em sessões:
+  // - AGENDADA: preparação
+  // - EM_ANDAMENTO: durante a sessão
+  // - CONCLUIDA: lançamento de dados pretéritos (sessões antigas)
+  // Apenas CANCELADA não permite alterações
+  if (sessao.status === 'CANCELADA') {
+    throw new ValidationError('Não é possível alterar presenças em sessões canceladas')
   }
 }
 
-export function assertSessaoPermiteVotacao(sessao: { status: string }) {
-  if (sessao.status !== 'EM_ANDAMENTO') {
-    throw new ValidationError('A sessão deve estar em andamento para registrar votos')
+export function assertSessaoPermiteVotacao(sessao: { status: string; finalizada?: boolean }) {
+  // Permite registro de votos em sessões:
+  // - EM_ANDAMENTO: durante a sessão ao vivo
+  // - CONCLUIDA: lançamento de dados pretéritos (sessões antigas)
+  // AGENDADA e CANCELADA não permitem votação
+  if (sessao.status === 'AGENDADA') {
+    throw new ValidationError('Não é possível registrar votos em sessões que ainda não iniciaram')
+  }
+  if (sessao.status === 'CANCELADA') {
+    throw new ValidationError('Não é possível registrar votos em sessões canceladas')
   }
 }
 

@@ -51,7 +51,12 @@ import {
   ArrowDown,
   RotateCcw,
   BookOpen,
-  LogOut
+  LogOut,
+  Tv,
+  ExternalLink,
+  ChevronDown,
+  Settings,
+  Pencil
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -88,15 +93,15 @@ const formatSeconds = (seconds: number) => {
 const getSessaoStatusBadge = (status: string) => {
   switch (status) {
     case 'AGENDADA':
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-blue-600 text-white'
     case 'EM_ANDAMENTO':
-      return 'bg-green-100 text-green-800'
+      return 'bg-green-600 text-white'
     case 'CONCLUIDA':
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-slate-600 text-white'
     case 'CANCELADA':
-      return 'bg-red-100 text-red-800'
+      return 'bg-red-600 text-white'
     default:
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-slate-600 text-white'
   }
 }
 
@@ -133,25 +138,25 @@ const getTipoSessaoLabel = (tipo: string) => {
 const getItemStatusBadge = (status: string) => {
   switch (status) {
     case 'PENDENTE':
-      return 'bg-gray-100 text-gray-700'
+      return 'bg-slate-600 text-slate-200'
     case 'EM_DISCUSSAO':
-      return 'bg-blue-100 text-blue-700'
+      return 'bg-blue-600 text-white'
     case 'EM_VOTACAO':
-      return 'bg-purple-100 text-purple-700'
+      return 'bg-purple-600 text-white'
     case 'APROVADO':
-      return 'bg-green-100 text-green-700'
+      return 'bg-green-600 text-white'
     case 'REJEITADO':
-      return 'bg-red-100 text-red-700'
+      return 'bg-red-600 text-white'
     case 'RETIRADO':
-      return 'bg-yellow-100 text-yellow-700'
+      return 'bg-yellow-600 text-white'
     case 'ADIADO':
-      return 'bg-orange-100 text-orange-700'
+      return 'bg-orange-600 text-white'
     case 'CONCLUIDO':
-      return 'bg-emerald-100 text-emerald-700'
+      return 'bg-emerald-600 text-white'
     case 'VISTA':
-      return 'bg-violet-100 text-violet-700'
+      return 'bg-violet-600 text-white'
     default:
-      return 'bg-gray-100 text-gray-700'
+      return 'bg-slate-600 text-slate-200'
   }
 }
 
@@ -159,17 +164,17 @@ const getItemStatusBadge = (status: string) => {
 const getTipoAcaoBadge = (tipoAcao: string) => {
   switch (tipoAcao) {
     case 'LEITURA':
-      return 'bg-sky-100 text-sky-700 border-sky-300'
+      return 'bg-sky-900/50 text-sky-300 border-sky-500'
     case 'VOTACAO':
-      return 'bg-purple-100 text-purple-700 border-purple-300'
+      return 'bg-purple-900/50 text-purple-300 border-purple-500'
     case 'DISCUSSAO':
-      return 'bg-blue-100 text-blue-700 border-blue-300'
+      return 'bg-blue-900/50 text-blue-300 border-blue-500'
     case 'HOMENAGEM':
-      return 'bg-pink-100 text-pink-700 border-pink-300'
+      return 'bg-pink-900/50 text-pink-300 border-pink-500'
     case 'COMUNICADO':
-      return 'bg-teal-100 text-teal-700 border-teal-300'
+      return 'bg-teal-900/50 text-teal-300 border-teal-500'
     default:
-      return 'bg-gray-100 text-gray-700 border-gray-300'
+      return 'bg-slate-700/50 text-slate-300 border-slate-500'
   }
 }
 
@@ -393,6 +398,33 @@ export default function PainelEletronicoOperadorPage() {
     }
   }
 
+  // Alterar status da sessão diretamente (para administradores)
+  const alterarStatusSessao = async (novoStatus: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA') => {
+    if (!sessao) return
+
+    try {
+      setExecutando(true)
+      const response = await fetch(`/api/sessoes/${sessao.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: novoStatus })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Erro ao alterar status')
+      }
+
+      await carregarSessao(false)
+      toast.success(`Status alterado para ${getSessaoStatusLabel(novoStatus)}`)
+    } catch (error: any) {
+      console.error('Erro ao alterar status da sessão:', error)
+      toast.error(error?.message || 'Erro ao alterar status da sessão')
+    } finally {
+      setExecutando(false)
+    }
+  }
+
   const executarAcaoItem = async (
     itemId: string,
     acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar' | 'vista' | 'retomarVista' | 'subir' | 'descer',
@@ -510,10 +542,10 @@ export default function PainelEletronicoOperadorPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-slate-900">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600" />
-          <p className="text-gray-600">Carregando painel...</p>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-400" />
+          <p className="text-slate-300">Carregando painel...</p>
         </div>
       </div>
     )
@@ -521,12 +553,12 @@ export default function PainelEletronicoOperadorPage() {
 
   if (!sessao) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Card>
+      <div className="flex min-h-screen items-center justify-center bg-slate-900">
+        <Card className="border-slate-700 bg-slate-800">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-            <p className="mb-4 text-red-600">Sessão não encontrada</p>
-            <Button asChild>
+            <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
+            <p className="mb-4 text-red-400">Sessão não encontrada</p>
+            <Button asChild className="bg-slate-700 hover:bg-slate-600">
               <Link href="/admin/sessoes-legislativas">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar
@@ -548,206 +580,273 @@ export default function PainelEletronicoOperadorPage() {
       })
     : 'Data não informada'
 
+  // Calcular estatísticas de presença
+  const totalParlamentares = sessao.presencas?.length || 0
+  const presentes = sessao.presencas?.filter(p => p.presente).length || 0
+  const ausentes = totalParlamentares - presentes
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Button asChild variant="outline">
-              <Link href="/admin/sessoes-legislativas">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar
-              </Link>
-            </Button>
-            <div>
-              <h1 className="flex items-center gap-2 text-3xl font-bold">
-                <Monitor className="h-8 w-8 text-blue-600" />
-                Painel Eletrônico – Operador
-              </h1>
-              <p className="mt-1 text-gray-600">
-                {sessao.numero}ª Sessão {getTipoSessaoLabel(sessao.tipo)} • {dataFormatada}
-              </p>
-              {sessao.horario && (
-                <p className="text-sm text-gray-500">Horário previsto: {sessao.horario}</p>
+    <div className="min-h-screen bg-slate-900 text-white">
+      {/* Header Superior com Informações da Sessão */}
+      <div className="border-b border-slate-700 bg-slate-800 px-6 py-4">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button asChild variant="outline" size="sm" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+                <Link href="/admin/sessoes-legislativas">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar
+                </Link>
+              </Button>
+              <div>
+                <h1 className="flex items-center gap-3 text-2xl font-bold text-white">
+                  <Monitor className="h-7 w-7 text-blue-400" />
+                  {sessao.numero}ª Sessão {getTipoSessaoLabel(sessao.tipo)}
+                </h1>
+                <p className="mt-1 text-slate-400">
+                  Câmara Municipal de Mojuí dos Campos
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              {/* Informações da Sessão inline */}
+              <div className="hidden lg:flex items-center gap-6 text-sm text-slate-300">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-slate-500" />
+                  <span>{dataFormatada}</span>
+                </div>
+                {sessao.horario && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-slate-500" />
+                    <span>{sessao.horario}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-slate-500" />
+                  <span>{sessao.pautaSessao?.itens.length ?? 0} itens na pauta</span>
+                </div>
+              </div>
+              {/* Dropdown para alterar status da sessão */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`${getSessaoStatusBadge(sessao.status)} hover:opacity-80 flex items-center gap-1`}
+                    disabled={executando}
+                  >
+                    {getSessaoStatusLabel(sessao.status)}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => alterarStatusSessao('AGENDADA')}
+                    disabled={sessao.status === 'AGENDADA'}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    Agendada
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => alterarStatusSessao('EM_ANDAMENTO')}
+                    disabled={sessao.status === 'EM_ANDAMENTO'}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    Em andamento
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => alterarStatusSessao('CONCLUIDA')}
+                    disabled={sessao.status === 'CONCLUIDA'}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-gray-500" />
+                    Concluída
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => alterarStatusSessao('CANCELADA')}
+                    disabled={sessao.status === 'CANCELADA'}
+                    className="flex items-center gap-2 text-red-400 focus:text-red-400"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                    Cancelada
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Botões de acesso aos painéis externos */}
+              <div className="flex items-center gap-2 border-l border-slate-600 pl-4">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                >
+                  <a
+                    href={`/painel-publico?sessaoId=${sessao.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Monitor className="mr-2 h-4 w-4" />
+                    Painel Público
+                    <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-600 bg-blue-600/20 text-blue-300 hover:bg-blue-600 hover:text-white"
+                >
+                  <a
+                    href={`/painel-tv/${sessao.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Tv className="mr-2 h-4 w-4" />
+                    Painel TV
+                    <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </Button>
+                {/* Botão Editar Dados da Sessão - destaque especial para sessões concluídas */}
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className={
+                    sessao.status === 'CONCLUIDA'
+                      ? "border-amber-500 bg-amber-500/30 text-amber-200 hover:bg-amber-500 hover:text-white animate-pulse"
+                      : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                  }
+                >
+                  <a
+                    href={`/painel-operador/${sessao.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {sessao.status === 'CONCLUIDA' ? 'Editar Dados' : 'Painel Operador'}
+                    <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </Button>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-400 hover:text-white hover:bg-slate-700"
+                onClick={() => carregarSessao(true)}
+                aria-label="Atualizar painel"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Cronômetro e controles da sessão */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Timer className="h-5 w-5 text-blue-400" />
+                <span className="text-2xl font-mono font-bold text-blue-400">{formatSeconds(cronometroSessao)}</span>
+              </div>
+              {currentItem && (
+                <div className="flex items-center gap-2 border-l border-slate-600 pl-6">
+                  <span className="text-sm text-slate-400">Item atual:</span>
+                  <span className="font-medium text-white">{currentItem.titulo}</span>
+                  <Badge variant="outline" className="ml-2 border-slate-500 text-slate-300">
+                    {formatSeconds(cronometroItem)}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              {sessao.status === 'AGENDADA' && (
+                <Button
+                  onClick={() => executarAcaoSessao('iniciar')}
+                  disabled={executando}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Play className="mr-2 h-4 w-4" /> Iniciar sessão
+                </Button>
+              )}
+              {sessao.status === 'EM_ANDAMENTO' && (
+                <>
+                  <Button
+                    onClick={() => executarAcaoSessao('finalizar')}
+                    disabled={executando}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    <Square className="mr-2 h-4 w-4" /> Finalizar sessão
+                  </Button>
+                  <Button
+                    onClick={() => executarAcaoSessao('cancelar')}
+                    disabled={executando}
+                    variant="outline"
+                    className="border-red-400 text-red-400 hover:bg-red-950"
+                  >
+                    Cancelar
+                  </Button>
+                </>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge className={getSessaoStatusBadge(sessao.status)}>{getSessaoStatusLabel(sessao.status)}</Badge>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-500"
-              onClick={() => carregarSessao(true)}
-              aria-label="Atualizar painel"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
+      </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase text-blue-600">
-                <Clock className="h-4 w-4" /> Tempo de sessão
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-700">{formatSeconds(cronometroSessao)}</div>
-              {sessao.tempoInicio && (
-                <p className="mt-2 text-xs text-gray-500">
-                  Iniciada às {new Date(sessao.tempoInicio).toLocaleTimeString('pt-BR')}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+      {/* Conteúdo Principal */}
+      <div className="mx-auto max-w-7xl p-6">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Coluna Principal (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase text-gray-600">
-                <Users className="h-4 w-4" /> Participação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-1 text-sm text-gray-600">
-                <p>
-                  Legislatura atual: {sessao.legislatura ? `${sessao.legislatura.numero}ª` : '—'}
-                </p>
-                <p>
-                  Período: {sessao.periodo ? `${sessao.periodo.numero}º` : 'Não vinculado'}
-                </p>
-                <p>Local: {sessao.local || 'Plenário'}</p>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Controle de Turnos */}
+            {sessao.status === 'EM_ANDAMENTO' && currentItem && currentItem.proposicaoId && (
+              <TurnoControl
+                sessaoId={sessao.id}
+                itemId={currentItem.id}
+                titulo={currentItem.titulo}
+                tipoProposicao={currentItem.proposicao?.tipo || 'PROJETO_LEI'}
+                onTurnoIniciado={() => carregarSessao(false)}
+                onTurnoFinalizado={() => carregarSessao(false)}
+              />
+            )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase text-gray-600">
-                <FileText className="h-4 w-4" /> Itens da pauta
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-gray-600">
-              <p>Total estimado: {sessao.pautaSessao?.tempoTotalEstimado ?? 0} min</p>
-              <p>
-                Tempo executado: {Math.round((sessao.pautaSessao?.tempoTotalReal ?? 0) / 60)} min
-              </p>
-              <p>Itens cadastrados: {sessao.pautaSessao?.itens.length ?? 0}</p>
-            </CardContent>
-          </Card>
+            {/* Painel de Acompanhamento de Votação */}
+            {sessao.status === 'EM_ANDAMENTO' && currentItem?.status === 'EM_VOTACAO' && (
+              <VotacaoAcompanhamento
+                sessaoId={sessao.id}
+                itemEmVotacao={currentItem}
+              />
+            )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase text-gray-600">
-                <Timer className="h-4 w-4" /> Item atual
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-lg font-semibold text-gray-800">
-                {currentItem ? currentItem.titulo : 'Nenhum item em andamento'}
-              </div>
-              <div className="text-sm text-gray-500">{calcularStatusDescricao(currentItem)}</div>
-              <div className="rounded bg-blue-50 p-2 text-center text-lg font-bold text-blue-700">
-                {formatSeconds(cronometroItem)}
-              </div>
-              {currentItem && (
-                <p className="text-xs text-gray-500">{formatTempoLabel(currentItem)}</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+            {/* Cronômetro de Pronunciamento */}
+            {sessao.status === 'EM_ANDAMENTO' && currentItem?.status === 'EM_DISCUSSAO' && (
+              <CronometroOrador
+                parlamentares={sessao.presencas?.filter(p => p.presente).map(p => p.parlamentar) || []}
+              />
+            )}
 
-        <div className="flex flex-wrap items-center gap-3">
-          {sessao.status === 'AGENDADA' && (
-            <Button
-              onClick={() => executarAcaoSessao('iniciar')}
-              disabled={executando}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Play className="mr-2 h-4 w-4" /> Iniciar sessão
-            </Button>
-          )}
-
-          {sessao.status === 'EM_ANDAMENTO' && (
-            <>
-              <Button
-                onClick={() => executarAcaoSessao('finalizar')}
-                disabled={executando}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Square className="mr-2 h-4 w-4" /> Finalizar sessão
-              </Button>
-              <Button
-                onClick={() => executarAcaoSessao('cancelar')}
-                disabled={executando}
-                variant="outline"
-                className="border-red-400 text-red-600 hover:bg-red-50"
-              >
-                Cancelar sessão
-              </Button>
-            </>
-          )}
-        </div>
-
-        {sessao.status === 'EM_ANDAMENTO' && (
-          <Card className="border border-green-200 bg-green-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-700">
-                <Users className="h-5 w-5" /> Controle de presenças
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PresencaControl sessaoId={sessao.id} />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Controle de Turnos */}
-        {sessao.status === 'EM_ANDAMENTO' && currentItem && currentItem.proposicaoId && (
-          <TurnoControl
-            sessaoId={sessao.id}
-            itemId={currentItem.id}
-            titulo={currentItem.titulo}
-            tipoProposicao={currentItem.proposicao?.tipo || 'PROJETO_LEI'}
-            onTurnoIniciado={() => carregarSessao(false)}
-            onTurnoFinalizado={() => carregarSessao(false)}
-          />
-        )}
-
-        {/* Painel de Acompanhamento de Votação */}
-        {sessao.status === 'EM_ANDAMENTO' && currentItem?.status === 'EM_VOTACAO' && (
-          <VotacaoAcompanhamento
-            sessaoId={sessao.id}
-            itemEmVotacao={currentItem}
-          />
-        )}
-
-        {/* Cronômetro de Pronunciamento */}
-        {sessao.status === 'EM_ANDAMENTO' && currentItem?.status === 'EM_DISCUSSAO' && (
-          <CronometroOrador
-            parlamentares={sessao.presencas?.filter(p => p.presente).map(p => p.parlamentar) || []}
-          />
-        )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-gray-700">
-              <FileText className="h-5 w-5" /> Pauta da sessão
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+            {/* Pauta da Sessão */}
+            <Card className="border-slate-700 bg-slate-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <FileText className="h-5 w-5 text-blue-400" /> Pauta da sessão
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
             {groupedItens.length === 0 && (
-              <p className="text-sm text-gray-500">Nenhum item cadastrado para esta pauta.</p>
+              <p className="text-sm text-slate-400">Nenhum item cadastrado para esta pauta.</p>
             )}
 
             {groupedItens.map(grupo => (
               <div key={grupo.secao} className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-800">
+                  <h2 className="text-lg font-semibold text-slate-200">
                     {grupo.secao.replace(/_/g, ' ')}
                   </h2>
-                  <span className="text-sm text-gray-500">{grupo.itens.length} item(s)</span>
+                  <span className="text-sm text-slate-400">{grupo.itens.length} item(s)</span>
                 </div>
 
                 <div className="space-y-3">
@@ -757,7 +856,7 @@ export default function PainelEletronicoOperadorPage() {
                       <div
                         key={item.id}
                         className={`flex flex-col gap-3 rounded-lg border p-4 transition ${
-                          isAtual ? 'border-blue-400 bg-blue-50 shadow' : 'border-gray-200 bg-white'
+                          isAtual ? 'border-blue-500 bg-blue-900/30 shadow-lg' : 'border-slate-600 bg-slate-700/50'
                         }`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -788,13 +887,13 @@ export default function PainelEletronicoOperadorPage() {
                                       : `${item.turnoAtual || 1}º/${item.turnoFinal} Turno`}
                                 </Badge>
                               )}
-                              <span className="text-xs text-gray-500">Ordem {item.ordem}</span>
+                              <span className="text-xs text-slate-400">Ordem {item.ordem}</span>
                             </div>
-                            <h3 className="mt-2 text-base font-semibold text-gray-900">{item.titulo}</h3>
+                            <h3 className="mt-2 text-base font-semibold text-white">{item.titulo}</h3>
                             {item.descricao && (
-                              <p className="mt-1 text-sm text-gray-600">{item.descricao}</p>
+                              <p className="mt-1 text-sm text-slate-300">{item.descricao}</p>
                             )}
-                            <p className="mt-2 text-xs text-gray-500">{formatTempoLabel(item)}</p>
+                            <p className="mt-2 text-xs text-slate-400">{formatTempoLabel(item)}</p>
                           </div>
 
                           {sessao.status === 'EM_ANDAMENTO' && (
@@ -809,22 +908,22 @@ export default function PainelEletronicoOperadorPage() {
                                         size="sm"
                                         variant="outline"
                                         disabled={executando}
-                                        className="border-sky-400 text-sky-600 hover:bg-sky-50"
+                                        className="border-sky-500 text-sky-400 hover:bg-sky-900/30"
                                         title="Alterar momento da matéria"
                                       >
                                         <BookOpen className="mr-1 h-4 w-4" /> Momento
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuContent align="end" className="bg-slate-800 border-slate-600">
                                       {TIPO_ACAO_OPTIONS.map(opt => (
                                         <DropdownMenuItem
                                           key={opt.value}
                                           onClick={() => atualizarTipoAcao(item.id, opt.value)}
-                                          className={item.tipoAcao === opt.value ? 'bg-sky-50' : ''}
+                                          className={`text-slate-200 hover:bg-slate-700 ${item.tipoAcao === opt.value ? 'bg-sky-900/50' : ''}`}
                                         >
                                           <span className="mr-2">{opt.icon}</span>
                                           {opt.label}
-                                          {item.tipoAcao === opt.value && <CheckCircle className="ml-auto h-4 w-4 text-sky-600" />}
+                                          {item.tipoAcao === opt.value && <CheckCircle className="ml-auto h-4 w-4 text-sky-400" />}
                                         </DropdownMenuItem>
                                       ))}
                                     </DropdownMenuContent>
@@ -912,15 +1011,16 @@ export default function PainelEletronicoOperadorPage() {
                               {['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status) && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button size="sm" variant="outline" disabled={executando} className="border-violet-400 text-violet-600 hover:bg-violet-50">
+                                    <Button size="sm" variant="outline" disabled={executando} className="border-violet-500 text-violet-400 hover:bg-violet-900/30">
                                       <Eye className="mr-2 h-4 w-4" /> Vista
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
+                                  <DropdownMenuContent align="end" className="bg-slate-800 border-slate-600">
                                     {sessao.presencas?.filter(p => p.presente).map(presenca => (
                                       <DropdownMenuItem
                                         key={presenca.parlamentar.id}
                                         onClick={() => executarAcaoItem(item.id, 'vista' as any, undefined, presenca.parlamentar.id)}
+                                        className="text-slate-200 hover:bg-slate-700"
                                       >
                                         {presenca.parlamentar.apelido || presenca.parlamentar.nome}
                                       </DropdownMenuItem>
@@ -936,21 +1036,22 @@ export default function PainelEletronicoOperadorPage() {
                                     variant="outline"
                                     disabled={executando}
                                     onClick={() => abrirModalRetirada(item.id, item.titulo)}
-                                    className="border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+                                    className="border-yellow-500 text-yellow-400 hover:bg-yellow-900/30"
                                   >
                                     <LogOut className="mr-2 h-4 w-4" /> Retirar
                                   </Button>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                      <Button size="sm" variant="secondary" disabled={executando}>
+                                      <Button size="sm" variant="secondary" disabled={executando} className="bg-slate-600 text-white hover:bg-slate-500">
                                         <MoreVertical className="mr-2 h-4 w-4" /> Encerrar
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuContent align="end" className="bg-slate-800 border-slate-600">
                                       {ITEM_RESULTADOS.filter(r => r.value !== 'RETIRADO').map(result => (
                                         <DropdownMenuItem
                                           key={result.value}
                                           onClick={() => executarAcaoItem(item.id, 'finalizar', result.value)}
+                                          className="text-slate-200 hover:bg-slate-700"
                                         >
                                           {result.label}
                                         </DropdownMenuItem>
@@ -964,7 +1065,7 @@ export default function PainelEletronicoOperadorPage() {
                         </div>
 
                         {item.status !== 'PENDENTE' && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-slate-400">
                             {item.iniciadoEm && (
                               <span className="mr-4">
                                 Início: {new Date(item.iniciadoEm).toLocaleTimeString('pt-BR')}
@@ -985,6 +1086,130 @@ export default function PainelEletronicoOperadorPage() {
             ))}
           </CardContent>
         </Card>
+      </div>
+
+          {/* Sidebar - Presença dos Parlamentares */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Card de Estatísticas */}
+            <Card className="border-slate-700 bg-slate-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Users className="h-5 w-5 text-blue-400" />
+                  Presença dos Parlamentares
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Stats Boxes */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-lg bg-blue-600 p-3 text-center">
+                    <p className="text-2xl font-bold text-white">{presentes}</p>
+                    <p className="text-xs text-blue-100">Presentes</p>
+                  </div>
+                  <div className="rounded-lg bg-red-600 p-3 text-center">
+                    <p className="text-2xl font-bold text-white">{ausentes}</p>
+                    <p className="text-xs text-red-100">Ausentes</p>
+                  </div>
+                  <div className="rounded-lg bg-slate-600 p-3 text-center">
+                    <p className="text-2xl font-bold text-white">
+                      {totalParlamentares > 0 ? Math.round((presentes / totalParlamentares) * 100) : 0}%
+                    </p>
+                    <p className="text-xs text-slate-300">Presença</p>
+                  </div>
+                </div>
+
+                {/* Barra de Quorum */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-slate-400">
+                    <span>Quorum: {presentes}/{totalParlamentares} parlamentares</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-slate-700">
+                    <div
+                      className="h-2 rounded-full bg-blue-500 transition-all"
+                      style={{ width: `${totalParlamentares > 0 ? (presentes / totalParlamentares) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Lista de Parlamentares - TODOS */}
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {/* Presentes */}
+                  {sessao.presencas && sessao.presencas.filter(p => p.presente).length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-green-400 mb-2 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Presentes ({sessao.presencas.filter(p => p.presente).length})
+                      </h4>
+                      <div className="space-y-1">
+                        {sessao.presencas.filter(p => p.presente).map(presenca => (
+                          <div
+                            key={presenca.id}
+                            className="flex items-center gap-2 rounded-md bg-slate-700/50 px-3 py-2"
+                          >
+                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">
+                                {presenca.parlamentar.apelido || presenca.parlamentar.nome}
+                              </p>
+                              {presenca.parlamentar.partido && (
+                                <p className="text-xs text-slate-400">{presenca.parlamentar.partido}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ausentes */}
+                  {sessao.presencas && sessao.presencas.filter(p => !p.presente).length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-red-400 mb-2 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        Ausentes ({sessao.presencas.filter(p => !p.presente).length})
+                      </h4>
+                      <div className="space-y-1">
+                        {sessao.presencas.filter(p => !p.presente).map(presenca => (
+                          <div
+                            key={presenca.id}
+                            className="flex items-center gap-2 rounded-md bg-slate-700/50 px-3 py-2"
+                          >
+                            <div className="h-2 w-2 rounded-full bg-red-500" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-300 truncate">
+                                {presenca.parlamentar.apelido || presenca.parlamentar.nome}
+                              </p>
+                              {presenca.parlamentar.partido && (
+                                <p className="text-xs text-slate-500">{presenca.parlamentar.partido}</p>
+                              )}
+                              {presenca.justificativa && (
+                                <p className="text-xs text-yellow-500 italic">
+                                  {presenca.justificativa}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(!sessao.presencas || sessao.presencas.length === 0) && (
+                    <p className="text-sm text-slate-400 text-center py-4">
+                      Nenhum parlamentar registrado
+                    </p>
+                  )}
+                </div>
+
+                {/* Componente de Controle de Presença - disponível para sessões em andamento ou concluídas (dados pretéritos) */}
+                {(sessao.status === 'EM_ANDAMENTO' || sessao.status === 'CONCLUIDA') && (
+                  <div className="pt-4 border-t border-slate-700">
+                    <PresencaControl sessaoId={sessao.id} sessaoStatus={sessao.status} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* Modal de Retirada de Pauta */}

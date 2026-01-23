@@ -68,14 +68,14 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="flex">
-        {/* Sidebar Desktop - escondida em mobile */}
-        <div className="hidden lg:block">
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar Desktop - escondida em mobile, fixa na tela */}
+        <div className="hidden lg:flex lg:flex-shrink-0">
           <AdminSidebar userRole={userRole} />
         </div>
 
-        {/* Area principal */}
-        <div className="flex-1 flex flex-col min-h-screen w-full lg:w-auto">
+        {/* Area principal com scroll independente */}
+        <div className="flex-1 flex flex-col min-h-screen w-full lg:w-auto overflow-y-auto">
           {/* Header */}
           <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
             <div className="px-4 lg:px-6 py-3">

@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError,
-  NotFoundError,
-  validateId
+  NotFoundError
 } from '@/lib/error-handler'
 import {
   assertSessaoPermiteVotacao,
   ensureParlamentarPresente,
-  obterSessaoParaControle
+  obterSessaoParaControle,
+  resolverSessaoId
 } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
@@ -27,7 +27,7 @@ export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  const sessaoId = await resolverSessaoId(params.id)
 
   const sessao = await prisma.sessao.findUnique({
     where: { id: sessaoId },
@@ -139,7 +139,7 @@ export const POST = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  const sessaoId = await resolverSessaoId(params.id)
   const body = await request.json()
 
   const validatedData = VotoSchema.parse(body)
@@ -178,7 +178,9 @@ export const POST = withErrorHandler(async (
     throw new ValidationError('Esta proposição não está na pauta desta sessão')
   }
 
-  if (pautaItem.status !== 'EM_VOTACAO') {
+  // Para sessões CONCLUIDAS, permitir edição de votos independente do status do item (dados pretéritos)
+  // Para sessões EM_ANDAMENTO, exigir que o item esteja em votação
+  if (sessao.status === 'EM_ANDAMENTO' && pautaItem.status !== 'EM_VOTACAO') {
     throw new ValidationError(
       pautaItem.status === 'EM_DISCUSSAO'
         ? 'A votação ainda não foi iniciada para esta proposição. Aguarde o operador iniciar a votação.'

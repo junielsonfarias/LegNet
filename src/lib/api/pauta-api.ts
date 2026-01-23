@@ -37,6 +37,7 @@ export interface PautaItemApi {
     numero: string
     ano: number
     titulo: string
+    ementa?: string | null
     tipo: string
     status: string
   } | null

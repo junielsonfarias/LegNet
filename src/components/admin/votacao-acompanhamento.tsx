@@ -14,6 +14,7 @@ import {
   Users,
   AlertCircle
 } from 'lucide-react'
+import { VereadorVotoCard } from '@/components/painel/vereador-voto-card'
 
 interface Voto {
   id: string
@@ -22,6 +23,8 @@ interface Voto {
     id: string
     nome: string
     apelido: string | null
+    foto?: string | null
+    partido?: string | null
   }
 }
 
@@ -48,6 +51,8 @@ interface Presenca {
     id: string
     nome: string
     apelido: string | null
+    foto?: string | null
+    partido?: string | null
   }
 }
 
@@ -202,31 +207,27 @@ export function VotacaoAcompanhamento({ sessaoId, itemEmVotacao }: VotacaoAcompa
           </div>
         </div>
 
-        {/* Lista de votos registrados */}
+        {/* Lista de votos registrados - Grid com fotos */}
         {totalVotos > 0 && (
           <div className="space-y-2">
             <h4 className="font-semibold text-gray-700 flex items-center gap-2">
               <Users className="h-4 w-4" />
               Votos registrados ({totalVotos})
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 max-h-64 overflow-y-auto py-2">
               {votos.map(voto => (
                 <div
                   key={voto.id}
-                  className={`flex items-center gap-2 p-2 rounded-lg text-sm ${
-                    voto.voto === 'SIM'
-                      ? 'bg-green-100 border border-green-200'
-                      : voto.voto === 'NAO'
-                        ? 'bg-red-100 border border-red-200'
-                        : 'bg-yellow-100 border border-yellow-200'
-                  }`}
+                  className="flex justify-center"
                 >
-                  {voto.voto === 'SIM' && <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />}
-                  {voto.voto === 'NAO' && <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />}
-                  {voto.voto === 'ABSTENCAO' && <MinusCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />}
-                  <span className="truncate">
-                    {voto.parlamentar.apelido || voto.parlamentar.nome.split(' ')[0]}
-                  </span>
+                  <VereadorVotoCard
+                    nome={voto.parlamentar.nome}
+                    apelido={voto.parlamentar.apelido}
+                    foto={voto.parlamentar.foto}
+                    partido={voto.parlamentar.partido}
+                    voto={voto.voto}
+                    size="sm"
+                  />
                 </div>
               ))}
             </div>

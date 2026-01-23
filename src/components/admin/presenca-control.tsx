@@ -32,9 +32,10 @@ interface Presenca {
 
 interface PresencaControlProps {
   sessaoId: string
+  sessaoStatus?: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
 }
 
-export function PresencaControl({ sessaoId }: PresencaControlProps) {
+export function PresencaControl({ sessaoId, sessaoStatus }: PresencaControlProps) {
   const { parlamentares } = useParlamentares()
   const [presencas, setPresencas] = useState<Presenca[]>([])
   const [loading, setLoading] = useState(true)
@@ -185,6 +186,15 @@ export function PresencaControl({ sessaoId }: PresencaControlProps) {
 
   return (
     <div className="space-y-4">
+      {/* Alerta de modo edição para sessões concluídas */}
+      {sessaoStatus === 'CONCLUIDA' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <p className="text-sm text-amber-700 text-center">
+            Modo de edição de dados pretéritos - As presenças serão registradas para esta sessão já concluída
+          </p>
+        </div>
+      )}
+
       {/* Estatísticas */}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 text-center">

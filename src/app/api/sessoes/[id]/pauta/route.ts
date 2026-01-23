@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { createSuccessResponse, NotFoundError, ValidationError, validateId } from '@/lib/error-handler'
+import { createSuccessResponse, NotFoundError, ValidationError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { gerarPautaAutomatica } from '@/lib/utils/sessoes-utils'
@@ -10,6 +10,7 @@ import {
   determinarTipoAcaoPauta,
   MAPEAMENTO_TIPO_SECAO
 } from '@/lib/services/proposicao-validacao-service'
+import { resolverSessaoId } from '@/lib/services/sessao-controle'
 
 const PAUTA_SECAO_ORDER = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
 const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
@@ -123,7 +124,7 @@ export const GET = withAuth(async (
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  const sessaoId = await resolverSessaoId(params.id)
 
   const pauta = await ensurePautaSessao(sessaoId)
   if (!pauta) {
@@ -138,7 +139,7 @@ export const POST = withAuth(async (
   { params }: { params: { id: string } },
   session
 ) => {
-  const sessaoId = validateId(params.id, 'Sessão')
+  const sessaoId = await resolverSessaoId(params.id)
   const body = await request.json()
 
   const payload = PautaItemCreateSchema.safeParse({

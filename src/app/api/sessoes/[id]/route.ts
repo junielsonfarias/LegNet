@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { createSuccessResponse, NotFoundError, ConflictError, validateId, ValidationError } from '@/lib/error-handler'
+import { createSuccessResponse, NotFoundError, ConflictError, ValidationError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { gerarAtaSessao } from '@/lib/utils/sessoes-utils'
 import { combineDateAndTimeUTC, formatDateOnly } from '@/lib/utils/date'
+import { resolverSessaoId } from '@/lib/services/sessao-controle'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -24,7 +25,7 @@ const UpdateSessaoSchema = z.object({
   legislaturaId: z.string().optional(),
   periodoId: z.string().optional(),
   pauta: z.string().optional(),
-  tempoInicio: z.string().optional()
+  tempoInicio: z.string().nullable().optional()
 })
 
 // GET - Buscar sessão por ID
@@ -33,7 +34,8 @@ export const GET = withAuth(async (
   { params }: { params: { id: string } },
   _session
 ) => {
-  const id = validateId(params.id, 'Sessão')
+  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
+  const id = await resolverSessaoId(params.id)
 
   const sessao = await prisma.sessao.findUnique({
     where: { id },
@@ -147,7 +149,8 @@ export const PUT = withAuth(async (
   { params }: { params: { id: string } },
   session
 ) => {
-  const id = validateId(params.id, 'Sessão')
+  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
+  const id = await resolverSessaoId(params.id)
   const body = await request.json()
 
   // Validar dados
@@ -206,13 +209,48 @@ export const PUT = withAuth(async (
     updateData.horario = validatedData.horario || null
   }
   if (validatedData.local !== undefined) updateData.local = validatedData.local
-  if (validatedData.status !== undefined) updateData.status = validatedData.status
   if (validatedData.descricao !== undefined) updateData.descricao = validatedData.descricao
   if (validatedData.ata !== undefined) updateData.ata = validatedData.ata
-  if (validatedData.finalizada !== undefined) updateData.finalizada = validatedData.finalizada
   if (validatedData.legislaturaId !== undefined) updateData.legislaturaId = validatedData.legislaturaId
   if (validatedData.periodoId !== undefined) updateData.periodoId = validatedData.periodoId
   if (validatedData.pauta !== undefined) updateData.pauta = validatedData.pauta
+
+  // Tratamento especial para transições de status
+  const statusAnterior = existingSessao.status
+  const novoStatus = validatedData.status
+
+  if (novoStatus !== undefined && novoStatus !== statusAnterior) {
+    updateData.status = novoStatus
+
+    // Transição para AGENDADA: permite reiniciar a sessão
+    if (novoStatus === 'AGENDADA') {
+      updateData.finalizada = false
+      updateData.tempoInicio = null
+    }
+    // Transição para EM_ANDAMENTO: inicia a sessão
+    else if (novoStatus === 'EM_ANDAMENTO') {
+      updateData.finalizada = false
+      // Só define tempoInicio se não tiver ainda
+      if (!existingSessao.tempoInicio) {
+        updateData.tempoInicio = new Date()
+      }
+    }
+    // Transição para CONCLUIDA: finaliza a sessão
+    else if (novoStatus === 'CONCLUIDA') {
+      updateData.finalizada = true
+    }
+    // Transição para CANCELADA: marca como finalizada
+    else if (novoStatus === 'CANCELADA') {
+      updateData.finalizada = true
+    }
+  }
+
+  // Se finalizada foi passado explicitamente, usar esse valor
+  if (validatedData.finalizada !== undefined && validatedData.status === undefined) {
+    updateData.finalizada = validatedData.finalizada
+  }
+
+  // Se tempoInicio foi passado explicitamente, usar esse valor
   if (validatedData.tempoInicio !== undefined) {
     updateData.tempoInicio = validatedData.tempoInicio ? new Date(validatedData.tempoInicio) : null
   }
@@ -220,8 +258,10 @@ export const PUT = withAuth(async (
   const finalizada = updateData.finalizada ?? existingSessao.finalizada
   const status = updateData.status ?? existingSessao.status
 
-  if (!finalizada && dataAtualizada <= new Date()) {
-    throw new ValidationError('A data da sessão deve ser futura para sessões não finalizadas')
+  // Validação de data: só exige data futura para sessões AGENDADAS não finalizadas
+  // que estão tendo a data alterada
+  if (validatedData.data !== undefined && status === 'AGENDADA' && !finalizada && dataAtualizada <= new Date()) {
+    throw new ValidationError('A data da sessão deve ser futura para sessões agendadas')
   }
 
   if (updateData.tempoInicio && Number.isNaN((updateData.tempoInicio as Date).getTime())) {
@@ -306,7 +346,8 @@ export const DELETE = withAuth(async (
   { params }: { params: { id: string } },
   session
 ) => {
-  const id = validateId(params.id, 'Sessão')
+  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
+  const id = await resolverSessaoId(params.id)
 
   // Verificar se sessão existe
   const existingSessao = await prisma.sessao.findUnique({

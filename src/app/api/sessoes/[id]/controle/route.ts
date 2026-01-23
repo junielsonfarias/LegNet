@@ -6,7 +6,8 @@ import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/
 import { withAuth } from '@/lib/auth/permissions'
 import {
   iniciarSessaoControle,
-  finalizarSessaoControle
+  finalizarSessaoControle,
+  resolverSessaoId
 } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
@@ -21,11 +22,9 @@ export const POST = withAuth(withErrorHandler(async (
 ) => {
   const body = await request.json()
   const { acao } = ControleSchema.parse(body)
-  const sessaoId = params.id
 
-  if (!sessaoId) {
-    throw new ValidationError('Sessão inválida')
-  }
+  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
+  const sessaoId = await resolverSessaoId(params.id)
 
   let sessao
 
@@ -41,7 +40,7 @@ export const POST = withAuth(withErrorHandler(async (
         where: { id: sessaoId },
         data: {
           status: 'CANCELADA',
-          finalizada: false
+          finalizada: true
         }
       })
       break
