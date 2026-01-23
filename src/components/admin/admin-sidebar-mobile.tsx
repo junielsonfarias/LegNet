@@ -40,8 +40,9 @@ interface NavItem {
 }
 
 // Navegação simplificada para mobile
+// OPERADOR vê apenas: Sessões e Painel (Dashboard exige relatorio.view)
 const mobileNavigation: NavItem[] = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, permissions: ['relatorio.view'] },
   { name: 'Parlamentares', href: '/admin/parlamentares', icon: Users, permissions: ['parlamentar.view'] },
   { name: 'Sessões', href: '/admin/sessoes-legislativas', icon: Calendar, permissions: ['periodo.view'] },
   { name: 'Proposições', href: '/admin/proposicoes', icon: FileText, permissions: ['tramitacao.view'] },

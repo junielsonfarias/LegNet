@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { useSessoes } from '@/lib/hooks/use-sessoes'
 import { useProposicoes } from '@/lib/hooks/use-proposicoes'
@@ -28,9 +30,17 @@ import {
 } from 'lucide-react'
 
 export default function AdminDashboard() {
-  const { data: session } = useSession()
+  const router = useRouter()
+  const { data: session, status } = useSession()
   const userRole = (session?.user?.role as UserRole) || 'USER'
   const theme = getRoleTheme(userRole)
+
+  // OPERADOR não tem acesso ao Dashboard - redirecionar para Painel Eletrônico
+  useEffect(() => {
+    if (status === 'authenticated' && userRole === 'OPERADOR') {
+      router.replace('/admin/painel-eletronico')
+    }
+  }, [status, userRole, router])
 
   const { parlamentares, loading: loadingParlamentares } = useParlamentares()
   const { sessoes, loading: loadingSessoes } = useSessoes()

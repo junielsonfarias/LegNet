@@ -71,7 +71,9 @@ const navigationCategories: NavCategory[] = [
       {
         name: 'Dashboard',
         href: '/admin',
-        icon: LayoutDashboard
+        icon: LayoutDashboard,
+        // OPERADOR não vê Dashboard (apenas Sessões e Painel Eletrônico)
+        permissions: ['relatorio.view']
       }
     ]
   },

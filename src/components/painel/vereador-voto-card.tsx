@@ -3,6 +3,9 @@
 import { useMemo } from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { getVotoStyle, type TipoVoto } from '@/lib/utils/accessibility-colors'
+import { getVereadorCardSize, getVereadorGridClasses } from '@/lib/design-tokens/painel-tokens'
+import { Check, X, Minus, Clock } from 'lucide-react'
 
 interface VereadorVotoCardProps {
   nome: string
@@ -13,12 +16,19 @@ interface VereadorVotoCardProps {
   votoPorProcuracao?: boolean
   size?: 'sm' | 'md' | 'lg'
   showVotoLabel?: boolean
+  /** Mostrar icone junto com a cor para acessibilidade */
+  showVotoIcon?: boolean
   className?: string
 }
 
 /**
  * Card de voto do vereador com foto, nome, partido e indicador de voto
  * Usado no painel de transmissao para exibir como cada vereador votou
+ *
+ * Features de acessibilidade:
+ * - Cores WCAG AA compliant
+ * - Icones junto com cores para daltonicos
+ * - Bordas diferenciadas por tipo de voto
  */
 export function VereadorVotoCard({
   nome,
@@ -29,6 +39,7 @@ export function VereadorVotoCard({
   votoPorProcuracao = false,
   size = 'md',
   showVotoLabel = true,
+  showVotoIcon = true,
   className
 }: VereadorVotoCardProps) {
   // Gerar iniciais para fallback de foto
@@ -49,7 +60,8 @@ export function VereadorVotoCard({
       avatarText: 'text-lg',
       nome: 'text-xs',
       partido: 'text-[10px]',
-      badge: 'text-[10px] px-1.5 py-0.5'
+      badge: 'text-[10px] px-1.5 py-0.5',
+      icon: 'h-3 w-3'
     },
     md: {
       container: 'w-28',
@@ -57,7 +69,8 @@ export function VereadorVotoCard({
       avatarText: 'text-xl',
       nome: 'text-sm',
       partido: 'text-xs',
-      badge: 'text-xs px-2 py-1'
+      badge: 'text-xs px-2 py-1',
+      icon: 'h-3.5 w-3.5'
     },
     lg: {
       container: 'w-36',
@@ -65,41 +78,26 @@ export function VereadorVotoCard({
       avatarText: 'text-2xl',
       nome: 'text-base',
       partido: 'text-sm',
-      badge: 'text-sm px-3 py-1.5'
+      badge: 'text-sm px-3 py-1.5',
+      icon: 'h-4 w-4'
     }
   }
 
   const styles = sizeStyles[size]
 
-  // Cores baseadas no voto
-  const votoStyles = {
-    SIM: {
-      border: 'border-green-500 ring-green-500/50',
-      bg: 'bg-green-500',
-      text: 'text-white',
-      label: 'SIM'
-    },
-    NAO: {
-      border: 'border-red-500 ring-red-500/50',
-      bg: 'bg-red-500',
-      text: 'text-white',
-      label: 'NAO'
-    },
-    ABSTENCAO: {
-      border: 'border-yellow-500 ring-yellow-500/50',
-      bg: 'bg-yellow-500',
-      text: 'text-black',
-      label: 'ABST'
-    },
-    null: {
-      border: 'border-gray-400 ring-gray-400/20',
-      bg: 'bg-gray-400',
-      text: 'text-white',
-      label: '---'
-    }
-  }
+  // Usar cores acessiveis do sistema
+  const votoStyleConfig = getVotoStyle(voto)
 
-  const votoStyle = votoStyles[voto ?? 'null']
+  // Icone do voto para acessibilidade
+  const VotoIcon = useMemo(() => {
+    switch (voto) {
+      case 'SIM': return Check
+      case 'NAO': return X
+      case 'ABSTENCAO': return Minus
+      default: return Clock
+    }
+  }, [voto])
+
   const nomeExibicao = apelido || nome.split(' ')[0]
 
   return (
@@ -115,7 +113,7 @@ export function VereadorVotoCard({
         className={cn(
           'relative rounded-full border-4 ring-4 overflow-hidden bg-gray-200 flex items-center justify-center mb-2 transition-all duration-300',
           styles.avatar,
-          voto ? votoStyle.border : 'border-gray-300 ring-gray-300/20'
+          voto ? `${votoStyleConfig.border} ${votoStyleConfig.ring}` : 'border-gray-300 ring-gray-300/20'
         )}
       >
         {foto ? (
@@ -171,17 +169,18 @@ export function VereadorVotoCard({
         </div>
       )}
 
-      {/* Badge de voto */}
+      {/* Badge de voto com icone para acessibilidade */}
       {showVotoLabel && (
         <div
           className={cn(
-            'mt-2 rounded-full font-bold uppercase tracking-wide transition-all duration-300',
+            'mt-2 rounded-full font-bold uppercase tracking-wide transition-all duration-300 flex items-center gap-1',
             styles.badge,
-            votoStyle.bg,
-            votoStyle.text
+            votoStyleConfig.bg,
+            votoStyleConfig.text
           )}
         >
-          {votoStyle.label}
+          {showVotoIcon && <VotoIcon className={styles.icon} />}
+          {votoStyleConfig.labelCurto}
         </div>
       )}
     </div>
@@ -190,6 +189,9 @@ export function VereadorVotoCard({
 
 /**
  * Grid de vereadores para exibicao em votacao
+ *
+ * MEL-VIS-008: Grid adaptativo que ajusta tamanho dos cards
+ * baseado na quantidade de parlamentares
  */
 interface VereadorVotoGridProps {
   vereadores: Array<{
@@ -201,13 +203,17 @@ interface VereadorVotoGridProps {
     voto: 'SIM' | 'NAO' | 'ABSTENCAO' | null
     votoPorProcuracao?: boolean
   }>
+  /** Tamanho fixo (se nao informado, usa tamanho adaptativo) */
   size?: 'sm' | 'md' | 'lg'
+  /** Usar tamanho adaptativo baseado na quantidade */
+  adaptiveSize?: boolean
   className?: string
 }
 
 export function VereadorVotoGrid({
   vereadores,
-  size = 'md',
+  size,
+  adaptiveSize = true,
   className
 }: VereadorVotoGridProps) {
   // Ordenar: votaram primeiro (SIM, NAO, ABSTENCAO), depois pendentes
@@ -220,6 +226,13 @@ export function VereadorVotoGrid({
       return (a.apelido || a.nome).localeCompare(b.apelido || b.nome)
     })
   }, [vereadores])
+
+  // Calcular tamanho adaptativo baseado na quantidade
+  const cardSize = useMemo(() => {
+    if (size) return size
+    if (!adaptiveSize) return 'md'
+    return getVereadorCardSize(vereadores.length)
+  }, [size, adaptiveSize, vereadores.length])
 
   return (
     <div
@@ -237,7 +250,8 @@ export function VereadorVotoGrid({
           partido={vereador.partido}
           voto={vereador.voto}
           votoPorProcuracao={vereador.votoPorProcuracao}
-          size={size}
+          size={cardSize}
+          showVotoIcon={true}
         />
       ))}
     </div>

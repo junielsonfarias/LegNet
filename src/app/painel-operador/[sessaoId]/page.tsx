@@ -407,48 +407,32 @@ export default function PainelOperadorPage() {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
-      <div className="border-b border-slate-700 bg-slate-800 px-6 py-4">
+      <div className="border-b border-slate-700 bg-slate-800 px-4 md:px-6 py-4">
         <div className="mx-auto max-w-7xl">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="flex items-center gap-3 text-2xl font-bold text-white">
-                  <Monitor className="h-7 w-7 text-blue-400" />
-                  {sessao.numero}ª Sessão {getTipoSessaoLabel(sessao.tipo)}
-                </h1>
-                <p className="mt-1 text-slate-400">
-                  Câmara Municipal de Mojuí dos Campos
-                </p>
-              </div>
+          {/* Linha 1: Título e Status */}
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-bold text-white truncate">
+                <Monitor className="h-5 w-5 md:h-7 md:w-7 text-blue-400 flex-shrink-0" />
+                <span className="truncate">{sessao.numero}ª Sessão {getTipoSessaoLabel(sessao.tipo)}</span>
+              </h1>
+              <p className="mt-1 text-xs md:text-sm text-slate-400 truncate">
+                Câmara Municipal de Mojuí dos Campos
+              </p>
             </div>
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="hidden md:flex items-center gap-4 text-sm text-slate-300">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-slate-500" />
-                  <span>{dataFormatada}</span>
-                </div>
-                {sessao.horario && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-slate-500" />
-                    <span>{sessao.horario}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-slate-500" />
-                  <span>{sessao.pautaSessao?.itens.length ?? 0} itens na pauta</span>
-                </div>
-              </div>
 
+            <div className="flex items-center gap-2 flex-shrink-0">
               {/* Dropdown de Status */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`${getSessaoStatusBadge(sessao.status)} hover:opacity-80 flex items-center gap-1`}
+                    className={`${getSessaoStatusBadge(sessao.status)} hover:opacity-80 flex items-center gap-1 text-xs md:text-sm`}
                     disabled={executando}
                   >
-                    {getSessaoStatusLabel(sessao.status)}
+                    <span className="hidden sm:inline">{getSessaoStatusLabel(sessao.status)}</span>
+                    <span className="sm:hidden">{sessao.status === 'EM_ANDAMENTO' ? 'Ativa' : getSessaoStatusLabel(sessao.status).slice(0, 4)}</span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -488,47 +472,6 @@ export default function PainelOperadorPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Botões Externos */}
-              <div className="flex items-center gap-2">
-                {/* Botão Ver Sessão no Admin - para editar metadados da sessão */}
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-                >
-                  <a href={`/admin/sessoes/${sessao.id}`} target="_blank" rel="noopener noreferrer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Dados da Sessão
-                    <ExternalLink className="ml-1 h-3 w-3" />
-                  </a>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-                >
-                  <a href={`/painel-publico?sessaoId=${sessao.id}`} target="_blank" rel="noopener noreferrer">
-                    <Monitor className="mr-2 h-4 w-4" />
-                    Painel Público
-                    <ExternalLink className="ml-1 h-3 w-3" />
-                  </a>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="border-blue-600 bg-blue-600/20 text-blue-300 hover:bg-blue-600 hover:text-white"
-                >
-                  <a href={`/painel-tv/${sessao.id}`} target="_blank" rel="noopener noreferrer">
-                    <Tv className="mr-2 h-4 w-4" />
-                    Painel TV
-                    <ExternalLink className="ml-1 h-3 w-3" />
-                  </a>
-                </Button>
-              </div>
-
               <Button
                 variant="ghost"
                 size="icon"
@@ -539,43 +482,107 @@ export default function PainelOperadorPage() {
               </Button>
             </div>
           </div>
+
+          {/* Linha 2: Info e Botões (responsivo) */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Informações da sessão */}
+            <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-slate-300 overflow-x-auto">
+              <div className="flex items-center gap-1.5 whitespace-nowrap">
+                <Calendar className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
+                <span>{dataFormatada}</span>
+              </div>
+              {sessao.horario && (
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <Clock className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
+                  <span>{sessao.horario}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 whitespace-nowrap">
+                <FileText className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
+                <span>{sessao.pautaSessao?.itens.length ?? 0} itens</span>
+              </div>
+            </div>
+
+            {/* Botões Externos */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white text-xs whitespace-nowrap flex-shrink-0"
+              >
+                <a href={`/admin/sessoes/${sessao.id}`} target="_blank" rel="noopener noreferrer">
+                  <Settings className="mr-1.5 h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Dados da Sessão</span>
+                  <span className="md:hidden">Dados</span>
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white text-xs whitespace-nowrap flex-shrink-0"
+              >
+                <a href={`/painel-publico?sessaoId=${sessao.id}`} target="_blank" rel="noopener noreferrer">
+                  <Monitor className="mr-1.5 h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Painel Público</span>
+                  <span className="md:hidden">Público</span>
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-blue-600 bg-blue-600/20 text-blue-300 hover:bg-blue-600 hover:text-white text-xs whitespace-nowrap flex-shrink-0"
+              >
+                <a href={`/painel-tv/${sessao.id}`} target="_blank" rel="noopener noreferrer">
+                  <Tv className="mr-1.5 h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Painel TV</span>
+                  <span className="md:hidden">TV</span>
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Cronômetro */}
-      <div className="bg-slate-800/50 border-b border-slate-700 px-6 py-3">
-        <div className="mx-auto max-w-7xl flex items-center gap-6">
-          <div className="flex items-center gap-2">
+      <div className="bg-slate-800/50 border-b border-slate-700 px-4 md:px-6 py-3">
+        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 md:gap-6">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Timer className="h-5 w-5 text-blue-400" />
-            <span className="text-2xl font-mono font-bold text-blue-400">{formatSeconds(cronometroSessao)}</span>
+            <span className="text-xl sm:text-2xl font-mono font-bold text-blue-400">{formatSeconds(cronometroSessao)}</span>
           </div>
           {itemEmExecucao && (
-            <div className="flex items-center gap-2 text-slate-300">
-              <span>Item atual:</span>
-              <span className="font-semibold text-white">
+            <div className="flex items-center gap-2 text-slate-300 min-w-0 overflow-hidden">
+              <span className="flex-shrink-0 text-sm sm:text-base">Item:</span>
+              <span className="font-semibold text-white truncate text-sm sm:text-base">
                 {itemEmExecucao.proposicao
                   ? `${itemEmExecucao.proposicao.tipo.replace('_', ' ')} nº ${itemEmExecucao.proposicao.numero}/${itemEmExecucao.proposicao.ano}`
                   : itemEmExecucao.titulo}
               </span>
-              <Badge variant="outline" className="ml-2 font-mono">{formatSeconds(cronometroItem)}</Badge>
+              <Badge variant="outline" className="ml-1 sm:ml-2 font-mono text-xs flex-shrink-0">{formatSeconds(cronometroItem)}</Badge>
             </div>
           )}
         </div>
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="mx-auto max-w-7xl px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 md:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Pauta da Sessão */}
           <div className="lg:col-span-2">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <FileText className="h-5 w-5 text-blue-400" />
+            <Card className="bg-slate-800 border-slate-700 overflow-hidden">
+              <CardHeader className="pb-3 md:pb-6">
+                <CardTitle className="flex items-center gap-2 text-white text-base md:text-lg">
+                  <FileText className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
                   Pauta da sessão
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 md:space-y-6 pt-0">
                 {ordemSecoes.map(secao => {
                   const itens = itensPorSecao[secao]
                   if (!itens || itens.length === 0) return null
@@ -594,38 +601,38 @@ export default function PainelOperadorPage() {
                         {itens.map(item => (
                           <div
                             key={item.id}
-                            className={`p-4 rounded-lg border transition-all ${
+                            className={`p-3 md:p-4 rounded-lg border transition-all ${
                               item.id === itemEmExecucao?.id
                                 ? 'bg-blue-900/30 border-blue-500'
                                 : 'bg-slate-700/50 border-slate-600 hover:border-slate-500'
                             }`}
                           >
-                            <div className="flex items-start justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap mb-2">
-                                  <Badge className={getItemStatusBadge(item.status)}>
+                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-2">
+                                  <Badge className={`${getItemStatusBadge(item.status)} text-xs`}>
                                     {item.status.replace(/_/g, ' ')}
                                   </Badge>
                                   {item.tipoAcao && (
-                                    <Badge variant="outline" className={getTipoAcaoBadge(item.tipoAcao)}>
+                                    <Badge variant="outline" className={`${getTipoAcaoBadge(item.tipoAcao)} text-xs`}>
                                       {getTipoAcaoLabel(item.tipoAcao)}
                                     </Badge>
                                   )}
-                                  <span className="text-xs text-slate-500">Ordem {item.ordem}</span>
+                                  <span className="text-xs text-slate-500">#{item.ordem}</span>
                                 </div>
-                                <h4 className="font-semibold text-white">
+                                <h4 className="font-semibold text-white text-sm sm:text-base break-words">
                                   {item.proposicao
                                     ? `${item.proposicao.tipo.replace('_', ' ')} ${item.proposicao.numero}/${item.proposicao.ano}`
                                     : item.titulo}
                                 </h4>
-                                <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+                                <p className="text-xs sm:text-sm text-slate-400 mt-1 line-clamp-2 break-words">
                                   {item.proposicao?.ementa || item.descricao || item.titulo}
                                 </p>
-                                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                <div className="flex items-center gap-2 sm:gap-4 mt-2 text-xs text-slate-500 flex-wrap">
                                   <span>{item.tempoEstimado || 0} min</span>
                                   <span>Real: {Math.floor((item.tempoReal || item.tempoAcumulado || 0) / 60)} min</span>
                                   {item.finalizadoEm && (
-                                    <span>Encerrado: {new Date(item.finalizadoEm).toLocaleTimeString('pt-BR')}</span>
+                                    <span className="hidden sm:inline">Encerrado: {new Date(item.finalizadoEm).toLocaleTimeString('pt-BR')}</span>
                                   )}
                                 </div>
                               </div>
@@ -727,26 +734,26 @@ export default function PainelOperadorPage() {
           </div>
 
           {/* Sidebar - Presença */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <Users className="h-5 w-5 text-blue-400" />
-                  Presença dos Parlamentares
+              <CardHeader className="pb-3 md:pb-6">
+                <CardTitle className="flex items-center gap-2 text-white text-base md:text-lg">
+                  <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
+                  <span className="truncate">Presença dos Parlamentares</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="text-center p-3 bg-green-600/20 rounded-lg">
-                    <div className="text-2xl font-bold text-green-400">{presentes}</div>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
+                  <div className="text-center p-2 md:p-3 bg-green-600/20 rounded-lg">
+                    <div className="text-xl md:text-2xl font-bold text-green-400">{presentes}</div>
                     <div className="text-xs text-green-300">Presentes</div>
                   </div>
-                  <div className="text-center p-3 bg-red-600/20 rounded-lg">
-                    <div className="text-2xl font-bold text-red-400">{ausentes}</div>
+                  <div className="text-center p-2 md:p-3 bg-red-600/20 rounded-lg">
+                    <div className="text-xl md:text-2xl font-bold text-red-400">{ausentes}</div>
                     <div className="text-xs text-red-300">Ausentes</div>
                   </div>
-                  <div className="text-center p-3 bg-blue-600/20 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400">{percentualPresenca}%</div>
+                  <div className="text-center p-2 md:p-3 bg-blue-600/20 rounded-lg">
+                    <div className="text-xl md:text-2xl font-bold text-blue-400">{percentualPresenca}%</div>
                     <div className="text-xs text-blue-300">Presença</div>
                   </div>
                 </div>

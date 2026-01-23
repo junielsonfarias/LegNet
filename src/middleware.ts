@@ -48,10 +48,13 @@ export async function middleware(request: NextRequest) {
   response.headers.set('x-tenant-type', type)
 
   // =========================================================================
-  // 2. Verificação de Autenticação (apenas rotas /admin)
+  // 2. Verificação de Autenticação (rotas /admin e /parlamentar)
   // =========================================================================
 
-  if (pathname.startsWith('/admin')) {
+  // Rotas que requerem autenticação
+  const isProtectedRoute = pathname.startsWith('/admin') || pathname.startsWith('/parlamentar')
+
+  if (isProtectedRoute) {
     // Obtém token de autenticação
     const token = await getToken({
       req: request,
@@ -65,13 +68,34 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // Verifica se tem role permitida
-    const allowedRoles = ['ADMIN', 'EDITOR', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA']
     const userRole = token.role as string
 
-    if (!allowedRoles.includes(userRole)) {
-      // Usuário autenticado mas sem permissão
-      return NextResponse.redirect(new URL('/', request.url))
+    // Regras específicas para rotas /parlamentar
+    if (pathname.startsWith('/parlamentar')) {
+      // Apenas usuários com role PARLAMENTAR podem acessar /parlamentar
+      if (userRole !== 'PARLAMENTAR') {
+        // Redireciona para área apropriada
+        if (['ADMIN', 'EDITOR', 'OPERADOR', 'SECRETARIA'].includes(userRole)) {
+          return NextResponse.redirect(new URL('/admin', request.url))
+        }
+        return NextResponse.redirect(new URL('/', request.url))
+      }
+    }
+
+    // Regras para rotas /admin
+    if (pathname.startsWith('/admin')) {
+      // Verifica se tem role permitida para admin
+      const allowedRolesAdmin = ['ADMIN', 'EDITOR', 'OPERADOR', 'SECRETARIA']
+
+      // PARLAMENTAR não pode acessar /admin diretamente (exceto se for página de login)
+      if (userRole === 'PARLAMENTAR') {
+        return NextResponse.redirect(new URL('/parlamentar', request.url))
+      }
+
+      if (!allowedRolesAdmin.includes(userRole)) {
+        // Usuário autenticado mas sem permissão
+        return NextResponse.redirect(new URL('/', request.url))
+      }
     }
 
     // Adiciona informações do usuário aos headers

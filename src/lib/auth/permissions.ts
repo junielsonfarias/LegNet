@@ -148,24 +148,19 @@ const rolePermissions: RolePermissions = {
     'publicacao.manage'
   ]),
   // OPERADOR: Operador de Sessão/Painel (baseado no operador_sessao + operador_painel do SAPL)
-  // Focado em: gerenciar sessões, pauta, presenças, votações, painel eletrônico
+  // RESTRITO: Apenas operação de sessões e painel eletrônico
+  // Menu exibe APENAS: Sessões e Painel Eletrônico
   OPERADOR: buildPermissions([
-    'config.view',
-    'parlamentar.view',
-    'comissao.view',
-    'tramitacao.view',
-    'relatorio.view',
-    'legislatura.view',
+    // Menu: Sessões (periodo.view mostra o item no menu)
     'periodo.view',
-    'mesa.view',
     'sessao.view',
     'sessao.manage',
-    'pauta.manage',
+    // Menu: Painel Eletrônico
     'painel.view',
     'painel.manage',
+    // Operacionais (não adicionam itens ao menu, mas são necessários para operar)
     'presenca.manage',
-    'votacao.manage',
-    'publicacao.view'
+    'votacao.manage'
   ]),
   PARLAMENTAR: buildPermissions([
     'parlamentar.view',

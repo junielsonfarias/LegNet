@@ -636,6 +636,20 @@ export default function PainelEletronicoPage() {
           
           {sessaoAtiva && (
             <>
+              {/* Botão principal - Abrir Painel do Operador */}
+              <Button
+                onClick={() => {
+                  if (sessaoAtiva?.id) {
+                    window.open(`/painel-operador/${sessaoAtiva.id}`, '_blank')
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Monitor className="h-4 w-4 mr-2" />
+                Abrir Painel Eletrônico
+                <ExternalLink className="h-3 w-3 ml-2" />
+              </Button>
+
               <Button onClick={abrirPainelPublico} className="bg-blue-600 hover:bg-blue-700">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Painel Público

@@ -742,3 +742,177 @@ Este documento apresenta um plano abrangente de melhorias que transformara o sis
 4. **Modernidade**: Tecnologias e praticas atuais
 
 Recomenda-se implementar as melhorias em fases, comecando pelas de alta prioridade que trazem beneficios imediatos para a operacao da casa legislativa.
+
+---
+
+## Melhorias de Visualizacao dos Paineis - **IMPLEMENTADO** (2026-01-23)
+
+> Conjunto de melhorias visuais e de acessibilidade para os paineis da Camara
+
+### MEL-VIS-001: Cronometros Sincronizados - **IMPLEMENTADO**
+
+**Descricao**: Hook centralizado com offset de servidor para sincronizar cronometros entre paineis.
+
+**Implementacao**:
+- Hook `use-cronometro-sincronizado.ts` com calculo de offset
+- API `/api/painel/hora-servidor` para sincronizacao
+- Compensacao de latencia de rede
+
+---
+
+### MEL-VIS-002: Layout Responsivo Operador - **IMPLEMENTADO**
+
+**Descricao**: Layout adaptativo com sidebar colapsavel e bottom sheet mobile.
+
+**Implementacao**:
+- Componente `operator-sidebar.tsx` com colapso automatico
+- Bottom sheet via Sheet component em mobile
+- Resumo visual quando colapsado
+
+---
+
+### MEL-VIS-003: Indicacao Visual Item Atual - **IMPLEMENTADO**
+
+**Descricao**: Destaque claro do item em execucao com animacoes.
+
+**Implementacao**:
+- Componente `item-pauta-card.tsx` unificado
+- Banner "Em Execucao" animado
+- Borda pulsante (animate-pulse-soft)
+- Indicador lateral azul
+
+---
+
+### MEL-VIS-004: Acessibilidade e Cores - **IMPLEMENTADO**
+
+**Descricao**: Paleta de cores WCAG AA para daltonicos.
+
+**Implementacao**:
+- Arquivo `accessibility-colors.ts` com paleta completa
+- Icones junto com cores para redundancia visual
+- Bordas diferenciadas por tipo de voto
+- Padroes visuais (solid, striped, dotted)
+
+---
+
+### MEL-VIS-005: Atalhos de Teclado - **IMPLEMENTADO**
+
+**Descricao**: Sistema de atalhos para operador.
+
+**Implementacao**:
+- Hook `use-keyboard-shortcuts.ts`
+- Componente `shortcuts-help-dialog.tsx`
+- Atalhos: Space (pausar), V (votar), F (finalizar), ? (ajuda)
+
+---
+
+### MEL-VIS-006: Tela de Aguardando - **IMPLEMENTADO**
+
+**Descricao**: Tela animada entre votacoes no Painel TV.
+
+**Implementacao**:
+- Componente `waiting-screen.tsx`
+- Informacoes da sessao em destaque
+- Animacoes de entrada suaves
+
+---
+
+### MEL-VIS-007: Animacoes de Resultado - **IMPLEMENTADO**
+
+**Descricao**: Animacoes especiais ao finalizar votacao.
+
+**Implementacao**:
+- Componente `resultado-animation.tsx`
+- Confete para aprovado (particulas coloridas)
+- Ondas vermelhas para rejeitado (ripple)
+- Fade amarelo para empate
+- Hook `useResultadoAnimation` para controle
+
+---
+
+### MEL-VIS-008: Grid Adaptativo Vereadores - **IMPLEMENTADO**
+
+**Descricao**: Tamanho automatico de cards baseado na quantidade.
+
+**Implementacao**:
+- Funcao `getVereadorCardSize()` em design-tokens
+- <=9 parlamentares: tamanho lg
+- <=15 parlamentares: tamanho md
+- >15 parlamentares: tamanho sm
+
+---
+
+### MEL-VIS-010: Polling Inteligente - **IMPLEMENTADO**
+
+**Descricao**: Intervalos adaptativos baseado no estado.
+
+**Implementacao**:
+- Durante votacao: 1s
+- Sessao em andamento: 3s
+- Sessao inativa: 10s
+- Hook `usePainelTempoReal` atualizado
+
+---
+
+### MEL-VIS-011: Resumo Visual da Sessao - **IMPLEMENTADO**
+
+**Descricao**: Cards de estatisticas da pauta.
+
+**Implementacao**:
+- Componente `sessao-summary-cards.tsx`
+- Total, aprovados, rejeitados, adiados, etc.
+- Barra de taxa de aprovacao
+
+---
+
+### MEL-VIS-012: Timeline de Navegacao - **IMPLEMENTADO**
+
+**Descricao**: Timeline lateral com filtros por status.
+
+**Implementacao**:
+- Componente `pauta-timeline.tsx`
+- Filtros: Todos, Aprovados, Rejeitados, Pendentes, Outros
+- Indicador de item selecionado
+- ScrollArea com lista completa
+
+---
+
+### MEL-VIS-014: Consistencia Visual - **IMPLEMENTADO**
+
+**Descricao**: Design tokens compartilhados.
+
+**Implementacao**:
+- Arquivo `painel-tokens.ts` com:
+  - Breakpoints responsivos
+  - Tamanhos de fonte por resolucao
+  - Espacamentos padronizados
+  - Cores e bordas
+  - Intervalos de polling
+  - Classes utilitarias
+
+---
+
+### Arquivos Criados
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/lib/hooks/use-cronometro-sincronizado.ts` | Hook de tempo sincronizado |
+| `src/lib/hooks/use-keyboard-shortcuts.ts` | Sistema de atalhos |
+| `src/lib/utils/accessibility-colors.ts` | Paleta acessivel |
+| `src/lib/design-tokens/painel-tokens.ts` | Design tokens |
+| `src/app/api/painel/hora-servidor/route.ts` | API de hora servidor |
+| `src/components/painel/operator-sidebar.tsx` | Sidebar colapsavel |
+| `src/components/painel/item-pauta-card.tsx` | Card de item unificado |
+| `src/components/painel/shortcuts-help-dialog.tsx` | Modal de ajuda |
+| `src/components/painel/waiting-screen.tsx` | Tela de aguardando |
+| `src/components/painel/resultado-animation.tsx` | Animacoes de resultado |
+| `src/components/painel/sessao-summary-cards.tsx` | Cards de resumo |
+| `src/components/painel/pauta-timeline.tsx` | Timeline visual |
+
+### Arquivos Modificados
+
+| Arquivo | Modificacao |
+|---------|-------------|
+| `tailwind.config.js` | Animacoes customizadas |
+| `src/components/painel/vereador-voto-card.tsx` | Cores acessiveis e grid adaptativo |
+| `src/lib/hooks/use-painel-sse.ts` | Polling inteligente |

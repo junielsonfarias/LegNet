@@ -1199,6 +1199,29 @@ Conteudo so pode ser publicado no portal por:
 REGRA RN-154: AUDITORIA
 Logs de auditoria NAO PODEM ser alterados ou excluidos
 por nenhum usuario, incluindo ADMIN.
+
+REGRA RN-155: ACESSO DO PARLAMENTAR DURANTE SESSAO
+Quando existe sessao EM_ANDAMENTO:
+- Parlamentar COM presenca confirmada: acessa APENAS modulo de votacao
+- Parlamentar SEM presenca confirmada: acesso BLOQUEADO (aguarda operador)
+- Parlamentar NAO pode acessar dashboard durante sessao em andamento
+
+REGRA RN-156: ACESSO DO PARLAMENTAR SEM SESSAO
+Quando NAO existe sessao em andamento:
+- Parlamentar acessa APENAS dashboard com seus dados pessoais
+- Dashboard exibe: presenca, votacoes, comissoes, mandatos
+- Parlamentar NAO pode acessar modulo de votacao
+
+REGRA RN-157: SEPARACAO DE AREAS POR ROLE
+- Usuarios PARLAMENTAR: acessam /parlamentar (NAO acessam /admin)
+- Usuarios ADMIN, EDITOR, OPERADOR, SECRETARIA: acessam /admin (NAO acessam /parlamentar)
+- Middleware redireciona automaticamente para area correta
+
+REGRA RN-158: MENU RESTRITO DO OPERADOR
+- OPERADOR ve APENAS: Sessoes e Painel Eletronico no menu
+- OPERADOR NAO tem acesso ao Dashboard administrativo
+- Acesso a /admin redireciona para /admin/painel-eletronico
+- Permissoes limitadas a operacao de sessao/votacao
 ```
 
 ---

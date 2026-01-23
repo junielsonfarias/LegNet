@@ -31,7 +31,21 @@
       "Bash(timeout 30 npm run dev)",
       "Bash(npx vitest:*)",
       "Bash(npm install:*)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(jest --version)",
+      "Bash(npx playwright test --list)",
+      "Bash(npx playwright test:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(if exist .next rmdir /s /q .next)",
+      "Bash(npx tsx:*)",
+      "Bash(grep:*)",
+      "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
+      "Bash(Get-Content \"C:\\\\Users\\\\JUNIELSON\\\\.claude\\\\projects\\\\D--Camara\\\\70fcc3d3-fb21-4aee-bc61-5005d7298472\\\\tool-results\\\\toolu_016n5Tv5UGzF83NMUWRmqQYa.txt\")",
+      "Bash(Select-Object -Last 50)"
     ]
   }
 }

@@ -284,24 +284,49 @@ export function usePainelSSE(
 }
 
 /**
+ * MEL-VIS-010: Polling inteligente
+ *
+ * Intervalos adaptativos:
+ * - 1s durante votacao ativa
+ * - 3s durante sessao em andamento
+ * - 10s durante sessao inativa/concluida
+ */
+const POLLING_INTERVALS = {
+  votacaoAtiva: 1000,
+  sessaoAtiva: 3000,
+  sessaoInativa: 10000
+} as const
+
+/**
  * Hook simplificado para usar apenas o estado do painel
  * Usa polling se SSE nao estiver disponivel
+ *
+ * MEL-VIS-010: Implementa polling inteligente com intervalos adaptativos
  */
 export function usePainelTempoReal(
   sessaoId: string | null | undefined,
-  options?: { pollingFallback?: boolean; pollingInterval?: number }
+  options?: {
+    pollingFallback?: boolean
+    /** Intervalo fixo de polling (se nao informado, usa intervalo adaptativo) */
+    pollingInterval?: number
+    /** Usar intervalo adaptativo baseado no estado */
+    adaptivePolling?: boolean
+  }
 ): {
   estado: EstadoPainelSSE | null
   loading: boolean
   erro: Error | null
   atualizar: () => void
+  /** Intervalo atual de polling */
+  pollingAtual: number
 } {
-  const { pollingFallback = true, pollingInterval = 3000 } = options || {}
+  const { pollingFallback = true, pollingInterval, adaptivePolling = true } = options || {}
 
   const [estado, setEstado] = useState<EstadoPainelSSE | null>(null)
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<Error | null>(null)
   const [usandoPolling, setUsandoPolling] = useState(false)
+  const [intervaloAtual, setIntervaloAtual] = useState<number>(POLLING_INTERVALS.sessaoAtiva)
 
   // Tentar usar SSE primeiro
   const { estado: estadoSSE, conectado, erro: erroSSE } = usePainelSSE(
@@ -317,6 +342,33 @@ export function usePainelTempoReal(
       setUsandoPolling(true)
     }
   }, [erroSSE, pollingFallback, usandoPolling])
+
+  // Calcular intervalo adaptativo baseado no estado
+  useEffect(() => {
+    if (!adaptivePolling || pollingInterval) {
+      setIntervaloAtual(pollingInterval || POLLING_INTERVALS.sessaoAtiva)
+      return
+    }
+
+    if (!estado?.sessao) {
+      setIntervaloAtual(POLLING_INTERVALS.sessaoInativa)
+      return
+    }
+
+    // Verificar se ha votacao em andamento
+    const emVotacao = estado.itemAtual?.status === 'EM_VOTACAO'
+    if (emVotacao) {
+      setIntervaloAtual(POLLING_INTERVALS.votacaoAtiva)
+      return
+    }
+
+    // Verificar status da sessao
+    if (estado.sessao.status === 'EM_ANDAMENTO') {
+      setIntervaloAtual(POLLING_INTERVALS.sessaoAtiva)
+    } else {
+      setIntervaloAtual(POLLING_INTERVALS.sessaoInativa)
+    }
+  }, [estado, adaptivePolling, pollingInterval])
 
   // Funcao de polling
   const fetchEstado = useCallback(async () => {
@@ -335,14 +387,14 @@ export function usePainelTempoReal(
     }
   }, [sessaoId])
 
-  // Usar polling se necessario
+  // Usar polling se necessario com intervalo adaptativo
   useEffect(() => {
     if (!usandoPolling || !sessaoId) return
 
     fetchEstado()
-    const interval = setInterval(fetchEstado, pollingInterval)
+    const interval = setInterval(fetchEstado, intervaloAtual)
     return () => clearInterval(interval)
-  }, [usandoPolling, sessaoId, fetchEstado, pollingInterval])
+  }, [usandoPolling, sessaoId, fetchEstado, intervaloAtual])
 
   // Usar estado do SSE se disponivel
   useEffect(() => {
@@ -356,7 +408,8 @@ export function usePainelTempoReal(
     estado,
     loading: loading && !estado,
     erro: usandoPolling ? erro : erroSSE,
-    atualizar: fetchEstado
+    atualizar: fetchEstado,
+    pollingAtual: intervaloAtual
   }
 }
 

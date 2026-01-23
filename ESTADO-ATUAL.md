@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-22
+> **Ultima Atualizacao**: 2026-01-23
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -290,7 +290,36 @@ Fluxo Validado:
 | **Painel operador standalone** | **Implementado** | /painel-operador/[sessaoId] - nova aba sem menu lateral |
 | **Dropdown de status** | **Implementado** | Alterar status da sessao (AGENDADA, EM_ANDAMENTO, CONCLUIDA, CANCELADA) |
 | **Cronometro de sessao** | **Implementado** | Duracao total da sessao no header HH:MM:SS |
+| **Cronometros sincronizados** | **Implementado** | MEL-VIS-001: Hook com offset de servidor entre paineis |
+| **Layout responsivo operador** | **Implementado** | MEL-VIS-002: Sidebar colapsavel + bottom sheet mobile |
+| **Indicacao visual item atual** | **Implementado** | MEL-VIS-003: Banner animado, borda pulsante, indicador lateral |
+| **Cores acessiveis WCAG AA** | **Implementado** | MEL-VIS-004: Paleta daltonico-friendly com icones |
+| **Atalhos de teclado** | **Implementado** | MEL-VIS-005: Space, V, F + dialog de ajuda |
+| **Tela de aguardando** | **Implementado** | MEL-VIS-006: Tela animada entre votacoes |
+| **Animacoes de resultado** | **Implementado** | MEL-VIS-007: Confete/ondas/fade por resultado |
+| **Grid adaptativo vereadores** | **Implementado** | MEL-VIS-008: Tamanho auto por quantidade |
+| **Polling inteligente** | **Implementado** | MEL-VIS-010: 1s votacao, 3s ativa, 10s inativa |
+| **Cards resumo sessao** | **Implementado** | MEL-VIS-011: Estatisticas da pauta |
+| **Timeline de navegacao** | **Implementado** | MEL-VIS-012: Timeline lateral com filtros |
+| **Design tokens** | **Implementado** | MEL-VIS-014: Tokens compartilhados entre paineis |
 | **Streaming ao vivo** | Pendente | Integracao com servicos de video |
+
+### 15.1 Portal do Parlamentar
+
+| Funcionalidade | Status | Observacoes |
+|---------------|--------|-------------|
+| **Dashboard individual** | **Implementado** | /parlamentar - dados vinculados ao parlamentar |
+| **Modulo de votacao** | **Implementado** | /parlamentar/votacao - votacao eletronica |
+| **Tela de aguardando** | **Implementado** | /parlamentar/aguardando - aguarda presenca |
+| **API status acesso** | **Implementado** | /api/parlamentar/status - verifica sessao/presenca |
+| **Controle de acesso** | **Implementado** | Regras de redirecionamento automatico |
+| **Middleware dedicado** | **Implementado** | Rotas /parlamentar protegidas |
+
+**Regras de Acesso Implementadas:**
+- Sessao em andamento + Presenca confirmada → Apenas modulo de votacao
+- Sessao em andamento + Sem presenca → Tela de aguardando (bloqueado)
+- Sem sessao em andamento → Apenas dashboard do parlamentar
+- Verificacao automatica a cada 3-5 segundos
 
 ### 16. Configuracoes
 
@@ -2387,6 +2416,142 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-23 - Responsividade do Painel Operador e Botao Nova Aba
+
+**Objetivo**: Ajustar painel operador para responsividade mobile e abrir painel em nova aba
+
+**Arquivos Modificados**:
+
+- `src/app/admin/painel-eletronico/page.tsx` - Botao "Abrir Painel Eletronico" abre em nova aba
+- `src/app/painel-operador/[sessaoId]/page.tsx` - Responsividade completa
+
+**Melhorias de Responsividade**:
+
+1. **Header**: Layout em duas linhas no mobile, truncamento de texto longo
+2. **Cronometro**: Flex-col no mobile, truncamento do nome do item atual
+3. **Conteudo Principal**: Padding responsivo (px-4 md:px-6, py-4 md:py-6)
+4. **Cards de Item**: Padding, badges e texto com tamanhos responsivos
+5. **Sidebar Presenca**: Cards de estatisticas com tamanhos adaptativos
+6. **Botoes**: Labels curtos no mobile ("TV" ao inves de "Painel TV")
+7. **Overflow**: `overflow-hidden`, `truncate`, `break-words` onde necessario
+
+**Breakpoints Utilizados**: `sm:` (640px), `md:` (768px), `lg:` (1024px)
+
+---
+
+### 2026-01-23 - Portal do Parlamentar com Regras de Acesso
+
+**Objetivo**: Restringir acesso do usuario PARLAMENTAR conforme estado da sessao e presenca
+
+**Regras de Negocio Implementadas**:
+
+1. **Sem sessao em andamento**: Parlamentar acessa apenas o Dashboard com seus dados
+2. **Sessao em andamento + Presenca confirmada**: Apenas modulo de votacao (sem dashboard)
+3. **Sessao em andamento + Sem presenca**: Bloqueado - tela de aguardando
+
+**Arquivos Criados**:
+
+- `src/app/parlamentar/page.tsx` - Dashboard do parlamentar
+- `src/app/parlamentar/aguardando/page.tsx` - Tela de aguardo de presenca
+- `src/app/api/parlamentar/status/route.ts` - API de verificacao de status
+
+**Arquivos Modificados**:
+
+- `src/app/parlamentar/layout.tsx` - Logica de redirecionamento automatico
+- `src/middleware.ts` - Protecao de rotas /parlamentar, separacao de /admin
+
+**Caracteristicas**:
+
+- Verificacao automatica a cada 3-5 segundos
+- Redirecionamento instantaneo quando presenca e confirmada
+- Tela de aguardando com contador de tempo de espera
+- Dashboard exibe: presenca em sessoes, total de votacoes, comissoes ativas, mandatos
+- Middleware separa rotas de PARLAMENTAR e demais roles
+
+---
+
+### 2026-01-23 - Restricao de Menu do OPERADOR
+
+**Objetivo**: Restringir menu do usuario OPERADOR para apenas operacao do painel
+
+**Regras de Negocio Implementadas**:
+
+1. **Menu restrito**: OPERADOR ve apenas "Sessoes" e "Painel Eletronico"
+2. **Sem Dashboard**: Dashboard nao e exibido no menu
+3. **Redirecionamento**: Acesso a /admin redireciona para /admin/painel-eletronico
+
+**Arquivos Modificados**:
+
+- `src/lib/auth/permissions.ts` - Permissoes do OPERADOR reduzidas
+- `src/components/admin/admin-sidebar.tsx` - Dashboard requer permissao
+- `src/components/admin/admin-sidebar-mobile.tsx` - Dashboard requer permissao
+- `src/app/admin/page.tsx` - Redireciona OPERADOR para painel-eletronico
+
+**Permissoes do OPERADOR**:
+
+```
+periodo.view      -> Menu: Sessoes
+sessao.view       -> Visualizar sessoes
+sessao.manage     -> Controlar sessoes
+painel.view       -> Menu: Painel Eletronico
+painel.manage     -> Operar painel
+presenca.manage   -> Gerenciar presencas
+votacao.manage    -> Gerenciar votacoes
+```
+
+---
+
+### 2026-01-23 - Melhorias de Visualizacao dos Paineis (MEL-VIS)
+
+**Objetivo**: Implementar melhorias visuais e de acessibilidade para os 3 paineis do sistema
+
+**Componentes Criados**:
+
+1. **Hooks**
+   - `use-cronometro-sincronizado.ts`: Cronometro sincronizado com servidor
+   - `use-keyboard-shortcuts.ts`: Sistema de atalhos de teclado
+
+2. **Componentes de Painel**
+   - `operator-sidebar.tsx`: Sidebar colapsavel para operador
+   - `item-pauta-card.tsx`: Card unificado de item com indicadores visuais
+   - `shortcuts-help-dialog.tsx`: Modal de ajuda com atalhos
+   - `waiting-screen.tsx`: Tela de aguardando entre votacoes
+   - `resultado-animation.tsx`: Animacoes de resultado (confete/ondas)
+   - `sessao-summary-cards.tsx`: Cards de resumo da sessao
+   - `pauta-timeline.tsx`: Timeline de navegacao com filtros
+
+3. **Utilitarios**
+   - `accessibility-colors.ts`: Paleta WCAG AA para daltonicos
+   - `painel-tokens.ts`: Design tokens compartilhados
+
+4. **API**
+   - `GET /api/painel/hora-servidor`: Sincronizacao de tempo
+
+**Modificacoes**:
+
+- `tailwind.config.js`: Animacoes (pulse-soft, bounce-soft, confetti, ripple)
+- `vereador-voto-card.tsx`: Cores acessiveis, icones, grid adaptativo
+- `use-painel-sse.ts`: Polling inteligente (1s/3s/10s)
+
+**Melhorias Implementadas**:
+
+| ID | Descricao | Prioridade |
+|----|-----------|------------|
+| MEL-VIS-001 | Cronometros sincronizados | Alta |
+| MEL-VIS-002 | Layout responsivo operador | Alta |
+| MEL-VIS-003 | Indicacao visual item atual | Alta |
+| MEL-VIS-004 | Acessibilidade e cores WCAG AA | Alta |
+| MEL-VIS-005 | Atalhos de teclado | Alta |
+| MEL-VIS-006 | Tela de aguardando TV | Media |
+| MEL-VIS-007 | Animacoes de resultado | Media |
+| MEL-VIS-008 | Grid adaptativo vereadores | Media |
+| MEL-VIS-010 | Polling inteligente | Media |
+| MEL-VIS-011 | Cards resumo sessao | Baixa |
+| MEL-VIS-012 | Timeline de navegacao | Baixa |
+| MEL-VIS-014 | Design tokens | Baixa |
+
+---
 
 ### 2026-01-23 - Revisao Completa e Correcoes de Fluxos
 
