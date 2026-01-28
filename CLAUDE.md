@@ -15,6 +15,7 @@
 | `ESTADO-ATUAL.md` | **SEMPRE** apos qualquer mudanca | Modulos alterados, historico |
 | `docs/ERROS-E-SOLUCOES.md` | Ao encontrar/corrigir erros | Erros, solucoes, status |
 | `docs/MELHORIAS-PROPOSTAS.md` | Ao identificar/implementar melhorias | Novas ideias |
+| `docs/skills/skill-*.md` | **Ao modificar modulo correspondente** | APIs, servicos, componentes, regras |
 
 ### Regras de Atualizacao
 
@@ -23,6 +24,8 @@
 - **DOC-003**: Marcar etapas como [~] em andamento ou [x] concluida
 - **DOC-004**: Erros encontrados DEVEM ir para ERROS-E-SOLUCOES.md
 - **DOC-005**: Verificar REGRAS-DE-NEGOCIO.md antes de implementar
+- **DOC-006**: ANTES de implementar, consultar a SKILL correspondente ao modulo
+- **DOC-007**: APOS implementar, ATUALIZAR a SKILL com as mudancas realizadas
 
 ### Checklist ao Finalizar Tarefa
 
@@ -31,6 +34,46 @@
 - [ ] Novos erros registrados?
 - [ ] Melhorias marcadas?
 - [ ] Novas regras de negocio adicionadas?
+- [ ] **SKILL do modulo atualizada?**
+
+### Manutencao de Skills (OBRIGATORIO)
+
+> As skills em `docs/skills/` sao documentacao VIVA e devem refletir o estado atual do sistema
+
+#### Antes de Implementar
+
+1. Identificar qual(is) skill(s) corresponde(m) ao modulo afetado
+2. LER a skill para entender:
+   - Arquivos existentes e suas funcoes
+   - APIs e endpoints disponiveis
+   - Regras de negocio aplicaveis
+   - Fluxos e validacoes obrigatorias
+3. Seguir os padroes documentados na skill
+
+#### Apos Implementar
+
+1. ATUALIZAR a skill correspondente com:
+   - Novos arquivos criados (tabela "Arquivos Principais")
+   - Novas APIs/endpoints (tabela "APIs e Endpoints")
+   - Novos campos em modelos Prisma
+   - Novas funcoes em servicos
+   - Novas regras de negocio (RN-XXX)
+   - Novos componentes React
+   - Atualizar exemplos de codigo se necessario
+   - Marcar itens no checklist de implementacao
+
+#### Mapeamento Skill x Modulo
+
+| Se mexer em... | Atualizar skill... |
+|----------------|-------------------|
+| Proposicoes, emendas, tramitacao | `skill-legislativo.md` |
+| Painel operador, votacao tempo real | `skill-operador.md` |
+| Comissoes, reunioes, pareceres | `skill-comissoes.md` |
+| Portal transparencia, dados abertos | `skill-transparencia.md` |
+| Area /parlamentar, votacao parlamentar | `skill-parlamentar.md` |
+| Usuarios, roles, configuracoes | `skill-admin.md` |
+| Protocolo, pautas, atas | `skill-secretaria.md` |
+| APIs publicas, webhooks | `skill-integracoes.md` |
 
 ---
 
@@ -126,6 +169,38 @@ npm run db:seed             # Popular banco com dados iniciais
 | `docs/FLUXO-LEGISLATIVO.md` | **IMPORTANTE** - Fluxo completo de tramitacao, sessoes, votacoes, comissoes |
 | `REGRAS-DE-NEGOCIO.md` | Regras RN-XXX completas do processo legislativo e PNTP |
 | `ESTADO-ATUAL.md` | Status atual de cada modulo do sistema |
+
+---
+
+## Skills de Referencia
+
+> **IMPORTANTE**: As skills sao DOCUMENTACAO VIVA. Consulte ANTES de implementar e ATUALIZE APOS modificar:
+
+| Skill | Arquivo | Consultar Quando |
+|-------|---------|------------------|
+| **Legislativo** | `docs/skills/skill-legislativo.md` | Proposicoes, votacoes, tramitacao, emendas, pareceres |
+| **Operador** | `docs/skills/skill-operador.md` | Painel eletronico, sessao em tempo real, quorum |
+| **Comissoes** | `docs/skills/skill-comissoes.md` | Comissoes, reunioes, pareceres, CPI |
+| **Transparencia** | `docs/skills/skill-transparencia.md` | Portal PNTP, dados abertos, acessibilidade |
+| **Parlamentar** | `docs/skills/skill-parlamentar.md` | Area do parlamentar, votacao, dashboard |
+| **Admin** | `docs/skills/skill-admin.md` | Configuracoes, usuarios, auditoria, permissoes |
+| **Secretaria** | `docs/skills/skill-secretaria.md` | Protocolo, pautas, tramitacao, atas |
+| **Integracoes** | `docs/skills/skill-integracoes.md` | APIs publicas, webhooks, sistemas externos |
+
+### Conteudo das Skills
+
+Cada skill contem:
+- Visao geral do modulo
+- Arquivos principais
+- Modelos de dados (Prisma)
+- APIs e endpoints
+- Servicos de negocio
+- Regras de negocio (RN-XXX)
+- Fluxos em ASCII
+- Validacoes obrigatorias
+- Componentes React
+- Exemplos de codigo
+- Checklist de implementacao
 
 ---
 

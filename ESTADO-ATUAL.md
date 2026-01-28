@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-23
+> **Ultima Atualizacao**: 2026-01-28
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -2416,6 +2416,124 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-28 - Criacao de Skills de Referencia
+
+**Objetivo**: Criar documentacao especializada por modulo para facilitar consulta e implementacao
+
+**Arquivos Criados**:
+
+1. **Pasta docs/skills/** - 8 arquivos de skill especializados:
+
+   | Arquivo | Linhas | Escopo |
+   |---------|--------|--------|
+   | `skill-legislativo.md` | ~700 | Processo legislativo, proposicoes, votacoes, emendas, turnos |
+   | `skill-operador.md` | ~500 | Painel eletronico, sessao tempo real, quorum, votacao |
+   | `skill-comissoes.md` | ~400 | Comissoes permanentes, CPI, reunioes, pareceres |
+   | `skill-transparencia.md` | ~350 | Portal PNTP nivel diamante, dados abertos, WCAG |
+   | `skill-parlamentar.md` | ~350 | Area do parlamentar, dashboard, votacao eletronica |
+   | `skill-admin.md` | ~400 | Configuracoes, usuarios, permissoes, auditoria |
+   | `skill-secretaria.md` | ~350 | Protocolo, pauta, tramitacao, atas |
+   | `skill-integracoes.md` | ~350 | APIs publicas, webhooks, integracoes externas |
+
+2. **Total**: ~3.400 linhas de documentacao especializada
+
+**Conteudo de Cada Skill**:
+- Visao geral do modulo
+- Arquivos principais com funcao
+- Modelos de dados Prisma completos
+- Enums e tipos TypeScript
+- APIs e endpoints com roles
+- Servicos de negocio com funcoes
+- Regras de negocio (RN-XXX)
+- Fluxos principais em ASCII
+- Validacoes obrigatorias
+- Componentes React
+- Exemplos de codigo funcionais
+- Checklist de implementacao
+- Integracao com outros modulos
+
+**Arquivos Modificados**:
+- `CLAUDE.md`:
+  - Adicionada secao "Skills de Referencia" com tabela de consulta
+  - Adicionadas regras DOC-006 e DOC-007 para consulta e atualizacao de skills
+  - Adicionada secao "Manutencao de Skills" com fluxo obrigatorio
+  - Adicionado mapeamento Skill x Modulo
+  - Skills incluidas na tabela de arquivos obrigatorios
+
+**Beneficios**:
+1. Onboarding rapido de desenvolvedores
+2. Consulta especializada por area
+3. Codigo de exemplo pronto para uso
+4. Regras de negocio centralizadas
+5. Fluxos visuais para entendimento
+6. Contexto para assistentes de IA
+
+---
+
+### 2026-01-27 - Redesign Visual do Portal Institucional (Fase 1-5)
+
+**Objetivo**: Modernizar o design do portal publico, implementar acessibilidade WCAG 2.1 AA e melhorar a navegacao
+
+**Arquivos Criados**:
+
+1. **Design Tokens**
+   - `src/lib/design-tokens/portal-tokens.ts`: Tokens centralizados de espacamento, tipografia, cores e acessibilidade
+
+2. **Acessibilidade**
+   - `src/components/accessibility/accessibility-toolbar.tsx`: Barra de ferramentas de acessibilidade
+   - `src/components/accessibility/index.ts`: Exportacoes dos componentes de acessibilidade
+
+3. **Layout**
+   - `src/components/layout/mega-menu.tsx`: Menu expandivel de 3 niveis com ARIA
+   - `src/components/layout/page-template.tsx`: Template padrao para paginas internas com breadcrumbs
+
+4. **Busca**
+   - `src/components/busca/quick-search.tsx`: Busca rapida com autocomplete e sugestoes
+
+5. **Home**
+   - `src/components/home/highlights-section.tsx`: Secao de destaques com countdown para sessoes
+
+**Arquivos Modificados**:
+
+1. **Tailwind e CSS**
+   - `tailwind.config.js`: Tokens de espacamento, tipografia responsiva, cores de alto contraste
+   - `src/app/globals.css`: Variaveis CSS, estilos de alto contraste, focus visible melhorado
+
+2. **Componentes de Acessibilidade**
+   - `src/components/ui/skip-link.tsx`: Expandido com skip links multiplos, focus trap, landmarks
+
+3. **Layout**
+   - `src/components/layout/header.tsx`: ARIA labels, navegacao por teclado, ESC fecha menu
+   - `src/components/layout/footer.tsx`: Landmarks ARIA, focus rings, estrutura semantica
+   - `src/components/layout/conditional-layout.tsx`: Integra AccessibilityToolbar e MainContent
+
+4. **Home**
+   - `src/components/home/hero.tsx`: Contador animado, estatisticas dinamicas da API, wave divider
+   - `src/app/page.tsx`: Nova estrutura com HighlightsSection
+
+**Caracteristicas de Acessibilidade**:
+
+1. **Skip Links**: 3 links para pular navegacao (conteudo, navegacao, rodape)
+2. **Toolbar Acessibilidade**:
+   - Tamanho de fonte: Normal/Medio/Grande
+   - Espacamento de linha: Normal/Confortavel/Amplo
+   - Alto contraste: Toggle on/off
+   - Animacoes reduzidas: Toggle on/off
+   - Persistencia via localStorage
+3. **Navegacao por Teclado**: ESC fecha menus, setas navegam itens
+4. **Focus Rings**: Indicadores visiveis customizados
+5. **Landmarks ARIA**: banner, navigation, main, contentinfo
+6. **Tipografia Responsiva**: Tamanhos clamp() para legibilidade
+
+**Conformidade WCAG 2.1 AA**:
+- Touch targets minimos de 44px
+- Contraste minimo 4.5:1
+- Navegacao completa por teclado
+- Suporte a prefers-reduced-motion
+- Suporte a prefers-contrast: high
+
+---
 
 ### 2026-01-23 - Responsividade do Painel Operador e Botao Nova Aba
 
