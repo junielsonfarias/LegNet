@@ -2423,10 +2423,11 @@ sudo ./scripts/uninstall.sh --full
 
 **Arquivos Criados**:
 
-1. **Pasta docs/skills/** - 8 arquivos de skill especializados:
+1. **Pasta docs/skills/** - 9 arquivos de skill especializados:
 
    | Arquivo | Linhas | Escopo |
    |---------|--------|--------|
+   | `skill-frontend.md` | ~650 | Stack tecnologica, componentes UI, hooks, design tokens, acessibilidade |
    | `skill-legislativo.md` | ~700 | Processo legislativo, proposicoes, votacoes, emendas, turnos |
    | `skill-operador.md` | ~500 | Painel eletronico, sessao tempo real, quorum, votacao |
    | `skill-comissoes.md` | ~400 | Comissoes permanentes, CPI, reunioes, pareceres |
@@ -2436,7 +2437,7 @@ sudo ./scripts/uninstall.sh --full
    | `skill-secretaria.md` | ~350 | Protocolo, pauta, tramitacao, atas |
    | `skill-integracoes.md` | ~350 | APIs publicas, webhooks, integracoes externas |
 
-2. **Total**: ~3.400 linhas de documentacao especializada
+2. **Total**: ~4.050 linhas de documentacao especializada
 
 **Conteudo de Cada Skill**:
 - Visao geral do modulo

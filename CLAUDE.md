@@ -66,6 +66,7 @@
 
 | Se mexer em... | Atualizar skill... |
 |----------------|-------------------|
+| Componentes UI, hooks, design tokens, Tailwind | `skill-frontend.md` |
 | Proposicoes, emendas, tramitacao | `skill-legislativo.md` |
 | Painel operador, votacao tempo real | `skill-operador.md` |
 | Comissoes, reunioes, pareceres | `skill-comissoes.md` |
@@ -178,6 +179,7 @@ npm run db:seed             # Popular banco com dados iniciais
 
 | Skill | Arquivo | Consultar Quando |
 |-------|---------|------------------|
+| **Frontend** | `docs/skills/skill-frontend.md` | Componentes, hooks, design tokens, acessibilidade, Tailwind |
 | **Legislativo** | `docs/skills/skill-legislativo.md` | Proposicoes, votacoes, tramitacao, emendas, pareceres |
 | **Operador** | `docs/skills/skill-operador.md` | Painel eletronico, sessao em tempo real, quorum |
 | **Comissoes** | `docs/skills/skill-comissoes.md` | Comissoes, reunioes, pareceres, CPI |
