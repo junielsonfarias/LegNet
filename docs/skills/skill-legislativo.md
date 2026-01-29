@@ -689,11 +689,33 @@ UNANIMIDADE        = Todos os PRESENTES
 | Componente | Arquivo | Funcao |
 |------------|---------|--------|
 | ProposicaoForm | `src/app/admin/proposicoes/nova/page.tsx` | Formulario de criacao |
-| ProposicaoList | `src/app/admin/proposicoes/page.tsx` | Lista com filtros |
-| ProposicaoDetail | `src/app/admin/proposicoes/[id]/page.tsx` | Detalhes e acoes |
+| ProposicaoList | `src/app/admin/proposicoes/page.tsx` | Lista compacta com filtros, badges coloridos por tipo/status |
+| ProposicaoDetail | `src/app/admin/proposicoes/[id]/page.tsx` | Detalhes com linha do tempo, pareceres e acoes rapidas |
 | TramitacaoTimeline | `src/components/admin/tramitacao-timeline.tsx` | Historico visual |
 | EmendaForm | `src/app/admin/emendas/nova/page.tsx` | Formulario de emenda |
 | ParecerForm | `src/app/admin/pareceres/novo/page.tsx` | Formulario de parecer |
+
+### Padrao Visual das Proposicoes
+
+**Badges de Tipo (cores solidas)**:
+- PL (Projeto de Lei): `bg-indigo-600 text-white`
+- PR (Projeto de Resolucao): `bg-teal-600 text-white`
+- PD (Projeto de Decreto): `bg-cyan-600 text-white`
+- IND (Indicacao): `bg-emerald-600 text-white`
+- REQ (Requerimento): `bg-violet-600 text-white`
+- MOC (Mocao): `bg-pink-600 text-white`
+- VP (Voto de Pesar): `bg-slate-600 text-white`
+- VA (Voto de Aplauso): `bg-amber-600 text-white`
+
+**Badges de Status (com borda)**:
+- APRESENTADA: `bg-blue-100 text-blue-800 border-blue-200`
+- EM_TRAMITACAO: `bg-yellow-100 text-yellow-800 border-yellow-200`
+- AGUARDANDO_PAUTA: `bg-amber-100 text-amber-800 border-amber-200`
+- EM_PAUTA: `bg-orange-100 text-orange-800 border-orange-200`
+- APROVADA: `bg-green-100 text-green-800 border-green-200`
+- REJEITADA: `bg-red-100 text-red-800 border-red-200`
+- ARQUIVADA: `bg-gray-100 text-gray-800 border-gray-200`
+- VETADA: `bg-purple-100 text-purple-800 border-purple-200`
 
 ### Publico
 

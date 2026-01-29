@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-29 (Teste Completo do Processo Legislativo)
+> **Ultima Atualizacao**: 2026-01-29 (Melhoria Visual das Proposicoes)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -134,6 +134,10 @@ Fluxo Validado:
 | Consulta publica | Implementado | /legislativo/proposicoes |
 | **Rastreabilidade completa** | **Implementado** | Ciclo: apresentacao -> pauta -> votacao |
 | **Sistema de Emendas** | **Implementado** | Tipos, votacao, aglutinacao, texto consolidado |
+| **Listagem compacta** | **Implementado** | Cards compactos com tipo, numero, status, autor, data e localizacao |
+| **Badges coloridos** | **Implementado** | Cores distintas por tipo (PL, PR, PD, etc) e status (Em Tramitacao, Aprovada, etc) |
+| **Pagina de detalhes** | **Melhorada** | Layout responsivo com linha do tempo, pareceres e acoes rapidas |
+| **Linha do tempo visual** | **Implementado** | Timeline do ciclo de vida da proposicao na pagina de detalhes |
 
 ### 5.1 Emendas a Proposicoes
 
@@ -2416,6 +2420,36 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-29 - Melhoria Visual das Proposicoes
+
+**Objetivo**: Redesenhar a interface de listagem e detalhes de proposicoes para maior legibilidade e usabilidade
+
+**Alteracoes na Listagem** (`/admin/proposicoes/page.tsx`):
+- Layout de cards compacto (uma linha por proposicao)
+- Badges coloridos por tipo: PL (indigo), PR (teal), PD (cyan), IND (emerald), REQ (violet), MOC (pink)
+- Badges de status com cores distintas: Apresentada (azul), Em Tramitacao (amarelo), Aprovada (verde), Rejeitada (vermelho)
+- Metadados em linha: autor, data de apresentacao, localizacao atual, prazo
+- Botoes de acao compactos com hover states coloridos
+- Estado vazio com mensagem orientativa
+- Contador de resultados
+
+**Alteracoes na Pagina de Detalhes** (`/admin/proposicoes/[id]/page.tsx`):
+- Card principal com cor de fundo baseada no status
+- Identificacao visual clara: tipo (badge colorido), numero/ano (grande), status (pill)
+- Grid responsivo: coluna principal (2/3) + coluna lateral (1/3)
+- Cards de metadados com icones: autor, data apresentacao, votacao, resultado
+- Texto completo com botao expandir/recolher
+- Secao de pareceres com visualizacao compacta dos votos
+- Coluna lateral: situacao atual, linha do tempo visual, acoes rapidas
+- Timeline visual do ciclo de vida da proposicao (apresentada -> tramitacao -> votacao)
+- Breadcrumb de navegacao
+
+**Arquivos Modificados**:
+- `src/app/admin/proposicoes/page.tsx` - Listagem redesenhada
+- `src/app/admin/proposicoes/[id]/page.tsx` - Detalhes redesenhados
+
+---
 
 ### 2026-01-29 - Teste Completo do Processo Legislativo
 

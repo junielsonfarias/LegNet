@@ -783,111 +783,176 @@ function ProposicoesContent() {
         </CardContent>
       </Card>
 
-      {/* Lista de Proposições */}
-      <div className="grid grid-cols-1 gap-4">
-        {filteredProposicoes.map((proposicao) => (
-          <Card key={proposicao.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="outline">
-                      {proposicao.numero}/{proposicao.ano}
-                    </Badge>
-                    <Badge>
-                      {proposicao.tipo.replace('_', ' ')}
-                    </Badge>
-                    <Badge variant="outline">
-                      {proposicao.status.replace('_', ' ')}
-                    </Badge>
+      {/* Lista de Proposições - Layout Compacto */}
+      <div className="space-y-3">
+        {filteredProposicoes.map((proposicao) => {
+          const statusDetalhado = getStatusDetalhado(proposicao.id)
+          const autor = proposicao.autor?.nome || parlamentares.find(p => p.id === proposicao.autorId)?.nome || 'Autor não encontrado'
+
+          // Cores por status
+          const statusColors: Record<string, string> = {
+            'APRESENTADA': 'bg-blue-100 text-blue-800 border-blue-200',
+            'EM_TRAMITACAO': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'APROVADA': 'bg-green-100 text-green-800 border-green-200',
+            'REJEITADA': 'bg-red-100 text-red-800 border-red-200',
+            'ARQUIVADA': 'bg-gray-100 text-gray-800 border-gray-200',
+            'VETADA': 'bg-purple-100 text-purple-800 border-purple-200',
+            'EM_PAUTA': 'bg-orange-100 text-orange-800 border-orange-200',
+            'AGUARDANDO_PAUTA': 'bg-amber-100 text-amber-800 border-amber-200'
+          }
+
+          // Cores por tipo
+          const tipoColors: Record<string, string> = {
+            'PROJETO_LEI': 'bg-indigo-600 text-white',
+            'PROJETO_RESOLUCAO': 'bg-teal-600 text-white',
+            'PROJETO_DECRETO': 'bg-cyan-600 text-white',
+            'INDICACAO': 'bg-emerald-600 text-white',
+            'REQUERIMENTO': 'bg-violet-600 text-white',
+            'MOCAO': 'bg-pink-600 text-white',
+            'VOTO_PESAR': 'bg-slate-600 text-white',
+            'VOTO_APLAUSO': 'bg-amber-600 text-white'
+          }
+
+          const tipoLabel: Record<string, string> = {
+            'PROJETO_LEI': 'PL',
+            'PROJETO_RESOLUCAO': 'PR',
+            'PROJETO_DECRETO': 'PD',
+            'INDICACAO': 'IND',
+            'REQUERIMENTO': 'REQ',
+            'MOCAO': 'MOC',
+            'VOTO_PESAR': 'VP',
+            'VOTO_APLAUSO': 'VA'
+          }
+
+          return (
+            <div
+              key={proposicao.id}
+              className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            >
+              {/* Linha Principal - Informações Essenciais */}
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-4">
+                  {/* Lado Esquerdo - Identificação e Título */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {/* Tipo (badge colorido) */}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${tipoColors[proposicao.tipo] || 'bg-gray-600 text-white'}`}>
+                        {tipoLabel[proposicao.tipo] || proposicao.tipo}
+                      </span>
+                      {/* Número/Ano */}
+                      <span className="text-sm font-semibold text-gray-900">
+                        {proposicao.numero}/{proposicao.ano}
+                      </span>
+                      {/* Status */}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${statusColors[proposicao.status] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                        {proposicao.status.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+
+                    {/* Título */}
+                    <h3 className="text-base font-medium text-gray-900 line-clamp-1 mb-1">
+                      {proposicao.titulo}
+                    </h3>
+
+                    {/* Ementa */}
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {proposicao.ementa}
+                    </p>
                   </div>
-                  <CardTitle className="mt-2">{proposicao.titulo}</CardTitle>
-                  <CardDescription className="mt-1">{proposicao.ementa}</CardDescription>
+
+                  {/* Lado Direito - Ações */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                      title="Visualizar"
+                      onClick={() => router.push(`/admin/proposicoes/${proposicao.id}`)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600"
+                      title="Editar"
+                      onClick={() => handleEdit(proposicao)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                      title="Tramitar"
+                      onClick={() => handleTramitar(proposicao)}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                      title="Excluir"
+                      onClick={() => handleDelete(proposicao.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    title="Visualizar proposição"
-                    onClick={() => {
-                      router.push(`/admin/proposicoes/${proposicao.id}`)
-                    }}
-                  >
-                    <Eye className="h-4 w-4" />
-                    <span className="sr-only">Visualizar</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    title="Editar proposição"
-                    onClick={() => handleEdit(proposicao)}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Editar</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    title="Tramitar proposição"
-                    onClick={() => handleTramitar(proposicao)}
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                    <span className="sr-only">Tramitar</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    title="Excluir proposição"
-                    onClick={() => handleDelete(proposicao.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Excluir</span>
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">
-                    {proposicao.autor?.nome || parlamentares.find(p => p.id === proposicao.autorId)?.nome || 'Autor não encontrado'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">
-                    {new Date(proposicao.dataApresentacao).toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-            {/* Status Atual da Tramitação */}
-            <div className="px-6 pb-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Status Atual</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-700">
-                      {getStatusDetalhado(proposicao.id).localizacao}
+
+                {/* Linha de Metadados */}
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+                  {/* Autor */}
+                  <div className="flex items-center gap-1">
+                    <User className="h-3.5 w-3.5" />
+                    <span className="font-medium">{autor}</span>
+                  </div>
+                  {/* Data */}
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>{new Date(proposicao.dataApresentacao).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  {/* Localização Atual */}
+                  <div className="flex items-center gap-1 ml-auto">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span className="truncate max-w-[200px]" title={statusDetalhado.localizacao}>
+                      {statusDetalhado.localizacao}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-700">
-                      {getStatusDetalhado(proposicao.id).prazo ? 
-                        `Prazo: ${new Date(getStatusDetalhado(proposicao.id).prazo!).toLocaleDateString('pt-BR')}` :
-                        'Sem prazo definido'
-                      }
-                    </span>
-                  </div>
+                  {/* Prazo (se houver) */}
+                  {statusDetalhado.prazo && (
+                    <div className="flex items-center gap-1 text-amber-600">
+                      <FileText className="h-3.5 w-3.5" />
+                      <span>Prazo: {new Date(statusDetalhado.prazo).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </Card>
-        ))}
+          )
+        })}
+
+        {/* Estado vazio */}
+        {filteredProposicoes.length === 0 && (
+          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+            <FileText className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhuma proposição encontrada</h3>
+            <p className="text-gray-500">
+              {searchTerm || statusFilter !== 'TODOS' || tipoFilter !== 'TODOS'
+                ? 'Tente ajustar os filtros de busca'
+                : 'Clique em "Nova Proposição" para criar a primeira'}
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Contador de resultados */}
+      {filteredProposicoes.length > 0 && (
+        <div className="text-center text-sm text-gray-500 py-2">
+          Mostrando {filteredProposicoes.length} de {proposicoes.length} proposições
+        </div>
+      )}
 
       {/* Modal de Criação/Edição */}
       {isModalOpen && (
