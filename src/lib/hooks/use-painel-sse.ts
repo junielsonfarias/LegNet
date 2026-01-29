@@ -133,6 +133,11 @@ export function usePainelSSE(
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttemptsRef = useRef(0)
 
+  // Usar ref para callbacks para evitar re-renders infinitos
+  // quando o consumidor não memoiza os callbacks
+  const callbacksRef = useRef(callbacks)
+  callbacksRef.current = callbacks
+
   const {
     enabled = true,
     reconnectOnError = true,
@@ -172,17 +177,17 @@ export function usePainelSSE(
         setConectado(true)
         setErro(null)
         reconnectAttemptsRef.current = 0
-        callbacks?.onConexao?.(true)
+        callbacksRef.current?.onConexao?.(true)
       }
 
       eventSource.onerror = (event) => {
         console.error('Erro SSE:', event)
         setConectado(false)
-        callbacks?.onConexao?.(false)
+        callbacksRef.current?.onConexao?.(false)
 
         const error = new Error('Erro na conexao SSE')
         setErro(error)
-        callbacks?.onErro?.(error)
+        callbacksRef.current?.onErro?.(error)
 
         // Tentar reconectar
         if (reconnectOnError && reconnectAttemptsRef.current < maxReconnectAttempts) {
@@ -198,7 +203,7 @@ export function usePainelSSE(
         try {
           const data: EstadoPainelSSE = JSON.parse(event.data)
           setEstado(data)
-          callbacks?.onEstado?.(data)
+          callbacksRef.current?.onEstado?.(data)
         } catch (e) {
           console.error('Erro ao parsear evento estado:', e)
         }
@@ -208,7 +213,7 @@ export function usePainelSSE(
       eventSource.addEventListener('voto', (event) => {
         try {
           const data: EventoVoto = JSON.parse(event.data)
-          callbacks?.onVoto?.(data)
+          callbacksRef.current?.onVoto?.(data)
         } catch (e) {
           console.error('Erro ao parsear evento voto:', e)
         }
@@ -218,7 +223,7 @@ export function usePainelSSE(
       eventSource.addEventListener('votacao-iniciada', (event) => {
         try {
           const data: EventoVotacaoIniciada = JSON.parse(event.data)
-          callbacks?.onVotacaoIniciada?.(data)
+          callbacksRef.current?.onVotacaoIniciada?.(data)
         } catch (e) {
           console.error('Erro ao parsear evento votacao-iniciada:', e)
         }
@@ -228,7 +233,7 @@ export function usePainelSSE(
       eventSource.addEventListener('votacao-finalizada', (event) => {
         try {
           const data: EventoVotacaoFinalizada = JSON.parse(event.data)
-          callbacks?.onVotacaoFinalizada?.(data)
+          callbacksRef.current?.onVotacaoFinalizada?.(data)
         } catch (e) {
           console.error('Erro ao parsear evento votacao-finalizada:', e)
         }
@@ -238,7 +243,7 @@ export function usePainelSSE(
       eventSource.addEventListener('presenca', (event) => {
         try {
           const data: EventoPresenca = JSON.parse(event.data)
-          callbacks?.onPresenca?.(data)
+          callbacksRef.current?.onPresenca?.(data)
         } catch (e) {
           console.error('Erro ao parsear evento presenca:', e)
         }
@@ -246,7 +251,7 @@ export function usePainelSSE(
     } catch (e) {
       const error = e instanceof Error ? e : new Error('Erro ao conectar SSE')
       setErro(error)
-      callbacks?.onErro?.(error)
+      callbacksRef.current?.onErro?.(error)
     }
   }, [
     sessaoId,
@@ -254,8 +259,8 @@ export function usePainelSSE(
     closeConnection,
     reconnectOnError,
     reconnectDelay,
-    maxReconnectAttempts,
-    callbacks
+    maxReconnectAttempts
+    // callbacks removido das dependências - usando ref
   ])
 
   // Funcao para reconectar manualmente

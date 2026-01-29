@@ -137,6 +137,48 @@ const estadoAtivo: Map<string, EstadoPainel> = new Map()
 const cronometros: Map<string, NodeJS.Timeout> = new Map()
 
 /**
+ * Locks para evitar race conditions em operações de votação
+ * Chave: `${sessaoId}-${parlamentarId}`
+ */
+const votacaoLocks: Map<string, boolean> = new Map()
+
+/**
+ * Adquire lock para votação de um parlamentar em uma sessão
+ * Retorna true se conseguiu adquirir, false se já está locked
+ */
+function acquireVoteLock(sessaoId: string, parlamentarId: string): boolean {
+  const key = `${sessaoId}-${parlamentarId}`
+  if (votacaoLocks.get(key)) {
+    return false
+  }
+  votacaoLocks.set(key, true)
+  return true
+}
+
+/**
+ * Libera lock de votação
+ */
+function releaseVoteLock(sessaoId: string, parlamentarId: string): void {
+  const key = `${sessaoId}-${parlamentarId}`
+  votacaoLocks.delete(key)
+}
+
+/**
+ * Limpa todos os cronômetros de uma sessão específica
+ * Previne memory leaks ao finalizar ou limpar uma sessão
+ */
+function limparCronometrosSessao(sessaoId: string): void {
+  const prefixos = ['sessao-', 'votacao-', 'item-', 'discurso-']
+  for (const prefixo of prefixos) {
+    const cronometroId = `${prefixo}${sessaoId}`
+    if (cronometros.has(cronometroId)) {
+      clearInterval(cronometros.get(cronometroId)!)
+      cronometros.delete(cronometroId)
+    }
+  }
+}
+
+/**
  * Busca estado atual do painel para uma sessao
  */
 export async function getEstadoPainel(sessaoId: string): Promise<EstadoPainel | null> {
@@ -313,12 +355,8 @@ export async function finalizarSessao(sessaoId: string): Promise<void> {
     }
   })
 
-  // Parar cronometro
-  const cronometroId = `sessao-${sessaoId}`
-  if (cronometros.has(cronometroId)) {
-    clearInterval(cronometros.get(cronometroId)!)
-    cronometros.delete(cronometroId)
-  }
+  // Limpar todos os cronômetros da sessão (previne memory leaks)
+  limparCronometrosSessao(sessaoId)
 
   // Limpar estado
   estadoAtivo.delete(sessaoId)
@@ -406,61 +444,88 @@ export async function iniciarVotacao(
 
 /**
  * Registra voto de um parlamentar
+ * Usa lock para evitar race conditions em votos simultâneos
  */
 export async function registrarVoto(
   sessaoId: string,
   parlamentarId: string,
   voto: 'SIM' | 'NAO' | 'ABSTENCAO'
 ): Promise<boolean> {
-  const estado = estadoAtivo.get(sessaoId)
-  if (!estado || !estado.votacaoAtiva || estado.votacaoAtiva.status !== 'ABERTA') {
+  // Tentar adquirir lock para evitar race conditions
+  if (!acquireVoteLock(sessaoId, parlamentarId)) {
+    logger.warn('Voto rejeitado: operação em andamento', {
+      action: 'registrar_voto_lock',
+      sessaoId,
+      parlamentarId
+    })
     return false
   }
 
-  const votoExistente = estado.votacaoAtiva.votosIndividuais.find(v => v.parlamentarId === parlamentarId)
-  if (!votoExistente) {
-    return false
-  }
-
-  // Atualizar voto
-  const votoAnterior = votoExistente.voto
-  votoExistente.voto = voto
-  votoExistente.horaVoto = new Date()
-
-  // Atualizar contagem
-  if (votoAnterior) {
-    estado.votacaoAtiva.votos[votoAnterior.toLowerCase() as 'sim' | 'nao' | 'abstencao']--
-  }
-  estado.votacaoAtiva.votos[voto.toLowerCase() as 'sim' | 'nao' | 'abstencao']++
-
-  // Persistir no banco
-  await prisma.votacao.upsert({
-    where: {
-      proposicaoId_parlamentarId_turno: {
-        proposicaoId: estado.votacaoAtiva.proposicaoId,
-        parlamentarId,
-        turno: estado.votacaoAtiva.turno
-      }
-    },
-    create: {
-      proposicaoId: estado.votacaoAtiva.proposicaoId,
-      parlamentarId,
-      voto,
-      turno: estado.votacaoAtiva.turno
-    },
-    update: {
-      voto
+  try {
+    const estado = estadoAtivo.get(sessaoId)
+    if (!estado || !estado.votacaoAtiva || estado.votacaoAtiva.status !== 'ABERTA') {
+      return false
     }
-  })
 
-  logger.info('Voto registrado', {
-    action: 'registrar_voto',
-    sessaoId,
-    parlamentarId,
-    voto
-  })
+    const votoExistente = estado.votacaoAtiva.votosIndividuais.find(v => v.parlamentarId === parlamentarId)
+    if (!votoExistente) {
+      return false
+    }
 
-  return true
+    // Usar transação para garantir atomicidade
+    await prisma.$transaction(async (tx) => {
+      // Persistir no banco primeiro (fonte da verdade)
+      await tx.votacao.upsert({
+        where: {
+          proposicaoId_parlamentarId_turno: {
+            proposicaoId: estado.votacaoAtiva!.proposicaoId,
+            parlamentarId,
+            turno: estado.votacaoAtiva!.turno
+          }
+        },
+        create: {
+          proposicaoId: estado.votacaoAtiva!.proposicaoId,
+          parlamentarId,
+          voto,
+          turno: estado.votacaoAtiva!.turno
+        },
+        update: {
+          voto
+        }
+      })
+    })
+
+    // Atualizar estado em memória após sucesso no banco
+    const votoAnterior = votoExistente.voto
+    votoExistente.voto = voto
+    votoExistente.horaVoto = new Date()
+
+    // Atualizar contagem
+    if (votoAnterior) {
+      estado.votacaoAtiva.votos[votoAnterior.toLowerCase() as 'sim' | 'nao' | 'abstencao']--
+    }
+    estado.votacaoAtiva.votos[voto.toLowerCase() as 'sim' | 'nao' | 'abstencao']++
+
+    logger.info('Voto registrado', {
+      action: 'registrar_voto',
+      sessaoId,
+      parlamentarId,
+      voto
+    })
+
+    return true
+  } catch (error) {
+    logger.error('Erro ao registrar voto', {
+      action: 'registrar_voto_erro',
+      sessaoId,
+      parlamentarId,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    })
+    return false
+  } finally {
+    // Sempre liberar o lock
+    releaseVoteLock(sessaoId, parlamentarId)
+  }
 }
 
 /**
@@ -848,11 +913,51 @@ export async function exportarDadosPainel(sessaoId: string): Promise<{
 }
 
 /**
- * Limpa todos os cronometros e estados (para cleanup)
+ * Limpa estado de uma sessão específica
+ * Use ao finalizar ou cancelar uma sessão para prevenir memory leaks
+ */
+export function limparEstadoSessao(sessaoId: string): void {
+  limparCronometrosSessao(sessaoId)
+  estadoAtivo.delete(sessaoId)
+  logger.info('Estado da sessão limpo', {
+    action: 'limpar_estado_sessao',
+    sessaoId
+  })
+}
+
+/**
+ * Limpa todos os cronometros e estados (para cleanup global)
+ * Use ao desligar o servidor ou em situações de emergência
  */
 export function limparTodosEstados(): void {
-  cronometros.forEach(interval => clearInterval(interval))
+  // Limpar todos os intervals ativos
+  cronometros.forEach((interval, key) => {
+    try {
+      clearInterval(interval)
+    } catch (e) {
+      logger.error('Erro ao limpar cronômetro', { key, error: e })
+    }
+  })
   cronometros.clear()
   estadoAtivo.clear()
-  logger.info('Todos estados limpos', { action: 'limpar_todos_estados' })
+  logger.info('Todos estados limpos', {
+    action: 'limpar_todos_estados',
+    cronometrosLimpos: cronometros.size,
+    sessoesLimpas: estadoAtivo.size
+  })
+}
+
+/**
+ * Retorna estatísticas do serviço (para monitoramento)
+ */
+export function getServiceStats(): {
+  sessoesAtivas: number
+  cronometrosAtivos: number
+  sessaoIds: string[]
+} {
+  return {
+    sessoesAtivas: estadoAtivo.size,
+    cronometrosAtivos: cronometros.size,
+    sessaoIds: Array.from(estadoAtivo.keys())
+  }
 }

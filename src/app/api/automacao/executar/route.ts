@@ -1,24 +1,17 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { automacaoService } from '@/lib/automacao-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 // POST - Executar agendamentos
-export async function POST(request: Request) {
-  try {
-    // Executar todos os agendamentos pendentes
-    automacaoService.executarAgendamentos()
-    
-    return NextResponse.json({ 
-      message: 'Agendamentos executados com sucesso',
-      timestamp: new Date().toISOString()
-    })
-  } catch (error) {
-    console.error('Erro ao executar agendamentos:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+export const POST = withAuth(async (request: NextRequest) => {
+  // Executar todos os agendamentos pendentes
+  automacaoService.executarAgendamentos()
+
+  return NextResponse.json({
+    message: 'Agendamentos executados com sucesso',
+    timestamp: new Date().toISOString()
+  })
+}, { permissions: 'automacao.manage' })
 
 // GET - Verificar próximos agendamentos
 export async function GET() {

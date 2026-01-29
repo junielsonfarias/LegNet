@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { folhaPagamentoDbService } from '@/lib/services/servidores-db-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,11 +29,11 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const PUT = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const body = await request.json()
 
@@ -62,20 +63,15 @@ export async function PUT(
       data: folhaAtualizada,
       message: 'Folha de pagamento atualizada com sucesso'
     })
-  } catch (error) {
-    console.error('Erro ao atualizar folha de pagamento:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const DELETE = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
 
     const folhaExistente = await folhaPagamentoDbService.getById(id)
@@ -92,11 +88,6 @@ export async function DELETE(
       success: true,
       message: 'Folha de pagamento excluida com sucesso'
     })
-  } catch (error) {
-    console.error('Erro ao excluir folha de pagamento:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)

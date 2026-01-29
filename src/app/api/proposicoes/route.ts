@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
-import { 
-  withErrorHandler, 
-  createSuccessResponse, 
+import { authOptions } from '@/lib/auth'
+import {
+  withErrorHandler,
+  createSuccessResponse,
   ValidationError,
   ConflictError,
-  NotFoundError
+  NotFoundError,
+  UnauthorizedError
 } from '@/lib/error-handler'
 
 // Configurar para renderização dinâmica
@@ -101,10 +104,16 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   )
 })
 
-// POST - Criar proposição
+// POST - Criar proposição (requer autenticação)
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  // Verificar autenticação
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    throw new UnauthorizedError('Autenticação necessária para criar proposição')
+  }
+
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = ProposicaoSchema.parse(body)
   

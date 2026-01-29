@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { categoriasPublicacaoService } from '@/lib/categorias-publicacao-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,8 +27,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withAuth(
+  async (request: NextRequest) => {
     const body = await request.json().catch(() => null)
     if (!body || typeof body.nome !== 'string' || !body.nome.trim()) {
       return NextResponse.json(
@@ -48,13 +49,6 @@ export async function POST(request: NextRequest) {
       { success: true, data: categoria, message: 'Categoria criada com sucesso.' },
       { status: 201 }
     )
-  } catch (error) {
-    console.error('Erro ao criar categoria de publicação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao criar categoria.' },
-      { status: 500 }
-    )
-  }
-}
-
-
+  },
+  { permissions: 'publicacao.manage' }
+)

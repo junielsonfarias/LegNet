@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { automacaoService } from '@/lib/automacao-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 // GET - Buscar dados de automação
 export async function GET(request: Request) {
@@ -42,157 +43,133 @@ export async function GET(request: Request) {
 }
 
 // POST - Criar nova regra, template ou agendamento
-export async function POST(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const tipo = searchParams.get('tipo')
-    const data = await request.json()
+export const POST = withAuth(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const tipo = searchParams.get('tipo')
+  const data = await request.json()
 
-    if (tipo === 'regra') {
-      const regra = automacaoService.createRegra(data)
-      return NextResponse.json(regra, { status: 201 })
-    }
-
-    if (tipo === 'template') {
-      const template = automacaoService.createTemplateEmail(data)
-      return NextResponse.json(template, { status: 201 })
-    }
-
-    if (tipo === 'agendamento') {
-      const agendamento = automacaoService.createAgendamentoPauta(data)
-      return NextResponse.json(agendamento, { status: 201 })
-    }
-
-    return NextResponse.json(
-      { message: 'Tipo não especificado' },
-      { status: 400 }
-    )
-  } catch (error) {
-    console.error('Erro ao criar item de automação:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (tipo === 'regra') {
+    const regra = automacaoService.createRegra(data)
+    return NextResponse.json(regra, { status: 201 })
   }
-}
+
+  if (tipo === 'template') {
+    const template = automacaoService.createTemplateEmail(data)
+    return NextResponse.json(template, { status: 201 })
+  }
+
+  if (tipo === 'agendamento') {
+    const agendamento = automacaoService.createAgendamentoPauta(data)
+    return NextResponse.json(agendamento, { status: 201 })
+  }
+
+  return NextResponse.json(
+    { message: 'Tipo não especificado' },
+    { status: 400 }
+  )
+}, { permissions: 'automacao.manage' })
 
 // PUT - Atualizar regra, template ou agendamento
-export async function PUT(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const tipo = searchParams.get('tipo')
-    const id = searchParams.get('id')
-    const data = await request.json()
+export const PUT = withAuth(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const tipo = searchParams.get('tipo')
+  const id = searchParams.get('id')
+  const data = await request.json()
 
-    if (!id) {
-      return NextResponse.json(
-        { message: 'ID é obrigatório' },
-        { status: 400 }
-      )
-    }
-
-    if (tipo === 'regra') {
-      const regra = automacaoService.updateRegra(id, data)
-      if (!regra) {
-        return NextResponse.json(
-          { message: 'Regra não encontrada' },
-          { status: 404 }
-        )
-      }
-      return NextResponse.json(regra)
-    }
-
-    if (tipo === 'template') {
-      const template = automacaoService.updateTemplateEmail(id, data)
-      if (!template) {
-        return NextResponse.json(
-          { message: 'Template não encontrado' },
-          { status: 404 }
-        )
-      }
-      return NextResponse.json(template)
-    }
-
-    if (tipo === 'agendamento') {
-      const agendamento = automacaoService.updateAgendamentoPauta(id, data)
-      if (!agendamento) {
-        return NextResponse.json(
-          { message: 'Agendamento não encontrado' },
-          { status: 404 }
-        )
-      }
-      return NextResponse.json(agendamento)
-    }
-
+  if (!id) {
     return NextResponse.json(
-      { message: 'Tipo não especificado' },
+      { message: 'ID é obrigatório' },
       { status: 400 }
     )
-  } catch (error) {
-    console.error('Erro ao atualizar item de automação:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
   }
-}
+
+  if (tipo === 'regra') {
+    const regra = automacaoService.updateRegra(id, data)
+    if (!regra) {
+      return NextResponse.json(
+        { message: 'Regra não encontrada' },
+        { status: 404 }
+      )
+    }
+    return NextResponse.json(regra)
+  }
+
+  if (tipo === 'template') {
+    const template = automacaoService.updateTemplateEmail(id, data)
+    if (!template) {
+      return NextResponse.json(
+        { message: 'Template não encontrado' },
+        { status: 404 }
+      )
+    }
+    return NextResponse.json(template)
+  }
+
+  if (tipo === 'agendamento') {
+    const agendamento = automacaoService.updateAgendamentoPauta(id, data)
+    if (!agendamento) {
+      return NextResponse.json(
+        { message: 'Agendamento não encontrado' },
+        { status: 404 }
+      )
+    }
+    return NextResponse.json(agendamento)
+  }
+
+  return NextResponse.json(
+    { message: 'Tipo não especificado' },
+    { status: 400 }
+  )
+}, { permissions: 'automacao.manage' })
 
 // DELETE - Deletar regra, template ou agendamento
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const tipo = searchParams.get('tipo')
-    const id = searchParams.get('id')
+export const DELETE = withAuth(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const tipo = searchParams.get('tipo')
+  const id = searchParams.get('id')
 
-    if (!id) {
-      return NextResponse.json(
-        { message: 'ID é obrigatório' },
-        { status: 400 }
-      )
-    }
-
-    if (tipo === 'regra') {
-      const deleted = automacaoService.deleteRegra(id)
-      if (!deleted) {
-        return NextResponse.json(
-          { message: 'Regra não encontrada' },
-          { status: 404 }
-        )
-      }
-      return NextResponse.json({ message: 'Regra deletada com sucesso' })
-    }
-
-    if (tipo === 'template') {
-      const deleted = automacaoService.deleteTemplateEmail(id)
-      if (!deleted) {
-        return NextResponse.json(
-          { message: 'Template não encontrado' },
-          { status: 404 }
-        )
-      }
-      return NextResponse.json({ message: 'Template deletado com sucesso' })
-    }
-
-    if (tipo === 'agendamento') {
-      const deleted = automacaoService.deleteAgendamentoPauta(id)
-      if (!deleted) {
-        return NextResponse.json(
-          { message: 'Agendamento não encontrado' },
-          { status: 404 }
-        )
-      }
-      return NextResponse.json({ message: 'Agendamento deletado com sucesso' })
-    }
-
+  if (!id) {
     return NextResponse.json(
-      { message: 'Tipo não especificado' },
+      { message: 'ID é obrigatório' },
       { status: 400 }
     )
-  } catch (error) {
-    console.error('Erro ao deletar item de automação:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
   }
-}
+
+  if (tipo === 'regra') {
+    const deleted = automacaoService.deleteRegra(id)
+    if (!deleted) {
+      return NextResponse.json(
+        { message: 'Regra não encontrada' },
+        { status: 404 }
+      )
+    }
+    return NextResponse.json({ message: 'Regra deletada com sucesso' })
+  }
+
+  if (tipo === 'template') {
+    const deleted = automacaoService.deleteTemplateEmail(id)
+    if (!deleted) {
+      return NextResponse.json(
+        { message: 'Template não encontrado' },
+        { status: 404 }
+      )
+    }
+    return NextResponse.json({ message: 'Template deletado com sucesso' })
+  }
+
+  if (tipo === 'agendamento') {
+    const deleted = automacaoService.deleteAgendamentoPauta(id)
+    if (!deleted) {
+      return NextResponse.json(
+        { message: 'Agendamento não encontrado' },
+        { status: 404 }
+      )
+    }
+    return NextResponse.json({ message: 'Agendamento deletado com sucesso' })
+  }
+
+  return NextResponse.json(
+    { message: 'Tipo não especificado' },
+    { status: 400 }
+  )
+}, { permissions: 'automacao.manage' })

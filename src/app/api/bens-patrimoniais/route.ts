@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { bensPatrimoniaisDbService } from '@/lib/services/bens-patrimoniais-db-service'
+import { withAuth } from '@/lib/auth/permissions'
 import type { TipoBem, SituacaoBem } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -49,8 +50,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withAuth(
+  async (request: NextRequest) => {
     const body = await request.json()
 
     if (!body.tipo || !body.descricao) {
@@ -82,11 +83,6 @@ export async function POST(request: NextRequest) {
       data: novoBem,
       message: 'Bem patrimonial criado com sucesso'
     }, { status: 201 })
-  } catch (error) {
-    console.error('Erro ao criar bem patrimonial:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)

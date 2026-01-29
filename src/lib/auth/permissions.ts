@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { UnauthorizedError, withErrorHandler } from '@/lib/error-handler'
 import { UserRole } from '@prisma/client'
+import { validateCsrf } from '@/lib/middleware/csrf'
 
 export type Permission =
   | 'config.view'
@@ -31,6 +32,7 @@ export type Permission =
   | 'presenca.manage'
   | 'votacao.manage'
   | 'audit.view'
+  | 'audit.manage'
   | 'integration.manage'
   | 'monitor.view'
   | 'monitor.manage'
@@ -38,6 +40,13 @@ export type Permission =
   | 'publicacao.manage'
   | 'transparencia.view'
   | 'transparencia.manage'
+  | 'financeiro.view'
+  | 'financeiro.manage'
+  | 'upload.manage'
+  | 'automacao.view'
+  | 'automacao.manage'
+  | 'participacao.view'
+  | 'participacao.manage'
 
 type RolePermissions = Record<UserRole, Set<Permission>>
 
@@ -71,13 +80,21 @@ const rolePermissions: RolePermissions = {
     'presenca.manage',
     'votacao.manage',
     'audit.view',
+    'audit.manage',
     'integration.manage',
     'monitor.view',
     'monitor.manage',
     'publicacao.view',
     'publicacao.manage',
     'transparencia.view',
-    'transparencia.manage'
+    'transparencia.manage',
+    'financeiro.view',
+    'financeiro.manage',
+    'upload.manage',
+    'automacao.view',
+    'automacao.manage',
+    'participacao.view',
+    'participacao.manage'
   ]),
   // SECRETARIA: Gestor legislativo (secretário da Câmara)
   // Responsável por: cadastro de proposições, tramitação, pauta, gestão de sessões
@@ -104,14 +121,19 @@ const rolePermissions: RolePermissions = {
     // Publicações e Comunicação
     'publicacao.view',
     'publicacao.manage',
-    // Transparência
+    // Transparência e Financeiro
     'transparencia.view',
     'transparencia.manage',
+    'financeiro.view',
+    'financeiro.manage',
+    // Upload de arquivos
+    'upload.manage',
     // Relatórios
     'relatorio.view',
-    // Monitoramento
+    // Monitoramento e Auditoria
     'monitor.view',
-    // === NOVO: Gestão do Processo Legislativo ===
+    'audit.view',
+    // === Gestão do Processo Legislativo ===
     // Sessões: criar, editar, visualizar (não opera o painel)
     'sessao.view',
     'sessao.manage',
@@ -121,7 +143,10 @@ const rolePermissions: RolePermissions = {
     // Pauta: incluir proposições na pauta, definir momento (leitura/votação)
     'pauta.manage',
     // Painel: apenas visualização (operação é do OPERADOR)
-    'painel.view'
+    'painel.view',
+    // Participação cidadã
+    'participacao.view',
+    'participacao.manage'
   ]),
   EDITOR: buildPermissions([
     'config.view',
@@ -200,6 +225,8 @@ export function hasAnyPermission(role: UserRole, permissions: Permission[]): boo
 interface WithAuthOptions {
   roles?: UserRole[]
   permissions?: Permission | Permission[]
+  /** Se deve pular a validação CSRF (padrão: false) */
+  skipCsrf?: boolean
 }
 
 type AuthHandler = (request: NextRequest, ...args: any[]) => Promise<NextResponse>
@@ -209,6 +236,12 @@ export function withAuth(
   options?: WithAuthOptions
 ) {
   return withErrorHandler(async (request: NextRequest, ...rest: any[]) => {
+    // Validação CSRF para métodos de mutação
+    if (!options?.skipCsrf) {
+      const csrfError = validateCsrf(request)
+      if (csrfError) return csrfError
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user) {

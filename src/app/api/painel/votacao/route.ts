@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import {
   iniciarVotacao,
@@ -15,79 +16,108 @@ import {
 
 export const dynamic = 'force-dynamic'
 
+// Schema de validação para votação
+const VotacaoBaseSchema = z.object({
+  sessaoId: z.string().min(1, 'sessaoId é obrigatório'),
+  acao: z.enum(['iniciar', 'finalizar', 'votar'], {
+    errorMap: () => ({ message: 'Ação inválida. Use: iniciar, finalizar, votar' })
+  })
+})
+
+const VotacaoIniciarSchema = VotacaoBaseSchema.extend({
+  acao: z.literal('iniciar'),
+  proposicaoId: z.string().min(1, 'proposicaoId é obrigatório para iniciar votação'),
+  tempoVotacao: z.number().min(30).max(3600).optional().default(300)
+})
+
+const VotacaoFinalizarSchema = VotacaoBaseSchema.extend({
+  acao: z.literal('finalizar')
+})
+
+const VotacaoVotarSchema = VotacaoBaseSchema.extend({
+  acao: z.literal('votar'),
+  parlamentarId: z.string().min(1, 'parlamentarId é obrigatório'),
+  voto: z.enum(['SIM', 'NAO', 'ABSTENCAO'], {
+    errorMap: () => ({ message: 'Voto inválido. Use: SIM, NAO, ABSTENCAO' })
+  })
+})
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
     if (!session) {
       return NextResponse.json(
-        { error: 'Nao autorizado' },
+        { success: false, error: 'Não autorizado' },
         { status: 401 }
       )
     }
 
     const body = await request.json()
-    const { sessaoId, acao, proposicaoId, parlamentarId, voto, tempoVotacao } = body
 
-    if (!sessaoId || !acao) {
+    // Validação inicial para determinar a ação
+    const baseValidation = VotacaoBaseSchema.safeParse(body)
+    if (!baseValidation.success) {
       return NextResponse.json(
-        { error: 'sessaoId e acao sao obrigatorios' },
+        { success: false, error: baseValidation.error.errors[0].message },
         { status: 400 }
       )
     }
 
+    const { acao, sessaoId } = baseValidation.data
+
     switch (acao) {
-      case 'iniciar':
-        if (!proposicaoId) {
+      case 'iniciar': {
+        const validation = VotacaoIniciarSchema.safeParse(body)
+        if (!validation.success) {
           return NextResponse.json(
-            { error: 'proposicaoId e obrigatorio para iniciar votacao' },
+            { success: false, error: validation.error.errors[0].message },
             { status: 400 }
           )
         }
-        const votacaoIniciada = await iniciarVotacao(sessaoId, proposicaoId, tempoVotacao || 300)
+        const { proposicaoId, tempoVotacao } = validation.data
+        const votacaoIniciada = await iniciarVotacao(sessaoId, proposicaoId, tempoVotacao)
         if (!votacaoIniciada) {
           return NextResponse.json(
-            { error: 'Erro ao iniciar votacao' },
+            { success: false, error: 'Erro ao iniciar votação' },
             { status: 400 }
           )
         }
         return NextResponse.json({
           success: true,
-          message: 'Votacao iniciada com sucesso',
+          message: 'Votação iniciada com sucesso',
           data: votacaoIniciada
         })
+      }
 
-      case 'finalizar':
+      case 'finalizar': {
         const votacaoFinalizada = await finalizarVotacao(sessaoId)
         if (!votacaoFinalizada) {
           return NextResponse.json(
-            { error: 'Nenhuma votacao ativa para finalizar' },
+            { success: false, error: 'Nenhuma votação ativa para finalizar' },
             { status: 400 }
           )
         }
         return NextResponse.json({
           success: true,
-          message: 'Votacao finalizada',
+          message: 'Votação finalizada',
           data: votacaoFinalizada
         })
+      }
 
-      case 'votar':
-        if (!parlamentarId || !voto) {
+      case 'votar': {
+        const validation = VotacaoVotarSchema.safeParse(body)
+        if (!validation.success) {
           return NextResponse.json(
-            { error: 'parlamentarId e voto sao obrigatorios' },
+            { success: false, error: validation.error.errors[0].message },
             { status: 400 }
           )
         }
-        if (!['SIM', 'NAO', 'ABSTENCAO'].includes(voto)) {
-          return NextResponse.json(
-            { error: 'Voto invalido. Use: SIM, NAO, ABSTENCAO' },
-            { status: 400 }
-          )
-        }
+        const { parlamentarId, voto } = validation.data
         const votoRegistrado = await registrarVoto(sessaoId, parlamentarId, voto)
         if (!votoRegistrado) {
           return NextResponse.json(
-            { error: 'Erro ao registrar voto. Votacao pode estar fechada ou parlamentar nao encontrado.' },
+            { success: false, error: 'Erro ao registrar voto. Votação pode estar fechada ou parlamentar não encontrado.' },
             { status: 400 }
           )
         }
@@ -95,17 +125,18 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'Voto registrado com sucesso'
         })
+      }
 
       default:
         return NextResponse.json(
-          { error: 'Acao invalida. Use: iniciar, finalizar, votar' },
+          { success: false, error: 'Ação inválida' },
           { status: 400 }
         )
     }
   } catch (error) {
-    console.error('Erro no controle de votacao:', error)
+    console.error('Erro no controle de votação:', error)
     return NextResponse.json(
-      { error: 'Erro no controle de votacao' },
+      { success: false, error: 'Erro interno no controle de votação' },
       { status: 500 }
     )
   }
@@ -118,7 +149,7 @@ export async function GET(request: NextRequest) {
 
     if (!sessaoId) {
       return NextResponse.json(
-        { error: 'sessaoId e obrigatorio' },
+        { success: false, error: 'sessaoId é obrigatório' },
         { status: 400 }
       )
     }
@@ -130,9 +161,9 @@ export async function GET(request: NextRequest) {
       data: estado?.votacaoAtiva || null
     })
   } catch (error) {
-    console.error('Erro ao buscar votacao:', error)
+    console.error('Erro ao buscar votação:', error)
     return NextResponse.json(
-      { error: 'Erro ao buscar votacao' },
+      { success: false, error: 'Erro ao buscar votação' },
       { status: 500 }
     )
   }

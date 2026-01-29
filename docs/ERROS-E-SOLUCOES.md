@@ -1,7 +1,7 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-01-16
+> **Ultima Atualizacao**: 2026-01-28
 > **Versao Analisada**: 1.0.0
 
 ---
@@ -10,10 +10,124 @@
 
 | Severidade | Quantidade | Status |
 |------------|------------|--------|
-| Critica | 3 | Corrigidos |
-| Alta | 3 | Pendente |
-| Media | 10 | 7 Corrigidos / 3 Pendente |
-| Baixa | 6 | Pendente |
+| Critica | 14 | 14 Corrigidos |
+| Alta | 3 | 3 Corrigidos |
+| Media | 10 | 10 Corrigidos |
+| Baixa | 6 | Pendente (melhorias opcionais) |
+
+### Correções Aplicadas em 2026-01-28 (Lote 2 - Validacao e Auth)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-031 | GET auditoria sem auth | Auth + role check (ADMIN/SECRETARIA) |
+| ERR-032 | GET/POST usuarios sem auth | withAuth com permissions |
+| ERR-033 | parseInt sem validação | Schemas Zod com z.coerce |
+| ERR-034 | Type casting sem validação | z.enum para todos enums |
+
+### Correções Aplicadas em 2026-01-28 (Lote 1 - Segurança Geral)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-021 | POST proposições sem auth | withAuth adicionado |
+| ERR-022 | Votação sem validação Zod | Schemas Zod implementados |
+| ERR-023 | Memory leaks cronômetros | Funções cleanup adicionadas |
+| ERR-024 | 47 endpoints sem auth | withAuth em todos POST/PUT/DELETE |
+| ERR-025 | Sem proteção CSRF | Middleware CSRF implementado |
+| ERR-026 | usePainelSSE re-renders | useRef para callbacks |
+| ERR-027 | Sem Error Boundary | SSEErrorBoundary criado |
+| ERR-028 | Race conditions votação | Locks e transações Prisma |
+| ERR-029 | Query params sem validação | Query schemas Zod criados |
+| ERR-030 | Permissões incompletas | 8 novas permissões adicionadas |
+
+---
+
+## Erros Criticos (Corrigidos em 2026-01-28)
+
+### ERR-021: POST de Proposições sem Autenticação (CORRIGIDO)
+
+**Localizacao**: `src/app/api/proposicoes/route.ts`
+
+**Descricao**: O endpoint POST permitia criar proposições sem verificar autenticação do usuário, permitindo que qualquer pessoa criasse proposições no sistema.
+
+**Impacto**:
+- Vulnerabilidade de segurança grave
+- Possibilidade de spam ou dados maliciosos
+- Violação das regras de negócio (RN-020)
+
+**Solução Aplicada**:
+```typescript
+// Adicionado verificação de sessão no POST
+const session = await getServerSession(authOptions)
+if (!session) {
+  throw new UnauthorizedError('Autenticação necessária para criar proposição')
+}
+```
+
+**Status**: CORRIGIDO - 2026-01-28
+
+---
+
+### ERR-022: Endpoint de Votação sem Validação Zod (CORRIGIDO)
+
+**Localizacao**: `src/app/api/painel/votacao/route.ts`
+
+**Descricao**: O endpoint usava validação manual dos parâmetros, inconsistente com o padrão do projeto que usa Zod schemas.
+
+**Impacto**:
+- Validação inconsistente
+- Possibilidade de dados malformados
+- Dificuldade de manutenção
+
+**Solução Aplicada**:
+```typescript
+// Schemas Zod criados para validação
+const VotacaoBaseSchema = z.object({
+  sessaoId: z.string().min(1),
+  acao: z.enum(['iniciar', 'finalizar', 'votar'])
+})
+
+const VotacaoIniciarSchema = VotacaoBaseSchema.extend({
+  acao: z.literal('iniciar'),
+  proposicaoId: z.string().min(1),
+  tempoVotacao: z.number().min(30).max(3600).optional().default(300)
+})
+```
+
+**Status**: CORRIGIDO - 2026-01-28
+
+---
+
+### ERR-023: Memory Leaks em painel-tempo-real-service.ts (CORRIGIDO)
+
+**Localizacao**: `src/lib/services/painel-tempo-real-service.ts`
+
+**Descricao**: O serviço criava intervals para cronômetros mas não tinha cleanup adequado quando sessões eram finalizadas ou o servidor era reiniciado.
+
+**Impacto**:
+- Memory leaks em ambiente de longa execução
+- Intervals órfãos consumindo recursos
+- Problemas em ambiente serverless
+
+**Solução Aplicada**:
+```typescript
+// Função de cleanup por sessão adicionada
+function limparCronometrosSessao(sessaoId: string): void {
+  const prefixos = ['sessao-', 'votacao-', 'item-', 'discurso-']
+  for (const prefixo of prefixos) {
+    const cronometroId = `${prefixo}${sessaoId}`
+    if (cronometros.has(cronometroId)) {
+      clearInterval(cronometros.get(cronometroId)!)
+      cronometros.delete(cronometroId)
+    }
+  }
+}
+
+// Funções exportadas para monitoramento
+export function limparEstadoSessao(sessaoId: string): void
+export function getServiceStats(): { sessoesAtivas, cronometrosAtivos, sessaoIds }
+```
+
+**Status**: CORRIGIDO - 2026-01-28
 
 ---
 
@@ -65,6 +179,106 @@
 **Descricao**: Estados de formulario usando `as const` criavam tipos literais muito restritivos, impedindo atribuicao de outros valores validos.
 
 **Status**: CORRIGIDO - Tipos expandidos para incluir todas as opcoes validas
+
+---
+
+### ERR-031: GET /api/auditoria sem Autenticacao (CORRIGIDO)
+
+**Localizacao**: `src/app/api/auditoria/route.ts`
+
+**Descricao**: O endpoint GET de auditoria nao exigia autenticacao, expondo logs sensiveis de acoes do sistema para qualquer pessoa.
+
+**Impacto**:
+- Vazamento de informacoes sensiveis (IPs, usuarios, acoes)
+- Violacao de privacidade
+- Potencial auxilio para ataques
+
+**Solucao Aplicada**:
+```typescript
+export async function GET(request: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json(
+      { success: false, error: 'Autenticacao necessaria' },
+      { status: 401 }
+    )
+  }
+  const role = session.user?.role
+  if (role !== 'ADMIN' && role !== 'SECRETARIA') {
+    return NextResponse.json(
+      { success: false, error: 'Permissao negada' },
+      { status: 403 }
+    )
+  }
+  // ... validacao Zod dos parametros
+}
+```
+
+**Status**: CORRIGIDO - 2026-01-28
+
+---
+
+### ERR-032: GET/POST /api/usuarios sem Autenticacao (CORRIGIDO)
+
+**Localizacao**: `src/app/api/usuarios/route.ts`
+
+**Descricao**: Os endpoints de usuarios permitiam listar todos os usuarios e criar novos sem autenticacao.
+
+**Impacto**:
+- Criacao de usuarios nao autorizada
+- Escalacao de privilegios
+- Exposicao de dados de usuarios
+
+**Solucao Aplicada**:
+```typescript
+export const GET = withAuth(async (request: NextRequest) => {
+  // ... validacao Zod
+}, { permissions: 'user.view' })
+
+export const POST = withAuth(async (request: NextRequest) => {
+  // ... criacao de usuario
+}, { permissions: 'user.manage' })
+```
+
+**Status**: CORRIGIDO - 2026-01-28
+
+---
+
+### ERR-033: parseInt sem Validacao em Endpoints Financeiros (CORRIGIDO)
+
+**Localizacao**:
+- `src/app/api/despesas/route.ts`
+- `src/app/api/receitas/route.ts`
+- `src/app/api/contratos/route.ts`
+- `src/app/api/licitacoes/route.ts`
+
+**Descricao**: Uso de parseInt diretamente em query params sem validacao de limites ou tratamento de NaN.
+
+**Impacto**:
+- Valores invalidos aceitos (NaN)
+- Paginacao negativa ou excessiva
+- Possiveis crashes ou dados incorretos
+
+**Solucao Aplicada**: Schemas Zod com z.coerce.number().int().min().max()
+
+**Status**: CORRIGIDO - 2026-01-28
+
+---
+
+### ERR-034: Type Casting sem Validacao (CORRIGIDO)
+
+**Localizacao**: Varios endpoints usando `as SituacaoDespesa`, `as ModalidadeLicitacao`, etc.
+
+**Descricao**: Uso de `as` para type casting de query params sem validar se o valor e um enum valido.
+
+**Impacto**:
+- Bypass de tipagem TypeScript
+- Valores invalidos aceitos no runtime
+- Erros de banco de dados
+
+**Solucao Aplicada**: Schemas Zod com z.enum(['VALOR1', 'VALOR2', ...])
+
+**Status**: CORRIGIDO - 2026-01-28
 
 ---
 

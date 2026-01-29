@@ -1,21 +1,74 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { getServerSession } from 'next-auth'
 import { auditoriaService } from '@/lib/auditoria-service'
+import { withAuth } from '@/lib/auth/permissions'
+import { authOptions } from '@/lib/auth'
 
-// GET - Buscar eventos de auditoria
+// Schema para validação de query params
+const AuditoriaQuerySchema = z.object({
+  tipo: z.enum(['eventos', 'recentes', 'erros', 'usuario', 'suspeitos', 'estatisticas', 'relatorios', 'export']).optional(),
+  limite: z.coerce.number().int().min(1).max(1000).default(50),
+  formato: z.enum(['json', 'csv']).default('json'),
+  dataInicio: z.string().datetime().optional(),
+  dataFim: z.string().datetime().optional(),
+  usuarioId: z.string().optional(),
+  acao: z.string().optional(),
+  entidade: z.string().optional(),
+  entidadeId: z.string().optional(),
+  sucesso: z.coerce.boolean().optional(),
+  ip: z.string().optional()
+})
+
+// GET - Buscar eventos de auditoria (REQUER AUTENTICAÇÃO - dados sensíveis)
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const tipo = searchParams.get('tipo')
-    const dataInicio = searchParams.get('dataInicio')
-    const dataFim = searchParams.get('dataFim')
-    const usuarioId = searchParams.get('usuarioId')
-    const acao = searchParams.get('acao')
-    const entidade = searchParams.get('entidade')
-    const entidadeId = searchParams.get('entidadeId')
-    const sucesso = searchParams.get('sucesso')
-    const ip = searchParams.get('ip')
+    // Verificar autenticação - auditoria contém dados sensíveis
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Autenticação necessária para acessar auditoria' },
+        { status: 401 }
+      )
+    }
 
-    const filtros: any = {}
+    // Verificar se é ADMIN ou SECRETARIA (únicos que podem ver auditoria)
+    const role = session.user?.role
+    if (role !== 'ADMIN' && role !== 'SECRETARIA') {
+      return NextResponse.json(
+        { success: false, error: 'Permissão negada para acessar auditoria' },
+        { status: 403 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+
+    // Validar parâmetros com Zod
+    const params: Record<string, string> = {}
+    searchParams.forEach((value, key) => {
+      params[key] = value
+    })
+
+    const validation = AuditoriaQuerySchema.safeParse(params)
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: 'Parâmetros inválidos', details: validation.error.errors },
+        { status: 400 }
+      )
+    }
+
+    const { tipo, limite, formato, dataInicio, dataFim, usuarioId, acao, entidade, entidadeId, sucesso, ip } = validation.data
+
+    const filtros: {
+      dataInicio?: Date
+      dataFim?: Date
+      usuarioId?: string
+      acao?: string
+      entidade?: string
+      entidadeId?: string
+      sucesso?: boolean
+      ip?: string
+    } = {}
 
     if (dataInicio) filtros.dataInicio = new Date(dataInicio)
     if (dataFim) filtros.dataFim = new Date(dataFim)
@@ -23,235 +76,223 @@ export async function GET(request: Request) {
     if (acao) filtros.acao = acao
     if (entidade) filtros.entidade = entidade
     if (entidadeId) filtros.entidadeId = entidadeId
-    if (sucesso !== null) filtros.sucesso = sucesso === 'true'
+    if (sucesso !== undefined) filtros.sucesso = sucesso
     if (ip) filtros.ip = ip
 
     if (tipo === 'eventos') {
       const eventos = auditoriaService.getEventos(filtros)
-      return NextResponse.json(eventos)
+      return NextResponse.json({ success: true, data: eventos })
     }
 
     if (tipo === 'recentes') {
-      const limite = parseInt(searchParams.get('limite') || '50')
       const eventos = auditoriaService.getEventosRecentes(limite)
-      return NextResponse.json(eventos)
+      return NextResponse.json({ success: true, data: eventos })
     }
 
     if (tipo === 'erros') {
-      const limite = parseInt(searchParams.get('limite') || '20')
       const eventos = auditoriaService.getEventosComErro(limite)
-      return NextResponse.json(eventos)
+      return NextResponse.json({ success: true, data: eventos })
     }
 
     if (tipo === 'usuario') {
-      const limite = parseInt(searchParams.get('limite') || '20')
-      const eventos = auditoriaService.getAtividadeUsuario(filtros.usuarioId!, limite)
-      return NextResponse.json(eventos)
+      if (!filtros.usuarioId) {
+        return NextResponse.json(
+          { success: false, error: 'usuarioId é obrigatório para tipo=usuario' },
+          { status: 400 }
+        )
+      }
+      const eventos = auditoriaService.getAtividadeUsuario(filtros.usuarioId, limite)
+      return NextResponse.json({ success: true, data: eventos })
     }
 
     if (tipo === 'suspeitos') {
       const eventos = auditoriaService.detectarAtividadeSuspeita()
-      return NextResponse.json(eventos)
+      return NextResponse.json({ success: true, data: eventos })
     }
 
     if (tipo === 'estatisticas') {
       const estatisticas = auditoriaService.gerarEstatisticas(filtros)
-      return NextResponse.json(estatisticas)
+      return NextResponse.json({ success: true, data: estatisticas })
     }
 
     if (tipo === 'relatorios') {
       const relatorios = auditoriaService.getAllRelatorios()
-      return NextResponse.json(relatorios)
+      return NextResponse.json({ success: true, data: relatorios })
     }
 
     if (tipo === 'export') {
-      const formato = searchParams.get('formato') as 'json' | 'csv' || 'json'
       const dados = auditoriaService.exportarEventos(filtros, formato)
-      
+
       const headers = new Headers()
       headers.set('Content-Type', formato === 'csv' ? 'text/csv' : 'application/json')
       headers.set('Content-Disposition', `attachment; filename=auditoria_${new Date().toISOString().split('T')[0]}.${formato}`)
-      
+
       return new Response(dados, { headers })
     }
 
-    // Retorna todos os eventos se não especificado
-    const eventos = auditoriaService.getAllEventos()
-    return NextResponse.json(eventos)
+    // Retorna eventos recentes com paginação por padrão (nunca retorna TODOS)
+    const eventos = auditoriaService.getEventosRecentes(limite)
+    return NextResponse.json({ success: true, data: eventos })
   } catch (error) {
     console.error('Erro ao buscar dados de auditoria:', error)
     return NextResponse.json(
-      { message: 'Erro interno do servidor' },
+      { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
 }
 
 // POST - Registrar novo evento ou criar relatório
-export async function POST(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const tipo = searchParams.get('tipo')
-    const data = await request.json()
+export const POST = withAuth(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const tipo = searchParams.get('tipo')
+  const data = await request.json()
 
-    if (tipo === 'evento') {
-      const evento = auditoriaService.registrarEvento(data)
-      return NextResponse.json(evento, { status: 201 })
-    }
-
-    if (tipo === 'login') {
-      const evento = auditoriaService.registrarLogin(
-        data.usuarioId,
-        data.usuarioNome,
-        data.sucesso,
-        data.ip,
-        data.userAgent,
-        data.erro
-      )
-      return NextResponse.json(evento, { status: 201 })
-    }
-
-    if (tipo === 'logout') {
-      const evento = auditoriaService.registrarLogout(
-        data.usuarioId,
-        data.usuarioNome,
-        data.ip,
-        data.userAgent
-      )
-      return NextResponse.json(evento, { status: 201 })
-    }
-
-    if (tipo === 'criacao') {
-      const evento = auditoriaService.registrarCriacao(
-        data.usuarioId,
-        data.usuarioNome,
-        data.entidade,
-        data.entidadeId,
-        data.dados,
-        data.ip,
-        data.userAgent
-      )
-      return NextResponse.json(evento, { status: 201 })
-    }
-
-    if (tipo === 'atualizacao') {
-      const evento = auditoriaService.registrarAtualizacao(
-        data.usuarioId,
-        data.usuarioNome,
-        data.entidade,
-        data.entidadeId,
-        data.dadosAnteriores,
-        data.dadosNovos,
-        data.ip,
-        data.userAgent
-      )
-      return NextResponse.json(evento, { status: 201 })
-    }
-
-    if (tipo === 'exclusao') {
-      const evento = auditoriaService.registrarExclusao(
-        data.usuarioId,
-        data.usuarioNome,
-        data.entidade,
-        data.entidadeId,
-        data.dadosAnteriores,
-        data.ip,
-        data.userAgent
-      )
-      return NextResponse.json(evento, { status: 201 })
-    }
-
-    if (tipo === 'erro') {
-      const evento = auditoriaService.registrarErro(
-        data.usuarioId,
-        data.usuarioNome,
-        data.acao,
-        data.entidade,
-        data.entidadeId,
-        data.erro,
-        data.ip,
-        data.userAgent
-      )
-      return NextResponse.json(evento, { status: 201 })
-    }
-
-    if (tipo === 'relatorio') {
-      const relatorio = auditoriaService.criarRelatorio(
-        data.nome,
-        data.descricao,
-        data.filtros,
-        data.geradoPor
-      )
-      return NextResponse.json(relatorio, { status: 201 })
-    }
-
-    return NextResponse.json(
-      { message: 'Tipo não especificado' },
-      { status: 400 }
-    )
-  } catch (error) {
-    console.error('Erro ao processar evento de auditoria:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (tipo === 'evento') {
+    const evento = auditoriaService.registrarEvento(data)
+    return NextResponse.json({ success: true, data: evento }, { status: 201 })
   }
-}
+
+  if (tipo === 'login') {
+    const evento = auditoriaService.registrarLogin(
+      data.usuarioId,
+      data.usuarioNome,
+      data.sucesso,
+      data.ip,
+      data.userAgent,
+      data.erro
+    )
+    return NextResponse.json({ success: true, data: evento }, { status: 201 })
+  }
+
+  if (tipo === 'logout') {
+    const evento = auditoriaService.registrarLogout(
+      data.usuarioId,
+      data.usuarioNome,
+      data.ip,
+      data.userAgent
+    )
+    return NextResponse.json({ success: true, data: evento }, { status: 201 })
+  }
+
+  if (tipo === 'criacao') {
+    const evento = auditoriaService.registrarCriacao(
+      data.usuarioId,
+      data.usuarioNome,
+      data.entidade,
+      data.entidadeId,
+      data.dados,
+      data.ip,
+      data.userAgent
+    )
+    return NextResponse.json({ success: true, data: evento }, { status: 201 })
+  }
+
+  if (tipo === 'atualizacao') {
+    const evento = auditoriaService.registrarAtualizacao(
+      data.usuarioId,
+      data.usuarioNome,
+      data.entidade,
+      data.entidadeId,
+      data.dadosAnteriores,
+      data.dadosNovos,
+      data.ip,
+      data.userAgent
+    )
+    return NextResponse.json({ success: true, data: evento }, { status: 201 })
+  }
+
+  if (tipo === 'exclusao') {
+    const evento = auditoriaService.registrarExclusao(
+      data.usuarioId,
+      data.usuarioNome,
+      data.entidade,
+      data.entidadeId,
+      data.dadosAnteriores,
+      data.ip,
+      data.userAgent
+    )
+    return NextResponse.json({ success: true, data: evento }, { status: 201 })
+  }
+
+  if (tipo === 'erro') {
+    const evento = auditoriaService.registrarErro(
+      data.usuarioId,
+      data.usuarioNome,
+      data.acao,
+      data.entidade,
+      data.entidadeId,
+      data.erro,
+      data.ip,
+      data.userAgent
+    )
+    return NextResponse.json({ success: true, data: evento }, { status: 201 })
+  }
+
+  if (tipo === 'relatorio') {
+    const relatorio = auditoriaService.criarRelatorio(
+      data.nome,
+      data.descricao,
+      data.filtros,
+      data.geradoPor
+    )
+    return NextResponse.json({ success: true, data: relatorio }, { status: 201 })
+  }
+
+  return NextResponse.json(
+    { success: false, error: 'Tipo não especificado' },
+    { status: 400 }
+  )
+}, { permissions: 'audit.manage' })
 
 // PUT - Atualizar relatório
-export async function PUT(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-    const data = await request.json()
+export const PUT = withAuth(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+  const data = await request.json()
 
-    if (!id) {
-      return NextResponse.json(
-        { message: 'ID é obrigatório' },
-        { status: 400 }
-      )
-    }
-
-    const relatorio = auditoriaService.atualizarStatusRelatorio(
-      id,
-      data.status,
-      data.arquivo
-    )
-
-    if (!relatorio) {
-      return NextResponse.json(
-        { message: 'Relatório não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(relatorio)
-  } catch (error) {
-    console.error('Erro ao atualizar relatório:', error)
+  if (!id) {
     return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
+      { success: false, error: 'ID é obrigatório' },
+      { status: 400 }
     )
   }
-}
+
+  const relatorio = auditoriaService.atualizarStatusRelatorio(
+    id,
+    data.status,
+    data.arquivo
+  )
+
+  if (!relatorio) {
+    return NextResponse.json(
+      { success: false, error: 'Relatório não encontrado' },
+      { status: 404 }
+    )
+  }
+
+  return NextResponse.json({ success: true, data: relatorio })
+}, { permissions: 'audit.manage' })
 
 // DELETE - Limpar eventos antigos
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const dias = parseInt(searchParams.get('dias') || '90')
+export const DELETE = withAuth(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const diasParam = searchParams.get('dias')
 
-    const eventosRemovidos = auditoriaService.limparEventosAntigos(dias)
-    
-    return NextResponse.json({
-      message: `${eventosRemovidos} eventos antigos removidos`,
-      eventosRemovidos
-    })
-  } catch (error) {
-    console.error('Erro ao limpar eventos antigos:', error)
+  // Validar parâmetro dias
+  const dias = diasParam ? parseInt(diasParam, 10) : 90
+  if (isNaN(dias) || dias < 1 || dias > 365) {
     return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
+      { success: false, error: 'dias deve ser um número entre 1 e 365' },
+      { status: 400 }
     )
   }
-}
+
+  const eventosRemovidos = auditoriaService.limparEventosAntigos(dias)
+
+  return NextResponse.json({
+    success: true,
+    message: `${eventosRemovidos} eventos antigos removidos`,
+    eventosRemovidos
+  })
+}, { permissions: 'audit.manage' })

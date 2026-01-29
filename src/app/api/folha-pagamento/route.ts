@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { folhaPagamentoDbService } from '@/lib/services/servidores-db-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,8 +41,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withAuth(
+  async (request: NextRequest) => {
     const body = await request.json()
 
     if (!body.competencia || !body.mes || !body.ano) {
@@ -69,11 +70,6 @@ export async function POST(request: NextRequest) {
       data: novaFolha,
       message: 'Folha de pagamento criada com sucesso'
     }, { status: 201 })
-  } catch (error) {
-    console.error('Erro ao criar folha de pagamento:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { despesasDbService } from '@/lib/services/despesas-db-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,11 +29,11 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const PUT = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const body = await request.json()
 
@@ -74,20 +75,15 @@ export async function PUT(
       data: despesaAtualizada,
       message: 'Despesa atualizada com sucesso'
     })
-  } catch (error) {
-    console.error('Erro ao atualizar despesa:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const DELETE = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
 
     const despesaExistente = await despesasDbService.getById(id)
@@ -104,11 +100,6 @@ export async function DELETE(
       success: true,
       message: 'Despesa excluida com sucesso'
     })
-  } catch (error) {
-    console.error('Erro ao excluir despesa:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)

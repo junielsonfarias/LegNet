@@ -2417,6 +2417,209 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-28 - Autenticacao nos Endpoints de Publicacoes e Participacao Cidada
+
+**Objetivo**: Adicionar autenticacao com withAuth nos endpoints POST, PUT, PATCH e DELETE de publicacoes e participacao cidada
+
+**Arquivos Modificados**:
+
+1. **src/app/api/publicacoes/[id]/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido PUT com `withAuth(..., { permissions: 'publicacao.manage' })`
+   - Envolvido PATCH com `withAuth(..., { permissions: 'publicacao.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'publicacao.manage' })`
+   - GET mantido publico (dados de publicacao sao publicos)
+
+2. **src/app/api/publicacoes/categorias/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'publicacao.manage' })`
+   - GET mantido publico (categorias sao dados publicos)
+
+3. **src/app/api/publicacoes/categorias/[id]/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido PUT com `withAuth(..., { permissions: 'publicacao.manage' })`
+   - Envolvido PATCH com `withAuth(..., { permissions: 'publicacao.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'publicacao.manage' })`
+   - GET mantido publico
+
+4. **src/app/api/participacao-cidada/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'participacao.manage' })`
+   - Envolvido PUT com `withAuth(..., { permissions: 'participacao.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'participacao.manage' })`
+   - GET mantido publico (dados de participacao cidada sao publicos)
+
+**Padrao Aplicado**:
+```typescript
+export const POST = withAuth(async (request: NextRequest) => {
+  // ... logica do endpoint
+}, { permissions: 'xxx.manage' })
+```
+
+**Status**: Concluido - 4 arquivos corrigidos
+
+---
+
+### 2026-01-28 - Autenticacao nos Endpoints de Upload, Auditoria e Automacao
+
+**Objetivo**: Adicionar autenticacao com withAuth nos endpoints POST, PUT e DELETE de upload, auditoria e automacao
+
+**Arquivos Modificados**:
+
+1. **src/app/api/upload/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'upload.manage' })`
+
+2. **src/app/api/auditoria/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'audit.manage' })`
+   - Envolvido PUT com `withAuth(..., { permissions: 'audit.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'audit.manage' })`
+   - GET mantido publico
+
+3. **src/app/api/automacao/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'automacao.manage' })`
+   - Envolvido PUT com `withAuth(..., { permissions: 'automacao.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'automacao.manage' })`
+   - GET mantido publico
+
+4. **src/app/api/automacao/executar/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'automacao.manage' })`
+   - GET mantido publico
+
+**Padrao Aplicado**:
+```typescript
+export const POST = withAuth(async (request: NextRequest) => {
+  // ... logica do endpoint
+}, { permissions: 'xxx.manage' })
+```
+
+**Status**: Concluido - 4 arquivos corrigidos
+
+---
+
+### 2026-01-28 - Autenticacao nos Endpoints de Contratos e Licitacoes
+
+**Objetivo**: Adicionar autenticacao com withAuth nos endpoints POST, PUT e DELETE de contratos e licitacoes
+
+**Arquivos Modificados**:
+
+1. **src/app/api/contratos/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+2. **src/app/api/contratos/[id]/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido PUT com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+3. **src/app/api/licitacoes/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+4. **src/app/api/licitacoes/[id]/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido PUT com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+**Padrao Aplicado**:
+```typescript
+export const POST = withAuth(async (request: NextRequest) => {
+  // ... logica do endpoint
+}, { permissions: 'financeiro.manage' })
+```
+
+**Status**: Concluido - 4 arquivos corrigidos
+
+---
+
+### 2026-01-28 - Autenticacao nos Endpoints de Receitas e Convenios
+
+**Objetivo**: Adicionar autenticacao com withAuth nos endpoints POST, PUT e DELETE de receitas e convenios
+
+**Arquivos Modificados**:
+
+1. **src/app/api/receitas/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+2. **src/app/api/receitas/[id]/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido PUT com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+3. **src/app/api/convenios/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido POST com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+4. **src/app/api/convenios/[id]/route.ts**
+   - Importado `withAuth` de `@/lib/auth/permissions`
+   - Envolvido PUT com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - Envolvido DELETE com `withAuth(..., { permissions: 'financeiro.manage' })`
+   - GET mantido publico (dados de transparencia)
+
+**Padrao Aplicado**:
+```typescript
+export const POST = withAuth(async (request: NextRequest) => {
+  // ... logica do endpoint
+}, { permissions: 'financeiro.manage' })
+```
+
+**Status**: Concluido - 4 arquivos corrigidos
+
+---
+
+### 2026-01-28 - Correcoes de Segurança e Qualidade
+
+**Objetivo**: Corrigir vulnerabilidades críticas identificadas na análise do código
+
+**Problemas Identificados**:
+
+| Severidade | Quantidade | Descrição |
+|------------|------------|-----------|
+| CRÍTICO | 10 | Memory leaks, autenticação ausente, CSRF |
+| ALTO | 15 | Type safety, validação Zod ausente |
+| MÉDIO | 12 | Hooks sem cleanup, código duplicado |
+| BAIXO | 5 | Otimizações de performance |
+
+**Correções Aplicadas**:
+
+1. **ERR-021: Autenticação no POST de Proposições**
+   - Arquivo: `src/app/api/proposicoes/route.ts`
+   - Adicionado `getServerSession` antes de criar proposição
+   - Importado `UnauthorizedError` para tratamento adequado
+
+2. **ERR-022: Validação Zod no Endpoint de Votação**
+   - Arquivo: `src/app/api/painel/votacao/route.ts`
+   - Criados schemas: `VotacaoBaseSchema`, `VotacaoIniciarSchema`, `VotacaoVotarSchema`
+   - Substituída validação manual por validação Zod estruturada
+
+3. **ERR-023: Memory Leaks no Painel Tempo Real**
+   - Arquivo: `src/lib/services/painel-tempo-real-service.ts`
+   - Adicionada função `limparCronometrosSessao(sessaoId)`
+   - Adicionada função `limparEstadoSessao(sessaoId)`
+   - Adicionada função `getServiceStats()` para monitoramento
+   - Atualizado `finalizarSessao` para usar cleanup centralizado
+
+**Arquivos Modificados**:
+- `src/app/api/proposicoes/route.ts`
+- `src/app/api/painel/votacao/route.ts`
+- `src/lib/services/painel-tempo-real-service.ts`
+- `docs/ERROS-E-SOLUCOES.md` (documentação das correções)
+
+**Status**: 3 correções críticas aplicadas, sistema mais seguro
+
+---
+
 ### 2026-01-28 - Criacao de Skills de Referencia
 
 **Objetivo**: Criar documentacao especializada por modulo para facilitar consulta e implementacao
@@ -3911,6 +4114,59 @@ votacao.manage    -> Gerenciar votacoes
   - Funcao `carregarDados` recebe parametro `isInitialLoad`
 - **Arquivo modificado**: `src/app/painel-publico/page.tsx`
 - **Build verificado**: Compilado com sucesso
+
+### 2026-01-28 - Seguranca: Validacao de Entrada e Autenticacao
+
+- **Problemas corrigidos**:
+  - GET /api/auditoria sem autenticacao (dados sensiveis expostos)
+  - GET/POST /api/usuarios sem autenticacao (criacao de usuarios por qualquer pessoa)
+  - parseInt sem validacao em 40+ endpoints (possivel NaN ou valores invalidos)
+  - Type casting `as SituacaoDespesa` sem validacao (bypass de tipagem)
+
+- **Solucoes implementadas**:
+
+  1. **Auditoria protegida** (`src/app/api/auditoria/route.ts`):
+     - Adicionada autenticacao obrigatoria no GET
+     - Verificacao de role (apenas ADMIN e SECRETARIA)
+     - Validacao Zod para todos os query params
+     - Paginacao por padrao (nunca retorna todos os registros)
+
+  2. **Usuarios protegido** (`src/app/api/usuarios/route.ts`):
+     - GET requer permissao `user.view`
+     - POST requer permissao `user.manage`
+     - Adicionado schema Zod para validacao
+     - Incluido role SECRETARIA no schema
+
+  3. **Endpoints financeiros com Zod** (despesas, receitas, contratos, licitacoes):
+     - `src/app/api/despesas/route.ts`
+     - `src/app/api/receitas/route.ts`
+     - `src/app/api/contratos/route.ts`
+     - `src/app/api/licitacoes/route.ts`
+     - Validacao de enums (situacao, modalidade, categoria)
+     - Validacao de limites (page, limit, ano, mes)
+     - Validacao de valores financeiros (min/max)
+
+  4. **Busca global validada** (`src/app/api/busca/route.ts`):
+     - Schema Zod completo
+     - Validacao de tipos de busca
+     - Limite maximo de resultados
+
+  5. **Utilitarios de validacao** (`src/lib/validation/query-schemas.ts`):
+     - Adicionados novos schemas: ContratoQuerySchema, LicitacaoQuerySchema, etc.
+     - Funcao `safeParseInt()` para parseInt seguro
+     - Funcao `extractPaginationParams()` para paginacao padronizada
+
+- **Arquivos modificados**:
+  - `src/app/api/auditoria/route.ts`
+  - `src/app/api/usuarios/route.ts`
+  - `src/app/api/despesas/route.ts`
+  - `src/app/api/receitas/route.ts`
+  - `src/app/api/contratos/route.ts`
+  - `src/app/api/licitacoes/route.ts`
+  - `src/app/api/busca/route.ts`
+  - `src/lib/validation/query-schemas.ts`
+
+- **Impacto de seguranca**: CRITICO - Corrigidas vulnerabilidades de acesso nao autorizado
 
 ---
 

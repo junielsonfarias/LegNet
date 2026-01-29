@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { publicacoesService } from '@/lib/publicacoes-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,8 +24,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
+export const PUT = withAuth(
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
     const body = await request.json().catch(() => null)
     if (!body) {
       return NextResponse.json(
@@ -39,17 +40,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       data: publicacao,
       message: 'Publicação atualizada com sucesso.'
     })
-  } catch (error) {
-    console.error('Erro ao atualizar publicação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao atualizar publicação.' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'publicacao.manage' }
+)
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
+export const PATCH = withAuth(
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
     const body = await request.json().catch(() => null)
     if (!body) {
       return NextResponse.json(
@@ -64,30 +60,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       data: publicacao,
       message: 'Publicação atualizada com sucesso.'
     })
-  } catch (error) {
-    console.error('Erro ao atualizar publicação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao atualizar publicação.' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'publicacao.manage' }
+)
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  try {
+export const DELETE = withAuth(
+  async (_request: NextRequest, { params }: { params: { id: string } }) => {
     await publicacoesService.remove(params.id)
     return NextResponse.json({
       success: true,
       data: { removed: true },
       message: 'Publicação removida com sucesso.'
     })
-  } catch (error) {
-    console.error('Erro ao remover publicação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao remover publicação.' },
-      { status: 500 }
-    )
-  }
-}
-
-
+  },
+  { permissions: 'publicacao.manage' }
+)

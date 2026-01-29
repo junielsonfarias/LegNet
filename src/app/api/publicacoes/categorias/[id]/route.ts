@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { categoriasPublicacaoService } from '@/lib/categorias-publicacao-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,8 +24,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
+export const PUT = withAuth(
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
     const body = await request.json().catch(() => null)
     if (!body) {
       return NextResponse.json(
@@ -46,17 +47,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       data: categoria,
       message: 'Categoria atualizada com sucesso.'
     })
-  } catch (error) {
-    console.error('Erro ao atualizar categoria de publicação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao atualizar categoria.' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'publicacao.manage' }
+)
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
+export const PATCH = withAuth(
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
     const body = await request.json().catch(() => null)
     if (!body || typeof body.ativa !== 'boolean') {
       return NextResponse.json(
@@ -71,30 +67,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       data: categoria,
       message: body.ativa ? 'Categoria ativada.' : 'Categoria desativada.'
     })
-  } catch (error) {
-    console.error('Erro ao alterar status da categoria:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao alterar status da categoria.' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'publicacao.manage' }
+)
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  try {
+export const DELETE = withAuth(
+  async (_request: NextRequest, { params }: { params: { id: string } }) => {
     await categoriasPublicacaoService.remove(params.id)
     return NextResponse.json({
       success: true,
       data: { removed: true },
       message: 'Categoria removida com sucesso.'
     })
-  } catch (error) {
-    console.error('Erro ao remover categoria de publicação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao remover categoria.' },
-      { status: 500 }
-    )
-  }
-}
-
-
+  },
+  { permissions: 'publicacao.manage' }
+)

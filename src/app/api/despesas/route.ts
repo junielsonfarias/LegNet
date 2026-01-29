@@ -1,41 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { despesasDbService } from '@/lib/services/despesas-db-service'
-import type { SituacaoDespesa } from '@prisma/client'
+import { withAuth } from '@/lib/auth/permissions'
+import { safeParseQueryParams } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
+
+// Schema de validação para query params de despesas
+// Enums devem corresponder ao schema Prisma
+const DespesaQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  situacao: z.enum(['EMPENHADA', 'LIQUIDADA', 'PAGA', 'ANULADA', 'PARCIALMENTE_PAGA']).optional(),
+  ano: z.coerce.number().int().min(2000).max(2100).optional(),
+  mes: z.coerce.number().int().min(1).max(12).optional(),
+  credor: z.string().optional(),
+  elemento: z.string().optional(),
+  funcao: z.string().optional(),
+  programa: z.string().optional(),
+  licitacaoId: z.string().optional(),
+  contratoId: z.string().optional(),
+  convenioId: z.string().optional(),
+  valorMinimo: z.coerce.number().min(0).optional(),
+  valorMaximo: z.coerce.number().min(0).optional()
+}).refine(
+  data => !data.valorMinimo || !data.valorMaximo || data.valorMinimo <= data.valorMaximo,
+  { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
+)
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const situacao = searchParams.get('situacao') as SituacaoDespesa | null
-    const ano = searchParams.get('ano')
-    const mes = searchParams.get('mes')
-    const credor = searchParams.get('credor')
-    const elemento = searchParams.get('elemento')
-    const funcao = searchParams.get('funcao')
-    const programa = searchParams.get('programa')
-    const licitacaoId = searchParams.get('licitacaoId')
-    const contratoId = searchParams.get('contratoId')
-    const convenioId = searchParams.get('convenioId')
-    const valorMinimo = searchParams.get('valorMinimo')
-    const valorMaximo = searchParams.get('valorMaximo')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+
+    // Validar query params com Zod
+    const validation = safeParseQueryParams(searchParams, DespesaQuerySchema)
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: 'Parâmetros inválidos', details: validation.error.errors },
+        { status: 400 }
+      )
+    }
+
+    const {
+      page, limit, situacao, ano, mes, credor, elemento,
+      funcao, programa, licitacaoId, contratoId, convenioId,
+      valorMinimo, valorMaximo
+    } = validation.data
 
     const result = await despesasDbService.paginate(
       {
-        situacao: situacao || undefined,
-        ano: ano ? parseInt(ano) : undefined,
-        mes: mes ? parseInt(mes) : undefined,
-        credor: credor || undefined,
-        elemento: elemento || undefined,
-        funcao: funcao || undefined,
-        programa: programa || undefined,
-        licitacaoId: licitacaoId || undefined,
-        contratoId: contratoId || undefined,
-        convenioId: convenioId || undefined,
-        valorMinimo: valorMinimo ? parseFloat(valorMinimo) : undefined,
-        valorMaximo: valorMaximo ? parseFloat(valorMaximo) : undefined
+        situacao,
+        ano,
+        mes,
+        credor,
+        elemento,
+        funcao,
+        programa,
+        licitacaoId,
+        contratoId,
+        convenioId,
+        valorMinimo,
+        valorMaximo
       },
       { page, limit }
     )
@@ -59,8 +84,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withAuth(
+  async (request: NextRequest) => {
     const body = await request.json()
 
     if (!body.numeroEmpenho || !body.credor || !body.valorEmpenhado) {
@@ -102,11 +127,6 @@ export async function POST(request: NextRequest) {
       data: novaDespesa,
       message: 'Despesa criada com sucesso'
     }, { status: 201 })
-  } catch (error) {
-    console.error('Erro ao criar despesa:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)

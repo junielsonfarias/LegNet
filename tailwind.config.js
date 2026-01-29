@@ -18,6 +18,40 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        // Fonte acessivel para dislexia (quando disponivel)
+        accessible: ['var(--font-accessible)', 'OpenDyslexic', 'system-ui', 'sans-serif'],
+      },
+      // Design Tokens - Espacamento Portal
+      spacing: {
+        'portal-xs': '0.25rem',   // 4px
+        'portal-sm': '0.5rem',    // 8px
+        'portal-md': '1rem',      // 16px
+        'portal-lg': '1.5rem',    // 24px
+        'portal-xl': '2rem',      // 32px
+        'portal-2xl': '3rem',     // 48px
+        'portal-3xl': '4rem',     // 64px
+        'portal-4xl': '6rem',     // 96px
+        // Touch targets (minimo 44px WCAG)
+        'touch-min': '44px',
+        'touch-comfortable': '48px',
+        'touch-large': '56px',
+      },
+      // Design Tokens - Tipografia Responsiva
+      fontSize: {
+        'portal-xs': ['clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem)', { lineHeight: '1.5' }],
+        'portal-sm': ['clamp(0.875rem, 0.8rem + 0.375vw, 1rem)', { lineHeight: '1.5' }],
+        'portal-base': ['clamp(1rem, 0.9rem + 0.5vw, 1.125rem)', { lineHeight: '1.625' }],
+        'portal-lg': ['clamp(1.125rem, 1rem + 0.625vw, 1.25rem)', { lineHeight: '1.625' }],
+        'portal-xl': ['clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem)', { lineHeight: '1.375' }],
+        'portal-2xl': ['clamp(1.5rem, 1.25rem + 1.25vw, 2rem)', { lineHeight: '1.25' }],
+        'portal-3xl': ['clamp(1.875rem, 1.5rem + 1.875vw, 2.5rem)', { lineHeight: '1.25' }],
+        'portal-4xl': ['clamp(2.25rem, 1.75rem + 2.5vw, 3rem)', { lineHeight: '1.25' }],
+        'portal-5xl': ['clamp(3rem, 2.25rem + 3.75vw, 4rem)', { lineHeight: '1.25' }],
+      },
+      // Alturas de linha para acessibilidade
+      lineHeight: {
+        'accessible': '1.75',     // Espacamento confortavel
+        'accessible-loose': '2',  // Espacamento amplo
       },
       colors: {
         border: "hsl(var(--border))",
@@ -65,11 +99,34 @@ module.exports = {
           primary: "var(--tenant-primary, #1e40af)",
           secondary: "var(--tenant-secondary, #3b82f6)",
         },
+        // Cores de alto contraste
+        'hc': {
+          bg: 'var(--hc-bg, #000000)',
+          fg: 'var(--hc-fg, #ffffff)',
+          primary: 'var(--hc-primary, #ffff00)',
+          secondary: 'var(--hc-secondary, #00ffff)',
+          accent: 'var(--hc-accent, #ff00ff)',
+          focus: 'var(--hc-focus, #ffff00)',
+          border: 'var(--hc-border, #ffffff)',
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      // Tamanhos minimos para touch targets
+      minWidth: {
+        'touch': '44px',
+      },
+      minHeight: {
+        'touch': '44px',
+      },
+      // Box shadows com focus ring acessivel
+      boxShadow: {
+        'focus-ring': '0 0 0 3px rgb(59 130 246 / 0.5)',
+        'focus-ring-hc': '0 0 0 3px #ffff00',
+        'focus-ring-offset': '0 0 0 2px white, 0 0 0 4px rgb(59 130 246 / 0.8)',
       },
       keyframes: {
         "accordion-down": {

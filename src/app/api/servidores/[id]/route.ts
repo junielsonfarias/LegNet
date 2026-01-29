@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { servidoresDbService } from '@/lib/services/servidores-db-service'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,11 +29,11 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const PUT = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const body = await request.json()
 
@@ -65,20 +66,15 @@ export async function PUT(
       data: servidorAtualizado,
       message: 'Servidor atualizado com sucesso'
     })
-  } catch (error) {
-    console.error('Erro ao atualizar servidor:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const DELETE = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
 
     const servidorExistente = await servidoresDbService.getById(id)
@@ -95,11 +91,6 @@ export async function DELETE(
       success: true,
       message: 'Servidor excluido com sucesso'
     })
-  } catch (error) {
-    console.error('Erro ao excluir servidor:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)

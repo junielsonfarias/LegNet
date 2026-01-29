@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { participacaoCidadaService } from '@/lib/participacao-cidada-service'
+import { withAuth } from '@/lib/auth/permissions'
 
-// GET - Buscar dados de participação cidadã
+// GET - Buscar dados de participação cidadã (público)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -9,21 +10,21 @@ export async function GET(request: Request) {
     const termo = searchParams.get('termo')
 
     if (tipo === 'sugestoes') {
-      const sugestoes = termo 
+      const sugestoes = termo
         ? participacaoCidadaService.searchSugestoes(termo)
         : participacaoCidadaService.getAllSugestoes()
       return NextResponse.json(sugestoes)
     }
 
     if (tipo === 'consultas') {
-      const consultas = termo 
+      const consultas = termo
         ? participacaoCidadaService.searchConsultas(termo)
         : participacaoCidadaService.getAllConsultas()
       return NextResponse.json(consultas)
     }
 
     if (tipo === 'peticoes') {
-      const peticoes = termo 
+      const peticoes = termo
         ? participacaoCidadaService.searchPeticoes(termo)
         : participacaoCidadaService.getAllPeticoes()
       return NextResponse.json(peticoes)
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
     const peticoes = participacaoCidadaService.getAllPeticoes()
     const foruns = participacaoCidadaService.getAllForuns()
     const estatisticas = participacaoCidadaService.getEstatisticas()
-    
+
     return NextResponse.json({
       sugestoes,
       consultas,
@@ -63,8 +64,8 @@ export async function GET(request: Request) {
 }
 
 // POST - Criar nova sugestão, consulta, petição ou forum
-export async function POST(request: Request) {
-  try {
+export const POST = withAuth(
+  async (request: NextRequest) => {
     const { searchParams } = new URL(request.url)
     const tipo = searchParams.get('tipo')
     const data = await request.json()
@@ -125,18 +126,13 @@ export async function POST(request: Request) {
       { message: 'Tipo não especificado' },
       { status: 400 }
     )
-  } catch (error) {
-    console.error('Erro ao processar dados de participação cidadã:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'participacao.manage' }
+)
 
 // PUT - Atualizar sugestão, consulta, petição ou forum
-export async function PUT(request: Request) {
-  try {
+export const PUT = withAuth(
+  async (request: NextRequest) => {
     const { searchParams } = new URL(request.url)
     const tipo = searchParams.get('tipo')
     const id = searchParams.get('id')
@@ -191,18 +187,13 @@ export async function PUT(request: Request) {
       { message: 'Tipo não especificado' },
       { status: 400 }
     )
-  } catch (error) {
-    console.error('Erro ao atualizar dados de participação cidadã:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'participacao.manage' }
+)
 
 // DELETE - Deletar sugestão, consulta, petição ou forum
-export async function DELETE(request: Request) {
-  try {
+export const DELETE = withAuth(
+  async (request: NextRequest) => {
     const { searchParams } = new URL(request.url)
     const tipo = searchParams.get('tipo')
     const id = searchParams.get('id')
@@ -216,16 +207,11 @@ export async function DELETE(request: Request) {
 
     // Implementar delete conforme necessário
     // Por enquanto, retorna não implementado
-    
+
     return NextResponse.json(
       { message: 'Exclusão não implementada' },
       { status: 501 }
     )
-  } catch (error) {
-    console.error('Erro ao deletar dados de participação cidadã:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'participacao.manage' }
+)

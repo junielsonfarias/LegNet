@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare, Heart } from 'lucide-react'
+import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare, Heart, Accessibility } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { SearchButton, CommandPalette } from '@/components/busca/command-palette'
+import { SkipLinks, NavigationRegion, useAnnounce } from '@/components/ui/skip-link'
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
@@ -16,6 +17,7 @@ export function Header() {
   const [isMounted, setIsMounted] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { configuracao } = useConfiguracaoInstitucional()
+  const { announce } = useAnnounce()
 
   const nomeCasa = configuracao.nomeCasa
   const sigla = configuracao.sigla || 'CM'
@@ -60,6 +62,21 @@ export function Header() {
       }
     }
   }, [])
+
+  // Fechar dropdown com ESC
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && activeDropdown) {
+      setActiveDropdown(null)
+      announce('Menu fechado')
+    }
+  }, [activeDropdown, announce])
+
+  useEffect(() => {
+    if (activeDropdown) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [activeDropdown, handleKeyDown])
 
   const menuItems = [
     {
@@ -227,44 +244,66 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
-      {/* Barra superior */}
-      <div className="bg-camara-primary text-white py-2">
+    <>
+      {/* Skip Links para acessibilidade */}
+      <SkipLinks />
+
+      <header
+        className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm"
+        role="banner"
+      >
+      {/* Barra superior - Top Bar */}
+      <div className="bg-camara-primary text-white py-2" role="navigation" aria-label="Links rapidos">
         <div className="container mx-auto px-4 flex justify-between items-center text-sm">
           {/* Links escondidos no mobile */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/transparencia" className="hover:text-blue-200 transition-colors">
-              Transparência
+            <Link
+              href="/transparencia"
+              className="hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+            >
+              Transparencia
             </Link>
-            <span>•</span>
-            <Link href="/institucional/ouvidoria" className="hover:text-blue-200 transition-colors">
-              Fale conosco
+            <span aria-hidden="true">•</span>
+            <Link
+              href="/institucional/e-sic"
+              className="hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+            >
+              E-SIC
             </Link>
-            <span>•</span>
-            <Link href="/institucional/ouvidoria" className="hover:text-blue-200 transition-colors">
-              Ouvidoria/e-Sic
+            <span aria-hidden="true">•</span>
+            <Link
+              href="/institucional/ouvidoria"
+              className="hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+            >
+              Ouvidoria
             </Link>
-            <span>•</span>
-            <span className="cursor-pointer hover:text-blue-200 transition-colors">Pesquisa</span>
-            <span>•</span>
-            <span className="cursor-pointer hover:text-blue-200 transition-colors">Acessibilidade</span>
+            <span aria-hidden="true">•</span>
+            <Link
+              href="#accessibility-toolbar"
+              className="flex items-center gap-1 hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+              aria-label="Opcoes de acessibilidade"
+            >
+              <Accessibility className="h-4 w-4" aria-hidden="true" />
+              <span>Acessibilidade</span>
+            </Link>
           </div>
-          {/* Área Restrita - sempre visível */}
+          {/* Area Restrita - sempre visivel */}
           <div className="flex items-center space-x-2 ml-auto">
             <Link
               href="/meus-favoritos"
-              className="flex items-center gap-1 px-3 py-1.5 hover:bg-white/10 rounded-md transition-colors font-medium"
-              title="Meus Favoritos"
+              className="flex items-center gap-1 px-3 py-1.5 hover:bg-white/10 rounded-md transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-white min-h-touch"
+              aria-label="Meus Favoritos"
             >
-              <Heart className="h-4 w-4" />
+              <Heart className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Favoritos</span>
             </Link>
             <Link
               href="/login"
-              className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors font-medium"
+              className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-white min-h-touch"
+              aria-label="Acessar area restrita"
             >
-              <User className="h-4 w-4" />
-              <span>Área Restrita</span>
+              <User className="h-4 w-4" aria-hidden="true" />
+              <span>Area Restrita</span>
             </Link>
           </div>
         </div>
@@ -381,74 +420,121 @@ export function Header() {
       {/* Menu desktop centralizado */}
       <div className="hidden lg:block border-t bg-white">
         <div className="container mx-auto px-4">
-          <nav className="flex items-center justify-center space-x-8 py-3">
-            {menuItems.map((section) => (
-              <div
-                key={section.title}
-                className="relative group"
-                onMouseEnter={() => section.items.length > 0 ? handleMouseEnter(section.title) : null}
-                onMouseLeave={handleMouseLeave}
-              >
-                {section.items.length === 0 && section.href ? (
-                  <Link 
-                    href={section.href}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-camara-primary transition-all duration-200 ease-in-out hover:bg-gray-50 rounded-md"
-                  >
-                    <section.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                    {section.title}
-                  </Link>
-                ) : (
-                  <>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-camara-primary transition-all duration-200 ease-in-out hover:bg-gray-50 rounded-md">
-                      <section.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                      {section.title}
-                      <ChevronDown className={`h-3 w-3 transition-all duration-300 ease-in-out ${
-                        activeDropdown === section.title ? 'rotate-180 text-camara-primary' : 'rotate-0'
-                      }`} />
-                    </button>
-                    
-                    {/* Dropdown */}
-                    <div 
-                      className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-1 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 transition-all duration-200 ease-in-out ${
-                        activeDropdown === section.title 
-                          ? 'opacity-100 visible translate-y-0' 
-                          : 'opacity-0 invisible -translate-y-2'
-                      }`}
-                      onMouseEnter={handleDropdownMouseEnter}
-                      onMouseLeave={handleMouseLeave}
+          <NavigationRegion label="Menu principal" id="main-nav">
+            <ul className="flex items-center justify-center space-x-8 py-3" role="menubar">
+              {menuItems.map((section) => (
+                <li
+                  key={section.title}
+                  className="relative group"
+                  role="none"
+                  onMouseEnter={() => section.items.length > 0 ? handleMouseEnter(section.title) : null}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {section.items.length === 0 && section.href ? (
+                    <Link
+                      href={section.href}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-camara-primary transition-all duration-200 ease-in-out hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-camara-primary focus:ring-offset-2 min-h-touch"
+                      role="menuitem"
                     >
-                      <div className="px-4 py-2 border-b border-gray-100">
-                        <h4 className="font-semibold text-camara-primary flex items-center gap-2">
-                          <section.icon className="h-4 w-4" />
-                          {section.title}
-                        </h4>
+                      <section.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
+                      {section.title}
+                    </Link>
+                  ) : (
+                    <>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-camara-primary transition-all duration-200 ease-in-out hover:bg-gray-50 rounded-md focus:outline-none focus:ring-2 focus:ring-camara-primary focus:ring-offset-2 min-h-touch"
+                        role="menuitem"
+                        aria-haspopup="true"
+                        aria-expanded={activeDropdown === section.title}
+                        aria-controls={`dropdown-${section.title.toLowerCase().replace(/\s/g, '-')}`}
+                        onClick={() => setActiveDropdown(activeDropdown === section.title ? null : section.title)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            setActiveDropdown(activeDropdown === section.title ? null : section.title)
+                          }
+                          if (e.key === 'ArrowDown' && section.items.length > 0) {
+                            e.preventDefault()
+                            setActiveDropdown(section.title)
+                          }
+                        }}
+                      >
+                        <section.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
+                        {section.title}
+                        <ChevronDown
+                          className={`h-3 w-3 transition-all duration-300 ease-in-out ${
+                            activeDropdown === section.title ? 'rotate-180 text-camara-primary' : 'rotate-0'
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </button>
+
+                      {/* Dropdown com ARIA */}
+                      <div
+                        id={`dropdown-${section.title.toLowerCase().replace(/\s/g, '-')}`}
+                        className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-1 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 transition-all duration-200 ease-in-out ${
+                          activeDropdown === section.title
+                            ? 'opacity-100 visible translate-y-0'
+                            : 'opacity-0 invisible -translate-y-2'
+                        }`}
+                        role="menu"
+                        aria-label={`Submenu de ${section.title}`}
+                        aria-hidden={activeDropdown !== section.title}
+                        onMouseEnter={handleDropdownMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <h4 className="font-semibold text-camara-primary flex items-center gap-2" id={`heading-${section.title.toLowerCase().replace(/\s/g, '-')}`}>
+                            <section.icon className="h-4 w-4" aria-hidden="true" />
+                            {section.title}
+                          </h4>
+                        </div>
+                        <ul className="max-h-96 overflow-y-auto" role="menu" aria-labelledby={`heading-${section.title.toLowerCase().replace(/\s/g, '-')}`}>
+                          {section.items.map((item, itemIndex) => (
+                            <li key={item.name} role="none">
+                              <Link
+                                href={item.href}
+                                className="block px-4 py-3 text-sm text-gray-700 hover:bg-camara-primary/5 hover:text-camara-primary transition-all duration-150 ease-in-out hover:pl-6 focus:outline-none focus:bg-camara-primary/10 focus:text-camara-primary"
+                                role="menuitem"
+                                tabIndex={activeDropdown === section.title ? 0 : -1}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Escape') {
+                                    setActiveDropdown(null)
+                                  }
+                                  if (e.key === 'ArrowDown') {
+                                    e.preventDefault()
+                                    const nextItem = e.currentTarget.parentElement?.nextElementSibling?.querySelector('a')
+                                    nextItem?.focus()
+                                  }
+                                  if (e.key === 'ArrowUp') {
+                                    e.preventDefault()
+                                    const prevItem = e.currentTarget.parentElement?.previousElementSibling?.querySelector('a')
+                                    prevItem?.focus()
+                                  }
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{item.name}</span>
+                                  {item.badge && (
+                                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full" aria-label={`${item.badge}`}>
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                </div>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <div className="max-h-96 overflow-y-auto">
-                        {section.items.map((item) => (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            className="block px-4 py-3 text-sm text-gray-700 hover:bg-camara-primary/5 hover:text-camara-primary transition-all duration-150 ease-in-out hover:pl-6"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span>{item.name}</span>
-                              {item.badge && (
-                                <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                  {item.badge}
-                                </span>
-                              )}
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </nav>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </NavigationRegion>
         </div>
       </div>
     </header>
+    </>
   )
 }
