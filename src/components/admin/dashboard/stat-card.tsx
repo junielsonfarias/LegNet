@@ -31,6 +31,7 @@ export function StatCard({
       const highlightClasses: Record<UserRole, string> = {
         ADMIN: 'bg-gradient-to-br from-violet-500 to-purple-600',
         SECRETARIA: 'bg-gradient-to-br from-cyan-500 to-teal-600',
+        AUXILIAR_LEGISLATIVO: 'bg-gradient-to-br from-teal-500 to-cyan-600',
         EDITOR: 'bg-gradient-to-br from-blue-500 to-indigo-600',
         OPERADOR: 'bg-gradient-to-br from-emerald-500 to-green-600',
         PARLAMENTAR: 'bg-gradient-to-br from-amber-500 to-orange-600',
@@ -42,6 +43,7 @@ export function StatCard({
     const defaultClasses: Record<UserRole, string> = {
       ADMIN: 'bg-violet-100',
       SECRETARIA: 'bg-cyan-100',
+      AUXILIAR_LEGISLATIVO: 'bg-teal-100',
       EDITOR: 'bg-blue-100',
       OPERADOR: 'bg-emerald-100',
       PARLAMENTAR: 'bg-amber-100',
@@ -56,6 +58,7 @@ export function StatCard({
     const colorClasses: Record<UserRole, string> = {
       ADMIN: 'text-violet-600',
       SECRETARIA: 'text-cyan-600',
+      AUXILIAR_LEGISLATIVO: 'text-teal-600',
       EDITOR: 'text-blue-600',
       OPERADOR: 'text-emerald-600',
       PARLAMENTAR: 'text-amber-600',
@@ -68,6 +71,7 @@ export function StatCard({
     const colorClasses: Record<UserRole, string> = {
       ADMIN: 'text-violet-600',
       SECRETARIA: 'text-cyan-600',
+      AUXILIAR_LEGISLATIVO: 'text-teal-600',
       EDITOR: 'text-blue-600',
       OPERADOR: 'text-emerald-600',
       PARLAMENTAR: 'text-amber-600',
@@ -82,6 +86,7 @@ export function StatCard({
     const borderClasses: Record<UserRole, string> = {
       ADMIN: 'border-violet-200',
       SECRETARIA: 'border-cyan-200',
+      AUXILIAR_LEGISLATIVO: 'border-teal-200',
       EDITOR: 'border-blue-200',
       OPERADOR: 'border-emerald-200',
       PARLAMENTAR: 'border-amber-200',

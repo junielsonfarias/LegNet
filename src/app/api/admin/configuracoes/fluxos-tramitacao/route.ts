@@ -62,7 +62,7 @@ export const GET = withAuth(async (
 
   const fluxos = await listarFluxos()
   return createSuccessResponse(fluxos, 'Fluxos carregados com sucesso')
-}, { permissions: 'configuracoes.view' })
+}, { permissions: 'config.view' })
 
 /**
  * POST /api/admin/configuracoes/fluxos-tramitacao
@@ -132,7 +132,7 @@ export const POST = withAuth(async (
   })
 
   return createSuccessResponse(fluxo, 'Fluxo criado com sucesso')
-}, { permissions: 'configuracoes.manage' })
+}, { permissions: 'config.manage' })
 
 /**
  * PUT /api/admin/configuracoes/fluxos-tramitacao
@@ -172,7 +172,7 @@ export const PUT = withAuth(async (
   })
 
   return createSuccessResponse(fluxo, 'Fluxo atualizado com sucesso')
-}, { permissions: 'configuracoes.manage' })
+}, { permissions: 'config.manage' })
 
 /**
  * DELETE /api/admin/configuracoes/fluxos-tramitacao
@@ -214,4 +214,4 @@ export const DELETE = withAuth(async (
   })
 
   return createSuccessResponse({ id }, 'Fluxo desativado com sucesso')
-}, { permissions: 'configuracoes.manage' })
+}, { permissions: 'config.manage' })

@@ -67,7 +67,7 @@ export const GET = withAuth(async (
   }
 
   return createSuccessResponse(fluxo.etapas, 'Etapas carregadas com sucesso')
-}, { permissions: 'configuracoes.view' })
+}, { permissions: 'config.view' })
 
 /**
  * POST /api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas
@@ -141,7 +141,7 @@ export const POST = withAuth(async (
   })
 
   return createSuccessResponse(etapa, 'Etapa adicionada com sucesso')
-}, { permissions: 'configuracoes.manage' })
+}, { permissions: 'config.manage' })
 
 /**
  * PUT /api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas
@@ -160,7 +160,7 @@ export const PUT = withAuth(async (
     throw new ValidationError(payload.error.issues[0]?.message ?? 'Dados invalidos')
   }
 
-  const { id, ...dados } = payload.data
+  const { id, ...rawDados } = payload.data
 
   // Verifica se a etapa existe e pertence ao fluxo
   const etapaExistente = await prisma.fluxoTramitacaoEtapa.findFirst({
@@ -169,6 +169,14 @@ export const PUT = withAuth(async (
 
   if (!etapaExistente) {
     throw new NotFoundError('Etapa nao encontrada neste fluxo')
+  }
+
+  // Converter null para undefined para compatibilidade com o service
+  const dados = {
+    ...rawDados,
+    descricao: rawDados.descricao ?? undefined,
+    unidadeId: rawDados.unidadeId ?? undefined,
+    prazoDiasUrgencia: rawDados.prazoDiasUrgencia ?? undefined
   }
 
   const etapa = await atualizarEtapa(id, dados)
@@ -183,7 +191,7 @@ export const PUT = withAuth(async (
   })
 
   return createSuccessResponse(etapa, 'Etapa atualizada com sucesso')
-}, { permissions: 'configuracoes.manage' })
+}, { permissions: 'config.manage' })
 
 /**
  * DELETE /api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas
@@ -234,4 +242,4 @@ export const DELETE = withAuth(async (
   })
 
   return createSuccessResponse({ id }, 'Etapa removida com sucesso')
-}, { permissions: 'configuracoes.manage' })
+}, { permissions: 'config.manage' })

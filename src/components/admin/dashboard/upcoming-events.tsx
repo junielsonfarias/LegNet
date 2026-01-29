@@ -76,6 +76,7 @@ export function UpcomingEvents({ userRole, events = mockEvents }: UpcomingEvents
     const colors: Record<UserRole, string> = {
       ADMIN: 'text-violet-600',
       SECRETARIA: 'text-cyan-600',
+      AUXILIAR_LEGISLATIVO: 'text-teal-600',
       EDITOR: 'text-blue-600',
       OPERADOR: 'text-emerald-600',
       PARLAMENTAR: 'text-amber-600',
@@ -88,6 +89,7 @@ export function UpcomingEvents({ userRole, events = mockEvents }: UpcomingEvents
     const classes: Record<UserRole, string> = {
       ADMIN: 'hover:border-violet-200 hover:bg-violet-50/50',
       SECRETARIA: 'hover:border-cyan-200 hover:bg-cyan-50/50',
+      AUXILIAR_LEGISLATIVO: 'hover:border-teal-200 hover:bg-teal-50/50',
       EDITOR: 'hover:border-blue-200 hover:bg-blue-50/50',
       OPERADOR: 'hover:border-emerald-200 hover:bg-emerald-50/50',
       PARLAMENTAR: 'hover:border-amber-200 hover:bg-amber-50/50',

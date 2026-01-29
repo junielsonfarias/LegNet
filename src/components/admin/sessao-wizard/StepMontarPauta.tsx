@@ -171,7 +171,7 @@ export function StepMontarPauta({ sessaoInfo, itens, onChange }: StepMontarPauta
           <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
           <div>
             <p className="text-blue-800">
-              <strong>RN-057:</strong> Apenas proposicoes com tramitacao "Encaminhado para Plenario" podem ser adicionadas na Ordem do Dia.
+              <strong>RN-057:</strong> Apenas proposicoes com tramitacao &quot;Encaminhado para Plenario&quot; podem ser adicionadas na Ordem do Dia.
             </p>
           </div>
         </div>

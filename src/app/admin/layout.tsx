@@ -46,6 +46,7 @@ export default async function AdminLayout({
     const badgeClasses: Record<UserRole, string> = {
       ADMIN: 'bg-violet-100 text-violet-700 border-violet-200',
       SECRETARIA: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+      AUXILIAR_LEGISLATIVO: 'bg-teal-100 text-teal-700 border-teal-200',
       EDITOR: 'bg-blue-100 text-blue-700 border-blue-200',
       OPERADOR: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       PARLAMENTAR: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -58,6 +59,7 @@ export default async function AdminLayout({
     const borderClasses: Record<UserRole, string> = {
       ADMIN: 'ring-2 ring-violet-400 ring-offset-1',
       SECRETARIA: 'ring-2 ring-cyan-400 ring-offset-1',
+      AUXILIAR_LEGISLATIVO: 'ring-2 ring-teal-400 ring-offset-1',
       EDITOR: 'ring-2 ring-blue-400 ring-offset-1',
       OPERADOR: 'ring-2 ring-emerald-400 ring-offset-1',
       PARLAMENTAR: 'ring-2 ring-amber-400 ring-offset-1',

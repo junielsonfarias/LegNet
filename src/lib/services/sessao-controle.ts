@@ -157,8 +157,24 @@ export async function iniciarSessaoControle(sessaoId: string) {
     }
   })
 
+  // GAP CRÍTICO #1: Validar que existe pauta vinculada
   if (!pauta) {
-    throw new ValidationError('Não foi possível localizar a pauta da sessão')
+    throw new ValidationError('Sessão não possui pauta vinculada. Crie uma pauta antes de iniciar a sessão.')
+  }
+
+  // GAP CRÍTICO #1: Validar que a pauta não está vazia
+  if (pauta.itens.length === 0) {
+    throw new ValidationError('Pauta da sessão está vazia. Adicione pelo menos um item antes de iniciar.')
+  }
+
+  // RN-125: Validar que a pauta foi publicada (status APROVADA)
+  // Pautas devem ser publicadas com 48h de antecedência para garantir transparência
+  if (pauta.status !== 'APROVADA' && pauta.status !== 'EM_ANDAMENTO') {
+    throw new ValidationError(
+      'RN-125: A pauta deve ser publicada antes de iniciar a sessão. ' +
+      `Status atual: "${pauta.status}". ` +
+      'Acesse a pauta e clique em "Publicar" para disponibilizá-la ao público.'
+    )
   }
 
   const proximoItem = pauta.itens.find(item => item.status === 'PENDENTE' || item.status === 'ADIADO')
@@ -175,7 +191,8 @@ export async function iniciarSessaoControle(sessaoId: string) {
     prisma.pautaSessao.update({
       where: { id: pauta.id },
       data: {
-        itemAtualId: proximoItem?.id ?? null
+        itemAtualId: proximoItem?.id ?? null,
+        status: 'EM_ANDAMENTO'
       }
     })
   ])
@@ -237,7 +254,17 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
     throw new ValidationError('A sessão deve estar em andamento para iniciar um item')
   }
 
-  const item = await obterItemPauta(sessaoId, itemId)
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: true,
+      proposicao: true
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
 
   if (!['PENDENTE', 'ADIADO', 'EM_DISCUSSAO'].includes(item.status)) {
     throw new ValidationError('Item não pode ser iniciado no estado atual')
@@ -245,7 +272,8 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
 
   const agora = new Date()
 
-  await prisma.$transaction([
+  // Iniciar transação com atualização do item e pauta
+  const updates: any[] = [
     prisma.pautaItem.update({
       where: { id: itemId },
       data: {
@@ -260,9 +288,28 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
         itemAtualId: itemId
       }
     })
-  ])
+  ]
 
-  return prisma.pautaItem.findUnique({ where: { id: itemId } })
+  // GAP CRÍTICO #5: Sincronizar status da proposição para EM_DISCUSSAO
+  if (item.proposicaoId && item.proposicao) {
+    // Apenas atualiza se a proposição está em status anterior
+    const statusAtualizaveis = ['EM_PAUTA', 'AGUARDANDO_PAUTA', 'EM_TRAMITACAO']
+    if (statusAtualizaveis.includes(item.proposicao.status)) {
+      updates.push(
+        prisma.proposicao.update({
+          where: { id: item.proposicaoId },
+          data: { status: 'EM_DISCUSSAO' }
+        })
+      )
+    }
+  }
+
+  await prisma.$transaction(updates)
+
+  return prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: { proposicao: true }
+  })
 }
 
 export async function pausarItemPauta(sessaoId: string, itemId: string) {
@@ -327,11 +374,34 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
     throw new ValidationError('A sessão deve estar em andamento para iniciar a votação de um item')
   }
 
-  const item = await obterItemPauta(sessaoId, itemId)
+  const item = await prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      pauta: true,
+      proposicao: true
+    }
+  })
+
+  if (!item || !item.pauta || item.pauta.sessaoId !== sessaoId) {
+    throw new ValidationError('Item inválido para a sessão informada')
+  }
+
   if (!item.iniciadoEm) {
     throw new ValidationError('O item precisa estar em discussão antes de iniciar a votação')
   }
 
+  // GAP CRÍTICO #3: Validar quorum antes de abrir votação (RN-060)
+  const { verificarQuorumInstalacao } = await import('@/lib/services/quorum-service')
+  const quorumResult = await verificarQuorumInstalacao(sessaoId)
+
+  if (!quorumResult.temQuorum) {
+    throw new ValidationError(
+      `Quorum insuficiente para votação. ${quorumResult.detalhes}. ` +
+      'Aguarde mais parlamentares ou registre presenças.'
+    )
+  }
+
+  // Atualizar status do item para EM_VOTACAO
   await prisma.pautaItem.update({
     where: { id: itemId },
     data: {
@@ -339,7 +409,18 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
     }
   })
 
-  return prisma.pautaItem.findUnique({ where: { id: itemId } })
+  // GAP CRÍTICO #5: Sincronizar status da proposição
+  if (item.proposicaoId) {
+    await prisma.proposicao.update({
+      where: { id: item.proposicaoId },
+      data: { status: 'EM_VOTACAO' }
+    })
+  }
+
+  return prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: { proposicao: true }
+  })
 }
 
 /**

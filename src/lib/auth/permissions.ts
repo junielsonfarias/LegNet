@@ -17,6 +17,8 @@ export type Permission =
   | 'comissao.manage'
   | 'tramitacao.view'
   | 'tramitacao.manage'
+  | 'proposicao.view'
+  | 'proposicao.manage'
   | 'relatorio.view'
   | 'legislatura.view'
   | 'legislatura.manage'
@@ -26,6 +28,7 @@ export type Permission =
   | 'mesa.manage'
   | 'sessao.view'
   | 'sessao.manage'
+  | 'pauta.view'
   | 'pauta.manage'
   | 'painel.view'
   | 'painel.manage'
@@ -65,6 +68,8 @@ const rolePermissions: RolePermissions = {
     'comissao.manage',
     'tramitacao.view',
     'tramitacao.manage',
+    'proposicao.view',
+    'proposicao.manage',
     'relatorio.view',
     'legislatura.view',
     'legislatura.manage',
@@ -74,6 +79,7 @@ const rolePermissions: RolePermissions = {
     'mesa.manage',
     'sessao.view',
     'sessao.manage',
+    'pauta.view',
     'pauta.manage',
     'painel.view',
     'painel.manage',
@@ -140,7 +146,11 @@ const rolePermissions: RolePermissions = {
     // Tramitação: encaminhar proposições entre comissões
     'tramitacao.view',
     'tramitacao.manage',
+    // Proposições: gerenciar proposições
+    'proposicao.view',
+    'proposicao.manage',
     // Pauta: incluir proposições na pauta, definir momento (leitura/votação)
+    'pauta.view',
     'pauta.manage',
     // Painel: apenas visualização (operação é do OPERADOR)
     'painel.view',
@@ -156,6 +166,8 @@ const rolePermissions: RolePermissions = {
     'comissao.manage',
     'tramitacao.view',
     'tramitacao.manage',
+    'proposicao.view',
+    'proposicao.manage',
     'relatorio.view',
     'legislatura.view',
     'legislatura.manage',
@@ -165,6 +177,7 @@ const rolePermissions: RolePermissions = {
     'mesa.manage',
     'sessao.view',
     'sessao.manage',
+    'pauta.view',
     'pauta.manage',
     'painel.view',
     'presenca.manage',
@@ -194,6 +207,8 @@ const rolePermissions: RolePermissions = {
     // Proposicoes: criar, editar, visualizar
     'tramitacao.view',
     'tramitacao.manage',
+    'proposicao.view',
+    'proposicao.manage',
     // Comissoes: gerenciar membros, reunioes, pautas
     'comissao.view',
     'comissao.manage',

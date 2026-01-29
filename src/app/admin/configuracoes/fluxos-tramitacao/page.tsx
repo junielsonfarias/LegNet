@@ -185,7 +185,7 @@ export default function FluxosTramitacaoPage() {
       descricao: etapa.descricao || '',
       unidadeId: etapa.unidadeId || '',
       prazoDiasNormal: etapa.prazoDiasNormal,
-      prazoDiasUrgencia: etapa.prazoDiasUrgencia,
+      prazoDiasUrgencia: etapa.prazoDiasUrgencia ?? null,
       requerParecer: etapa.requerParecer,
       habilitaPauta: etapa.habilitaPauta,
       ehEtapaFinal: etapa.ehEtapaFinal

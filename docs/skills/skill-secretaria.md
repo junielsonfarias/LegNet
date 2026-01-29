@@ -226,9 +226,10 @@ enum StatusAta {
 
 | Rota | Metodo | Funcionalidade | Roles |
 |------|--------|----------------|-------|
-| `/api/pautas` | GET | Listar pautas | SECRETARIA |
+| `/api/pautas` | GET | Listar pautas com dados da sessao, paginacao e filtro por status | pauta.view |
+| `/api/pautas` | POST | Criar nova pauta vinculada a sessao existente | pauta.manage |
+| `/api/pautas/sessoes-disponiveis` | GET | Listar sessoes sem pauta vinculada (para dropdown de vinculacao) | pauta.manage |
 | `/api/pautas/sessao/[sessaoId]` | GET | Pauta de sessao | Publico |
-| `/api/pautas/sessao/[sessaoId]` | POST | Criar pauta | SECRETARIA |
 | `/api/pautas/sessao/[sessaoId]` | PUT | Atualizar pauta | SECRETARIA |
 | `/api/pautas/sessao/[sessaoId]/publicar` | POST | Publicar pauta | SECRETARIA |
 | `/api/pautas/sessao/[sessaoId]/sugerir` | GET | Sugerir itens | SECRETARIA |

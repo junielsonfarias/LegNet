@@ -218,7 +218,15 @@ export async function listarProposicoesElegiveisPauta(): Promise<{
     }
   })
 
-  const elegiveis = []
+  const elegiveis: Array<{
+    id: string
+    numero: string
+    ano: number
+    tipo: TipoProposicao
+    titulo: string
+    ementa: string
+    etapaAtual: string
+  }> = []
 
   for (const prop of proposicoes) {
     const elegibilidade = await verificarElegibilidadePauta(prop.id)

@@ -124,7 +124,7 @@ export function ProposicaoSelector({ onSelect }: ProposicaoSelectorProps) {
               : 'Nenhuma proposicao elegivel para pauta no momento'}
           </p>
           <p className="text-sm text-gray-400 mt-2">
-            Proposicoes precisam estar na etapa "Encaminhado para Plenario"
+            Proposicoes precisam estar na etapa &quot;Encaminhado para Plenario&quot;
           </p>
         </div>
       ) : (

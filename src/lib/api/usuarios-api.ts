@@ -1,10 +1,12 @@
 import { withRetry } from '@/lib/utils/retry'
 
+export type UsuarioRole = 'ADMIN' | 'SECRETARIA' | 'AUXILIAR_LEGISLATIVO' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR'
+
 export interface UsuarioApi {
   id: string
   name: string | null
   email: string
-  role: 'ADMIN' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR'
+  role: UsuarioRole
   ativo: boolean
   parlamentarId: string | null
   parlamentar?: {
@@ -19,7 +21,7 @@ export interface UsuarioCreate {
   name?: string
   email: string
   password: string
-  role: 'ADMIN' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR'
+  role: UsuarioRole
   parlamentarId?: string
   ativo?: boolean
 }
@@ -28,7 +30,7 @@ export interface UsuarioUpdate {
   name?: string
   email?: string
   password?: string
-  role?: 'ADMIN' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR'
+  role?: UsuarioRole
   parlamentarId?: string
   ativo?: boolean
 }

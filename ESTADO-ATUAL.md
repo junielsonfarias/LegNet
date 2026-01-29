@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-29 (Melhoria Visual das Proposicoes)
+> **Ultima Atualizacao**: 2026-01-29 (Correcoes Criticas no Fluxo Legislativo)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -2512,6 +2512,193 @@ sudo ./scripts/uninstall.sh --full
 - `src/app/admin/sessoes/page.tsx` - Atualizado (botao para wizard)
 - `src/components/admin/sessao-wizard/*` - NOVOS (5 arquivos)
 - `scripts/migrar-fluxos-tramitacao.ts` - NOVO
+
+---
+
+### 2026-01-29 - Correcoes Criticas no Fluxo Legislativo
+
+**Objetivo**: Corrigir gaps criticos identificados na analise do fluxo proposicao → tramitacao → pauta → sessao plenaria.
+
+**Gaps Criticos Corrigidos**:
+
+1. **GAP #1: Sessao podia iniciar sem pauta ou com pauta vazia**
+   - Arquivo: `src/lib/services/sessao-controle.ts`
+   - Funcao: `iniciarSessaoControle()`
+   - Correcao: Adicionada validacao que bloqueia inicio se pauta nao existe ou esta vazia
+   - Mensagens de erro claras para o operador
+
+2. **GAP #2: Novos estados intermediarios no StatusProposicao**
+   - Arquivo: `prisma/schema.prisma`
+   - Enum `StatusProposicao` expandido com:
+     - `EM_DISCUSSAO` - Proposicao em discussao no plenario
+     - `EM_VOTACAO` - Proposicao em processo de votacao
+     - `SANCIONADA` - Sancionada pelo Executivo
+     - `PROMULGADA` - Promulgada e publicada (estado final)
+
+3. **GAP #3: Quorum nao era validado antes de abrir votacao**
+   - Arquivo: `src/lib/services/sessao-controle.ts`
+   - Funcao: `iniciarVotacaoItem()`
+   - Correcao: Chama `verificarQuorumInstalacao()` antes de abrir votacao
+   - Bloqueia se quorum insuficiente com mensagem detalhada
+
+4. **GAP #4: Parecer CLJ podia ser ignorado via flag**
+   - Arquivo: `src/app/api/sessoes/[id]/pauta/route.ts`
+   - Correcao: Removida flag `validarParecer` que permitia bypass
+   - Validacao de parecer CLJ agora e SEMPRE obrigatoria para PL/PR/PD
+   - Mensagem de erro cita RN-030/RN-057
+
+5. **GAP #5: Status da proposicao nao sincronizava com eventos**
+   - Arquivo: `src/lib/services/sessao-controle.ts`
+   - Funcoes: `iniciarItemPauta()`, `iniciarVotacaoItem()`
+   - Correcao: Proposicao.status atualizado automaticamente:
+     - Ao iniciar item: `EM_PAUTA` → `EM_DISCUSSAO`
+     - Ao iniciar votacao: `EM_DISCUSSAO` → `EM_VOTACAO`
+
+**Transicoes de Status Atualizadas**:
+
+```
+APRESENTADA → EM_TRAMITACAO → AGUARDANDO_PAUTA → EM_PAUTA
+                                                    ↓
+                                              EM_DISCUSSAO
+                                                    ↓
+                                               EM_VOTACAO
+                                                    ↓
+                                    APROVADA ←──────┴──────→ REJEITADA
+                                        ↓                         ↓
+                              SANCIONADA ←→ VETADA           ARQUIVADA
+                                        ↓
+                                   PROMULGADA
+```
+
+**Validacoes Adicionadas**:
+
+| Local | Validacao | Regra |
+|-------|-----------|-------|
+| `iniciarSessaoControle` | Pauta existe e tem itens | GAP #1 |
+| `iniciarVotacaoItem` | Quorum verificado | RN-060 |
+| `POST /api/sessoes/[id]/pauta` | Parecer CLJ obrigatorio | RN-030/RN-057 |
+
+**Arquivos Modificados**:
+- `prisma/schema.prisma` - Enum StatusProposicao expandido
+- `src/lib/services/sessao-controle.ts` - 3 funcoes atualizadas
+- `src/lib/services/proposicao-validacao-service.ts` - Transicoes de status
+- `src/app/api/sessoes/[id]/pauta/route.ts` - Removido bypass de validacao
+
+---
+
+### 2026-01-29 - RN-125: Publicacao de Pauta com 48h de Antecedencia
+
+**Objetivo**: Implementar regra de transparencia RN-125 que exige que a pauta seja publicada com pelo menos 48 horas de antecedencia da sessao.
+
+**Motivacao**: Garante que cidadaos possam acompanhar a ordem do dia e se preparar para acompanhar as sessoes.
+
+**APIs Criadas**:
+
+1. **`POST /api/pautas/[id]/publicar`**
+   - Muda status da pauta de RASCUNHO para APROVADA (publicada)
+   - Valida que a sessao esta agendada para pelo menos 48h no futuro
+   - Considera horario especifico da sessao se definido
+   - Registra auditoria com dados completos
+
+2. **`GET /api/pautas/[id]`**
+   - Retorna pauta por ID com todos os itens e estatisticas
+   - Inclui dados da sessao vinculada e legislatura
+   - Calcula totais por status dos itens
+
+3. **`PATCH /api/pautas/[id]`**
+   - Atualiza observacoes ou status da pauta
+   - Impede despublicar (APROVADA → RASCUNHO) com menos de 48h da sessao
+   - Bloqueia alteracoes manuais em pautas EM_ANDAMENTO ou CONCLUIDA
+
+4. **`DELETE /api/pautas/[id]`**
+   - Remove pauta apenas se em RASCUNHO
+   - Reverte status das proposicoes para AGUARDANDO_PAUTA
+   - Registra auditoria com lista de proposicoes afetadas
+
+**Validacao na Sessao**:
+
+- Arquivo: `src/lib/services/sessao-controle.ts`
+- Funcao: `iniciarSessaoControle()`
+- Adiciona: Valida que pauta tem status APROVADA antes de iniciar
+- Mensagem: Informa operador para publicar a pauta antes de iniciar
+
+**Regras Implementadas**:
+
+| Regra | Descricao | Implementacao |
+|-------|-----------|---------------|
+| RN-125.1 | Pauta deve ser publicada 48h antes | `POST /api/pautas/[id]/publicar` |
+| RN-125.2 | Nao pode despublicar com menos de 48h | `PATCH /api/pautas/[id]` |
+| RN-125.3 | Sessao so inicia com pauta publicada | `iniciarSessaoControle()` |
+
+**Fluxo de Publicacao**:
+
+```
+[Criar Pauta] → Status: RASCUNHO
+       ↓
+[Adicionar Itens] → Proposicoes, comunicacoes, etc.
+       ↓
+[Verificar 48h] → Sessao >= 48h no futuro?
+       ↓                    ↓
+      SIM                  NAO
+       ↓                    ↓
+[Publicar] ←──────── [Aguardar ou reagendar sessao]
+       ↓
+Status: APROVADA
+       ↓
+[Iniciar Sessao] → Validacao passa
+       ↓
+Status: EM_ANDAMENTO
+```
+
+**Arquivos Criados/Modificados**:
+- `src/app/api/pautas/[id]/publicar/route.ts` - NOVO
+- `src/app/api/pautas/[id]/route.ts` - NOVO
+- `src/lib/services/sessao-controle.ts` - Validacao RN-125
+
+---
+
+### 2026-01-29 - Formulario de Nova Pauta com Vinculacao a Sessao
+
+**Objetivo**: Implementar funcionalidade para criar pautas avulsas vinculadas a sessoes existentes, substituindo dados mock por integracao real com banco de dados.
+
+**Alteracoes Realizadas**:
+
+1. **Nova API `/api/pautas/route.ts`**:
+   - `GET`: Lista pautas com dados da sessao, paginacao e filtro por status
+   - `POST`: Cria nova pauta vinculada a sessao existente
+   - Validacao: sessao nao pode ter pauta ja vinculada (relacao 1:1)
+   - Auditoria: registra criacao com `PAUTA_CREATE`
+
+2. **Nova API `/api/pautas/sessoes-disponiveis/route.ts`**:
+   - `GET`: Lista sessoes disponiveis para vinculacao
+   - Filtra sessoes que ainda NAO possuem PautaSessao
+   - Retorna separado: `sessoesSemPauta` e `sessoesComPauta`
+   - Permissao: `pauta.manage`
+
+3. **Pagina `/admin/pautas-sessoes/page.tsx` Reescrita**:
+   - Removido uso de mock service (`pautasSessoesService`)
+   - Integracao com APIs reais (`/api/pautas` e `/api/pautas/sessoes-disponiveis`)
+   - Formulario de nova pauta com:
+     - Dropdown de selecao de sessao (apenas sem pauta)
+     - Preview da sessao selecionada antes de criar
+     - Campo de observacoes
+   - Estados de loading e feedback visual
+   - Paginacao e filtros funcionais
+   - Estatisticas calculadas dos dados reais
+
+**Arquivos Criados/Modificados**:
+- `src/app/api/pautas/route.ts` - NOVO
+- `src/app/api/pautas/sessoes-disponiveis/route.ts` - NOVO
+- `src/app/admin/pautas-sessoes/page.tsx` - REESCRITO (mock → API real)
+
+**Fluxo Implementado**:
+```
+[+ Nova Pauta] → Carregar sessoes sem pauta → Selecionar sessao → Preview → Criar
+                                                                              ↓
+                                                               POST /api/pautas
+                                                                              ↓
+                                                              PautaSessao criada
+```
 
 ---
 

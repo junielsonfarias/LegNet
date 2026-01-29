@@ -45,6 +45,14 @@ const quickActionsByRole: Record<UserRole, QuickAction[]> = {
     { label: 'Configurações', href: '/admin/configuracoes', icon: Settings, description: 'Tabelas auxiliares' },
     { label: 'Relatórios', href: '/admin/relatorios', icon: BarChart3, description: 'Gerar relatórios' }
   ],
+  AUXILIAR_LEGISLATIVO: [
+    { label: 'Nova Proposição', href: '/admin/proposicoes/nova', icon: FileText, description: 'Cadastrar proposição' },
+    { label: 'Tramitação', href: '/admin/tramitacao', icon: ClipboardList, description: 'Tramitar proposições' },
+    { label: 'Comissões', href: '/admin/comissoes', icon: Users, description: 'Gerenciar comissões' },
+    { label: 'Pareceres', href: '/admin/pareceres', icon: FileText, description: 'Elaborar pareceres' },
+    { label: 'Sessões', href: '/admin/sessoes-legislativas', icon: Calendar, description: 'Ver sessões' },
+    { label: 'Relatórios', href: '/admin/relatorios', icon: BarChart3, description: 'Gerar relatórios' }
+  ],
   EDITOR: [
     { label: 'Nova Proposição', href: '/admin/proposicoes/nova', icon: FileText, description: 'Cadastrar proposição' },
     { label: 'Nova Sessão', href: '/admin/sessoes-legislativas/nova', icon: Calendar, description: 'Agendar sessão' },
@@ -88,6 +96,7 @@ export function QuickActions({ userRole }: QuickActionsProps) {
     const classes: Record<UserRole, string> = {
       ADMIN: 'hover:bg-violet-50 hover:border-violet-200 group-hover:text-violet-600',
       SECRETARIA: 'hover:bg-cyan-50 hover:border-cyan-200 group-hover:text-cyan-600',
+      AUXILIAR_LEGISLATIVO: 'hover:bg-teal-50 hover:border-teal-200 group-hover:text-teal-600',
       EDITOR: 'hover:bg-blue-50 hover:border-blue-200 group-hover:text-blue-600',
       OPERADOR: 'hover:bg-emerald-50 hover:border-emerald-200 group-hover:text-emerald-600',
       PARLAMENTAR: 'hover:bg-amber-50 hover:border-amber-200 group-hover:text-amber-600',
@@ -100,6 +109,7 @@ export function QuickActions({ userRole }: QuickActionsProps) {
     const classes: Record<UserRole, string> = {
       ADMIN: 'text-violet-500 group-hover:text-violet-600',
       SECRETARIA: 'text-cyan-500 group-hover:text-cyan-600',
+      AUXILIAR_LEGISLATIVO: 'text-teal-500 group-hover:text-teal-600',
       EDITOR: 'text-blue-500 group-hover:text-blue-600',
       OPERADOR: 'text-emerald-500 group-hover:text-emerald-600',
       PARLAMENTAR: 'text-amber-500 group-hover:text-amber-600',

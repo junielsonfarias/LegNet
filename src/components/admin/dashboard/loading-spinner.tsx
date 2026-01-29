@@ -21,6 +21,7 @@ export function LoadingSpinner({ size = 'md', userRole = 'ADMIN', text }: Loadin
     const colors: Record<UserRole, string> = {
       ADMIN: 'text-violet-600',
       SECRETARIA: 'text-cyan-600',
+      AUXILIAR_LEGISLATIVO: 'text-teal-600',
       EDITOR: 'text-blue-600',
       OPERADOR: 'text-emerald-600',
       PARLAMENTAR: 'text-amber-600',
@@ -48,6 +49,7 @@ export function PageLoader({ userRole = 'ADMIN' }: PageLoaderProps) {
     const gradients: Record<UserRole, string> = {
       ADMIN: 'from-violet-500/20 via-purple-500/20 to-violet-500/20',
       SECRETARIA: 'from-cyan-500/20 via-teal-500/20 to-cyan-500/20',
+      AUXILIAR_LEGISLATIVO: 'from-teal-500/20 via-cyan-500/20 to-teal-500/20',
       EDITOR: 'from-blue-500/20 via-indigo-500/20 to-blue-500/20',
       OPERADOR: 'from-emerald-500/20 via-green-500/20 to-emerald-500/20',
       PARLAMENTAR: 'from-amber-500/20 via-orange-500/20 to-amber-500/20',

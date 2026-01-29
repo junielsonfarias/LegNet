@@ -23,8 +23,8 @@ const PautaItemCreateSchema = z.object({
   tempoEstimado: z.number().min(0).optional(),
   autor: z.string().optional(),
   observacoes: z.string().optional(),
-  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional(), // NOVO - se não informado, será determinado automaticamente
-  validarParecer: z.boolean().optional().default(true) // NOVO - permite ignorar validação em casos especiais
+  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional() // Se não informado, será determinado automaticamente
+  // REMOVIDO: validarParecer - GAP CRÍTICO #4: Validação de parecer CLJ é sempre obrigatória
 })
 
 const sortItens = <T extends { secao: string; ordem: number }>(itens: T[]) => {
@@ -190,16 +190,19 @@ export const POST = withAuth(async (
         }
       }
 
-      // RN-030: Validar parecer se está adicionando à ORDEM_DO_DIA para VOTAÇÃO
+      // RN-030 e RN-057: SEMPRE validar parecer ao adicionar à ORDEM_DO_DIA para VOTAÇÃO
+      // GAP CRÍTICO #4: Removido bypass - validação é sempre obrigatória
       if (
         payload.data.secao === 'ORDEM_DO_DIA' &&
-        (tipoAcao === 'VOTACAO' || tipoAcao === 'DISCUSSAO') &&
-        payload.data.validarParecer !== false
+        (tipoAcao === 'VOTACAO' || tipoAcao === 'DISCUSSAO')
       ) {
         const validacao = await validarInclusaoOrdemDoDia(payload.data.proposicaoId)
 
         if (!validacao.valid) {
-          throw new ValidationError(validacao.errors.join('; '))
+          throw new ValidationError(
+            'RN-030/RN-057: ' + validacao.errors.join('; ') +
+            ' Não é possível incluir esta proposição na Ordem do Dia.'
+          )
         }
 
         // Se passou na validação, atualizar status da proposição para EM_PAUTA

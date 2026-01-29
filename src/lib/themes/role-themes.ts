@@ -92,6 +92,33 @@ export const roleThemes: Record<UserRole, RoleTheme> = {
     icon: 'ClipboardList'
   },
 
+  // AUXILIAR_LEGISLATIVO: Teal - Representa apoio legislativo
+  AUXILIAR_LEGISLATIVO: {
+    primary: '#0d9488',
+    primaryHover: '#0f766e',
+    primaryLight: '#ccfbf1',
+    accent: '#14b8a6',
+
+    gradient: 'from-teal-600 to-cyan-600',
+    gradientHover: 'from-teal-700 to-cyan-700',
+    sidebarGradient: 'from-teal-50 via-cyan-50 to-white',
+
+    badgeBg: 'bg-teal-100',
+    badgeText: 'text-teal-800',
+    badgeBorder: 'border-teal-200',
+
+    sidebarActiveBg: 'bg-teal-600',
+    sidebarActiveText: 'text-white',
+    sidebarHoverBg: 'hover:bg-teal-50',
+
+    cardAccent: 'border-l-teal-500',
+    iconColor: 'text-teal-600',
+
+    label: 'Auxiliar Legislativo',
+    description: 'Apoio ao processo legislativo',
+    icon: 'ClipboardList'
+  },
+
   // EDITOR: Azul - Representa criação e edição de conteúdo
   EDITOR: {
     primary: '#2563eb',
@@ -171,33 +198,6 @@ export const roleThemes: Record<UserRole, RoleTheme> = {
     label: 'Parlamentar',
     description: 'Vereador(a)',
     icon: 'User'
-  },
-
-  // AUXILIAR_LEGISLATIVO: Rosa/Magenta - Representa suporte ao trabalho legislativo
-  AUXILIAR_LEGISLATIVO: {
-    primary: '#be185d',
-    primaryHover: '#9d174d',
-    primaryLight: '#fce7f3',
-    accent: '#ec4899',
-
-    gradient: 'from-pink-600 to-rose-600',
-    gradientHover: 'from-pink-700 to-rose-700',
-    sidebarGradient: 'from-pink-50 via-rose-50 to-white',
-
-    badgeBg: 'bg-pink-100',
-    badgeText: 'text-pink-800',
-    badgeBorder: 'border-pink-200',
-
-    sidebarActiveBg: 'bg-pink-600',
-    sidebarActiveText: 'text-white',
-    sidebarHoverBg: 'hover:bg-pink-50',
-
-    cardAccent: 'border-l-pink-500',
-    iconColor: 'text-pink-600',
-
-    label: 'Auxiliar Legislativo',
-    description: 'Suporte ao processo legislativo',
-    icon: 'FileText'
   },
 
   // USER: Cinza - Representa acesso básico/visitante

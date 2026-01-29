@@ -107,6 +107,7 @@ export function RecentActivity({ userRole, activities = mockActivities }: Recent
     const colors: Record<UserRole, string> = {
       ADMIN: 'border-l-violet-500',
       SECRETARIA: 'border-l-cyan-500',
+      AUXILIAR_LEGISLATIVO: 'border-l-teal-500',
       EDITOR: 'border-l-blue-500',
       OPERADOR: 'border-l-emerald-500',
       PARLAMENTAR: 'border-l-amber-500',
@@ -119,6 +120,7 @@ export function RecentActivity({ userRole, activities = mockActivities }: Recent
     const colors: Record<UserRole, string> = {
       ADMIN: 'bg-violet-100 text-violet-600',
       SECRETARIA: 'bg-cyan-100 text-cyan-600',
+      AUXILIAR_LEGISLATIVO: 'bg-teal-100 text-teal-600',
       EDITOR: 'bg-blue-100 text-blue-600',
       OPERADOR: 'bg-emerald-100 text-emerald-600',
       PARLAMENTAR: 'bg-amber-100 text-amber-600',

@@ -93,6 +93,7 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
     const classes: Record<UserRole, string> = {
       ADMIN: 'bg-violet-600 text-white',
       SECRETARIA: 'bg-cyan-600 text-white',
+      AUXILIAR_LEGISLATIVO: 'bg-teal-600 text-white',
       EDITOR: 'bg-blue-600 text-white',
       OPERADOR: 'bg-emerald-600 text-white',
       PARLAMENTAR: 'bg-amber-500 text-white',
@@ -105,6 +106,7 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
     const gradients: Record<UserRole, string> = {
       ADMIN: 'from-violet-600 to-purple-700',
       SECRETARIA: 'from-cyan-600 to-teal-600',
+      AUXILIAR_LEGISLATIVO: 'from-teal-600 to-cyan-600',
       EDITOR: 'from-blue-600 to-blue-700',
       OPERADOR: 'from-emerald-600 to-green-600',
       PARLAMENTAR: 'from-amber-500 to-orange-500',
@@ -117,6 +119,7 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
     const colors: Record<UserRole, string> = {
       ADMIN: 'text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/30',
       SECRETARIA: 'text-cyan-600 hover:bg-cyan-50 dark:text-cyan-400 dark:hover:bg-cyan-900/30',
+      AUXILIAR_LEGISLATIVO: 'text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-900/30',
       EDITOR: 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30',
       OPERADOR: 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30',
       PARLAMENTAR: 'text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30',

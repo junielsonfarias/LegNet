@@ -71,6 +71,7 @@ export default function AdminDashboard() {
     const gradients: Record<UserRole, string> = {
       ADMIN: 'from-violet-600 to-purple-700',
       SECRETARIA: 'from-cyan-600 to-teal-600',
+      AUXILIAR_LEGISLATIVO: 'from-teal-600 to-cyan-600',
       EDITOR: 'from-blue-600 to-blue-700',
       OPERADOR: 'from-emerald-600 to-green-600',
       PARLAMENTAR: 'from-amber-500 to-orange-500',

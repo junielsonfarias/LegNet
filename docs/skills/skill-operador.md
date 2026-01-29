@@ -246,6 +246,22 @@ enum TipoQuorum {
 | `/api/sessoes/[id]/pauta/apply-template` | POST | `{ templateId }` | Aplicar template | SECRETARIA |
 | `/api/sessoes/[id]/pauta/sugestoes` | GET | - | Sugestoes de pauta | SECRETARIA |
 
+### Gestao de Pauta (RN-125)
+
+| Rota | Metodo | Body/Params | Funcionalidade | Roles |
+|------|--------|-------------|----------------|-------|
+| `/api/pautas/[id]` | GET | - | Obter pauta por ID com estatisticas | pauta.view |
+| `/api/pautas/[id]` | PATCH | `{ observacoes?, status? }` | Atualizar pauta | pauta.manage |
+| `/api/pautas/[id]` | DELETE | - | Excluir pauta (apenas RASCUNHO) | pauta.manage |
+| `/api/pautas/[id]/publicar` | POST | - | Publicar pauta (RASCUNHO → APROVADA) | pauta.manage |
+
+#### Regras de Publicacao (RN-125)
+
+- **Publicar**: Pauta so pode ser publicada se sessao esta >= 48h no futuro
+- **Despublicar**: Voltar de APROVADA para RASCUNHO so permitido se sessao >= 48h
+- **Iniciar Sessao**: Sessao so inicia se pauta tem status APROVADA
+- **Excluir**: Apenas pautas em RASCUNHO podem ser excluidas (reverte proposicoes)
+
 #### Acoes de Controle de Item (`/api/sessoes/[id]/pauta/[itemId]/controle`)
 
 | Acao | Body | Descricao |

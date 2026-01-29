@@ -393,6 +393,7 @@ const navigationCategories: NavCategory[] = [
 const roleIcons: Record<UserRole, LucideIcon> = {
   ADMIN: Shield,
   SECRETARIA: ClipboardList,
+  AUXILIAR_LEGISLATIVO: ClipboardList,
   EDITOR: Edit3,
   OPERADOR: Monitor,
   PARLAMENTAR: UserCircle,
@@ -458,6 +459,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
     const activeClasses: Record<UserRole, string> = {
       ADMIN: 'bg-violet-600 text-white shadow-md shadow-violet-200 dark:shadow-violet-900/30',
       SECRETARIA: 'bg-cyan-600 text-white shadow-md shadow-cyan-200 dark:shadow-cyan-900/30',
+      AUXILIAR_LEGISLATIVO: 'bg-teal-600 text-white shadow-md shadow-teal-200 dark:shadow-teal-900/30',
       EDITOR: 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30',
       OPERADOR: 'bg-emerald-600 text-white shadow-md shadow-emerald-200 dark:shadow-emerald-900/30',
       PARLAMENTAR: 'bg-amber-500 text-white shadow-md shadow-amber-200 dark:shadow-amber-900/30',
@@ -470,6 +472,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
     const hoverClasses: Record<UserRole, string> = {
       ADMIN: 'hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-900/30 dark:hover:text-violet-300',
       SECRETARIA: 'hover:bg-cyan-50 hover:text-cyan-700 dark:hover:bg-cyan-900/30 dark:hover:text-cyan-300',
+      AUXILIAR_LEGISLATIVO: 'hover:bg-teal-50 hover:text-teal-700 dark:hover:bg-teal-900/30 dark:hover:text-teal-300',
       EDITOR: 'hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/30 dark:hover:text-blue-300',
       OPERADOR: 'hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-300',
       PARLAMENTAR: 'hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-300',
@@ -482,6 +485,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
     const gradients: Record<UserRole, string> = {
       ADMIN: 'from-violet-50 via-purple-50 to-white dark:from-gray-900 dark:via-violet-950/20 dark:to-gray-900',
       SECRETARIA: 'from-cyan-50 via-teal-50 to-white dark:from-gray-900 dark:via-cyan-950/20 dark:to-gray-900',
+      AUXILIAR_LEGISLATIVO: 'from-teal-50 via-cyan-50 to-white dark:from-gray-900 dark:via-teal-950/20 dark:to-gray-900',
       EDITOR: 'from-blue-50 via-indigo-50 to-white dark:from-gray-900 dark:via-blue-950/20 dark:to-gray-900',
       OPERADOR: 'from-emerald-50 via-green-50 to-white dark:from-gray-900 dark:via-emerald-950/20 dark:to-gray-900',
       PARLAMENTAR: 'from-amber-50 via-orange-50 to-white dark:from-gray-900 dark:via-amber-950/20 dark:to-gray-900',
@@ -494,6 +498,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
     const gradients: Record<UserRole, string> = {
       ADMIN: 'from-violet-600 to-purple-700',
       SECRETARIA: 'from-cyan-600 to-teal-600',
+      AUXILIAR_LEGISLATIVO: 'from-teal-600 to-cyan-600',
       EDITOR: 'from-blue-600 to-blue-700',
       OPERADOR: 'from-emerald-600 to-green-600',
       PARLAMENTAR: 'from-amber-500 to-orange-500',
@@ -506,6 +511,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
     const iconClasses: Record<UserRole, string> = {
       ADMIN: 'text-violet-500',
       SECRETARIA: 'text-cyan-500',
+      AUXILIAR_LEGISLATIVO: 'text-teal-500',
       EDITOR: 'text-blue-500',
       OPERADOR: 'text-emerald-500',
       PARLAMENTAR: 'text-amber-500',

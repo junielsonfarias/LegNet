@@ -444,10 +444,14 @@ enum StatusProposicao {
   EM_TRAMITACAO
   AGUARDANDO_PAUTA  // Com pareceres, pronta para inclusão na pauta
   EM_PAUTA          // Incluída na ordem do dia de uma sessão
+  EM_DISCUSSAO      // Em discussão no plenário
+  EM_VOTACAO        // Em processo de votação
   APROVADA
   REJEITADA
   ARQUIVADA
   VETADA
+  SANCIONADA        // Sancionada pelo Executivo
+  PROMULGADA        // Promulgada e publicada
 }
 
 // Tipo de ação do item na pauta (LEITURA vs VOTAÇÃO)

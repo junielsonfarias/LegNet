@@ -3,6 +3,8 @@ import { createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { listarProposicoesElegiveisPauta } from '@/lib/services/fluxo-tramitacao-service'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/proposicoes/elegiveis-pauta
  * Lista proposicoes que estao elegiveis para inclusao na pauta

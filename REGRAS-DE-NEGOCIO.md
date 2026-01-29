@@ -1009,6 +1009,33 @@ O sistema DEVE disponibilizar API REST com:
 - Endpoints para consulta de votacoes
 - Documentacao completa (OpenAPI/Swagger)
 - Limitacao de requisicoes (rate limiting)
+
+REGRA RN-125: PUBLICACAO DE PAUTA COM ANTECEDENCIA
+A pauta de sessao DEVE ser publicada com antecedencia minima de 48 horas:
+
+1. PUBLICACAO DA PAUTA
+   - Pauta criada com status RASCUNHO
+   - Publicacao muda status para APROVADA
+   - Publicar so permitido se sessao >= 48h no futuro
+   - Considera horario especifico da sessao se definido
+
+2. DESPUBLICACAO
+   - Voltar de APROVADA para RASCUNHO so permitido se sessao >= 48h
+   - Garante que pauta publicada nao seja retirada de ultima hora
+   - Protege direito do cidadao de se preparar para sessao
+
+3. VALIDACAO NA SESSAO
+   - Sessao so pode iniciar se pauta esta publicada (status APROVADA)
+   - Operador recebe mensagem clara para publicar pauta primeiro
+   - Sistema bloqueia inicio de sessao com pauta em RASCUNHO
+
+4. AUDITORIA
+   - Todas acoes de publicar/despublicar sao registradas
+   - Inclui usuario, data/hora, e estado anterior/novo
+   - Permite rastrear manipulacoes de pauta
+
+Objetivo: Garantir transparencia e permitir que cidadaos acompanhem
+a ordem do dia com tempo habil para preparacao.
 ```
 
 ---

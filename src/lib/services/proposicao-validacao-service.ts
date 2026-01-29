@@ -399,7 +399,7 @@ export function validarIniciativaPopular(
 
 /**
  * Valida transição de status da proposição
- * Baseado no enum StatusProposicao do Prisma: APRESENTADA, EM_TRAMITACAO, APROVADA, REJEITADA, ARQUIVADA, VETADA
+ * Baseado no enum StatusProposicao do Prisma (atualizado com estados intermediários)
  */
 export function validarTransicaoStatus(
   statusAtual: string,
@@ -407,13 +407,19 @@ export function validarTransicaoStatus(
 ): ValidationResult {
   const errors: string[] = []
 
-  // Define transições válidas (baseado no schema Prisma atual)
+  // Define transições válidas com todos os estados do fluxo legislativo
   const transicoesValidas: Record<string, string[]> = {
-    APRESENTADA: ['EM_TRAMITACAO', 'ARQUIVADA'],
-    EM_TRAMITACAO: ['APROVADA', 'REJEITADA', 'ARQUIVADA'],
-    APROVADA: ['VETADA', 'ARQUIVADA'],
+    APRESENTADA: ['EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'ARQUIVADA'],
+    EM_TRAMITACAO: ['AGUARDANDO_PAUTA', 'ARQUIVADA'],
+    AGUARDANDO_PAUTA: ['EM_PAUTA', 'ARQUIVADA', 'EM_TRAMITACAO'],
+    EM_PAUTA: ['EM_DISCUSSAO', 'AGUARDANDO_PAUTA', 'ARQUIVADA'],
+    EM_DISCUSSAO: ['EM_VOTACAO', 'EM_PAUTA', 'ARQUIVADA'],
+    EM_VOTACAO: ['APROVADA', 'REJEITADA', 'EM_DISCUSSAO', 'ARQUIVADA'],
+    APROVADA: ['VETADA', 'SANCIONADA', 'ARQUIVADA'],
     REJEITADA: ['ARQUIVADA'],
-    VETADA: ['ARQUIVADA'],
+    VETADA: ['APROVADA', 'ARQUIVADA'],
+    SANCIONADA: ['PROMULGADA', 'ARQUIVADA'],
+    PROMULGADA: [],
     ARQUIVADA: []
   }
 
@@ -745,6 +751,7 @@ export const MAPEAMENTO_TIPO_SECAO: Record<string, {
 
 /**
  * Atualiza as transições válidas de status para incluir novos estados
+ * Inclui estados intermediários: EM_DISCUSSAO, EM_VOTACAO, SANCIONADA, PROMULGADA
  */
 export function validarTransicaoStatusCompleta(
   statusAtual: string,
@@ -752,15 +759,19 @@ export function validarTransicaoStatusCompleta(
 ): ValidationResult {
   const errors: string[] = []
 
-  // Define transições válidas com novos estados
+  // Define transições válidas com todos os estados (incluindo intermediários)
   const transicoesValidas: Record<string, string[]> = {
     APRESENTADA: ['EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'ARQUIVADA'],
     EM_TRAMITACAO: ['AGUARDANDO_PAUTA', 'ARQUIVADA'],
     AGUARDANDO_PAUTA: ['EM_PAUTA', 'ARQUIVADA', 'EM_TRAMITACAO'], // Pode voltar para tramitação
-    EM_PAUTA: ['APROVADA', 'REJEITADA', 'AGUARDANDO_PAUTA', 'ARQUIVADA'], // Pode ser retirada da pauta
-    APROVADA: ['VETADA', 'ARQUIVADA'],
+    EM_PAUTA: ['EM_DISCUSSAO', 'AGUARDANDO_PAUTA', 'ARQUIVADA'], // Pode ser retirada da pauta
+    EM_DISCUSSAO: ['EM_VOTACAO', 'EM_PAUTA', 'ARQUIVADA'], // Pode voltar para pauta ou ir para votação
+    EM_VOTACAO: ['APROVADA', 'REJEITADA', 'EM_DISCUSSAO', 'ARQUIVADA'], // Pode voltar para discussão
+    APROVADA: ['VETADA', 'SANCIONADA', 'ARQUIVADA'],
     REJEITADA: ['ARQUIVADA'],
     VETADA: ['APROVADA', 'ARQUIVADA'], // Veto pode ser derrubado
+    SANCIONADA: ['PROMULGADA', 'ARQUIVADA'],
+    PROMULGADA: [], // Estado final
     ARQUIVADA: []
   }
 
