@@ -9,6 +9,7 @@ import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, Refre
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { BotaoFavorito } from '@/components/favoritos'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 // Interface para proposição da API pública
 interface ProposicaoPublica {
@@ -31,6 +32,7 @@ interface ProposicaoPublica {
 }
 
 export default function ProposicoesPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [proposicoes, setProposicoes] = useState<ProposicaoPublica[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -146,7 +148,7 @@ export default function ProposicoesPage() {
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Acompanhe todas as proposições legislativas apresentadas pelos vereadores
-            da Câmara Municipal de Mojuí dos Campos.
+            da {configuracao?.nomeCasa || 'Câmara Municipal'}.
           </p>
         </div>
 

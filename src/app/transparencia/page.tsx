@@ -73,7 +73,7 @@ export default function TransparenciaPage() {
   }, []);
 
   const config = dados?.configuracao;
-  const nomeCasa = config?.nome || 'Câmara Municipal de Mojuí dos Campos';
+  const nomeCasa = config?.nome || 'Câmara Municipal';
   const endereco = config?.endereco;
   const enderecoCompleto = endereco?.logradouro
     ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', s/nº'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { ParlamentaresListSkeleton } from '@/components/skeletons/parlamentar-skeleton'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function ParlamentaresPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -31,6 +32,8 @@ export default function ParlamentaresPage() {
 
   // Dados dos parlamentares usando hook
   const { parlamentares, loading } = useParlamentares({ ativo: true })
+  const { configuracao } = useConfiguracaoInstitucional()
+  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
 
   // Mesa Diretora - filtrar por cargo
   const mesaDiretora = useMemo(() => {
@@ -152,7 +155,7 @@ export default function ParlamentaresPage() {
             Parlamentares
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-            Conheça os vereadores e a Mesa Diretora da Câmara Municipal de Mojuí dos Campos
+            Conheça os vereadores e a Mesa Diretora da {nomeCasa}
           </p>
           <div className="flex justify-center space-x-4">
             <Button asChild variant="outline">

@@ -10,6 +10,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    // Buscar configuração institucional
+    const config = await prisma.configuracaoInstitucional.findFirst({
+      where: { slug: 'principal' }
+    })
+    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
     const ano = searchParams.get('ano') ? parseInt(searchParams.get('ano')!) : undefined
@@ -100,7 +106,7 @@ export async function GET(request: NextRequest) {
         limite: limit,
         paginas: Math.ceil(total / limit),
         atualizacao: new Date().toISOString(),
-        fonte: 'Camara Municipal de Mojui dos Campos'
+        fonte: nomeCasa
       }
     })
   } catch (error) {

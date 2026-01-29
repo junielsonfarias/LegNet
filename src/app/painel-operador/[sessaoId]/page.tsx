@@ -65,6 +65,7 @@ import type { PautaItemApi } from '@/lib/api/pauta-api'
 import { PresencaControl } from '@/components/admin/presenca-control'
 import { VotacaoAcompanhamento } from '@/components/admin/votacao-acompanhamento'
 import { VotacaoEdicao } from '@/components/admin/votacao-edicao'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'; label: string }> = [
   { value: 'CONCLUIDO', label: 'Concluído' },
@@ -184,6 +185,7 @@ const getTipoAcaoLabel = (tipoAcao: string) => {
 export default function PainelOperadorPage() {
   const params = useParams()
   const sessaoId = params?.sessaoId as string
+  const { configuracao } = useConfiguracaoInstitucional()
 
   const [sessao, setSessao] = useState<SessaoApi | null>(null)
   const [loading, setLoading] = useState(true)
@@ -417,7 +419,7 @@ export default function PainelOperadorPage() {
                 <span className="truncate">{sessao.numero}ª Sessão {getTipoSessaoLabel(sessao.tipo)}</span>
               </h1>
               <p className="mt-1 text-xs md:text-sm text-slate-400 truncate">
-                Câmara Municipal de Mojuí dos Campos
+                {configuracao?.nomeCasa || 'Câmara Municipal'}
               </p>
             </div>
 

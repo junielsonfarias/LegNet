@@ -10,6 +10,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    // Buscar configuração institucional
+    const config = await prisma.configuracaoInstitucional.findFirst({
+      where: { slug: 'principal' }
+    })
+    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+
     // Buscar todos os parlamentares ativos com contagens
     const parlamentares = await prisma.parlamentar.findMany({
       where: { ativo: true },
@@ -47,7 +53,7 @@ export async function GET(request: NextRequest) {
       metadados: {
         total: parlamentares.length,
         atualizacao: new Date().toISOString(),
-        fonte: 'Câmara Municipal de Mojuí dos Campos'
+        fonte: nomeCasa
       }
     })
   } catch (error) {

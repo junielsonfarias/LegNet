@@ -22,38 +22,7 @@ interface UpcomingEventsProps {
   events?: UpcomingEvent[]
 }
 
-// Dados mock para demonstração
-const mockEvents: UpcomingEvent[] = [
-  {
-    id: '1',
-    title: 'Sessão Ordinária 037',
-    type: 'sessao',
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2), // 2 dias
-    time: '09:00',
-    location: 'Plenário',
-    attendees: 9
-  },
-  {
-    id: '2',
-    title: 'Reunião CLJ',
-    type: 'reuniao',
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3), // 3 dias
-    time: '14:00',
-    location: 'Sala de Comissões',
-    attendees: 5
-  },
-  {
-    id: '3',
-    title: 'Audiência Pública - Orçamento',
-    type: 'audiencia',
-    date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5), // 5 dias
-    time: '18:00',
-    location: 'Plenário',
-    attendees: 50
-  }
-]
-
-export function UpcomingEvents({ userRole, events = mockEvents }: UpcomingEventsProps) {
+export function UpcomingEvents({ userRole, events = [] }: UpcomingEventsProps) {
   const getTypeLabel = (type: UpcomingEvent['type']) => {
     const labels = {
       sessao: 'Sessão',

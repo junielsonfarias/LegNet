@@ -14,6 +14,12 @@ export async function GET(request: NextRequest) {
     const formato = searchParams.get('formato') || 'json'
     const legislaturaId = searchParams.get('legislatura')
 
+    // Buscar configuração institucional
+    const config = await prisma.configuracaoInstitucional.findFirst({
+      where: { slug: 'principal' }
+    })
+    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+
     // Buscar parlamentares ativos
     const parlamentares = await prisma.parlamentar.findMany({
       where: {
@@ -87,7 +93,7 @@ export async function GET(request: NextRequest) {
       metadados: {
         total: dadosFormatados.length,
         atualizacao: new Date().toISOString(),
-        fonte: 'Camara Municipal de Mojui dos Campos'
+        fonte: nomeCasa
       }
     })
   } catch (error) {

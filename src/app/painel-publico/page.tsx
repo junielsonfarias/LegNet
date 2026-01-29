@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -98,6 +99,8 @@ interface VotacaoRegistro {
 function PainelPublicoContent() {
   const searchParams = useSearchParams()
   const sessaoIdParam = searchParams.get('sessaoId')
+  const { configuracao } = useConfiguracaoInstitucional()
+  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
 
   const [sessao, setSessao] = useState<Sessao | null>(null)
   const [presencas, setPresencas] = useState<Presenca[]>([])
@@ -353,7 +356,7 @@ function PainelPublicoContent() {
                 <h1 className="text-2xl font-bold text-white">
                   {sessao.numero}ª Sessão {tipoSessaoLabel} - {new Date(sessao.data).getFullYear()}
                 </h1>
-                <p className="text-blue-200">Câmara Municipal de Mojuí dos Campos</p>
+                <p className="text-blue-200">{nomeCasa}</p>
               </div>
             </div>
             <div className="text-right">

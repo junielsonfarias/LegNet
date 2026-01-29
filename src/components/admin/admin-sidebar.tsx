@@ -47,6 +47,7 @@ import {
   Briefcase
 } from 'lucide-react'
 import { useState } from 'react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface NavItem {
   name: string
@@ -362,6 +363,12 @@ const navigationCategories: NavCategory[] = [
         permissions: ['config.manage']
       },
       {
+        name: 'Tipos de Proposição',
+        href: '/admin/configuracoes/tipos-proposicoes',
+        icon: FileText,
+        permissions: ['config.manage']
+      },
+      {
         name: 'Integrações',
         href: '/admin/integracoes',
         icon: Key,
@@ -408,9 +415,14 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
   const pathname = usePathname()
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['Visão Geral', 'Processo Legislativo'])
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+  const { configuracao, legislatura } = useConfiguracaoInstitucional()
 
   const theme = getRoleTheme(userRole)
   const RoleIcon = roleIcons[userRole]
+
+  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
+  const cidade = configuracao.endereco.cidade || ''
+  const periodoLegislatura = legislatura?.periodo || `${new Date().getFullYear()}/${new Date().getFullYear() + 3}`
 
   const toggleCategory = (categoryName: string) => {
     setExpandedCategories(prev =>
@@ -536,7 +548,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Painel Admin</h2>
-            <p className="text-xs text-white/80">Câmara Municipal</p>
+            <p className="text-xs text-white/80">{nomeCasa}</p>
           </div>
         </div>
 
@@ -693,8 +705,8 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
             <Building className="h-4 w-4 text-white" />
           </div>
           <div className="text-xs">
-            <div className="font-semibold text-gray-800 dark:text-gray-200">Mojuí dos Campos</div>
-            <div className="text-gray-500 dark:text-gray-400">Legislatura 2025/2028</div>
+            <div className="font-semibold text-gray-800 dark:text-gray-200">{cidade || 'Sistema Legislativo'}</div>
+            <div className="text-gray-500 dark:text-gray-400">Legislatura {periodoLegislatura}</div>
           </div>
         </div>
       </div>

@@ -1,8 +1,12 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Users, FileText, CheckCircle, Clock, Building, Award, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function LegislaturaPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
@@ -12,7 +16,7 @@ export default function LegislaturaPage() {
             Legislatura Atual
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Conheça a composição da atual legislatura da Câmara Municipal de Mojuí dos Campos, 
+            Conheça a composição da atual legislatura da {configuracao?.nomeCasa || 'Câmara Municipal'},
             seus representantes e principais realizações.
           </p>
         </div>
@@ -28,7 +32,7 @@ export default function LegislaturaPage() {
             </CardHeader>
             <CardContent className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed mb-4">
-                A atual legislatura da Câmara Municipal de Mojuí dos Campos teve início 
+                A atual legislatura da {configuracao?.nomeCasa || 'Câmara Municipal'} teve início 
                 em 1º de janeiro de 2021 e se estende até 31 de dezembro de 2024. 
                 Esta é a 17ª legislatura desde a criação do município.
               </p>

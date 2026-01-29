@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Calendar, Clock, Users, FileText, Play, CheckCircle, XCircle, AlertCircle, Search, Filter, X, Download, Loader2, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 import { toast } from 'sonner'
@@ -31,6 +32,7 @@ interface SessaoPublica {
 }
 
 export default function SessoesPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [searchTerm, setSearchTerm] = useState('')
   const [tipoFilter, setTipoFilter] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
@@ -175,7 +177,7 @@ export default function SessoesPage() {
             Sessões Legislativas
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Acompanhe todas as sessões da Câmara Municipal de Mojuí dos Campos. 
+            Acompanhe todas as sessões da {configuracao?.nomeCasa || 'Câmara Municipal'}. 
             Consulte atas, proposições votadas e presença dos vereadores.
           </p>
         </div>

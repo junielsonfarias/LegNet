@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Users, FileText, UserCheck, Loader2, AlertCircle } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface Membro {
   id: string
@@ -25,6 +26,7 @@ interface Comissao {
 }
 
 export default function ComissoesPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [comissoes, setComissoes] = useState<Comissao[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -116,7 +118,7 @@ export default function ComissoesPage() {
               Comissões Legislativas
             </h1>
             <p className="text-gray-600">
-              Conheça as comissões da Câmara Municipal de Mojuí dos Campos
+              Conheça as comissões da {configuracao?.nomeCasa || 'Câmara Municipal'}
             </p>
           </div>
           <div className="flex items-center justify-center py-12">
@@ -157,7 +159,7 @@ export default function ComissoesPage() {
               Comissões Legislativas
             </h1>
             <p className="text-gray-600">
-              Conheça as comissões da Câmara Municipal de Mojuí dos Campos
+              Conheça as comissões da {configuracao?.nomeCasa || 'Câmara Municipal'}
             </p>
           </div>
           <Card>
@@ -182,7 +184,7 @@ export default function ComissoesPage() {
             Comissões Legislativas
           </h1>
           <p className="text-gray-600">
-            Conheça as comissões da Câmara Municipal de Mojuí dos Campos
+            Conheça as comissões da {configuracao?.nomeCasa || 'Câmara Municipal'}
           </p>
         </div>
 

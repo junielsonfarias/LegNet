@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { usePublicParticipacao } from '@/lib/hooks/use-public-participacao'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface AssinaturaFormState {
   [peticaoId: string]: {
@@ -37,6 +38,7 @@ const formatDate = (value: string) =>
 const formatPercent = (value: number) => `${value.toFixed(0)}%`
 
 export default function ParticipacaoPublicaPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [searchInput, setSearchInput] = useState('')
   const [appliedTerm, setAppliedTerm] = useState<string | undefined>(undefined)
   const [assinaturas, setAssinaturas] = useState<AssinaturaFormState>({})
@@ -94,7 +96,7 @@ export default function ParticipacaoPublicaPage() {
             Participe das decisões públicas, acompanhe consultas e enquetes em tempo real.
           </h1>
           <p className="max-w-2xl text-base md:text-lg text-white/80">
-            Envie sugestões, vote em consultas públicas e apoie petições que impactam diretamente o futuro de Mojuí dos Campos.
+            Envie sugestões, vote em consultas públicas e apoie petições que impactam diretamente o futuro de {configuracao?.endereco?.cidade || 'nossa cidade'}.
           </p>
         </div>
       </section>

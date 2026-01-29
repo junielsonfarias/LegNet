@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, User, Loader2, RefreshCw, X, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { toast } from 'sonner'
 
 // Interface para publicação da API
@@ -33,6 +34,7 @@ interface PublicacaoPortaria {
 }
 
 export default function PortariasPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [portarias, setPortarias] = useState<PublicacaoPortaria[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -101,7 +103,7 @@ export default function PortariasPage() {
             Portarias da Câmara
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Consulte todas as portarias expedidas pela Câmara Municipal de Mojuí dos Campos.
+            Consulte todas as portarias expedidas pela {configuracao?.nomeCasa || 'Câmara Municipal'}.
             Portarias tratam de atos administrativos internos e nomeações.
           </p>
         </div>

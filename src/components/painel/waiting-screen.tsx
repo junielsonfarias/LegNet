@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Monitor, Calendar, Clock, Users, FileText, Timer } from 'lucide-react'
 import { useCronometroSincronizado, useHoraSincronizada } from '@/lib/hooks/use-cronometro-sincronizado'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface WaitingScreenProps {
   /** Informacoes da sessao */
@@ -47,6 +48,8 @@ export function WaitingScreen({
     tempoInicio: sessao.tempoInicio ?? null,
     ativo: sessao.status === 'EM_ANDAMENTO'
   })
+  const { configuracao } = useConfiguracaoInstitucional()
+  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
 
   // Formatar tipo de sessao
   const tipoSessaoLabel = {
@@ -93,7 +96,7 @@ export function WaitingScreen({
           {sessao.numero}ª Sessao {tipoSessaoLabel}
         </h1>
         <p className="text-xl text-blue-300">
-          Camara Municipal de Mojui dos Campos
+          {nomeCasa}
         </p>
       </div>
 

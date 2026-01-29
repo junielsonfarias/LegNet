@@ -166,7 +166,7 @@ export function Hero({ className }: HeroProps) {
     fetchStats()
   }, [])
 
-  const nomeCasa = configuracao.nomeCasa || 'Camara Municipal de Mojui dos Campos'
+  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
 
   return (
     <section

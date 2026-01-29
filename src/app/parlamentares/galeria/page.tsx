@@ -4,8 +4,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { User, Mail, Phone, MapPin, Calendar, Award } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function GaleriaParlamentaresPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const parlamentares = [
     {
       id: '1',
@@ -171,7 +173,7 @@ export default function GaleriaParlamentaresPage() {
             Galeria de Parlamentares
           </h1>
           <p className="text-gray-600">
-            Conheça os vereadores da Câmara Municipal de Mojuí dos Campos
+            Conheça os vereadores da {configuracao?.nomeCasa || 'Câmara Municipal'}
           </p>
         </div>
 
@@ -327,7 +329,7 @@ export default function GaleriaParlamentaresPage() {
                 Sobre a Legislatura 2025/2028
               </h3>
               <p className="text-gray-600 mb-4">
-                A Câmara Municipal de Mojuí dos Campos é composta por 11 vereadores 
+                A {configuracao?.nomeCasa || 'Câmara Municipal'} é composta por 11 vereadores 
                 eleitos para a legislatura 2025/2028, representando os interesses 
                 da população do município.
               </p>

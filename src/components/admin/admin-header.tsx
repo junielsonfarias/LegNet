@@ -27,6 +27,7 @@ import { getRoleTheme } from '@/lib/themes/role-themes'
 import { UserRole } from '@prisma/client'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface AdminHeaderProps {
   userRole?: UserRole
@@ -43,6 +44,9 @@ export function AdminHeader({
 }: AdminHeaderProps) {
   const { data: session } = useSession()
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const { configuracao } = useConfiguracaoInstitucional()
+
+  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
 
   // Usa props se disponíveis, senão usa sessão
   const userRole = (propRole || session?.user?.role || 'USER') as UserRole
@@ -102,7 +106,7 @@ export function AdminHeader({
                 Painel Administrativo
               </h1>
               <p className="text-xs text-gray-500">
-                Câmara Municipal de Mojuí dos Campos
+                {nomeCasa}
               </p>
             </div>
           </div>

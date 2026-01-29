@@ -40,6 +40,24 @@ import {
 } from '@/lib/api/tramitacoes-api'
 import { toast } from 'sonner'
 
+// Interface para tipos de proposição carregados do banco
+interface TipoProposicaoConfig {
+  id: string
+  codigo: string
+  nome: string
+  sigla: string
+  descricao?: string | null
+  prazoLimite?: number | null
+  requerVotacao: boolean
+  requerSancao: boolean
+  numeracaoAnual: boolean
+  prefixoNumeracao?: string | null
+  ativo: boolean
+  ordem: number
+  corBadge?: string | null
+  icone?: string | null
+}
+
 const SELECT_AUTO = '__auto__'
 const RESULTADO_PADRAO = '__sem__'
 const RESULTADOS_TRAMITACAO: Array<{ value: TramitacaoResultado; label: string }> = [
@@ -54,6 +72,8 @@ function ProposicoesContent() {
   const searchParams = useSearchParams()
   const { proposicoes, loading: loadingProposicoes, create, update, remove } = useProposicoes()
   const { parlamentares, loading: loadingParlamentares } = useParlamentares()
+  const [tiposProposicao, setTiposProposicao] = useState<TipoProposicaoConfig[]>([])
+  const [loadingTiposProposicao, setLoadingTiposProposicao] = useState(true)
   const [tiposTramitacao, setTiposTramitacao] = useState<TipoTramitacao[]>([])
   const [tiposOrgaos, setTiposOrgaos] = useState<TipoOrgao[]>([])
   const [tramitacoes, setTramitacoes] = useState<TramitacaoApi[]>([])
@@ -67,8 +87,8 @@ function ProposicoesContent() {
   const [formData, setFormData] = useState({
     numero: '',
     numeroAutomatico: true, // Por padrão, numeração automática
-    ano: 2024,
-    tipo: 'projeto_lei',
+    ano: new Date().getFullYear(),
+    tipo: '', // Será carregado do banco de dados
     titulo: '',
     ementa: '',
     textoCompleto: '',
@@ -120,6 +140,25 @@ function ProposicoesContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, loadingProposicoes])
 
+  const loadTiposProposicao = useCallback(async () => {
+    try {
+      setLoadingTiposProposicao(true)
+      const response = await fetch('/api/tipos-proposicao?ativo=true')
+      const result = await response.json()
+      if (result.success && result.data) {
+        setTiposProposicao(result.data)
+      } else {
+        console.error('Erro ao carregar tipos de proposição:', result.error)
+        toast.error('Não foi possível carregar os tipos de proposição')
+      }
+    } catch (error) {
+      console.error('Erro ao carregar tipos de proposição:', error)
+      toast.error('Erro ao carregar tipos de proposição')
+    } finally {
+      setLoadingTiposProposicao(false)
+    }
+  }, [])
+
   const loadTiposTramitacao = useCallback(() => {
     try {
       const data = tiposTramitacaoService.getAll()
@@ -152,14 +191,20 @@ function ProposicoesContent() {
   }, [])
 
   useEffect(() => {
+    void loadTiposProposicao()
     loadTiposTramitacao()
     loadTiposOrgaos()
     void loadTramitacoes()
-  }, [loadTiposTramitacao, loadTiposOrgaos, loadTramitacoes])
+  }, [loadTiposProposicao, loadTiposTramitacao, loadTiposOrgaos, loadTramitacoes])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    if (!formData.tipo) {
+      toast.error('Selecione um tipo de proposição')
+      return
+    }
+
     if (!formData.autorId) {
       toast.error('Selecione um autor')
       return
@@ -232,8 +277,8 @@ function ProposicoesContent() {
     setFormData({
       numero: '',
       numeroAutomatico: true,
-      ano: 2024,
-      tipo: 'projeto_lei',
+      ano: new Date().getFullYear(),
+      tipo: '',
       titulo: '',
       ementa: '',
       textoCompleto: '',
@@ -770,12 +815,11 @@ function ProposicoesContent() {
                 </SelectTrigger>
                   <SelectContent>
                   <SelectItem value="TODOS">Todos</SelectItem>
-                  <SelectItem value="PROJETO_LEI">Projeto de Lei</SelectItem>
-                  <SelectItem value="PROJETO_RESOLUCAO">Projeto de Resolução</SelectItem>
-                  <SelectItem value="PROJETO_DECRETO">Projeto de Decreto</SelectItem>
-                  <SelectItem value="INDICACAO">Indicação</SelectItem>
-                  <SelectItem value="REQUERIMENTO">Requerimento</SelectItem>
-                  <SelectItem value="MOCAO">Moção</SelectItem>
+                  {tiposProposicao.map((tipo) => (
+                    <SelectItem key={tipo.id} value={tipo.codigo}>
+                      {tipo.nome}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -801,8 +845,11 @@ function ProposicoesContent() {
             'AGUARDANDO_PAUTA': 'bg-amber-100 text-amber-800 border-amber-200'
           }
 
-          // Cores por tipo
-          const tipoColors: Record<string, string> = {
+          // Obter configuração do tipo de proposição do banco
+          const tipoConfig = tiposProposicao.find(t => t.codigo === proposicao.tipo)
+
+          // Cores por tipo (usa do banco se disponível, ou fallback)
+          const tipoColorsFallback: Record<string, string> = {
             'PROJETO_LEI': 'bg-indigo-600 text-white',
             'PROJETO_RESOLUCAO': 'bg-teal-600 text-white',
             'PROJETO_DECRETO': 'bg-cyan-600 text-white',
@@ -813,7 +860,7 @@ function ProposicoesContent() {
             'VOTO_APLAUSO': 'bg-amber-600 text-white'
           }
 
-          const tipoLabel: Record<string, string> = {
+          const tipoLabelFallback: Record<string, string> = {
             'PROJETO_LEI': 'PL',
             'PROJETO_RESOLUCAO': 'PR',
             'PROJETO_DECRETO': 'PD',
@@ -823,6 +870,16 @@ function ProposicoesContent() {
             'VOTO_PESAR': 'VP',
             'VOTO_APLAUSO': 'VA'
           }
+
+          // Usa sigla do banco ou fallback
+          const tipoSigla = tipoConfig?.sigla || tipoLabelFallback[proposicao.tipo] || proposicao.tipo
+          // Usa cor do banco ou fallback
+          const tipoBadgeStyle = tipoConfig?.corBadge
+            ? { backgroundColor: tipoConfig.corBadge, color: 'white' }
+            : undefined
+          const tipoBadgeClass = !tipoConfig?.corBadge
+            ? (tipoColorsFallback[proposicao.tipo] || 'bg-gray-600 text-white')
+            : ''
 
           return (
             <div
@@ -836,8 +893,12 @@ function ProposicoesContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       {/* Tipo (badge colorido) */}
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${tipoColors[proposicao.tipo] || 'bg-gray-600 text-white'}`}>
-                        {tipoLabel[proposicao.tipo] || proposicao.tipo}
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${tipoBadgeClass}`}
+                        style={tipoBadgeStyle}
+                        title={tipoConfig?.nome || proposicao.tipo}
+                      >
+                        {tipoSigla}
                       </span>
                       {/* Número/Ano */}
                       <span className="text-sm font-semibold text-gray-900">
@@ -1023,17 +1084,28 @@ function ProposicoesContent() {
                     <Label htmlFor="tipo">Tipo</Label>
                     <Select value={formData.tipo} onValueChange={handleTipoChange}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                       <SelectContent>
-                      <SelectItem value="PROJETO_LEI">Projeto de Lei</SelectItem>
-                      <SelectItem value="PROJETO_RESOLUCAO">Projeto de Resolução</SelectItem>
-                      <SelectItem value="PROJETO_DECRETO">Projeto de Decreto</SelectItem>
-                      <SelectItem value="INDICACAO">Indicação</SelectItem>
-                      <SelectItem value="REQUERIMENTO">Requerimento</SelectItem>
-                      <SelectItem value="MOCAO">Moção</SelectItem>
-                      <SelectItem value="VOTO_PESAR">Voto de Pesar</SelectItem>
-                      <SelectItem value="VOTO_APLAUSO">Voto de Aplauso</SelectItem>
+                        {loadingTiposProposicao ? (
+                          <SelectItem value="loading" disabled>Carregando tipos...</SelectItem>
+                        ) : tiposProposicao.length === 0 ? (
+                          <SelectItem value="empty" disabled>Nenhum tipo cadastrado</SelectItem>
+                        ) : (
+                          tiposProposicao.map((tipo) => (
+                            <SelectItem key={tipo.id} value={tipo.codigo}>
+                              <div className="flex items-center gap-2">
+                                {tipo.corBadge && (
+                                  <span
+                                    className="w-3 h-3 rounded-full"
+                                    style={{ backgroundColor: tipo.corBadge }}
+                                  />
+                                )}
+                                <span>{tipo.nome} ({tipo.sigla})</span>
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

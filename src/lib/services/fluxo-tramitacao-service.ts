@@ -5,7 +5,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
-import type { TipoProposicao, FluxoTramitacao, FluxoTramitacaoEtapa } from '@prisma/client'
+import type { TipoProposicao, FluxoTramitacao, FluxoTramitacaoEtapa, TipoCondicaoEtapa } from '@prisma/client'
 
 const logger = createLogger('fluxo-tramitacao')
 
@@ -461,6 +461,9 @@ export async function adicionarEtapa(
     requerParecer?: boolean
     habilitaPauta?: boolean
     ehEtapaFinal?: boolean
+    condicional?: boolean
+    tipoCondicao?: string | null
+    condicaoConfig?: Record<string, unknown> | null
   }
 ): Promise<FluxoTramitacaoEtapa> {
   // Busca a maior ordem atual
@@ -483,7 +486,10 @@ export async function adicionarEtapa(
       prazoDiasUrgencia: dados.prazoDiasUrgencia,
       requerParecer: dados.requerParecer || false,
       habilitaPauta: dados.habilitaPauta || false,
-      ehEtapaFinal: dados.ehEtapaFinal || false
+      ehEtapaFinal: dados.ehEtapaFinal || false,
+      condicional: dados.condicional || false,
+      tipoCondicao: dados.tipoCondicao as TipoCondicaoEtapa | null,
+      condicaoConfig: dados.condicaoConfig ? JSON.parse(JSON.stringify(dados.condicaoConfig)) : undefined
     }
   })
 
@@ -505,11 +511,22 @@ export async function atualizarEtapa(
     requerParecer?: boolean
     habilitaPauta?: boolean
     ehEtapaFinal?: boolean
+    condicional?: boolean
+    tipoCondicao?: string | null
+    condicaoConfig?: Record<string, unknown> | null
   }
 ): Promise<FluxoTramitacaoEtapa> {
+  // Prepara os dados para atualizacao
+  const updateData: Record<string, unknown> = { ...dados }
+
+  // Converte tipoCondicao para o tipo correto do Prisma
+  if ('tipoCondicao' in dados) {
+    updateData.tipoCondicao = dados.tipoCondicao as TipoCondicaoEtapa | null
+  }
+
   const etapa = await prisma.fluxoTramitacaoEtapa.update({
     where: { id },
-    data: dados
+    data: updateData
   })
 
   logger.info('Etapa atualizada', { etapaId: id, dados })

@@ -6,12 +6,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { 
-  FileText, 
-  Download, 
-  Calendar, 
-  DollarSign, 
-  TrendingUp, 
+import {
+  FileText,
+  Download,
+  Calendar,
+  DollarSign,
+  TrendingUp,
   AlertCircle,
   Search,
   Filter,
@@ -20,8 +20,10 @@ import {
   FileDown,
   Eye
 } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function GestaoFiscalPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [filtros, setFiltros] = useState({
     tipo: '',
     ano: '',
@@ -289,7 +291,7 @@ export default function GestaoFiscalPage() {
             Gestão Fiscal
           </h1>
           <p className="text-lg text-gray-700">
-            Acompanhe a gestão fiscal da Câmara Municipal de Mojuí dos Campos
+            Acompanhe a gestão fiscal da {configuracao?.nomeCasa || 'Câmara Municipal'}
           </p>
         </div>
 
@@ -541,7 +543,7 @@ export default function GestaoFiscalPage() {
           <CardContent>
             <div className="prose max-w-none">
               <p className="text-gray-700 mb-4">
-                A gestão fiscal da Câmara Municipal de Mojuí dos Campos é realizada 
+                A gestão fiscal da {configuracao?.nomeCasa || 'Câmara Municipal'} é realizada 
                 de acordo com a Lei de Responsabilidade Fiscal (Lei Complementar nº 101/2000) 
                 e demais normas aplicáveis.
               </p>

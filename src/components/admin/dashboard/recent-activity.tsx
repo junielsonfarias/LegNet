@@ -18,7 +18,7 @@ import { ptBR } from 'date-fns/locale'
 
 interface ActivityItem {
   id: string
-  type: 'proposicao' | 'votacao' | 'sessao' | 'parecer' | 'usuario' | 'comentario'
+  type: 'proposicao' | 'votacao' | 'sessao' | 'parecer' | 'usuario' | 'comentario' | 'comissao'
   title: string
   description: string
   timestamp: Date
@@ -31,53 +31,7 @@ interface RecentActivityProps {
   activities?: ActivityItem[]
 }
 
-// Dados mock para demonstração
-const mockActivities: ActivityItem[] = [
-  {
-    id: '1',
-    type: 'proposicao',
-    title: 'PL 015/2026 cadastrado',
-    description: 'Projeto de Lei sobre iluminação pública',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min atrás
-    status: 'success',
-    user: 'Maria Silva'
-  },
-  {
-    id: '2',
-    type: 'votacao',
-    title: 'Votação concluída',
-    description: 'PL 012/2026 aprovado por 7x2',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 horas atrás
-    status: 'success'
-  },
-  {
-    id: '3',
-    type: 'sessao',
-    title: 'Sessão agendada',
-    description: 'Sessão Ordinária 037 - 25/01/2026',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 horas atrás
-    status: 'pending'
-  },
-  {
-    id: '4',
-    type: 'parecer',
-    title: 'Parecer emitido',
-    description: 'CLJ: Favorável ao PL 010/2026',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 horas atrás
-    status: 'success',
-    user: 'João Santos'
-  },
-  {
-    id: '5',
-    type: 'usuario',
-    title: 'Novo usuário cadastrado',
-    description: 'Pedro Oliveira (Operador)',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 dia atrás
-    status: 'success'
-  }
-]
-
-export function RecentActivity({ userRole, activities = mockActivities }: RecentActivityProps) {
+export function RecentActivity({ userRole, activities = [] }: RecentActivityProps) {
   const getIconByType = (type: ActivityItem['type']) => {
     const icons = {
       proposicao: FileText,
@@ -85,7 +39,8 @@ export function RecentActivity({ userRole, activities = mockActivities }: Recent
       sessao: Calendar,
       parecer: Edit3,
       usuario: Users,
-      comentario: MessageSquare
+      comentario: MessageSquare,
+      comissao: Users
     }
     return icons[type]
   }
@@ -182,6 +137,13 @@ export function RecentActivity({ userRole, activities = mockActivities }: Recent
         <button className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 font-medium">
           Ver todas as atividades
         </button>
+      )}
+      {activities.length === 0 && (
+        <div className="text-center py-8 text-gray-400">
+          <Clock className="h-10 w-10 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">Nenhuma atividade recente</p>
+          <p className="text-xs mt-1">As atividades aparecerão aqui conforme o uso do sistema</p>
+        </div>
       )}
     </div>
   )

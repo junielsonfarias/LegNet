@@ -9,6 +9,7 @@ import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, R
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 // Interface para publicação da API
 interface PublicacaoLei {
@@ -34,6 +35,7 @@ interface PublicacaoLei {
 }
 
 export default function LeisPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [leis, setLeis] = useState<PublicacaoLei[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -121,7 +123,7 @@ export default function LeisPage() {
             Leis Municipais
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Consulte todas as leis aprovadas pela Câmara Municipal de Mojuí dos Campos.
+            Consulte todas as leis aprovadas pela {configuracao?.nomeCasa || 'Câmara Municipal'}.
             Aqui você encontra o texto completo das leis, suas alterações e histórico legislativo.
           </p>
         </div>

@@ -1,7 +1,11 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Shield, Users, Scale, Heart, Eye, CheckCircle } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function CodigoEticaPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
@@ -12,7 +16,7 @@ export default function CodigoEticaPage() {
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Princípios éticos e valores que norteiam a conduta dos vereadores e servidores 
-            da Câmara Municipal de Mojuí dos Campos.
+            da {configuracao?.nomeCasa || 'Câmara Municipal'}.
           </p>
         </div>
 
@@ -27,7 +31,7 @@ export default function CodigoEticaPage() {
             </CardHeader>
             <CardContent className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed mb-4">
-                O Código de Ética da Câmara Municipal de Mojuí dos Campos estabelece os princípios 
+                O Código de Ética da {configuracao?.nomeCasa || 'Câmara Municipal'} estabelece os princípios 
                 e valores que devem orientar a conduta de todos os vereadores e servidores desta 
                 Casa Legislativa, garantindo a transparência, a integridade e o compromisso com 
                 o interesse público.
@@ -299,7 +303,7 @@ export default function CodigoEticaPage() {
                 Nosso Compromisso
               </h3>
               <p className="text-lg text-gray-700 leading-relaxed">
-                A Câmara Municipal de Mojuí dos Campos compromete-se a cumprir rigorosamente 
+                A {configuracao?.nomeCasa || 'Câmara Municipal'} compromete-se a cumprir rigorosamente 
                 este Código de Ética, promovendo uma cultura de integridade, transparência 
                 e responsabilidade em todas as suas ações, sempre em benefício da população 
                 e do desenvolvimento do município.

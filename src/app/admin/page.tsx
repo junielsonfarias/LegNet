@@ -3,15 +3,14 @@
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useParlamentares } from '@/lib/hooks/use-parlamentares'
-import { useSessoes } from '@/lib/hooks/use-sessoes'
-import { useProposicoes } from '@/lib/hooks/use-proposicoes'
-import { useNoticias } from '@/lib/hooks/use-noticias'
+import { useDashboardStats, useAtividadesRecentes, useProximosEventos } from '@/lib/hooks/use-dashboard'
 import { DashboardSkeleton } from '@/components/skeletons/dashboard-skeleton'
 import { StatCard, QuickActions, RecentActivity, UpcomingEvents } from '@/components/admin/dashboard'
 import { getRoleTheme } from '@/lib/themes/role-themes'
 import { UserRole } from '@prisma/client'
 import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import {
   Users,
   Calendar,
@@ -21,7 +20,6 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
-  TrendingUp,
   Gavel,
   Eye,
   Monitor,
@@ -35,6 +33,11 @@ export default function AdminDashboard() {
   const userRole = (session?.user?.role as UserRole) || 'USER'
   const theme = getRoleTheme(userRole)
 
+  // Buscar dados reais do dashboard
+  const { stats, loading: loadingStats } = useDashboardStats()
+  const { atividades, loading: loadingAtividades } = useAtividadesRecentes(10)
+  const { eventos, loading: loadingEventos } = useProximosEventos(5)
+
   // OPERADOR não tem acesso ao Dashboard - redirecionar para Painel Eletrônico
   useEffect(() => {
     if (status === 'authenticated' && userRole === 'OPERADOR') {
@@ -42,23 +45,18 @@ export default function AdminDashboard() {
     }
   }, [status, userRole, router])
 
-  const { parlamentares, loading: loadingParlamentares } = useParlamentares()
-  const { sessoes, loading: loadingSessoes } = useSessoes()
-  const { proposicoes, loading: loadingProposicoes } = useProposicoes()
-  const { noticias, loading: loadingNoticias } = useNoticias()
+  const loading = loadingStats || loadingAtividades || loadingEventos
 
-  const loading = loadingParlamentares || loadingSessoes || loadingProposicoes || loadingNoticias
-
-  // Calcular estatísticas
-  const parlamentaresCount = parlamentares && Array.isArray(parlamentares) ? parlamentares.length : 0
-  const sessoesCount = sessoes && Array.isArray(sessoes) ? sessoes.length : 0
-  const proposicoesCount = proposicoes && Array.isArray(proposicoes) ? proposicoes.length : 0
-  const noticiasCount = noticias && Array.isArray(noticias) ? noticias.length : 0
-
-  // Estatísticas adicionais simuladas
-  const votacoesHoje = 3
-  const proposicoesPendentes = Math.floor(proposicoesCount * 0.3)
-  const sessoesAgendadas = Math.floor(sessoesCount * 0.2)
+  // Dados do dashboard
+  const parlamentaresCount = stats?.parlamentares.ativos || 0
+  const sessoesCount = stats?.sessoes.total || 0
+  const proposicoesCount = stats?.proposicoes.total || 0
+  const noticiasCount = stats?.noticias.total || 0
+  const votacoesHoje = stats?.hoje.votacoes || 0
+  const proposicoesPendentes = stats?.proposicoes.pendentes || 0
+  const sessoesAgendadas = stats?.sessoes.agendadas || 0
+  const comissoesAtivas = stats?.comissoes.ativas || 0
+  const membrosComissao = stats?.comissoes.membros || 0
 
   const getWelcomeMessage = () => {
     const hour = new Date().getHours()
@@ -86,39 +84,62 @@ export default function AdminDashboard() {
       case 'ADMIN':
         return [
           { title: 'Parlamentares', value: parlamentaresCount, icon: Users, subtitle: 'Vereadores ativos' },
-          { title: 'Sessões', value: sessoesCount, icon: Calendar, subtitle: 'Realizadas este ano', trend: { value: 12, isPositive: true } },
-          { title: 'Proposições', value: proposicoesCount, icon: FileText, subtitle: 'Total cadastradas', trend: { value: 8, isPositive: true } },
-          { title: 'Notícias', value: noticiasCount, icon: Newspaper, subtitle: 'Publicadas' },
+          { title: 'Sessões', value: sessoesCount, icon: Calendar, subtitle: `${stats?.sessoes.realizadas || 0} realizadas` },
+          { title: 'Proposições', value: proposicoesCount, icon: FileText, subtitle: `${stats?.proposicoes.aprovadas || 0} aprovadas` },
+          { title: 'Comissões', value: comissoesAtivas, icon: Gavel, subtitle: `${membrosComissao} membros` },
           { title: 'Pendentes', value: proposicoesPendentes, icon: Clock, subtitle: 'Aguardando análise', variant: 'highlight' as const },
-          { title: 'Votações Hoje', value: votacoesHoje, icon: Vote, subtitle: 'Na pauta' }
+          { title: 'Votações Hoje', value: votacoesHoje, icon: Vote, subtitle: 'Registradas' }
         ]
       case 'SECRETARIA':
         return [
           { title: 'Parlamentares', value: parlamentaresCount, icon: Users, subtitle: 'Cadastrados' },
-          { title: 'Usuários', value: 15, icon: Users, subtitle: 'Ativos no sistema' },
-          { title: 'Protocolos', value: 48, icon: ClipboardList, subtitle: 'Este mês' },
+          { title: 'Usuários', value: stats?.sistema.usuarios || 0, icon: Users, subtitle: 'No sistema' },
+          { title: 'Sessões', value: sessoesCount, icon: Calendar, subtitle: `${sessoesAgendadas} agendadas` },
           { title: 'Publicações', value: noticiasCount, icon: Newspaper, subtitle: 'Gerenciadas' }
+        ]
+      case 'AUXILIAR_LEGISLATIVO':
+        return [
+          { title: 'Proposições', value: proposicoesCount, icon: FileText, subtitle: `${stats?.proposicoes.emTramitacao || 0} em tramitação` },
+          { title: 'Comissões', value: comissoesAtivas, icon: Gavel, subtitle: `${membrosComissao} membros` },
+          { title: 'Sessões', value: sessoesCount, icon: Calendar, subtitle: `${sessoesAgendadas} agendadas` },
+          { title: 'Pendentes', value: proposicoesPendentes, icon: Clock, subtitle: 'Aguardando' }
         ]
       case 'EDITOR':
         return [
           { title: 'Proposições', value: proposicoesCount, icon: FileText, subtitle: 'Cadastradas' },
           { title: 'Sessões', value: sessoesCount, icon: Calendar, subtitle: 'Registradas' },
-          { title: 'Notícias', value: noticiasCount, icon: Newspaper, subtitle: 'Publicadas', trend: { value: 5, isPositive: true } },
-          { title: 'Pautas', value: sessoesAgendadas, icon: ClipboardList, subtitle: 'Em elaboração' }
+          { title: 'Notícias', value: noticiasCount, icon: Newspaper, subtitle: 'Publicadas' },
+          { title: 'Agendadas', value: sessoesAgendadas, icon: ClipboardList, subtitle: 'Próximas sessões' }
         ]
       case 'OPERADOR':
+        // Dados da sessão em andamento
+        const sessaoAtual = stats?.sessaoAtual
         return [
-          { title: 'Sessão Atual', value: 'ORD 036', icon: Monitor, subtitle: 'Em andamento', variant: 'highlight' as const },
-          { title: 'Presentes', value: 7, icon: Users, subtitle: 'De 9 parlamentares' },
-          { title: 'Itens na Pauta', value: 12, icon: ClipboardList, subtitle: 'Para votação' },
+          {
+            title: 'Sessão Atual',
+            value: sessaoAtual ? `${sessaoAtual.tipo.substring(0, 3)} ${String(sessaoAtual.numero).padStart(3, '0')}` : 'Nenhuma',
+            icon: Monitor,
+            subtitle: sessaoAtual ? 'Em andamento' : 'Sem sessão ativa',
+            variant: sessaoAtual ? 'highlight' as const : undefined
+          },
+          { title: 'Presentes', value: sessaoAtual?.presentes || 0, icon: Users, subtitle: `De ${sessaoAtual?.totalParlamentares || parlamentaresCount} parlamentares` },
+          { title: 'Itens na Pauta', value: sessaoAtual?.itensNaPauta || 0, icon: ClipboardList, subtitle: 'Para votação' },
           { title: 'Votações', value: votacoesHoje, icon: Vote, subtitle: 'Realizadas hoje' }
         ]
       case 'PARLAMENTAR':
+        // Estatísticas do parlamentar logado
+        const parlamentar = stats?.parlamentar
+        const proximaSessao = stats?.proximaSessao
         return [
-          { title: 'Minhas Proposições', value: 8, icon: FileText, subtitle: 'Apresentadas', variant: 'highlight' as const },
-          { title: 'Aprovadas', value: 5, icon: CheckCircle2, subtitle: 'Projetos aprovados' },
-          { title: 'Em Tramitação', value: 3, icon: Clock, subtitle: 'Aguardando' },
-          { title: 'Próxima Sessão', value: '25/01', icon: Calendar, subtitle: 'Sessão Ordinária' }
+          { title: 'Minhas Proposições', value: parlamentar?.minhasProposicoes || 0, icon: FileText, subtitle: 'Apresentadas', variant: 'highlight' as const },
+          { title: 'Aprovadas', value: parlamentar?.aprovadas || 0, icon: CheckCircle2, subtitle: 'Projetos aprovados' },
+          { title: 'Em Tramitação', value: parlamentar?.emTramitacao || 0, icon: Clock, subtitle: 'Aguardando' },
+          {
+            title: 'Próxima Sessão',
+            value: proximaSessao ? format(new Date(proximaSessao.data), 'dd/MM', { locale: ptBR }) : '-',
+            icon: Calendar,
+            subtitle: proximaSessao ? `${proximaSessao.tipo}` : 'Nenhuma agendada'
+          }
         ]
       default:
         return [
@@ -128,6 +149,35 @@ export default function AdminDashboard() {
         ]
     }
   }
+
+  // Converter atividades para o formato esperado pelo componente
+  const atividadesFormatadas = atividades.map(a => ({
+    ...a,
+    timestamp: new Date(a.timestamp)
+  }))
+
+  // Converter eventos para o formato esperado pelo componente
+  const eventosFormatados = eventos.map(e => ({
+    ...e,
+    date: new Date(e.date)
+  }))
+
+  // Gerar alertas baseados em dados reais
+  const getAlertMessage = () => {
+    if (proposicoesPendentes > 0 && proposicoesPendentes > 3) {
+      return `${proposicoesPendentes} proposições aguardando análise.`
+    }
+    const proximaSessao = stats?.proximaSessao
+    if (proximaSessao) {
+      const diasAteProxima = Math.ceil((new Date(proximaSessao.data).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      if (diasAteProxima <= 2 && diasAteProxima > 0) {
+        return `Sessão ${proximaSessao.tipo} ${String(proximaSessao.numero).padStart(3, '0')} em ${diasAteProxima} dia${diasAteProxima > 1 ? 's' : ''}.`
+      }
+    }
+    return null
+  }
+
+  const alertMessage = getAlertMessage()
 
   if (loading) {
     return (
@@ -165,14 +215,21 @@ export default function AdminDashboard() {
               {getWelcomeMessage()}, {session?.user?.name?.split(' ')[0] || 'Usuário'}!
             </h1>
             <p className="text-white/80">
-              {theme.description} • Câmara Municipal de Mojuí dos Campos
+              {theme.description} • {stats?.instituicao.nome || 'Câmara Municipal'}
             </p>
           </div>
           <div className="hidden md:flex items-center gap-3 bg-white/10 backdrop-blur rounded-lg px-4 py-2">
             <Building className="h-5 w-5 text-white/80" />
             <div className="text-right">
-              <p className="text-sm font-medium">Legislatura 2025/2028</p>
-              <p className="text-xs text-white/70">1º Período Legislativo</p>
+              <p className="text-sm font-medium">
+                {stats?.instituicao.legislatura
+                  ? `Legislatura ${stats.instituicao.legislatura.descricao}`
+                  : 'Legislatura não definida'
+                }
+              </p>
+              <p className="text-xs text-white/70">
+                {stats?.instituicao.legislatura?.periodoAtual?.descricao || 'Período não definido'}
+              </p>
             </div>
           </div>
         </div>
@@ -187,7 +244,6 @@ export default function AdminDashboard() {
             value={stat.value}
             subtitle={stat.subtitle}
             icon={stat.icon}
-            trend={stat.trend}
             userRole={userRole}
             variant={stat.variant}
           />
@@ -202,13 +258,19 @@ export default function AdminDashboard() {
           <QuickActions userRole={userRole} />
 
           {/* Atividade Recente */}
-          <RecentActivity userRole={userRole} />
+          <RecentActivity
+            userRole={userRole}
+            activities={atividadesFormatadas.length > 0 ? atividadesFormatadas : undefined}
+          />
         </div>
 
         {/* Coluna lateral - 1/3 */}
         <div className="space-y-6">
           {/* Próximos Eventos */}
-          <UpcomingEvents userRole={userRole} />
+          <UpcomingEvents
+            userRole={userRole}
+            events={eventosFormatados.length > 0 ? eventosFormatados : undefined}
+          />
 
           {/* Card de status rápido */}
           <div className="bg-white rounded-xl border border-gray-100 p-5">
@@ -219,7 +281,7 @@ export default function AdminDashboard() {
                   <div className="w-2 h-2 rounded-full bg-green-500" />
                   <span className="text-sm text-gray-600">Sistema Online</span>
                 </div>
-                <span className="text-xs text-gray-400">100%</span>
+                <span className="text-xs text-gray-400">{stats?.sistema.uptime || '100%'}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -236,30 +298,34 @@ export default function AdminDashboard() {
                 <span className="text-xs text-gray-400">Operacional</span>
               </div>
               {userRole === 'ADMIN' && (
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Usuários Online</span>
+                <>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">Usuários</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">{stats?.sistema.usuarios || 0}</span>
                   </div>
-                  <span className="text-xs font-medium text-gray-700">4</span>
-                </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ClipboardList className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">Logs Hoje</span>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700">{stats?.sistema.logsHoje || 0}</span>
+                  </div>
+                </>
               )}
             </div>
           </div>
 
-          {/* Alertas (apenas para ADMIN/OPERADOR) */}
-          {(userRole === 'ADMIN' || userRole === 'OPERADOR') && (
+          {/* Alertas (apenas quando há alertas reais) */}
+          {alertMessage && (userRole === 'ADMIN' || userRole === 'OPERADOR' || userRole === 'SECRETARIA') && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-semibold text-amber-800">Atenção</h4>
-                  <p className="text-xs text-amber-700 mt-1">
-                    {userRole === 'ADMIN'
-                      ? '3 proposições aguardando parecer da CLJ há mais de 15 dias.'
-                      : 'Sessão Ordinária 037 agendada para 25/01. Pauta ainda não publicada.'
-                    }
-                  </p>
+                  <p className="text-xs text-amber-700 mt-1">{alertMessage}</p>
                 </div>
               </div>
             </div>

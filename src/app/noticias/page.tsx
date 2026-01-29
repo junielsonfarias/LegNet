@@ -11,11 +11,13 @@ import { useNoticias } from '@/lib/hooks/use-noticias'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 import { NoticiasListSkeleton } from '@/components/skeletons/noticia-skeleton'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function NoticiasPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [searchTerm, setSearchTerm] = useState('')
   const [categoriaFilter, setCategoriaFilter] = useState<string | null>(null)
-  
+
   const { noticias, loading } = useNoticias({ publicada: true })
   const breadcrumbs = useBreadcrumbs()
   
@@ -79,7 +81,7 @@ export default function NoticiasPage() {
             Notícias
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Acompanhe as últimas notícias e informações sobre as atividades da Câmara Municipal de Mojuí dos Campos.
+            Acompanhe as últimas notícias e informações sobre as atividades da {configuracao?.nomeCasa || 'Câmara Municipal'}.
           </p>
         </div>
 

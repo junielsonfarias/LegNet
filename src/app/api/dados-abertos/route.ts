@@ -4,16 +4,25 @@
  */
 
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
+  // Buscar configuração institucional
+  const config = await prisma.configuracaoInstitucional.findFirst({
+    where: { slug: 'principal' }
+  })
+  const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+  const emailContato = config?.email || 'transparencia@camara.gov.br'
+  const telefoneContato = config?.telefone || ''
+
   return NextResponse.json({
-    titulo: 'API de Dados Abertos - Camara Municipal',
+    titulo: `API de Dados Abertos - ${nomeCasa}`,
     versao: '1.0.0',
-    descricao: 'API publica para acesso a dados abertos da Camara Municipal de Mojui dos Campos',
+    descricao: `API publica para acesso a dados abertos da ${nomeCasa}`,
     documentacao: `${baseUrl}/api-docs`,
     endpoints: [
       {
@@ -68,8 +77,8 @@ export async function GET() {
     ],
     licenca: 'Creative Commons CC-BY 4.0',
     contato: {
-      email: 'transparencia@camaramojui.pa.gov.br',
-      telefone: '(93) 3526-0000'
+      email: emailContato,
+      telefone: telefoneContato
     },
     atualizacao: new Date().toISOString()
   })

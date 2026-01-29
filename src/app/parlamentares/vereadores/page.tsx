@@ -25,8 +25,10 @@ import {
 } from 'lucide-react';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
 
 export default function VereadoresPage() {
+  const { configuracao } = useConfiguracaoInstitucional();
   const [searchTerm, setSearchTerm] = useState('');
   const [legislaturaFiltro, setLegislaturaFiltro] = useState('2025-2028');
   const [statusFiltro, setStatusFiltro] = useState('ativo');
@@ -148,7 +150,7 @@ export default function VereadoresPage() {
             Vereadores
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Conheça todos os vereadores da Câmara Municipal de Mojuí dos Campos
+            Conheça todos os vereadores da {configuracao?.nomeCasa || 'Câmara Municipal'}
           </p>
         </div>
 

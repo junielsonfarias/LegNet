@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Users, Crown, Shield, Award, User, Mail, Phone, Calendar, Filter, BarChart3, Eye } from 'lucide-react';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
 
 export default function MesaDiretoraTransparenciaPage() {
+  const { configuracao } = useConfiguracaoInstitucional();
   const [legislaturaFiltro, setLegislaturaFiltro] = useState<string>('');
 
   // Dados usando hooks
@@ -168,12 +170,12 @@ export default function MesaDiretoraTransparenciaPage() {
               Mesa Diretora
             </h1>
             <p className="text-xl md:text-2xl font-semibold mb-6 text-blue-100 animate-fade-in">
-              Câmara Municipal de Mojuí dos Campos
+              {configuracao?.nomeCasa || 'Câmara Municipal'}
             </p>
             
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-8 border border-white/20 shadow-2xl animate-fade-in">
               <p className="text-base text-blue-50">
-                Conheça os membros da Mesa Diretora da Câmara Municipal de Mojuí dos Campos, 
+                Conheça os membros da Mesa Diretora da {configuracao?.nomeCasa || 'Câmara Municipal'}, 
                 eleitos para dirigir os trabalhos legislativos e administrativos da Casa.
               </p>
             </div>

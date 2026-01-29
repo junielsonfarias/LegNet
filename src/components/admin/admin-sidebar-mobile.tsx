@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { hasAnyPermission, type Permission } from '@/lib/auth/permissions'
 import { getRoleTheme } from '@/lib/themes/role-themes'
 import { UserRole } from '@prisma/client'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import {
   Menu,
   X,
@@ -64,6 +65,9 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const theme = getRoleTheme(userRole)
+  const { configuracao, legislatura } = useConfiguracaoInstitucional()
+  const cidade = configuracao.endereco.cidade || 'Sistema Legislativo'
+  const periodoLegislatura = legislatura?.periodo || `${new Date().getFullYear()}/${new Date().getFullYear() + 3}`
 
   // Fecha o menu ao mudar de rota
   useEffect(() => {
@@ -221,7 +225,7 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <Building className="h-4 w-4" />
-            <span>Mojuí dos Campos • 2025/2028</span>
+            <span>{cidade} • {periodoLegislatura}</span>
           </div>
         </div>
       </div>

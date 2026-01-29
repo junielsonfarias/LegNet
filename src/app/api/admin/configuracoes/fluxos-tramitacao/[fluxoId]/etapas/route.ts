@@ -11,6 +11,14 @@ import {
 } from '@/lib/services/fluxo-tramitacao-service'
 import { prisma } from '@/lib/prisma'
 
+const TipoCondicaoEnum = z.enum([
+  'SEMPRE',
+  'IMPACTO_FINANCEIRO',
+  'REGIME_URGENCIA',
+  'REGIME_NORMAL',
+  'CAMPO_PERSONALIZADO'
+])
+
 const EtapaCreateSchema = z.object({
   nome: z.string().min(1, 'Nome e obrigatorio'),
   descricao: z.string().optional(),
@@ -19,7 +27,10 @@ const EtapaCreateSchema = z.object({
   prazoDiasUrgencia: z.number().min(0).optional(),
   requerParecer: z.boolean().optional().default(false),
   habilitaPauta: z.boolean().optional().default(false),
-  ehEtapaFinal: z.boolean().optional().default(false)
+  ehEtapaFinal: z.boolean().optional().default(false),
+  condicional: z.boolean().optional().default(false),
+  tipoCondicao: TipoCondicaoEnum.optional().nullable(),
+  condicaoConfig: z.record(z.unknown()).optional().nullable()
 })
 
 const EtapaUpdateSchema = z.object({
@@ -31,7 +42,10 @@ const EtapaUpdateSchema = z.object({
   prazoDiasUrgencia: z.number().min(0).optional().nullable(),
   requerParecer: z.boolean().optional(),
   habilitaPauta: z.boolean().optional(),
-  ehEtapaFinal: z.boolean().optional()
+  ehEtapaFinal: z.boolean().optional(),
+  condicional: z.boolean().optional(),
+  tipoCondicao: TipoCondicaoEnum.optional().nullable(),
+  condicaoConfig: z.record(z.unknown()).optional().nullable()
 })
 
 const ReordenarSchema = z.object({

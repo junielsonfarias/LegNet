@@ -1,133 +1,25 @@
 'use client'
 
-import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Users, 
-  Calendar, 
-  FileText, 
-  BarChart3, 
-  TrendingUp, 
+  Users,
+  Calendar,
+  FileText,
+  BarChart3,
+  TrendingUp,
   Clock,
   CheckCircle,
   AlertCircle,
-  Eye,
   Download,
   RefreshCw,
   Activity
 } from 'lucide-react'
-import { useParlamentares } from '@/lib/hooks/use-parlamentares'
-import { useSessoes } from '@/lib/hooks/use-sessoes'
-import { useProposicoes } from '@/lib/hooks/use-proposicoes'
-import { useComissoes } from '@/lib/hooks/use-comissoes'
-
-interface DashboardStats {
-  parlamentares: {
-    total: number;
-    ativos: number;
-    presencaMedia: number;
-  };
-  sessoes: {
-    total: number;
-    realizadas: number;
-    canceladas: number;
-    duracaoMedia: number;
-  };
-  proposicoes: {
-    total: number;
-    aprovadas: number;
-    emTramitacao: number;
-    tempoMedioTramitacao: number;
-  };
-  comissoes: {
-    total: number;
-    ativas: number;
-    membros: number;
-  };
-  sistema: {
-    usuariosAtivos: number;
-    logsHoje: number;
-    ultimoBackup?: Date;
-    uptime: string;
-  };
-}
+import { useDashboardStats } from '@/lib/hooks/use-dashboard'
 
 export default function DashboardPage() {
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
-  
-  // Usar hooks para carregar dados
-  const { parlamentares, loading: loadingParlamentares } = useParlamentares()
-  const { sessoes, loading: loadingSessoes } = useSessoes()
-  const { proposicoes, loading: loadingProposicoes } = useProposicoes()
-  const { comissoes, loading: loadingComissoes } = useComissoes()
-
-  const loading = loadingParlamentares || loadingSessoes || loadingProposicoes || loadingComissoes
-
-  // Calcular estatísticas
-  const stats = useMemo<DashboardStats | null>(() => {
-    if (loading) return null
-
-    const parlamentaresAtivos = parlamentares.filter(p => p.ativo)
-    const presencaMedia = parlamentares.length > 0 
-      ? parlamentares.reduce((acc, p) => acc + 0, 0) / parlamentares.length 
-      : 0 // TODO: Calcular presença real quando API estiver disponível
-
-    const sessoesRealizadas = sessoes.filter(s => s.status === 'CONCLUIDA')
-    const duracaoMedia = sessoesRealizadas.length > 0 ? 120 : 0 // Duração média estimada
-
-    const proposicoesAprovadas = proposicoes.filter(p => p.status === 'APROVADA')
-    const proposicoesEmTramitacao = proposicoes.filter(p => p.status === 'EM_TRAMITACAO')
-    
-    const tempoMedioTramitacao = proposicoesAprovadas.length > 0 
-      ? proposicoesAprovadas.reduce((acc, p) => {
-          if (p.dataVotacao && p.dataApresentacao) {
-            const dias = Math.ceil((new Date(p.dataVotacao).getTime() - new Date(p.dataApresentacao).getTime()) / (1000 * 60 * 60 * 24))
-            return acc + dias
-          }
-          return acc
-        }, 0) / proposicoesAprovadas.length 
-      : 0
-
-    const comissoesAtivas = comissoes.filter(c => c.ativa)
-    const totalMembros = 0 // TODO: Calcular membros quando API incluir relacionamento
-
-    return {
-      parlamentares: {
-        total: parlamentares.length,
-        ativos: parlamentaresAtivos.length,
-        presencaMedia: Math.round(presencaMedia * 100) / 100
-      },
-      sessoes: {
-        total: sessoes.length,
-        realizadas: sessoesRealizadas.length,
-        canceladas: sessoes.filter(s => s.status === 'CANCELADA').length,
-        duracaoMedia: Math.round(duracaoMedia)
-      },
-      proposicoes: {
-        total: proposicoes.length,
-        aprovadas: proposicoesAprovadas.length,
-        emTramitacao: proposicoesEmTramitacao.length,
-        tempoMedioTramitacao: Math.round(tempoMedioTramitacao)
-      },
-      comissoes: {
-        total: comissoes.length,
-        ativas: comissoesAtivas.length,
-        membros: totalMembros
-      },
-      sistema: {
-        usuariosAtivos: 5,
-        logsHoje: 25,
-        ultimoBackup: new Date(),
-        uptime: '99.9%'
-      }
-    }
-  }, [parlamentares, sessoes, proposicoes, comissoes, loading])
-
-  const carregarEstatisticas = () => {
-    setLastUpdate(new Date())
-  }
+  const { stats, loading, refetch } = useDashboardStats()
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -139,19 +31,6 @@ export default function DashboardPage() {
       case 'cancelada': return 'bg-red-100 text-red-800'
       case 'rejeitada': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'ativa': return 'Ativa'
-      case 'realizada': return 'Realizada'
-      case 'aprovada': return 'Aprovada'
-      case 'em_tramitacao': return 'Em Tramitação'
-      case 'agendada': return 'Agendada'
-      case 'cancelada': return 'Cancelada'
-      case 'rejeitada': return 'Rejeitada'
-      default: return status
     }
   }
 
@@ -168,6 +47,10 @@ export default function DashboardPage() {
       <div className="text-center py-8">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <p className="text-gray-600">Erro ao carregar estatísticas</p>
+        <Button onClick={refetch} variant="outline" className="mt-4">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Tentar Novamente
+        </Button>
       </div>
     )
   }
@@ -179,14 +62,11 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard Executivo</h1>
           <p className="text-gray-600">
-            Visão geral do sistema legislativo
-            <span className="ml-2 text-sm text-gray-500">
-              Última atualização: {lastUpdate.toLocaleTimeString()}
-            </span>
+            Visão geral do sistema legislativo - {stats.instituicao.nome}
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button onClick={carregarEstatisticas} variant="outline" size="sm">
+          <Button onClick={refetch} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
@@ -233,7 +113,7 @@ export default function DashboardPage() {
             <div className="mt-2">
               <div className="flex items-center text-xs text-blue-600">
                 <Clock className="h-3 w-3 mr-1" />
-                Duração média: {stats.sessoes.duracaoMedia}min
+                {stats.sessoes.agendadas} agendadas
               </div>
             </div>
           </CardContent>
@@ -253,7 +133,7 @@ export default function DashboardPage() {
             <div className="mt-2">
               <div className="flex items-center text-xs text-yellow-600">
                 <Activity className="h-3 w-3 mr-1" />
-                Tempo médio: {stats.proposicoes.tempoMedioTramitacao} dias
+                {stats.proposicoes.emTramitacao} em tramitação
               </div>
             </div>
           </CardContent>
@@ -304,7 +184,7 @@ export default function DashboardPage() {
                   <span className="text-sm">Agendadas</span>
                 </div>
                 <Badge className={getStatusColor('agendada')}>
-                  {stats.sessoes.total - stats.sessoes.realizadas - stats.sessoes.canceladas}
+                  {stats.sessoes.agendadas}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
@@ -347,11 +227,20 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm">Pendentes</span>
+                </div>
+                <Badge className={getStatusColor('agendada')}>
+                  {stats.proposicoes.pendentes}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
                   <AlertCircle className="h-4 w-4 text-red-600" />
                   <span className="text-sm">Rejeitadas</span>
                 </div>
                 <Badge className={getStatusColor('rejeitada')}>
-                  {stats.proposicoes.total - stats.proposicoes.aprovadas - stats.proposicoes.emTramitacao}
+                  {stats.proposicoes.rejeitadas}
                 </Badge>
               </div>
             </div>
@@ -371,25 +260,44 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-600">Uptime</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.sistema.usuariosAtivos}</div>
-              <p className="text-sm text-gray-600">Usuários Ativos</p>
+              <div className="text-2xl font-bold text-blue-600">{stats.sistema.usuarios}</div>
+              <p className="text-sm text-gray-600">Usuários Cadastrados</p>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">{stats.sistema.logsHoje}</div>
               <p className="text-sm text-gray-600">Logs Hoje</p>
             </div>
             <div className="text-center">
-              <div className="text-sm font-bold text-orange-600">
-                {stats.sistema.ultimoBackup 
-                  ? new Date(stats.sistema.ultimoBackup).toLocaleDateString()
-                  : 'Nunca'
-                }
-              </div>
-              <p className="text-sm text-gray-600">Último Backup</p>
+              <div className="text-2xl font-bold text-orange-600">{stats.hoje.votacoes}</div>
+              <p className="text-sm text-gray-600">Votações Hoje</p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Legislatura Atual */}
+      {stats.instituicao.legislatura && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Legislatura Atual</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-lg font-semibold">
+                  {stats.instituicao.legislatura.numero}ª Legislatura ({stats.instituicao.legislatura.descricao})
+                </p>
+                {stats.instituicao.legislatura.periodoAtual && (
+                  <p className="text-sm text-gray-600">
+                    {stats.instituicao.legislatura.periodoAtual.descricao}
+                  </p>
+                )}
+              </div>
+              <Badge className="bg-green-100 text-green-800">Ativa</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

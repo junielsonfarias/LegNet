@@ -9,6 +9,7 @@ import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, R
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 // Interface para publicação da API
 interface PublicacaoDecreto {
@@ -34,6 +35,7 @@ interface PublicacaoDecreto {
 }
 
 export default function DecretosPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [decretos, setDecretos] = useState<PublicacaoDecreto[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -121,7 +123,7 @@ export default function DecretosPage() {
             Decretos Legislativos
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Consulte todos os decretos legislativos da Câmara Municipal de Mojuí dos Campos.
+            Consulte todos os decretos legislativos da {configuracao?.nomeCasa || 'Câmara Municipal'}.
             Decretos legislativos são atos normativos de competência exclusiva do Legislativo.
           </p>
         </div>

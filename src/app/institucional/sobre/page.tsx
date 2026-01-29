@@ -143,7 +143,7 @@ export default function SobrePage() {
   }
 
   const config = dados?.configuracao
-  const nomeCasa = config?.nome || 'Câmara Municipal de Mojuí dos Campos'
+  const nomeCasa = config?.nome || 'Câmara Municipal'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -182,7 +182,7 @@ export default function SobrePage() {
                   </p>
                   <p className="text-gray-700 leading-relaxed mb-4">
                     Nossa Casa Legislativa tem como missão principal representar
-                    o povo de {config?.endereco?.cidade || 'Mojuí dos Campos'}, elaborando leis que atendam às necessidades da comunidade e
+                    o povo de {config?.endereco?.cidade || 'nossa cidade'}, elaborando leis que atendam às necessidades da comunidade e
                     fiscalizando a aplicação dos recursos públicos.
                   </p>
                   <p className="text-gray-700 leading-relaxed">
@@ -206,7 +206,7 @@ export default function SobrePage() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-700">
-                Representar o povo de {config?.endereco?.cidade || 'Mojuí dos Campos'}, elaborando leis que promovam o desenvolvimento
+                Representar o povo de {config?.endereco?.cidade || 'nossa cidade'}, elaborando leis que promovam o desenvolvimento
                 social, econômico e cultural do município, sempre com transparência e responsabilidade.
               </p>
             </CardContent>
@@ -222,7 +222,7 @@ export default function SobrePage() {
             <CardContent>
               <p className="text-gray-700">
                 Ser reconhecida como uma Casa Legislativa moderna, eficiente e transparente,
-                que contribui efetivamente para o desenvolvimento sustentável de {config?.endereco?.cidade || 'Mojuí dos Campos'}.
+                que contribui efetivamente para o desenvolvimento sustentável de {config?.endereco?.cidade || 'nossa cidade'}.
               </p>
             </CardContent>
           </Card>

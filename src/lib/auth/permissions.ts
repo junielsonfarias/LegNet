@@ -7,6 +7,7 @@ import { UserRole } from '@prisma/client'
 import { validateCsrf } from '@/lib/middleware/csrf'
 
 export type Permission =
+  | 'dashboard.view'
   | 'config.view'
   | 'config.manage'
   | 'user.view'
@@ -58,6 +59,7 @@ const buildPermissions = (permissions: Permission[]): Set<Permission> => new Set
 const rolePermissions: RolePermissions = {
   // ADMIN: Acesso total ao sistema
   ADMIN: buildPermissions([
+    'dashboard.view',
     'config.view',
     'config.manage',
     'user.view',
@@ -106,6 +108,8 @@ const rolePermissions: RolePermissions = {
   // Responsável por: cadastro de proposições, tramitação, pauta, gestão de sessões
   // Conforme fluxo legislativo: cria proposições, tramita entre comissões, inclui na pauta
   SECRETARIA: buildPermissions([
+    // Dashboard
+    'dashboard.view',
     // Gerenciamento de Usuários
     'user.view',
     'user.manage',
@@ -159,6 +163,7 @@ const rolePermissions: RolePermissions = {
     'participacao.manage'
   ]),
   EDITOR: buildPermissions([
+    'dashboard.view',
     'config.view',
     'parlamentar.view',
     'parlamentar.manage',
@@ -189,6 +194,8 @@ const rolePermissions: RolePermissions = {
   // RESTRITO: Apenas operação de sessões e painel eletrônico
   // Menu exibe APENAS: Sessões e Painel Eletrônico
   OPERADOR: buildPermissions([
+    // Dashboard (para estatísticas no painel)
+    'dashboard.view',
     // Menu: Sessões (periodo.view mostra o item no menu)
     'periodo.view',
     'sessao.view',
@@ -204,6 +211,8 @@ const rolePermissions: RolePermissions = {
   // Responsavel por: proposicoes, tramitacao, comissoes, pareceres
   // Foco: trabalho legislativo sem acesso a configuracoes ou painel eletronico
   AUXILIAR_LEGISLATIVO: buildPermissions([
+    // Dashboard
+    'dashboard.view',
     // Proposicoes: criar, editar, visualizar
     'tramitacao.view',
     'tramitacao.manage',
@@ -224,6 +233,7 @@ const rolePermissions: RolePermissions = {
     'publicacao.view'
   ]),
   PARLAMENTAR: buildPermissions([
+    'dashboard.view',
     'parlamentar.view',
     'comissao.view',
     'tramitacao.view',
@@ -233,6 +243,7 @@ const rolePermissions: RolePermissions = {
     'publicacao.view'
   ]),
   USER: buildPermissions([
+    'dashboard.view',
     'parlamentar.view',
     'comissao.view',
     'sessao.view',

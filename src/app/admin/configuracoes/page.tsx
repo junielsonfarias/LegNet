@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-import { Save, Download, Upload, RefreshCcw, Building2, Settings, Shield, SlidersHorizontal, AlertCircle } from 'lucide-react'
+import { Save, Download, Upload, RefreshCcw, Building2, Settings, Shield, SlidersHorizontal, AlertCircle, ArrowRight, FileText, Workflow, Vote, Database, Layers, Key } from 'lucide-react'
+import Link from 'next/link'
 
 import { configuracoesApi, ConfiguracaoInstitucionalApi } from '@/lib/api/configuracoes-api'
 import {
@@ -404,6 +405,93 @@ export default function ConfiguracoesPage() {
           />
         </div>
         <AdminBreadcrumbs />
+      </div>
+
+      {/* Links rápidos para configurações avançadas */}
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+        <Link
+          href="/admin/configuracoes/tipos-proposicoes"
+          className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-camara-primary hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">Tipos de Proposição</p>
+            <p className="text-xs text-gray-500">Gerenciar tipos e configurações</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
+        </Link>
+
+        <Link
+          href="/admin/configuracoes/tipos-tramitacao"
+          className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-camara-primary hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-purple-600 group-hover:bg-purple-100">
+            <Workflow className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">Tipos de Tramitação</p>
+            <p className="text-xs text-gray-500">Fluxos de tramitação</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
+        </Link>
+
+        <Link
+          href="/admin/configuracoes/quorum"
+          className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-camara-primary hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-600 group-hover:bg-green-100">
+            <Vote className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">Quórum</p>
+            <p className="text-xs text-gray-500">Regras de votação</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
+        </Link>
+
+        <Link
+          href="/admin/configuracoes/backups"
+          className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-camara-primary hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-100">
+            <Database className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">Backups</p>
+            <p className="text-xs text-gray-500">Backup e restauração</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
+        </Link>
+
+        <Link
+          href="/admin/templates-sessao"
+          className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-camara-primary hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100">
+            <Layers className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">Templates de Sessão</p>
+            <p className="text-xs text-gray-500">Modelos de pauta</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
+        </Link>
+
+        <Link
+          href="/admin/integracoes"
+          className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-camara-primary hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
+            <Key className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">Integrações</p>
+            <p className="text-xs text-gray-500">APIs e webhooks</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
+        </Link>
       </div>
 
       {!canManage && (

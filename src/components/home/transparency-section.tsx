@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Download, Eye, Users, Calendar, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface Publicacao {
   id: string
@@ -22,6 +23,7 @@ interface Estatisticas {
 }
 
 export function TransparencySection() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [publicacoes, setPublicacoes] = useState<Publicacao[]>([])
   const [estatisticas, setEstatisticas] = useState<Estatisticas>({ leis: 0, decretos: 0, sessoes: 0, proposicoes: 0 })
   const [loading, setLoading] = useState(true)
@@ -113,7 +115,7 @@ export function TransparencySection() {
             Transparência e Acesso à Informação
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            A Câmara Municipal de Mojuí dos Campos garante total transparência
+            A {configuracao?.nomeCasa || 'Câmara Municipal'} garante total transparência
             em suas ações, cumprindo a Lei de Acesso à Informação
           </p>
         </div>

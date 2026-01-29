@@ -1,3 +1,5 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, Phone, Mail, MapPin, Clock, Shield, FileText, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -5,8 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function OuvidoriaPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
@@ -244,7 +248,7 @@ export default function OuvidoriaPage() {
                 <h3 className="font-semibold text-gray-900 mb-2">Presencial</h3>
                 <p className="text-gray-600 text-sm">
                   Av. Principal, 123<br />
-                  Centro - Mojuí dos Campos
+                  Centro - {configuracao?.endereco?.cidade || 'Cidade'}
                 </p>
               </CardContent>
             </Card>

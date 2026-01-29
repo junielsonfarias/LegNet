@@ -19,6 +19,7 @@ import {
   EyeOff,
   ShieldCheck
 } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface PageProps {
   params: Promise<{ token: string }>
@@ -27,6 +28,7 @@ interface PageProps {
 export default function ResetPasswordPage({ params }: PageProps) {
   const { token } = use(params)
   const router = useRouter()
+  const { configuracao } = useConfiguracaoInstitucional()
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -183,7 +185,7 @@ export default function ResetPasswordPage({ params }: PageProps) {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Câmara Municipal</h1>
-              <p className="text-white/80">Mojuí dos Campos - PA</p>
+              <p className="text-white/80">{configuracao?.endereco?.cidade || 'Cidade'} - {configuracao?.endereco?.estado || 'UF'}</p>
             </div>
           </div>
         </div>
@@ -237,7 +239,7 @@ export default function ResetPasswordPage({ params }: PageProps) {
               </div>
             </div>
             <h1 className="text-xl font-bold text-gray-900">Câmara Municipal</h1>
-            <p className="text-gray-500 text-sm">Mojuí dos Campos - PA</p>
+            <p className="text-gray-500 text-sm">{configuracao?.endereco?.cidade || 'Cidade'} - {configuracao?.endereco?.estado || 'UF'}</p>
           </div>
 
           <Card className="border-0 shadow-xl">

@@ -440,6 +440,47 @@ enum TipoProposicao {
   VOTO_APLAUSO
 }
 
+// Configurações de tipos de proposição (gerenciável pelo admin)
+model TipoProposicaoConfig {
+  id              String          @id @default(cuid())
+  codigo          TipoProposicao  @unique  // Vincula ao enum
+  nome            String                    // Nome completo (ex: "Projeto de Lei")
+  sigla           String                    // Sigla (ex: "PL")
+  descricao       String?         @db.Text  // Descrição do tipo
+  prazoLimite     Int?                      // Prazo limite em dias para tramitação
+  requerVotacao   Boolean         @default(true)   // Se requer votação em plenário
+  requerSancao    Boolean         @default(false)  // Se requer sanção do executivo
+  numeracaoAnual  Boolean         @default(true)   // Se a numeração reinicia a cada ano
+  prefixoNumeracao String?                  // Prefixo personalizado (ex: "PL", "IND")
+  ativo           Boolean         @default(true)   // Se está ativo para uso
+  ordem           Int             @default(0)      // Ordem de exibição
+  corBadge        String?                   // Cor para exibição (hex)
+  icone           String?                   // Ícone (nome do lucide icon)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("tipos_proposicao_config")
+}
+
+// Protocolo de proposicao - numeracao sequencial separada do numero da proposicao
+model ProtocoloProposicao {
+  id              String    @id @default(cuid())
+  numero          Int       // Numero sequencial do ano
+  ano             Int       // Ano do protocolo
+  codigo          String    @unique // PROT-00001/2026
+  proposicaoId    String    @unique
+  dataProtocolo   DateTime  @default(now())
+  responsavelId   String?   // Usuario que registrou o protocolo
+  observacoes     String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([numero, ano])
+  @@index([ano])
+  @@index([dataProtocolo])
+  @@map("protocolos_proposicao")
+}
+
 enum StatusProposicao {
   APRESENTADA
   EM_TRAMITACAO
@@ -1479,6 +1520,10 @@ model FluxoTramitacaoEtapa {
   requerParecer     Boolean                 @default(false)
   habilitaPauta     Boolean                 @default(false)  // Marca etapa que habilita inclusao na pauta
   ehEtapaFinal      Boolean                 @default(false)
+  // Campos para etapas condicionais
+  condicional       Boolean                 @default(false)  // Se e etapa condicional (pode ser pulada)
+  tipoCondicao      TipoCondicaoEtapa?      // Tipo de condicao para executar a etapa
+  condicaoConfig    Json?                   // Configuracao adicional da condicao (campo, operador, valor)
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
 
@@ -1489,6 +1534,15 @@ model FluxoTramitacaoEtapa {
   @@unique([fluxoId, ordem])
   @@index([fluxoId])
   @@map("fluxo_tramitacao_etapas")
+}
+
+// Tipos de condicao para etapas de fluxo de tramitacao
+enum TipoCondicaoEtapa {
+  SEMPRE                    // Etapa obrigatoria (padrao)
+  IMPACTO_FINANCEIRO        // Executar se proposicao tiver impacto financeiro
+  REGIME_URGENCIA           // Executar se proposicao estiver em regime de urgencia
+  REGIME_NORMAL             // Executar apenas em regime normal
+  CAMPO_PERSONALIZADO       // Condicao baseada em campo especifico da proposicao
 }
 
 // ============================================

@@ -10,8 +10,10 @@ import Link from 'next/link';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 import { slugify } from '@/lib/utils';
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
 
 export default function MesaDiretoraPage() {
+  const { configuracao } = useConfiguracaoInstitucional();
   const [legislaturaFiltro, setLegislaturaFiltro] = useState<string>('');
 
   // Dados usando hooks
@@ -162,7 +164,7 @@ export default function MesaDiretoraPage() {
             Mesa Diretora
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Conheça os membros da Mesa Diretora da Câmara Municipal de Mojuí dos Campos, 
+            Conheça os membros da Mesa Diretora da {configuracao?.nomeCasa || 'Câmara Municipal'},
             eleitos para a legislatura 2025/2028.
           </p>
         </div>

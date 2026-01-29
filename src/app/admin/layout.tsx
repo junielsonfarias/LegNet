@@ -10,6 +10,7 @@ import { getRoleTheme } from '@/lib/themes/role-themes'
 import { cn } from '@/lib/utils'
 import { Building } from 'lucide-react'
 import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,12 @@ export default async function AdminLayout({
   const userEmail = session?.user?.email || ''
   const userImage = session?.user?.image || ''
   const theme = getRoleTheme(userRole)
+
+  // Buscar configuração institucional
+  const configInstitucional = await prisma.configuracaoInstitucional.findFirst({
+    where: { slug: 'principal' }
+  })
+  const nomeCasa = configInstitucional?.nomeCasa || 'Câmara Municipal'
 
   const getInitials = (name: string) => {
     return name
@@ -109,7 +116,7 @@ export default async function AdminLayout({
                       Painel Administrativo
                     </h1>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Camara Municipal de Mojui dos Campos
+                      {nomeCasa}
                     </p>
                   </div>
                 </div>
@@ -199,7 +206,7 @@ export default async function AdminLayout({
           {/* Footer do admin */}
           <footer className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 px-4 lg:px-6 py-3">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <span>Camara Municipal de Mojui dos Campos</span>
+              <span>{nomeCasa}</span>
               <span className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500" />
                 Sistema Online - v1.0.0

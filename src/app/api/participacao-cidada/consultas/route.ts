@@ -31,7 +31,7 @@ let consultasData: ConsultaPublica[] = [
   {
     id: '1',
     titulo: 'Consulta sobre o Plano Diretor Municipal',
-    descricao: 'Consulta pública para discussão do novo Plano Diretor Municipal de Mojuí dos Campos.',
+    descricao: 'Consulta pública para discussão do novo Plano Diretor Municipal.',
     tipo: 'CONSULTA',
     categoria: 'planejamento',
     dataInicio: '2025-01-01',

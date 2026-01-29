@@ -1,7 +1,12 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Calendar, FileText, TrendingUp } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export function StatsSection() {
+  const { configuracao } = useConfiguracaoInstitucional()
+
   const stats = [
     {
       icon: Users,
@@ -41,8 +46,8 @@ export function StatsSection() {
             Números da Câmara
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Acompanhe os principais indicadores de atividade legislativa 
-            e transparência da Câmara Municipal de Mojuí dos Campos
+            Acompanhe os principais indicadores de atividade legislativa
+            e transparência da {configuracao?.nomeCasa || 'Câmara Municipal'}
           </p>
         </div>
 

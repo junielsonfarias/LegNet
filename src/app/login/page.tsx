@@ -20,6 +20,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -30,6 +31,12 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const { configuracao } = useConfiguracaoInstitucional()
+
+  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
+  const cidade = configuracao.endereco.cidade
+  const estado = configuracao.endereco.estado
+  const localidade = cidade && estado ? `${cidade} - ${estado}` : ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,8 +104,8 @@ export default function LoginPage() {
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Câmara Municipal</h1>
-              <p className="text-white/80">Mojuí dos Campos - PA</p>
+              <h1 className="text-2xl font-bold text-white">{nomeCasa}</h1>
+              {localidade && <p className="text-white/80">{localidade}</p>}
             </div>
           </div>
         </div>
@@ -145,8 +152,8 @@ export default function LoginPage() {
                 <Building2 className="h-6 w-6 text-white" />
               </div>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Câmara Municipal</h1>
-            <p className="text-gray-500 text-sm">Mojuí dos Campos - PA</p>
+            <h1 className="text-xl font-bold text-gray-900">{nomeCasa}</h1>
+            {localidade && <p className="text-gray-500 text-sm">{localidade}</p>}
           </div>
 
           <Card className="border-0 shadow-xl">

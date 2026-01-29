@@ -12,20 +12,20 @@ export const dynamic = 'force-dynamic'
 
 // Dados padrao quando nao ha configuracao no banco
 const dadosPadrao = {
-  nome: process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME || 'Camara Municipal de Mojui dos Campos',
-  sigla: 'CMMJC',
+  nome: process.env.NEXT_PUBLIC_SITE_NAME || process.env.SITE_NAME || 'Câmara Municipal',
+  sigla: process.env.NEXT_PUBLIC_SITE_SIGLA || 'CM',
   cnpj: null,
   endereco: {
-    logradouro: 'Rua Deputado Jose Macedo',
-    numero: 's/n',
-    bairro: 'Centro',
-    cidade: 'Mojui dos Campos',
-    estado: 'PA',
-    cep: '68135-000'
+    logradouro: null,
+    numero: null,
+    bairro: null,
+    cidade: null,
+    estado: null,
+    cep: null
   },
-  telefone: '(93) 99138-8426',
-  email: 'camaramojui@hotmail.com',
-  site: 'www.camaramojuidoscampos.pa.gov.br',
+  telefone: null,
+  email: null,
+  site: null,
   logoUrl: null,
   descricao: null
 }
