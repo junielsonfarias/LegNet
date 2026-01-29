@@ -2515,6 +2515,61 @@ sudo ./scripts/uninstall.sh --full
 
 ---
 
+### 2026-01-29 - Analise e Documentacao do Sistema de Sessao e Painel Eletronico
+
+**Objetivo**: Revisar arquitetura do sistema de sessoes, painel do operador e painel publico, documentar APIs reais e corrigir discrepancias na skill-operador.md.
+
+**Arquitetura Mapeada**:
+
+```
+PAINEIS DE INTERFACE
+├── /painel-operador/[sessaoId] - Controle completo da sessao (OPERADOR)
+├── /painel-publico?sessaoId= - Visualizacao publica (PUBLICO)
+└── /painel-tv/[sessaoId] - Display para TVs em plenario (PUBLICO)
+
+APIs REST
+├── /api/sessoes - CRUD de sessoes
+├── /api/sessoes/[id]/controle - Controle de status (iniciar/finalizar/cancelar)
+├── /api/sessoes/[id]/pauta/[itemId]/controle - 14 acoes de controle de item
+├── /api/painel/presenca - Registro de presencas
+├── /api/painel/votacao - Controle de votacao (iniciar/votar/finalizar)
+└── /api/painel/streaming - SSE para tempo real
+
+SERVICOS DE NEGOCIO
+├── sessao-controle.ts - Controle de estado da sessao e itens
+├── votacao-service.ts - Calculo de quorum e registro de votos
+├── painel-tempo-real-service.ts - Estado em memoria do painel
+├── quorum-service.ts - Calculo de quorum configuravel
+└── turno-service.ts - Controle de turnos e intersticio
+```
+
+**Discrepancias Corrigidas na skill-operador.md**:
+
+| Documentado (antes) | Implementacao Real |
+|---------------------|-------------------|
+| `POST /api/painel/sessao/[id]/iniciar` | `PUT /api/sessoes/[id]` com `{ status: 'EM_ANDAMENTO' }` |
+| `POST /api/painel/sessao/[id]/encerrar` | `PUT /api/sessoes/[id]` com `{ status: 'CONCLUIDA' }` |
+| `POST /api/sessoes/[id]/votacao/[votacaoId]/voto` | `POST /api/painel/votacao` com `{ acao: 'votar' }` |
+| APIs de orador | Nao implementadas |
+
+**Componentes do Painel Operador**:
+- PainelOperador (page.tsx) - Interface principal com cronometro
+- PresencaControl - Registro de presencas (presente/ausente/justificado)
+- VotacaoAcompanhamento - Votos em tempo real durante sessao
+- VotacaoEdicao - Edicao de votos em sessoes concluidas
+
+**Fluxo do Operador**:
+1. Acessa `/painel-operador/[sessaoId]`
+2. Registra presencas (minimo 5 para quorum)
+3. Altera status para EM_ANDAMENTO (dropdown)
+4. Para cada item: Play -> discussao -> votacao -> finalizar com resultado
+5. Altera status para CONCLUIDA
+
+**Arquivos Atualizados**:
+- `docs/skills/skill-operador.md` - APIs corrigidas + fluxo documentado + wizard de sessao
+
+---
+
 ### 2026-01-29 - Melhoria Visual das Proposicoes
 
 **Objetivo**: Redesenhar a interface de listagem e detalhes de proposicoes para maior legibilidade e usabilidade

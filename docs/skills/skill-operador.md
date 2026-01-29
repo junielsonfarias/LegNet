@@ -199,52 +199,79 @@ enum TipoQuorum {
 
 ## APIs e Endpoints
 
+> **IMPORTANTE**: Esta documentacao reflete as rotas REAIS implementadas no sistema.
+
 ### Controle de Sessao
 
-| Rota | Metodo | Funcionalidade | Roles |
-|------|--------|----------------|-------|
-| `/api/painel/sessao/[id]/iniciar` | POST | Iniciar sessao | OPERADOR |
-| `/api/painel/sessao/[id]/suspender` | POST | Suspender sessao | OPERADOR |
-| `/api/painel/sessao/[id]/retomar` | POST | Retomar sessao | OPERADOR |
-| `/api/painel/sessao/[id]/encerrar` | POST | Encerrar sessao | OPERADOR |
-| `/api/painel/sessao/[id]/estado` | GET | Estado atual | OPERADOR |
+| Rota | Metodo | Body/Params | Funcionalidade | Roles |
+|------|--------|-------------|----------------|-------|
+| `/api/sessoes` | GET | `?status=&tipo=&page=&limit=` | Lista sessoes | Publico |
+| `/api/sessoes` | POST | `SessaoCreate` | Criar sessao | SECRETARIA |
+| `/api/sessoes/[id]` | GET | - | Obter sessao completa | Publico |
+| `/api/sessoes/[id]` | PUT | `{ status, ...campos }` | Atualizar sessao/status | OPERADOR |
+| `/api/sessoes/[id]` | DELETE | - | Excluir sessao | ADMIN |
+| `/api/sessoes/[id]/controle` | POST | `{ acao: 'iniciar'\|'finalizar'\|'cancelar' }` | Controle de sessao | OPERADOR |
+| `/api/painel/sessao` | POST | `{ sessaoId, acao }` | Controle via painel (legado) | OPERADOR |
+| `/api/painel/sessao-completa` | GET | `?sessaoId=` | Estado completo da sessao | Publico |
+| `/api/painel/estado` | GET | `?sessaoId=` | Estado do painel | Publico |
 
 ### Presenca
 
-| Rota | Metodo | Funcionalidade | Roles |
-|------|--------|----------------|-------|
-| `/api/painel/sessao/[id]/presenca` | GET | Lista presencas | OPERADOR |
-| `/api/painel/sessao/[id]/presenca` | POST | Registrar presenca | OPERADOR |
-| `/api/painel/sessao/[id]/presenca/[parlamentarId]` | PUT | Atualizar presenca | OPERADOR |
-| `/api/painel/sessao/[id]/quorum` | GET | Verificar quorum | OPERADOR |
+| Rota | Metodo | Body/Params | Funcionalidade | Roles |
+|------|--------|-------------|----------------|-------|
+| `/api/painel/presenca` | GET | `?sessaoId=` | Lista presencas com estatisticas | OPERADOR |
+| `/api/painel/presenca` | POST | `{ sessaoId, parlamentarId, presente, justificativa? }` | Registrar presenca | OPERADOR |
+| `/api/sessoes/[id]/presenca` | GET | - | Lista presencas da sessao | Publico |
+| `/api/sessoes/[id]/presenca` | POST | `{ parlamentarId, presente, justificativa? }` | Registrar presenca | OPERADOR |
 
 ### Votacao
 
-| Rota | Metodo | Funcionalidade | Roles |
-|------|--------|----------------|-------|
-| `/api/sessoes/[id]/votacao` | GET | Lista votacoes | Publico |
-| `/api/sessoes/[id]/votacao` | POST | Criar votacao | OPERADOR |
-| `/api/sessoes/[id]/votacao/[votacaoId]/iniciar` | POST | Abrir votacao | OPERADOR |
-| `/api/sessoes/[id]/votacao/[votacaoId]/encerrar` | POST | Fechar votacao | OPERADOR |
-| `/api/sessoes/[id]/votacao/[votacaoId]/voto` | POST | Registrar voto | PARLAMENTAR |
-| `/api/sessoes/[id]/votacao/[votacaoId]/resultado` | GET | Resultado final | Publico |
+| Rota | Metodo | Body/Params | Funcionalidade | Roles |
+|------|--------|-------------|----------------|-------|
+| `/api/sessoes/[id]/votacao` | GET | - | Lista votacoes da sessao | Publico |
+| `/api/painel/votacao` | GET | `?sessaoId=` | Votacao ativa | Publico |
+| `/api/painel/votacao` | POST | `{ sessaoId, acao: 'iniciar', proposicaoId, tempoVotacao? }` | Iniciar votacao | OPERADOR |
+| `/api/painel/votacao` | POST | `{ sessaoId, acao: 'finalizar' }` | Finalizar votacao | OPERADOR |
+| `/api/painel/votacao` | POST | `{ sessaoId, acao: 'votar', parlamentarId, voto }` | Registrar voto | PARLAMENTAR |
+| `/api/sessoes/[id]/votacao/turno` | POST | `{ acao, itemId, resultado? }` | Controle de turnos | OPERADOR |
 
-### Pauta
+### Pauta e Itens
 
-| Rota | Metodo | Funcionalidade | Roles |
-|------|--------|----------------|-------|
-| `/api/painel/sessao/[id]/pauta` | GET | Obter pauta | OPERADOR |
-| `/api/painel/sessao/[id]/pauta/item/[itemId]/iniciar` | POST | Iniciar item | OPERADOR |
-| `/api/painel/sessao/[id]/pauta/item/[itemId]/encerrar` | POST | Encerrar item | OPERADOR |
-| `/api/painel/sessao/[id]/pauta/item/[itemId]/pular` | POST | Pular item | OPERADOR |
+| Rota | Metodo | Body/Params | Funcionalidade | Roles |
+|------|--------|-------------|----------------|-------|
+| `/api/sessoes/[id]/pauta` | GET | - | Obter pauta da sessao | Publico |
+| `/api/sessoes/[id]/pauta` | POST | `{ itens: [...] }` | Adicionar itens a pauta | SECRETARIA |
+| `/api/sessoes/[id]/pauta/[itemId]/controle` | POST | Ver abaixo | Controle de item | OPERADOR |
+| `/api/sessoes/[id]/pauta/[itemId]/destaques` | GET/POST | - | Destaques de item | OPERADOR |
+| `/api/sessoes/[id]/pauta/apply-template` | POST | `{ templateId }` | Aplicar template | SECRETARIA |
+| `/api/sessoes/[id]/pauta/sugestoes` | GET | - | Sugestoes de pauta | SECRETARIA |
 
-### Orador
+#### Acoes de Controle de Item (`/api/sessoes/[id]/pauta/[itemId]/controle`)
 
-| Rota | Metodo | Funcionalidade | Roles |
-|------|--------|----------------|-------|
-| `/api/painel/sessao/[id]/orador/iniciar` | POST | Iniciar cronometro | OPERADOR |
-| `/api/painel/sessao/[id]/orador/pausar` | POST | Pausar cronometro | OPERADOR |
-| `/api/painel/sessao/[id]/orador/encerrar` | POST | Encerrar orador | OPERADOR |
+| Acao | Body | Descricao |
+|------|------|-----------|
+| `iniciar` | `{ acao: 'iniciar' }` | Inicia discussao do item |
+| `pausar` | `{ acao: 'pausar' }` | Pausa o item (acumula tempo) |
+| `retomar` | `{ acao: 'retomar' }` | Retoma item pausado ou adiado |
+| `votacao` | `{ acao: 'votacao' }` | Inicia votacao do item |
+| `finalizar` | `{ acao: 'finalizar', resultado: 'APROVADO'\|'REJEITADO'\|'ADIADO'\|'RETIRADO'\|'CONCLUIDO', observacoes? }` | Finaliza o item |
+| `vista` | `{ acao: 'vista', parlamentarId, prazoDias? }` | Pedido de vista |
+| `retomarVista` | `{ acao: 'retomarVista' }` | Retoma item apos vista |
+| `subir` | `{ acao: 'subir' }` | Move item para cima na pauta |
+| `descer` | `{ acao: 'descer' }` | Move item para baixo na pauta |
+| `iniciar-turno` | `{ acao: 'iniciar-turno' }` | Inicia turno de votacao |
+| `finalizar-turno` | `{ acao: 'finalizar-turno', resultado }` | Finaliza turno com resultado |
+| `verificar-intersticio` | `{ acao: 'verificar-intersticio' }` | Verifica prazo para 2o turno |
+| `segundo-turno` | `{ acao: 'segundo-turno' }` | Inicia segundo turno |
+| `listar-intersticio` | `{ acao: 'listar-intersticio' }` | Lista itens aguardando 2o turno |
+
+### Streaming (Tempo Real)
+
+| Rota | Metodo | Params | Funcionalidade | Roles |
+|------|--------|--------|----------------|-------|
+| `/api/painel/streaming` | GET | `?sessaoId=` | SSE stream de eventos | Publico |
+| `/api/painel/stream` | GET | `?sessaoId=` | SSE stream alternativo | Publico |
+| `/api/painel/hora-servidor` | GET | - | Hora atual do servidor | Publico |
 
 ---
 
@@ -1160,6 +1187,84 @@ const sessoesAnteriores = await prisma.sessao.findMany({
 - [x] Cronometro de fala
 - [x] Pausar/retomar
 - [x] Tempo por tipo de pronunciamento
+
+---
+
+## Wizard de Sessao e Pauta
+
+O sistema inclui um wizard integrado para criacao de sessoes com pauta em `/admin/sessoes/nova`:
+
+### Passo 1: Dados Basicos
+- Tipo da sessao (Ordinaria, Extraordinaria, Solene, Especial)
+- Data e horario
+- Local
+- Descricao opcional
+
+### Passo 2: Montar Pauta
+- Lista proposicoes elegiveis (`/api/proposicoes/elegiveis-pauta`)
+- Proposicoes elegiveis: status AGUARDANDO_PAUTA com habilitaPauta=true
+- Selecao multipla com checkbox
+- Ordenacao drag-and-drop
+- Secao e tipo de acao por item
+
+### Passo 3: Confirmar
+- Resumo da sessao
+- Resumo da pauta montada
+- Criacao atomica (sessao + pauta em transacao)
+
+### API de Proposicoes Elegiveis
+
+```typescript
+// GET /api/proposicoes/elegiveis-pauta
+// Retorna proposicoes que podem ser incluidas em pauta:
+// - status IN ['AGUARDANDO_PAUTA', 'EM_TRAMITACAO', 'APROVADA_1_TURNO']
+// - habilitaPauta = true
+// - Nao esta em pauta de sessao EM_ANDAMENTO
+```
+
+---
+
+## Fluxo de Uso pelo Operador
+
+```
+1. PREPARACAO (Admin/Secretaria)
+   └── Wizard Sessao -> Cria sessao + pauta
+       └── Sessao status = AGENDADA
+
+2. ABERTURA (Operador)
+   └── Acessa /painel-operador/[sessaoId]
+   └── Registra presencas
+   └── Verifica quorum (5/9 = maioria absoluta)
+   └── Dropdown Status -> EM_ANDAMENTO
+       └── tempoInicio = agora
+       └── Cronometro inicia
+
+3. EXECUCAO (Operador)
+   └── Para cada item da pauta:
+       ├── [Play] -> status = EM_DISCUSSAO
+       ├── [Pause] -> acumula tempo
+       ├── [Vote] -> status = EM_VOTACAO
+       │   └── Registra votos dos parlamentares
+       │   └── [Finalizar] -> calcula resultado
+       └── [Stop] -> Modal com resultado
+           └── CONCLUIDO/APROVADO/REJEITADO/ADIADO/RETIRADO
+
+4. ENCERRAMENTO (Operador)
+   └── Dropdown Status -> CONCLUIDA
+       └── finalizada = true
+       └── Todos itens com status final
+```
+
+---
+
+## Componentes do Painel Operador
+
+| Componente | Arquivo | Funcao |
+|------------|---------|--------|
+| PainelOperador | `src/app/painel-operador/[sessaoId]/page.tsx` | Pagina principal |
+| PresencaControl | `src/components/admin/presenca-control.tsx` | Registrar presencas |
+| VotacaoAcompanhamento | `src/components/admin/votacao-acompanhamento.tsx` | Votos em tempo real |
+| VotacaoEdicao | `src/components/admin/votacao-edicao.tsx` | Editar votos (sessoes concluidas) |
 
 ---
 
