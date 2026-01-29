@@ -124,7 +124,7 @@ export default function BuscaPage() {
 
   // Filtros
   const [tiposSelecionados, setTiposSelecionados] = useState<TipoResultado[]>([])
-  const [anoSelecionado, setAnoSelecionado] = useState<string>('')
+  const [anoSelecionado, setAnoSelecionado] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(true)
 
   const debouncedQuery = useDebounce(query, 400)
@@ -150,7 +150,7 @@ export default function BuscaPage() {
         params.set('tipos', tiposSelecionados.join(','))
       }
 
-      if (anoSelecionado) {
+      if (anoSelecionado && anoSelecionado !== 'all') {
         const anoNum = parseInt(anoSelecionado)
         params.set('dataInicio', `${anoNum}-01-01`)
         params.set('dataFim', `${anoNum}-12-31`)
@@ -202,11 +202,11 @@ export default function BuscaPage() {
 
   const limparFiltros = () => {
     setTiposSelecionados([])
-    setAnoSelecionado('')
+    setAnoSelecionado('all')
     setPagina(1)
   }
 
-  const temFiltrosAtivos = tiposSelecionados.length > 0 || anoSelecionado !== ''
+  const temFiltrosAtivos = tiposSelecionados.length > 0 || anoSelecionado !== 'all'
 
   return (
     <div className="space-y-6">
@@ -325,7 +325,7 @@ export default function BuscaPage() {
                     <SelectValue placeholder="Todos os anos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os anos</SelectItem>
+                    <SelectItem value="all">Todos os anos</SelectItem>
                     {facetas.anos.map(({ ano, count }) => (
                       <SelectItem key={ano} value={String(ano)}>
                         {ano} ({count})
@@ -367,11 +367,11 @@ export default function BuscaPage() {
                       <X className="h-3 w-3 ml-1" />
                     </Badge>
                   ))}
-                  {anoSelecionado && (
+                  {anoSelecionado && anoSelecionado !== 'all' && (
                     <Badge
                       variant="secondary"
                       className="cursor-pointer"
-                      onClick={() => setAnoSelecionado('')}
+                      onClick={() => setAnoSelecionado('all')}
                     >
                       {anoSelecionado}
                       <X className="h-3 w-3 ml-1" />

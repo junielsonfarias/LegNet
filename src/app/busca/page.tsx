@@ -67,7 +67,7 @@ function BuscaContent() {
 
   const [query, setQuery] = useState(searchParams.get('q') || '')
   const [tiposSelecionados, setTiposSelecionados] = useState<TipoResultado[]>([])
-  const [anoSelecionado, setAnoSelecionado] = useState<string>('')
+  const [anoSelecionado, setAnoSelecionado] = useState<string>('all')
   const [pagina, setPagina] = useState(1)
   const [resultado, setResultado] = useState<ResultadoPaginado | null>(null)
   const [loading, setLoading] = useState(false)
@@ -91,7 +91,7 @@ function BuscaContent() {
         params.set('tipos', tiposSelecionados.join(','))
       }
 
-      if (anoSelecionado) {
+      if (anoSelecionado && anoSelecionado !== 'all') {
         params.set('dataInicio', `${anoSelecionado}-01-01`)
         params.set('dataFim', `${anoSelecionado}-12-31`)
       }
@@ -135,7 +135,7 @@ function BuscaContent() {
 
   const limparFiltros = () => {
     setTiposSelecionados([])
-    setAnoSelecionado('')
+    setAnoSelecionado('all')
     setPagina(1)
   }
 
@@ -216,7 +216,7 @@ function BuscaContent() {
                       <SelectValue placeholder="Todos os anos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos os anos</SelectItem>
+                      <SelectItem value="all">Todos os anos</SelectItem>
                       {[2026, 2025, 2024, 2023, 2022, 2021, 2020].map(ano => (
                         <SelectItem key={ano} value={ano.toString()}>
                           {ano}
@@ -227,7 +227,7 @@ function BuscaContent() {
                 </div>
 
                 {/* Limpar filtros */}
-                {(tiposSelecionados.length > 0 || anoSelecionado) && (
+                {(tiposSelecionados.length > 0 || (anoSelecionado && anoSelecionado !== 'all')) && (
                   <div className="flex items-end">
                     <Button
                       variant="ghost"
@@ -452,7 +452,7 @@ function BuscaContent() {
                                 checked={anoSelecionado === ano.toString()}
                                 onCheckedChange={() => {
                                   setAnoSelecionado(
-                                    anoSelecionado === ano.toString() ? '' : ano.toString()
+                                    anoSelecionado === ano.toString() ? 'all' : ano.toString()
                                   )
                                   setPagina(1)
                                 }}

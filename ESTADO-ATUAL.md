@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-29 (Correcoes Criticas no Fluxo Legislativo)
+> **Ultima Atualizacao**: 2026-01-29 (Correcao global SelectItem value vazio)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -12,7 +12,7 @@
 | Metrica | Valor |
 |---------|-------|
 | **Modelos Prisma** | 78 |
-| **Endpoints API** | 138 |
+| **Endpoints API** | 142 |
 | **Componentes React** | 76 |
 | **Servicos de Negocio** | 37 |
 | **Hooks Customizados** | 34 |
@@ -128,7 +128,11 @@ Fluxo Validado:
 | Funcionalidade | Status | Observacoes |
 |---------------|--------|-------------|
 | CRUD de proposicoes | Implementado | /admin/proposicoes |
-| Tipos de proposicao | Implementado | 8 tipos definidos |
+| Tipos de proposicao | Implementado | 8 tipos configuraveis via /admin/configuracoes/tipos-proposicoes |
+| **Gerenciamento de tipos** | **Implementado** | CRUD completo: nome, sigla, cor, prazo, votacao, sancao |
+| **API tipos-proposicao** | **Implementado** | GET/POST/PUT/DELETE + seed com dados padrao |
+| **Fluxo por tipo** | **Implementado** | Tab "Fluxo de Tramitacao" para configurar etapas por tipo |
+| **Editor visual fluxo** | **Implementado** | FluxoTramitacaoEditor component com drag-and-drop |
 | Status de proposicao | Implementado | 8 status incluindo AGUARDANDO_PAUTA e EM_PAUTA |
 | Vinculacao com autor | Implementado | Parlamentar autor |
 | Vinculacao com sessao | Implementado | Sessao onde foi apresentada (sessaoId) |
@@ -218,6 +222,10 @@ Fluxo Validado:
 | **Validacao de elegibilidade** | **Implementado** | RN-057 - habilitaPauta flag |
 | **Config prazos urgencia** | **Implementado** | /admin/configuracoes/prazos-urgencia |
 | **Config fluxos por tipo** | **Implementado** | /admin/configuracoes/fluxos-tramitacao |
+| **Editor fluxo integrado** | **Implementado** | Tab "Fluxo de Tramitacao" na pagina de Tipos de Proposicao |
+| **Etapas condicionais** | **Implementado** | Etapas podem ser puladas baseado em criterios (impacto financeiro, regime urgencia, etc) |
+| **Servico de condicoes** | **Implementado** | condicao-etapa-service.ts - avalia se etapa deve ser executada |
+| **Protocolo proposicao** | **Implementado** | ProtocoloProposicao model - numeracao separada PROT-XXXXX/ANO |
 
 ### 11. Publicacoes
 
@@ -2428,6 +2436,197 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-29 - Propagacao de Configuracao Dinamica em Todo Sistema
+
+**Objetivo**: Substituir todas as referencias hardcoded "Mojui dos Campos" por valores dinamicos da ConfiguracaoInstitucional, permitindo que alteracoes nas configuracoes se propaguem automaticamente em todo o portal.
+
+**Arquivos Atualizados** (60+ arquivos):
+
+| Categoria | Arquivos | Status |
+|-----------|----------|--------|
+| **Componentes Layout** | header.tsx, footer.tsx, hero.tsx | Ja usavam hook |
+| **Componentes Admin** | admin-sidebar.tsx, admin-header.tsx, admin-sidebar-mobile.tsx | Atualizado |
+| **Layout Admin** | src/app/admin/layout.tsx | Atualizado (Server Component com Prisma) |
+| **Pagina Login** | src/app/login/page.tsx | Atualizado |
+| **Painel Publico** | src/app/painel-publico/page.tsx | Atualizado |
+| **Painel Operador** | src/app/painel-operador/[sessaoId]/page.tsx | Atualizado |
+| **Painel Eletronico** | src/app/admin/painel-eletronico/[sessaoId]/page.tsx | Atualizado |
+| **Componente Waiting** | src/components/painel/waiting-screen.tsx | Atualizado |
+| **Paginas Transparencia** | transparencia/, leis, decretos, portarias, gestao-fiscal | Atualizado |
+| **Paginas Legislativo** | sessoes, proposicoes, comissoes, legislatura | Atualizado |
+| **Paginas Parlamentares** | page, galeria, mesa-diretora, vereadores | Atualizado |
+| **Paginas Institucionais** | sobre, codigo-etica, ouvidoria | Atualizado |
+| **APIs Dados Abertos** | 9 rotas em /api/dados-abertos/* | Atualizado |
+| **API Institucional** | /api/institucional/route.ts | Fallback generico |
+| **Autenticacao** | reset-password, forgot-password | Atualizado |
+
+**Hook Utilizado**: `useConfiguracaoInstitucional()` de `@/lib/hooks/use-configuracao-institucional.ts`
+
+**Padrao para Client Components**:
+```typescript
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+
+const { configuracao, legislatura } = useConfiguracaoInstitucional()
+const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
+```
+
+**Padrao para Server Components/APIs**:
+```typescript
+const config = await prisma.configuracaoInstitucional.findFirst({
+  where: { slug: 'principal' }
+})
+const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+```
+
+**Resultado**: Agora quando a configuracao institucional e alterada em `/admin/configuracoes`, o novo nome da camara aparece automaticamente em todo o portal, incluindo header, footer, login, painel eletronico, APIs de dados abertos e todas as paginas publicas.
+
+---
+
+### 2026-01-29 - Configuracoes Institucionais e Dashboard com Dados Reais
+
+**Objetivo**: Implementar configuracoes institucionais editaveis e corrigir dashboard para exibir metricas e dados reais do banco de dados.
+
+**Configuracoes Institucionais** (`/admin/configuracoes`):
+
+A pagina de configuracoes ja existia e permite editar:
+- Nome da Casa Legislativa (ex: "Camara Municipal de Ruropolis")
+- Sigla (ex: "CMR")
+- CNPJ
+- Endereco completo (logradouro, numero, bairro, cidade, estado, CEP)
+- Telefone, Email, Site
+- URL do Logotipo
+- Tema (claro/escuro/auto)
+- Fuso horario
+- Descricao
+
+**Dados Cadastrados**:
+
+| Campo | Valor |
+|-------|-------|
+| Nome | Camara Municipal de Ruropolis |
+| Sigla | CMR |
+| CNPJ | 10.219.673/0001-90 |
+| Endereco | Av. Brasil, 491 - Centro |
+| Cidade/Estado | Ruropolis - PA |
+| CEP | 68165-000 |
+| Telefone | (93) 3543-1599 |
+| Email | camaraderuropolis@hotmail.com |
+| Site | https://camararuropolis.pa.gov.br |
+
+---
+
+### 2026-01-29 - Dashboard com Dados Reais do Banco
+
+**Objetivo**: Corrigir dashboard para exibir metricas e dados reais do banco de dados, removendo valores hardcoded e mocks.
+
+**Problemas Corrigidos**:
+
+| Problema | Solucao |
+|----------|---------|
+| Nome da camara hardcoded | Busca dinamica da legislatura ativa |
+| Legislatura/Periodo fixos | Busca da legislatura e periodo ativos do banco |
+| Votacoes hoje = 3 (fixo) | Contagem real de votacoes do dia |
+| Usuarios online = 4 (fixo) | Contagem real de usuarios no sistema |
+| Atividades recentes mockadas | API real que busca proposicoes, sessoes, votacoes, pareceres |
+| Proximos eventos mockados | API real que busca sessoes e reunioes agendadas |
+| Membros de comissao = 0 | Contagem real de membros ativos |
+| Estatisticas PARLAMENTAR fixas | Busca proposicoes do parlamentar logado |
+
+**APIs Criadas**:
+
+| Endpoint | Funcao |
+|----------|--------|
+| `GET /api/dashboard/stats` | Estatisticas gerais do sistema |
+| `GET /api/dashboard/atividades` | Atividades recentes (proposicoes, votacoes, etc) |
+| `GET /api/dashboard/eventos` | Proximos eventos (sessoes, reunioes) |
+
+**Hook Criado**: `src/lib/hooks/use-dashboard.ts`
+- `useDashboardStats()` - Estatisticas do dashboard
+- `useAtividadesRecentes()` - Atividades recentes
+- `useProximosEventos()` - Proximos eventos
+
+**Permissao Adicionada**: `dashboard.view` (todos os roles)
+
+**Arquivos Criados**:
+
+| Arquivo | Funcao |
+|---------|--------|
+| `src/app/api/dashboard/stats/route.ts` | API de estatisticas |
+| `src/app/api/dashboard/atividades/route.ts` | API de atividades recentes |
+| `src/app/api/dashboard/eventos/route.ts` | API de proximos eventos |
+| `src/lib/hooks/use-dashboard.ts` | Hooks para consumir APIs |
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/app/admin/page.tsx` | Usa dados reais do dashboard |
+| `src/app/admin/dashboard/page.tsx` | Usa dados reais do dashboard |
+| `src/components/admin/dashboard/recent-activity.tsx` | Remove mock, mostra mensagem quando vazio |
+| `src/components/admin/dashboard/upcoming-events.tsx` | Remove mock, mostra mensagem quando vazio |
+| `src/lib/auth/permissions.ts` | Adicionada permissao dashboard.view |
+
+---
+
+### 2026-01-29 - Importacao de Dados: Camara Municipal de Ruropolis-PA
+
+**Objetivo**: Importar dados completos da Camara Municipal de Ruropolis-PA para o sistema.
+
+**Script Criado**: `prisma/seed-ruropolis.ts`
+
+**Dados Importados**:
+
+| Tipo | Quantidade | Detalhes |
+|------|------------|----------|
+| Legislatura | 1 | 10ª Legislatura (2021-2024) |
+| Periodo | 1 | 2º Bienio (2023-2024) |
+| Parlamentares | 13 | Todos os vereadores com fotos |
+| Mandatos | 13 | Vinculados a legislatura |
+| Filiacoes | 13 | Partidos: Uniao Brasil, MDB, PT, PSD, PL, PP |
+| Mesa Diretora | 1 | Presidente, Vice, 1º e 2º Secretarios |
+| Membros Mesa | 4 | Guto Touta (Pres), Andersson (Vice), Jonas (1º Sec), Elivaldo (2º Sec) |
+| Comissoes | 3 | CECSSDH, CFCJR, CTAMOP |
+| Membros Comissao | 9 | 3 membros por comissao |
+| Usuario Admin | 1 | admin@camararuropolis.pa.gov.br |
+
+**Comissoes Criadas**:
+
+1. **CECSSDH** - Educacao, Cultura, Desporto, Saude, Saneamento, Assistencia Social e Direitos Humanos
+   - Presidente: Andersson Guimaraes Pinto
+   - Relator: Jonas Lourenco da Silva
+   - Membro: Paulo Soares de Sousa
+
+2. **CFCJR** - Financas, Constituicoes, Justica e Redacao (equivalente CLJ)
+   - Presidente: Ismael Carvalho Cunha
+   - Relator: Elias Roberto Zanetti
+   - Membro: Guto da Silva Touta
+
+3. **CTAMOP** - Transporte, Agricultura, Meio Ambiente e Obras Publicas
+   - Presidente: Elivaldo Conceicao Silva
+   - Relator: Marcelo Duarte Correa
+   - Membro: Ismael Carvalho Cunha
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `prisma/seed-ruropolis.ts` | Novo script de seed com dados de Ruropolis |
+| `package.json` | Adicionado script `db:seed-ruropolis` |
+
+**Comando de Execucao**:
+```bash
+npm run db:seed-ruropolis
+```
+
+**Informacoes Institucionais** (referencia):
+- CNPJ: 10.219.673/0001-90
+- Endereco: Av. Brasil, 491 – Centro, CEP 68.165-000
+- Telefones: (93) 3543-1599 | (93) 3543-1594
+- Email: camaraderuropolis@hotmail.com
+- Horario: Segunda a Sexta, 08h as 14h
+
+---
+
 ### 2026-01-29 - Correcoes Criticas: Sessao e Tipos de Votacao
 
 **Objetivo**: Corrigir problemas identificados na analise comparativa com o SAPL.
@@ -2558,6 +2757,10 @@ npx prisma migrate dev --name remove-pauta-add-votacao-types  # Criar migracao
 | `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | POST | Adicionar etapa |
 | `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | PUT | Atualizar etapa |
 | `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | DELETE | Remover etapa |
+| `/api/admin/configuracoes/unidades-tramitacao` | GET | Listar unidades de tramitacao |
+| `/api/admin/configuracoes/unidades-tramitacao` | POST | Criar unidade de tramitacao |
+| `/api/admin/configuracoes/unidades-tramitacao` | PUT | Atualizar unidade de tramitacao |
+| `/api/admin/configuracoes/unidades-tramitacao` | DELETE | Excluir unidade de tramitacao |
 | `/api/proposicoes/elegiveis-pauta` | GET | Listar proposicoes elegiveis para pauta |
 
 **Novas Paginas Admin** (`src/app/admin/`):

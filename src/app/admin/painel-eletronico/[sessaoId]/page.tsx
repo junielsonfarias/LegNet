@@ -66,6 +66,7 @@ import { PresencaControl } from '@/components/admin/presenca-control'
 import { VotacaoAcompanhamento } from '@/components/admin/votacao-acompanhamento'
 import { CronometroOrador } from '@/components/admin/cronometro-orador'
 import { TurnoControl } from '@/components/admin/turno-control'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'; label: string }> = [
   { value: 'CONCLUIDO', label: 'Encerrar discussão' },
@@ -253,6 +254,7 @@ export default function PainelEletronicoOperadorPage() {
   const params = useParams()
   const router = useRouter()
   const sessaoId = params?.sessaoId as string
+  const { configuracao } = useConfiguracaoInstitucional()
 
   const [sessao, setSessao] = useState<SessaoApi | null>(null)
   const [loading, setLoading] = useState(true)
@@ -267,7 +269,7 @@ export default function PainelEletronicoOperadorPage() {
     itemTitulo: string
   }>({ open: false, itemId: '', itemTitulo: '' })
   const [motivoRetirada, setMotivoRetirada] = useState('')
-  const [autorRetirada, setAutorRetirada] = useState('')
+  const [autorRetirada, setAutorRetirada] = useState('none')
 
   const sessaoIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const itemIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -503,7 +505,7 @@ export default function PainelEletronicoOperadorPage() {
   const abrirModalRetirada = (itemId: string, itemTitulo: string) => {
     setModalRetirada({ open: true, itemId, itemTitulo })
     setMotivoRetirada('')
-    setAutorRetirada('')
+    setAutorRetirada('none')
   }
 
   const confirmarRetirada = async () => {
@@ -514,7 +516,7 @@ export default function PainelEletronicoOperadorPage() {
 
     try {
       setExecutando(true)
-      const observacoes = autorRetirada
+      const observacoes = autorRetirada && autorRetirada !== 'none'
         ? `Retirado por: ${autorRetirada}. Motivo: ${motivoRetirada}`
         : `Motivo: ${motivoRetirada}`
 
@@ -531,7 +533,7 @@ export default function PainelEletronicoOperadorPage() {
       toast.success('Item retirado da pauta com sucesso')
       setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
       setMotivoRetirada('')
-      setAutorRetirada('')
+      setAutorRetirada('none')
     } catch (error: any) {
       console.error('Erro ao retirar item da pauta:', error)
       toast.error(error?.message || 'Erro ao retirar item da pauta')
@@ -604,7 +606,7 @@ export default function PainelEletronicoOperadorPage() {
                   {sessao.numero}ª Sessão {getTipoSessaoLabel(sessao.tipo)}
                 </h1>
                 <p className="mt-1 text-slate-400">
-                  Câmara Municipal de Mojuí dos Campos
+                  {configuracao?.nomeCasa || 'Câmara Municipal'}
                 </p>
               </div>
             </div>
@@ -1219,7 +1221,7 @@ export default function PainelEletronicoOperadorPage() {
           if (!open) {
             setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
             setMotivoRetirada('')
-            setAutorRetirada('')
+            setAutorRetirada('none')
           }
         }}
       >
@@ -1243,7 +1245,7 @@ export default function PainelEletronicoOperadorPage() {
                   <SelectValue placeholder="Selecione quem solicitou" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Não informado</SelectItem>
+                  <SelectItem value="none">Não informado</SelectItem>
                   <SelectItem value="Mesa Diretora">Mesa Diretora</SelectItem>
                   <SelectItem value="Autor da Proposição">Autor da Proposição</SelectItem>
                   {sessao?.presencas?.filter(p => p.presente).map(presenca => (
@@ -1272,7 +1274,7 @@ export default function PainelEletronicoOperadorPage() {
               onClick={() => {
                 setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
                 setMotivoRetirada('')
-                setAutorRetirada('')
+                setAutorRetirada('none')
               }}
             >
               Cancelar

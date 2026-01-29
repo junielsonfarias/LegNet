@@ -64,8 +64,8 @@ export default function NormasPublicPage() {
   const [normas, setNormas] = useState<NormaJuridica[]>([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState<string>('')
-  const [filtroAno, setFiltroAno] = useState<string>('')
+  const [filtroTipo, setFiltroTipo] = useState<string>('all')
+  const [filtroAno, setFiltroAno] = useState<string>('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -78,8 +78,8 @@ export default function NormasPublicPage() {
       params.set('situacao', 'VIGENTE') // Por padrao, mostrar apenas vigentes
 
       if (busca) params.set('busca', busca)
-      if (filtroTipo) params.set('tipo', filtroTipo)
-      if (filtroAno) params.set('ano', filtroAno)
+      if (filtroTipo && filtroTipo !== 'all') params.set('tipo', filtroTipo)
+      if (filtroAno && filtroAno !== 'all') params.set('ano', filtroAno)
 
       const response = await fetch(`/api/normas?${params.toString()}`)
       const data = await response.json()
@@ -152,7 +152,7 @@ export default function NormasPublicPage() {
                   <SelectValue placeholder="Tipo de norma" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os tipos</SelectItem>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="LEI_ORDINARIA">Lei Ordinaria</SelectItem>
                   <SelectItem value="LEI_COMPLEMENTAR">Lei Complementar</SelectItem>
                   <SelectItem value="DECRETO_LEGISLATIVO">Decreto Legislativo</SelectItem>
@@ -165,7 +165,7 @@ export default function NormasPublicPage() {
                   <SelectValue placeholder="Ano" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   {anos.map(ano => (
                     <SelectItem key={ano} value={ano.toString()}>{ano}</SelectItem>
                   ))}
@@ -177,8 +177,8 @@ export default function NormasPublicPage() {
                 className="h-12"
                 onClick={() => {
                   setBusca('')
-                  setFiltroTipo('')
-                  setFiltroAno('')
+                  setFiltroTipo('all')
+                  setFiltroAno('all')
                   setPage(1)
                 }}
               >
