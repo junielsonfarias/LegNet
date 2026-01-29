@@ -52,7 +52,7 @@ model Sessao {
 ```prisma
 model Votacao {
   id                  String              @id @default(cuid())
-  tipo                TipoVotacao         // NOMINAL, SIMBOLICA, SECRETA
+  tipo                TipoVotacao         // NOMINAL, SECRETA, SIMBOLICA, LEITURA
   status              StatusVotacao       @default(PENDENTE)
   resultado           ResultadoVotacao?   // APROVADA, REJEITADA, EMPATADA
   dataInicio          DateTime?

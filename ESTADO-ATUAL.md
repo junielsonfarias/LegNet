@@ -2428,6 +2428,100 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-29 - Correcoes Criticas: Sessao e Tipos de Votacao
+
+**Objetivo**: Corrigir problemas identificados na analise comparativa com o SAPL.
+
+**Alteracoes no Schema Prisma** (`prisma/schema.prisma`):
+
+1. **Removido campo redundante `Sessao.pauta`**:
+   - Campo `pauta String? @db.Text` removido do modelo Sessao
+   - Dados de pauta agora gerenciados exclusivamente via `PautaSessao`
+
+2. **Novos tipos de votacao**:
+   ```prisma
+   enum TipoVotacao {
+     NOMINAL    // Votacao nominal - votos individuais registrados
+     SECRETA    // Votacao secreta - apenas totais
+     SIMBOLICA  // Votacao simbolica - mao levantada, sem registro individual
+     LEITURA    // Apenas leitura, sem votacao efetiva
+   }
+   ```
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `prisma/schema.prisma` | Removido `pauta` de Sessao; adicionado SIMBOLICA e LEITURA ao enum |
+| `src/app/api/sessoes/route.ts` | Removido campo `pauta` do schema Zod e dados |
+| `src/app/api/sessoes/[id]/route.ts` | Removido campo `pauta` do schema Zod e update |
+| `src/app/api/sessoes/[id]/votacao/route.ts` | Tratamento para SIMBOLICA e LEITURA |
+| `src/app/api/sessoes/[id]/pauta/[itemId]/destaques/route.ts` | Novos tipos no Zod |
+| `src/lib/services/votacao-service.ts` | Tipo atualizado |
+| `src/lib/services/sessao-controle.ts` | Usa tipoVotacao do item (nao mais hardcoded) |
+| `src/lib/api/pauta-api.ts` | Tipo atualizado |
+| `src/lib/utils/impressao-votacao.ts` | Tipo atualizado |
+| `src/lib/db.ts` | Removido campo `pauta` do mock |
+
+**Comportamento dos Novos Tipos**:
+
+| Tipo | Registro Individual | Retorno API | Uso |
+|------|---------------------|-------------|-----|
+| NOMINAL | Sim | Votos detalhados | Votacoes importantes, nominais |
+| SECRETA | Nao | Apenas totais | Votacoes confidenciais |
+| SIMBOLICA | Nao | Apenas totais | Votacoes rapidas por mao levantada |
+| LEITURA | N/A | Sem votos | Itens apenas para leitura |
+
+**Proximos Passos** (apos reiniciar servidor):
+```bash
+npx prisma generate    # Regenerar cliente Prisma
+npx prisma db push     # Aplicar alteracoes ao banco (dev)
+# OU
+npx prisma migrate dev --name remove-pauta-add-votacao-types  # Criar migracao
+```
+
+---
+
+### 2026-01-29 - Melhoria Visual da Pagina de Detalhes da Sessao
+
+**Objetivo**: Melhorar a visualizacao das informacoes de sessao na pagina `/admin/sessoes/[id]` com interface moderna e completa.
+
+**Arquivo Modificado**:
+- `src/app/admin/sessoes/[id]/page.tsx` - Reescrita completa (659 linhas)
+
+**Novas Funcionalidades**:
+- **Header com status badge**: Exibe titulo da sessao com badge visual do status (cores por estado)
+- **Botoes de acao contextuais**:
+  - "Iniciar Sessao" (quando AGENDADA)
+  - "Acessar Painel" (quando EM_ANDAMENTO)
+  - "Editar" e "Historico" (sempre visiveis)
+- **4 Cards de estatisticas**:
+  - Presenca (presente/total com barra de progresso)
+  - Itens na Pauta (total de itens)
+  - Aprovados (contagem de itens aprovados)
+  - Duracao (tempo formatado em hh:mm:ss ou "--:--" se nao iniciada)
+- **Interface com abas (Tabs)**:
+  - **Pauta**: Itens agrupados por secao (EXPEDIENTE, ORDEM_DO_DIA, EXPLICACOES_PESSOAIS) com badges de status
+  - **Presenca**: Lista de parlamentares com indicadores visuais de presenca/ausencia
+  - **Informacoes**: Descricao, ata e observacoes da sessao
+- **Sidebar melhorada**: Todas as informacoes da sessao (numero, tipo, status, data, horario, local, legislatura, periodo, tempoInicio)
+- **Card de acoes rapidas**: Links diretos para painel-operador, painel-publico, painel-tv e historico
+
+**Componentes UI Utilizados**:
+- `Card`, `CardHeader`, `CardTitle`, `CardContent` do shadcn/ui
+- `Badge` para status
+- `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` para navegacao
+- `Button` com variantes (default, outline, ghost)
+- Icones Lucide: Calendar, Clock, MapPin, Users, FileText, Play, Edit, ArrowLeft, etc.
+
+**Visual**:
+- Cores de status: verde (CONCLUIDA), amarelo (EM_ANDAMENTO), azul (AGENDADA), vermelho (CANCELADA), cinza (SUSPENSA)
+- Badges coloridos para status dos itens da pauta
+- Barra de progresso para presenca
+- Layout responsivo com grid
+
+---
+
 ### 2026-01-29 - Sistema de Fluxos de Tramitacao Configuraveis e Wizard de Sessao
 
 **Objetivo**: Implementar fluxos de tramitacao configuraveis por tipo de proposicao, validacao de elegibilidade para pauta, e wizard de criacao de sessao com pauta integrada.

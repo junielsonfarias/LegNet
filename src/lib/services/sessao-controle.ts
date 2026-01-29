@@ -1024,7 +1024,7 @@ export async function finalizarTurnoItem(
     totalMembros,
     totalPresentes,
     config.tipoQuorum as TipoQuorum,
-    'NOMINAL' as TipoVotacao,
+    item.tipoVotacao as TipoVotacao,
     resultadoAgrupado
   )
 

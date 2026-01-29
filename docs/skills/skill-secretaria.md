@@ -14,6 +14,7 @@ O modulo da Secretaria gerencia as operacoes administrativas do processo legisla
 | `src/app/admin/pauta-sessoes/` | Composicao de pautas |
 | `src/app/admin/tramitacoes/` | Acompanhamento de tramitacao |
 | `src/app/admin/sessoes/nova/` | Wizard de criacao de sessao com pauta |
+| `src/app/admin/sessoes/[id]/page.tsx` | Pagina de detalhes da sessao com tabs, stats e acoes |
 | `src/app/admin/configuracoes/fluxos-tramitacao/` | Configuracao de fluxos por tipo |
 | `src/app/admin/configuracoes/prazos-urgencia/` | Configuracao de prazos globais |
 | `src/lib/services/automacao-pautas-service.ts` | Sugestao automatica de pauta |

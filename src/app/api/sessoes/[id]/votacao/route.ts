@@ -102,11 +102,24 @@ export const GET = withErrorHandler(async (
     }
   }
 
-  // Processar proposições para respeitar votação secreta
+  // Processar proposições para respeitar tipo de votação
   const proposicoesConsolidadas = Array.from(proposicoesMap.values()).map(prop => {
     const tipoVotacao = tipoVotacaoMap.get(prop.id) || 'NOMINAL'
 
-    // Se votação é secreta, não retornar detalhes individuais dos votos
+    // Votação LEITURA - apenas leitura, sem votação
+    if (tipoVotacao === 'LEITURA') {
+      return {
+        ...prop,
+        tipoVotacao: 'LEITURA',
+        votacoes: [],
+        votacaoInfo: {
+          tipo: 'LEITURA',
+          descricao: 'Apenas leitura, sem votação'
+        }
+      }
+    }
+
+    // Votação SECRETA - não retornar detalhes individuais dos votos
     if (tipoVotacao === 'SECRETA') {
       const votosSim = prop.votacoes?.filter((v: any) => v.voto === 'SIM').length || 0
       const votosNao = prop.votacoes?.filter((v: any) => v.voto === 'NAO').length || 0
@@ -125,6 +138,27 @@ export const GET = withErrorHandler(async (
       }
     }
 
+    // Votação SIMBOLICA - mão levantada, apenas contagem
+    if (tipoVotacao === 'SIMBOLICA') {
+      const votosSim = prop.votacoes?.filter((v: any) => v.voto === 'SIM').length || 0
+      const votosNao = prop.votacoes?.filter((v: any) => v.voto === 'NAO').length || 0
+      const votosAbstencao = prop.votacoes?.filter((v: any) => v.voto === 'ABSTENCAO').length || 0
+
+      return {
+        ...prop,
+        tipoVotacao: 'SIMBOLICA',
+        votacoes: [], // Não retorna votos individuais
+        votacaoSimbolica: {
+          total: votosSim + votosNao + votosAbstencao,
+          sim: votosSim,
+          nao: votosNao,
+          abstencao: votosAbstencao,
+          descricao: 'Votação por mão levantada'
+        }
+      }
+    }
+
+    // Votação NOMINAL - retorna votos individuais
     return {
       ...prop,
       tipoVotacao: 'NOMINAL'

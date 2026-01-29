@@ -28,8 +28,8 @@ export type OpcaoVoto = 'SIM' | 'NAO' | 'ABSTENCAO' | 'AUSENTE'
 // Tipos de quórum (RN-060)
 export type TipoQuorum = 'SIMPLES' | 'ABSOLUTA' | 'QUALIFICADA'
 
-// Tipos de votação
-export type TipoVotacao = 'NOMINAL' | 'SIMBOLICA' | 'SECRETA'
+// Tipos de votação (alinhado com SAPL)
+export type TipoVotacao = 'NOMINAL' | 'SECRETA' | 'SIMBOLICA' | 'LEITURA'
 
 // Resultado de validação
 export interface ValidationResult {

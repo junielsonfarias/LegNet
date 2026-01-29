@@ -30,7 +30,7 @@ interface DadosVotacao {
   }
   votos: Voto[]
   resultado: 'APROVADO' | 'REJEITADO'
-  tipoVotacao: 'NOMINAL' | 'SECRETA'
+  tipoVotacao: 'NOMINAL' | 'SECRETA' | 'SIMBOLICA' | 'LEITURA'
   dataHoraVotacao: Date
 }
 

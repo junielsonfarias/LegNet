@@ -24,7 +24,6 @@ const UpdateSessaoSchema = z.object({
   finalizada: z.boolean().optional(),
   legislaturaId: z.string().optional(),
   periodoId: z.string().optional(),
-  pauta: z.string().optional(),
   tempoInicio: z.string().nullable().optional()
 })
 
@@ -213,7 +212,6 @@ export const PUT = withAuth(async (
   if (validatedData.ata !== undefined) updateData.ata = validatedData.ata
   if (validatedData.legislaturaId !== undefined) updateData.legislaturaId = validatedData.legislaturaId
   if (validatedData.periodoId !== undefined) updateData.periodoId = validatedData.periodoId
-  if (validatedData.pauta !== undefined) updateData.pauta = validatedData.pauta
 
   // Tratamento especial para transições de status
   const statusAnterior = existingSessao.status

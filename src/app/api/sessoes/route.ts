@@ -29,7 +29,6 @@ const SessaoSchema = z.object({
   finalizada: z.boolean().default(false),
   legislaturaId: z.string().optional(),
   periodoId: z.string().optional(),
-  pauta: z.string().optional(),
   tempoInicio: z.string().optional()
 })
 
@@ -269,8 +268,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       ata: validatedData.ata || null,
       finalizada: validatedData.finalizada || false,
       legislaturaId: legislaturaId || null,
-      periodoId: periodoId || null,
-      pauta: validatedData.pauta || null
+      periodoId: periodoId || null
     }
   })
 

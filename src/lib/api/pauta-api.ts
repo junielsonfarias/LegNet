@@ -17,7 +17,7 @@ export interface PautaItemApi {
   observacoes?: string | null
   iniciadoEm?: string | null
   finalizadoEm?: string | null
-  tipoVotacao?: 'NOMINAL' | 'SECRETA' | null
+  tipoVotacao?: 'NOMINAL' | 'SECRETA' | 'SIMBOLICA' | 'LEITURA' | null
 
   // === CAMPOS DE TURNO (SAPL) ===
   turnoAtual?: number

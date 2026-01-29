@@ -234,7 +234,6 @@ model Sessao {
   finalizada    Boolean      @default(false) // Indica se é uma sessão já finalizada (para inclusão de dados pretéritos)
   legislaturaId String? // Relacionamento com Legislatura
   periodoId     String? // Relacionamento com PeriodoLegislatura
-  pauta         String?      @db.Text // JSON da pauta da sessão
   tempoInicio   DateTime?    // Data/hora real em que a sessão foi iniciada (para cronômetro)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -297,8 +296,10 @@ enum PautaItemStatus {
 }
 
 enum TipoVotacao {
-  NOMINAL           // Votação aberta - votos individuais são registrados
+  NOMINAL           // Votação nominal - votos individuais são registrados
   SECRETA           // Votação secreta - apenas totais são registrados
+  SIMBOLICA         // Votação simbólica - mão levantada, sem registro individual
+  LEITURA           // Apenas leitura, sem votação efetiva
 }
 
 model ApiToken {
