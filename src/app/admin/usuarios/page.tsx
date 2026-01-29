@@ -27,7 +27,7 @@ interface Usuario {
   id: string
   name: string | null
   email: string
-  role: 'ADMIN' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR'
+  role: 'ADMIN' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR' | 'SECRETARIA' | 'AUXILIAR_LEGISLATIVO'
   ativo: boolean
   parlamentarId: string | null
   parlamentar?: {
@@ -50,7 +50,7 @@ export default function UsuariosPage() {
     name: string
     email: string
     password: string
-    role: 'ADMIN' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR'
+    role: 'ADMIN' | 'EDITOR' | 'USER' | 'PARLAMENTAR' | 'OPERADOR' | 'SECRETARIA' | 'AUXILIAR_LEGISLATIVO'
     parlamentarId: string
     ativo: boolean
   }>({
@@ -187,10 +187,12 @@ export default function UsuariosPage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'ADMIN': return 'bg-red-100 text-red-800'
+      case 'ADMIN': return 'bg-violet-100 text-violet-800'
+      case 'SECRETARIA': return 'bg-cyan-100 text-cyan-800'
+      case 'AUXILIAR_LEGISLATIVO': return 'bg-pink-100 text-pink-800'
       case 'EDITOR': return 'bg-blue-100 text-blue-800'
-      case 'PARLAMENTAR': return 'bg-green-100 text-green-800'
-      case 'OPERADOR': return 'bg-purple-100 text-purple-800'
+      case 'PARLAMENTAR': return 'bg-amber-100 text-amber-800'
+      case 'OPERADOR': return 'bg-emerald-100 text-emerald-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -198,6 +200,8 @@ export default function UsuariosPage() {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'ADMIN': return 'Administrador'
+      case 'SECRETARIA': return 'Secretaria'
+      case 'AUXILIAR_LEGISLATIVO': return 'Auxiliar Legislativo'
       case 'EDITOR': return 'Editor'
       case 'PARLAMENTAR': return 'Parlamentar'
       case 'OPERADOR': return 'Operador'
@@ -270,9 +274,11 @@ export default function UsuariosPage() {
               >
                 <option value="TODOS">Todos</option>
                 <option value="ADMIN">Administrador</option>
+                <option value="SECRETARIA">Secretaria</option>
+                <option value="AUXILIAR_LEGISLATIVO">Auxiliar Legislativo</option>
                 <option value="EDITOR">Editor</option>
-                <option value="PARLAMENTAR">Parlamentar</option>
                 <option value="OPERADOR">Operador</option>
+                <option value="PARLAMENTAR">Parlamentar</option>
                 <option value="USER">Usuário</option>
               </select>
             </div>
@@ -430,10 +436,21 @@ export default function UsuariosPage() {
                   >
                     <option value="USER">Usuário</option>
                     <option value="ADMIN">Administrador</option>
+                    <option value="SECRETARIA">Secretaria</option>
+                    <option value="AUXILIAR_LEGISLATIVO">Auxiliar Legislativo</option>
                     <option value="EDITOR">Editor</option>
-                    <option value="PARLAMENTAR">Parlamentar</option>
                     <option value="OPERADOR">Operador</option>
+                    <option value="PARLAMENTAR">Parlamentar</option>
                   </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.role === 'ADMIN' && 'Acesso total ao sistema'}
+                    {formData.role === 'SECRETARIA' && 'Gestão legislativa: proposições, tramitação, pautas, sessões'}
+                    {formData.role === 'AUXILIAR_LEGISLATIVO' && 'Proposições, tramitação e gestão de comissões (pareceres, pautas)'}
+                    {formData.role === 'EDITOR' && 'Edição de conteúdo e gestão de parlamentares'}
+                    {formData.role === 'OPERADOR' && 'Operação de sessões e painel eletrônico'}
+                    {formData.role === 'PARLAMENTAR' && 'Acesso à área do parlamentar e votação'}
+                    {formData.role === 'USER' && 'Acesso básico de visualização'}
+                  </p>
                 </div>
 
                 {formData.role === 'PARLAMENTAR' && (

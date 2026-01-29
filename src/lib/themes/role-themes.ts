@@ -173,6 +173,33 @@ export const roleThemes: Record<UserRole, RoleTheme> = {
     icon: 'User'
   },
 
+  // AUXILIAR_LEGISLATIVO: Rosa/Magenta - Representa suporte ao trabalho legislativo
+  AUXILIAR_LEGISLATIVO: {
+    primary: '#be185d',
+    primaryHover: '#9d174d',
+    primaryLight: '#fce7f3',
+    accent: '#ec4899',
+
+    gradient: 'from-pink-600 to-rose-600',
+    gradientHover: 'from-pink-700 to-rose-700',
+    sidebarGradient: 'from-pink-50 via-rose-50 to-white',
+
+    badgeBg: 'bg-pink-100',
+    badgeText: 'text-pink-800',
+    badgeBorder: 'border-pink-200',
+
+    sidebarActiveBg: 'bg-pink-600',
+    sidebarActiveText: 'text-white',
+    sidebarHoverBg: 'hover:bg-pink-50',
+
+    cardAccent: 'border-l-pink-500',
+    iconColor: 'text-pink-600',
+
+    label: 'Auxiliar Legislativo',
+    description: 'Suporte ao processo legislativo',
+    icon: 'FileText'
+  },
+
   // USER: Cinza - Representa acesso básico/visitante
   USER: {
     primary: '#6b7280',

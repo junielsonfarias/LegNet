@@ -187,6 +187,27 @@ const rolePermissions: RolePermissions = {
     'presenca.manage',
     'votacao.manage'
   ]),
+  // AUXILIAR_LEGISLATIVO: Auxiliar do Secretario
+  // Responsavel por: proposicoes, tramitacao, comissoes, pareceres
+  // Foco: trabalho legislativo sem acesso a configuracoes ou painel eletronico
+  AUXILIAR_LEGISLATIVO: buildPermissions([
+    // Proposicoes: criar, editar, visualizar
+    'tramitacao.view',
+    'tramitacao.manage',
+    // Comissoes: gerenciar membros, reunioes, pautas
+    'comissao.view',
+    'comissao.manage',
+    // Parlamentares: apenas visualizacao
+    'parlamentar.view',
+    // Sessoes: apenas visualizacao (nao opera)
+    'sessao.view',
+    // Painel: apenas visualizacao
+    'painel.view',
+    // Relatorios
+    'relatorio.view',
+    // Publicacoes: apenas visualizacao
+    'publicacao.view'
+  ]),
   PARLAMENTAR: buildPermissions([
     'parlamentar.view',
     'comissao.view',

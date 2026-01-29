@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-28
+> **Ultima Atualizacao**: 2026-01-29 (Teste Completo do Processo Legislativo)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -2416,6 +2416,134 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-29 - Teste Completo do Processo Legislativo
+
+**Objetivo**: Criar e executar teste automatizado de todo o fluxo legislativo
+
+**Resultados do Teste**:
+- Total de etapas: 32
+- Sucessos: 31 (96.9%)
+- Falhas: 0 (0.0%)
+- Avisos: 1 (3.1%)
+- Duracao: 33.77s
+
+**Fluxo Testado**:
+1. Verificar permissoes (7 tipos de usuario)
+2. Verificar dados base (parlamentares, CLJ, legislatura)
+3. Criar proposicao (PL 004/2026)
+4. Tramitar para CLJ
+5. Criar reuniao de comissao
+6. Elaborar e votar parecer (FAVORAVEL)
+7. Incluir na pauta (Ordem do Dia)
+8. Registrar presencas e verificar quorum
+9. Votacao nominal (7 SIM, 2 NAO, 1 ABST, 1 AUS)
+10. Verificar distribuicao de resultados
+
+**19 Regras de Negocio Validadas**:
+- RN-001: PUBLICIDADE
+- RN-003: RASTREABILIDADE
+- RN-004: INTEGRIDADE
+- RN-020, RN-021: Proposicoes
+- RN-030, RN-031, RN-032: CLJ e Pareceres
+- RN-040, RN-043: Quorum e Ordem
+- RN-061, RN-062: Votacao
+- RN-120: PNTP
+
+**Arquivos Criados**:
+- `scripts/teste-processo-legislativo-completo.ts` - Script de teste
+- `scripts/criar-clj.ts` - Criar comissoes obrigatorias
+- `docs/skills/skill-teste-legislativo.md` - Documentacao
+
+**Correcoes Aplicadas Durante o Teste**:
+1. CLJ (Comissao de Legislacao e Justica) criada
+2. CFO (Comissao de Financas e Orcamento) criada
+3. Membros adicionados a CLJ
+
+**Status**: TODOS OS TESTES PASSARAM COM SUCESSO
+
+---
+
+### 2026-01-29 - Novo Tipo de Usuario: AUXILIAR_LEGISLATIVO
+
+**Objetivo**: Criar um tipo de usuario para auxiliar o Secretario no trabalho legislativo
+
+**Funcoes do AUXILIAR_LEGISLATIVO**:
+- Criar e editar proposicoes
+- Fazer tramitacoes entre orgaos
+- Gerenciar comissoes (membros, reunioes)
+- Criar pautas de comissao
+- Salvar pareceres das comissoes
+- Visualizar parlamentares, sessoes e painel
+
+**Arquivos Modificados**:
+
+1. **prisma/schema.prisma**
+   - Adicionado `AUXILIAR_LEGISLATIVO` no enum `UserRole`
+
+2. **src/lib/auth/permissions.ts**
+   - Adicionado bloco de permissoes para `AUXILIAR_LEGISLATIVO`:
+     - `tramitacao.view`, `tramitacao.manage`
+     - `comissao.view`, `comissao.manage`
+     - `parlamentar.view`, `sessao.view`, `painel.view`
+     - `relatorio.view`, `publicacao.view`
+
+3. **src/lib/themes/role-themes.ts**
+   - Adicionado tema Rosa/Magenta para `AUXILIAR_LEGISLATIVO`
+   - Cor primaria: #be185d (pink-700)
+   - Icone: FileText
+
+4. **src/app/admin/usuarios/page.tsx**
+   - Adicionado `AUXILIAR_LEGISLATIVO` em todos os tipos e selects
+   - Cor do badge: bg-pink-100 text-pink-800
+   - Descricao: "Proposicoes, tramitacao e gestao de comissoes (pareceres, pautas)"
+
+**Hierarquia de Usuarios Atualizada**:
+```
+ADMIN > SECRETARIA > AUXILIAR_LEGISLATIVO > EDITOR > OPERADOR > PARLAMENTAR > USER
+```
+
+**Acao Necessaria**: Executar `npm run db:generate` para gerar o cliente Prisma
+
+**Status**: Concluido
+
+---
+
+### 2026-01-29 - Correcao do Tipo SECRETARIA no Formulario de Usuarios
+
+**Objetivo**: Adicionar o tipo de usuario SECRETARIA que estava faltando no formulario de criacao/edicao de usuarios
+
+**Problema Identificado**:
+- O tipo `SECRETARIA` existe no schema Prisma e no sistema de permissoes
+- Porem, estava faltando na pagina `/admin/usuarios`:
+  - Interface `Usuario` nao incluia SECRETARIA
+  - FormData type nao incluia SECRETARIA
+  - Select de filtro nao tinha opcao SECRETARIA
+  - Select do formulario nao tinha opcao SECRETARIA
+  - Funcoes `getRoleColor` e `getRoleLabel` nao tinham case para SECRETARIA
+
+**Arquivo Modificado**: `src/app/admin/usuarios/page.tsx`
+
+**Correcoes Aplicadas**:
+1. Adicionado `SECRETARIA` na interface `Usuario.role`
+2. Adicionado `SECRETARIA` no type do `formData.role`
+3. Adicionado case `SECRETARIA` em `getRoleColor()` (cor ciano)
+4. Adicionado case `SECRETARIA` em `getRoleLabel()` (label "Secretaria")
+5. Adicionada opcao `SECRETARIA` no select de filtro
+6. Adicionada opcao `SECRETARIA` no select do formulario
+7. Adicionadas descricoes de funcao para cada role no formulario
+
+**Cores atualizadas para consistencia com role-themes.ts**:
+- ADMIN: Violeta (bg-violet-100)
+- SECRETARIA: Ciano (bg-cyan-100)
+- EDITOR: Azul (bg-blue-100)
+- OPERADOR: Esmeralda (bg-emerald-100)
+- PARLAMENTAR: Ambar (bg-amber-100)
+- USER: Cinza (bg-gray-100)
+
+**Status**: Concluido
+
+---
 
 ### 2026-01-28 - Autenticacao nos Endpoints de Publicacoes e Participacao Cidada
 

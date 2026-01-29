@@ -254,12 +254,13 @@ export async function GET(request: NextRequest) {
 
 ```typescript
 enum UserRole {
-  ADMIN       // Acesso total
-  EDITOR      // Edita conteudo
-  USER        // Leitura basica
-  PARLAMENTAR // Area do parlamentar
-  OPERADOR    // Opera painel eletronico
-  SECRETARIA  // Administrativo limitado
+  ADMIN               // Acesso total
+  SECRETARIA          // Gestao legislativa completa
+  AUXILIAR_LEGISLATIVO // Proposicoes, tramitacao, comissoes
+  EDITOR              // Edita conteudo
+  OPERADOR            // Opera painel eletronico
+  PARLAMENTAR         // Area do parlamentar
+  USER                // Leitura basica
 }
 ```
 
