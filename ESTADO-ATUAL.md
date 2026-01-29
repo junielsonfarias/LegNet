@@ -112,6 +112,9 @@ Fluxo Validado:
 | Controle de andamento | Implementado | Item atual, tempo acumulado |
 | Aplicar template | Implementado | /api/sessoes/[id]/pauta/apply-template |
 | **Automacao de geracao** | **Implementado** | AutomacaoPautasService completo (FASE 5) |
+| **Wizard Sessao+Pauta** | **Implementado** | /admin/sessoes/nova - 3 passos integrados |
+| **Validacao de elegibilidade** | **Implementado** | RN-057 - so proposicoes com habilitaPauta |
+| **Proposicoes elegiveis** | **Implementado** | /api/proposicoes/elegiveis-pauta |
 | **Validacao regimental** | **Implementado** | RegrasRegimentaisService completo (FASE 5) |
 | **Tipo de acao (tipoAcao)** | **Implementado** | LEITURA, DISCUSSAO, VOTACAO, COMUNICADO, HOMENAGEM |
 | **Validacao parecer CLJ** | **Implementado** | Obrigatorio para ORDEM_DO_DIA com VOTACAO |
@@ -211,6 +214,10 @@ Fluxo Validado:
 | Regras de tramitacao | Implementado | RegraTramitacao model |
 | Consulta publica | Implementado | Portal de tramitacoes |
 | **Automacao completa** | **Implementado** | NotificacaoService + AutomacaoPautasService (FASE 5) |
+| **Fluxos configuraveis** | **Implementado** | FluxoTramitacao + FluxoTramitacaoEtapa models |
+| **Validacao de elegibilidade** | **Implementado** | RN-057 - habilitaPauta flag |
+| **Config prazos urgencia** | **Implementado** | /admin/configuracoes/prazos-urgencia |
+| **Config fluxos por tipo** | **Implementado** | /admin/configuracoes/fluxos-tramitacao |
 
 ### 11. Publicacoes
 
@@ -2420,6 +2427,93 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-29 - Sistema de Fluxos de Tramitacao Configuraveis e Wizard de Sessao
+
+**Objetivo**: Implementar fluxos de tramitacao configuraveis por tipo de proposicao, validacao de elegibilidade para pauta, e wizard de criacao de sessao com pauta integrada.
+
+**Novas Regras de Negocio**:
+- **RN-057 (atualizada)**: Proposicoes so podem ser incluidas na ORDEM_DO_DIA quando estiverem na etapa com `habilitaPauta = true` (tipicamente "Encaminhado para Plenario")
+
+**Alteracoes no Schema Prisma** (`prisma/schema.prisma`):
+- Novo modelo `FluxoTramitacao` - Define fluxos por tipo de proposicao
+- Novo modelo `FluxoTramitacaoEtapa` - Define etapas do fluxo com prazos e validacoes
+- Novo modelo `ConfiguracaoTramitacao` - Configuracoes globais de prazos
+- Adicionado campo `fluxoEtapaId` em `Tramitacao` para vincular a etapa do fluxo
+- Adicionada relacao `fluxoEtapas` em `TramitacaoUnidade`
+
+**Novos Servicos** (`src/lib/services/`):
+- `fluxo-tramitacao-service.ts` - Servico completo de fluxos:
+  - `getFluxoByTipoProposicao()` - Retorna fluxo configurado para o tipo
+  - `verificarElegibilidadePauta()` - Verifica se proposicao pode ir para pauta
+  - `listarProposicoesElegiveisPauta()` - Lista proposicoes elegiveis para pauta
+  - `criarFluxosPadrao()` - Cria fluxos padrao para cada tipo de proposicao
+
+**Atualizacao na Validacao** (`src/lib/services/proposicao-validacao-service.ts`):
+- `validarInclusaoOrdemDoDia()` agora valida etapa de tramitacao (RN-057)
+- Fallback para dados legados: verifica nome do tipo de tramitacao se nao houver fluxoEtapa
+
+**Novas APIs** (`src/app/api/`):
+| Rota | Metodo | Funcao |
+|------|--------|--------|
+| `/api/admin/configuracoes/fluxos-tramitacao` | GET | Listar todos os fluxos com etapas |
+| `/api/admin/configuracoes/fluxos-tramitacao` | POST | Criar novo fluxo |
+| `/api/admin/configuracoes/fluxos-tramitacao` | PUT | Atualizar fluxo existente |
+| `/api/admin/configuracoes/fluxos-tramitacao` | DELETE | Excluir fluxo |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | GET | Listar etapas do fluxo |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | POST | Adicionar etapa |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | PUT | Atualizar etapa |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | DELETE | Remover etapa |
+| `/api/proposicoes/elegiveis-pauta` | GET | Listar proposicoes elegiveis para pauta |
+
+**Novas Paginas Admin** (`src/app/admin/`):
+- `configuracoes/fluxos-tramitacao/page.tsx` - Configuracao de fluxos por tipo de proposicao
+- `configuracoes/prazos-urgencia/page.tsx` - Configuracao de prazos globais por regime de urgencia
+- `sessoes/nova/page.tsx` - Pagina do wizard de criacao de sessao
+
+**Novos Componentes** (`src/components/admin/sessao-wizard/`):
+- `SessaoWizard.tsx` - Container do wizard de 3 passos
+- `StepSessaoInfo.tsx` - Passo 1: Informacoes da sessao (tipo, data, hora, local)
+- `StepMontarPauta.tsx` - Passo 2: Montar pauta com proposicoes elegiveis
+- `StepConfirmar.tsx` - Passo 3: Confirmar e criar sessao
+- `ProposicaoSelector.tsx` - Seletor de proposicoes com filtro por status
+- `index.ts` - Exportacoes
+
+**Script de Migracao** (`scripts/migrar-fluxos-tramitacao.ts`):
+- Cria unidades de tramitacao basicas (Mesa Diretora, CLJ, CFO, Plenario)
+- Cria fluxos padrao para cada tipo de proposicao:
+  - PL: Mesa Diretora → CLJ → CFO (se despesa) → Plenario
+  - PR/PD: Mesa Diretora → CLJ → Plenario
+  - REQ/MOC: Mesa Diretora → Plenario
+  - IND: Mesa Diretora → Leitura em Expediente
+  - VP/VA: Protocolo e Leitura (etapa unica)
+- Cria configuracoes de prazo globais (normal: 15 dias, prioridade: 10 dias, urgencia: 5 dias)
+
+**Funcionalidades do Wizard de Sessao**:
+1. **Passo 1 - Criar Sessao**: Tipo, numero, data, horario, local, descricao
+2. **Passo 2 - Montar Pauta**: Selecionar proposicoes elegiveis, adicionar itens de expediente, reordenar
+3. **Passo 3 - Confirmar**: Resumo completo, verificacao de 48h, opcao de publicar pauta
+
+**Validacoes Implementadas**:
+- Proposicao so pode ir para pauta se etapa atual tem `habilitaPauta = true`
+- Verificacao de 48h de antecedencia para publicacao da pauta (RN-120)
+- Calculo automatico de tempo estimado da sessao
+
+**Arquivos Criados/Modificados**:
+- `prisma/schema.prisma` - 3 novos modelos
+- `src/lib/services/fluxo-tramitacao-service.ts` - NOVO
+- `src/lib/services/proposicao-validacao-service.ts` - Atualizado
+- `src/app/api/admin/configuracoes/fluxos-tramitacao/route.ts` - NOVO
+- `src/app/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas/route.ts` - NOVO
+- `src/app/api/proposicoes/elegiveis-pauta/route.ts` - NOVO
+- `src/app/admin/configuracoes/fluxos-tramitacao/page.tsx` - NOVO
+- `src/app/admin/configuracoes/prazos-urgencia/page.tsx` - NOVO
+- `src/app/admin/sessoes/nova/page.tsx` - NOVO
+- `src/app/admin/sessoes/page.tsx` - Atualizado (botao para wizard)
+- `src/components/admin/sessao-wizard/*` - NOVOS (5 arquivos)
+- `scripts/migrar-fluxos-tramitacao.ts` - NOVO
+
+---
 
 ### 2026-01-29 - Melhoria Visual das Proposicoes
 

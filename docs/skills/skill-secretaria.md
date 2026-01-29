@@ -13,11 +13,18 @@ O modulo da Secretaria gerencia as operacoes administrativas do processo legisla
 | `src/app/admin/proposicoes/` | Protocolo de proposicoes |
 | `src/app/admin/pauta-sessoes/` | Composicao de pautas |
 | `src/app/admin/tramitacoes/` | Acompanhamento de tramitacao |
+| `src/app/admin/sessoes/nova/` | Wizard de criacao de sessao com pauta |
+| `src/app/admin/configuracoes/fluxos-tramitacao/` | Configuracao de fluxos por tipo |
+| `src/app/admin/configuracoes/prazos-urgencia/` | Configuracao de prazos globais |
 | `src/lib/services/automacao-pautas-service.ts` | Sugestao automatica de pauta |
 | `src/lib/services/regras-regimentais-service.ts` | Validacao regimental |
 | `src/lib/services/tramitacao-service.ts` | Servico de tramitacao |
+| `src/lib/services/fluxo-tramitacao-service.ts` | Servico de fluxos configuraveis |
+| `src/components/admin/sessao-wizard/` | Componentes do wizard de sessao |
 | `src/app/api/pautas/` | APIs de pauta |
 | `src/app/api/atas/` | APIs de atas |
+| `src/app/api/admin/configuracoes/fluxos-tramitacao/` | APIs de configuracao de fluxos |
+| `src/app/api/proposicoes/elegiveis-pauta/` | API de proposicoes elegiveis |
 
 ---
 
@@ -96,6 +103,70 @@ model Protocolo {
 
   proposicaoId        String?             @unique
   proposicao          Proposicao?         @relation(fields: [proposicaoId])
+}
+```
+
+### Model: FluxoTramitacao
+
+```prisma
+model FluxoTramitacao {
+  id              String              @id @default(cuid())
+  tipoProposicao  TipoProposicao      @unique
+  nome            String
+  descricao       String?             @db.Text
+  ativo           Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  etapas          FluxoTramitacaoEtapa[]
+
+  @@map("fluxos_tramitacao")
+}
+```
+
+### Model: FluxoTramitacaoEtapa
+
+```prisma
+model FluxoTramitacaoEtapa {
+  id                String                  @id @default(cuid())
+  fluxoId           String
+  ordem             Int
+  nome              String
+  descricao         String?                 @db.Text
+  unidadeId         String?
+  prazoDiasNormal   Int                     @default(15)
+  prazoDiasUrgencia Int?
+  requerParecer     Boolean                 @default(false)
+  habilitaPauta     Boolean                 @default(false)  // Marca etapa que habilita inclusao na pauta
+  ehEtapaFinal      Boolean                 @default(false)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  fluxo             FluxoTramitacao         @relation(fields: [fluxoId], references: [id], onDelete: Cascade)
+  unidade           TramitacaoUnidade?      @relation(fields: [unidadeId], references: [id])
+  tramitacoes       Tramitacao[]
+
+  @@unique([fluxoId, ordem])
+  @@map("fluxo_tramitacao_etapas")
+}
+```
+
+### Model: ConfiguracaoTramitacao
+
+```prisma
+model ConfiguracaoTramitacao {
+  id          String   @id @default(cuid())
+  chave       String   @unique
+  valor       String
+  descricao   String?  @db.Text
+  categoria   String?
+  tipo        String   @default("string")
+  ativo       Boolean  @default(true)
+  editavel    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("configuracoes_tramitacao")
 }
 ```
 
@@ -182,6 +253,20 @@ enum StatusAta {
 | `/api/tramitacoes/pendentes` | GET | Com prazo vencendo | SECRETARIA |
 | `/api/tramitacoes/vencidas` | GET | Prazos vencidos | SECRETARIA |
 | `/api/tramitacoes/notificar` | POST | Enviar notificacoes | SECRETARIA |
+
+### Fluxos de Tramitacao
+
+| Rota | Metodo | Funcionalidade | Roles |
+|------|--------|----------------|-------|
+| `/api/admin/configuracoes/fluxos-tramitacao` | GET | Listar fluxos | ADMIN |
+| `/api/admin/configuracoes/fluxos-tramitacao` | POST | Criar fluxo | ADMIN |
+| `/api/admin/configuracoes/fluxos-tramitacao` | PUT | Atualizar fluxo | ADMIN |
+| `/api/admin/configuracoes/fluxos-tramitacao` | DELETE | Excluir fluxo | ADMIN |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | GET | Listar etapas | ADMIN |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | POST | Adicionar etapa | ADMIN |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | PUT | Atualizar etapa | ADMIN |
+| `/api/admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | DELETE | Remover etapa | ADMIN |
+| `/api/proposicoes/elegiveis-pauta` | GET | Proposicoes elegiveis | SECRETARIA |
 
 ---
 
@@ -284,6 +369,44 @@ async function prorrogarPrazo(
 ): Promise<Tramitacao>
 ```
 
+### fluxo-tramitacao-service.ts
+
+```typescript
+// Retorna fluxo configurado para o tipo de proposicao
+async function getFluxoByTipoProposicao(
+  tipo: TipoProposicao
+): Promise<FluxoTramitacao | null>
+
+// Retorna proxima etapa do fluxo
+async function getProximaEtapa(
+  fluxoId: string,
+  ordemAtual: number
+): Promise<FluxoTramitacaoEtapa | null>
+
+// Verifica se proposicao pode ser incluida na pauta (RN-058)
+async function verificarElegibilidadePauta(
+  proposicaoId: string
+): Promise<{ elegivel: boolean; motivo?: string; etapaAtual?: string }>
+
+// Lista todas as proposicoes elegiveis para pauta
+async function listarProposicoesElegiveisPauta(): Promise<Proposicao[]>
+
+// Cria fluxos padrao para todos os tipos de proposicao
+async function criarFluxosPadrao(): Promise<void>
+
+// Obtem configuracao de prazo por regime
+async function getConfiguracaoPrazo(
+  chave: string
+): Promise<number>
+
+// Salva configuracao de prazo
+async function salvarConfiguracaoPrazo(
+  chave: string,
+  valor: string,
+  descricao?: string
+): Promise<ConfiguracaoTramitacao>
+```
+
 ---
 
 ## Regras de Negocio
@@ -308,6 +431,8 @@ async function prorrogarPrazo(
 | **RN-055** | Sistema sugere itens automaticamente |
 | **RN-056** | Validacao regimental obrigatoria |
 | **RN-057** | Tempo estimado calculado automaticamente |
+| **RN-058** | Proposicao so vai para pauta se etapa tem `habilitaPauta = true` |
+| **RN-059** | Prazos configuraveis por regime (normal, prioridade, urgencia) |
 
 ### Tramitacao
 
@@ -610,6 +735,23 @@ async function prorrogarPrazo(
 | EditorAta | `src/app/admin/atas/[id]/page.tsx` | Editar ata |
 | GerarAta | `src/components/admin/gerar-ata.tsx` | Geracao automatica |
 | PreviewAta | `src/components/admin/preview-ata.tsx` | Visualizacao |
+
+### Wizard de Sessao
+
+| Componente | Arquivo | Funcao |
+|------------|---------|--------|
+| SessaoWizard | `src/components/admin/sessao-wizard/SessaoWizard.tsx` | Container do wizard |
+| StepSessaoInfo | `src/components/admin/sessao-wizard/StepSessaoInfo.tsx` | Passo 1: Info da sessao |
+| StepMontarPauta | `src/components/admin/sessao-wizard/StepMontarPauta.tsx` | Passo 2: Montar pauta |
+| StepConfirmar | `src/components/admin/sessao-wizard/StepConfirmar.tsx` | Passo 3: Confirmar |
+| ProposicaoSelector | `src/components/admin/sessao-wizard/ProposicaoSelector.tsx` | Seletor de proposicoes |
+
+### Configuracao de Fluxos
+
+| Componente | Arquivo | Funcao |
+|------------|---------|--------|
+| FluxosTramitacaoPage | `src/app/admin/configuracoes/fluxos-tramitacao/page.tsx` | Configurar fluxos |
+| PrazosUrgenciaPage | `src/app/admin/configuracoes/prazos-urgencia/page.tsx` | Configurar prazos |
 
 ---
 
@@ -1094,6 +1236,8 @@ export async function GET(request: NextRequest) {
 - [x] Ordenacao por regimento
 - [x] Verificacao prazo 48h
 - [x] Publicacao
+- [x] Wizard de criacao de sessao com pauta
+- [x] Validacao de elegibilidade (RN-058)
 
 ### Tramitacao
 
@@ -1101,6 +1245,9 @@ export async function GET(request: NextRequest) {
 - [x] Notificacoes automaticas
 - [x] Prorrogacao de prazo
 - [x] Relatorio de vencidos
+- [x] Fluxos configuraveis por tipo de proposicao
+- [x] Configuracao de prazos por regime de urgencia
+- [x] Etapas com flag habilitaPauta
 
 ### Atas
 

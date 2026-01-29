@@ -468,6 +468,38 @@ O sistema DEVE calcular tempo estimado baseado em:
 - Numero de discussoes previstas
 - Historico de materias similares
 - Emendas apresentadas
+
+REGRA RN-058: VALIDACAO DE TRAMITACAO PARA PAUTA
+Proposicoes so podem ser incluidas na ORDEM_DO_DIA quando:
+1. Tramitacao atual estiver na etapa marcada com "habilitaPauta = true"
+   (tipicamente "Encaminhado para Plenario")
+2. Para PL/PR/PD: Possuir parecer favoravel da CLJ (RN-030)
+
+Fluxos de tramitacao por tipo de proposicao:
+- PL: Mesa Diretora → CLJ → CFO (se despesa) → Plenario
+- PR/PD: Mesa Diretora → CLJ → Plenario
+- REQ/MOC: Mesa Diretora → Plenario
+- IND: Mesa Diretora → Leitura em Expediente (sem votacao)
+- VP/VA: Protocolo e Leitura (etapa unica, aprovacao simbolica)
+
+Excecoes:
+- Indicacoes, Votos de Pesar/Aplauso vao para EXPEDIENTE/HONRAS sem votacao
+- Requerimentos de urgencia urgentissima podem ter fluxo acelerado
+
+O sistema DEVE:
+- Verificar etapa atual da tramitacao antes de permitir inclusao na pauta
+- Exibir lista de proposicoes elegiveis no wizard de criacao de sessao
+- Bloquear inclusao manual de proposicoes inelegiveis na ORDEM_DO_DIA
+
+REGRA RN-059: CONFIGURACAO DE PRAZOS POR REGIME
+Os prazos de tramitacao variam conforme o regime:
+- NORMAL: 15 dias uteis (padrao)
+- PRIORIDADE: 10 dias uteis
+- URGENCIA: 5 dias uteis
+- URGENCIA_URGENTISSIMA: 0 dias (votacao imediata)
+
+Prazos sao configuraveis pelo administrador em:
+/admin/configuracoes/prazos-urgencia
 ```
 
 ---

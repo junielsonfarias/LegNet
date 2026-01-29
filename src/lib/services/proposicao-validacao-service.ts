@@ -478,8 +478,10 @@ export async function validarProposicaoCompleta(
 }
 
 /**
- * RN-030: Valida se proposição pode ser incluída na Ordem do Dia
- * Requer parecer da CLJ para projetos que precisam de votação
+ * RN-030 e RN-057: Valida se proposição pode ser incluída na Ordem do Dia
+ * Requer:
+ * - Tramitação na etapa que habilita pauta (habilitaPauta = true)
+ * - Parecer da CLJ para projetos que precisam de votação
  */
 export async function validarInclusaoOrdemDoDia(
   proposicaoId: string
@@ -487,7 +489,7 @@ export async function validarInclusaoOrdemDoDia(
   const errors: string[] = []
   const warnings: string[] = []
 
-  // Busca proposição com pareceres
+  // Busca proposição com pareceres e tramitação atual
   const proposicao = await prisma.proposicao.findUnique({
     where: { id: proposicaoId },
     include: {
@@ -496,6 +498,15 @@ export async function validarInclusaoOrdemDoDia(
           comissao: {
             select: { sigla: true, nome: true }
           }
+        }
+      },
+      tramitacoes: {
+        where: { status: 'EM_ANDAMENTO' },
+        orderBy: { dataEntrada: 'desc' },
+        take: 1,
+        include: {
+          tipoTramitacao: true,
+          fluxoEtapa: true
         }
       }
     }
@@ -519,6 +530,34 @@ export async function validarInclusaoOrdemDoDia(
       warnings: ['Este tipo de proposição não requer parecer para votação'],
       rule: 'RN-030'
     }
+  }
+
+  // RN-057: Verificar status de tramitação antes de validar parecer
+  const tramitacaoAtual = proposicao.tramitacoes[0]
+
+  // Verificar se etapa habilita pauta
+  if (tramitacaoAtual?.fluxoEtapa) {
+    if (!tramitacaoAtual.fluxoEtapa.habilitaPauta) {
+      errors.push(
+        `RN-057: Proposição deve estar na etapa que habilita inclusão na pauta. ` +
+        `Etapa atual: "${tramitacaoAtual.fluxoEtapa.nome}".`
+      )
+    }
+  } else if (tramitacaoAtual) {
+    // Fallback: verificar por nome do tipo de tramitação (compatibilidade)
+    const nomeAtual = tramitacaoAtual.tipoTramitacao?.nome?.toLowerCase() || ''
+    if (!nomeAtual.includes('plenario') && !nomeAtual.includes('plenário')) {
+      errors.push(
+        'RN-057: Proposição deve estar com status "Encaminhado para Plenário" para ser incluída na pauta. ' +
+        `Status atual: "${tramitacaoAtual.tipoTramitacao?.nome || 'Desconhecido'}".`
+      )
+    }
+  } else {
+    // Sem tramitação em andamento
+    errors.push(
+      'RN-057: Proposição não possui tramitação em andamento. ' +
+      'Inicie a tramitação e avance até a etapa de encaminhamento para Plenário.'
+    )
   }
 
   // Tipos que PRECISAM de parecer da CLJ
@@ -597,7 +636,7 @@ export async function validarInclusaoOrdemDoDia(
     valid: errors.length === 0,
     errors,
     warnings,
-    rule: 'RN-030'
+    rule: 'RN-030/RN-057'
   }
 }
 

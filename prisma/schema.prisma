@@ -1298,6 +1298,7 @@ model TramitacaoUnidade {
   tramitacoes       Tramitacao[]
   tiposResponsaveis TramitacaoTipo[]       @relation("TramitacaoTipoUnidadeResponsavel")
   regraEtapas       RegraTramitacaoEtapa[]
+  fluxoEtapas       FluxoTramitacaoEtapa[]
 
   @@map("tramitacao_unidades")
 }
@@ -1339,6 +1340,7 @@ model Tramitacao {
   prazoVencimento  DateTime?
   diasVencidos     Int?
   automatica       Boolean              @default(false)
+  fluxoEtapaId     String?              // Referencia a etapa do fluxo configurado
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
@@ -1346,10 +1348,12 @@ model Tramitacao {
   responsavel    Parlamentar?            @relation(fields: [responsavelId], references: [id])
   tipoTramitacao TramitacaoTipo          @relation(fields: [tipoTramitacaoId], references: [id])
   unidade        TramitacaoUnidade       @relation(fields: [unidadeId], references: [id])
+  fluxoEtapa     FluxoTramitacaoEtapa?   @relation(fields: [fluxoEtapaId], references: [id])
   historicos     TramitacaoHistorico[]
   notificacoes   TramitacaoNotificacao[]
 
   @@index([proposicaoId])
+  @@index([fluxoEtapaId])
   @@map("tramitacoes")
 }
 
@@ -1438,6 +1442,48 @@ model ConfiguracaoTramitacao {
   updatedAt DateTime @updatedAt
 
   @@map("configuracoes_tramitacao")
+}
+
+// =============================================================================
+// SISTEMA DE FLUXOS DE TRAMITACAO CONFIGURAVEIS
+// =============================================================================
+
+model FluxoTramitacao {
+  id              String          @id @default(cuid())
+  tipoProposicao  TipoProposicao  @unique
+  nome            String
+  descricao       String?         @db.Text
+  ativo           Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  etapas          FluxoTramitacaoEtapa[]
+
+  @@map("fluxos_tramitacao")
+}
+
+model FluxoTramitacaoEtapa {
+  id                String                  @id @default(cuid())
+  fluxoId           String
+  ordem             Int
+  nome              String
+  descricao         String?                 @db.Text
+  unidadeId         String?
+  prazoDiasNormal   Int                     @default(15)
+  prazoDiasUrgencia Int?
+  requerParecer     Boolean                 @default(false)
+  habilitaPauta     Boolean                 @default(false)  // Marca etapa que habilita inclusao na pauta
+  ehEtapaFinal      Boolean                 @default(false)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  fluxo             FluxoTramitacao         @relation(fields: [fluxoId], references: [id], onDelete: Cascade)
+  unidade           TramitacaoUnidade?      @relation(fields: [unidadeId], references: [id])
+  tramitacoes       Tramitacao[]
+
+  @@unique([fluxoId, ordem])
+  @@index([fluxoId])
+  @@map("fluxo_tramitacao_etapas")
 }
 
 // ============================================
