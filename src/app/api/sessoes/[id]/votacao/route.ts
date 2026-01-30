@@ -13,6 +13,9 @@ import {
   obterSessaoParaControle,
   resolverSessaoId
 } from '@/lib/services/sessao-controle'
+import { logAudit } from '@/lib/audit'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -227,6 +230,9 @@ export const POST = withErrorHandler(async (
   // Usar turno atual do item da pauta (default 1)
   const turnoAtual = pautaItem.turnoAtual || 1
 
+  // Detectar se é lançamento retroativo (sessão já concluída)
+  const isRetroativo = sessao.status === 'CONCLUIDA'
+
   // Criar ou atualizar voto
   const voto = await prisma.votacao.upsert({
     where: {
@@ -237,13 +243,15 @@ export const POST = withErrorHandler(async (
       }
     },
     update: {
-      voto: validatedData.voto
+      voto: validatedData.voto,
+      sessaoId: sessaoId  // Garante que sessaoId é atualizado mesmo em updates
     },
     create: {
       proposicaoId: validatedData.proposicaoId,
       parlamentarId: validatedData.parlamentarId,
       voto: validatedData.voto,
-      turno: turnoAtual
+      turno: turnoAtual,
+      sessaoId: sessaoId  // GAP #1: Registrar sessaoId nos votos individuais
     },
     include: {
       parlamentar: {
@@ -263,6 +271,28 @@ export const POST = withErrorHandler(async (
       }
     }
   })
+
+  // RN-078: Registrar auditoria para voto retroativo
+  if (isRetroativo) {
+    const session = await getServerSession(authOptions)
+    if (session?.user) {
+      await logAudit({
+        request,
+        session,
+        action: 'VOTO_RETROATIVO',
+        entity: 'Votacao',
+        entityId: voto.id,
+        metadata: {
+          sessaoId,
+          proposicaoId: validatedData.proposicaoId,
+          parlamentarId: validatedData.parlamentarId,
+          voto: validatedData.voto,
+          proposicao: `${proposicao.numero}/${proposicao.ano}`,
+          timestamp: new Date().toISOString()
+        }
+      })
+    }
+  }
 
   return createSuccessResponse(voto, 'Voto registrado com sucesso')
 })

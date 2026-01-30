@@ -611,7 +611,33 @@ O resultado da votacao DEVE ser:
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 7.5 Painel Eletronico de Votacao
+### 7.5 Itens Informativos (Sem Votacao)
+
+```
+REGRA RN-067: TIPOS DE ACAO NA PAUTA
+Os itens da pauta podem ter os seguintes tipos de acao:
+- VOTACAO: Requer discussao e votacao nominal
+- DISCUSSAO: Requer discussao, pode levar a votacao
+- LEITURA: Apenas leitura no expediente, sem votacao
+- COMUNICADO: Informes e comunicacoes, sem votacao
+- HOMENAGEM: Votos de pesar, aplauso, mocoes, sem votacao
+
+REGRA RN-068: ITENS INFORMATIVOS
+Itens com tipoAcao LEITURA, COMUNICADO ou HOMENAGEM:
+- NAO requerem votacao
+- Devem ser marcados como CONCLUIDO apos apresentacao
+- Exibem status diferenciado no painel (EM LEITURA, COMUNICACAO, HOMENAGEM)
+- Nao mostram botao "Iniciar Votacao" no painel do operador
+
+REGRA RN-069: FLUXO DE ITENS INFORMATIVOS
+1. Operador inicia o item (status: EM_DISCUSSAO)
+2. Painel exibe label apropriado (EM LEITURA, COMUNICACAO, HOMENAGEM)
+3. Apos conclusao da leitura/apresentacao
+4. Operador clica em "Concluir" (status: CONCLUIDO)
+5. Nao ha apuracao de votos
+```
+
+### 7.6 Painel Eletronico de Votacao
 
 ```
 REGRA RN-070: PAINEL DE VOTACAO
@@ -642,6 +668,49 @@ Um painel publico DEVE exibir em tempo real:
 - Materia em discussao/votacao
 - Resultado parcial (votos totais)
 - Votos nominais (apos encerramento)
+
+REGRA RN-074: SINCRONIZACAO STATUS PROPOSICAO-PAUTA
+O status da Proposicao DEVE ser sincronizado com o status do PautaItem:
+- PENDENTE -> EM_PAUTA
+- EM_DISCUSSAO -> EM_DISCUSSAO
+- EM_VOTACAO -> EM_VOTACAO
+- APROVADO -> APROVADA
+- REJEITADO -> REJEITADA
+- ADIADO -> EM_PAUTA
+- RETIRADO -> ARQUIVADA
+
+REGRA RN-075: REGISTRO DE SESSAO NO VOTO
+Todo voto individual DEVE registrar o sessaoId:
+- Identificacao da sessao onde o voto foi registrado
+- Permitir rastreabilidade completa do voto
+- Garantir integridade historica
+
+REGRA RN-076: LANCAMENTO RETROATIVO
+Lancamento retroativo de votacoes SO e permitido para sessoes CONCLUIDAS:
+- NAO pode alterar sessoes AGENDADAS ou EM_ANDAMENTO via retroativo
+- Sessao CANCELADA nao permite lancamento retroativo
+- Acesso restrito a usuarios com permissao sessao.manage
+
+REGRA RN-077: PARLAMENTAR PRESENTE PARA VOTO RETROATIVO
+Apenas parlamentares que estavam PRESENTES na sessao podem receber voto retroativo:
+- Sistema DEVE validar registro de presenca antes de aceitar voto
+- Parlamentares ausentes nao podem ter voto registrado
+- Presenca deve ter sido registrada na sessao original
+
+REGRA RN-078: AUDITORIA DE ALTERACOES RETROATIVAS
+Toda alteracao retroativa DEVE ser auditada com:
+- Data e hora da alteracao
+- Usuario que realizou a alteracao
+- Motivo obrigatorio informado pelo usuario
+- Dados anteriores vs novos valores
+- IP e user-agent do requisitante
+
+REGRA RN-079: ATUALIZACAO STATUS APOS VOTACAO RETROATIVA
+Ao finalizar votacao retroativa:
+- Atualizar status da Proposicao (APROVADA/REJEITADA)
+- Atualizar status do PautaItem
+- Registrar VotacaoAgrupada com resultado consolidado
+- Vincular sessaoVotacaoId na Proposicao
 ```
 
 ---

@@ -247,6 +247,14 @@ export default function SessaoDetailPage() {
               </Link>
             </Button>
           )}
+          {sessao.status === 'CONCLUIDA' && (
+            <Button asChild variant="default" className="bg-amber-600 hover:bg-amber-700">
+              <Link href={`/admin/sessoes/${id}/lancamento-retroativo`}>
+                <Vote className="h-4 w-4 mr-2" />
+                Lancar Votacoes
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="outline">
             <Link href={`/admin/sessoes/${id}/editar`}>
               <Edit className="h-4 w-4 mr-2" />

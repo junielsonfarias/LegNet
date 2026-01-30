@@ -125,8 +125,49 @@ model Parecer {
   comissao            Comissao            @relation(fields: [comissaoId])
   relatorId           String
   relator             Parlamentar         @relation(fields: [relatorId])
+  pautaItens          PautaItem[]         // Itens de pauta vinculados
 }
 ```
+
+### Model: PautaItem
+
+```prisma
+model PautaItem {
+  id             String          @id @default(cuid())
+  pautaId        String
+  secao          PautaSecao      // EXPEDIENTE, ORDEM_DO_DIA, COMUNICACOES, HONRAS, OUTROS
+  ordem          Int
+  titulo         String
+  descricao      String?         @db.Text
+  proposicaoId   String?
+  tempoEstimado  Int?
+  tempoReal      Int?
+  status         PautaItemStatus @default(PENDENTE)
+  tipoAcao       TipoAcaoPauta   @default(VOTACAO)  // LEITURA, DISCUSSAO, VOTACAO, COMUNICADO, HOMENAGEM
+  autor          String?
+  observacoes    String?         @db.Text
+
+  // === CAMPOS DE ETAPA E LEITURA ===
+  etapa           Int?              // Sub-etapa: 1 = "1ª Ordem do Dia" (leituras), 2 = "2ª Ordem do Dia" (votações)
+  parecerId       String?           // Referência ao parecer da comissão vinculado
+  leituraNumero   Int?              // Número da leitura (1ª, 2ª, 3ª leitura)
+  relatorId       String?           // Relator designado para o item
+
+  // Relacionamentos
+  pauta       PautaSessao  @relation(fields: [pautaId], references: [id], onDelete: Cascade)
+  proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
+  parecer     Parecer?     @relation(fields: [parecerId], references: [id], onDelete: SetNull)
+  relator     Parlamentar? @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
+}
+```
+
+**Campos importantes**:
+- `secao`: Secao da sessao (EXPEDIENTE, ORDEM_DO_DIA, etc.)
+- `tipoAcao`: Acao do item (LEITURA, VOTACAO, etc.)
+- `etapa`: Subetapa da Ordem do Dia (1 = leituras, 2 = votacoes)
+- `leituraNumero`: Indica se e 1ª, 2ª ou 3ª leitura
+- `parecerId`: Parecer de comissao vinculado ao item
+- `relatorId`: Parlamentar relator designado
 
 ---
 
@@ -207,10 +248,12 @@ enum StatusEmenda {
 | Rota | Metodo | Funcionalidade | Roles |
 |------|--------|----------------|-------|
 | `/api/proposicoes` | GET | Listar proposicoes com filtros | Publico |
-| `/api/proposicoes` | POST | Criar nova proposicao | EDITOR, ADMIN |
+| `/api/proposicoes` | POST | Criar nova proposicao (auto-inicia tramitacao) | EDITOR, ADMIN |
 | `/api/proposicoes/[id]` | GET | Obter proposicao por ID | Publico |
 | `/api/proposicoes/[id]` | PUT | Atualizar proposicao | EDITOR, ADMIN |
 | `/api/proposicoes/[id]` | DELETE | Excluir proposicao | ADMIN |
+| `/api/proposicoes/[id]/tramitar` | GET | Obter etapa atual da tramitacao | proposicao.view |
+| `/api/proposicoes/[id]/tramitar` | POST | Avancar para proxima etapa | tramitacao.manage |
 | `/api/proposicoes/[id]/tramitacoes` | GET | Historico de tramitacao | Publico |
 | `/api/proposicoes/[id]/emendas` | GET | Listar emendas | Publico |
 | `/api/proposicoes/[id]/votos` | GET | Resultado de votacoes | Publico |
@@ -233,6 +276,21 @@ enum StatusEmenda {
 | `/api/tramitacoes` | POST | Registrar tramitacao | SECRETARIA, EDITOR |
 | `/api/tramitacoes/[id]` | PUT | Atualizar tramitacao | SECRETARIA, EDITOR |
 | `/api/tramitacoes/pendentes` | GET | Tramitacoes com prazo vencendo | SECRETARIA |
+
+### Votacoes e Lancamento Retroativo
+
+| Rota | Metodo | Funcionalidade | Roles |
+|------|--------|----------------|-------|
+| `/api/sessoes/[id]/votacao` | GET | Listar votos da sessao | Publico |
+| `/api/sessoes/[id]/votacao` | POST | Registrar voto individual | PARLAMENTAR, OPERADOR |
+| `/api/sessoes/[id]/votacao/lote` | POST | Registrar votos em lote (retroativo) | sessao.manage |
+
+**Notas sobre Lancamento Retroativo:**
+- Disponivel apenas para sessoes com status CONCLUIDA
+- Requer motivo obrigatorio (campo `motivo`)
+- Valida que parlamentares estavam presentes na sessao
+- Registra auditoria completa (RN-078)
+- Atualiza Proposicao.status automaticamente (RN-074)
 
 ---
 
@@ -280,14 +338,49 @@ async function validarInclusaoOrdemDoDia(
 ### tramitacao-service.ts
 
 ```typescript
-// Registra nova tramitacao
+// Avanca proposicao para proxima etapa do fluxo de tramitacao
+// RN-035: Toda movimentacao registrada com usuario, IP, dados anteriores/novos
+async function avancarEtapaFluxo(
+  proposicaoId: string,
+  observacoes?: string,
+  parecer?: TipoParecer,
+  resultado?: TramitacaoResultado,
+  usuarioId?: string,
+  ip?: string
+): Promise<AvancarEtapaResult>
+
+// Inicia tramitacao vinculada a fluxo configurado
+async function iniciarTramitacaoComFluxo(
+  proposicaoId: string,
+  fluxoId: string,
+  etapaInicialId: string,
+  regime?: RegimeTramitacao,
+  usuarioId?: string,
+  ip?: string
+): Promise<ValidationResult & { tramitacaoId?: string }>
+
+// Registra nova tramitacao com auditoria completa
+async function registrarMovimentacaoComAuditoria(
+  data: TramitacaoData & {
+    usuarioId?: string
+    ip?: string
+    dadosAnteriores?: Record<string, unknown>
+  }
+): Promise<ValidationResult & { tramitacaoId?: string }>
+
+// Obtem etapa atual da tramitacao
+async function obterEtapaAtual(
+  proposicaoId: string
+): Promise<{ tramitacao?, etapa?, fluxo? } | null>
+
+// Registra nova tramitacao (legado)
 async function registrarTramitacao(
   proposicaoId: string,
   orgaoDestinoId: string,
   despacho?: string
 ): Promise<Tramitacao>
 
-// Finaliza tramitacao com parecer
+// Finaliza tramitacao com parecer (legado)
 async function finalizarTramitacao(
   tramitacaoId: string,
   parecer: string,
@@ -335,6 +428,49 @@ async function ordenarItensRegimentalmente(
 ): Promise<PautaItem[]>
 ```
 
+### sessao-controle.ts (Votacao e Retroativo)
+
+```typescript
+// Sincroniza status da proposicao com o item da pauta (RN-074)
+async function sincronizarStatusProposicao(
+  proposicaoId: string,
+  pautaItemStatus: string,
+  sessaoId?: string
+): Promise<void>
+
+// Contabiliza votos de uma proposicao
+async function contabilizarVotos(
+  proposicaoId: string,
+  options?: {
+    tipoProposicao?: string
+    regimeUrgencia?: boolean
+    isDerrubadaVeto?: boolean
+    sessaoId?: string
+  }
+): Promise<{
+  sim: number
+  nao: number
+  abstencao: number
+  total: number
+  resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
+  detalhesQuorum?: string
+}>
+
+// Inicia votacao de item (validando quorum)
+async function iniciarVotacaoItem(
+  sessaoId: string,
+  itemId: string
+): Promise<PautaItem>
+
+// Finaliza item da pauta com resultado
+async function finalizarItemPauta(
+  sessaoId: string,
+  itemId: string,
+  resultado: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO',
+  observacoes?: string
+): Promise<PautaItem>
+```
+
 ---
 
 ## Regras de Negocio
@@ -372,26 +508,86 @@ async function ordenarItensRegimentalmente(
 
 | Regra | Descricao |
 |-------|-----------|
-| **RN-030** | Toda proposicao DEVE passar pela CLJ antes da votacao |
+| **RN-030** | Toda proposicao DEVE passar pela CLJ antes da votacao. **Validacao BLOQUEANTE** ao mover para ORDEM_DO_DIA |
 | **RN-031** | Proposicoes com impacto orcamentario DEVEM passar pela CFO |
 | **RN-032** | Prazo de comissao: 15 dias uteis (prorrogavel 1x) |
 | **RN-033** | Parecer DEVE conter voto do relator e fundamentacao |
 | **RN-034** | Voto em separado PODE ser apresentado por membro discordante |
-| **RN-035** | Urgencia pode reduzir prazos (maioria absoluta para aprovar) |
+| **RN-035** | Toda movimentacao DEVE ser registrada com data, usuario, IP, dados anteriores/novos |
 | **RN-036** | Urgencia urgentissima: votacao na mesma sessao (2/3 para aprovar) |
 | **RN-037** | Preferencia altera ordem de votacao na pauta |
+| **RN-057** | Proposicao so pode ser incluida na pauta se estiver em etapa que habilita (habilitaPauta=true) |
+
+### Pauta de Sessao e Ordem do Dia
+
+| Regra | Descricao |
+|-------|-----------|
+| **RN-058** | Campo `etapa` so e valido para secao ORDEM_DO_DIA |
+| **RN-059** | Etapa 1 = 1ª Ordem do Dia (leitura de materias e pareceres) |
+| **RN-060-PAUTA** | Etapa 2 = 2ª Ordem do Dia (discussao e votacao) |
+| **RN-061-PAUTA** | Default: etapa=1 para tipoAcao LEITURA, etapa=2 para VOTACAO/DISCUSSAO |
+| **RN-062-PAUTA** | `leituraNumero` indica qual leitura (1ª, 2ª, 3ª) da materia |
+| **RN-063-PAUTA** | `relatorId` deve ser parlamentar com mandato ativo |
+| **RN-064** | Etapa 1 NAO permite tipoAcao VOTACAO |
+| **RN-065** | Etapa 2 NAO permite tipoAcao LEITURA |
+
+### Itens Informativos (Sem Votacao)
+
+| Regra | Descricao |
+|-------|-----------|
+| **RN-067-INFO** | Tipos de acao: VOTACAO, DISCUSSAO, LEITURA, COMUNICADO, HOMENAGEM |
+| **RN-068-INFO** | Itens LEITURA, COMUNICADO, HOMENAGEM sao informativos (nao precisam votacao) |
+| **RN-069-INFO** | Itens informativos devem ser marcados como CONCLUIDO apos apresentacao |
+
+**Fluxo de Itens Informativos**:
+
+```
+PENDENTE -> (iniciar) -> EM_DISCUSSAO -> (concluir) -> CONCLUIDO
+                              |
+                    Label no painel:
+                    - LEITURA -> "EM LEITURA"
+                    - COMUNICADO -> "COMUNICACAO"
+                    - HOMENAGEM -> "HOMENAGEM"
+```
 
 ### Votacao
 
 | Regra | Descricao |
 |-------|-----------|
-| **RN-060** | Quorum de VOTACAO por tipo: maioria simples, absoluta, 2/3, 3/5 |
-| **RN-061** | Votacao NOMINAL obrigatoria para: LOM, LC, vetos, 2o turno |
-| **RN-062** | Votacao SIMBOLICA permitida para materias ordinarias |
-| **RN-063** | Parlamentar NAO pode votar em causa propria ou de parente |
+| **RN-066** | Quorum de VOTACAO por tipo: maioria simples, absoluta, 2/3, 3/5 |
+| **RN-067** | Votacao NOMINAL obrigatoria para: LOM, LC, vetos, 2o turno |
+| **RN-068** | Votacao SIMBOLICA permitida para materias ordinarias |
+| **RN-069** | Parlamentar NAO pode votar em causa propria ou de parente |
 | **RN-070** | Materia rejeitada so pode ser reapresentada na proxima sessao legislativa |
 | **RN-074** | Dois turnos OBRIGATORIOS para LOM, LC com intersticio minimo de 10 dias |
 | **RN-075** | Primeiro turno aprova: encaminha para segundo turno |
+
+### Lancamento Retroativo de Votacoes
+
+| Regra | Descricao |
+|-------|-----------|
+| **RN-074-RETRO** | Sincroniza Proposicao.status com PautaItem.status automaticamente |
+| **RN-075-RETRO** | Todo voto DEVE registrar sessaoId (sessao onde foi registrado) |
+| **RN-076** | Lancamento retroativo so permitido para sessoes CONCLUIDAS |
+| **RN-077** | Apenas parlamentares PRESENTES na sessao podem receber voto retroativo |
+| **RN-078** | Toda alteracao retroativa DEVE ser auditada (usuario, data, motivo) |
+| **RN-079** | Ao finalizar votacao retroativa, atualizar Proposicao.status |
+
+**Mapeamento Status Pauta -> Proposicao (RN-074-RETRO)**:
+
+```
+PautaItem.status   -> Proposicao.status
+-------------------------------------------
+PENDENTE           -> EM_PAUTA
+EM_DISCUSSAO       -> EM_DISCUSSAO
+EM_VOTACAO         -> EM_VOTACAO
+APROVADO           -> APROVADA
+REJEITADO          -> REJEITADA
+ADIADO             -> EM_PAUTA
+RETIRADO           -> ARQUIVADA
+VISTA              -> (mantém status atual)
+CONCLUIDO          -> (mantém status atual)
+```
 
 ### Tipos de Quorum
 

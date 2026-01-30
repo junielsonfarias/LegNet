@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-30 (Unidades de Tramitacao com API real e novos tipos)
+> **Ultima Atualizacao**: 2026-01-30 (Lancamento Retroativo de Votacoes)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -98,7 +98,13 @@ Fluxo Validado:
 | Controle de presenca | Implementado | PresencaSessao model |
 | **Falta Justificada** | **Implementado** | 3 opcoes: Presente, Ausente, Falta Justificada com motivo |
 | **Dados Preteritos** | **Implementado** | Permite editar presencas/votacoes em sessoes CONCLUIDAS (lancamento retroativo) |
+| **Criar Sessao Preterita** | **Implementado** | Busca flexivel de legislatura/periodo para sessoes finalizadas (qualquer ano) |
 | **Botao Editar Dados** | **Implementado** | Botao destacado (amarelo pulsante) nos paineis para sessoes concluidas |
+| **Lancamento Retroativo** | **Implementado** | Interface /admin/sessoes/[id]/lancamento-retroativo para registro de votacoes em lote |
+| **API Votacao Lote** | **Implementado** | POST /api/sessoes/[id]/votacao/lote - registro de multiplos votos com auditoria |
+| **Auditoria Retroativa** | **Implementado** | Registro completo: usuario, motivo, data, IP (RN-078) |
+| **Sync Status Proposicao** | **Implementado** | Sincroniza Proposicao.status com PautaItem.status (RN-074) |
+| **sessaoId nos Votos** | **Implementado** | Votacao.sessaoId sempre registrado (RN-075) |
 | Pauta de sessao | Implementado | PautaSessao + PautaItem |
 | Templates de sessao | Implementado | SessaoTemplate + TemplateItem |
 | Numeracao automatica | Implementado | Sequencial por tipo |
@@ -231,6 +237,10 @@ Fluxo Validado:
 | **Etapas condicionais** | **Implementado** | Etapas podem ser puladas baseado em criterios (impacto financeiro, regime urgencia, etc) |
 | **Servico de condicoes** | **Implementado** | condicao-etapa-service.ts - avalia se etapa deve ser executada |
 | **Protocolo proposicao** | **Implementado** | ProtocoloProposicao model - numeracao separada PROT-XXXXX/ANO |
+| **Auto-inicio tramitacao** | **Implementado** | Tramitacao inicia automaticamente ao criar proposicao |
+| **API avancar etapa** | **Implementado** | POST /api/proposicoes/[id]/tramitar |
+| **Validacao CLJ bloqueante** | **Implementado** | RN-030 bloqueia inclusao em ORDEM_DO_DIA sem parecer CLJ |
+| **Historico com auditoria** | **Implementado** | Registra usuario, IP, dados anteriores/novos |
 
 ### 11. Publicacoes
 
@@ -1137,6 +1147,63 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-30 - Correcao Criacao de Sessoes com Dados Preteritos
+
+**Problema**: Ao criar sessao marcada como "finalizada" (dados preteritos) para anos anteriores, o sistema bloqueava com erro "Nao ha periodo ativo para a data informada".
+
+**Solucao**:
+- Novas funcoes em `sessoes-utils.ts`:
+  - `getLegislaturaParaData()` - Busca legislatura pelo ano da data (nao apenas ativa)
+  - `getPeriodoParaData()` - Busca periodo de forma flexivel para dados preteritos
+- Modificado `POST /api/sessoes`:
+  - Detecta `finalizada === true` como indicador de dados preteritos
+  - Usa funcoes flexiveis para busca de legislatura/periodo
+  - Mensagens de erro mais claras para cada cenario
+
+**Arquivos Modificados**:
+- `src/lib/utils/sessoes-utils.ts` - Novas funcoes de busca flexivel
+- `src/app/api/sessoes/route.ts` - Logica diferenciada para dados preteritos
+
+### 2026-01-30 - Sistema de Tramitacao com Auto-inicio e Validacao CLJ
+
+**Implementacao completa do sistema de tramitacao conforme processo legislativo**
+
+**Validacao CLJ Bloqueante (RN-030)**:
+- Endpoint PUT `/api/pauta/[itemId]` agora valida parecer da CLJ
+- Ao mover item para ORDEM_DO_DIA com tipoAcao VOTACAO ou DISCUSSAO, valida se proposicao tem parecer CLJ
+- Retorna erro 422 se proposicao nao tem parecer da CLJ
+
+**Auto-inicio de Tramitacao**:
+- POST `/api/proposicoes` agora inicia tramitacao automaticamente apos criar proposicao
+- Busca fluxo configurado para o tipo de proposicao
+- Vincula tramitacao a etapa inicial do fluxo
+- Atualiza status da proposicao para EM_TRAMITACAO
+
+**Nova API de Avancar Tramitacao**:
+- Novo endpoint POST `/api/proposicoes/[id]/tramitar`
+- Recebe observacoes, parecer e resultado opcionais
+- Avanca proposicao para proxima etapa do fluxo
+- Registra historico completo com auditoria
+- GET retorna informacoes da etapa atual
+
+**Novas Funcoes no tramitacao-service.ts**:
+- `avancarEtapaFluxo()` - Avanca tramitacao entre etapas do fluxo
+- `iniciarTramitacaoComFluxo()` - Inicia tramitacao vinculada a fluxo
+- `registrarMovimentacaoComAuditoria()` - Registra movimentacao com dados completos
+- `obterEtapaAtual()` - Retorna etapa atual da tramitacao
+
+**Historico de Tramitacao Melhorado**:
+- Registra `usuarioId`, `ip`, `dadosAnteriores` e `dadosNovos` em todas as movimentacoes
+- Permite rastreabilidade completa das acoes (RN-035)
+
+**Arquivos Modificados**:
+- `src/app/api/pauta/[itemId]/route.ts` - Validacao CLJ
+- `src/app/api/proposicoes/route.ts` - Auto-inicio tramitacao
+- `src/lib/services/tramitacao-service.ts` - Novas funcoes
+
+**Arquivos Criados**:
+- `src/app/api/proposicoes/[id]/tramitar/route.ts` - API de avancar tramitacao
 
 ### 2026-01-30 - Correcoes Dashboard Eventos e Link Unidades Tramitacao
 
@@ -2450,6 +2517,141 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-30 - Itens Informativos na Pauta (Sem Votacao)
+
+**Objetivo**: Diferenciar itens informativos (leitura de correspondencia, comunicados, homenagens) dos itens que precisam de votacao no painel eletronico.
+
+**Logica Implementada**:
+
+| tipoAcao | Tipo | Fluxo |
+|----------|------|-------|
+| VOTACAO | Votavel | Iniciar -> Discussao -> Iniciar Votacao -> Resultado |
+| DISCUSSAO | Votavel | Iniciar -> Discussao -> Iniciar Votacao -> Resultado |
+| LEITURA | Informativo | Iniciar -> Leitura -> Concluir |
+| COMUNICADO | Informativo | Iniciar -> Comunicacao -> Concluir |
+| HOMENAGEM | Informativo | Iniciar -> Homenagem -> Concluir |
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/lib/types/painel-eletronico.ts` | Adicionado tipoAcao, secao, funcoes helper isItemInformativo, isItemVotavel |
+| `src/lib/utils/accessibility-colors.ts` | Adicionados estilos para COMUNICADO e HOMENAGEM |
+| `src/components/painel/item-pauta-card.tsx` | Botao votacao so aparece se NAO e informativo |
+| `src/components/painel/painel-tv-display.tsx` | Label do status baseado no tipoAcao |
+| `src/app/admin/painel-eletronico/page.tsx` | Funcao concluirItemInformativo, botao Concluir |
+| `src/app/api/pauta/[itemId]/route.ts` | Status CONCLUIDO adicionado aos permitidos |
+
+**Labels no Painel TV**:
+
+- `EM_DISCUSSAO` + LEITURA = "EM LEITURA"
+- `EM_DISCUSSAO` + COMUNICADO = "COMUNICACAO"
+- `EM_DISCUSSAO` + HOMENAGEM = "HOMENAGEM"
+- `EM_DISCUSSAO` + VOTACAO/DISCUSSAO = "EM DISCUSSAO"
+
+---
+
+### 2026-01-30 - Remocao de Parlamentar de Teste do Banco de Dados
+
+**Problema**: O painel eletronico listava 14 parlamentares quando apenas 13 estavam cadastrados e ativos.
+
+**Causa**: Parlamentar de teste "Teste Parlamentar 1769723685928" (ID: cmkzzslo60005bee1hmamzd8f) estava marcado como `ativo: false` mas ainda existia no banco de dados.
+
+**Solucao**: Deletado completamente do banco de dados apos verificar que nao havia registros associados (mandatos, presencas, comissoes, proposicoes).
+
+**Resultado**: Total de parlamentares agora e 13 (todos ativos), consistente com o cadastro.
+
+---
+
+### 2026-01-30 - Remocao de Dados Mockados do Painel Eletronico
+
+**Objetivo**: Garantir que o painel eletronico use apenas dados reais do banco de dados.
+
+**Arquivos Deprecados** (marcados com @deprecated):
+
+| Arquivo | Motivo |
+|---------|--------|
+| `src/lib/parlamentares-data.ts` | Dados mockados de parlamentares, sessoes, etc. |
+| `src/lib/painel-eletronico-service.ts` | Servico usando dados mockados |
+| `src/lib/database-service.ts` | Servico simulando banco em memoria |
+| `src/lib/painel-integracao-service.ts` | Integracao usando servicos mockados |
+
+**Paginas Atualizadas** (agora usam APIs reais):
+
+| Pagina | Alteracao |
+|--------|-----------|
+| `admin/audiencias-publicas/page.tsx` | Carrega parlamentares de /api/parlamentares |
+| `parlamentares/[slug]/perfil-completo/page.tsx` | Busca parlamentar por slug via API |
+| `parlamentares/comparativo/page.tsx` | Carrega parlamentares da API real |
+
+**Servico Correto para Painel Eletronico**:
+
+O painel eletronico DEVE usar o servico `painel-tempo-real-service.ts` que:
+- Usa Prisma para buscar dados reais do banco
+- Busca parlamentares via legislatura e mandatos ativos
+- Sincroniza presencas e votacoes com o banco
+
+**APIs Reais para Painel**:
+- Estado: `/api/painel/estado`
+- Presenca: `/api/sessoes/[id]/presenca`
+- Votacao: `/api/painel/votacao`
+- Parlamentares: `/api/parlamentares`
+
+---
+
+### 2026-01-30 - Novos Campos de Etapa e Leitura na Pauta de Sessao
+
+**Objetivo**: Flexibilizar a Ordem do Dia com subetapas (1ª e 2ª Ordem) e campos adicionais.
+
+**Novos Campos no Model PautaItem**:
+
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| `etapa` | Int? | Sub-etapa: 1 = "1ª Ordem do Dia" (leituras), 2 = "2ª Ordem do Dia" (votacoes) |
+| `parecerId` | String? | Referencia ao parecer da comissao vinculado |
+| `leituraNumero` | Int? | Numero da leitura (1ª, 2ª, 3ª leitura) |
+| `relatorId` | String? | Relator designado para o item |
+
+**Novos Relacionamentos**:
+
+| Relacao | Descricao |
+|---------|-----------|
+| `PautaItem.parecer` | Referencia ao Parecer vinculado |
+| `PautaItem.relator` | Referencia ao Parlamentar relator |
+| `Parecer.pautaItens` | Relacao inversa - itens de pauta vinculados |
+| `Parlamentar.pautaItensRelator` | Relacao inversa - itens onde e relator |
+
+**Regras de Negocio Implementadas**:
+
+| Regra | Descricao |
+|-------|-----------|
+| RN-060 | Campo `etapa` so e valido para secao ORDEM_DO_DIA |
+| RN-061 | Etapa 1 = 1ª Ordem do Dia (leitura de materias e pareceres) |
+| RN-062 | Etapa 2 = 2ª Ordem do Dia (discussao e votacao) |
+| RN-063 | Default: etapa=1 para LEITURA, etapa=2 para VOTACAO |
+| RN-064 | `leituraNumero` indica qual leitura (1ª, 2ª, 3ª) |
+| RN-065 | `relatorId` deve ser parlamentar com mandato ativo |
+
+**Validacoes nas APIs**:
+
+| Validacao | Descricao |
+|-----------|-----------|
+| Etapa 1 + VOTACAO | Erro - Etapa 1 nao permite tipoAcao VOTACAO |
+| Etapa 2 + LEITURA | Erro - Etapa 2 nao permite tipoAcao LEITURA |
+| parecerId invalido | Erro - Parecer nao encontrado |
+| relatorId sem mandato | Erro - Relator deve ter mandato ativo |
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `prisma/schema.prisma` | Novos campos e relacionamentos no PautaItem |
+| `src/app/api/pauta/[itemId]/route.ts` | Validacoes e includes dos novos campos |
+| `src/app/api/sessoes/[id]/pauta/route.ts` | Auto-determinacao de etapa no POST |
+| `src/lib/api/pauta-api.ts` | Interface PautaItemApi atualizada |
+
+---
 
 ### 2026-01-30 - Unidades de Tramitacao com API Real e Novos Tipos
 

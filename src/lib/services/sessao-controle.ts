@@ -15,9 +15,60 @@ import {
   registrarVotacaoAgrupada,
   listarItensEmIntersticio
 } from '@/lib/services/turno-service'
-import type { ResultadoVotacaoAgrupada, TipoQuorum, TipoVotacao } from '@prisma/client'
+import type { ResultadoVotacaoAgrupada, TipoQuorum, TipoVotacao, StatusProposicao } from '@prisma/client'
 
 type SessaoBasica = Awaited<ReturnType<typeof prisma.sessao.findUnique>>
+
+/**
+ * Mapeamento de PautaItemStatus para StatusProposicao
+ * GAP #2: Sincronização entre status do item da pauta e status da proposição
+ */
+const MAPEAMENTO_STATUS_PAUTA_PROPOSICAO: Record<string, StatusProposicao | null> = {
+  'PENDENTE': 'EM_PAUTA',
+  'EM_DISCUSSAO': 'EM_DISCUSSAO',
+  'EM_VOTACAO': 'EM_VOTACAO',
+  'APROVADO': 'APROVADA',
+  'REJEITADO': 'REJEITADA',
+  'ADIADO': 'EM_PAUTA',       // Adiado volta para EM_PAUTA
+  'RETIRADO': 'ARQUIVADA',    // Retirado = arquivada
+  'VISTA': null,               // Vista mantém status atual
+  'CONCLUIDO': null            // Concluído mantém status atual (usado para itens sem proposição)
+}
+
+/**
+ * Sincroniza o status da proposição com o status do item da pauta
+ * Chamada quando há mudança de status no item
+ *
+ * @param proposicaoId - ID da proposição
+ * @param pautaItemStatus - Status do item da pauta
+ * @param sessaoId - ID da sessão (opcional, para vincular sessaoVotacaoId)
+ */
+export async function sincronizarStatusProposicao(
+  proposicaoId: string,
+  pautaItemStatus: string,
+  sessaoId?: string
+): Promise<void> {
+  const novoStatus = MAPEAMENTO_STATUS_PAUTA_PROPOSICAO[pautaItemStatus]
+
+  // Se o mapeamento retornar null, não atualiza (mantém status atual)
+  if (!novoStatus) {
+    return
+  }
+
+  const data: { status: StatusProposicao; sessaoVotacaoId?: string } = {
+    status: novoStatus
+  }
+
+  // Se tiver sessaoId e for status final, vincula a sessão
+  if (sessaoId && ['APROVADA', 'REJEITADA', 'ARQUIVADA'].includes(novoStatus)) {
+    data.sessaoVotacaoId = sessaoId
+  }
+
+  await prisma.proposicao.update({
+    where: { id: proposicaoId },
+    data
+  })
+}
 
 const calcularTempoAcumulado = (iniciadoEm: Date | null, acumulado: number) => {
   if (!iniciadoEm) {
@@ -849,6 +900,15 @@ export async function finalizarItemPauta(
       dataVotacao: new Date().toISOString(),
       sessaoVotacaoId: sessaoId
     })
+  }
+
+  // GAP #2: Sincronizar status da proposição para casos sem votação efetiva
+  if (temProposicao && !eraVotacao) {
+    await sincronizarStatusProposicao(
+      item.proposicaoId!,
+      resultado,
+      sessaoId
+    )
   }
 
   await prisma.pautaSessao.update({
