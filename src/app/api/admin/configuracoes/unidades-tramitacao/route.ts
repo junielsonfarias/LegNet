@@ -10,6 +10,11 @@ const TramitacaoUnidadeTipoEnum = z.enum([
   'MESA_DIRETORA',
   'PLENARIO',
   'PREFEITURA',
+  'SECRETARIA',
+  'GABINETE',
+  'ARQUIVO',
+  'PROTOCOLO',
+  'ASSESSORIA',
   'OUTROS'
 ])
 
@@ -40,14 +45,20 @@ export const GET = withAuth(async (
   request: NextRequest
 ) => {
   const { searchParams } = new URL(request.url)
-  const apenasAtivos = searchParams.get('ativo') !== 'false'
+  const ativoParam = searchParams.get('ativo')
   const tipo = searchParams.get('tipo')
 
   const where: Record<string, unknown> = {}
 
-  if (apenasAtivos) {
+  // Se ativo=true, filtra apenas ativos
+  // Se ativo=false, filtra apenas inativos
+  // Se não informado (null), não filtra por status (traz todos)
+  if (ativoParam === 'true') {
     where.ativo = true
+  } else if (ativoParam === 'false') {
+    where.ativo = false
   }
+  // Se ativoParam é null, não adiciona filtro (traz todos)
 
   if (tipo) {
     const parseResult = TramitacaoUnidadeTipoEnum.safeParse(tipo)

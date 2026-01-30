@@ -66,7 +66,6 @@ export const GET = withAuth(async (request: NextRequest) => {
     take: 10,
     include: {
       comissao: {
-        select: { sigla: true, nome: true },
         include: {
           membros: {
             where: { ativo: true },

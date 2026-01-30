@@ -16,6 +16,7 @@ import {
   Settings,
   Gavel,
   Building,
+  Building2,
   BookOpen,
   BarChart3,
   DollarSign,
@@ -360,6 +361,12 @@ const navigationCategories: NavCategory[] = [
         name: 'Tipos de Tramitação',
         href: '/admin/configuracoes/tipos-tramitacao',
         icon: Workflow,
+        permissions: ['config.manage']
+      },
+      {
+        name: 'Unidades de Tramitação',
+        href: '/admin/configuracoes/unidades-tramitacao',
+        icon: Building2,
         permissions: ['config.manage']
       },
       {

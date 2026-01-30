@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-30 (URLs amigaveis para proposicoes: slug pl-0022-2025)
+> **Ultima Atualizacao**: 2026-01-30 (Unidades de Tramitacao com API real e novos tipos)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -1137,6 +1137,16 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-30 - Correcoes Dashboard Eventos e Link Unidades Tramitacao
+
+- **API Dashboard Eventos**: Corrigida query Prisma que misturava `select` com `include` na relacao `comissao`, causando erro 500
+  - Arquivo: `src/app/api/dashboard/eventos/route.ts`
+  - Removido `select: { sigla, nome }` e mantido apenas `include` para resolver conflito
+- **Sidebar Admin**: Adicionado link "Unidades de Tramitacao" no menu de configuracoes
+  - Arquivo: `src/components/admin/admin-sidebar.tsx`
+  - Adicionado icone Building2 e permissao `config.manage`
+  - Link: `/admin/configuracoes/unidades-tramitacao`
 
 ### 2026-01-21 - Alinhamento Pauta/Sessao/Proposicao com SAPL
 
@@ -2440,6 +2450,54 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-30 - Unidades de Tramitacao com API Real e Novos Tipos
+
+**Objetivo**: Implementar gerenciamento completo de unidades/órgãos de tramitação persistidos no banco de dados.
+
+**Novos Tipos de Unidade** (enum `TramitacaoUnidadeTipo`):
+
+| Tipo | Descrição |
+|------|-----------|
+| COMISSAO | Comissões permanentes e temporárias |
+| MESA_DIRETORA | Mesa Diretora |
+| PLENARIO | Plenário para votações |
+| PREFEITURA | Órgãos do Poder Executivo |
+| SECRETARIA | Secretarias internas (ex: Secretaria Geral) |
+| GABINETE | Gabinetes (Presidente, Vereadores) |
+| ARQUIVO | Setor de Arquivo |
+| PROTOCOLO | Setor de Protocolo |
+| ASSESSORIA | Assessorias (Jurídica, Comunicação, etc.) |
+| OUTROS | Outros órgãos não classificados |
+
+**Página Admin Atualizada** (`/admin/configuracoes/unidades-tramitacao`):
+
+| Funcionalidade | Descrição |
+|----------------|-----------|
+| CRUD Completo | Criar, editar, excluir unidades via API real |
+| Filtros | Por tipo, status (ativo/inativo/todos) e busca |
+| Agrupamento | Unidades organizadas por tipo |
+| Estatísticas | Cards com totais por categoria |
+| Ativar/Desativar | Toggle rápido de status |
+
+**API Atualizada** (`/api/admin/configuracoes/unidades-tramitacao`):
+
+| Método | Descrição |
+|--------|-----------|
+| GET | Lista com filtros por tipo e status |
+| POST | Cria nova unidade com auditoria |
+| PUT | Atualiza unidade existente |
+| DELETE | Exclui (com proteção de referências) |
+
+**Exemplos de Unidades**:
+- Secretaria Geral (SECRETARIA)
+- Gabinete do Presidente (GABINETE)
+- Protocolo (PROTOCOLO)
+- Arquivo (ARQUIVO)
+- CLJ - Comissão de Legislação e Justiça (COMISSAO)
+- Plenário (PLENARIO)
+
+---
 
 ### 2026-01-30 - URLs Amigaveis (Slugs) para Proposicoes
 

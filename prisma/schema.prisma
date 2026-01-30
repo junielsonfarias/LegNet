@@ -1307,11 +1307,16 @@ enum TramitacaoResultado {
 }
 
 enum TramitacaoUnidadeTipo {
-  COMISSAO
-  MESA_DIRETORA
-  PLENARIO
-  PREFEITURA
-  OUTROS
+  COMISSAO          // Comissões permanentes e temporárias
+  MESA_DIRETORA     // Mesa Diretora
+  PLENARIO          // Plenário
+  PREFEITURA        // Órgãos do Executivo
+  SECRETARIA        // Secretarias internas (ex: Secretaria Geral)
+  GABINETE          // Gabinetes (Presidente, Vereadores)
+  ARQUIVO           // Setor de Arquivo
+  PROTOCOLO         // Setor de Protocolo
+  ASSESSORIA        // Assessorias (Jurídica, Comunicação, etc.)
+  OUTROS            // Outros órgãos não classificados
 }
 
 model TramitacaoTipoProposicao {
