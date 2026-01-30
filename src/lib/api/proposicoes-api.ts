@@ -2,12 +2,14 @@ import { ApiResponse } from '@/lib/error-handler'
 
 export interface ProposicaoApi {
   id: string
+  slug?: string | null // URL amigável (ex: pl-0022-2025)
   numero: string
   ano: number
   tipo: 'PROJETO_LEI' | 'PROJETO_RESOLUCAO' | 'PROJETO_DECRETO' | 'INDICACAO' | 'REQUERIMENTO' | 'MOCAO' | 'VOTO_PESAR' | 'VOTO_APLAUSO'
   titulo: string
   ementa: string
   texto: string | null
+  urlDocumento: string | null // URL externa do documento (Google Drive, etc)
   status: 'APRESENTADA' | 'EM_TRAMITACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA'
   dataApresentacao: string
   dataVotacao: string | null
@@ -45,6 +47,7 @@ export interface ProposicaoCreate {
   titulo: string
   ementa: string
   texto?: string
+  urlDocumento?: string // URL externa do documento (Google Drive, etc)
   status?: 'APRESENTADA' | 'EM_TRAMITACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA'
   dataApresentacao: string
   dataVotacao?: string
@@ -60,6 +63,7 @@ export interface ProposicaoUpdate {
   titulo?: string
   ementa?: string
   texto?: string
+  urlDocumento?: string // URL externa do documento (Google Drive, etc)
   status?: 'APRESENTADA' | 'EM_TRAMITACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA'
   dataApresentacao?: string
   dataVotacao?: string

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ChevronRight, Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isSlugProposicao, formatarSlugParaExibicao } from '@/lib/utils/proposicao-slug'
 
 interface BreadcrumbItem {
   label: string
@@ -39,7 +40,50 @@ const breadcrumbMap: Record<string, string> = {
   'status': 'Health Check',
   'seguranca': 'Segurança',
   'backups': 'Backups & Restauração',
-  'logs': 'Logs'
+  'logs': 'Logs',
+  'novo': 'Novo',
+  'editar': 'Editar',
+  'emendas': 'Emendas',
+  'comissoes': 'Comissões',
+  'sessoes': 'Sessões',
+  'pareceres': 'Pareceres',
+  'votacoes': 'Votações',
+  'auditoria': 'Auditoria',
+  'participacao-cidada': 'Participação Cidadã',
+  'transparencia': 'Transparência',
+  'tipos-proposicoes': 'Tipos de Proposição'
+}
+
+// Função para detectar se um segmento é um ID técnico (CUID, UUID, etc.)
+const isIdSegment = (segment: string): boolean => {
+  // Primeiro, verifica se é um slug de proposição (não é ID técnico)
+  if (isSlugProposicao(segment)) {
+    return false
+  }
+  // CUIDs têm ~25 caracteres alfanuméricos
+  if (segment.length >= 20 && /^[a-z0-9]+$/i.test(segment)) {
+    return true
+  }
+  // UUID pattern
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)) {
+    return true
+  }
+  return false
+}
+
+// Mapeamento de contexto para labels amigáveis quando há ID
+const contextLabelMap: Record<string, string> = {
+  'proposicoes': 'Detalhes',
+  'parlamentares': 'Perfil',
+  'sessoes': 'Detalhes',
+  'comissoes': 'Detalhes',
+  'usuarios': 'Perfil',
+  'noticias': 'Visualizar',
+  'publicacoes': 'Visualizar',
+  'painel-eletronico': 'Sessão',
+  'pareceres': 'Detalhes',
+  'legislaturas': 'Detalhes',
+  'tramitacoes': 'Detalhes'
 }
 
 export function AdminBreadcrumbs() {
@@ -52,20 +96,37 @@ export function AdminBreadcrumbs() {
     ]
 
     let currentPath = '/admin'
-    
+    let previousSegment = ''
+
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`
-      
+
       // Pular o primeiro segmento 'admin' pois já foi adicionado
       if (index > 0) {
-        const label = breadcrumbMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)
+        let label: string
+
+        // Verificar se é um slug de proposição (ex: pl-0022-2025)
+        if (isSlugProposicao(segment)) {
+          // Formatar slug para exibição amigável (ex: "PL 0022/2025")
+          label = formatarSlugParaExibicao(segment)
+        }
+        // Verificar se é um ID técnico
+        else if (isIdSegment(segment)) {
+          // Usar label baseado no contexto (segmento anterior)
+          label = contextLabelMap[previousSegment] || 'Detalhes'
+        } else {
+          label = breadcrumbMap[segment] || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
+        }
+
         const isLast = index === segments.length - 1
-        
+
         breadcrumbs.push({
           label,
           href: isLast ? undefined : currentPath
         })
       }
+
+      previousSegment = segment
     })
 
     return breadcrumbs

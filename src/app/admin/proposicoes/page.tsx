@@ -30,6 +30,7 @@ import { useProposicoes } from '@/lib/hooks/use-proposicoes'
 import { tiposTramitacaoService, tiposOrgaosService } from '@/lib/tramitacao-service'
 import { leisService } from '@/lib/leis-service'
 import { buscarProximoNumero } from '@/lib/utils/proposicao-numero'
+import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 import type { TipoTramitacao, TipoOrgao } from '@/lib/types/tramitacao'
 import type { ProposicaoApi } from '@/lib/api/proposicoes-api'
 import {
@@ -92,6 +93,8 @@ function ProposicoesContent() {
     titulo: '',
     ementa: '',
     textoCompleto: '',
+    dataApresentacao: new Date().toISOString().split('T')[0], // Data no formato YYYY-MM-DD
+    urlDocumento: '', // URL externa do documento (Google Drive, etc)
     autorId: '',
     autores: [] as string[], // Array de IDs dos autores
     coautores: [] as string[], // Mantido para compatibilidade
@@ -219,11 +222,12 @@ function ProposicoesContent() {
           titulo: formData.titulo,
           ementa: formData.ementa,
           texto: formData.textoCompleto || undefined,
+          urlDocumento: formData.urlDocumento || undefined,
           status: 'EM_TRAMITACAO',
-          dataApresentacao: editingProposicao.dataApresentacao,
+          dataApresentacao: new Date(formData.dataApresentacao).toISOString(),
           autorId: formData.autorId
         })
-        
+
         if (updated) {
           toast.success('Proposição atualizada com sucesso')
           handleClose()
@@ -236,11 +240,12 @@ function ProposicoesContent() {
           titulo: formData.titulo,
           ementa: formData.ementa,
           texto: formData.textoCompleto || undefined,
+          urlDocumento: formData.urlDocumento || undefined,
           status: 'APRESENTADA',
-          dataApresentacao: new Date().toISOString(),
+          dataApresentacao: new Date(formData.dataApresentacao).toISOString(),
           autorId: formData.autorId
         })
-        
+
         if (nova) {
           toast.success('Proposição criada com sucesso')
           handleClose()
@@ -253,6 +258,10 @@ function ProposicoesContent() {
 
   const handleEdit = (proposicao: ProposicaoApi) => {
     setEditingProposicao(proposicao)
+    // Formatar data para input date (YYYY-MM-DD)
+    const dataFormatada = proposicao.dataApresentacao
+      ? new Date(proposicao.dataApresentacao).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0]
     setFormData({
       numero: proposicao.numero,
       numeroAutomatico: false,
@@ -261,6 +270,8 @@ function ProposicoesContent() {
       titulo: proposicao.titulo,
       ementa: proposicao.ementa,
       textoCompleto: proposicao.texto || '',
+      dataApresentacao: dataFormatada,
+      urlDocumento: (proposicao as any).urlDocumento || '',
       autorId: proposicao.autorId,
       autores: [],
       coautores: [],
@@ -282,6 +293,8 @@ function ProposicoesContent() {
       titulo: '',
       ementa: '',
       textoCompleto: '',
+      dataApresentacao: new Date().toISOString().split('T')[0],
+      urlDocumento: '',
       autorId: '',
       autores: [],
       coautores: [],
@@ -928,7 +941,11 @@ function ProposicoesContent() {
                       size="sm"
                       className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
                       title="Visualizar"
-                      onClick={() => router.push(`/admin/proposicoes/${proposicao.id}`)}
+                      onClick={() => {
+                        // Usa slug existente ou gera dinamicamente
+                        const slug = proposicao.slug || gerarSlugProposicao(proposicao.tipo, proposicao.numero, proposicao.ano)
+                        router.push(`/admin/proposicoes/${slug}`)
+                      }}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -1051,7 +1068,7 @@ function ProposicoesContent() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <Label htmlFor="numero">
                       Número {formData.numeroAutomatico ? '(Gerado Automaticamente)' : '(Manual)'}
@@ -1079,6 +1096,19 @@ function ProposicoesContent() {
                       onChange={(e) => handleAnoChange(parseInt(e.target.value))}
                       required
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="dataApresentacao">Data de Apresentação</Label>
+                    <Input
+                      id="dataApresentacao"
+                      type="date"
+                      value={formData.dataApresentacao}
+                      onChange={(e) => setFormData({ ...formData, dataApresentacao: e.target.value })}
+                      required
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Para dados históricos, informe a data original
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="tipo">Tipo</Label>
@@ -1156,6 +1186,21 @@ function ProposicoesContent() {
                     rows={5}
                     required
                   />
+                </div>
+
+                {/* Campo de URL do Documento */}
+                <div>
+                  <Label htmlFor="urlDocumento">URL do Documento (Opcional)</Label>
+                  <Input
+                    id="urlDocumento"
+                    type="url"
+                    value={formData.urlDocumento}
+                    onChange={(e) => setFormData({ ...formData, urlDocumento: e.target.value })}
+                    placeholder="https://drive.google.com/... ou outro link"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Link externo para o documento original (Google Drive, Dropbox, etc.)
+                  </p>
                 </div>
 
                 <div>

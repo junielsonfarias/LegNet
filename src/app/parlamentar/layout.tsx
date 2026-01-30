@@ -152,7 +152,10 @@ export default function ParlamentarLayout({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={async () => {
+                  await signOut({ redirect: false })
+                  window.location.href = '/login'
+                }}
                 className="text-gray-600 hover:text-gray-900"
               >
                 <LogOut className="h-4 w-4 mr-2" />

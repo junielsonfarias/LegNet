@@ -1,28 +1,17 @@
 // Sistema de autenticação mock para desenvolvimento
-// Em produção, use NextAuth.js com banco de dados real
+// DESATIVADO - Usar apenas usuários do banco de dados
 import bcrypt from 'bcryptjs'
 
-// Hash da senha 'admin123' com salt rounds 12
-const hashedPassword = '$2a$12$0WDdi1QyeJey7dnixGq6Y.IJN6XjEL8P8qewujcDEqDBkhTZRLA.m'
-
-export const mockUsers = [
-  {
-    id: '1',
-    email: 'admin@camaramojui.com',
-    name: 'Administrador',
-    password: hashedPassword, // Senha hasheada com bcrypt
-    role: 'ADMIN',
-    twoFactorEnabled: false
-  },
-  {
-    id: '2',
-    email: 'secretaria@camaramojui.com',
-    name: 'Secretaria Legislativa',
-    password: hashedPassword,
-    role: 'SECRETARIA',
-    twoFactorEnabled: false
-  }
-]
+// Mock users desativado - autenticação apenas via banco de dados (Prisma)
+// Para criar usuários, use o painel admin ou seed do banco
+export const mockUsers: Array<{
+  id: string
+  email: string
+  name: string
+  password: string
+  role: string
+  twoFactorEnabled: boolean
+}> = []
 
 export const mockAuth = {
   signIn: async (credentials: { email: string; password: string }) => {
@@ -53,14 +42,7 @@ export const mockAuth = {
   },
   
   getSession: async () => {
-    // Simula uma sessão ativa para desenvolvimento
-    return {
-      user: {
-        id: '1',
-        email: 'admin@camaramojui.com',
-        name: 'Administrador',
-        role: 'ADMIN'
-      }
-    }
+    // Mock desativado - retorna null para forçar uso do banco
+    return null
   }
 }

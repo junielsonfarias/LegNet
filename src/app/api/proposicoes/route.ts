@@ -11,6 +11,7 @@ import {
   NotFoundError,
   UnauthorizedError
 } from '@/lib/error-handler'
+import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -18,11 +19,12 @@ export const dynamic = 'force-dynamic'
 // Schema de validação para proposição
 const ProposicaoSchema = z.object({
   numero: z.string().min(1, 'Número da proposição é obrigatório'),
-  ano: z.number().min(2020, 'Ano deve ser válido'),
+  ano: z.number().min(1900, 'Ano deve ser válido'), // Permite anos anteriores para dados históricos
   tipo: z.enum(['PROJETO_LEI', 'PROJETO_RESOLUCAO', 'PROJETO_DECRETO', 'INDICACAO', 'REQUERIMENTO', 'MOCAO', 'VOTO_PESAR', 'VOTO_APLAUSO']),
   titulo: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
   ementa: z.string().min(10, 'Ementa deve ter pelo menos 10 caracteres'),
   texto: z.string().optional(),
+  urlDocumento: z.string().url('URL deve ser válida').optional().or(z.literal('')), // URL externa do documento
   status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA']).default('APRESENTADA'),
   dataApresentacao: z.string().min(1, 'Data de apresentação é obrigatória'),
   dataVotacao: z.string().optional(),
@@ -139,15 +141,20 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   if (!autor) {
     throw new NotFoundError('Autor')
   }
-  
+
+  // Gerar slug amigável
+  const slug = gerarSlugProposicao(validatedData.tipo, validatedData.numero, validatedData.ano)
+
   const proposicao = await prisma.proposicao.create({
     data: {
+      slug,
       numero: validatedData.numero,
       ano: validatedData.ano,
       tipo: validatedData.tipo,
       titulo: validatedData.titulo,
       ementa: validatedData.ementa,
       texto: validatedData.texto || null,
+      urlDocumento: validatedData.urlDocumento || null,
       status: validatedData.status || 'APRESENTADA',
       dataApresentacao: new Date(validatedData.dataApresentacao),
       dataVotacao: validatedData.dataVotacao ? new Date(validatedData.dataVotacao) : null,

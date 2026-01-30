@@ -392,12 +392,14 @@ model PresencaSessao {
 
 model Proposicao {
   id               String            @id @default(cuid())
+  slug             String?           @unique // URL amigável: pl-0022-2025
   numero           String
   ano              Int
   tipo             TipoProposicao
   titulo           String
   ementa           String            @db.Text
   texto            String?           @db.Text
+  urlDocumento     String?           // URL externa do documento (Google Drive, etc)
   status           StatusProposicao  @default(APRESENTADA)
   dataApresentacao DateTime
   dataVotacao      DateTime?

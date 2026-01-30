@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-29 (Correcao global SelectItem value vazio)
+> **Ultima Atualizacao**: 2026-01-30 (URLs amigaveis para proposicoes: slug pl-0022-2025)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -78,6 +78,8 @@ Fluxo Validado:
 |---------------|--------|-------------|
 | CRUD de parlamentares | Implementado | /admin/parlamentares |
 | **Visualizar no Admin** | **Implementado** | /admin/parlamentares/[id] - visualizacao interna do painel |
+| **Soft Delete com Filtro** | **Implementado** | Exclusao marca inativo, filtro por status na listagem |
+| **Reativar Parlamentar** | **Implementado** | Botao para reativar parlamentares inativos |
 | Perfil publico | Implementado | /parlamentares/[slug] |
 | Galeria de vereadores | Implementado | /parlamentares/galeria |
 | Historico de mandatos | Implementado | Modelo Mandato |
@@ -145,6 +147,9 @@ Fluxo Validado:
 | **Badges coloridos** | **Implementado** | Cores distintas por tipo (PL, PR, PD, etc) e status (Em Tramitacao, Aprovada, etc) |
 | **Pagina de detalhes** | **Melhorada** | Layout responsivo com linha do tempo, pareceres e acoes rapidas |
 | **Linha do tempo visual** | **Implementado** | Timeline do ciclo de vida da proposicao na pagina de detalhes |
+| **Data apresentacao editavel** | **Implementado** | Permite informar data historica para dados preteritos |
+| **URL documento externo** | **Implementado** | Campo urlDocumento para link Google Drive, Dropbox, etc |
+| **Cadastro historico** | **Implementado** | Suporta anos desde 1900 para migracao de dados antigos |
 
 ### 5.1 Emendas a Proposicoes
 
@@ -2435,6 +2440,185 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-30 - URLs Amigaveis (Slugs) para Proposicoes
+
+**Objetivo**: Substituir IDs tecnicos (CUIDs) por URLs amigaveis no formato `tipo-numero-ano` (ex: `pl-0022-2025`, `req-0001-2026`).
+
+**Alteracoes no Schema Prisma**:
+
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| `slug` | String? @unique | URL amigavel no formato sigla-numero-ano |
+
+**Utilitarios Criados** (`src/lib/utils/proposicao-slug.ts`):
+
+| Funcao | Descricao |
+|--------|-----------|
+| `gerarSlugProposicao(tipo, numero, ano)` | Gera slug: pl-0022-2025 |
+| `parseSlugProposicao(slug)` | Extrai tipo, numero, ano do slug |
+| `isSlugProposicao(value)` | Verifica se string e um slug valido |
+| `formatarSlugParaExibicao(slug)` | Formata para "PL 0022/2025" |
+| `isIdTecnico(value)` | Verifica se e um CUID |
+
+**Mapeamento Tipo -> Sigla**:
+
+| Tipo | Sigla |
+|------|-------|
+| PROJETO_LEI | pl |
+| PROJETO_RESOLUCAO | pr |
+| PROJETO_DECRETO | pd |
+| INDICACAO | ind |
+| REQUERIMENTO | req |
+| MOCAO | moc |
+| VOTO_PESAR | vp |
+| VOTO_APLAUSO | va |
+
+**Alteracoes nas APIs**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/app/api/proposicoes/route.ts` | Gera slug automaticamente no POST |
+| `src/app/api/proposicoes/[id]/route.ts` | Aceita slug OU id, regenera slug em PUT se tipo/numero/ano mudar |
+
+**Alteracoes na Interface**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/lib/api/proposicoes-api.ts` | Interface com campo `slug?: string` |
+| `src/app/admin/proposicoes/page.tsx` | Navega usando `proposicao.slug || proposicao.id` |
+| `src/components/admin/admin-breadcrumbs.tsx` | Reconhece e formata slugs de proposicao |
+
+**Script de Migracao** (`prisma/scripts/generate-slugs.ts`):
+- Gera slugs para proposicoes existentes sem slug
+- Executar com: `npx ts-node prisma/scripts/generate-slugs.ts`
+
+**Exemplos de URLs**:
+- Antes: `/admin/proposicoes/cml0vcz2g0001eg1q6ypxj0f1`
+- Depois: `/admin/proposicoes/req-0022-2025`
+
+**Breadcrumbs Atualizados**:
+- Antes: "Dashboard > Proposicoes > Detalhes"
+- Depois: "Dashboard > Proposicoes > REQ 0022/2025"
+
+---
+
+### 2026-01-30 - Breadcrumbs Amigaveis no Admin
+
+**Problema**: O breadcrumb do admin mostrava IDs tecnicos (ex: `Cml0vcz2g0001eg1q6ypxj0f1`) ao acessar paginas de detalhes.
+
+**Solucao**: Modificado o componente `AdminBreadcrumbs` para detectar IDs e mostrar labels amigaveis baseados no contexto.
+
+**Alteracoes** (`src/components/admin/admin-breadcrumbs.tsx`):
+
+| Funcionalidade | Descricao |
+|----------------|-----------|
+| `isIdSegment()` | Detecta CUIDs (25+ chars) e UUIDs |
+| `contextLabelMap` | Mapeia contexto para labels (proposicoes -> "Detalhes", parlamentares -> "Perfil") |
+| Novos mapeamentos | Adicionados: novo, editar, emendas, comissoes, sessoes, pareceres, etc. |
+
+**Exemplos de Resultado**:
+- `/admin/proposicoes/cml0vcz2g...` → "Dashboard > Proposicoes > Detalhes"
+- `/admin/parlamentares/abc123...` → "Dashboard > Parlamentares > Perfil"
+- `/admin/sessoes/xyz789.../painel-eletronico` → "Dashboard > Sessoes > Detalhes > Painel Eletronico"
+
+---
+
+### 2026-01-30 - Data de Apresentacao Editavel e URL de Documento em Proposicoes
+
+**Objetivo**: Permitir cadastro de dados historicos (proposicoes de anos anteriores) e link para documentos externos.
+
+**Alteracoes no Modelo Prisma**:
+
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| `urlDocumento` | String? | URL externa do documento (Google Drive, Dropbox, etc) |
+
+**Alteracoes no Formulario** (`src/app/admin/proposicoes/page.tsx`):
+
+| Campo | Funcionalidade |
+|-------|----------------|
+| **Data de Apresentacao** | Agora editavel com input date, permite informar data historica |
+| **URL do Documento** | Novo campo para link externo do documento original |
+
+**Alteracoes nas APIs**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/app/api/proposicoes/route.ts` | Schema aceita urlDocumento e ano minimo 1900 |
+| `src/app/api/proposicoes/[id]/route.ts` | Schema de update aceita urlDocumento e ano minimo 1900 |
+| `src/lib/api/proposicoes-api.ts` | Interfaces atualizadas com urlDocumento |
+| `prisma/schema.prisma` | Campo urlDocumento adicionado ao modelo Proposicao |
+
+**Casos de Uso**:
+- Cadastrar proposicoes de 2025 ou anos anteriores com data original
+- Vincular documentos hospedados no Google Drive ou outros servicos
+- Manter marco historico de documentos migrados de sistemas anteriores
+
+---
+
+### 2026-01-30 - Correcao Logout, Exclusao de Parlamentares e Desativacao Mock Auth
+
+#### Desativacao do Sistema de Mock Auth
+
+**Problema**: Usuarios antigos hardcoded (como `secretaria@camaramojui.com`) ainda conseguiam fazer login mesmo nao existindo no banco de dados.
+
+**Causa**: Existia um arquivo `auth-mock.ts` com usuarios hardcoded que era consultado ANTES do banco de dados real.
+
+**Solucao Implementada**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/lib/auth-mock.ts` | Array `mockUsers` esvaziado, `getSession` retorna null |
+
+**Comportamento Agora**: Apenas usuarios cadastrados no banco de dados (via Prisma) podem fazer login. O sistema mock foi desativado.
+
+---
+
+#### Correcao do Logout
+
+**Problema**: Ao fazer logout, o usuario era levado para `/api/auth/signout` (pagina de confirmacao do NextAuth) em vez de ir direto para a tela de login.
+
+**Causa**: A configuracao do NextAuth nao definia a pagina de `signOut` e o callback de redirecionamento nao estava funcionando corretamente.
+
+**Solucao Implementada**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/lib/auth.ts` | Adicionado `signOut: '/login'` nas pages |
+| `src/components/admin/admin-header.tsx` | Alterado para `signOut({ redirect: false })` + redirect manual |
+| `src/app/parlamentar/layout.tsx` | Mesmo ajuste no botao de logout |
+
+**Comportamento Agora**: Ao clicar em "Sair", o usuario e deslogado e redirecionado diretamente para `/login`.
+
+---
+
+#### Correcao Exclusao de Parlamentares
+
+**Problema**: Ao excluir um parlamentar, a mensagem de sucesso aparecia mas o parlamentar continuava visivel na listagem mesmo apos atualizar a pagina.
+
+**Causa**: A API DELETE fazia soft delete (marcava `ativo: false`) mas a pagina admin nao filtrava por status ativo, mostrando todos os parlamentares incluindo os inativos.
+
+**Solucao Implementada**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/app/admin/parlamentares/page.tsx` | Adicionado filtro de status (ativos/inativos/todos) |
+
+**Funcionalidades Adicionadas**:
+- Filtro de status no painel de filtros (padrao: "Apenas Ativos")
+- Badge "Inativo" em vermelho para parlamentares desativados
+- Estilo visual diferenciado para inativos (fundo cinza, opacidade reduzida)
+- Botao "Reativar" no lugar de "Excluir" para parlamentares inativos
+- Estatistica de total atualiza conforme filtro selecionado
+
+**Comportamento Agora**:
+- Por padrao, mostra apenas parlamentares ativos
+- Ao excluir, parlamentar some da lista (pois filtro e "ativos")
+- Administrador pode ver inativos usando filtro "Apenas Inativos" ou "Todos"
+- Pode reativar parlamentares inativos com um clique
+
+---
 
 ### 2026-01-29 - Propagacao de Configuracao Dinamica em Todo Sistema
 

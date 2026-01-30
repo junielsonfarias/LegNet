@@ -28,11 +28,14 @@ export default function ParlamentaresPage() {
   const [filtros, setFiltros] = useState({
     busca: '',
     partido: 'Todos',
-    cargo: 'Todos'
+    cargo: 'Todos',
+    status: 'ativos' as 'ativos' | 'inativos' | 'todos'
   })
 
-  // Usar hook real para buscar parlamentares (sem filtro de ativo para ver todos)
-  const { parlamentares, loading: carregando, remove, create, update } = useParlamentares()
+  // Usar hook real para buscar parlamentares (filtrar por status)
+  const { parlamentares, loading: carregando, remove, create, update, refetch } = useParlamentares(
+    filtros.status === 'todos' ? undefined : { ativo: filtros.status === 'ativos' }
+  )
 
   // Aplicar filtros
   const parlamentaresFiltrados = useMemo(() => {
@@ -69,6 +72,17 @@ export default function ParlamentaresPage() {
       const sucesso = await remove(id)
       if (sucesso) {
         toast.success('Parlamentar excluído com sucesso')
+        // Refetch é chamado automaticamente pelo hook
+      }
+    }
+  }
+
+  // Handler para reativar parlamentar
+  const handleReativar = async (id: string) => {
+    if (confirm('Deseja reativar este parlamentar?')) {
+      const resultado = await update(id, { ativo: true })
+      if (resultado) {
+        toast.success('Parlamentar reativado com sucesso')
       }
     }
   }
@@ -135,7 +149,11 @@ export default function ParlamentaresPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{parlamentares.length}</div>
-            <p className="text-xs text-gray-500">Parlamentares ativos</p>
+            <p className="text-xs text-gray-500">
+              {filtros.status === 'ativos' ? 'Parlamentares ativos' :
+               filtros.status === 'inativos' ? 'Parlamentares inativos' :
+               'Todos os parlamentares'}
+            </p>
           </CardContent>
         </Card>
 
@@ -186,7 +204,7 @@ export default function ParlamentaresPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">Buscar</label>
               <div className="relative">
@@ -229,12 +247,25 @@ export default function ParlamentaresPage() {
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+              <select
+                value={filtros.status}
+                onChange={(e) => setFiltros(prev => ({ ...prev, status: e.target.value as 'ativos' | 'inativos' | 'todos' }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-camara-primary focus:border-transparent"
+              >
+                <option value="ativos">Apenas Ativos</option>
+                <option value="inativos">Apenas Inativos</option>
+                <option value="todos">Todos</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex justify-end mt-4">
             <Button
               variant="outline"
-              onClick={() => setFiltros({ busca: '', partido: 'Todos', cargo: 'Todos' })}
+              onClick={() => setFiltros({ busca: '', partido: 'Todos', cargo: 'Todos', status: 'ativos' })}
             >
               <X className="h-4 w-4 mr-2" />
               Limpar Filtros
@@ -257,16 +288,27 @@ export default function ParlamentaresPage() {
           ) : (
             <div className="space-y-4">
               {parlamentaresFiltrados.map(parlamentar => {
+                const isInativo = !parlamentar.ativo
                 return (
-                  <div key={parlamentar.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
+                  <div
+                    key={parlamentar.id}
+                    className={`flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow ${isInativo ? 'bg-gray-50 opacity-75' : ''}`}
+                  >
                     <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-camara-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-camara-primary font-semibold text-lg">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isInativo ? 'bg-gray-200' : 'bg-camara-primary/10'}`}>
+                        <span className={`font-semibold text-lg ${isInativo ? 'text-gray-500' : 'text-camara-primary'}`}>
                           {parlamentar.nome.split(' ').map(n => n[0]).join('').slice(0, 2)}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg">{parlamentar.nome}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className={`font-semibold text-lg ${isInativo ? 'text-gray-500' : ''}`}>{parlamentar.nome}</h3>
+                          {isInativo && (
+                            <Badge variant="destructive" className="text-xs">
+                              Inativo
+                            </Badge>
+                          )}
+                        </div>
                         {parlamentar.apelido && <p className="text-gray-600">{parlamentar.apelido}</p>}
                         <div className="flex items-center space-x-2 mt-1">
                           {parlamentar.partido && <Badge variant="outline">{parlamentar.partido}</Badge>}
@@ -293,14 +335,27 @@ export default function ParlamentaresPage() {
                         <Edit className="h-4 w-4 mr-2" />
                         Editar
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(parlamentar.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir
-                      </Button>
+                      {isInativo ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={() => handleReativar(parlamentar.id)}
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          Reativar
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDelete(parlamentar.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )
