@@ -197,6 +197,7 @@ model Parlamentar {
   mandatos               Mandato[]
   filiacoes              Filiacao[]
   mesasDiretora          MembroMesaDiretora[]
+  mesasSessao            MembroMesaSessao[]     // Participações em mesas de sessão
   historicoParticipacoes HistoricoParticipacao[]
   usuario                User? // Relacionamento com User (se tiver acesso ao sistema)
   Tramitacao             Tramitacao[]
@@ -206,6 +207,7 @@ model Parlamentar {
   emendasAutor           Emenda[]               @relation("EmendaAutor")
   emendasParecerRelator  Emenda[]               @relation("EmendaParecerRelator")
   votosEmenda            VotoEmenda[]
+  pautaItensRelator      PautaItem[]            @relation("PautaItemRelator")
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -246,12 +248,48 @@ model Sessao {
   proposicoesVotadas  Proposicao[]        @relation("ProposicaoVotacao")      // Proposições VOTADAS nesta sessão
   pautaSessao         PautaSessao?
   emendasVotadas      Emenda[]            @relation("EmendaVotacao")          // Emendas VOTADAS nesta sessão
+  mesaSessao          MesaSessao?         // Mesa que presidiu esta sessão específica
 
   @@index([status, data])
   @@index([tipo, status])
   @@index([legislaturaId, data])
   @@index([data])
   @@map("sessoes")
+}
+
+// Mesa da Sessão - Composição da mesa que presidiu uma sessão específica
+// Permite registrar substituições temporárias quando um membro da Mesa Diretora está ausente
+model MesaSessao {
+  id            String   @id @default(cuid())
+  sessaoId      String   @unique
+  observacoes   String?  @db.Text // Observações sobre a composição (ex: "Vice assumiu por ausência do presidente")
+  criadoPor     String?  // User.id que criou/atualizou
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relacionamentos
+  sessao  Sessao             @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  membros MembroMesaSessao[]
+
+  @@map("mesas_sessao")
+}
+
+// Membros que compõem a Mesa de uma Sessão específica
+model MembroMesaSessao {
+  id           String  @id @default(cuid())
+  mesaSessaoId String
+  parlamentarId String
+  cargo        String  // "PRESIDENTE", "VICE_PRESIDENTE", "PRIMEIRO_SECRETARIO", "SEGUNDO_SECRETARIO"
+  titular      Boolean @default(true) // Se é o titular do cargo ou substituto
+  observacoes  String? @db.Text // Motivo da substituição, se aplicável
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  mesaSessao  MesaSessao  @relation(fields: [mesaSessaoId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@unique([mesaSessaoId, cargo]) // Apenas um parlamentar por cargo na mesa da sessão
+  @@map("membros_mesa_sessao")
 }
 
 enum TipoSessao {
@@ -1215,6 +1253,12 @@ model PautaItem {
   dataIntersticio      DateTime?                        // Data em que o interstício foi iniciado
   prazoIntersticio     DateTime?                        // Data limite para votação em 2º turno
 
+  // === CAMPOS DE ETAPA E LEITURA ===
+  etapa           Int?              // Sub-etapa: 1 = "1ª Ordem do Dia" (leituras), 2 = "2ª Ordem do Dia" (votações)
+  parecerId       String?           // Referência ao parecer da comissão vinculado
+  leituraNumero   Int?              // Número da leitura (1ª, 2ª, 3ª leitura)
+  relatorId       String?           // Relator designado para o item
+
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -1222,10 +1266,15 @@ model PautaItem {
   proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
   sessaoAtual PautaSessao? @relation("SessaoItemAtual")
   destaques   DestaquePautaItem[]
+  parecer     Parecer?     @relation(fields: [parecerId], references: [id], onDelete: SetNull)
+  relator     Parlamentar? @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
 
   @@index([pautaId, secao, ordem])
   @@index([tipoAcao])
   @@index([turnoAtual])
+  @@index([secao, etapa])
+  @@index([parecerId])
+  @@index([relatorId])
   @@map("pauta_itens")
 }
 
@@ -2006,6 +2055,7 @@ model Parecer {
   relator           Parlamentar   @relation("ParecerRelator", fields: [relatorId], references: [id])
   reuniao           ReuniaoComissao? @relation(fields: [reuniaoId], references: [id], onDelete: SetNull)
   votosComissao     VotoParecerComissao[]
+  pautaItens        PautaItem[]
 
   @@unique([proposicaoId, comissaoId]) // Uma proposicao so pode ter um parecer por comissao
   @@index([proposicaoId])

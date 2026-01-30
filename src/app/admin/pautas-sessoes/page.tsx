@@ -31,6 +31,7 @@ import {
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 interface Sessao {
   id: string
@@ -657,7 +658,7 @@ export default function PautasSessoesAdminPage() {
                     size="sm"
                     asChild
                   >
-                    <Link href={`/admin/sessoes/${pauta.sessaoId}`}>
+                    <Link href={`/admin/sessoes/${gerarSlugSessao(pauta.sessao.numero, pauta.sessao.data)}`}>
                       <Eye className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -666,7 +667,7 @@ export default function PautasSessoesAdminPage() {
                     size="sm"
                     asChild
                   >
-                    <Link href={`/painel-operador/${pauta.sessaoId}`}>
+                    <Link href={`/painel-operador/${gerarSlugSessao(pauta.sessao.numero, pauta.sessao.data)}`}>
                       <ExternalLink className="h-4 w-4" />
                     </Link>
                   </Button>

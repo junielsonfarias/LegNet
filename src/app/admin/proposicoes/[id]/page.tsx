@@ -28,6 +28,7 @@ import {
 import { useProposicao } from '@/lib/hooks/use-proposicoes'
 import { usePareceres } from '@/lib/hooks/use-pareceres'
 import Link from 'next/link'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 const TIPOS_PARECER: Record<string, string> = {
   'FAVORAVEL': 'Favoravel',
@@ -546,7 +547,7 @@ export default function ProposicaoDetailPage() {
                 </Button>
                 {proposicao.sessao && (
                   <Button variant="outline" className="w-full justify-start" asChild>
-                    <Link href={`/admin/sessoes/${proposicao.sessao.id}`}>
+                    <Link href={`/admin/sessoes/${gerarSlugSessao(proposicao.sessao.numero, proposicao.sessao.data)}`}>
                       <Gavel className="h-4 w-4 mr-2" />
                       Ver Sessao
                     </Link>

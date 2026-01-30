@@ -23,8 +23,12 @@ const PautaItemCreateSchema = z.object({
   tempoEstimado: z.number().min(0).optional(),
   autor: z.string().optional(),
   observacoes: z.string().optional(),
-  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional() // Se não informado, será determinado automaticamente
-  // REMOVIDO: validarParecer - GAP CRÍTICO #4: Validação de parecer CLJ é sempre obrigatória
+  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional(), // Se não informado, será determinado automaticamente
+  // === NOVOS CAMPOS DE ETAPA E LEITURA ===
+  etapa: z.number().int().min(1).max(2).nullable().optional(), // 1 = 1ª Ordem do Dia, 2 = 2ª Ordem do Dia
+  parecerId: z.string().nullable().optional(),
+  leituraNumero: z.number().int().min(1).max(3).nullable().optional(),
+  relatorId: z.string().nullable().optional()
 })
 
 const sortItens = <T extends { secao: string; ordem: number }>(itens: T[]) => {
@@ -52,6 +56,26 @@ const loadPautaCompleta = async (sessaoId: string) => {
               titulo: true,
               tipo: true,
               status: true
+            }
+          },
+          parecer: {
+            select: {
+              id: true,
+              numero: true,
+              ano: true,
+              tipo: true,
+              status: true,
+              comissao: {
+                select: { id: true, nome: true, sigla: true }
+              }
+            }
+          },
+          relator: {
+            select: {
+              id: true,
+              nome: true,
+              apelido: true,
+              partido: true
             }
           }
         }
@@ -236,6 +260,49 @@ export const POST = withAuth(async (
     }
   }
 
+  // === AUTO-DETERMINAÇÃO DE ETAPA (RN-060 a RN-063) ===
+  let etapa = payload.data.etapa ?? null
+
+  // RN-060: Campo etapa só é válido para ORDEM_DO_DIA
+  if (payload.data.secao !== 'ORDEM_DO_DIA') {
+    etapa = null
+  } else if (etapa === null) {
+    // RN-063: Default - etapa 1 para LEITURA, etapa 2 para VOTACAO/DISCUSSAO
+    etapa = (tipoAcao === 'LEITURA') ? 1 : 2
+  }
+
+  // Validar consistência etapa vs tipoAcao
+  if (etapa !== null && payload.data.secao === 'ORDEM_DO_DIA') {
+    if (etapa === 1 && tipoAcao === 'VOTACAO') {
+      throw new ValidationError('RN-061: Etapa 1 (1ª Ordem do Dia) não permite tipoAcao VOTACAO')
+    }
+    if (etapa === 2 && tipoAcao === 'LEITURA') {
+      throw new ValidationError('RN-062: Etapa 2 (2ª Ordem do Dia) não permite tipoAcao LEITURA')
+    }
+  }
+
+  // Validar parecerId existe
+  if (payload.data.parecerId) {
+    const parecer = await prisma.parecer.findUnique({ where: { id: payload.data.parecerId } })
+    if (!parecer) {
+      throw new ValidationError('Parecer não encontrado')
+    }
+  }
+
+  // RN-065: Validar relatorId com mandato ativo
+  if (payload.data.relatorId) {
+    const relator = await prisma.parlamentar.findUnique({
+      where: { id: payload.data.relatorId },
+      include: { mandatos: { where: { ativo: true } } }
+    })
+    if (!relator) {
+      throw new ValidationError('Relator não encontrado')
+    }
+    if (relator.mandatos.length === 0) {
+      throw new ValidationError('RN-065: Relator deve ter mandato ativo')
+    }
+  }
+
   const maiorOrdem = await prisma.pautaItem.findFirst({
     where: {
       pautaId: pautaSessao.id,
@@ -258,7 +325,12 @@ export const POST = withAuth(async (
       status: 'PENDENTE',
       tipoAcao: tipoAcao,
       autor: payload.data.autor ?? null,
-      observacoes: payload.data.observacoes ?? null
+      observacoes: payload.data.observacoes ?? null,
+      // Novos campos de etapa e leitura
+      etapa: etapa,
+      parecerId: payload.data.parecerId ?? null,
+      leituraNumero: payload.data.leituraNumero ?? null,
+      relatorId: payload.data.relatorId ?? null
     }
   })
 

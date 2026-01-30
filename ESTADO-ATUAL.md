@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-30 (Lancamento Retroativo de Votacoes)
+> **Ultima Atualizacao**: 2026-01-30 (Correcao de Erros TypeScript + Editor de Pauta)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -98,6 +98,10 @@ Fluxo Validado:
 | Controle de presenca | Implementado | PresencaSessao model |
 | **Falta Justificada** | **Implementado** | 3 opcoes: Presente, Ausente, Falta Justificada com motivo |
 | **Dados Preteritos** | **Implementado** | Permite editar presencas/votacoes em sessoes CONCLUIDAS (lancamento retroativo) |
+| **URLs Amigaveis** | **Implementado** | Todas as URLs de sessao usam slug `sessao-{numero}-{ano}` em vez de CUID |
+| **Visualizar Sessao** | **Melhorado** | Botao de visualizar em Sessoes Legislativas abre pagina completa de detalhes |
+| **Mesa da Sessao** | **Implementado** | Composicao personalizada da mesa para cada sessao, substituicoes por ausencia |
+| **Editar Pauta na Sessao** | **Implementado** | Botao "Editar Pauta" abre editor inline na pagina de detalhes da sessao |
 | **Criar Sessao Preterita** | **Implementado** | Busca flexivel de legislatura/periodo para sessoes finalizadas (qualquer ano) |
 | **Botao Editar Dados** | **Implementado** | Botao destacado (amarelo pulsante) nos paineis para sessoes concluidas |
 | **Lancamento Retroativo** | **Implementado** | Interface /admin/sessoes/[id]/lancamento-retroativo para registro de votacoes em lote |
@@ -130,6 +134,9 @@ Fluxo Validado:
 | **Edicao de Momento** | **Implementado** | UI para alterar tipoAcao de itens pendentes |
 | **Materia Lida** | **Implementado** | Botao especial para itens com tipoAcao=LEITURA |
 | **Retirada com motivo** | **Implementado** | Modal com solicitante e motivo da retirada |
+| **Editor de Pauta** | **Implementado** | Componente PautaEditor para editar pauta na pagina de detalhes da sessao |
+| **Edicao inline** | **Implementado** | Adicionar, editar e remover itens diretamente na visualizacao |
+| **Selecao de proposicoes** | **Implementado** | Modal para buscar e adicionar proposicoes disponiveis a pauta |
 
 ### 5. Proposicoes
 
@@ -1147,6 +1154,24 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-30 - Melhorias Visuais no Painel Operador
+
+**Objetivo**: Melhorar visualizacao do modal "Controle de Presenca" no painel operador
+
+**Problemas Identificados**:
+- Modal muito estreito (max-w-md) truncava nomes de parlamentares
+- Tema escuro conflitava com componente PresencaControl (tema claro)
+
+**Solucao**:
+- Aumentada largura do modal de `max-w-md` para `max-w-3xl w-[95vw]`
+- Alterado tema do modal para claro (`bg-white border-slate-200 text-slate-900`)
+- Adicionado controle de overflow (`max-h-[85vh] overflow-hidden flex flex-col`)
+
+**Arquivo Modificado**:
+- `src/app/painel-operador/[sessaoId]/page.tsx` - Modal de controle de presenca
+
+---
 
 ### 2026-01-30 - Correcao Criacao de Sessoes com Dados Preteritos
 
@@ -2517,6 +2542,90 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-30 - URLs Amigaveis para Paineis (Sessao)
+
+**Objetivo**: Usar slugs amigaveis nas URLs dos paineis em vez de CUIDs.
+
+**Problema Anterior**:
+- URLs ilegíveis: `/painel-operador/cml0zn5ab001324gp9vy7l0i9`
+- Usuário não conseguia identificar qual sessão estava sendo exibida
+
+**Solução Implementada**:
+- URLs amigáveis: `/painel-operador/sessao-36-2026`
+- Formato: `sessao-{numero}-{ano}`
+- Sistema aceita tanto CUID quanto slug (retrocompatível)
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/lib/utils/sessoes-utils.ts` | Adicionada função `gerarSlugSessao(numero, data)` |
+| `src/app/api/painel/sessao-completa/route.ts` | Usa `resolverSessaoId` para aceitar slug |
+| `src/app/admin/sessoes/[id]/page.tsx` | Links usam slug para paineis |
+| `src/app/admin/painel-eletronico/page.tsx` | Links usam slug para paineis |
+| `src/app/admin/painel-eletronico/[sessaoId]/page.tsx` | Links usam slug para paineis |
+| `src/app/admin/pautas-sessoes/page.tsx` | Links usam slug para paineis |
+| `src/app/admin/sessoes-legislativas/page.tsx` | Links usam slug para paineis |
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Links usam slug para paineis |
+
+**Exemplos de URLs**:
+
+| Antes | Depois |
+|-------|--------|
+| `/painel-operador/cml0zn5ab001324gp9vy7l0i9` | `/painel-operador/sessao-36-2026` |
+| `/painel-publico?sessaoId=cml0zn5ab001324gp9vy7l0i9` | `/painel-publico?sessaoId=sessao-36-2026` |
+| `/painel-tv/cml0zn5ab001324gp9vy7l0i9` | `/painel-tv/sessao-36-2026` |
+| `/admin/painel-eletronico/cml0zn5ab001324gp9vy7l0i9` | `/admin/painel-eletronico/sessao-36-2026` |
+
+---
+
+### 2026-01-30 - Melhorias Visuais Painel Publico (Secao Parlamentares)
+
+**Objetivo**: Melhorar a visualizacao dos parlamentares no Painel Publico com layout compacto em grid 2x7.
+
+**Problemas Resolvidos**:
+
+| Antes | Depois |
+|-------|--------|
+| Lista vertical longa (11 linhas) | Grid compacto 2 colunas x 7 linhas |
+| Presentes e ausentes em colunas separadas | Grid unico ordenado (presentes primeiro) |
+| Cards grandes com muito espaco | Cards ultra-compactos |
+| Scroll vertical necessario | Tudo visivel sem scroll |
+| Icone generico User | Foto real do parlamentar |
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/app/painel-publico/page.tsx` | Interface Presenca + foto, import Image, grid unico 2x7 |
+| `src/app/api/sessoes/[id]/presenca/route.ts` | Adicionado foto no select do parlamentar |
+| `src/app/api/painel/sessao-completa/route.ts` | Adicionado foto no include de presencas e objeto virtual |
+
+**Novo Layout (Grid 2x7)**:
+
+```
++-------------------------+-------------------------+
+| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |  <- Presentes
+| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
+| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
+| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
+| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
+| [foto✓] Nome  Partido   | [foto✗] Nome  Partido   |  <- Ausentes
+| [foto✗] Nome  Partido   |                         |
++-------------------------+-------------------------+
+```
+
+**Detalhes**:
+- Grid unico com todos os parlamentares (presentes primeiro, depois ausentes)
+- Fotos de parlamentares com indicador de status no canto (check verde / x vermelho)
+- Fallback com iniciais quando foto nao disponivel
+- Presentes: fundo verde, ring verde, cores vibrantes
+- Ausentes: fundo vermelho, ring vermelho, opacity 60%, grayscale na foto
+- Estatisticas compactas no topo (presentes, ausentes, % quorum)
+- Cards ultra-compactos (foto 36px, fonte 11px nome, 9px partido)
+
+---
 
 ### 2026-01-30 - Itens Informativos na Pauta (Sem Votacao)
 

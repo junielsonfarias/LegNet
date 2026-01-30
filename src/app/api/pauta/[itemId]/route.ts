@@ -5,9 +5,10 @@ import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, validateId } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { validarInclusaoOrdemDoDia } from '@/lib/services/proposicao-validacao-service'
 
 const PAUTA_SECAO_ORDER = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
-const PAUTA_STATUS = ['PENDENTE', 'EM_DISCUSSAO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO'] as const
+const PAUTA_STATUS = ['PENDENTE', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO', 'CONCLUIDO', 'VISTA'] as const
 const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
 
 const PautaItemUpdateSchema = z.object({
@@ -21,7 +22,12 @@ const PautaItemUpdateSchema = z.object({
   autor: z.string().optional(),
   observacoes: z.string().optional(),
   ordem: z.number().int().min(1).optional(),
-  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional() // Tipo de ação: LEITURA, VOTACAO, etc.
+  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional(), // Tipo de ação: LEITURA, VOTACAO, etc.
+  // === NOVOS CAMPOS DE ETAPA E LEITURA ===
+  etapa: z.number().int().min(1).max(2).nullable().optional(), // 1 = 1ª Ordem do Dia, 2 = 2ª Ordem do Dia
+  parecerId: z.string().nullable().optional(),
+  leituraNumero: z.number().int().min(1).max(3).nullable().optional(), // 1ª, 2ª ou 3ª leitura
+  relatorId: z.string().nullable().optional()
 })
 
 const sortItens = <T extends { secao: string; ordem: number }>(itens: T[]) => {
@@ -87,6 +93,26 @@ const loadPautaSessao = async (pautaId: string) => {
               tipo: true,
               status: true
             }
+          },
+          parecer: {
+            select: {
+              id: true,
+              numero: true,
+              ano: true,
+              tipo: true,
+              status: true,
+              comissao: {
+                select: { id: true, nome: true, sigla: true }
+              }
+            }
+          },
+          relator: {
+            select: {
+              id: true,
+              nome: true,
+              apelido: true,
+              partido: true
+            }
           }
         }
       }
@@ -128,6 +154,58 @@ export const PUT = withAuth(async (
   const data = payload.data
   const updateData: Record<string, unknown> = {}
 
+  // Determinar seção e tipoAcao finais para validações
+  const secaoFinal = data.secao || existingItem.secao
+  const tipoAcaoFinal = data.tipoAcao || existingItem.tipoAcao
+
+  // RN-060: Campo etapa só é válido para seção ORDEM_DO_DIA
+  if (data.etapa !== undefined && data.etapa !== null) {
+    if (secaoFinal !== 'ORDEM_DO_DIA') {
+      throw new ValidationError('RN-060: Campo etapa só é válido para seção ORDEM_DO_DIA')
+    }
+    // RN-061/RN-062: Consistência entre etapa e tipoAcao
+    if (data.etapa === 1 && tipoAcaoFinal === 'VOTACAO') {
+      throw new ValidationError('RN-061: Etapa 1 (1ª Ordem do Dia) não permite tipoAcao VOTACAO')
+    }
+    if (data.etapa === 2 && tipoAcaoFinal === 'LEITURA') {
+      throw new ValidationError('RN-062: Etapa 2 (2ª Ordem do Dia) não permite tipoAcao LEITURA')
+    }
+  }
+
+  // Validar parecerId existe
+  if (data.parecerId) {
+    const parecer = await prisma.parecer.findUnique({ where: { id: data.parecerId } })
+    if (!parecer) {
+      throw new ValidationError('Parecer não encontrado')
+    }
+  }
+
+  // RN-065: Validar relatorId com mandato ativo
+  if (data.relatorId) {
+    const relator = await prisma.parlamentar.findUnique({
+      where: { id: data.relatorId },
+      include: { mandatos: { where: { ativo: true } } }
+    })
+    if (!relator) {
+      throw new ValidationError('Relator não encontrado')
+    }
+    if (relator.mandatos.length === 0) {
+      throw new ValidationError('RN-065: Relator deve ter mandato ativo')
+    }
+  }
+
+  // RN-030: Validar parecer CLJ antes de mover para ORDEM_DO_DIA
+  if (data.secao === 'ORDEM_DO_DIA' && existingItem.secao !== 'ORDEM_DO_DIA') {
+    const tipoAcao = data.tipoAcao || existingItem.tipoAcao
+    // Validar apenas para ações que envolvem votação ou discussão
+    if (existingItem.proposicaoId && (tipoAcao === 'VOTACAO' || tipoAcao === 'DISCUSSAO')) {
+      const validacao = await validarInclusaoOrdemDoDia(existingItem.proposicaoId)
+      if (!validacao.valid) {
+        throw new ValidationError('RN-030: ' + validacao.errors.join('; '))
+      }
+    }
+  }
+
   if (data.titulo !== undefined) updateData.titulo = data.titulo
   if (data.descricao !== undefined) updateData.descricao = data.descricao ?? null
   if (data.proposicaoId !== undefined) updateData.proposicaoId = data.proposicaoId ?? null
@@ -137,6 +215,10 @@ export const PUT = withAuth(async (
   if (data.autor !== undefined) updateData.autor = data.autor ?? null
   if (data.observacoes !== undefined) updateData.observacoes = data.observacoes ?? null
   if (data.tipoAcao !== undefined) updateData.tipoAcao = data.tipoAcao
+  if (data.etapa !== undefined) updateData.etapa = data.etapa
+  if (data.parecerId !== undefined) updateData.parecerId = data.parecerId
+  if (data.leituraNumero !== undefined) updateData.leituraNumero = data.leituraNumero
+  if (data.relatorId !== undefined) updateData.relatorId = data.relatorId
 
   let novaSecao = existingItem.secao
 
@@ -175,6 +257,26 @@ export const PUT = withAuth(async (
           titulo: true,
           tipo: true,
           status: true
+        }
+      },
+      parecer: {
+        select: {
+          id: true,
+          numero: true,
+          ano: true,
+          tipo: true,
+          status: true,
+          comissao: {
+            select: { id: true, nome: true, sigla: true }
+          }
+        }
+      },
+      relator: {
+        select: {
+          id: true,
+          nome: true,
+          apelido: true,
+          partido: true
         }
       }
     }

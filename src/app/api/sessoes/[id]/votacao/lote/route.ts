@@ -179,7 +179,11 @@ export const POST = withErrorHandler(async (
     }
 
     // Se deve finalizar a votação
-    let resultadoFinal = null
+    let resultadoFinal: {
+      resultado: string
+      contagem: { sim: number; nao: number; abstencao: number; total: number }
+      detalhesQuorum?: string
+    } | null = null
     if (validatedData.finalizarVotacao) {
       // Contabilizar votos
       const contagem = await contabilizarVotos(validatedData.proposicaoId, {

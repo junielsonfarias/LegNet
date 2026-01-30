@@ -23,6 +23,7 @@ import { useSessoes } from '@/lib/hooks/use-sessoes'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { SessoesListSkeleton } from '@/components/skeletons/sessao-skeleton'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 export default function SessoesAdminPage() {
   const { sessoes, loading, create, update, remove } = useSessoes()
@@ -521,7 +522,7 @@ export default function SessoesAdminPage() {
                     variant="outline"
                     asChild
                   >
-                    <Link href={`/admin/sessoes/${sessao.id}`}>
+                    <Link href={`/admin/sessoes/${gerarSlugSessao(sessao.numero, sessao.data)}`}>
                       <Eye className="h-3 w-3" />
                     </Link>
                   </Button>

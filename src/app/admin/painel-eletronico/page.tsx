@@ -41,6 +41,7 @@ import {
 } from 'lucide-react'
 import { PainelSessao, PautaItem, Presenca } from '@/lib/types/painel-eletronico'
 import { toast } from 'sonner'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 export default function PainelEletronicoPage() {
   const [sessaoAtiva, setSessaoAtiva] = useState<PainelSessao | null>(null)
@@ -303,7 +304,7 @@ export default function PainelEletronicoPage() {
   }, [discursoAtivo, tempoDiscurso])
 
 
-  const iniciarSessao = async (sessaoId: string) => {
+  const iniciarSessao = async (sessaoId: string, numeroSessao: string, dataSessao: Date) => {
     try {
       // Atualizar status da sessão para EM_ANDAMENTO via API
       const response = await fetch(`/api/sessoes/${sessaoId}`, {
@@ -323,8 +324,9 @@ export default function PainelEletronicoPage() {
       toast.success('Sessão iniciada com sucesso!')
       await carregarDados()
 
-      // Abrir painel do operador em nova aba (versão sem menu lateral)
-      window.open(`/painel-operador/${sessaoId}`, '_blank')
+      // Abrir painel do operador em nova aba usando slug amigável
+      const slug = gerarSlugSessao(parseInt(numeroSessao), dataSessao)
+      window.open(`/painel-operador/${slug}`, '_blank')
 
     } catch (error) {
       console.error('Erro ao iniciar sessão:', error)
@@ -443,8 +445,9 @@ export default function PainelEletronicoPage() {
     if (!sessaoAtiva) return
 
     try {
-      // Abrir página de relatório da sessão em nova aba
-      window.open(`/admin/sessoes/${sessaoAtiva.id}/relatorio`, '_blank')
+      // Abrir página de relatório da sessão em nova aba usando slug amigável
+      const slug = gerarSlugSessao(parseInt(sessaoAtiva.numeroSessao), sessaoAtiva.data)
+      window.open(`/admin/sessoes/${slug}/relatorio`, '_blank')
       toast.success('Relatório aberto em nova aba')
     } catch (error) {
       console.error('Erro ao gerar relatório:', error)
@@ -453,8 +456,12 @@ export default function PainelEletronicoPage() {
   }
 
   const abrirPainelPublico = () => {
-    // Abrir painel público com a sessão selecionada
-    const url = sessaoAtiva ? `/painel-publico?sessao=${sessaoAtiva.id}` : '/painel-publico'
+    // Abrir painel público com a sessão selecionada usando slug amigável
+    let url = '/painel-publico'
+    if (sessaoAtiva?.numeroSessao && sessaoAtiva?.data) {
+      const slug = gerarSlugSessao(parseInt(sessaoAtiva.numeroSessao), sessaoAtiva.data)
+      url = `/painel-publico?sessaoId=${slug}`
+    }
     window.open(url, '_blank', 'width=1920,height=1080,scrollbars=yes,resizable=yes')
     setPainelPublicoAberto(true)
     toast.success('Painel público aberto em nova guia')
@@ -510,6 +517,35 @@ export default function PainelEletronicoPage() {
       console.error('Erro ao finalizar votação:', error)
       toast.error('Erro ao finalizar votação')
     }
+  }
+
+  // Concluir item informativo (não precisa de votação)
+  const concluirItemInformativo = async (itemId: string) => {
+    if (!sessaoAtiva) return
+
+    try {
+      // Chamar API para marcar item como concluído (usando ação 'finalizar' com resultado 'CONCLUIDO')
+      const response = await fetch(`/api/sessoes/${sessaoAtiva.id}/pauta/${itemId}/controle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao: 'finalizar', resultado: 'CONCLUIDO' })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao concluir item')
+      }
+
+      toast.success('Item concluído')
+      await carregarDados()
+    } catch (error) {
+      console.error('Erro ao concluir item:', error)
+      toast.error('Erro ao concluir item')
+    }
+  }
+
+  // Verifica se o item é informativo (não precisa de votação)
+  const isItemInformativo = (tipoAcao?: string): boolean => {
+    return tipoAcao === 'LEITURA' || tipoAcao === 'COMUNICADO' || tipoAcao === 'HOMENAGEM'
   }
 
   const iniciarDiscurso = (parlamentarId: string, parlamentarNome: string) => {
@@ -639,8 +675,9 @@ export default function PainelEletronicoPage() {
               {/* Botão principal - Abrir Painel do Operador */}
               <Button
                 onClick={() => {
-                  if (sessaoAtiva?.id) {
-                    window.open(`/painel-operador/${sessaoAtiva.id}`, '_blank')
+                  if (sessaoAtiva?.id && sessaoAtiva?.numeroSessao && sessaoAtiva?.data) {
+                    const slug = gerarSlugSessao(parseInt(sessaoAtiva.numeroSessao), sessaoAtiva.data)
+                    window.open(`/painel-operador/${slug}`, '_blank')
                   }
                 }}
                 className="bg-green-600 hover:bg-green-700"
@@ -657,8 +694,9 @@ export default function PainelEletronicoPage() {
 
               <Button
                 onClick={() => {
-                  if (sessaoAtiva?.id) {
-                    window.open(`/painel-tv/${sessaoAtiva.id}`, '_blank')
+                  if (sessaoAtiva?.id && sessaoAtiva?.numeroSessao && sessaoAtiva?.data) {
+                    const slug = gerarSlugSessao(parseInt(sessaoAtiva.numeroSessao), sessaoAtiva.data)
+                    window.open(`/painel-tv/${slug}`, '_blank')
                   }
                 }}
                 className="bg-purple-600 hover:bg-purple-700"
@@ -1128,17 +1166,33 @@ export default function PainelEletronicoPage() {
                         
                         <div className="flex gap-2">
                           {item.status === 'em_discussao' && (
-                            <Button 
-                              onClick={() => iniciarVotacao(item.id)}
-                              className="bg-green-600 hover:bg-green-700"
-                              size="sm"
-                            >
-                              <Vote className="h-4 w-4 mr-1" />
-                              Iniciar Votação
-                            </Button>
+                            <>
+                              {/* Botão Iniciar Votação - apenas para itens que precisam de votação */}
+                              {!isItemInformativo(item.tipoAcao) && (
+                                <Button
+                                  onClick={() => iniciarVotacao(item.id)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                  size="sm"
+                                >
+                                  <Vote className="h-4 w-4 mr-1" />
+                                  Iniciar Votação
+                                </Button>
+                              )}
+                              {/* Botão Concluir - para itens informativos (leitura, comunicado, homenagem) */}
+                              {isItemInformativo(item.tipoAcao) && (
+                                <Button
+                                  onClick={() => concluirItemInformativo(item.id)}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                  size="sm"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Concluir
+                                </Button>
+                              )}
+                            </>
                           )}
                           {item.status === 'votacao' && (
-                            <Button 
+                            <Button
                               onClick={() => finalizarVotacao(`votacao-${item.id}`)}
                               variant="destructive"
                               size="sm"

@@ -30,6 +30,7 @@ import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -88,12 +89,12 @@ export default function LancamentoRetroativoPage() {
         // Criar lista de parlamentares presentes com votos
         const parlamentaresComVoto: VotoParlamentar[] = (sessao.presencas || []).map(p => {
           const votoExistente = proposicaoData?.votacoes?.find(
-            (v: any) => v.parlamentarId === p.parlamentarId
+            (v: any) => v.parlamentarId === p.parlamentar.id
           )
           return {
-            parlamentarId: p.parlamentarId,
+            parlamentarId: p.parlamentar.id,
             nome: p.parlamentar?.nome || 'Parlamentar',
-            apelido: p.parlamentar?.apelido,
+            apelido: p.parlamentar?.apelido ?? undefined,
             presente: p.presente,
             voto: votoExistente?.voto || (p.presente ? null : 'AUSENTE'),
             votoAnterior: votoExistente?.voto || null
@@ -251,6 +252,9 @@ export default function LancamentoRetroativoPage() {
     )
   }
 
+  // Gerar slug amigável para URLs
+  const slugSessao = gerarSlugSessao(sessao.numero, sessao.data)
+
   // Validar que sessao esta CONCLUIDA
   if (sessao.status !== 'CONCLUIDA') {
     return (
@@ -264,7 +268,7 @@ export default function LancamentoRetroativoPage() {
               Esta sessao esta com status: <Badge>{sessao.status}</Badge>
             </p>
             <Button asChild>
-              <Link href={`/admin/sessoes/${id}`}>
+              <Link href={`/admin/sessoes/${slugSessao}`}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar para Sessao
               </Link>
@@ -296,7 +300,7 @@ export default function LancamentoRetroativoPage() {
       {/* Header */}
       <div className="flex items-start gap-4">
         <Button asChild variant="outline" size="sm" className="mt-1">
-          <Link href={`/admin/sessoes/${id}`}>
+          <Link href={`/admin/sessoes/${slugSessao}`}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>

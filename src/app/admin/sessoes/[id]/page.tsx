@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,11 +27,15 @@ import {
   Gavel,
   UserCheck,
   UserX,
-  BookOpen
+  BookOpen,
+  PenLine
 } from 'lucide-react'
 import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
+import { MesaSessaoEditor } from '@/components/admin/mesa-sessao-editor'
+import { PautaEditor } from '@/components/admin/pauta-editor'
 
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
@@ -40,6 +45,7 @@ export default function SessaoDetailPage() {
   const router = useRouter()
   const id = params?.id as string | undefined
   const { sessao, loading, error } = useSessao(id || null)
+  const [editingPauta, setEditingPauta] = useState(false)
 
   if (!id) {
     return (
@@ -146,6 +152,7 @@ export default function SessaoDetailPage() {
   }
 
   const statusConfig = getStatusConfig(sessao.status)
+  const slugSessao = gerarSlugSessao(sessao.numero, sessao.data)
   const StatusIcon = statusConfig.icon
 
   // Calculate statistics
@@ -233,7 +240,7 @@ export default function SessaoDetailPage() {
         <div className="flex flex-wrap gap-2">
           {sessao.status === 'AGENDADA' && (
             <Button asChild>
-              <Link href={`/painel-operador/${id}`}>
+              <Link href={`/painel-operador/${slugSessao}`}>
                 <Play className="h-4 w-4 mr-2" />
                 Iniciar Sessao
               </Link>
@@ -241,7 +248,7 @@ export default function SessaoDetailPage() {
           )}
           {sessao.status === 'EM_ANDAMENTO' && (
             <Button asChild variant="default" className="bg-yellow-600 hover:bg-yellow-700">
-              <Link href={`/painel-operador/${id}`}>
+              <Link href={`/painel-operador/${slugSessao}`}>
                 <Gavel className="h-4 w-4 mr-2" />
                 Acessar Painel
               </Link>
@@ -249,20 +256,20 @@ export default function SessaoDetailPage() {
           )}
           {sessao.status === 'CONCLUIDA' && (
             <Button asChild variant="default" className="bg-amber-600 hover:bg-amber-700">
-              <Link href={`/admin/sessoes/${id}/lancamento-retroativo`}>
+              <Link href={`/admin/sessoes/${slugSessao}/lancamento-retroativo`}>
                 <Vote className="h-4 w-4 mr-2" />
                 Lancar Votacoes
               </Link>
             </Button>
           )}
           <Button asChild variant="outline">
-            <Link href={`/admin/sessoes/${id}/editar`}>
+            <Link href={`/admin/sessoes/${slugSessao}/editar`}>
               <Edit className="h-4 w-4 mr-2" />
               Editar
             </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href={`/admin/sessoes/${id}/historico`}>
+            <Link href={`/admin/sessoes/${slugSessao}/historico`}>
               <History className="h-4 w-4 mr-2" />
               Historico
             </Link>
@@ -351,92 +358,119 @@ export default function SessaoDetailPage() {
 
             {/* Pauta Tab */}
             <TabsContent value="pauta" className="mt-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <ClipboardList className="h-5 w-5" />
-                      Pauta da Sessao
-                    </CardTitle>
-                    {sessao.pautaSessao && (
-                      <Badge variant="outline">
-                        {sessao.pautaSessao.status === 'APROVADA' ? 'Publicada' : sessao.pautaSessao.status}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {pautaItens.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <ClipboardList className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p>Nenhum item na pauta</p>
-                      <Button asChild variant="link" className="mt-2">
-                        <Link href={`/admin/sessoes/${id}/editar`}>Adicionar itens</Link>
-                      </Button>
+              {editingPauta ? (
+                <PautaEditor
+                  sessaoId={sessao.id}
+                  readOnly={sessao.status === 'CANCELADA'}
+                  onClose={() => setEditingPauta(false)}
+                />
+              ) : (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <ClipboardList className="h-5 w-5" />
+                        Pauta da Sessao
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        {sessao.pautaSessao && (
+                          <Badge variant="outline">
+                            {sessao.pautaSessao.status === 'APROVADA' ? 'Publicada' : sessao.pautaSessao.status}
+                          </Badge>
+                        )}
+                        {sessao.status !== 'CANCELADA' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingPauta(true)}
+                          >
+                            <PenLine className="h-4 w-4 mr-1" />
+                            Editar Pauta
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'].map(secao => {
-                        const itens = itensPorSecao[secao]
-                        if (!itens || itens.length === 0) return null
+                  </CardHeader>
+                  <CardContent>
+                    {pautaItens.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <ClipboardList className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                        <p>Nenhum item na pauta</p>
+                        {sessao.status !== 'CANCELADA' && (
+                          <Button
+                            variant="link"
+                            className="mt-2"
+                            onClick={() => setEditingPauta(true)}
+                          >
+                            Adicionar itens
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'].map(secao => {
+                          const itens = itensPorSecao[secao]
+                          if (!itens || itens.length === 0) return null
 
-                        return (
-                          <div key={secao}>
-                            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-                              {secao === 'ORDEM_DO_DIA' && <Gavel className="h-4 w-4" />}
-                              {secao === 'EXPEDIENTE' && <BookOpen className="h-4 w-4" />}
-                              {getSecaoLabel(secao)}
-                              <Badge variant="secondary" className="text-xs">{itens.length}</Badge>
-                            </h3>
-                            <div className="space-y-2">
-                              {itens.map((item, idx) => {
-                                const itemStatus = getItemStatusConfig(item.status)
-                                return (
-                                  <div
-                                    key={item.id}
-                                    className={cn(
-                                      'p-3 rounded-lg border bg-white hover:bg-gray-50 transition-colors',
-                                      item.status === 'EM_DISCUSSAO' && 'border-blue-300 bg-blue-50',
-                                      item.status === 'EM_VOTACAO' && 'border-yellow-300 bg-yellow-50'
-                                    )}
-                                  >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <span className="text-xs font-medium text-gray-400">
-                                            {idx + 1}.
-                                          </span>
-                                          <span className="font-medium text-gray-900 truncate">
-                                            {item.titulo}
-                                          </span>
+                          return (
+                            <div key={secao}>
+                              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+                                {secao === 'ORDEM_DO_DIA' && <Gavel className="h-4 w-4" />}
+                                {secao === 'EXPEDIENTE' && <BookOpen className="h-4 w-4" />}
+                                {getSecaoLabel(secao)}
+                                <Badge variant="secondary" className="text-xs">{itens.length}</Badge>
+                              </h3>
+                              <div className="space-y-2">
+                                {itens.map((item, idx) => {
+                                  const itemStatus = getItemStatusConfig(item.status)
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className={cn(
+                                        'p-3 rounded-lg border bg-white hover:bg-gray-50 transition-colors cursor-pointer',
+                                        item.status === 'EM_DISCUSSAO' && 'border-blue-300 bg-blue-50',
+                                        item.status === 'EM_VOTACAO' && 'border-yellow-300 bg-yellow-50'
+                                      )}
+                                      onClick={() => setEditingPauta(true)}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-xs font-medium text-gray-400">
+                                              {idx + 1}.
+                                            </span>
+                                            <span className="font-medium text-gray-900 truncate">
+                                              {item.titulo}
+                                            </span>
+                                          </div>
+                                          {item.proposicao && (
+                                            <p className="text-sm text-gray-600">
+                                              {item.proposicao.tipo} {item.proposicao.numero}/{item.proposicao.ano}
+                                              {item.proposicao.ementa && (
+                                                <span className="text-gray-400"> - {item.proposicao.ementa.substring(0, 60)}...</span>
+                                              )}
+                                            </p>
+                                          )}
+                                          {item.descricao && !item.proposicao && (
+                                            <p className="text-sm text-gray-500 truncate">{item.descricao}</p>
+                                          )}
                                         </div>
-                                        {item.proposicao && (
-                                          <p className="text-sm text-gray-600">
-                                            {item.proposicao.tipo} {item.proposicao.numero}/{item.proposicao.ano}
-                                            {item.proposicao.ementa && (
-                                              <span className="text-gray-400"> - {item.proposicao.ementa.substring(0, 60)}...</span>
-                                            )}
-                                          </p>
-                                        )}
-                                        {item.descricao && !item.proposicao && (
-                                          <p className="text-sm text-gray-500 truncate">{item.descricao}</p>
-                                        )}
+                                        <Badge className={cn(itemStatus.bg, itemStatus.text, 'text-xs whitespace-nowrap')}>
+                                          {itemStatus.label}
+                                        </Badge>
                                       </div>
-                                      <Badge className={cn(itemStatus.bg, itemStatus.text, 'text-xs whitespace-nowrap')}>
-                                        {itemStatus.label}
-                                      </Badge>
                                     </div>
-                                  </div>
-                                )
-                              })}
+                                  )
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* Presenca Tab */}
@@ -635,31 +669,37 @@ export default function SessaoDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button asChild variant="outline" className="w-full justify-start">
-                <Link href={`/painel-operador/${id}`}>
+                <Link href={`/painel-operador/${slugSessao}`}>
                   <Gavel className="h-4 w-4 mr-2" />
                   Painel do Operador
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full justify-start">
-                <Link href={`/painel-publico?sessaoId=${id}`}>
+                <Link href={`/painel-publico?sessaoId=${slugSessao}`}>
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Painel Publico
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full justify-start">
-                <Link href={`/painel-tv/${id}`}>
+                <Link href={`/painel-tv/${slugSessao}`}>
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Painel TV
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full justify-start">
-                <Link href={`/admin/sessoes/${id}/historico`}>
+                <Link href={`/admin/sessoes/${slugSessao}/historico`}>
                   <History className="h-4 w-4 mr-2" />
                   Ver Historico Completo
                 </Link>
               </Button>
             </CardContent>
           </Card>
+
+          {/* Mesa da Sessão */}
+          <MesaSessaoEditor
+            sessaoId={sessao.id}
+            readOnly={sessao.status === 'CANCELADA'}
+          />
         </div>
       </div>
     </div>

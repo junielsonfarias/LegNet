@@ -3,6 +3,19 @@ import type { LegislaturaApi } from '@/lib/api/legislaturas-api'
 import type { PeriodoLegislaturaApi } from '@/lib/api/mesa-diretora-api'
 
 /**
+ * Gera o slug amigável para uma sessão no formato "sessao-{numero}-{ano}"
+ * Exemplo: sessao-36-2026
+ *
+ * @param numero - Número da sessão
+ * @param data - Data da sessão (Date ou string ISO)
+ * @returns Slug no formato "sessao-{numero}-{ano}"
+ */
+export function gerarSlugSessao(numero: number, data: Date | string): string {
+  const ano = typeof data === 'string' ? new Date(data).getFullYear() : data.getFullYear()
+  return `sessao-${numero}-${ano}`
+}
+
+/**
  * Busca a legislatura ativa atual
  */
 export async function getLegislaturaAtual(): Promise<LegislaturaApi | null> {
@@ -44,7 +57,7 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
       if (!legislatura) return null
       legId = legislatura.id
     }
-    
+
     const periodo = await prisma.periodoLegislatura.findFirst({
       where: {
         legislaturaId: legId,
@@ -56,9 +69,9 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
       },
       orderBy: { numero: 'desc' }
     })
-    
+
     if (!periodo) return null
-    
+
     return {
       id: periodo.id,
       legislaturaId: periodo.legislaturaId,
@@ -69,6 +82,122 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
     }
   } catch (error) {
     console.error('Erro ao buscar período atual:', error)
+    return null
+  }
+}
+
+/**
+ * Busca o período para uma data específica (usado para dados pretéritos)
+ * Tenta encontrar um período que contenha a data, ou o período mais próximo da legislatura
+ */
+export async function getPeriodoParaData(data: Date, legislaturaId: string): Promise<PeriodoLegislaturaApi | null> {
+  try {
+    // Primeiro tenta encontrar período que contenha a data
+    const periodoExato = await prisma.periodoLegislatura.findFirst({
+      where: {
+        legislaturaId,
+        dataInicio: { lte: data },
+        OR: [
+          { dataFim: null },
+          { dataFim: { gte: data } }
+        ]
+      },
+      orderBy: { numero: 'desc' }
+    })
+
+    if (periodoExato) {
+      return {
+        id: periodoExato.id,
+        legislaturaId: periodoExato.legislaturaId,
+        numero: periodoExato.numero,
+        dataInicio: periodoExato.dataInicio.toISOString(),
+        dataFim: periodoExato.dataFim?.toISOString() || null,
+        descricao: periodoExato.descricao || null
+      }
+    }
+
+    // Se não encontrou, busca qualquer período da legislatura
+    // Prioriza o período mais recente que começou antes da data
+    const periodoProximo = await prisma.periodoLegislatura.findFirst({
+      where: {
+        legislaturaId,
+        dataInicio: { lte: data }
+      },
+      orderBy: { dataInicio: 'desc' }
+    })
+
+    if (periodoProximo) {
+      console.log(`⚠️ Data ${data.toISOString()} está fora do período ${periodoProximo.numero}, mas será aceita (dados pretéritos)`)
+      return {
+        id: periodoProximo.id,
+        legislaturaId: periodoProximo.legislaturaId,
+        numero: periodoProximo.numero,
+        dataInicio: periodoProximo.dataInicio.toISOString(),
+        dataFim: periodoProximo.dataFim?.toISOString() || null,
+        descricao: periodoProximo.descricao || null
+      }
+    }
+
+    // Último recurso: busca o primeiro período da legislatura
+    const primeiroPeriodo = await prisma.periodoLegislatura.findFirst({
+      where: { legislaturaId },
+      orderBy: { numero: 'asc' }
+    })
+
+    if (primeiroPeriodo) {
+      console.log(`⚠️ Usando primeiro período da legislatura para data ${data.toISOString()} (dados pretéritos)`)
+      return {
+        id: primeiroPeriodo.id,
+        legislaturaId: primeiroPeriodo.legislaturaId,
+        numero: primeiroPeriodo.numero,
+        dataInicio: primeiroPeriodo.dataInicio.toISOString(),
+        dataFim: primeiroPeriodo.dataFim?.toISOString() || null,
+        descricao: primeiroPeriodo.descricao || null
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.error('Erro ao buscar período para data:', error)
+    return null
+  }
+}
+
+/**
+ * Busca legislatura que contenha o ano da data fornecida
+ */
+export async function getLegislaturaParaData(data: Date): Promise<LegislaturaApi | null> {
+  try {
+    const ano = data.getFullYear()
+
+    // Primeiro tenta buscar legislatura que contenha o ano
+    const legislatura = await prisma.legislatura.findFirst({
+      where: {
+        anoInicio: { lte: ano },
+        anoFim: { gte: ano }
+      },
+      orderBy: { anoInicio: 'desc' }
+    })
+
+    if (legislatura) {
+      return {
+        id: legislatura.id,
+        numero: legislatura.numero,
+        anoInicio: legislatura.anoInicio,
+        anoFim: legislatura.anoFim,
+        dataInicio: legislatura.dataInicio?.toISOString() || null,
+        dataFim: legislatura.dataFim?.toISOString() || null,
+        ativa: legislatura.ativa,
+        descricao: legislatura.descricao || null,
+        createdAt: legislatura.createdAt.toISOString(),
+        updatedAt: legislatura.updatedAt.toISOString()
+      }
+    }
+
+    // Se não encontrou, tenta a legislatura ativa
+    return getLegislaturaAtual()
+  } catch (error) {
+    console.error('Erro ao buscar legislatura para data:', error)
     return null
   }
 }

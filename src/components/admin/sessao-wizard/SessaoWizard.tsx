@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 import { StepSessaoInfo, type SessaoFormData } from './StepSessaoInfo'
 import { StepMontarPauta, type PautaItem } from './StepMontarPauta'
@@ -115,7 +116,9 @@ export function SessaoWizard({ onComplete, onCancel }: SessaoWizardProps) {
       toast.success('Sessao criada com sucesso!')
 
       if (onComplete) {
-        onComplete(sessaoId)
+        // Usar slug amigável em vez de CUID para URL mais legível
+        const slug = gerarSlugSessao(parseInt(sessaoData.numero), sessaoData.data)
+        onComplete(slug)
       }
     } catch (error) {
       console.error('Erro ao criar sessao:', error)

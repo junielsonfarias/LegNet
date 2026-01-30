@@ -4,9 +4,11 @@ import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, ValidationError, ConflictError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
-import { 
-  getLegislaturaAtual, 
-  getPeriodoAtual, 
+import {
+  getLegislaturaAtual,
+  getLegislaturaParaData,
+  getPeriodoAtual,
+  getPeriodoParaData,
   getProximoNumeroSessaoOrdinaria,
   gerarPautaAutomatica,
   gerarAtaSessao
@@ -206,23 +208,42 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const dataSessao = combineDateAndTimeUTC(validatedData.data, validatedData.horario)
   let legislaturaId = validatedData.legislaturaId
   let periodoId = validatedData.periodoId
-  
+  const ehDadoPreterito = validatedData.finalizada === true
+
   if (!legislaturaId) {
-    const legislatura = await getLegislaturaAtual()
+    // Para dados pretéritos, busca legislatura pelo ano da data
+    // Para sessões novas, usa legislatura ativa
+    const legislatura = ehDadoPreterito
+      ? await getLegislaturaParaData(dataSessao)
+      : await getLegislaturaAtual()
+
     if (!legislatura) {
-      throw new ValidationError('Não há legislatura ativa cadastrada. Cadastre uma legislatura primeiro.')
+      throw new ValidationError(
+        ehDadoPreterito
+          ? `Não há legislatura cadastrada para o ano ${dataSessao.getFullYear()}. Cadastre a legislatura primeiro.`
+          : 'Não há legislatura ativa cadastrada. Cadastre uma legislatura primeiro.'
+      )
     }
     legislaturaId = legislatura.id
-    console.log('📋 Legislatura identificada automaticamente:', legislatura.numero)
+    console.log('📋 Legislatura identificada automaticamente:', legislatura.numero, ehDadoPreterito ? '(dados pretéritos)' : '')
   }
-  
+
   if (!periodoId && legislaturaId) {
-    const periodo = await getPeriodoAtual(dataSessao, legislaturaId)
+    // Para dados pretéritos, usa busca mais flexível de período
+    // Para sessões novas, exige período ativo
+    const periodo = ehDadoPreterito
+      ? await getPeriodoParaData(dataSessao, legislaturaId)
+      : await getPeriodoAtual(dataSessao, legislaturaId)
+
     if (!periodo) {
-      throw new ValidationError('Não há período ativo para a data informada. Verifique os períodos da legislatura.')
+      throw new ValidationError(
+        ehDadoPreterito
+          ? `Não há período cadastrado na legislatura para a data informada. Cadastre os períodos da legislatura primeiro.`
+          : 'Não há período ativo para a data informada. Verifique os períodos da legislatura.'
+      )
     }
     periodoId = periodo.id
-    console.log('📋 Período identificado automaticamente:', periodo.numero)
+    console.log('📋 Período identificado automaticamente:', periodo.numero, ehDadoPreterito ? '(dados pretéritos)' : '')
   }
   
   // Calcular número sequencial se não fornecido (apenas para sessões ordinárias)

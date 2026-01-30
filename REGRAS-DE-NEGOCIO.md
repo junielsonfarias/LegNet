@@ -1352,6 +1352,43 @@ REGRA RN-158: MENU RESTRITO DO OPERADOR
 - Permissoes limitadas a operacao de sessao/votacao
 ```
 
+### 15.3 Mesa da Sessao
+
+```
+REGRA RN-160: MESA DA SESSAO
+A Mesa da Sessao e composta pelos membros da Mesa Diretora vigente
+que presidem uma sessao especifica. Permite registrar substituicoes
+temporarias quando um membro titular esta ausente.
+
+REGRA RN-161: COMPOSICAO PADRAO
+Por padrao, a Mesa da Sessao herda a composicao da Mesa Diretora
+ativa do periodo legislativo. Pode ser personalizada para cada sessao.
+
+REGRA RN-162: SUBSTITUICAO POR AUSENCIA
+Se o Presidente nao puder presidir a sessao, a ordem de substituicao e:
+1. Vice-Presidente assume a Presidencia
+2. 1o Secretario assume (se Vice ausente)
+3. 2o Secretario assume (se demais ausentes)
+4. Vereador mais idoso presente (ultimo recurso)
+Toda substituicao DEVE ser registrada com motivo.
+
+REGRA RN-163: RASTREABILIDADE DA PRESIDENCIA
+O sistema DEVE registrar para cada sessao:
+- Quem presidiu efetivamente
+- Se foi titular ou substituto
+- Motivo da substituicao (se aplicavel)
+- Data/hora do registro
+
+REGRA RN-164: PERMISSOES PARA ALTERAR MESA
+Podem alterar a Mesa da Sessao:
+- ADMIN, SECRETARIA, OPERADOR
+A sessao NAO precisa estar em andamento para alterar a mesa.
+
+REGRA RN-165: RESTAURACAO DA MESA DIRETORA
+E possivel restaurar a composicao padrao (Mesa Diretora)
+a qualquer momento antes do encerramento da sessao.
+```
+
 ---
 
 ## ANEXO A: GLOSSARIO

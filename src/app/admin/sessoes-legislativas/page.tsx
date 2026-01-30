@@ -20,6 +20,7 @@ import type { PautaSugestaoApi } from '@/lib/api/pauta-api'
 import { cn } from '@/lib/utils'
 import type { PautaItemApi } from '@/lib/api/pauta-api'
 import { toast } from 'sonner'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 const PAUTA_SECOES = [
   { value: 'EXPEDIENTE', label: 'Expediente' },
@@ -711,10 +712,10 @@ export default function SessoesLegislativasPage() {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => router.push(`/admin/painel-eletronico/${sessao.id}`)}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/admin/painel-eletronico/${gerarSlugSessao(sessao.numero, sessao.data)}`)}
                       title="Abrir Painel Eletrônico"
                       className="bg-blue-50 hover:bg-blue-100 border-blue-200"
                     >
@@ -728,7 +729,12 @@ export default function SessoesLegislativasPage() {
                     >
                       <Layers className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleView(sessao)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/admin/sessoes/${gerarSlugSessao(sessao.numero, sessao.data)}`)}
+                      title="Ver detalhes da sessão"
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleManagePauta(sessao)}>

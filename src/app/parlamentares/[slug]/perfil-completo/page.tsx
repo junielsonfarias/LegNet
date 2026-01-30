@@ -25,8 +25,6 @@ import {
   Target,
   Star
 } from 'lucide-react'
-import { parlamentarAvancadoService } from '@/lib/parlamentar-avancado-service'
-import { parlamentaresService } from '@/lib/parlamentares-data'
 import { ParlamentarCompleto } from '@/lib/types/parlamentar-avancado'
 import { toast } from 'sonner'
 
@@ -44,10 +42,91 @@ export default function PerfilCompletoPage({ params }: PerfilCompletoPageProps) 
   const carregarParlamentar = useCallback(async () => {
     try {
       setLoading(true)
-      const parlamentarEncontrado = parlamentaresService.getBySlug(params.slug)
-      if (parlamentarEncontrado) {
-        const parlamentarCompleto = parlamentarAvancadoService.getParlamentarCompleto(parlamentarEncontrado.id)
-        setParlamentar(parlamentarCompleto || null)
+      // Buscar parlamentar da API real por slug
+      const response = await fetch(`/api/parlamentares?search=${encodeURIComponent(params.slug)}&ativo=true`)
+      const data = await response.json()
+
+      if (data.success && data.data && data.data.length > 0) {
+        // Encontrar o parlamentar pelo slug (apelido normalizado)
+        const parlamentarEncontrado = data.data.find((p: any) => {
+          const slugNormalizado = (p.apelido || p.nome).toLowerCase()
+            .replace(/\s+/g, '-')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          return slugNormalizado === params.slug || p.id === params.slug
+        }) || data.data[0]
+
+        // Converter para o formato ParlamentarCompleto
+        const parlamentarCompleto: ParlamentarCompleto = {
+          id: parlamentarEncontrado.id,
+          nome: parlamentarEncontrado.nome,
+          apelido: parlamentarEncontrado.apelido || '',
+          cargo: parlamentarEncontrado.cargo || 'Vereador',
+          partido: parlamentarEncontrado.partido || '',
+          legislatura: '',
+          foto: parlamentarEncontrado.foto,
+          email: parlamentarEncontrado.email,
+          telefone: parlamentarEncontrado.telefone,
+          gabinete: parlamentarEncontrado.gabinete,
+          biografia: parlamentarEncontrado.biografia,
+          ativo: parlamentarEncontrado.ativo,
+          historicoLegislativo: [],
+          producaoLegislativa: [],
+          comissoes: [],
+          filiacaoPartidaria: [],
+          agenda: [],
+          estatisticas: {
+            parlamentarId: parlamentarEncontrado.id,
+            legislaturaAtual: '',
+            mandatos: 0,
+            anosExperiencia: 0,
+            produtividade: {
+              proposicoesPorAno: 0,
+              proposicoesAprovadas: 0,
+              proposicoesRejeitadas: 0,
+              taxaAprovacao: 0
+            },
+            participacao: {
+              presencaSessoes: 0,
+              presencaComissoes: 0,
+              participacaoDebates: 0,
+              relatorias: 0
+            },
+            influencia: {
+              proposicoesCoautoria: 0,
+              proposicoesApoiadas: 0,
+              proposicoesApoiadasPor: 0,
+              indiceInfluencia: 0
+            },
+            redeSocial: {
+              seguidoresFacebook: 0,
+              seguidoresInstagram: 0,
+              seguidoresTwitter: 0,
+              engajamentoMedio: 0
+            },
+            ultimaAtualizacao: new Date()
+          },
+          proposicoes: {
+            apresentadas: 0,
+            aprovadas: 0,
+            emTramitacao: 0,
+            rejeitadas: 0,
+            arquivadas: 0
+          },
+          presenca: {
+            totalSessoes: 0,
+            presenciadas: 0,
+            ausencias: 0,
+            percentual: 0
+          },
+          participacaoComissoes: {
+            totalComissoes: 0,
+            presidencias: 0,
+            relatorias: 0,
+            participacao: 0
+          }
+        }
+
+        setParlamentar(parlamentarCompleto)
       }
     } catch (error) {
       console.error('Erro ao carregar parlamentar:', error)
@@ -65,9 +144,9 @@ export default function PerfilCompletoPage({ params }: PerfilCompletoPageProps) 
     if (!parlamentar) return
 
     try {
-      const relatorio = parlamentarAvancadoService.gerarRelatorioParlamentar(parlamentar.id, 'anual')
-      toast.success('Relatório gerado com sucesso!')
-      console.log('Relatório:', relatorio)
+      // TODO: Implementar geração de relatório via API real
+      toast.info('Funcionalidade de relatório em desenvolvimento')
+      console.log('Parlamentar para relatório:', parlamentar.id)
     } catch (error) {
       console.error('Erro ao gerar relatório:', error)
       toast.error('Erro ao gerar relatório')

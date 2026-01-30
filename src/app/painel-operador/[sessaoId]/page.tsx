@@ -6,9 +6,7 @@ import { useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +28,11 @@ import {
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu'
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible'
+import {
   Play,
   Pause,
   Square,
@@ -38,37 +41,37 @@ import {
   Vote,
   Users,
   Calendar,
-  AlertCircle,
   CheckCircle,
   Timer,
   Monitor,
   RefreshCw,
-  MoreVertical,
-  Eye,
-  ArrowUp,
-  ArrowDown,
   RotateCcw,
-  BookOpen,
-  LogOut,
   Tv,
   ExternalLink,
   ChevronDown,
+  ChevronRight,
   Loader2,
   XCircle,
   Pencil,
-  Settings
+  Settings,
+  ListOrdered,
+  UserCheck,
+  UserX,
+  Minus
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import type { PautaItemApi } from '@/lib/api/pauta-api'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 import { PresencaControl } from '@/components/admin/presenca-control'
 import { VotacaoAcompanhamento } from '@/components/admin/votacao-acompanhamento'
 import { VotacaoEdicao } from '@/components/admin/votacao-edicao'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { cn } from '@/lib/utils'
 
 const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'; label: string }> = [
-  { value: 'CONCLUIDO', label: 'Concluído' },
+  { value: 'CONCLUIDO', label: 'Concluido' },
   { value: 'APROVADO', label: 'Aprovado' },
   { value: 'REJEITADO', label: 'Rejeitado' },
   { value: 'RETIRADO', label: 'Retirado' },
@@ -84,101 +87,56 @@ const formatSeconds = (seconds: number) => {
 
 const getSessaoStatusBadge = (status: string) => {
   switch (status) {
-    case 'AGENDADA':
-      return 'bg-blue-600 text-white'
-    case 'EM_ANDAMENTO':
-      return 'bg-green-600 text-white'
-    case 'CONCLUIDA':
-      return 'bg-gray-600 text-white'
-    case 'CANCELADA':
-      return 'bg-red-600 text-white'
-    default:
-      return 'bg-slate-600 text-white'
+    case 'AGENDADA': return 'bg-blue-600 text-white'
+    case 'EM_ANDAMENTO': return 'bg-green-600 text-white'
+    case 'CONCLUIDA': return 'bg-gray-600 text-white'
+    case 'CANCELADA': return 'bg-red-600 text-white'
+    default: return 'bg-slate-600 text-white'
   }
 }
 
 const getSessaoStatusLabel = (status: string) => {
   switch (status) {
-    case 'AGENDADA':
-      return 'Agendada'
-    case 'EM_ANDAMENTO':
-      return 'Em andamento'
-    case 'CONCLUIDA':
-      return 'Concluída'
-    case 'CANCELADA':
-      return 'Cancelada'
-    default:
-      return status
+    case 'AGENDADA': return 'Agendada'
+    case 'EM_ANDAMENTO': return 'Em andamento'
+    case 'CONCLUIDA': return 'Concluida'
+    case 'CANCELADA': return 'Cancelada'
+    default: return status
   }
 }
 
 const getTipoSessaoLabel = (tipo: string) => {
   switch (tipo) {
-    case 'ORDINARIA':
-      return 'Ordinária'
-    case 'EXTRAORDINARIA':
-      return 'Extraordinária'
-    case 'SOLENE':
-      return 'Solene'
-    case 'ESPECIAL':
-      return 'Especial'
-    default:
-      return tipo
+    case 'ORDINARIA': return 'Ordinaria'
+    case 'EXTRAORDINARIA': return 'Extraordinaria'
+    case 'SOLENE': return 'Solene'
+    case 'ESPECIAL': return 'Especial'
+    default: return tipo
   }
 }
 
-const getItemStatusBadge = (status: string) => {
+const getItemStatusConfig = (status: string) => {
   switch (status) {
-    case 'PENDENTE':
-      return 'bg-slate-600 text-slate-200'
-    case 'EM_DISCUSSAO':
-      return 'bg-blue-600 text-white'
-    case 'EM_VOTACAO':
-      return 'bg-purple-600 text-white'
-    case 'APROVADO':
-      return 'bg-green-600 text-white'
-    case 'REJEITADO':
-      return 'bg-red-600 text-white'
-    case 'ADIADO':
-      return 'bg-yellow-600 text-black'
-    case 'CONCLUIDO':
-      return 'bg-teal-600 text-white'
-    case 'RETIRADO':
-      return 'bg-orange-600 text-white'
-    case 'VISTA':
-      return 'bg-indigo-600 text-white'
-    default:
-      return 'bg-slate-600 text-slate-200'
+    case 'PENDENTE': return { bg: 'bg-slate-600', text: 'text-slate-200', label: 'Pendente' }
+    case 'EM_DISCUSSAO': return { bg: 'bg-blue-600', text: 'text-white', label: 'Em Discussao' }
+    case 'EM_VOTACAO': return { bg: 'bg-purple-600', text: 'text-white', label: 'Em Votacao' }
+    case 'APROVADO': return { bg: 'bg-green-600', text: 'text-white', label: 'Aprovado' }
+    case 'REJEITADO': return { bg: 'bg-red-600', text: 'text-white', label: 'Rejeitado' }
+    case 'ADIADO': return { bg: 'bg-yellow-600', text: 'text-black', label: 'Adiado' }
+    case 'CONCLUIDO': return { bg: 'bg-teal-600', text: 'text-white', label: 'Concluido' }
+    case 'RETIRADO': return { bg: 'bg-orange-600', text: 'text-white', label: 'Retirado' }
+    case 'VISTA': return { bg: 'bg-indigo-600', text: 'text-white', label: 'Vista' }
+    default: return { bg: 'bg-slate-600', text: 'text-slate-200', label: status }
   }
 }
 
-const getTipoAcaoBadge = (tipoAcao: string) => {
+const getTipoAcaoConfig = (tipoAcao: string) => {
   switch (tipoAcao) {
-    case 'VOTACAO':
-      return 'bg-purple-600/20 text-purple-300 border-purple-500/50'
-    case 'LEITURA':
-      return 'bg-blue-600/20 text-blue-300 border-blue-500/50'
-    case 'DISCUSSAO':
-      return 'bg-teal-600/20 text-teal-300 border-teal-500/50'
-    case 'COMUNICACAO':
-      return 'bg-amber-600/20 text-amber-300 border-amber-500/50'
-    default:
-      return 'bg-slate-600/20 text-slate-300 border-slate-500/50'
-  }
-}
-
-const getTipoAcaoLabel = (tipoAcao: string) => {
-  switch (tipoAcao) {
-    case 'VOTACAO':
-      return 'Votação'
-    case 'LEITURA':
-      return 'Leitura'
-    case 'DISCUSSAO':
-      return 'Discussão'
-    case 'COMUNICACAO':
-      return 'Comunicação'
-    default:
-      return tipoAcao
+    case 'VOTACAO': return { icon: Vote, color: 'text-purple-400' }
+    case 'LEITURA': return { icon: FileText, color: 'text-blue-400' }
+    case 'DISCUSSAO': return { icon: Users, color: 'text-teal-400' }
+    case 'COMUNICACAO': return { icon: Monitor, color: 'text-amber-400' }
+    default: return { icon: FileText, color: 'text-slate-400' }
   }
 }
 
@@ -194,6 +152,14 @@ export default function PainelOperadorPage() {
   const [cronometroItem, setCronometroItem] = useState(0)
   const [itemEmExecucao, setItemEmExecucao] = useState<PautaItemApi | null>(null)
 
+  // Estados para colapsar secoes
+  const [secoesExpandidas, setSecoesExpandidas] = useState<Record<string, boolean>>({
+    'EXPEDIENTE': true,
+    'ORDEM_DO_DIA': true
+  })
+  const [presencaExpandida, setPresencaExpandida] = useState(false)
+  const [mostrarControlePresenca, setMostrarControlePresenca] = useState(false)
+
   const sessaoIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const itemIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const autoRefreshRef = useRef<NodeJS.Timeout | null>(null)
@@ -204,16 +170,10 @@ export default function PainelOperadorPage() {
     titulo: string
   }>({ open: false, itemId: '', titulo: '' })
   const [resultadoSelecionado, setResultadoSelecionado] = useState<string>('')
-
-  // Estado para edição de votação em sessões concluídas
   const [itemParaEditarVotacao, setItemParaEditarVotacao] = useState<PautaItemApi | null>(null)
 
-  // Iniciar timer da sessão
   const iniciarSessaoTimer = useCallback((dadosSessao: SessaoApi) => {
-    if (sessaoIntervalRef.current) {
-      clearInterval(sessaoIntervalRef.current)
-    }
-
+    if (sessaoIntervalRef.current) clearInterval(sessaoIntervalRef.current)
     if (dadosSessao.status === 'EM_ANDAMENTO' && dadosSessao.tempoInicio) {
       const calcularTempo = () => {
         const inicio = new Date(dadosSessao.tempoInicio!)
@@ -228,14 +188,9 @@ export default function PainelOperadorPage() {
     }
   }, [])
 
-  // Iniciar timer do item
   const iniciarItemTimer = useCallback((item: PautaItemApi | null) => {
-    if (itemIntervalRef.current) {
-      clearInterval(itemIntervalRef.current)
-    }
-
+    if (itemIntervalRef.current) clearInterval(itemIntervalRef.current)
     setItemEmExecucao(item)
-
     if (item && item.iniciadoEm) {
       const calcularTempo = () => {
         const inicio = new Date(item.iniciadoEm!)
@@ -255,26 +210,21 @@ export default function PainelOperadorPage() {
 
   const carregarSessao = useCallback(async (mostrarLoader = false) => {
     if (!sessaoId) return
-
     try {
-      if (mostrarLoader) {
-        setLoading(true)
-      }
+      if (mostrarLoader) setLoading(true)
       const dados = await sessoesApi.getById(sessaoId)
       setSessao(dados)
       iniciarSessaoTimer(dados)
       iniciarItemTimer(
         dados.pautaSessao?.itemAtual ??
-          dados.pautaSessao?.itens.find(item => ['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status)) ??
-          null
+        dados.pautaSessao?.itens.find(item => ['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status)) ??
+        null
       )
     } catch (error: any) {
-      console.error('Erro ao carregar sessão:', error)
-      toast.error(error?.message || 'Erro ao carregar sessão')
+      console.error('Erro ao carregar sessao:', error)
+      toast.error(error?.message || 'Erro ao carregar sessao')
     } finally {
-      if (mostrarLoader) {
-        setLoading(false)
-      }
+      if (mostrarLoader) setLoading(false)
     }
   }, [sessaoId, iniciarItemTimer, iniciarSessaoTimer])
 
@@ -288,10 +238,8 @@ export default function PainelOperadorPage() {
     }
   }, [carregarSessao])
 
-  // Alterar status da sessão
   const alterarStatusSessao = async (novoStatus: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA') => {
     if (!sessao) return
-
     try {
       setExecutando(true)
       const response = await fetch(`/api/sessoes/${sessao.id}`, {
@@ -299,17 +247,14 @@ export default function PainelOperadorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: novoStatus })
       })
-
       if (!response.ok) {
         const data = await response.json()
         throw new Error(data.error || 'Erro ao alterar status')
       }
-
       await carregarSessao(false)
       toast.success(`Status alterado para ${getSessaoStatusLabel(novoStatus)}`)
     } catch (error: any) {
-      console.error('Erro ao alterar status da sessão:', error)
-      toast.error(error?.message || 'Erro ao alterar status da sessão')
+      toast.error(error?.message || 'Erro ao alterar status da sessao')
     } finally {
       setExecutando(false)
     }
@@ -328,11 +273,10 @@ export default function PainelOperadorPage() {
         acao === 'iniciar' ? 'Item iniciado' :
         acao === 'pausar' ? 'Item pausado' :
         acao === 'retomar' ? 'Item retomado' :
-        acao === 'votacao' ? 'Votação iniciada' : 'Item finalizado'
+        acao === 'votacao' ? 'Votacao iniciada' : 'Item finalizado'
       )
     } catch (error: any) {
-      console.error('Erro ao executar ação no item:', error)
-      toast.error(error?.message || 'Erro ao executar ação no item')
+      toast.error(error?.message || 'Erro ao executar acao no item')
     } finally {
       setExecutando(false)
     }
@@ -348,15 +292,10 @@ export default function PainelOperadorPage() {
       toast.error('Selecione um resultado')
       return
     }
-    await executarAcaoItem(
-      modalFinalizar.itemId,
-      'finalizar',
-      resultadoSelecionado as 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
-    )
+    await executarAcaoItem(modalFinalizar.itemId, 'finalizar', resultadoSelecionado as any)
     setModalFinalizar({ open: false, itemId: '', titulo: '' })
   }
 
-  // Agrupar itens por seção
   const itensPorSecao = useMemo(() => {
     if (!sessao?.pautaSessao?.itens) return {}
     return sessao.pautaSessao.itens.reduce((acc, item) => {
@@ -369,9 +308,13 @@ export default function PainelOperadorPage() {
 
   const ordemSecoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'EXPLICACOES_PESSOAIS', 'SEM_SECAO']
 
+  const toggleSecao = (secao: string) => {
+    setSecoesExpandidas(prev => ({ ...prev, [secao]: !prev[secao] }))
+  }
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-screen bg-slate-900">
         <Loader2 className="h-12 w-12 animate-spin text-blue-400" />
       </div>
     )
@@ -379,12 +322,12 @@ export default function PainelOperadorPage() {
 
   if (!sessao) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-screen bg-slate-900">
         <Card className="bg-slate-800 border-slate-700 text-white max-w-md">
           <CardContent className="pt-6 text-center">
             <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Sessão não encontrada</h2>
-            <p className="text-slate-400">A sessão solicitada não existe ou foi removida.</p>
+            <h2 className="text-xl font-bold mb-2">Sessao nao encontrada</h2>
+            <p className="text-slate-400">A sessao solicitada nao existe ou foi removida.</p>
           </CardContent>
         </Card>
       </div>
@@ -393,436 +336,412 @@ export default function PainelOperadorPage() {
 
   const dataSessao = sessao.data ? new Date(sessao.data) : null
   const dataFormatada = dataSessao
-    ? dataSessao.toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      })
-    : 'Data não informada'
+    ? dataSessao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '--/--/----'
 
   const totalParlamentares = sessao.presencas?.length || 0
   const presentes = sessao.presencas?.filter(p => p.presente).length || 0
   const ausentes = totalParlamentares - presentes
   const percentualPresenca = totalParlamentares > 0 ? Math.round((presentes / totalParlamentares) * 100) : 0
 
+  // Contagem de status da pauta
+  const totalItens = sessao.pautaSessao?.itens.length || 0
+  const itensPendentes = sessao.pautaSessao?.itens.filter(i => i.status === 'PENDENTE').length || 0
+  const itensAprovados = sessao.pautaSessao?.itens.filter(i => i.status === 'APROVADO').length || 0
+  const itensRejeitados = sessao.pautaSessao?.itens.filter(i => i.status === 'REJEITADO').length || 0
+  const itensConcluidos = sessao.pautaSessao?.itens.filter(i => ['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO'].includes(i.status)).length || 0
+
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
-      {/* Header */}
-      <div className="border-b border-slate-700 bg-slate-800 px-4 md:px-6 py-4">
-        <div className="mx-auto max-w-7xl">
-          {/* Linha 1: Título e Status */}
-          <div className="flex items-center justify-between gap-4 mb-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="flex items-center gap-2 md:gap-3 text-lg md:text-2xl font-bold text-white truncate">
-                <Monitor className="h-5 w-5 md:h-7 md:w-7 text-blue-400 flex-shrink-0" />
-                <span className="truncate">{sessao.numero}ª Sessão {getTipoSessaoLabel(sessao.tipo)}</span>
-              </h1>
-              <p className="mt-1 text-xs md:text-sm text-slate-400 truncate">
-                {configuracao?.nomeCasa || 'Câmara Municipal'}
-              </p>
+    <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden">
+      {/* Header Compacto */}
+      <div className="flex-shrink-0 border-b border-slate-700 bg-slate-800 px-4 py-2">
+        <div className="flex items-center justify-between gap-4">
+          {/* Titulo e Info */}
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-blue-400 flex-shrink-0" />
+              <span className="font-bold text-lg truncate">
+                {sessao.numero}a {getTipoSessaoLabel(sessao.tipo)}
+              </span>
+            </div>
+            <div className="hidden md:flex items-center gap-3 text-sm text-slate-400">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {dataFormatada}
+              </span>
+              {sessao.horario && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {sessao.horario}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Status e Acoes */}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`${getSessaoStatusBadge(sessao.status)} hover:opacity-80 text-xs h-7`}
+                  disabled={executando}
+                >
+                  {getSessaoStatusLabel(sessao.status)}
+                  <ChevronDown className="h-3 w-3 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                {['AGENDADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'].map(s => (
+                  <DropdownMenuItem
+                    key={s}
+                    onClick={() => alterarStatusSessao(s as any)}
+                    disabled={sessao.status === s}
+                    className="text-xs"
+                  >
+                    {getSessaoStatusLabel(s)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div className="hidden sm:flex items-center gap-1">
+              <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-slate-400 hover:text-white">
+                <a href={`/admin/sessoes/${gerarSlugSessao(sessao.numero, sessao.data)}`} target="_blank" rel="noopener noreferrer">
+                  <Settings className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-slate-400 hover:text-white">
+                <a href={`/painel-publico?sessaoId=${gerarSlugSessao(sessao.numero, sessao.data)}`} target="_blank" rel="noopener noreferrer">
+                  <Monitor className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-blue-400 hover:text-blue-300">
+                <a href={`/painel-tv/${gerarSlugSessao(sessao.numero, sessao.data)}`} target="_blank" rel="noopener noreferrer">
+                  <Tv className="h-3.5 w-3.5" />
+                </a>
+              </Button>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Dropdown de Status */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-slate-400 hover:text-white"
+              onClick={() => carregarSessao(true)}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Barra de Status / Cronometro */}
+      <div className="flex-shrink-0 bg-slate-800/50 border-b border-slate-700 px-4 py-2">
+        <div className="flex items-center justify-between gap-4">
+          {/* Cronometro da Sessao */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Timer className="h-4 w-4 text-blue-400" />
+              <span className="text-xl font-mono font-bold text-blue-400">{formatSeconds(cronometroSessao)}</span>
+            </div>
+            {itemEmExecucao && (
+              <div className="flex items-center gap-2 text-sm">
+                <Minus className="h-3 w-3 text-slate-500" />
+                <span className="text-slate-400">Item:</span>
+                <span className="font-medium text-white truncate max-w-[200px]">
+                  {itemEmExecucao.proposicao
+                    ? `${itemEmExecucao.proposicao.tipo} ${itemEmExecucao.proposicao.numero}/${itemEmExecucao.proposicao.ano}`
+                    : itemEmExecucao.titulo}
+                </span>
+                <Badge variant="outline" className="font-mono text-xs h-5">{formatSeconds(cronometroItem)}</Badge>
+              </div>
+            )}
+          </div>
+
+          {/* Resumo da Pauta */}
+          <div className="hidden md:flex items-center gap-3 text-xs">
+            <span className="text-slate-400">Pauta:</span>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-slate-700 rounded">{totalItens} total</span>
+              <span className="px-2 py-0.5 bg-green-900/50 text-green-400 rounded">{itensAprovados} aprov</span>
+              <span className="px-2 py-0.5 bg-red-900/50 text-red-400 rounded">{itensRejeitados} rej</span>
+              <span className="px-2 py-0.5 bg-slate-600 rounded">{itensPendentes} pend</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Conteudo Principal - Altura Fixa com Scroll Interno */}
+      <div className="flex-1 overflow-hidden p-4">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Pauta da Sessao - 3 colunas */}
+          <div className="lg:col-span-3 flex flex-col min-h-0">
+            <Card className="bg-slate-800 border-slate-700 flex flex-col h-full">
+              <CardHeader className="flex-shrink-0 py-3 px-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-white text-base">
+                    <ListOrdered className="h-4 w-4 text-blue-400" />
+                    Pauta da Sessao
+                  </CardTitle>
+                  <Badge variant="outline" className="text-slate-400 text-xs">
+                    {itensConcluidos}/{totalItens} concluidos
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-hidden p-0">
+                <ScrollArea className="h-full px-4 pb-4">
+                  <div className="space-y-3">
+                    {ordemSecoes.map(secao => {
+                      const itens = itensPorSecao[secao]
+                      if (!itens || itens.length === 0) return null
+                      const isExpanded = secoesExpandidas[secao] !== false
+
+                      return (
+                        <Collapsible key={secao} open={isExpanded} onOpenChange={() => toggleSecao(secao)}>
+                          <CollapsibleTrigger className="flex items-center justify-between w-full py-2 px-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition-colors">
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                              <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                                {secao.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                            <Badge variant="outline" className="text-slate-400 text-xs">
+                              {itens.length}
+                            </Badge>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-2 space-y-1.5">
+                            {itens.map(item => {
+                              const statusConfig = getItemStatusConfig(item.status)
+                              const tipoConfig = getTipoAcaoConfig(item.tipoAcao || '')
+                              const TipoIcon = tipoConfig.icon
+                              const isAtivo = item.id === itemEmExecucao?.id
+
+                              return (
+                                <div
+                                  key={item.id}
+                                  className={cn(
+                                    "flex items-center gap-3 p-2.5 rounded-lg border transition-all",
+                                    isAtivo
+                                      ? "bg-blue-900/30 border-blue-500"
+                                      : "bg-slate-700/30 border-slate-600/50 hover:border-slate-500"
+                                  )}
+                                >
+                                  {/* Icone do Tipo */}
+                                  <div className={cn("flex-shrink-0", tipoConfig.color)}>
+                                    <TipoIcon className="h-4 w-4" />
+                                  </div>
+
+                                  {/* Conteudo Principal */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <Badge className={cn(statusConfig.bg, statusConfig.text, "text-[10px] h-5 px-1.5")}>
+                                        {statusConfig.label}
+                                      </Badge>
+                                      <span className="text-xs text-slate-500">#{item.ordem}</span>
+                                    </div>
+                                    <p className="text-sm font-medium text-white truncate mt-0.5">
+                                      {item.proposicao
+                                        ? `${item.proposicao.tipo} ${item.proposicao.numero}/${item.proposicao.ano}`
+                                        : item.titulo}
+                                    </p>
+                                    {item.proposicao?.ementa && (
+                                      <p className="text-xs text-slate-400 truncate">{item.proposicao.ementa}</p>
+                                    )}
+                                  </div>
+
+                                  {/* Tempo */}
+                                  <div className="flex-shrink-0 text-right">
+                                    <div className="text-xs text-slate-500">
+                                      {Math.floor((item.tempoReal || item.tempoAcumulado || 0) / 60)}min
+                                    </div>
+                                  </div>
+
+                                  {/* Acoes */}
+                                  <div className="flex-shrink-0 flex items-center gap-1">
+                                    {sessao.status === 'EM_ANDAMENTO' && (
+                                      <>
+                                        {item.status === 'PENDENTE' && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 w-7 p-0 text-green-400 hover:text-green-300 hover:bg-green-900/30"
+                                            onClick={() => executarAcaoItem(item.id, 'iniciar')}
+                                            disabled={executando}
+                                          >
+                                            <Play className="h-3.5 w-3.5" />
+                                          </Button>
+                                        )}
+                                        {item.status === 'EM_DISCUSSAO' && (
+                                          <>
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-7 w-7 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30"
+                                              onClick={() => executarAcaoItem(item.id, 'pausar')}
+                                              disabled={executando}
+                                            >
+                                              <Pause className="h-3.5 w-3.5" />
+                                            </Button>
+                                            {item.tipoAcao === 'VOTACAO' && (
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-7 w-7 p-0 text-purple-400 hover:text-purple-300 hover:bg-purple-900/30"
+                                                onClick={() => executarAcaoItem(item.id, 'votacao')}
+                                                disabled={executando}
+                                              >
+                                                <Vote className="h-3.5 w-3.5" />
+                                              </Button>
+                                            )}
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/30"
+                                              onClick={() => abrirModalFinalizar(item.id, item.titulo)}
+                                              disabled={executando}
+                                            >
+                                              <Square className="h-3.5 w-3.5" />
+                                            </Button>
+                                          </>
+                                        )}
+                                        {item.status === 'EM_VOTACAO' && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/30"
+                                            onClick={() => abrirModalFinalizar(item.id, item.titulo)}
+                                            disabled={executando}
+                                          >
+                                            <Square className="h-3.5 w-3.5" />
+                                          </Button>
+                                        )}
+                                        {(item.status === 'ADIADO' || (item.iniciadoEm === null && item.tempoAcumulado && item.tempoAcumulado > 0)) && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 w-7 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
+                                            onClick={() => executarAcaoItem(item.id, 'retomar')}
+                                            disabled={executando}
+                                          >
+                                            <RotateCcw className="h-3.5 w-3.5" />
+                                          </Button>
+                                        )}
+                                      </>
+                                    )}
+                                    {sessao.status === 'CONCLUIDA' && item.tipoAcao === 'VOTACAO' && item.proposicao && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 px-2 text-amber-400 hover:text-amber-300 hover:bg-amber-900/30"
+                                        onClick={() => setItemParaEditarVotacao(item)}
+                                      >
+                                        <Vote className="h-3.5 w-3.5 mr-1" />
+                                        <Pencil className="h-3 w-3" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar Direita - 1 coluna */}
+          <div className="flex flex-col gap-4 min-h-0">
+            {/* Presenca Compacta */}
+            <Card className="bg-slate-800 border-slate-700 flex-shrink-0">
+              <CardHeader className="py-3 px-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-white text-sm">
+                    <Users className="h-4 w-4 text-blue-400" />
+                    Presenca
+                  </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`${getSessaoStatusBadge(sessao.status)} hover:opacity-80 flex items-center gap-1 text-xs md:text-sm`}
-                    disabled={executando}
+                    className="h-6 px-2 text-xs text-slate-400 hover:text-white"
+                    onClick={() => setPresencaExpandida(!presencaExpandida)}
                   >
-                    <span className="hidden sm:inline">{getSessaoStatusLabel(sessao.status)}</span>
-                    <span className="sm:hidden">{sessao.status === 'EM_ANDAMENTO' ? 'Ativa' : getSessaoStatusLabel(sessao.status).slice(0, 4)}</span>
-                    <ChevronDown className="h-3 w-3" />
+                    {presencaExpandida ? 'Ocultar' : 'Ver lista'}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    onClick={() => alterarStatusSessao('AGENDADA')}
-                    disabled={sessao.status === 'AGENDADA'}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    Agendada
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => alterarStatusSessao('EM_ANDAMENTO')}
-                    disabled={sessao.status === 'EM_ANDAMENTO'}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    Em andamento
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => alterarStatusSessao('CONCLUIDA')}
-                    disabled={sessao.status === 'CONCLUIDA'}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-gray-500" />
-                    Concluída
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => alterarStatusSessao('CANCELADA')}
-                    disabled={sessao.status === 'CANCELADA'}
-                    className="flex items-center gap-2 text-red-400 focus:text-red-400"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                    Cancelada
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-slate-400 hover:text-white hover:bg-slate-700"
-                onClick={() => carregarSessao(true)}
-              >
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Linha 2: Info e Botões (responsivo) */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            {/* Informações da sessão */}
-            <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-slate-300 overflow-x-auto">
-              <div className="flex items-center gap-1.5 whitespace-nowrap">
-                <Calendar className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
-                <span>{dataFormatada}</span>
-              </div>
-              {sessao.horario && (
-                <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <Clock className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
-                  <span>{sessao.horario}</span>
                 </div>
-              )}
-              <div className="flex items-center gap-1.5 whitespace-nowrap">
-                <FileText className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
-                <span>{sessao.pautaSessao?.itens.length ?? 0} itens</span>
-              </div>
-            </div>
-
-            {/* Botões Externos */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white text-xs whitespace-nowrap flex-shrink-0"
-              >
-                <a href={`/admin/sessoes/${sessao.id}`} target="_blank" rel="noopener noreferrer">
-                  <Settings className="mr-1.5 h-3.5 w-3.5" />
-                  <span className="hidden md:inline">Dados da Sessão</span>
-                  <span className="md:hidden">Dados</span>
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white text-xs whitespace-nowrap flex-shrink-0"
-              >
-                <a href={`/painel-publico?sessaoId=${sessao.id}`} target="_blank" rel="noopener noreferrer">
-                  <Monitor className="mr-1.5 h-3.5 w-3.5" />
-                  <span className="hidden md:inline">Painel Público</span>
-                  <span className="md:hidden">Público</span>
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="border-blue-600 bg-blue-600/20 text-blue-300 hover:bg-blue-600 hover:text-white text-xs whitespace-nowrap flex-shrink-0"
-              >
-                <a href={`/painel-tv/${sessao.id}`} target="_blank" rel="noopener noreferrer">
-                  <Tv className="mr-1.5 h-3.5 w-3.5" />
-                  <span className="hidden md:inline">Painel TV</span>
-                  <span className="md:hidden">TV</span>
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Cronômetro */}
-      <div className="bg-slate-800/50 border-b border-slate-700 px-4 md:px-6 py-3">
-        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 md:gap-6">
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Timer className="h-5 w-5 text-blue-400" />
-            <span className="text-xl sm:text-2xl font-mono font-bold text-blue-400">{formatSeconds(cronometroSessao)}</span>
-          </div>
-          {itemEmExecucao && (
-            <div className="flex items-center gap-2 text-slate-300 min-w-0 overflow-hidden">
-              <span className="flex-shrink-0 text-sm sm:text-base">Item:</span>
-              <span className="font-semibold text-white truncate text-sm sm:text-base">
-                {itemEmExecucao.proposicao
-                  ? `${itemEmExecucao.proposicao.tipo.replace('_', ' ')} nº ${itemEmExecucao.proposicao.numero}/${itemEmExecucao.proposicao.ano}`
-                  : itemEmExecucao.titulo}
-              </span>
-              <Badge variant="outline" className="ml-1 sm:ml-2 font-mono text-xs flex-shrink-0">{formatSeconds(cronometroItem)}</Badge>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Conteúdo Principal */}
-      <div className="mx-auto max-w-7xl px-4 md:px-6 py-4 md:py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-          {/* Pauta da Sessão */}
-          <div className="lg:col-span-2">
-            <Card className="bg-slate-800 border-slate-700 overflow-hidden">
-              <CardHeader className="pb-3 md:pb-6">
-                <CardTitle className="flex items-center gap-2 text-white text-base md:text-lg">
-                  <FileText className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
-                  Pauta da sessão
-                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 md:space-y-6 pt-0">
-                {ordemSecoes.map(secao => {
-                  const itens = itensPorSecao[secao]
-                  if (!itens || itens.length === 0) return null
-
-                  return (
-                    <div key={secao}>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-                          {secao.replace(/_/g, ' ')}
-                        </h3>
-                        <Badge variant="outline" className="text-slate-400">
-                          {itens.length} item(s)
-                        </Badge>
-                      </div>
-                      <div className="space-y-3">
-                        {itens.map(item => (
-                          <div
-                            key={item.id}
-                            className={`p-3 md:p-4 rounded-lg border transition-all ${
-                              item.id === itemEmExecucao?.id
-                                ? 'bg-blue-900/30 border-blue-500'
-                                : 'bg-slate-700/50 border-slate-600 hover:border-slate-500'
-                            }`}
-                          >
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-2">
-                                  <Badge className={`${getItemStatusBadge(item.status)} text-xs`}>
-                                    {item.status.replace(/_/g, ' ')}
-                                  </Badge>
-                                  {item.tipoAcao && (
-                                    <Badge variant="outline" className={`${getTipoAcaoBadge(item.tipoAcao)} text-xs`}>
-                                      {getTipoAcaoLabel(item.tipoAcao)}
-                                    </Badge>
-                                  )}
-                                  <span className="text-xs text-slate-500">#{item.ordem}</span>
-                                </div>
-                                <h4 className="font-semibold text-white text-sm sm:text-base break-words">
-                                  {item.proposicao
-                                    ? `${item.proposicao.tipo.replace('_', ' ')} ${item.proposicao.numero}/${item.proposicao.ano}`
-                                    : item.titulo}
-                                </h4>
-                                <p className="text-xs sm:text-sm text-slate-400 mt-1 line-clamp-2 break-words">
-                                  {item.proposicao?.ementa || item.descricao || item.titulo}
-                                </p>
-                                <div className="flex items-center gap-2 sm:gap-4 mt-2 text-xs text-slate-500 flex-wrap">
-                                  <span>{item.tempoEstimado || 0} min</span>
-                                  <span>Real: {Math.floor((item.tempoReal || item.tempoAcumulado || 0) / 60)} min</span>
-                                  {item.finalizadoEm && (
-                                    <span className="hidden sm:inline">Encerrado: {new Date(item.finalizadoEm).toLocaleTimeString('pt-BR')}</span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Ações do Item */}
-                              {sessao.status === 'EM_ANDAMENTO' && (
-                                <div className="flex items-center gap-1">
-                                  {item.status === 'PENDENTE' && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-green-400 hover:text-green-300 hover:bg-green-900/30"
-                                      onClick={() => executarAcaoItem(item.id, 'iniciar')}
-                                      disabled={executando}
-                                    >
-                                      <Play className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                  {item.status === 'EM_DISCUSSAO' && (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30"
-                                        onClick={() => executarAcaoItem(item.id, 'pausar')}
-                                        disabled={executando}
-                                      >
-                                        <Pause className="h-4 w-4" />
-                                      </Button>
-                                      {item.tipoAcao === 'VOTACAO' && (
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/30"
-                                          onClick={() => executarAcaoItem(item.id, 'votacao')}
-                                          disabled={executando}
-                                        >
-                                          <Vote className="h-4 w-4" />
-                                        </Button>
-                                      )}
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                                        onClick={() => abrirModalFinalizar(item.id, item.titulo)}
-                                        disabled={executando}
-                                      >
-                                        <Square className="h-4 w-4" />
-                                      </Button>
-                                    </>
-                                  )}
-                                  {item.status === 'EM_VOTACAO' && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                                      onClick={() => abrirModalFinalizar(item.id, item.titulo)}
-                                      disabled={executando}
-                                    >
-                                      <Square className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                  {(item.status === 'ADIADO' || (item.iniciadoEm === null && item.tempoAcumulado && item.tempoAcumulado > 0)) && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
-                                      onClick={() => executarAcaoItem(item.id, 'retomar')}
-                                      disabled={executando}
-                                    >
-                                      <RotateCcw className="h-4 w-4" />
-                                    </Button>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Botão Editar Votação para sessões concluídas */}
-                              {sessao.status === 'CONCLUIDA' && item.tipoAcao === 'VOTACAO' && item.proposicao && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-amber-400 hover:text-amber-300 hover:bg-amber-900/30"
-                                  onClick={() => setItemParaEditarVotacao(item)}
-                                  title="Editar votos"
-                                >
-                                  <Vote className="h-4 w-4 mr-1" />
-                                  <Pencil className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar - Presença */}
-          <div className="space-y-4 md:space-y-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader className="pb-3 md:pb-6">
-                <CardTitle className="flex items-center gap-2 text-white text-base md:text-lg">
-                  <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
-                  <span className="truncate">Presença dos Parlamentares</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
-                  <div className="text-center p-2 md:p-3 bg-green-600/20 rounded-lg">
-                    <div className="text-xl md:text-2xl font-bold text-green-400">{presentes}</div>
-                    <div className="text-xs text-green-300">Presentes</div>
+              <CardContent className="pt-0 px-4 pb-4">
+                {/* Resumo Visual Compacto */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="text-center p-2 bg-green-900/30 rounded-lg">
+                    <div className="text-lg font-bold text-green-400">{presentes}</div>
+                    <div className="text-[10px] text-green-300">Presentes</div>
                   </div>
-                  <div className="text-center p-2 md:p-3 bg-red-600/20 rounded-lg">
-                    <div className="text-xl md:text-2xl font-bold text-red-400">{ausentes}</div>
-                    <div className="text-xs text-red-300">Ausentes</div>
+                  <div className="text-center p-2 bg-red-900/30 rounded-lg">
+                    <div className="text-lg font-bold text-red-400">{ausentes}</div>
+                    <div className="text-[10px] text-red-300">Ausentes</div>
                   </div>
-                  <div className="text-center p-2 md:p-3 bg-blue-600/20 rounded-lg">
-                    <div className="text-xl md:text-2xl font-bold text-blue-400">{percentualPresenca}%</div>
-                    <div className="text-xs text-blue-300">Presença</div>
+                  <div className="text-center p-2 bg-blue-900/30 rounded-lg">
+                    <div className="text-lg font-bold text-blue-400">{percentualPresenca}%</div>
+                    <div className="text-[10px] text-blue-300">Quorum</div>
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <div className="text-sm text-slate-400 mb-2">
-                    Quorum: {presentes}/{totalParlamentares} parlamentares
-                  </div>
-                  <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
-                      style={{ width: `${percentualPresenca}%` }}
-                    />
-                  </div>
+                {/* Barra de Progresso */}
+                <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden mb-3">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
+                    style={{ width: `${percentualPresenca}%` }}
+                  />
                 </div>
 
-                {/* Lista de Presentes */}
-                {sessao.presencas && sessao.presencas.length > 0 && (
-                  <div className="space-y-3 max-h-80 overflow-y-auto">
-                    <div>
-                      <h4 className="text-sm font-semibold text-green-400 mb-2 flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" />
-                        Presentes ({presentes})
-                      </h4>
-                      <div className="space-y-1">
-                        {sessao.presencas.filter(p => p.presente).map(p => (
-                          <div key={p.id} className="flex items-center gap-2 text-sm text-slate-300">
-                            <div className="w-2 h-2 rounded-full bg-green-500" />
-                            {p.parlamentar?.apelido || p.parlamentar?.nome}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    {ausentes > 0 && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-red-400 mb-2 flex items-center gap-1">
-                          <XCircle className="h-4 w-4" />
-                          Ausentes ({ausentes})
-                        </h4>
-                        <div className="space-y-1">
-                          {sessao.presencas.filter(p => !p.presente).map(p => (
-                            <div key={p.id} className="flex items-center gap-2 text-sm text-slate-400">
-                              <div className="w-2 h-2 rounded-full bg-red-500" />
-                              {p.parlamentar?.apelido || p.parlamentar?.nome}
-                            </div>
-                          ))}
+                {/* Lista Colapsavel */}
+                {presencaExpandida && sessao.presencas && (
+                  <ScrollArea className="h-32">
+                    <div className="space-y-1 pr-2">
+                      {sessao.presencas.filter(p => p.presente).map(p => (
+                        <div key={p.id} className="flex items-center gap-2 text-xs text-slate-300">
+                          <UserCheck className="h-3 w-3 text-green-500" />
+                          <span className="truncate">{p.parlamentar?.apelido || p.parlamentar?.nome}</span>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      ))}
+                      {sessao.presencas.filter(p => !p.presente).map(p => (
+                        <div key={p.id} className="flex items-center gap-2 text-xs text-slate-500">
+                          <UserX className="h-3 w-3 text-red-500" />
+                          <span className="truncate">{p.parlamentar?.apelido || p.parlamentar?.nome}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
 
-                {/* Controle de Presença - disponível para sessões em andamento ou concluídas (dados pretéritos) */}
+                {/* Botao para Controle de Presenca */}
                 {(sessao.status === 'EM_ANDAMENTO' || sessao.status === 'CONCLUIDA') && (
-                  <div className="pt-4 border-t border-slate-700 mt-4">
-                    <PresencaControl sessaoId={sessao.id} sessaoStatus={sessao.status} />
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2 h-7 text-xs border-slate-600 text-slate-300 hover:bg-slate-700"
+                    onClick={() => setMostrarControlePresenca(true)}
+                  >
+                    <Pencil className="h-3 w-3 mr-1" />
+                    Editar Presencas
+                  </Button>
                 )}
               </CardContent>
             </Card>
 
-            {/* Votação em Andamento */}
+            {/* Votacao em Andamento */}
             {itemEmExecucao?.status === 'EM_VOTACAO' && itemEmExecucao.proposicao && (
-              <VotacaoAcompanhamento
-                sessaoId={sessao.id}
-                itemEmVotacao={itemEmExecucao}
-              />
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <VotacaoAcompanhamento
+                  sessaoId={sessao.id}
+                  itemEmVotacao={itemEmExecucao}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -830,39 +749,57 @@ export default function PainelOperadorPage() {
 
       {/* Modal Finalizar Item */}
       <Dialog open={modalFinalizar.open} onOpenChange={(open) => !open && setModalFinalizar({ open: false, itemId: '', titulo: '' })}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-sm">
           <DialogHeader>
-            <DialogTitle>Finalizar Item</DialogTitle>
+            <DialogTitle className="text-base">Finalizar Item</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-slate-400 mb-4">
-              Selecione o resultado para: <span className="text-white font-semibold">{modalFinalizar.titulo}</span>
+          <div className="py-3">
+            <p className="text-sm text-slate-400 mb-3">
+              Resultado para: <span className="text-white font-medium">{modalFinalizar.titulo}</span>
             </p>
             <Select value={resultadoSelecionado} onValueChange={setResultadoSelecionado}>
-              <SelectTrigger className="bg-slate-700 border-slate-600">
+              <SelectTrigger className="bg-slate-700 border-slate-600 h-9">
                 <SelectValue placeholder="Selecione o resultado" />
               </SelectTrigger>
               <SelectContent className="bg-slate-700 border-slate-600">
                 {ITEM_RESULTADOS.map(r => (
-                  <SelectItem key={r.value} value={r.value}>
-                    {r.label}
-                  </SelectItem>
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setModalFinalizar({ open: false, itemId: '', titulo: '' })}>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setModalFinalizar({ open: false, itemId: '', titulo: '' })}>
               Cancelar
             </Button>
-            <Button onClick={confirmarFinalizar} disabled={!resultadoSelecionado || executando}>
+            <Button size="sm" onClick={confirmarFinalizar} disabled={!resultadoSelecionado || executando}>
               Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Edição de Votação para sessões concluídas */}
+      {/* Modal Controle de Presenca */}
+      <Dialog open={mostrarControlePresenca} onOpenChange={setMostrarControlePresenca}>
+        <DialogContent className="bg-white border-slate-200 text-slate-900 max-w-3xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-lg flex items-center gap-2 text-slate-900">
+              <Users className="h-5 w-5 text-blue-600" />
+              Controle de Presenca
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto py-2">
+            <PresencaControl sessaoId={sessao.id} sessaoStatus={sessao.status} />
+          </div>
+          <DialogFooter className="border-t pt-4">
+            <Button variant="outline" onClick={() => { setMostrarControlePresenca(false); carregarSessao(false) }}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Edicao de Votacao */}
       {itemParaEditarVotacao && sessao && (
         <VotacaoEdicao
           sessaoId={sessao.id}

@@ -17,8 +17,6 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react'
-import { parlamentarAvancadoService } from '@/lib/parlamentar-avancado-service'
-import { parlamentaresService } from '@/lib/parlamentares-data'
 import { ComparativoParlamentares } from '@/lib/types/parlamentar-avancado'
 import { toast } from 'sonner'
 
@@ -35,8 +33,44 @@ export default function ComparativoPage() {
   const carregarComparativo = async () => {
     try {
       setLoading(true)
-      const dados = parlamentarAvancadoService.gerarComparativoParlamentares()
-      setComparativo(dados)
+      // Buscar parlamentares da API real
+      const response = await fetch('/api/parlamentares?ativo=true')
+      const data = await response.json()
+
+      if (data.success && data.data) {
+        // Gerar comparativo com dados reais (estatísticas zeradas por enquanto)
+        const parlamentaresComparativos = data.data.map((p: any, index: number) => ({
+          id: p.id,
+          nome: p.apelido || p.nome,
+          partido: p.partido || 'Sem partido',
+          ranking: index + 1,
+          pontuacao: 0, // TODO: Calcular com dados reais
+          dados: {
+            proposicoes: 0,
+            aprovacoes: 0,
+            presenca: 0,
+            participacao: 0
+          }
+        }))
+
+        const agora = new Date()
+        const inicioAno = new Date(agora.getFullYear(), 0, 1)
+
+        setComparativo({
+          periodo: {
+            inicio: inicioAno,
+            fim: agora
+          },
+          parlamentares: parlamentaresComparativos,
+          metricas: {
+            mediaProposicoes: 0,
+            mediaAprovacoes: 0,
+            mediaPresenca: 0,
+            mediaParticipacao: 0
+          },
+          geradoEm: agora
+        })
+      }
     } catch (error) {
       console.error('Erro ao carregar comparativo:', error)
       toast.error('Erro ao carregar dados do comparativo')
