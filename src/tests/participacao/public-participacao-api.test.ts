@@ -1,14 +1,9 @@
 import { publicParticipacaoApi } from '@/lib/api/public-participacao-api'
 import { participacaoCidadaService } from '@/lib/participacao-cidada-service'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var fetch: jest.Mock
-}
-
 describe('publicParticipacaoApi fallback', () => {
   beforeEach(() => {
-    global.fetch = jest.fn().mockRejectedValue(new Error('network unavailable'))
+    (global as any).fetch = jest.fn().mockRejectedValue(new Error('network unavailable'))
   })
 
   afterEach(() => {

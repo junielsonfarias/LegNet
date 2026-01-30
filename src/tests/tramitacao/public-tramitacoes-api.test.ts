@@ -2,11 +2,6 @@ import { mockData } from '@/lib/db'
 import { tramitacoesService } from '@/lib/tramitacao-service'
 import { publicTramitacoesApi } from '@/lib/api/public-tramitacoes-api'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var fetch: jest.Mock
-}
-
 describe('publicTramitacoesApi fallback', () => {
   beforeEach(() => {
     mockData.tramitacoes = []
