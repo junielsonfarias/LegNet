@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-30 (Fase 1.3: Dados de parlamentares consolidados)
+> **Ultima Atualizacao**: 2026-01-30 (Fase 3: Criacao de Abstracoes - Hooks, Validacoes, Repositories)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -5588,6 +5588,89 @@ votacao.manage    -> Gerenciar votacoes
 - [ ] Verificar comportamento quando nao ha proposicoes na pauta
 - [ ] Testar com diferentes quantidades de parlamentares
 - [ ] Validar exibicao de justificativas de ausencia
+
+---
+
+### 2026-01-30 - Fase 3: Criacao de Abstracoes
+
+**Objetivo**: Criar padroes reutilizaveis para hooks, validacoes e acesso a dados.
+
+#### 3.1 Factory de Hooks CRUD
+
+**Arquivos Criados**:
+- `src/lib/hooks/use-crud-resource.ts` - Hook generico para operacoes CRUD
+
+**Funcionalidades**:
+- `useCrudResource<T>()` - Hook generico com: data, loading, error, meta, refetch, create, update, remove
+- `useSingleResource<T>()` - Hook para buscar item unico por ID
+- `createCrudHookFactory<T>()` - Factory para criar hooks tipados
+
+**Hooks Migrados**:
+- `use-parlamentares.ts` - Agora usa useCrudResource internamente
+- `use-proposicoes.ts` - Agora usa useCrudResource internamente
+
+**Beneficios**:
+- Reducao de ~100 linhas de codigo duplicado por hook
+- Interface padronizada para todos os hooks CRUD
+- Facilita adicao de novos hooks seguindo o padrao
+
+#### 3.2 Strategy Pattern para Validacoes
+
+**Arquivos Criados**:
+- `src/lib/validation/validation-strategy.ts` - Pattern base
+- `src/lib/validation/validators.ts` - Validadores pre-configurados
+
+**Funcionalidades**:
+```typescript
+// Validator composavel
+const validator = new Validator<ProposicaoInput>()
+  .addRule({ name: 'requisitos', ruleCode: 'RN-022', validate: validarRequisitos })
+  .addRule({ name: 'iniciativa', ruleCode: 'RN-020', validate: validarIniciativa })
+
+const result = await validator.validate(data)
+// { valid: boolean, errors: string[], warnings: string[], ruleResults: [...] }
+```
+
+**Validadores Disponiveis**:
+- `createProposicaoValidator()` - Validacao completa de proposicao (RN-020 a RN-025)
+- `createSessaoInicioValidator()` - Validacao de inicio de sessao (RN-040, RN-041)
+- `createSessaoStatusValidator()` - Validacao de transicao de status
+- `createOrdemDoDiaValidator()` - Validacao de inclusao na Ordem do Dia (RN-030)
+- `createEmendaValidator()` - Validacao de emendas (RN-024)
+
+**Helpers**:
+- `validResult()` / `invalidResult()` - Criar resultados padronizados
+- `combineValidationResults()` - Combinar multiplos resultados
+- `requiredFieldRule()`, `minLengthRule()`, etc. - Regras comuns
+
+#### 3.3 Repository Pattern para Acesso a Dados
+
+**Arquivos Criados**:
+- `src/lib/repositories/base-repository.ts` - Interface e classe base
+- `src/lib/repositories/proposicao-repository.ts` - Implementacao para Proposicao
+- `src/lib/repositories/index.ts` - Exports publicos
+
+**Funcionalidades**:
+```typescript
+const repo = getProposicaoRepository()
+
+// Consultas
+const proposicoes = await repo.findMany({
+  filters: { status: 'EM_TRAMITACAO', ano: 2026 },
+  pagination: { page: 1, limit: 10 },
+  sort: { orderBy: 'dataApresentacao', order: 'desc' }
+})
+
+// CRUD
+const nova = await repo.create({ numero: '001', ano: 2026, ... })
+await repo.updateStatus(id, 'APROVADA')
+```
+
+**Beneficios**:
+- Desacoplamento do Prisma (facilita testes e troca de ORM)
+- Interface padronizada para acesso a dados
+- Metodos especificos por entidade (ex: findBySlug, countByStatus)
+- Paginacao e ordenacao incluidos
 
 ---
 

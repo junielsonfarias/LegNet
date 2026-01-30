@@ -208,9 +208,10 @@ function useCrudResource<T>(options: UseCrudOptions<T>) {
 ```
 
 **Tarefas**:
-- [ ] Criar hook generico `useCrudResource`
-- [ ] Migrar hooks existentes para usar factory
-- [ ] Manter hooks especializados apenas com logica especifica
+- [x] Criar hook generico `useCrudResource` (`src/lib/hooks/use-crud-resource.ts`)
+- [x] Migrar hooks existentes para usar factory (`use-parlamentares.ts`, `use-proposicoes.ts`)
+- [x] Manter hooks especializados apenas com logica especifica
+**Status**: CONCLUÍDO em 2026-01-30
 
 ---
 
@@ -248,6 +249,11 @@ class Validator<T> {
 }
 ```
 
+**Arquivos Criados**:
+- `src/lib/validation/validation-strategy.ts` - Strategy Pattern base
+- `src/lib/validation/validators.ts` - Validadores pré-configurados
+**Status**: CONCLUÍDO em 2026-01-30
+
 ---
 
 #### 3.3 Repository Pattern para Acesso a Dados
@@ -271,6 +277,12 @@ class PrismaProposicaoRepository implements ProposicaoRepository {
   // Implementacao com Prisma
 }
 ```
+
+**Arquivos Criados**:
+- `src/lib/repositories/base-repository.ts` - Interfaces e classes base
+- `src/lib/repositories/proposicao-repository.ts` - Implementação para Proposição
+- `src/lib/repositories/index.ts` - Exports públicos
+**Status**: CONCLUÍDO em 2026-01-30
 
 ---
 
