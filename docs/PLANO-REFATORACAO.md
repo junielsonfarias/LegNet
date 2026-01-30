@@ -161,6 +161,14 @@ src/app/admin/proposicoes/
 
 **Situacao Atual**: 1.556 linhas
 
+**Progresso**:
+- [x] Criar _types/index.ts (150 linhas)
+- [x] Criar _hooks/use-sessoes-state.ts (582 linhas)
+- [x] Criar _components/sessoes-filters.tsx (88 linhas)
+- [x] Criar _components/sessao-card.tsx (148 linhas)
+- [x] Integrar hook e componentes no page.tsx (1.556 → 620 linhas, -60%)
+**Status**: CONCLUÍDO em 2026-01-30
+
 **Decomposicao Similar**
 
 ---
