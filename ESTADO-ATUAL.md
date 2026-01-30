@@ -2586,14 +2586,14 @@ sudo ./scripts/uninstall.sh --full
 
 ### 2026-01-30 - Melhorias Visuais Painel Publico (Secao Parlamentares)
 
-**Objetivo**: Melhorar a visualizacao dos parlamentares no Painel Publico com layout compacto em grid 2x7.
+**Objetivo**: Melhorar a visualizacao dos parlamentares no Painel Publico com layout em duas colunas separadas (Presentes | Ausentes).
 
 **Problemas Resolvidos**:
 
 | Antes | Depois |
 |-------|--------|
-| Lista vertical longa (11 linhas) | Grid compacto 2 colunas x 7 linhas |
-| Presentes e ausentes em colunas separadas | Grid unico ordenado (presentes primeiro) |
+| Lista vertical longa (11 linhas) | Duas colunas com headers separados |
+| Presentes e ausentes misturados | Separados em colunas distintas |
 | Cards grandes com muito espaco | Cards ultra-compactos |
 | Scroll vertical necessario | Tudo visivel sem scroll |
 | Icone generico User | Foto real do parlamentar |
@@ -2602,31 +2602,34 @@ sudo ./scripts/uninstall.sh --full
 
 | Arquivo | Alteracao |
 |---------|-----------|
-| `src/app/painel-publico/page.tsx` | Interface Presenca + foto, import Image, grid unico 2x7 |
+| `src/app/painel-publico/page.tsx` | Layout em 2 colunas separadas com headers |
 | `src/app/api/sessoes/[id]/presenca/route.ts` | Adicionado foto no select do parlamentar |
 | `src/app/api/painel/sessao-completa/route.ts` | Adicionado foto no include de presencas e objeto virtual |
 
-**Novo Layout (Grid 2x7)**:
+**Novo Layout (Duas Colunas Separadas)**:
 
 ```
-+-------------------------+-------------------------+
-| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |  <- Presentes
-| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
-| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
-| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
-| [foto✓] Nome  Partido   | [foto✓] Nome  Partido   |
-| [foto✓] Nome  Partido   | [foto✗] Nome  Partido   |  <- Ausentes
-| [foto✗] Nome  Partido   |                         |
-+-------------------------+-------------------------+
++---------------------------+---------------------------+
+| ✓ PRESENTES (9)           | ✗ AUSENTES (4)            |
++---------------------------+---------------------------+
+| [foto] Nome  Partido      | [foto] Nome  Partido      |
+| [foto] Nome  Partido      | [foto] Nome  Partido      |
+| [foto] Nome  Partido      | [foto] Nome  Partido      |
+| [foto] Nome  Partido      | [foto] Nome  Partido      |
+| [foto] Nome  Partido      |                           |
+| [foto] Nome  Partido      |                           |
++---------------------------+---------------------------+
 ```
 
 **Detalhes**:
-- Grid unico com todos os parlamentares (presentes primeiro, depois ausentes)
-- Fotos de parlamentares com indicador de status no canto (check verde / x vermelho)
-- Fallback com iniciais quando foto nao disponivel
+- Duas colunas separadas com headers (Presentes | Ausentes)
+- Cada coluna mostra contagem: "Presentes (9)" e "Ausentes (4)"
+- Ordenacao alfabetica dentro de cada coluna
+- Fotos de parlamentares com fallback para iniciais
 - Presentes: fundo verde, ring verde, cores vibrantes
-- Ausentes: fundo vermelho, ring vermelho, opacity 60%, grayscale na foto
+- Ausentes: fundo vermelho, ring vermelho, opacity 70%, grayscale na foto
 - Estatisticas compactas no topo (presentes, ausentes, % quorum)
+- Mensagem "Nenhum presente/ausente" quando lista vazia
 - Cards ultra-compactos (foto 36px, fonte 11px nome, 9px partido)
 
 ---
