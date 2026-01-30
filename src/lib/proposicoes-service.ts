@@ -1,4 +1,3 @@
-// @ts-nocheck
 export interface AnexoDocumento {
   id: string;
   nome: string;
@@ -226,7 +225,14 @@ export const proposicoesService = {
   // Função para obter o próximo número disponível para um tipo e ano
   obterProximoNumero: (tipo: string, ano: number): string => {
     let numero = 1
-    while (this.numeroExiste(numero.toString().padStart(3, '0'), tipo, ano)) {
+    // Chama a função diretamente ao invés de usar this
+    const numeroExiste = (num: string, t: string, a: number): boolean => {
+      return proposicoesData.some(p =>
+        p.numero === `${num}/${a}` &&
+        p.tipo === t
+      )
+    }
+    while (numeroExiste(numero.toString().padStart(3, '0'), tipo, ano)) {
       numero++
     }
     return numero.toString().padStart(3, '0')

@@ -293,23 +293,27 @@ class PrismaProposicaoRepository implements ProposicaoRepository {
 #### 4.1 Remover Arquivos Deprecados
 
 **Arquivos para Remocao** (apos verificacao de uso):
-- [ ] `src/lib/database-service.ts` (519 linhas)
-- [ ] `src/lib/painel-eletronico-service.ts` (499 linhas) - se duplicado
-- [ ] `src/lib/painel-integracao-service.ts` (405 linhas) - se duplicado
-- [ ] `src/lib/parlamentares-data.ts` (1.865 linhas) - @deprecated
+- [x] `src/lib/database-service.ts` (519 linhas) - REMOVIDO
+- [x] `src/lib/painel-eletronico-service.ts` (499 linhas) - REMOVIDO
+- [x] `src/lib/painel-integracao-service.ts` (405 linhas) - REMOVIDO
+- [x] `src/lib/parlamentar-avancado-service.ts` (496 linhas) - REMOVIDO
+- [x] `src/lib/pautas-sessoes-service.ts` (429 linhas) - REMOVIDO
+- [x] `src/lib/mock-data/` (diretório completo) - REMOVIDO
+- [ ] `src/lib/parlamentares-data.ts` (1.865 linhas) - @deprecated, ainda em uso por APIs públicas
 
-**Processo**:
-1. Buscar todos os imports do arquivo
-2. Verificar se funcionalidade existe em outro lugar
-3. Migrar usos restantes
-4. Remover arquivo
-5. Testar aplicacao
+**Total Removido**: ~2.348 linhas de código legado
+**Status**: CONCLUÍDO em 2026-01-30
 
 ---
 
 #### 4.2 Remover @ts-nocheck
 
-**Arquivos Afetados**: 11 arquivos
+**Arquivos Afetados**: 3 arquivos restantes (reduzido de 11)
+
+**Progresso**:
+- [x] `src/lib/proposicoes-service.ts` (286 linhas) - @ts-nocheck REMOVIDO
+- [ ] `src/lib/parlamentares-data.ts` (1.865 linhas) - mantido temporariamente
+- [ ] `src/lib/db.ts` (5.238 linhas) - mantido temporariamente
 
 **Processo por arquivo**:
 1. Remover diretiva @ts-nocheck
