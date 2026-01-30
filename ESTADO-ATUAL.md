@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-30 (Correcao de Erros TypeScript + Editor de Pauta)
+> **Ultima Atualizacao**: 2026-01-30 (Refatoração: estrutura modular proposicoes + painel-eletronico)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -15,7 +15,7 @@
 | **Endpoints API** | 158 |
 | **Componentes React** | 110 |
 | **Servicos de Negocio** | 39 |
-| **Hooks Customizados** | 40 |
+| **Hooks Customizados** | 41 |
 | **Paginas Admin** | 79 |
 | **Paginas Publicas** | 74 |
 | **Total Paginas** | 153 |

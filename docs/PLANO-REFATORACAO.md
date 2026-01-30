@@ -120,11 +120,12 @@ src/app/admin/painel-eletronico/
 ```
 
 **Tarefas**:
-- [ ] Extrair tipos para arquivo separado
-- [ ] Criar hook `usePainelState` para gerenciar estados
-- [ ] Extrair componentes de UI
-- [ ] Manter page.tsx como orquestrador
-- [ ] Remover @ts-nocheck
+- [x] Extrair tipos para arquivo separado (_types/index.ts - 210 linhas)
+- [x] Criar hook `usePainelState` para gerenciar estados (_hooks/use-painel-state.ts - 538 linhas)
+- [x] Extrair componentes de UI (_components/ - PainelControles, PainelHeader - 311 linhas)
+- [x] Manter page.tsx como orquestrador (700 linhas - redução de 66%)
+- [x] Remover @ts-nocheck
+**Status**: CONCLUÍDO em 2026-01-30
 
 ---
 
@@ -144,6 +145,15 @@ src/app/admin/proposicoes/
   _hooks/
     use-proposicoes-filters.ts
 ```
+
+**Progresso**:
+- [x] Criar _types/index.ts (279 linhas)
+- [x] Criar _hooks/use-proposicoes-state.ts (684 linhas)
+- [x] Criar _components/proposicoes-filters.tsx (84 linhas)
+- [x] Criar _components/proposicao-card.tsx (134 linhas)
+- [ ] Integrar hook e componentes no page.tsx
+- [ ] Extrair modais para componentes separados
+**Status**: EM ANDAMENTO
 
 ---
 
