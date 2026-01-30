@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  FileText, 
-  Users, 
-  Building2, 
-  MapPin, 
-  Clock, 
+import {
+  FileText,
+  Users,
+  Building2,
+  MapPin,
+  Clock,
   Calendar,
   BarChart3,
   Shield,
@@ -22,7 +22,6 @@ import {
   Eye
 } from 'lucide-react';
 import Link from 'next/link';
-import { transparenciaService } from '@/lib/transparencia-service';
 import { TransparenciaItem } from '@/lib/types/transparencia';
 
 const categorias = [
@@ -37,6 +36,7 @@ const categorias = [
 
 export default function PortalTransparenciaPage() {
   const [itens, setItens] = useState<TransparenciaItem[]>([]);
+  const [todosItens, setTodosItens] = useState<TransparenciaItem[]>([]); // Para opções de filtro
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>('portal-da-transparencia');
   const [subcategoriaSelecionada, setSubcategoriaSelecionada] = useState<string>('all');
   const [anoSelecionado, setAnoSelecionado] = useState<string>('all');
@@ -45,40 +45,58 @@ export default function PortalTransparenciaPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
 
-  const carregarDados = useCallback(() => {
+  const carregarDados = useCallback(async () => {
     setLoading(true);
-    
-    let dadosFiltrados = transparenciaService.getByCategoria(categoriaSelecionada);
-    
-    if (subcategoriaSelecionada !== 'all') {
-      dadosFiltrados = dadosFiltrados.filter(item => item.subcategoria === subcategoriaSelecionada);
-    }
-    
-    if (anoSelecionado !== 'all') {
-      dadosFiltrados = dadosFiltrados.filter(item => item.ano === parseInt(anoSelecionado));
-    }
-    
-    if (tipoSelecionado !== 'all') {
-      dadosFiltrados = dadosFiltrados.filter(item => item.tipo === tipoSelecionado);
-    }
-    
-    if (busca) {
-      const termoBusca = busca.toLowerCase();
-      dadosFiltrados = dadosFiltrados.filter(item => 
-        item.titulo.toLowerCase().includes(termoBusca) ||
-        item.descricao.toLowerCase().includes(termoBusca) ||
-        item.subcategoria.toLowerCase().includes(termoBusca)
-      );
-    }
 
-    setItens(dadosFiltrados);
-    
-    // Carregar estatísticas
-    const estatisticas = transparenciaService.getEstatisticasPorCategoria();
-    const categoriaStats = estatisticas.find(stat => stat.categoria === categoriaSelecionada);
-    setStats(categoriaStats);
-    
-    setLoading(false);
+    try {
+      // Buscar todos os itens da categoria (sem filtro de subcategoria) para opções de dropdown
+      const todosResponse = await fetch(`/api/transparencia/itens?categoria=${categoriaSelecionada}`);
+      const todosResult = await todosResponse.json();
+      const todosOsItens: TransparenciaItem[] = todosResult.success && todosResult.data?.itens
+        ? todosResult.data.itens
+        : (todosResult.success && Array.isArray(todosResult.data) ? todosResult.data : []);
+      setTodosItens(todosOsItens);
+
+      // Aplicar filtros
+      let dadosFiltrados = [...todosOsItens];
+
+      if (subcategoriaSelecionada !== 'all') {
+        dadosFiltrados = dadosFiltrados.filter(item => item.subcategoria === subcategoriaSelecionada);
+      }
+
+      if (anoSelecionado !== 'all') {
+        dadosFiltrados = dadosFiltrados.filter(item => item.ano === parseInt(anoSelecionado));
+      }
+
+      if (tipoSelecionado !== 'all') {
+        dadosFiltrados = dadosFiltrados.filter(item => item.tipo === tipoSelecionado);
+      }
+
+      if (busca) {
+        const termoBusca = busca.toLowerCase();
+        dadosFiltrados = dadosFiltrados.filter(item =>
+          item.titulo.toLowerCase().includes(termoBusca) ||
+          item.descricao.toLowerCase().includes(termoBusca) ||
+          item.subcategoria.toLowerCase().includes(termoBusca)
+        );
+      }
+
+      setItens(dadosFiltrados);
+
+      // Carregar estatísticas via API
+      const statsResponse = await fetch('/api/transparencia/estatisticas');
+      const statsResult = await statsResponse.json();
+      if (statsResult.success && statsResult.data?.porCategoria) {
+        const categoriaStats = statsResult.data.porCategoria.find(
+          (stat: any) => stat.categoria === categoriaSelecionada
+        );
+        setStats(categoriaStats);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [anoSelecionado, busca, categoriaSelecionada, subcategoriaSelecionada, tipoSelecionado]);
 
   useEffect(() => {
@@ -86,18 +104,15 @@ export default function PortalTransparenciaPage() {
   }, [carregarDados]);
 
   const obterSubcategorias = () => {
-    const dadosCategoria = transparenciaService.getByCategoria(categoriaSelecionada);
-    return Array.from(new Set(dadosCategoria.map(item => item.subcategoria)));
+    return Array.from(new Set(todosItens.map(item => item.subcategoria)));
   };
 
   const obterAnos = () => {
-    const dadosCategoria = transparenciaService.getByCategoria(categoriaSelecionada);
-    return Array.from(new Set(dadosCategoria.map(item => item.ano))).sort((a, b) => b - a);
+    return Array.from(new Set(todosItens.map(item => item.ano))).sort((a, b) => b - a);
   };
 
   const obterTipos = () => {
-    const dadosCategoria = transparenciaService.getByCategoria(categoriaSelecionada);
-    return Array.from(new Set(dadosCategoria.map(item => item.tipo)));
+    return Array.from(new Set(todosItens.map(item => item.tipo)));
   };
 
   const obterIconePorTipo = (tipo: string) => {

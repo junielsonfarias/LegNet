@@ -29,6 +29,8 @@ import {
   Eye,
   Download
 } from 'lucide-react'
+// Mantido com mock service - modelo Prisma AudienciaPublica não existe ainda
+// A migração completa para Prisma será feita quando o modelo de dados for definido
 import {
   audienciasPublicasService,
   AudienciaPublica,

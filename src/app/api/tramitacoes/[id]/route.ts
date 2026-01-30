@@ -1,21 +1,15 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
+import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import {
   createSuccessResponse,
-  validateId,
   ValidationError,
   NotFoundError
 } from '@/lib/error-handler'
-import { logAudit } from '@/lib/audit'
-import {
-  tramitacoesService,
-  tiposTramitacaoService,
-  tiposOrgaosService,
-  tramitacaoHistoricosService,
-  tramitacaoNotificacoesService
-} from '@/lib/tramitacao-service'
+import { addBusinessDays } from '@/lib/utils/date'
+import { avancarEtapaFluxo } from '@/lib/services/tramitacao-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,18 +41,12 @@ const UpdateTramitacaoSchema = z.object({
   automatica: z.boolean().optional()
 })
 
-const buildTramitacaoResponse = (tramitacao: ReturnType<typeof tramitacoesService.getAll>[number]) => ({
-  ...tramitacao,
-  tipoTramitacao: tiposTramitacaoService.getById(tramitacao.tipoTramitacaoId) || null,
-  unidade: tiposOrgaosService.getById(tramitacao.unidadeId) || null
-})
-
 const ActionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('advance'),
     comentario: z.union([z.string(), z.null()]).optional(),
-    regraId: z.string().optional(),
-    etapaId: z.string().optional()
+    parecer: z.string().optional(),
+    resultado: ResultadoEnum.optional()
   }),
   z.object({
     action: z.literal('reopen'),
@@ -71,242 +59,287 @@ const ActionSchema = z.discriminatedUnion('action', [
   })
 ])
 
+// GET - Obter tramitação por ID
 export const GET = withAuth(async (_request: NextRequest, { params }) => {
-  const id = validateId(params?.id)
-  const tramitacao = tramitacoesService.getById(id)
+  const { id } = await params
+
+  const tramitacao = await prisma.tramitacao.findUnique({
+    where: { id },
+    include: {
+      tipoTramitacao: true,
+      unidade: true,
+      proposicao: {
+        select: {
+          id: true,
+          numero: true,
+          ano: true,
+          tipo: true,
+          titulo: true
+        }
+      },
+      responsavel: {
+        select: {
+          id: true,
+          nome: true
+        }
+      },
+      historicos: {
+        orderBy: { data: 'desc' }
+      },
+      notificacoes: {
+        orderBy: { enviadoEm: 'desc' }
+      },
+      fluxoEtapa: {
+        include: {
+          fluxo: true
+        }
+      }
+    }
+  })
 
   if (!tramitacao) {
     throw new NotFoundError('Tramitação não encontrada')
   }
 
-  const historicos = tramitacaoHistoricosService.getByTramitacao(id)
-  const notificacoes = tramitacaoNotificacoesService.getByTramitacao(id)
-
-  return createSuccessResponse(
-    {
-      ...buildTramitacaoResponse(tramitacao),
-      historicos,
-      notificacoes
-    },
-    'Tramitação encontrada'
-  )
+  return createSuccessResponse(tramitacao, 'Tramitação encontrada')
 }, { permissions: 'tramitacao.view' })
 
-export const PUT = withAuth(async (request: NextRequest, { params }, session) => {
-  const id = validateId(params?.id)
+// PUT - Atualizar tramitação ou executar ação
+export const PUT = withAuth(async (request: NextRequest, { params, user }) => {
+  const { id } = await params
   const body = await request.json()
 
+  // Verificar se é uma ação especial
   const actionResult = ActionSchema.safeParse(body)
   if (actionResult.success) {
     const actionPayload = actionResult.data
-    const atual = tramitacoesService.getById(id)
+
+    const atual = await prisma.tramitacao.findUnique({
+      where: { id },
+      include: { proposicao: true }
+    })
+
     if (!atual) {
       throw new NotFoundError('Tramitação não encontrada')
     }
 
+    // Ação: Avançar para próxima etapa
     if (actionPayload.action === 'advance') {
-      const resultado = tramitacoesService.advance(id, {
-        usuarioId: session.user.id,
-        comentario: actionPayload.comentario,
-        regraId: actionPayload.regraId,
-        etapaId: actionPayload.etapaId
-      })
-
-      await logAudit({
-        request,
-        session,
-        action: 'TRAMITACAO_ADVANCE',
-        entity: 'Tramitacao',
-        entityId: id,
-        metadata: {
-          proposicaoId: atual.proposicaoId,
-          regraId: resultado.regraAplicada?.id ?? null,
-          etapaDestinoId: resultado.etapaDestino?.id ?? null,
-          novaEtapaId: resultado.novaEtapa?.id ?? null
-        }
-      })
+      const resultado = await avancarEtapaFluxo(
+        atual.proposicaoId,
+        actionPayload.comentario || undefined,
+        actionPayload.parecer as any,
+        actionPayload.resultado as any,
+        user?.id,
+        request.headers.get('x-forwarded-for') || undefined
+      )
 
       return createSuccessResponse(
-        {
-          etapaFinalizada: buildTramitacaoResponse(resultado.etapaFinalizada),
-          novaEtapa: resultado.novaEtapa ? buildTramitacaoResponse(resultado.novaEtapa) : null,
-          regraAplicada: resultado.regraAplicada,
-          etapaDestino: resultado.etapaDestino,
-          historicos: resultado.historicos,
-          notificacoes: resultado.notificacoes
-        },
-        resultado.novaEtapa ? 'Tramitação avançada para a próxima etapa' : 'Tramitação finalizada'
+        resultado,
+        resultado.etapaFinal ? 'Tramitação finalizada' : 'Tramitação avançada para a próxima etapa'
       )
     }
 
+    // Ação: Reabrir tramitação
     if (actionPayload.action === 'reopen') {
-      const resultado = tramitacoesService.reopen(id, {
-        usuarioId: session.user.id,
-        observacoes: actionPayload.observacoes
+      const tipo = await prisma.tramitacaoTipo.findUnique({
+        where: { id: atual.tipoTramitacaoId }
       })
 
-      await logAudit({
-        request,
-        session,
-        action: 'TRAMITACAO_REOPEN',
-        entity: 'Tramitacao',
-        entityId: id,
-        metadata: {
-          proposicaoId: resultado.tramitacao.proposicaoId,
-          motivo: actionPayload.observacoes ?? null
+      const prazoVencimento = tipo?.prazoRegimental
+        ? addBusinessDays(new Date(), tipo.prazoRegimental)
+        : null
+
+      const tramitacao = await prisma.tramitacao.update({
+        where: { id },
+        data: {
+          status: 'EM_ANDAMENTO',
+          dataSaida: null,
+          resultado: null,
+          observacoes: actionPayload.observacoes
+            ? `${atual.observacoes || ''}\n[Reaberta] ${actionPayload.observacoes}`.trim()
+            : atual.observacoes,
+          diasVencidos: 0,
+          prazoVencimento
+        },
+        include: {
+          tipoTramitacao: true,
+          unidade: true
         }
       })
 
-      return createSuccessResponse(
-        buildTramitacaoResponse(resultado.tramitacao),
-        'Tramitação reaberta com sucesso'
-      )
+      await prisma.tramitacaoHistorico.create({
+        data: {
+          tramitacaoId: id,
+          acao: 'REABERTURA',
+          descricao: actionPayload.observacoes || 'Tramitação reaberta',
+          usuarioId: user?.id
+        }
+      })
+
+      return createSuccessResponse(tramitacao, 'Tramitação reaberta com sucesso')
     }
 
+    // Ação: Finalizar tramitação
     if (actionPayload.action === 'finalize') {
-      const resultado = tramitacoesService.finalize(id, {
-        usuarioId: session.user.id,
-        resultado: actionPayload.resultado ?? undefined,
-        observacoes: actionPayload.observacoes ?? undefined
-      })
-
-      await logAudit({
-        request,
-        session,
-        action: 'TRAMITACAO_FINALIZE',
-        entity: 'Tramitacao',
-        entityId: id,
-        metadata: {
-          proposicaoId: resultado.tramitacao.proposicaoId,
-          resultado: resultado.tramitacao.resultado ?? null
+      const tramitacao = await prisma.tramitacao.update({
+        where: { id },
+        data: {
+          status: 'CONCLUIDA',
+          dataSaida: new Date(),
+          resultado: actionPayload.resultado as any,
+          observacoes: actionPayload.observacoes
+            ? `${atual.observacoes || ''}\n[Finalizada] ${actionPayload.observacoes}`.trim()
+            : atual.observacoes
+        },
+        include: {
+          tipoTramitacao: true,
+          unidade: true
         }
       })
 
-      return createSuccessResponse(
-        buildTramitacaoResponse(resultado.tramitacao),
-        'Tramitação finalizada com sucesso'
-      )
+      await prisma.tramitacaoHistorico.create({
+        data: {
+          tramitacaoId: id,
+          acao: 'FINALIZACAO',
+          descricao: actionPayload.observacoes || 'Tramitação finalizada',
+          usuarioId: user?.id,
+          dadosNovos: { resultado: actionPayload.resultado }
+        }
+      })
+
+      return createSuccessResponse(tramitacao, 'Tramitação finalizada com sucesso')
     }
   }
 
+  // Atualização normal
   const payload = UpdateTramitacaoSchema.parse(body)
 
-  const atual = tramitacoesService.getById(id)
+  const atual = await prisma.tramitacao.findUnique({
+    where: { id }
+  })
+
   if (!atual) {
     throw new NotFoundError('Tramitação não encontrada')
   }
 
+  // Verificar tipo de tramitação
   const tipoId = payload.tipoTramitacaoId ?? atual.tipoTramitacaoId
-  const tipo = tiposTramitacaoService.getById(tipoId)
+  const tipo = await prisma.tramitacaoTipo.findUnique({
+    where: { id: tipoId }
+  })
+
   if (!tipo) {
     throw new ValidationError('Tipo de tramitação não encontrado')
   }
 
-  const resolvedUnidadeId =
-    payload.unidadeId ??
-    (payload.tipoTramitacaoId
-      ? (tipo.unidadeResponsavelId ?? tipo.unidadeResponsavel ?? atual.unidadeId)
-      : atual.unidadeId)
+  // Resolver unidade (unidadeId é obrigatório, usar atual como fallback)
+  const resolvedUnidadeId = payload.unidadeId ??
+    (payload.tipoTramitacaoId && tipo.unidadeResponsavelId ? tipo.unidadeResponsavelId : atual.unidadeId)
 
-  const unidade = tiposOrgaosService.getById(resolvedUnidadeId)
-  if (!unidade) {
-    throw new ValidationError('Unidade responsável não encontrada')
+  if (resolvedUnidadeId !== atual.unidadeId) {
+    const unidade = await prisma.tramitacaoUnidade.findUnique({
+      where: { id: resolvedUnidadeId }
+    })
+
+    if (!unidade) {
+      throw new ValidationError('Unidade responsável não encontrada')
+    }
   }
 
-  const status = (payload.status ?? atual.status ?? 'EM_ANDAMENTO').toUpperCase() as z.infer<typeof StatusEnum>
-
-  const dataEntrada = payload.dataEntrada ? new Date(payload.dataEntrada).toISOString() : atual.dataEntrada
-  let dataSaida = payload.dataSaida === null ? undefined : payload.dataSaida ? new Date(payload.dataSaida).toISOString() : atual.dataSaida
+  const status = (payload.status ?? atual.status) as 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  const dataEntrada = payload.dataEntrada ? new Date(payload.dataEntrada) : atual.dataEntrada
+  let dataSaida = payload.dataSaida === null
+    ? null
+    : payload.dataSaida
+      ? new Date(payload.dataSaida)
+      : atual.dataSaida
 
   if (status === 'CONCLUIDA' && !dataSaida) {
-    dataSaida = new Date().toISOString()
+    dataSaida = new Date()
   }
 
+  // Calcular prazo
   let prazoVencimento = payload.prazoVencimento === null
-    ? undefined
+    ? null
     : payload.prazoVencimento
-      ? new Date(payload.prazoVencimento).toISOString()
+      ? new Date(payload.prazoVencimento)
       : atual.prazoVencimento
 
-  if (!prazoVencimento && status === 'EM_ANDAMENTO') {
-    prazoVencimento = tramitacoesService.calcularPrazoVencimento(tipo.id).toISOString()
+  if (!prazoVencimento && status === 'EM_ANDAMENTO' && tipo.prazoRegimental > 0) {
+    prazoVencimento = addBusinessDays(dataEntrada, tipo.prazoRegimental)
   }
 
-  let diasVencidos = payload.diasVencidos === null ? undefined : payload.diasVencidos ?? atual.diasVencidos
-  if (diasVencidos === undefined && prazoVencimento) {
-    const diff = Date.now() - new Date(prazoVencimento).getTime()
+  // Calcular dias vencidos
+  let diasVencidos = payload.diasVencidos === null ? null : payload.diasVencidos ?? atual.diasVencidos
+  if (diasVencidos === null && prazoVencimento) {
+    const diff = Date.now() - prazoVencimento.getTime()
     diasVencidos = diff > 0 ? Math.floor(diff / (1000 * 60 * 60 * 24)) : 0
   }
 
-  const atualizado = tramitacoesService.update({
-    ...atual,
-    tipoTramitacaoId: tipoId,
-    unidadeId: resolvedUnidadeId,
-    dataEntrada,
-    dataSaida,
-    status,
-    observacoes: payload.observacoes === undefined ? atual.observacoes : payload.observacoes ?? undefined,
-    parecer: payload.parecer === undefined ? atual.parecer : payload.parecer ?? undefined,
-    resultado: payload.resultado === undefined ? atual.resultado : payload.resultado ?? undefined,
-    responsavelId: payload.responsavelId === undefined ? atual.responsavelId : payload.responsavelId ?? undefined,
-    prazoVencimento,
-    diasVencidos,
-    automatica: payload.automatica ?? atual.automatica
-  })
-
-  await tramitacaoHistoricosService.create({
-    tramitacaoId: atualizado.id,
-    acao: 'ATUALIZACAO',
-    descricao: 'Tramitação atualizada',
-    usuarioId: session.user.id,
-    proposicaoId: atualizado.proposicaoId,
-    dadosAnteriores: atual,
-    dadosNovos: atualizado
-  })
-
-  await logAudit({
-    request,
-    session,
-    action: 'TRAMITACAO_UPDATE',
-    entity: 'Tramitacao',
-    entityId: atualizado.id,
-    metadata: {
+  const tramitacao = await prisma.tramitacao.update({
+    where: { id },
+    data: {
       tipoTramitacaoId: tipoId,
       unidadeId: resolvedUnidadeId,
-      status
+      dataEntrada,
+      dataSaida,
+      status,
+      observacoes: payload.observacoes === undefined ? undefined : payload.observacoes,
+      parecer: payload.parecer === undefined ? undefined : payload.parecer,
+      resultado: payload.resultado === undefined ? undefined : payload.resultado as any,
+      responsavelId: payload.responsavelId === undefined ? undefined : payload.responsavelId,
+      prazoVencimento,
+      diasVencidos,
+      automatica: payload.automatica ?? atual.automatica
+    },
+    include: {
+      tipoTramitacao: true,
+      unidade: true,
+      proposicao: {
+        select: {
+          id: true,
+          numero: true,
+          ano: true,
+          tipo: true,
+          titulo: true
+        }
+      }
     }
   })
 
-  return createSuccessResponse(
-    buildTramitacaoResponse(atualizado),
-    'Tramitação atualizada com sucesso'
-  )
+  await prisma.tramitacaoHistorico.create({
+    data: {
+      tramitacaoId: id,
+      acao: 'ATUALIZACAO',
+      descricao: 'Tramitação atualizada',
+      usuarioId: user?.id,
+      dadosAnteriores: atual as any,
+      dadosNovos: tramitacao as any
+    }
+  })
+
+  return createSuccessResponse(tramitacao, 'Tramitação atualizada com sucesso')
 }, { permissions: 'tramitacao.manage' })
 
-export const DELETE = withAuth(async (request: NextRequest, { params }, session) => {
-  const id = validateId(params?.id)
-  const tramitacao = tramitacoesService.getById(id)
+// DELETE - Excluir tramitação
+export const DELETE = withAuth(async (request: NextRequest, { params, user }) => {
+  const { id } = await params
+
+  const tramitacao = await prisma.tramitacao.findUnique({
+    where: { id }
+  })
 
   if (!tramitacao) {
     throw new NotFoundError('Tramitação não encontrada')
   }
 
-  tramitacoesService.delete(id)
-  tramitacaoHistoricosService.deleteByTramitacao(id)
-  tramitacaoNotificacoesService.deleteByTramitacao(id)
-
-  await logAudit({
-    request,
-    session,
-    action: 'TRAMITACAO_DELETE',
-    entity: 'Tramitacao',
-    entityId: id,
-    metadata: {
-      proposicaoId: tramitacao.proposicaoId,
-      tipoTramitacaoId: tramitacao.tipoTramitacaoId,
-      unidadeId: tramitacao.unidadeId
-    }
-  })
+  // Excluir em cascata (históricos e notificações)
+  await prisma.$transaction([
+    prisma.tramitacaoHistorico.deleteMany({ where: { tramitacaoId: id } }),
+    prisma.tramitacaoNotificacao.deleteMany({ where: { tramitacaoId: id } }),
+    prisma.tramitacao.delete({ where: { id } })
+  ])
 
   return createSuccessResponse({ id }, 'Tramitação removida com sucesso')
 }, { permissions: 'tramitacao.manage' })

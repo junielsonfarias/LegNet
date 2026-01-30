@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Users, 
-  Search, 
+import {
+  Users,
+  Search,
   Calendar,
   MapPin,
   Clock,
@@ -26,23 +26,107 @@ import {
   ChevronRight,
   ExternalLink
 } from 'lucide-react'
-import { 
-  audienciasPublicasService,
-  AudienciaPublica,
-  ParticipanteAudiencia
-} from '@/lib/parlamentares-data'
+
+// Interfaces locais (originalmente de parlamentares-data)
+interface ParticipanteAudiencia {
+  id: string
+  nome: string
+  cargo?: string
+  instituicao?: string
+  tipo: 'PARLAMENTAR' | 'CONVIDADO' | 'CIDADAO' | 'ORGAO_PUBLICO' | 'ENTIDADE' | 'ESPECIALISTA'
+  confirmado: boolean
+  presenca?: boolean
+  intervencoes?: {
+    id: string
+    horario: string
+    duracao: number
+    assunto: string
+    resumo?: string
+  }[]
+}
+
+interface AudienciaPublica {
+  id: string
+  numero?: string
+  titulo: string
+  descricao: string
+  tipo: 'ORDINARIA' | 'EXTRAORDINARIA' | 'ESPECIAL'
+  status: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | 'ADIADA'
+  dataHora: string
+  local: string
+  endereco?: string
+  responsavel: string
+  parlamentarId?: string
+  comissaoId?: string
+  objetivo: string
+  publicoAlvo: string
+  documentos?: {
+    nome: string
+    url: string
+    tipo: string
+    data: string
+  }[]
+  participantes: ParticipanteAudiencia[]
+  links?: {
+    nome: string
+    url: string
+    tipo: 'TRANSMISSAO' | 'DOCUMENTO' | 'OUTROS'
+  }[]
+  observacoes?: string
+  criadaEm: string
+  atualizadaEm: string
+}
+
+interface AudienciasStats {
+  total: number
+  agendadas: number
+  concluidas: number
+  canceladas: number
+  ordinarias: number
+  extraordinarias: number
+  especiais: number
+}
 
 export default function AudienciasPublicasPublicPage() {
   const [audiencias, setAudiencias] = useState<AudienciaPublica[]>([])
+  const [stats, setStats] = useState<AudienciasStats>({
+    total: 0,
+    agendadas: 0,
+    concluidas: 0,
+    canceladas: 0,
+    ordinarias: 0,
+    extraordinarias: 0,
+    especiais: 0
+  })
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterTipo, setFilterTipo] = useState('all')
   const [expandedAudiencias, setExpandedAudiencias] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Carregar dados
-  useEffect(() => {
-    setAudiencias(audienciasPublicasService.getAll())
+  // Carregar dados via API
+  const carregarDados = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/publico/audiencias-publicas')
+      const result = await response.json()
+
+      if (result.success && result.data) {
+        setAudiencias(result.data.audiencias || [])
+        if (result.data.stats) {
+          setStats(result.data.stats)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar audiências:', error)
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    carregarDados()
+  }, [carregarDados])
 
   // Filtrar audiências
   const filteredAudiencias = audiencias.filter(audiencia => {
@@ -137,8 +221,16 @@ export default function AudienciasPublicasPublicPage() {
     }
   }
 
-  // Estatísticas
-  const stats = audienciasPublicasService.getStats()
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-camara-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando audiências públicas...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

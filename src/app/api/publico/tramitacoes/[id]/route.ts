@@ -1,84 +1,118 @@
 import { NextRequest } from 'next/server'
 
-import { createErrorResponse, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
-import {
-  tramitacoesService,
-  tramitacaoHistoricosService,
-  tiposTramitacaoService,
-  tiposOrgaosService
-} from '@/lib/tramitacao-service'
-import { proposicoesService } from '@/lib/proposicoes-service'
-import { mockData } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
+import { createSuccessResponse, NotFoundError, createErrorResponse } from '@/lib/error-handler'
 
-export const GET = async (_request: NextRequest, { params }: { params: { id: string } }) => {
+export const dynamic = 'force-dynamic'
+
+export const GET = async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const tramitacao = tramitacoesService.getById(params.id)
+    const { id } = await params
+
+    const tramitacao = await prisma.tramitacao.findUnique({
+      where: { id },
+      include: {
+        tipoTramitacao: {
+          select: {
+            id: true,
+            nome: true,
+            descricao: true
+          }
+        },
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true
+          }
+        },
+        proposicao: {
+          select: {
+            id: true,
+            numero: true,
+            titulo: true,
+            tipo: true,
+            status: true,
+            dataApresentacao: true,
+            autor: {
+              select: {
+                id: true,
+                nome: true,
+                partido: true
+              }
+            }
+          }
+        },
+        historicos: {
+          select: {
+            id: true,
+            data: true,
+            acao: true,
+            descricao: true,
+            usuarioId: true,
+            dadosAnteriores: true,
+            dadosNovos: true
+          },
+          orderBy: { data: 'desc' }
+        }
+      }
+    })
+
     if (!tramitacao) {
       throw new NotFoundError('Tramitação')
     }
 
-    const proposicao = proposicoesService.getById(tramitacao.proposicaoId)
-    const tipo = tiposTramitacaoService.getById(tramitacao.tipoTramitacaoId)
-    const unidade = tiposOrgaosService.getById(tramitacao.unidadeId)
-    const autor = proposicao?.autorId
-      ? mockData.parlamentares?.find(parlamentar => parlamentar.id === proposicao.autorId) ?? null
-      : null
-
-    const historicos = tramitacaoHistoricosService.getByTramitacao(tramitacao.id).map(historico => ({
-      id: historico.id,
-      data: historico.data,
-      acao: historico.acao,
-      descricao: historico.descricao ?? null,
-      usuarioId: historico.usuarioId ?? null,
-      dadosAnteriores: historico.dadosAnteriores ?? null,
-      dadosNovos: historico.dadosNovos ?? null
-    }))
-
     return createSuccessResponse({
       id: tramitacao.id,
-      proposicao: proposicao
-        ? {
-            id: proposicao.id,
-            numero: proposicao.numero,
-            titulo: proposicao.titulo,
-            tipo: proposicao.tipo,
-            status: proposicao.status,
-            dataApresentacao: proposicao.dataApresentacao,
-            autor: autor
-              ? {
-                  id: autor.id,
-                  nome: autor.nome,
-                  partido: autor.partido ?? null
-                }
-              : null
-          }
-        : null,
+      proposicao: {
+        id: tramitacao.proposicao.id,
+        numero: tramitacao.proposicao.numero,
+        titulo: tramitacao.proposicao.titulo,
+        tipo: tramitacao.proposicao.tipo,
+        status: tramitacao.proposicao.status,
+        dataApresentacao: tramitacao.proposicao.dataApresentacao?.toISOString() ?? null,
+        autor: tramitacao.proposicao.autor
+          ? {
+              id: tramitacao.proposicao.autor.id,
+              nome: tramitacao.proposicao.autor.nome,
+              partido: tramitacao.proposicao.autor.partido
+            }
+          : null
+      },
       status: tramitacao.status,
-      resultado: tramitacao.resultado ?? null,
-      dataEntrada: tramitacao.dataEntrada,
-      dataSaida: tramitacao.dataSaida ?? null,
-      observacoes: tramitacao.observacoes ?? null,
-      parecer: tramitacao.parecer ?? null,
-      prazoVencimento: tramitacao.prazoVencimento ?? null,
-      diasVencidos: tramitacao.diasVencidos ?? null,
-      unidade: unidade
+      resultado: tramitacao.resultado,
+      dataEntrada: tramitacao.dataEntrada.toISOString(),
+      dataSaida: tramitacao.dataSaida?.toISOString() ?? null,
+      observacoes: tramitacao.observacoes,
+      parecer: tramitacao.parecer,
+      prazoVencimento: tramitacao.prazoVencimento?.toISOString() ?? null,
+      diasVencidos: tramitacao.diasVencidos,
+      unidade: tramitacao.unidade
         ? {
-            id: unidade.id,
-            nome: unidade.nome,
-            sigla: unidade.sigla ?? null
+            id: tramitacao.unidade.id,
+            nome: tramitacao.unidade.nome,
+            sigla: tramitacao.unidade.sigla
           }
         : null,
-      tipo: tipo
+      tipo: tramitacao.tipoTramitacao
         ? {
-            id: tipo.id,
-            nome: tipo.nome,
-            descricao: tipo.descricao ?? null
+            id: tramitacao.tipoTramitacao.id,
+            nome: tramitacao.tipoTramitacao.nome,
+            descricao: tramitacao.tipoTramitacao.descricao
           }
         : null,
-      historicos
+      historicos: tramitacao.historicos.map(h => ({
+        id: h.id,
+        data: h.data.toISOString(),
+        acao: h.acao,
+        descricao: h.descricao,
+        usuarioId: h.usuarioId,
+        dadosAnteriores: h.dadosAnteriores,
+        dadosNovos: h.dadosNovos
+      }))
     })
   } catch (error) {
-    return createErrorResponse(error, `/api/publico/tramitacoes/${params.id}`)
+    const { id } = await params
+    return createErrorResponse(error, `/api/publico/tramitacoes/${id}`)
   }
 }
-

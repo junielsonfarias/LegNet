@@ -1,15 +1,10 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
+import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
-import {
-  regrasTramitacaoService,
-  regrasTramitacaoEtapasService,
-  tiposTramitacaoService,
-  tiposOrgaosService
-} from '@/lib/tramitacao-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,44 +31,49 @@ const RegraSchema = z.object({
   etapas: z.array(RegraEtapaSchema).optional()
 })
 
-const validateEtapas = (etapas: z.infer<typeof RegraEtapaSchema>[]) => {
-  etapas.forEach(etapa => {
+const validateEtapas = async (etapas: z.infer<typeof RegraEtapaSchema>[]) => {
+  for (const etapa of etapas) {
     if (etapa.tipoTramitacaoId) {
-      const tipo = tiposTramitacaoService.getById(etapa.tipoTramitacaoId)
+      const tipo = await prisma.tramitacaoTipo.findUnique({
+        where: { id: etapa.tipoTramitacaoId }
+      })
       if (!tipo) {
         throw new ValidationError(`Tipo de tramitação não encontrado para a etapa ${etapa.nome}`)
       }
     }
 
     if (etapa.unidadeId) {
-      const unidade = tiposOrgaosService.getById(etapa.unidadeId)
+      const unidade = await prisma.tramitacaoUnidade.findUnique({
+        where: { id: etapa.unidadeId }
+      })
       if (!unidade) {
         throw new ValidationError(`Unidade responsável não encontrada para a etapa ${etapa.nome}`)
       }
     }
-  })
+  }
 }
 
 export const GET = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const ativo = searchParams.get('ativo')
 
-  let regras = regrasTramitacaoService.getAll()
+  const where: any = {}
 
   if (ativo !== null) {
-    if (ativo === 'true') {
-      regras = regras.filter(regra => regra.ativo)
-    } else if (ativo === 'false') {
-      regras = regras.filter(regra => !regra.ativo)
-    }
+    where.ativo = ativo === 'true'
   }
 
-  const resposta = regras.map(regra => ({
-    ...regra,
-    etapas: regrasTramitacaoEtapasService.getByRegra(regra.id)
-  }))
+  const regras = await prisma.regraTramitacao.findMany({
+    where,
+    include: {
+      etapas: {
+        orderBy: { ordem: 'asc' }
+      }
+    },
+    orderBy: { ordem: 'asc' }
+  })
 
-  return createSuccessResponse(resposta, 'Regras de tramitação carregadas com sucesso', resposta.length)
+  return createSuccessResponse(regras, 'Regras de tramitação carregadas com sucesso', regras.length)
 }, { permissions: 'tramitacao.view' })
 
 export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
@@ -81,33 +81,36 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const payload = RegraSchema.parse(body)
 
   const etapas = payload.etapas ?? []
-  validateEtapas(etapas)
+  await validateEtapas(etapas)
 
-  const regra = regrasTramitacaoService.create({
-    nome: payload.nome,
-    descricao: payload.descricao ?? '',
-    condicoes: payload.condicoes,
-    acoes: payload.acoes,
-    excecoes: payload.excecoes,
-    ativo: payload.ativo,
-    ordem: payload.ordem
-  } as any) as any
-
-  const etapasCriadas = etapas
-    .sort((a, b) => a.ordem - b.ordem)
-    .map((etapa, index) =>
-      regrasTramitacaoEtapasService.create({
-        regraId: regra.id,
-        ordem: etapa.ordem ?? index,
-        nome: etapa.nome,
-        descricao: etapa.descricao,
-        tipoTramitacaoId: etapa.tipoTramitacaoId,
-        unidadeId: etapa.unidadeId,
-        notificacoes: etapa.notificacoes,
-        alertas: etapa.alertas,
-        prazoDias: etapa.prazoDias ?? undefined
-      })
-    )
+  const regra = await prisma.regraTramitacao.create({
+    data: {
+      nome: payload.nome,
+      descricao: payload.descricao,
+      condicoes: payload.condicoes,
+      acoes: payload.acoes,
+      excecoes: payload.excecoes ?? {},
+      ativo: payload.ativo,
+      ordem: payload.ordem,
+      etapas: {
+        create: etapas.sort((a, b) => a.ordem - b.ordem).map((etapa, index) => ({
+          ordem: etapa.ordem ?? index,
+          nome: etapa.nome,
+          descricao: etapa.descricao,
+          tipoTramitacaoId: etapa.tipoTramitacaoId,
+          unidadeId: etapa.unidadeId,
+          notificacoes: etapa.notificacoes,
+          alertas: etapa.alertas,
+          prazoDias: etapa.prazoDias
+        }))
+      }
+    },
+    include: {
+      etapas: {
+        orderBy: { ordem: 'asc' }
+      }
+    }
+  })
 
   await logAudit({
     request,
@@ -117,15 +120,12 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     entityId: regra.id,
     metadata: {
       nome: regra.nome,
-      etapas: etapasCriadas.length
+      etapas: regra.etapas.length
     }
   })
 
   return createSuccessResponse(
-    {
-      ...regra,
-      etapas: etapasCriadas
-    },
+    regra,
     'Regra de tramitação criada com sucesso',
     undefined,
     201

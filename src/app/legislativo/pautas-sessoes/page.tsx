@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { 
-  FileText, 
-  Search, 
+import {
+  FileText,
+  Search,
   Calendar,
   Clock,
   Users,
@@ -23,23 +23,100 @@ import {
   CheckCircle,
   PlayCircle
 } from 'lucide-react'
-import { 
-  pautasSessoesService,
-  PautaSessao,
-  PautaItem
-} from '@/lib/parlamentares-data'
+
+// Interfaces locais (originalmente de parlamentares-data)
+interface PautaItem {
+  id: string
+  tipo: 'EXPEDIENTE' | 'ORDEM_DO_DIA'
+  categoria: 'COMUNICACAO' | 'REQUERIMENTO' | 'INDICACAO' | 'PROJETO_LEI' | 'PROJETO_RESOLUCAO' | 'PROJETO_DECRETO' | 'VOTO_APLAUSO' | 'VOTO_PESAR' | 'OUTROS'
+  numero?: string
+  titulo: string
+  descricao?: string
+  autor?: string
+  parlamentarId?: string
+  prioridade: 'BAIXA' | 'MEDIA' | 'ALTA'
+  status: 'PENDENTE' | 'APROVADO' | 'REJEITADO' | 'ADIADO'
+  tempoEstimado?: number
+  ordem: number
+  votacao?: {
+    aprovado: boolean
+    votosFavoraveis: number
+    votosContrarios: number
+    abstencao: number
+    resultado?: string
+  }
+  anexos?: {
+    nome: string
+    url: string
+    tipo: string
+  }[]
+}
+
+interface PautaSessao {
+  id: string
+  sessaoId: string
+  data: string
+  tipo: 'ORDINARIA' | 'EXTRAORDINARIA' | 'ESPECIAL' | 'SOLENE'
+  status: 'RASCUNHO' | 'PUBLICADA' | 'APROVADA' | 'EM_ANDAMENTO' | 'CONCLUIDA'
+  titulo: string
+  descricao?: string
+  expediente: PautaItem[]
+  ordemDoDia: PautaItem[]
+  observacoes?: string
+  publicadaEm?: string
+  aprovadaEm?: string
+  criadaEm: string
+  atualizadaEm: string
+}
+
+interface PautasStats {
+  total: number
+  publicadas: number
+  rascunhos: number
+  aprovadas: number
+  ordinarias: number
+  extraordinarias: number
+}
 
 export default function PautasSessoesPublicPage() {
   const [pautas, setPautas] = useState<PautaSessao[]>([])
+  const [stats, setStats] = useState<PautasStats>({
+    total: 0,
+    publicadas: 0,
+    rascunhos: 0,
+    aprovadas: 0,
+    ordinarias: 0,
+    extraordinarias: 0
+  })
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterTipo, setFilterTipo] = useState('all')
   const [expandedPautas, setExpandedPautas] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Carregar dados
-  useEffect(() => {
-    setPautas(pautasSessoesService.getPublicadas())
+  // Carregar dados via API
+  const carregarDados = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/publico/pautas-sessoes?publicadas=true')
+      const result = await response.json()
+
+      if (result.success && result.data) {
+        setPautas(result.data.pautas || [])
+        if (result.data.stats) {
+          setStats(result.data.stats)
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar pautas:', error)
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    carregarDados()
+  }, [carregarDados])
 
   // Filtrar pautas
   const filteredPautas = pautas.filter(pauta => {
@@ -146,8 +223,16 @@ export default function PautasSessoesPublicPage() {
     }
   }
 
-  // Estatísticas
-  const stats = pautasSessoesService.getStats()
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-camara-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando pautas...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

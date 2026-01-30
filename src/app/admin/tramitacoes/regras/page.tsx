@@ -42,9 +42,17 @@ import { toast } from 'sonner'
 import {
   useTramitacaoRegras
 } from '@/lib/hooks/use-tramitacoes'
-import { tiposTramitacaoService, tiposOrgaosService } from '@/lib/tramitacao-service'
 import type { TramitacaoRegraPayload } from '@/lib/api/tramitacoes-api'
-import type { TipoTramitacao, TipoOrgao } from '@/lib/types/tramitacao'
+
+interface TipoTramitacao {
+  id: string
+  nome: string
+}
+
+interface TipoOrgao {
+  id: string
+  nome: string
+}
 
 interface RegraFormState {
   nome: string
@@ -130,13 +138,28 @@ export default function TramitationRulesPage() {
   const [etapaForm, setEtapaForm] = useState<EtapaFormState>(defaultEtapaForm)
 
   useEffect(() => {
-    try {
-      setTiposTramitacao(tiposTramitacaoService.getAll())
-      setUnidades(tiposOrgaosService.getAll())
-    } catch (err) {
-      console.error('Erro ao carregar dados auxiliares', err)
-      toast.error('Não foi possível carregar dados auxiliares')
+    async function loadAuxiliaryData() {
+      try {
+        const [tiposRes, unidadesRes] = await Promise.all([
+          fetch('/api/configuracoes/tipos-tramitacao'),
+          fetch('/api/configuracoes/unidades-tramitacao')
+        ])
+
+        if (tiposRes.ok) {
+          const data = await tiposRes.json()
+          setTiposTramitacao(data.data ?? [])
+        }
+
+        if (unidadesRes.ok) {
+          const data = await unidadesRes.json()
+          setUnidades(data.data ?? [])
+        }
+      } catch (err) {
+        console.error('Erro ao carregar dados auxiliares', err)
+        toast.error('Não foi possível carregar dados auxiliares')
+      }
     }
+    loadAuxiliaryData()
   }, [])
 
   useEffect(() => {

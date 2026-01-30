@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { 
+import {
   Search,
   Download,
   Eye,
@@ -20,7 +20,6 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react'
-import { transparenciaService } from '@/lib/transparencia-service'
 import { TransparenciaItem } from '@/lib/types/transparencia'
 import { toast } from 'sonner'
 
@@ -45,25 +44,26 @@ export default function CategoriaTransparenciaPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
-      
-      // Carregar categoria
-      const categorias = transparenciaService.getCategorias()
-      const categoriaData = categorias.find(cat => cat === categoriaId)
-      if (!categoriaData) {
+
+      // Carregar itens da categoria via API
+      const response = await fetch(`/api/transparencia/itens?categoria=${encodeURIComponent(categoriaId)}`)
+      if (!response.ok) {
         toast.error('Categoria não encontrada')
         return
       }
 
-      // Carregar subcategorias
-      const subcategoriasData = transparenciaService.getSubcategorias(categoriaId)
-      
-      // Carregar itens da categoria
-      const itensData = transparenciaService.getByCategoria(categoriaId)
+      const result = await response.json()
+      if (!result.success || !result.data) {
+        toast.error('Categoria não encontrada')
+        return
+      }
 
-      setCategoria(categoriaData)
-      setSubcategorias(subcategoriasData)
-      setItens(itensData)
-      setItensFiltrados(itensData)
+      const { itens: itensData, subcategorias: subcategoriasData } = result.data
+
+      setCategoria(categoriaId)
+      setSubcategorias(subcategoriasData || [])
+      setItens(itensData || [])
+      setItensFiltrados(itensData || [])
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
       toast.error('Erro ao carregar dados da categoria')
@@ -204,10 +204,10 @@ export default function CategoriaTransparenciaPage() {
           </Button>
           
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {categoria.nome}
+            {String(categoria).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
           </h1>
           <p className="text-gray-600">
-            {categoria.descricao}
+            Documentos e informações da categoria
           </p>
         </div>
 

@@ -52,11 +52,19 @@ import {
   useTramitacaoDashboard
 } from '@/lib/hooks/use-tramitacoes'
 import type { TramitacaoFilters, TramitacaoStatus, TramitacaoResultado, TramitacaoCreate } from '@/lib/api/tramitacoes-api'
-import {
-  tiposTramitacaoService,
-  tiposOrgaosService
-} from '@/lib/tramitacao-service'
-import type { TipoTramitacao, TipoOrgao } from '@/lib/types/tramitacao'
+
+interface TipoTramitacao {
+  id: string
+  nome: string
+  unidadeResponsavelId?: string | null
+  unidadeResponsavel?: string | null
+}
+
+interface TipoOrgao {
+  id: string
+  nome: string
+  sigla?: string | null
+}
 import { formatDateOnly } from '@/lib/utils/date'
 
 const STATUS_CONFIG: Record<
@@ -170,20 +178,30 @@ export default function TramitacoesAdminPage() {
     []
   )
 
-  const loadOptions = useCallback(() => {
+  const loadOptions = useCallback(async () => {
     try {
-      const tipos = tiposTramitacaoService.getAll()
-      const unidadesData = tiposOrgaosService.getAll()
+      const [tiposRes, unidadesRes] = await Promise.all([
+        fetch('/api/configuracoes/tipos-tramitacao'),
+        fetch('/api/configuracoes/unidades-tramitacao')
+      ])
 
-      setTiposTramitacao(tipos)
-      setUnidades(unidadesData)
+      if (tiposRes.ok) {
+        const tiposData = await tiposRes.json()
+        const tipos = tiposData.data ?? []
+        setTiposTramitacao(tipos)
 
-      if (!createForm.tipoTramitacaoId && tipos.length > 0) {
-        setCreateForm(prev => ({
-          ...prev,
-          tipoTramitacaoId: tipos[0].id,
-          unidadeId: (tipos[0].unidadeResponsavelId ?? tipos[0].unidadeResponsavel) ?? undefined
-        }))
+        if (!createForm.tipoTramitacaoId && tipos.length > 0) {
+          setCreateForm(prev => ({
+            ...prev,
+            tipoTramitacaoId: tipos[0].id,
+            unidadeId: (tipos[0].unidadeResponsavelId ?? tipos[0].unidadeResponsavel) ?? undefined
+          }))
+        }
+      }
+
+      if (unidadesRes.ok) {
+        const unidadesData = await unidadesRes.json()
+        setUnidades(unidadesData.data ?? [])
       }
     } catch (err) {
       console.error('Erro ao carregar opções de tramitação', err)

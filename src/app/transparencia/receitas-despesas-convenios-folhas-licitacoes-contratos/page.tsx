@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  DollarSign, 
-  FileText, 
-  Calendar, 
+import {
+  DollarSign,
+  FileText,
+  Calendar,
   Eye,
   Download,
   ArrowLeft,
@@ -23,9 +23,12 @@ import {
 import Link from 'next/link'
 import { transparenciaService } from '@/lib/transparencia-service'
 
+// Mantido como Server Component - import do service é aceitável no servidor
+// A migração completa para Prisma será feita quando o modelo de dados for definido
+
 export default function ReceitasDespesasConveniosFolhasLicitacoesContratosPage() {
   const { data } = transparenciaService.getAll()
-  
+
   // Filtrar apenas itens da categoria
   const categoriaItems = data.filter(item => item.categoria === 'receitas-despesas-convenios-folhas-licitacoes-contratos')
 

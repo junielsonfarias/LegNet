@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-30 (Refatoração Fase 2 concluída: 3 páginas modulares)
+> **Ultima Atualizacao**: 2026-01-30 (Fase 1.3: Dados de parlamentares consolidados)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -5522,6 +5522,55 @@ votacao.manage    -> Gerenciar votacoes
   - `src/lib/validation/query-schemas.ts`
 
 - **Impacto de seguranca**: CRITICO - Corrigidas vulnerabilidades de acesso nao autorizado
+
+### 2026-01-30 - Fase 1.2: Consolidacao dos Servicos de Transparencia
+
+- **Objetivo**: Migrar paginas de transparencia de imports diretos do mock service para uso de APIs
+- **APIs criadas**:
+  - `GET /api/transparencia/itens` - Lista/busca itens com filtros (categoria, subcategoria, ano, tipo, search)
+  - `GET /api/transparencia/categorias` - Lista categorias e subcategorias
+  - `GET /api/transparencia/estatisticas` - Estatisticas gerais e por categoria
+- **Paginas migradas** (client components -> fetch):
+  - `src/app/transparencia/[categoria]/page.tsx`
+  - `src/app/transparencia/portal-da-transparencia/page.tsx`
+- **Paginas mantidas** (server components):
+  - `src/app/transparencia/lei-responsabilidade-fiscal/page.tsx`
+  - `src/app/transparencia/receitas-despesas-convenios-folhas-licitacoes-contratos/page.tsx`
+  - Nota: Server Components podem importar servicos diretamente (executam no servidor)
+- **Arquivos modificados**:
+  - `src/app/transparencia/[categoria]/page.tsx` - Removido import, usa fetch
+  - `src/app/transparencia/portal-da-transparencia/page.tsx` - Removido import, usa fetch
+  - `src/app/api/transparencia/itens/route.ts` (novo)
+  - `src/app/api/transparencia/categorias/route.ts` (novo)
+  - `src/app/api/transparencia/estatisticas/route.ts` (novo)
+- **Proximos passos**:
+  - Fase 1.3: Consolidar dados de parlamentares
+  - Futura migracao do `transparenciaService` de mock para Prisma
+- **Build verificado**: Compilado com sucesso
+
+### 2026-01-30 - Fase 1.3: Consolidacao dos Dados de Parlamentares
+
+- **Objetivo**: Migrar paginas que usam mock services de parlamentares-data.ts para APIs
+- **Escopo ajustado**: Arquivo parlamentares-data.ts contem nao apenas dados de parlamentares, mas tambem audiencias publicas e pautas de sessoes. Este arquivo foi identificado como um "mega mock file" que precisa de refatoracao progressiva.
+- **APIs publicas criadas**:
+  - `GET /api/publico/audiencias-publicas` - Lista audiencias publicas com filtros (status, tipo, search)
+  - `GET /api/publico/pautas-sessoes` - Lista pautas publicadas com filtros (status, tipo, search)
+- **Paginas publicas migradas** (client components -> fetch):
+  - `src/app/legislativo/audiencias-publicas/page.tsx` - Usa API publica
+  - `src/app/legislativo/pautas-sessoes/page.tsx` - Usa API publica
+- **Paginas admin mantidas** (mock service):
+  - `src/app/admin/audiencias-publicas/page.tsx` - CRUD completo via mock service
+  - Nota: Nao existe modelo Prisma para AudienciaPublica, migracao futura necessaria
+- **Arquivos criados/modificados**:
+  - `src/app/api/publico/audiencias-publicas/route.ts` (novo)
+  - `src/app/api/publico/pautas-sessoes/route.ts` (novo)
+  - `src/app/legislativo/audiencias-publicas/page.tsx` (migrado para fetch)
+  - `src/app/legislativo/pautas-sessoes/page.tsx` (migrado para fetch)
+- **Proximos passos**:
+  - Criar modelo Prisma para AudienciaPublica
+  - Migrar audienciasPublicasService para Prisma
+  - Migrar pautas mock para usar PautaSessao existente no Prisma
+- **Build verificado**: Compilado com sucesso
 
 ---
 

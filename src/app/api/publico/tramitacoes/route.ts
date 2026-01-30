@@ -1,180 +1,147 @@
 import { NextRequest } from 'next/server'
 
-import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
-import {
-  tramitacoesService,
-  tiposTramitacaoService,
-  tiposOrgaosService
-} from '@/lib/tramitacao-service'
-import { proposicoesService } from '@/lib/proposicoes-service'
-import { mockData } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
+import { createSuccessResponse } from '@/lib/error-handler'
 
-interface PublicTramitacao {
-  id: string
-  proposicaoId: string
-  proposicaoNumero?: string | null
-  proposicaoTitulo?: string | null
-  autor?: {
-    id: string
-    nome: string
-    partido?: string | null
-  } | null
-  status: string
-  resultado?: string | null
-  dataEntrada: string
-  dataSaida?: string | null
-  unidade?: {
-    id: string
-    nome: string
-    sigla?: string | null
-  } | null
-  tipo?: {
-    id: string
-    nome: string
-  } | null
-  observacoes?: string | null
-  parecer?: string | null
-  prazoVencimento?: string | null
-  diasVencidos?: number | null
-}
-
-const normalizeString = (value?: string | null) => value?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') ?? ''
-
-const toPublicTramitacao = (tramitacao: ReturnType<typeof tramitacoesService.getAll>[number]): PublicTramitacao => {
-  const proposicao = proposicoesService.getById(tramitacao.proposicaoId)
-  const tipo = tiposTramitacaoService.getById(tramitacao.tipoTramitacaoId)
-  const unidade = tiposOrgaosService.getById(tramitacao.unidadeId)
-  const autor = proposicao?.autorId
-    ? mockData.parlamentares?.find(parlamentar => parlamentar.id === proposicao.autorId) ?? null
-    : null
-
-  return {
-    id: tramitacao.id,
-    proposicaoId: tramitacao.proposicaoId,
-    proposicaoNumero: proposicao?.numero ?? null,
-    proposicaoTitulo: proposicao?.titulo ?? null,
-    autor: autor
-      ? {
-          id: autor.id,
-          nome: autor.nome,
-          partido: autor.partido ?? null
-        }
-      : null,
-    status: tramitacao.status ?? 'EM_ANDAMENTO',
-    resultado: tramitacao.resultado ?? null,
-    dataEntrada: tramitacao.dataEntrada,
-    dataSaida: tramitacao.dataSaida ?? null,
-    unidade: unidade
-      ? {
-          id: unidade.id,
-          nome: unidade.nome,
-          sigla: unidade.sigla ?? null
-        }
-      : null,
-    tipo: tipo
-      ? {
-          id: tipo.id,
-          nome: tipo.nome
-        }
-      : null,
-    observacoes: tramitacao.observacoes ?? null,
-    parecer: tramitacao.parecer ?? null,
-    prazoVencimento: tramitacao.prazoVencimento ?? null,
-    diasVencidos: tramitacao.diasVencidos ?? null
-  }
-}
+export const dynamic = 'force-dynamic'
 
 export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
 
-  const status = searchParams.get('status')
-  const resultado = searchParams.get('resultado')
+  const status = searchParams.get('status')?.toUpperCase()
+  const resultado = searchParams.get('resultado')?.toUpperCase()
   const autorId = searchParams.get('autorId')
   const searchTerm = searchParams.get('search')
   const from = searchParams.get('from')
   const to = searchParams.get('to')
-  const page = Number(searchParams.get('page') ?? '1')
-  const limit = Number(searchParams.get('limit') ?? '10')
+  const page = Math.max(1, Number(searchParams.get('page') ?? '1'))
+  const limit = Math.min(Math.max(1, Number(searchParams.get('limit') ?? '10')), 100)
 
-  const all = tramitacoesService.getAll()
+  const where: any = {}
 
-  const filtered = all.filter(tramitacao => {
-    if (status && tramitacao.status?.toUpperCase() !== status.toUpperCase()) {
-      return false
+  if (status) {
+    where.status = status
+  }
+
+  if (resultado) {
+    where.resultado = resultado
+  }
+
+  if (autorId) {
+    where.proposicao = {
+      autorId
     }
+  }
 
-    if (resultado && (tramitacao.resultado ?? '').toUpperCase() !== resultado.toUpperCase()) {
-      return false
-    }
-
-    if (autorId) {
-      const proposicaoAutor = proposicoesService.getById(tramitacao.proposicaoId)?.autorId
-      if (!proposicaoAutor || proposicaoAutor !== autorId) {
-        return false
+  if (from || to) {
+    where.dataEntrada = {}
+    if (from) {
+      const fromDate = new Date(from)
+      if (!Number.isNaN(fromDate.getTime())) {
+        where.dataEntrada.gte = fromDate
       }
     }
+    if (to) {
+      const toDate = new Date(to)
+      if (!Number.isNaN(toDate.getTime())) {
+        where.dataEntrada.lte = toDate
+      }
+    }
+  }
 
-    if (from || to) {
-      const dataEntrada = new Date(tramitacao.dataEntrada)
-      if (!Number.isNaN(dataEntrada.getTime())) {
-        if (from) {
-          const fromDate = new Date(from)
-          if (!Number.isNaN(fromDate.getTime()) && dataEntrada < fromDate) {
-            return false
+  if (searchTerm) {
+    where.OR = [
+      { observacoes: { contains: searchTerm, mode: 'insensitive' } },
+      { parecer: { contains: searchTerm, mode: 'insensitive' } },
+      { proposicao: { numero: { contains: searchTerm, mode: 'insensitive' } } },
+      { proposicao: { titulo: { contains: searchTerm, mode: 'insensitive' } } }
+    ]
+  }
+
+  const [tramitacoes, total] = await Promise.all([
+    prisma.tramitacao.findMany({
+      where,
+      include: {
+        tipoTramitacao: {
+          select: {
+            id: true,
+            nome: true
+          }
+        },
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true
+          }
+        },
+        proposicao: {
+          select: {
+            id: true,
+            numero: true,
+            titulo: true,
+            autor: {
+              select: {
+                id: true,
+                nome: true,
+                partido: true
+              }
+            }
           }
         }
-        if (to) {
-          const toDate = new Date(to)
-          if (!Number.isNaN(toDate.getTime()) && dataEntrada > toDate) {
-            return false
-          }
+      },
+      orderBy: { dataEntrada: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit
+    }),
+    prisma.tramitacao.count({ where })
+  ])
+
+  const items = tramitacoes.map(t => ({
+    id: t.id,
+    proposicaoId: t.proposicaoId,
+    proposicaoNumero: t.proposicao.numero,
+    proposicaoTitulo: t.proposicao.titulo,
+    autor: t.proposicao.autor
+      ? {
+          id: t.proposicao.autor.id,
+          nome: t.proposicao.autor.nome,
+          partido: t.proposicao.autor.partido
         }
-      }
-    }
-
-    if (searchTerm) {
-      const normalizedSearch = normalizeString(searchTerm)
-      const proposicao = proposicoesService.getById(tramitacao.proposicaoId)
-      const matchesSearch =
-        normalizeString(proposicao?.numero).includes(normalizedSearch) ||
-        normalizeString(proposicao?.titulo).includes(normalizedSearch) ||
-        normalizeString(tramitacao.observacoes).includes(normalizedSearch) ||
-        normalizeString(tramitacao.parecer).includes(normalizedSearch)
-
-      if (!matchesSearch) {
-        return false
-      }
-    }
-
-    return true
-  })
-
-  const sorted = filtered.sort(
-    (a, b) => new Date(b.dataEntrada).getTime() - new Date(a.dataEntrada).getTime()
-  )
-
-  const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 10
-  const safePage = Number.isFinite(page) && page > 0 ? page : 1
-  const total = sorted.length
-  const totalPages = Math.max(1, Math.ceil(total / safeLimit))
-  const startIndex = (safePage - 1) * safeLimit
-  const paginated = sorted.slice(startIndex, startIndex + safeLimit)
-
-  const data = paginated.map(toPublicTramitacao)
+      : null,
+    status: t.status,
+    resultado: t.resultado,
+    dataEntrada: t.dataEntrada.toISOString(),
+    dataSaida: t.dataSaida?.toISOString() ?? null,
+    unidade: t.unidade
+      ? {
+          id: t.unidade.id,
+          nome: t.unidade.nome,
+          sigla: t.unidade.sigla
+        }
+      : null,
+    tipo: t.tipoTramitacao
+      ? {
+          id: t.tipoTramitacao.id,
+          nome: t.tipoTramitacao.nome
+        }
+      : null,
+    observacoes: t.observacoes,
+    parecer: t.parecer,
+    prazoVencimento: t.prazoVencimento?.toISOString() ?? null,
+    diasVencidos: t.diasVencidos
+  }))
 
   return createSuccessResponse(
-    {
-      items: data
-    },
+    { items },
     undefined,
     total,
     200,
     {
       total,
-      page: safePage,
-      limit: safeLimit,
-      totalPages
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
     }
   )
 }
-
