@@ -1,4 +1,14 @@
 // @ts-nocheck
+/**
+ * @deprecated Este arquivo contém DADOS MOCKADOS e NÃO deve ser usado em produção.
+ * Use as APIs reais em vez deste serviço:
+ * - Parlamentares: /api/parlamentares
+ * - Sessões: /api/sessoes
+ * - Proposições: /api/proposicoes
+ *
+ * TODO: Remover este arquivo após migrar todos os consumidores para APIs reais.
+ */
+
 // Sistema de dados compartilhado entre admin e portal público
 // Em produção, isso seria substituído por chamadas à API ou banco de dados
 

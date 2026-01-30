@@ -4,24 +4,26 @@ import {
   withErrorHandler,
   createSuccessResponse,
   NotFoundError,
-  validateId,
   ValidationError
 } from '@/lib/error-handler'
+import { resolverSessaoId } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
 
 // GET - Buscar sessão completa para o painel público (sem autenticação)
+// Aceita tanto CUID quanto slug no formato "sessao-{numero}-{ano}"
 export const GET = withErrorHandler(async (
   request: NextRequest
 ) => {
   const { searchParams } = new URL(request.url)
-  const sessaoId = searchParams.get('sessaoId')
+  const sessaoIdParam = searchParams.get('sessaoId')
 
-  if (!sessaoId) {
+  if (!sessaoIdParam) {
     throw new ValidationError('sessaoId é obrigatório')
   }
 
-  const id = validateId(sessaoId, 'Sessão')
+  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
+  const id = await resolverSessaoId(sessaoIdParam)
 
   const sessao = await prisma.sessao.findUnique({
     where: { id },
@@ -114,7 +116,8 @@ export const GET = withErrorHandler(async (
               id: true,
               nome: true,
               apelido: true,
-              partido: true
+              partido: true,
+              foto: true
             }
           }
         }
@@ -151,7 +154,8 @@ export const GET = withErrorHandler(async (
         id: parlamentar.id,
         nome: parlamentar.nome,
         apelido: parlamentar.apelido,
-        partido: parlamentar.partido
+        partido: parlamentar.partido,
+        foto: parlamentar.foto
       }
     }
   })

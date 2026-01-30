@@ -34,7 +34,8 @@ export const GET = withErrorHandler(async (
           id: true,
           nome: true,
           apelido: true,
-          partido: true
+          partido: true,
+          foto: true
         }
       }
     }
@@ -98,7 +99,8 @@ export const POST = withErrorHandler(async (
           id: true,
           nome: true,
           apelido: true,
-          partido: true
+          partido: true,
+          foto: true
         }
       }
     }

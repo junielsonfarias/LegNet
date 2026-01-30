@@ -12,6 +12,11 @@ import {
   UnauthorizedError
 } from '@/lib/error-handler'
 import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
+import { getFluxoByTipoProposicao, getEtapaInicial } from '@/lib/services/fluxo-tramitacao-service'
+import { iniciarTramitacaoComFluxo, iniciarTramitacaoPadrao } from '@/lib/services/tramitacao-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const logger = createLogger('proposicoes-api')
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -172,10 +177,88 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       }
     }
   })
-  
+
+  // Auto-iniciar tramitação ao criar proposição
+  let tramitacaoInfo: {
+    tramitacaoId?: string
+    fluxo?: string
+    etapa?: string
+    message: string
+    warnings?: string[]
+  } | null = null
+  try {
+    // Busca fluxo configurado para o tipo de proposição
+    const fluxo = await getFluxoByTipoProposicao(validatedData.tipo)
+
+    if (fluxo) {
+      // Busca etapa inicial do fluxo
+      const etapaInicial = await getEtapaInicial(fluxo.id)
+
+      if (etapaInicial) {
+        // Inicia tramitação vinculada ao fluxo
+        const resultadoTramitacao = await iniciarTramitacaoComFluxo(
+          proposicao.id,
+          fluxo.id,
+          etapaInicial.id,
+          'NORMAL',
+          session.user.id
+        )
+
+        if (resultadoTramitacao.valid) {
+          tramitacaoInfo = {
+            tramitacaoId: resultadoTramitacao.tramitacaoId,
+            fluxo: fluxo.nome,
+            etapa: etapaInicial.nome,
+            message: 'Tramitação iniciada automaticamente'
+          }
+
+          logger.info('Tramitação auto-iniciada com fluxo', {
+            action: 'auto_iniciar_tramitacao',
+            proposicaoId: proposicao.id,
+            fluxoId: fluxo.id,
+            etapaId: etapaInicial.id
+          })
+        } else {
+          logger.warn('Falha ao auto-iniciar tramitação com fluxo', {
+            action: 'auto_iniciar_tramitacao_falha',
+            proposicaoId: proposicao.id,
+            errors: resultadoTramitacao.errors
+          })
+        }
+      }
+    } else {
+      // Sem fluxo configurado - usa tramitação padrão
+      const resultadoTramitacao = await iniciarTramitacaoPadrao(proposicao.id, 'NORMAL')
+
+      if (resultadoTramitacao.valid) {
+        tramitacaoInfo = {
+          message: 'Tramitação iniciada (sem fluxo configurado)',
+          warnings: resultadoTramitacao.warnings
+        }
+
+        logger.info('Tramitação auto-iniciada sem fluxo', {
+          action: 'auto_iniciar_tramitacao_padrao',
+          proposicaoId: proposicao.id
+        })
+      }
+    }
+  } catch (error) {
+    // Não bloqueia a criação se a tramitação falhar
+    logger.error('Erro ao auto-iniciar tramitação', {
+      action: 'auto_iniciar_tramitacao_erro',
+      proposicaoId: proposicao.id,
+      error
+    })
+  }
+
   return createSuccessResponse(
-    proposicao,
-    'Proposição criada com sucesso',
+    {
+      ...proposicao,
+      tramitacao: tramitacaoInfo
+    },
+    tramitacaoInfo
+      ? 'Proposição criada e tramitação iniciada com sucesso'
+      : 'Proposição criada com sucesso',
     undefined,
     201
   )

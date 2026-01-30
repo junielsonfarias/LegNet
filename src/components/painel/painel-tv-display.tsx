@@ -21,6 +21,7 @@ export interface ItemPautaAtivo {
   titulo: string
   descricao?: string | null
   status: string // Flexivel para aceitar qualquer status da API
+  tipoAcao?: string | null // VOTACAO, LEITURA, COMUNICADO, HOMENAGEM, DISCUSSAO
   proposicao?: {
     id: string
     numero: string | number
@@ -106,15 +107,27 @@ export function PainelTvDisplay({
     }
   }, [sessao])
 
-  // Status do item atual
+  // Status do item atual - considera o tipoAcao para itens informativos
   const statusItemLabel = useMemo(() => {
     if (!itemAtual) return ''
-    switch (itemAtual.status) {
-      case 'EM_DISCUSSAO': return 'EM LEITURA'
+    const status = itemAtual.status
+    const tipoAcao = itemAtual.tipoAcao
+
+    // Para itens EM_DISCUSSAO, o label depende do tipoAcao
+    if (status === 'EM_DISCUSSAO' || status === 'em_discussao') {
+      if (tipoAcao === 'LEITURA') return 'EM LEITURA'
+      if (tipoAcao === 'COMUNICADO') return 'COMUNICACAO'
+      if (tipoAcao === 'HOMENAGEM') return 'HOMENAGEM'
+      return 'EM DISCUSSAO'
+    }
+
+    switch (status) {
       case 'EM_VOTACAO': return 'EM VOTACAO'
       case 'APROVADO': return 'APROVADO'
       case 'REJEITADO': return 'REJEITADO'
-      default: return itemAtual.status.replace('_', ' ')
+      case 'CONCLUIDO': return 'CONCLUIDO'
+      case 'concluido': return 'CONCLUIDO'
+      default: return status.replace('_', ' ')
     }
   }, [itemAtual])
 

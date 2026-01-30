@@ -1,4 +1,17 @@
 // @ts-nocheck
+/**
+ * @deprecated Este serviço usa DADOS MOCKADOS e NÃO deve ser usado em produção.
+ * Use o serviço painel-tempo-real-service.ts que usa Prisma e dados reais do banco.
+ *
+ * APIs reais para painel eletrônico:
+ * - Estado do painel: /api/painel/estado
+ * - Votação: /api/painel/votacao
+ * - Presença: /api/sessoes/[id]/presenca
+ * - Streaming: /api/painel/stream
+ *
+ * TODO: Remover este arquivo após confirmar que não está mais em uso.
+ */
+
 import {
   PainelSessao,
   PautaItem,

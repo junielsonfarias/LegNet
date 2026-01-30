@@ -31,12 +31,48 @@ export interface PautaItem {
   titulo: string;
   descricao: string;
   autor: string;
-  status: 'pendente' | 'em_discussao' | 'votacao' | 'aprovado' | 'rejeitado' | 'adiado';
+  status: 'pendente' | 'em_discussao' | 'votacao' | 'aprovado' | 'rejeitado' | 'adiado' | 'concluido';
   prioridade: 'alta' | 'media' | 'baixa';
   tempoEstimado: number; // em minutos
   tempoReal?: number;
   observacoes?: string;
   anexos?: string[];
+  // Tipo de ação do item: define se precisa de votação ou é apenas informativo
+  tipoAcao?: 'VOTACAO' | 'LEITURA' | 'DISCUSSAO' | 'COMUNICADO' | 'HOMENAGEM';
+  // Seção da pauta
+  secao?: 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS';
+}
+
+/**
+ * Verifica se o item é informativo (não precisa de votação)
+ * Itens informativos: LEITURA, COMUNICADO, HOMENAGEM
+ */
+export function isItemInformativo(tipoAcao?: string): boolean {
+  return tipoAcao === 'LEITURA' || tipoAcao === 'COMUNICADO' || tipoAcao === 'HOMENAGEM';
+}
+
+/**
+ * Verifica se o item precisa de votação
+ * Itens que precisam de votação: VOTACAO, DISCUSSAO
+ */
+export function isItemVotavel(tipoAcao?: string): boolean {
+  return tipoAcao === 'VOTACAO' || tipoAcao === 'DISCUSSAO';
+}
+
+/**
+ * Retorna o label apropriado para o status do item baseado no tipoAcao
+ */
+export function getStatusLabelPorTipoAcao(status: string, tipoAcao?: string): string {
+  if (status === 'em_discussao' || status === 'EM_DISCUSSAO') {
+    if (tipoAcao === 'LEITURA') return 'EM LEITURA';
+    if (tipoAcao === 'COMUNICADO') return 'COMUNICAÇÃO';
+    if (tipoAcao === 'HOMENAGEM') return 'HOMENAGEM';
+    return 'EM DISCUSSÃO';
+  }
+  if (status === 'concluido' || status === 'CONCLUIDO') {
+    return 'CONCLUÍDO';
+  }
+  return status.replace('_', ' ').toUpperCase();
 }
 
 export interface Votacao {

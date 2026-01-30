@@ -23,7 +23,8 @@ import {
   BookOpen,
   Megaphone,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  Award
 } from 'lucide-react'
 
 interface Proposicao {
@@ -92,10 +93,20 @@ function getIconeTipoAcao(tipoAcao: string | null | undefined) {
     case 'DISCUSSAO':
       return MessageCircle
     case 'COMUNICACAO':
+    case 'COMUNICADO':
       return Megaphone
+    case 'HOMENAGEM':
+      return Award
     default:
       return MessageCircle
   }
+}
+
+/**
+ * Verifica se o item e informativo (nao precisa de votacao)
+ */
+function isItemInformativo(tipoAcao: string | null | undefined): boolean {
+  return tipoAcao === 'LEITURA' || tipoAcao === 'COMUNICADO' || tipoAcao === 'COMUNICACAO' || tipoAcao === 'HOMENAGEM'
 }
 
 /**
@@ -275,7 +286,8 @@ export function ItemPautaCard({
                     <Pause className="h-4 w-4" />
                   </Button>
                 )}
-                {item.tipoAcao === 'VOTACAO' && onVotacao && (
+                {/* Botao de votacao - apenas para itens que precisam de votacao (VOTACAO ou DISCUSSAO) */}
+                {!isItemInformativo(item.tipoAcao) && onVotacao && (
                   <Button
                     size="sm"
                     variant="ghost"

@@ -1,4 +1,11 @@
 // @ts-nocheck
+/**
+ * @deprecated Este serviço usa DADOS MOCKADOS e NÃO deve ser usado em produção.
+ * Use o serviço painel-tempo-real-service.ts que usa Prisma e dados reais do banco.
+ *
+ * TODO: Remover este arquivo após confirmar que não está mais em uso.
+ */
+
 // Serviço de integração entre painel administrativo e painel eletrônico
 // Conecta dados de sessões, parlamentares, pautas e votações
 

@@ -11,16 +11,20 @@
 
 | Metrica | Valor |
 |---------|-------|
-| **Modelos Prisma** | 78 |
-| **Endpoints API** | 142 |
-| **Componentes React** | 76 |
-| **Servicos de Negocio** | 37 |
-| **Hooks Customizados** | 34 |
-| **Paginas Admin** | 50+ |
-| **Paginas Publicas** | 93+ |
+| **Modelos Prisma** | 84 |
+| **Endpoints API** | 158 |
+| **Componentes React** | 110 |
+| **Servicos de Negocio** | 39 |
+| **Hooks Customizados** | 40 |
+| **Paginas Admin** | 79 |
+| **Paginas Publicas** | 74 |
+| **Total Paginas** | 153 |
+| **Arquivos TSX** | 271 |
+| **Arquivos TS** | 382 |
 | **Multi-Tenant** | Implementado |
 | **Cobertura SAPL** | 100% |
-| **ESLint Warnings** | 0 |
+| **TypeScript Errors** | 0 |
+| **ESLint Warnings** | 4 (menores) |
 | **Build Status** | Passing |
 
 ---

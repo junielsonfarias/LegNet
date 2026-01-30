@@ -30,6 +30,12 @@ export interface PautaItemApi {
   dataIntersticio?: string | null
   prazoIntersticio?: string | null
 
+  // === CAMPOS DE ETAPA E LEITURA ===
+  etapa?: number | null                // 1 = 1ª Ordem do Dia (leituras), 2 = 2ª Ordem do Dia (votações)
+  parecerId?: string | null            // Referência ao parecer vinculado
+  leituraNumero?: number | null        // Número da leitura (1ª, 2ª, 3ª)
+  relatorId?: string | null            // ID do relator designado
+
   createdAt: string
   updatedAt: string
   proposicao?: {
@@ -40,6 +46,24 @@ export interface PautaItemApi {
     ementa?: string | null
     tipo: string
     status: string
+  } | null
+  parecer?: {
+    id: string
+    numero: string | null
+    ano: number
+    tipo: string
+    status: string
+    comissao?: {
+      id: string
+      nome: string
+      sigla: string
+    } | null
+  } | null
+  relator?: {
+    id: string
+    nome: string
+    apelido?: string | null
+    partido?: string | null
   } | null
 }
 

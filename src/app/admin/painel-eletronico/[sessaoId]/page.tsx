@@ -67,6 +67,7 @@ import { VotacaoAcompanhamento } from '@/components/admin/votacao-acompanhamento
 import { CronometroOrador } from '@/components/admin/cronometro-orador'
 import { TurnoControl } from '@/components/admin/turno-control'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 
 const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'; label: string }> = [
   { value: 'CONCLUIDO', label: 'Encerrar discussão' },
@@ -686,7 +687,7 @@ export default function PainelEletronicoOperadorPage() {
                   className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
                 >
                   <a
-                    href={`/painel-publico?sessaoId=${sessao.id}`}
+                    href={`/painel-publico?sessaoId=${gerarSlugSessao(sessao.numero, sessao.data)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -702,7 +703,7 @@ export default function PainelEletronicoOperadorPage() {
                   className="border-blue-600 bg-blue-600/20 text-blue-300 hover:bg-blue-600 hover:text-white"
                 >
                   <a
-                    href={`/painel-tv/${sessao.id}`}
+                    href={`/painel-tv/${gerarSlugSessao(sessao.numero, sessao.data)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -723,7 +724,7 @@ export default function PainelEletronicoOperadorPage() {
                   }
                 >
                   <a
-                    href={`/painel-operador/${sessao.id}`}
+                    href={`/painel-operador/${gerarSlugSessao(sessao.numero, sessao.data)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

@@ -39,7 +39,7 @@ async function findProposicaoByIdOrSlug(idOrSlug: string) {
   // Verifica se é um slug amigável
   if (isSlugProposicao(idOrSlug)) {
     // Primeiro tenta buscar pelo slug armazenado
-    let proposicao = null
+    let proposicao: Awaited<ReturnType<typeof prisma.proposicao.findUnique>> = null
     try {
       proposicao = await prisma.proposicao.findUnique({
         where: { slug: idOrSlug }

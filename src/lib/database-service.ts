@@ -1,3 +1,10 @@
+/**
+ * @deprecated Este serviço usa DADOS MOCKADOS em memória e NÃO deve ser usado em produção.
+ * Use Prisma diretamente ou os serviços em src/lib/services/ que usam o banco de dados real.
+ *
+ * TODO: Remover este arquivo após confirmar que não está mais em uso.
+ */
+
 // Serviço de dados centralizado que simula um banco de dados real
 // Em produção, isso seria substituído por chamadas ao Prisma/PostgreSQL
 

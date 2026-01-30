@@ -29,15 +29,23 @@ import {
   Eye,
   Download
 } from 'lucide-react'
-import { 
+import {
   audienciasPublicasService,
-  parlamentaresService,
   AudienciaPublica,
   ParticipanteAudiencia
 } from '@/lib/parlamentares-data'
 
+// Tipo para parlamentar carregado da API
+interface ParlamentarApi {
+  id: string
+  nome: string
+  apelido?: string
+  partido?: string
+}
+
 export default function AudienciasPublicasAdminPage() {
   const [audiencias, setAudiencias] = useState<AudienciaPublica[]>([])
+  const [parlamentares, setParlamentares] = useState<ParlamentarApi[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -99,6 +107,20 @@ export default function AudienciasPublicasAdminPage() {
   // Carregar dados
   useEffect(() => {
     setAudiencias(audienciasPublicasService.getAll())
+
+    // Carregar parlamentares da API real
+    const carregarParlamentares = async () => {
+      try {
+        const response = await fetch('/api/parlamentares?ativo=true')
+        const data = await response.json()
+        if (data.success && data.data) {
+          setParlamentares(data.data)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar parlamentares:', error)
+      }
+    }
+    carregarParlamentares()
   }, [])
 
   // Filtrar audiências
@@ -635,9 +657,9 @@ export default function AudienciasPublicasAdminPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
-                    {parlamentaresService.getAll().map(parlamentar => (
+                    {parlamentares.map(parlamentar => (
                       <SelectItem key={parlamentar.id} value={parlamentar.id}>
-                        {parlamentar.nome}
+                        {parlamentar.apelido || parlamentar.nome}
                       </SelectItem>
                     ))}
                   </SelectContent>

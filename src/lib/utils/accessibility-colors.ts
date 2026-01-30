@@ -306,7 +306,7 @@ export function getStatusSessaoStyle(status: string): StatusSessaoStyleConfig {
 /**
  * Tipo de acao (para badges de item)
  */
-export type TipoAcao = 'VOTACAO' | 'LEITURA' | 'DISCUSSAO' | 'COMUNICACAO'
+export type TipoAcao = 'VOTACAO' | 'LEITURA' | 'DISCUSSAO' | 'COMUNICACAO' | 'COMUNICADO' | 'HOMENAGEM'
 
 export interface TipoAcaoStyleConfig {
   bg: string
@@ -349,6 +349,22 @@ export const TIPO_ACAO_STYLES: Record<TipoAcao, TipoAcaoStyleConfig> = {
     border: 'border-amber-500/50',
     icon: 'megaphone',
     label: 'Comunicacao'
+  },
+  COMUNICADO: {
+    bg: 'bg-amber-600',
+    bgLight: 'bg-amber-600/20',
+    text: 'text-amber-200',
+    border: 'border-amber-500/50',
+    icon: 'megaphone',
+    label: 'Comunicado'
+  },
+  HOMENAGEM: {
+    bg: 'bg-pink-600',
+    bgLight: 'bg-pink-600/20',
+    text: 'text-pink-200',
+    border: 'border-pink-500/50',
+    icon: 'award',
+    label: 'Homenagem'
   }
 }
 
