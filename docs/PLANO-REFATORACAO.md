@@ -151,9 +151,9 @@ src/app/admin/proposicoes/
 - [x] Criar _hooks/use-proposicoes-state.ts (684 linhas)
 - [x] Criar _components/proposicoes-filters.tsx (84 linhas)
 - [x] Criar _components/proposicao-card.tsx (134 linhas)
-- [ ] Integrar hook e componentes no page.tsx
-- [ ] Extrair modais para componentes separados
-**Status**: EM ANDAMENTO
+- [x] Integrar hook e componentes no page.tsx (1.972 → 875 linhas, -55%)
+- [ ] Extrair modais para componentes separados (opcional - futuro)
+**Status**: CONCLUÍDO em 2026-01-30
 
 ---
 

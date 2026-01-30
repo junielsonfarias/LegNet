@@ -15,7 +15,7 @@
 | **Endpoints API** | 158 |
 | **Componentes React** | 110 |
 | **Servicos de Negocio** | 39 |
-| **Hooks Customizados** | 41 |
+| **Hooks Customizados** | 42 |
 | **Paginas Admin** | 79 |
 | **Paginas Publicas** | 74 |
 | **Total Paginas** | 153 |
