@@ -1,2 +1,5 @@
 export { ProposicoesFilters } from './proposicoes-filters'
 export { ProposicaoCard } from './proposicao-card'
+export { ProposicaoFormModal } from './proposicao-form-modal'
+export { TramitacaoModal } from './tramitacao-modal'
+export { LeiReferenciadaModal } from './lei-referenciada-modal'

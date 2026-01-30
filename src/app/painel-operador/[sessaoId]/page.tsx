@@ -8,20 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -69,14 +55,7 @@ import { VotacaoAcompanhamento } from '@/components/admin/votacao-acompanhamento
 import { VotacaoEdicao } from '@/components/admin/votacao-edicao'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { cn } from '@/lib/utils'
-
-const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'; label: string }> = [
-  { value: 'CONCLUIDO', label: 'Concluido' },
-  { value: 'APROVADO', label: 'Aprovado' },
-  { value: 'REJEITADO', label: 'Rejeitado' },
-  { value: 'RETIRADO', label: 'Retirado' },
-  { value: 'ADIADO', label: 'Adiado' }
-]
+import { FinalizarItemModal, ControlePresencaModal } from './_components'
 
 const formatSeconds = (seconds: number) => {
   const horas = Math.floor(seconds / 3600)
@@ -748,56 +727,24 @@ export default function PainelOperadorPage() {
       </div>
 
       {/* Modal Finalizar Item */}
-      <Dialog open={modalFinalizar.open} onOpenChange={(open) => !open && setModalFinalizar({ open: false, itemId: '', titulo: '' })}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-base">Finalizar Item</DialogTitle>
-          </DialogHeader>
-          <div className="py-3">
-            <p className="text-sm text-slate-400 mb-3">
-              Resultado para: <span className="text-white font-medium">{modalFinalizar.titulo}</span>
-            </p>
-            <Select value={resultadoSelecionado} onValueChange={setResultadoSelecionado}>
-              <SelectTrigger className="bg-slate-700 border-slate-600 h-9">
-                <SelectValue placeholder="Selecione o resultado" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-700 border-slate-600">
-                {ITEM_RESULTADOS.map(r => (
-                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setModalFinalizar({ open: false, itemId: '', titulo: '' })}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={confirmarFinalizar} disabled={!resultadoSelecionado || executando}>
-              Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <FinalizarItemModal
+        open={modalFinalizar.open}
+        titulo={modalFinalizar.titulo}
+        resultadoSelecionado={resultadoSelecionado}
+        executando={executando}
+        onClose={() => setModalFinalizar({ open: false, itemId: '', titulo: '' })}
+        onConfirm={confirmarFinalizar}
+        onResultadoChange={setResultadoSelecionado}
+      />
 
       {/* Modal Controle de Presenca */}
-      <Dialog open={mostrarControlePresenca} onOpenChange={setMostrarControlePresenca}>
-        <DialogContent className="bg-white border-slate-200 text-slate-900 max-w-3xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-lg flex items-center gap-2 text-slate-900">
-              <Users className="h-5 w-5 text-blue-600" />
-              Controle de Presenca
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto py-2">
-            <PresencaControl sessaoId={sessao.id} sessaoStatus={sessao.status} />
-          </div>
-          <DialogFooter className="border-t pt-4">
-            <Button variant="outline" onClick={() => { setMostrarControlePresenca(false); carregarSessao(false) }}>
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ControlePresencaModal
+        open={mostrarControlePresenca}
+        sessaoId={sessao.id}
+        sessaoStatus={sessao.status}
+        onClose={() => setMostrarControlePresenca(false)}
+        onRefresh={() => carregarSessao(false)}
+      />
 
       {/* Modal de Edicao de Votacao */}
       {itemParaEditarVotacao && sessao && (

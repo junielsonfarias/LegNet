@@ -8,22 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -68,6 +52,7 @@ import { CronometroOrador } from '@/components/admin/cronometro-orador'
 import { TurnoControl } from '@/components/admin/turno-control'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
+import { RetiradaPautaModal } from './_components'
 
 const ITEM_RESULTADOS: Array<{ value: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'; label: string }> = [
   { value: 'CONCLUIDO', label: 'Encerrar discussão' },
@@ -1216,80 +1201,22 @@ export default function PainelEletronicoOperadorPage() {
       </div>
 
       {/* Modal de Retirada de Pauta */}
-      <Dialog
+      <RetiradaPautaModal
         open={modalRetirada.open}
-        onOpenChange={(open) => {
-          if (!open) {
-            setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
-            setMotivoRetirada('')
-            setAutorRetirada('none')
-          }
+        itemTitulo={modalRetirada.itemTitulo}
+        motivoRetirada={motivoRetirada}
+        autorRetirada={autorRetirada}
+        executando={executando}
+        presencas={sessao?.presencas}
+        onClose={() => {
+          setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
+          setMotivoRetirada('')
+          setAutorRetirada('none')
         }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-yellow-700">
-              <LogOut className="h-5 w-5" />
-              Retirar de Pauta
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800 font-medium">Item a ser retirado:</p>
-              <p className="text-sm text-gray-700 mt-1">{modalRetirada.itemTitulo}</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="autorRetirada">Solicitante da retirada (opcional)</Label>
-              <Select value={autorRetirada} onValueChange={setAutorRetirada}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione quem solicitou" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Não informado</SelectItem>
-                  <SelectItem value="Mesa Diretora">Mesa Diretora</SelectItem>
-                  <SelectItem value="Autor da Proposição">Autor da Proposição</SelectItem>
-                  {sessao?.presencas?.filter(p => p.presente).map(presenca => (
-                    <SelectItem key={presenca.parlamentar.id} value={presenca.parlamentar.apelido || presenca.parlamentar.nome}>
-                      {presenca.parlamentar.apelido || presenca.parlamentar.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="motivoRetirada">Motivo da retirada *</Label>
-              <Textarea
-                id="motivoRetirada"
-                value={motivoRetirada}
-                onChange={(e) => setMotivoRetirada(e.target.value)}
-                placeholder="Descreva o motivo da retirada da pauta..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setModalRetirada({ open: false, itemId: '', itemTitulo: '' })
-                setMotivoRetirada('')
-                setAutorRetirada('none')
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={confirmarRetirada}
-              disabled={executando || !motivoRetirada.trim()}
-              className="bg-yellow-600 hover:bg-yellow-700"
-            >
-              {executando ? 'Retirando...' : 'Confirmar Retirada'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onConfirm={confirmarRetirada}
+        onMotivoChange={setMotivoRetirada}
+        onAutorChange={setAutorRetirada}
+      />
     </div>
   )
 }

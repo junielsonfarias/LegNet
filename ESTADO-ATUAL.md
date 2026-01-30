@@ -2547,6 +2547,42 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-01-30 - Extracao de Modais para Componentes Separados
+
+**Objetivo**: Reduzir complexidade de paginas de alta prioridade extraindo modais inline para componentes reutilizaveis.
+
+**Paginas Refatoradas**:
+
+| Pagina | Linhas Antes | Linhas Depois | Modais Extraidos |
+|--------|--------------|---------------|------------------|
+| `sessoes-legislativas/page.tsx` | ~620 | ~258 | 4 modais |
+| `proposicoes/page.tsx` | ~875 | ~350 | 3 modais |
+| `painel-operador/[sessaoId]/page.tsx` | ~814 | ~780 | 2 modais |
+| `painel-eletronico/[sessaoId]/page.tsx` | ~1296 | ~1240 | 1 modal |
+
+**Componentes Criados**:
+
+| Componente | Caminho |
+|------------|---------|
+| SessaoFormModal | `src/app/admin/sessoes-legislativas/_components/sessao-form-modal.tsx` |
+| SessaoViewModal | `src/app/admin/sessoes-legislativas/_components/sessao-view-modal.tsx` |
+| PautaEditorModal | `src/app/admin/sessoes-legislativas/_components/pauta-editor-modal.tsx` |
+| TemplateApplyModal | `src/app/admin/sessoes-legislativas/_components/template-apply-modal.tsx` |
+| ProposicaoFormModal | `src/app/admin/proposicoes/_components/proposicao-form-modal.tsx` |
+| TramitacaoModal | `src/app/admin/proposicoes/_components/tramitacao-modal.tsx` |
+| LeiReferenciadaModal | `src/app/admin/proposicoes/_components/lei-referenciada-modal.tsx` |
+| FinalizarItemModal | `src/app/painel-operador/[sessaoId]/_components/finalizar-item-modal.tsx` |
+| ControlePresencaModal | `src/app/painel-operador/[sessaoId]/_components/controle-presenca-modal.tsx` |
+| RetiradaPautaModal | `src/app/admin/painel-eletronico/[sessaoId]/_components/retirada-pauta-modal.tsx` |
+
+**Padrao Utilizado**:
+- Pasta `_components` adjacente a cada page.tsx
+- Arquivo `index.ts` com barrel exports
+- Props bem definidas com interfaces TypeScript
+- Componentes sem estado interno (controlados pelo pai)
+
+---
+
 ### 2026-01-30 - URLs Amigaveis para Paineis (Sessao)
 
 **Objetivo**: Usar slugs amigaveis nas URLs dos paineis em vez de CUIDs.

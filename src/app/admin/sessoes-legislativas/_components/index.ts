@@ -1,2 +1,6 @@
 export { SessoesFilters } from './sessoes-filters'
 export { SessaoCard } from './sessao-card'
+export { SessaoFormModal } from './sessao-form-modal'
+export { SessaoViewModal } from './sessao-view-modal'
+export { PautaEditorModal } from './pauta-editor-modal'
+export { TemplateApplyModal } from './template-apply-modal'
