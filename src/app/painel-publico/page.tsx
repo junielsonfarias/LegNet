@@ -769,7 +769,7 @@ function PainelPublicoContent() {
 
           </div>
 
-          {/* Coluna 2: Presença dos Parlamentares - Grid Compacto 2 Colunas x 7 Linhas */}
+          {/* Coluna 2: Presença dos Parlamentares - Layout em Duas Colunas (Presentes | Ausentes) */}
           <div className="space-y-6">
             <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
               <CardHeader className="pb-2">
@@ -795,7 +795,7 @@ function PainelPublicoContent() {
                 </div>
 
                 {/* Barra de Progresso Compacta */}
-                <div className="mb-3">
+                <div className="mb-4">
                   <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
@@ -807,73 +807,117 @@ function PainelPublicoContent() {
                   </p>
                 </div>
 
-                {/* Grid Único 2 Colunas - Todos os Parlamentares */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  {/* Ordenar: presentes primeiro (alfabético), depois ausentes (alfabético) */}
-                  {[...presencas]
-                    .sort((a, b) => {
-                      // Presentes primeiro
-                      if (a.presente && !b.presente) return -1
-                      if (!a.presente && b.presente) return 1
-                      // Depois alfabeticamente
-                      const nomeA = a.parlamentar.apelido || a.parlamentar.nome
-                      const nomeB = b.parlamentar.apelido || b.parlamentar.nome
-                      return nomeA.localeCompare(nomeB)
-                    })
-                    .map((p) => {
-                      const nome = p.parlamentar.apelido || p.parlamentar.nome
-                      const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                      return (
-                        <div
-                          key={p.id}
-                          className={`flex items-center gap-1.5 p-1 rounded-md transition-all ${
-                            p.presente
-                              ? 'bg-green-500/15 border border-green-400/30'
-                              : 'bg-red-500/15 border border-red-400/30 opacity-60'
-                          }`}
-                        >
-                          {/* Foto/Avatar */}
-                          <div className="relative flex-shrink-0">
-                            {p.parlamentar.foto ? (
-                              <Image
-                                src={p.parlamentar.foto}
-                                alt={nome}
-                                width={36}
-                                height={36}
-                                className={`w-9 h-9 rounded-full object-cover ring-2 ${
-                                  p.presente ? 'ring-green-400/60' : 'ring-red-400/40 grayscale'
-                                }`}
-                                unoptimized
-                              />
-                            ) : (
-                              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${
-                                p.presente ? 'bg-green-600' : 'bg-red-600'
-                              }`}>
-                                {initials}
+                {/* Grid de Duas Colunas: Presentes | Ausentes */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Coluna Presentes */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-green-300 mb-2 flex items-center gap-1 pb-1 border-b border-green-400/30">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      Presentes ({presentes.length})
+                    </h4>
+                    <div className="space-y-1">
+                      {presentes
+                        .sort((a, b) => {
+                          const nomeA = a.parlamentar.apelido || a.parlamentar.nome
+                          const nomeB = b.parlamentar.apelido || b.parlamentar.nome
+                          return nomeA.localeCompare(nomeB)
+                        })
+                        .map((p) => {
+                          const nome = p.parlamentar.apelido || p.parlamentar.nome
+                          const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                          return (
+                            <div
+                              key={p.id}
+                              className="flex items-center gap-1.5 p-1 rounded-md bg-green-500/10 border border-green-400/20"
+                            >
+                              {/* Foto/Avatar */}
+                              <div className="relative flex-shrink-0">
+                                {p.parlamentar.foto ? (
+                                  <Image
+                                    src={p.parlamentar.foto}
+                                    alt={nome}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 rounded-full object-cover ring-2 ring-green-400/50"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-green-600">
+                                    {initials}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            {/* Indicador de status no canto */}
-                            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center ${
-                              p.presente ? 'bg-green-500' : 'bg-red-500'
-                            }`}>
-                              {p.presente ? (
-                                <CheckCircle className="h-2.5 w-2.5 text-white" />
-                              ) : (
-                                <XCircle className="h-2.5 w-2.5 text-white" />
-                              )}
+                              {/* Nome e Partido */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
+                                <p className="text-[9px] text-green-300 leading-tight">
+                                  {p.parlamentar.partido || '-'}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          {/* Nome e Partido */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
-                            <p className={`text-[9px] leading-tight ${p.presente ? 'text-green-300' : 'text-red-300'}`}>
-                              {p.parlamentar.partido || '-'}
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    })
-                  }
+                          )
+                        })
+                      }
+                      {presentes.length === 0 && (
+                        <p className="text-[10px] text-gray-400 text-center py-2">Nenhum presente</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Coluna Ausentes */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-red-300 mb-2 flex items-center gap-1 pb-1 border-b border-red-400/30">
+                      <XCircle className="h-3.5 w-3.5" />
+                      Ausentes ({ausentes.length})
+                    </h4>
+                    <div className="space-y-1">
+                      {ausentes
+                        .sort((a, b) => {
+                          const nomeA = a.parlamentar.apelido || a.parlamentar.nome
+                          const nomeB = b.parlamentar.apelido || b.parlamentar.nome
+                          return nomeA.localeCompare(nomeB)
+                        })
+                        .map((p) => {
+                          const nome = p.parlamentar.apelido || p.parlamentar.nome
+                          const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                          return (
+                            <div
+                              key={p.id}
+                              className="flex items-center gap-1.5 p-1 rounded-md bg-red-500/10 border border-red-400/20 opacity-70"
+                            >
+                              {/* Foto/Avatar */}
+                              <div className="relative flex-shrink-0">
+                                {p.parlamentar.foto ? (
+                                  <Image
+                                    src={p.parlamentar.foto}
+                                    alt={nome}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 rounded-full object-cover ring-2 ring-red-400/40 grayscale"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-red-600">
+                                    {initials}
+                                  </div>
+                                )}
+                              </div>
+                              {/* Nome e Partido */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
+                                <p className="text-[9px] text-red-300 leading-tight">
+                                  {p.parlamentar.partido || '-'}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        })
+                      }
+                      {ausentes.length === 0 && (
+                        <p className="text-[10px] text-gray-400 text-center py-2">Nenhum ausente</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
