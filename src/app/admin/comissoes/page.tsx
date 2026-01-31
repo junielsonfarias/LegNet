@@ -8,11 +8,11 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { 
-  Users, 
-  Search, 
-  Plus, 
-  Edit, 
+import {
+  Users,
+  Search,
+  Plus,
+  Edit,
   Trash2,
   Calendar,
   User,
@@ -22,8 +22,11 @@ import {
   CheckCircle,
   XCircle,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  LayoutDashboard,
+  ExternalLink
 } from 'lucide-react'
+import Link from 'next/link'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { useComissoes } from '@/lib/hooks/use-comissoes'
 import { toast } from 'sonner'
@@ -591,6 +594,16 @@ export default function ComissoesAdminPage() {
                 </div>
                 
                 <div className="flex gap-1">
+                  <Link href={`/admin/comissoes/${comissao.id}`}>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <LayoutDashboard className="h-3 w-3 mr-1" />
+                      Dashboard
+                    </Button>
+                  </Link>
                   <Button
                     size="sm"
                     variant="outline"

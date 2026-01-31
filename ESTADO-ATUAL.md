@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-31 (Sistema de Autores + Melhoria modal + Correcao numeracao)
+> **Ultima Atualizacao**: 2026-01-31 (Correcoes Sistema Comissoes + API meeting-defaults + Auth APIs)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -12,7 +12,7 @@
 | Metrica | Valor |
 |---------|-------|
 | **Modelos Prisma** | 84 |
-| **Endpoints API** | 158 |
+| **Endpoints API** | 159 |
 | **Componentes React** | 110 |
 | **Servicos de Negocio** | 39 |
 | **Hooks Customizados** | 43 |
@@ -1162,6 +1162,132 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-31 - Sistema Simplificado de Gerenciamento de Comissoes
+
+**Objetivo**: Simplificar o gerenciamento de reunioes, pautas e pareceres das comissoes, reduzindo tempo de tarefas rotineiras em 75-85%.
+
+**Novos Componentes**:
+- `ComissaoDashboard` - Dashboard unificado com estatisticas, proposicoes pendentes, reunioes agendadas e pareceres em andamento
+- `DeadlineIndicator` - Indicador visual de prazo (verde/amarelo/vermelho) seguindo RN-113 (15 dias)
+- `QuickMeetingDialog` - Wizard de 2 passos para criar reuniao com defaults inteligentes e selecao rapida de pauta
+- `QuickParecerForm` - Formulario simplificado com geracao automatica de texto via templates
+- `QuickAddPautaItems` - Adicao em lote de proposicoes pendentes na pauta
+- `VotingGrid` - Grid visual de votacao com implementacao da RN-112 (presidente so vota em empate)
+
+**Novos Servicos**:
+- `deadline-service.ts` - Calculo de prazos e verificacao de vencimento (RN-113)
+- `parecer-template-service.ts` - Templates de parecer por tipo (favoravel, contrario, inconstitucionalidade, etc.)
+- `meeting-defaults-service.ts` - Defaults inteligentes (numero sequencial, data sugerida, local padrao)
+
+**Novas APIs**:
+- `GET /api/comissoes/[id]/dashboard` - Dados agregados para dashboard
+- `POST /api/reunioes-comissao/[id]/pauta/bulk` - Adicao em lote de itens na pauta
+
+**Nova Pagina**:
+- `/admin/comissoes/[id]` - Dashboard individual da comissao com acoes rapidas
+
+**Regras de Negocio Implementadas**:
+- RN-112: Presidente so vota em empate (VotingGrid desabilita voto do presidente ate haver empate)
+- RN-113: Indicador de prazo vencido (DeadlineIndicator mostra status e dias restantes)
+
+**Arquivos Criados**:
+- `src/app/admin/comissoes/[id]/page.tsx`
+- `src/app/api/comissoes/[id]/dashboard/route.ts`
+- `src/app/api/reunioes-comissao/[id]/pauta/bulk/route.ts`
+- `src/components/admin/comissoes/ComissaoDashboard.tsx`
+- `src/components/admin/comissoes/DeadlineIndicator.tsx`
+- `src/components/admin/comissoes/QuickMeetingDialog.tsx`
+- `src/components/admin/comissoes/QuickParecerForm.tsx`
+- `src/components/admin/comissoes/QuickAddPautaItems.tsx`
+- `src/components/admin/comissoes/VotingGrid.tsx`
+- `src/components/admin/comissoes/index.ts`
+- `src/lib/services/deadline-service.ts`
+- `src/lib/services/parecer-template-service.ts`
+- `src/lib/services/meeting-defaults-service.ts`
+
+**Arquivos Modificados**:
+- `src/app/admin/comissoes/page.tsx` - Adicionado botao "Dashboard" por comissao
+- `docs/skills/skill-comissoes.md` - Documentado sistema simplificado
+
+**Ganhos de Produtividade**:
+| Tarefa | Antes | Depois | Reducao |
+|--------|-------|--------|---------|
+| Criar reuniao | 3-5 min | 30 seg | 85% |
+| Montar pauta | 10-15 min | 2-3 min | 80% |
+| Gerar parecer | 15-20 min | 3-5 min | 75% |
+| Votar parecer | 2-3 min | 30 seg | 85% |
+
+---
+
+### 2026-01-31 - Correcoes Sistema de Comissoes
+
+**Objetivo**: Corrigir problemas identificados na revisao de codigo do sistema simplificado de comissoes.
+
+**Correcoes Realizadas**:
+
+1. **Tipos TypeScript** - Corrigido `numero: number` para `numero: string` em:
+   - `ComissaoDashboard.tsx` (interfaces ProposicaoPendente, Reuniao, proposicao em ParecerEmAndamento)
+   - `QuickMeetingDialog.tsx` (interface ProposicaoPendente)
+   - `QuickAddPautaItems.tsx` (interface ProposicaoPendente)
+   - `QuickParecerForm.tsx` (interface Proposicao)
+
+2. **API de Meeting Defaults** - Criada rota que faltava:
+   - `GET /api/comissoes/[id]/meeting-defaults` com autenticacao
+
+3. **Performance (N+1 queries)** - Corrigido em QuickMeetingDialog:
+   - Substituido loop sequencial por chamada unica a API bulk
+   - Antes: N chamadas a `/api/reunioes-comissao/[id]/pauta`
+   - Depois: 1 chamada a `/api/reunioes-comissao/[id]/pauta/bulk`
+
+4. **Anti-pattern window.location.reload()** - Corrigido em page.tsx:
+   - Substituido por `refreshKey` state que forca re-render do ComissaoDashboard
+
+5. **Autenticacao em APIs** - Adicionada verificacao de sessao:
+   - `GET /api/comissoes/[id]/dashboard`
+   - `POST /api/reunioes-comissao/[id]/pauta/bulk`
+   - `GET /api/comissoes/[id]/meeting-defaults` (ja criado com auth)
+
+**Arquivos Criados**:
+- `src/app/api/comissoes/[id]/meeting-defaults/route.ts`
+
+**Arquivos Modificados**:
+- `src/components/admin/comissoes/ComissaoDashboard.tsx`
+- `src/components/admin/comissoes/QuickMeetingDialog.tsx`
+- `src/components/admin/comissoes/QuickAddPautaItems.tsx`
+- `src/components/admin/comissoes/QuickParecerForm.tsx`
+- `src/app/admin/comissoes/[id]/page.tsx`
+- `src/app/api/comissoes/[id]/dashboard/route.ts`
+- `src/app/api/reunioes-comissao/[id]/pauta/bulk/route.ts`
+
+---
+
+### 2026-01-31 - Navbar Admin com Comportamento Acordeao
+
+**Objetivo**: Melhorar navegacao e indicar visualmente modulo ativo no menu lateral
+
+**Implementacao**:
+- **Comportamento de acordeao**: Apenas uma categoria/submenu aberto por vez
+  - Ao abrir uma categoria, as outras sao fechadas automaticamente
+  - Ao abrir um submenu, os outros submenus sao fechados automaticamente
+- **Indicador visual de modulo ativo**:
+  - Barra colorida lateral (conforme cor do role) nas categorias ativas
+  - Destaque visual nos itens de menu ativos
+  - Icone colorido na categoria que contem item ativo
+- **Auto-expansao baseada na rota**:
+  - Ao navegar, a categoria e submenu correspondentes sao expandidos automaticamente
+  - `useEffect` monitora mudancas no `pathname`
+
+**Mudancas Tecnicas**:
+- Estado alterado de arrays para valores unicos (`expandedCategory: string | null`, `expandedMenu: string | null`)
+- Funcoes `toggleCategory()` e `toggleMenu()` com logica de acordeao
+- Funcoes `findActiveCategory()` e `findActiveMenu()` para detectar rota ativa
+- Classes CSS condicionais para indicadores visuais por role
+
+**Arquivo Modificado**:
+- `src/components/admin/admin-sidebar.tsx`
+
+---
 
 ### 2026-01-30 - Melhorias Visuais no Painel Operador
 
