@@ -46,7 +46,7 @@ interface ProposicaoPendente {
 
 interface Reuniao {
   id: string
-  numero: string
+  numero: number
   ano: number
   tipo: string
   status: string
