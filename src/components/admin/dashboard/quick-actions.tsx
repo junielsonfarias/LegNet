@@ -31,14 +31,14 @@ interface QuickAction {
 const quickActionsByRole: Record<UserRole, QuickAction[]> = {
   ADMIN: [
     { label: 'Nova Proposição', href: '/admin/proposicoes/nova', icon: FileText, description: 'Cadastrar proposição' },
-    { label: 'Nova Sessão', href: '/admin/sessoes-legislativas/nova', icon: Calendar, description: 'Agendar sessão' },
-    { label: 'Novo Usuário', href: '/admin/usuarios/novo', icon: Users, description: 'Criar usuário' },
+    { label: 'Nova Sessão', href: '/admin/sessoes/nova', icon: Calendar, description: 'Agendar sessão' },
+    { label: 'Usuários', href: '/admin/usuarios', icon: Users, description: 'Gerenciar usuários' },
     { label: 'Configurações', href: '/admin/configuracoes', icon: Settings, description: 'Ajustes do sistema' },
     { label: 'Relatórios', href: '/admin/relatorios', icon: BarChart3, description: 'Gerar relatórios' },
     { label: 'Auditoria', href: '/admin/auditoria', icon: Eye, description: 'Logs do sistema' }
   ],
   SECRETARIA: [
-    { label: 'Novo Usuário', href: '/admin/usuarios/novo', icon: Users, description: 'Criar usuário' },
+    { label: 'Usuários', href: '/admin/usuarios', icon: Users, description: 'Gerenciar usuários' },
     { label: 'Parlamentares', href: '/admin/parlamentares', icon: Users, description: 'Gerenciar vereadores' },
     { label: 'Novo Protocolo', href: '/admin/protocolo/novo', icon: FileInput, description: 'Registrar documento' },
     { label: 'Publicações', href: '/admin/publicacoes', icon: Newspaper, description: 'Gerenciar publicações' },
@@ -55,7 +55,7 @@ const quickActionsByRole: Record<UserRole, QuickAction[]> = {
   ],
   EDITOR: [
     { label: 'Nova Proposição', href: '/admin/proposicoes/nova', icon: FileText, description: 'Cadastrar proposição' },
-    { label: 'Nova Sessão', href: '/admin/sessoes-legislativas/nova', icon: Calendar, description: 'Agendar sessão' },
+    { label: 'Nova Sessão', href: '/admin/sessoes/nova', icon: Calendar, description: 'Agendar sessão' },
     { label: 'Nova Notícia', href: '/admin/noticias/nova', icon: Newspaper, description: 'Publicar notícia' },
     { label: 'Publicações', href: '/admin/publicacoes', icon: Edit3, description: 'Gerenciar conteúdo' },
     { label: 'Pautas', href: '/admin/pautas-sessoes', icon: ClipboardList, description: 'Gerenciar pautas' },
