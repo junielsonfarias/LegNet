@@ -1,7 +1,7 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-01-28
+> **Ultima Atualizacao**: 2026-01-31
 > **Versao Analisada**: 1.0.0
 
 ---
@@ -11,9 +11,16 @@
 | Severidade | Quantidade | Status |
 |------------|------------|--------|
 | Critica | 14 | 14 Corrigidos |
-| Alta | 3 | 3 Corrigidos |
+| Alta | 5 | 5 Corrigidos |
 | Media | 10 | 10 Corrigidos |
 | Baixa | 6 | Pendente (melhorias opcionais) |
+
+### Correções Aplicadas em 2026-01-31 (Numeração Automática)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-035 | Numeração automática sempre retorna 001 | Corrigido parsing do campo numero |
+| ERR-036 | Numeração única por numero+ano, não por tipo+numero+ano | Constraint alterada para @@unique([tipo, numero, ano]) |
 
 ### Correções Aplicadas em 2026-01-28 (Lote 2 - Validacao e Auth)
 
@@ -279,6 +286,115 @@ export const POST = withAuth(async (request: NextRequest) => {
 **Solucao Aplicada**: Schemas Zod com z.enum(['VALOR1', 'VALOR2', ...])
 
 **Status**: CORRIGIDO - 2026-01-28
+
+---
+
+### ERR-035: Numeração Automática de Proposições Sempre Retorna 001 (CORRIGIDO)
+
+**Localizacao**: `src/lib/utils/proposicao-numero.ts`
+
+**Descricao**: A função `gerarNumeroAutomatico` assumia incorretamente que o campo `numero` da proposição estava no formato `"001/2025"`, quando na verdade o banco de dados armazena apenas `"001"` com o `ano` em um campo separado. Isso fazia com que o split por `/` falhasse e nenhuma proposição fosse considerada no cálculo, resultando sempre em `"001"`.
+
+**Impacto**:
+- Ao criar uma nova proposição com numeração automática, o sistema sempre sugeria "001"
+- Usuários precisavam corrigir manualmente ou criavam duplicatas
+- Violação de regra de negócio de numeração sequencial
+
+**Código Problemático**:
+```typescript
+// ERRADO - p.numero é "001", não "001/2025"
+const [numeroStr, anoStr] = p.numero.split('/')
+return p.tipo === tipo && parseInt(anoStr) === ano
+// anoStr = undefined, parseInt(undefined) = NaN, NaN === 2026 = false
+```
+
+**Solução Aplicada**:
+```typescript
+// CORRETO - usar campos separados
+const proposicoesDoTipoAno = proposicoesExistentes.filter(p => {
+  return p.tipo === tipo && p.ano === ano
+})
+
+// Para o numero, verificar compatibilidade
+const numeroStr = p.numero.includes('/') ? p.numero.split('/')[0] : p.numero
+const numero = parseInt(numeroStr)
+```
+
+**Arquivos Alterados**:
+- `src/lib/utils/proposicao-numero.ts`
+
+**Status**: CORRIGIDO - 2026-01-31
+
+---
+
+### ERR-036: Numeração Única Sem Considerar Tipo de Proposição (CORRIGIDO)
+
+**Localizacao**: `prisma/schema.prisma`, `src/app/api/proposicoes/route.ts`, `src/app/api/proposicoes/[id]/route.ts`
+
+**Descricao**: A constraint unique no banco de dados era `@@unique([numero, ano])`, mas deveria ser `@@unique([tipo, numero, ano])`. Isso impedia criar PL 001/2026 e PR 001/2026, pois o sistema considerava apenas número e ano como identificador único, quando cada tipo de proposição deve ter sua própria sequência numérica independente.
+
+**Impacto**:
+- Impossível criar proposições de tipos diferentes com mesmo número/ano
+- Ex: PL 001/2026 bloqueava PR 001/2026
+- Violação de regra de negócio de numeração por tipo
+
+**Solução Aplicada**:
+
+1. **Schema Prisma** - Alterada constraint unique:
+```prisma
+// ANTES
+@@unique([numero, ano])
+
+// DEPOIS
+@@unique([tipo, numero, ano], name: "tipo_numero_ano")
+```
+
+2. **API de Criação** (`route.ts`):
+```typescript
+// Verificar tipo + número + ano
+const existingProposicao = await prisma.proposicao.findUnique({
+  where: {
+    tipo_numero_ano: {
+      tipo: validatedData.tipo,
+      numero: validatedData.numero,
+      ano: validatedData.ano
+    }
+  }
+})
+```
+
+3. **API de Atualização** (`[id]/route.ts`):
+```typescript
+// Verificar duplicatas considerando tipo
+const duplicateCheck = await prisma.proposicao.findUnique({
+  where: {
+    tipo_numero_ano: {
+      tipo: tipoParaVerificar,
+      numero: numeroParaVerificar,
+      ano: anoParaVerificar
+    }
+  }
+})
+```
+
+4. **Validação Frontend** (`use-proposicoes-state.ts`):
+```typescript
+const existe = proposicoes.some(p =>
+  p.numero === numero &&
+  p.ano === formData.ano &&
+  p.tipo === formData.tipo.toUpperCase() &&
+  p.id !== editingProposicao?.id
+)
+```
+
+**Arquivos Alterados**:
+- `prisma/schema.prisma` - Constraint unique
+- `src/app/api/proposicoes/route.ts` - Validação criação
+- `src/app/api/proposicoes/[id]/route.ts` - Validação atualização
+- `src/app/admin/proposicoes/_hooks/use-proposicoes-state.ts` - Validação frontend
+- `src/lib/repositories/proposicao-repository.ts` - Método findByTipoNumeroAno
+
+**Status**: CORRIGIDO - 2026-01-31
 
 ---
 

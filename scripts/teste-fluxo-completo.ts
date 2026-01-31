@@ -423,7 +423,7 @@ async function testarFluxoCompleto() {
 
     console.log(`
    Proposicao: ${proposicaoFinal?.numero}
-   Autor: ${proposicaoFinal?.autor.nome}
+   Autor: ${proposicaoFinal?.autor?.nome || 'Não informado'}
    Status Final: ${proposicaoFinal?.status}
    Resultado: ${proposicaoFinal?.resultado}
 

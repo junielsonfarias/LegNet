@@ -483,7 +483,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
           if (item.proposicao) {
             const prop = item.proposicao
             ata += `   Proposição: ${prop.tipo} nº ${prop.numero}/${prop.ano}\n`
-            ata += `   Autor: ${prop.autor.nome}\n`
+            ata += `   Autor: ${prop.autor?.nome || 'Não informado'}\n`
 
             // Votação nominal
             if (prop.votacoes && prop.votacoes.length > 0) {

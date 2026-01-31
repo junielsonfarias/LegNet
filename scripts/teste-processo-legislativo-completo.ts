@@ -304,7 +304,7 @@ Mojui dos Campos, ${new Date().toLocaleDateString('pt-BR')}.
     registrarResultado({
       etapa: 'Proposicao.Criar',
       status: 'SUCESSO',
-      mensagem: `PL ${proposicao.numero}/${proposicao.ano} criado por ${proposicao.autor.nome}`,
+      mensagem: `PL ${proposicao.numero}/${proposicao.ano} criado por ${proposicao.autor?.nome || 'autor'}`,
       dados: { id: proposicao.id, numero: proposicao.numero },
       regraValidada: 'RN-020: Proposicao criada com autor valido'
     })

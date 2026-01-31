@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-30 (Fase 3: Criacao de Abstracoes - Hooks, Validacoes, Repositories)
+> **Ultima Atualizacao**: 2026-01-31 (Sistema de Autores + Melhoria modal + Correcao numeracao)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -153,7 +153,10 @@ Fluxo Validado:
 | **Fluxo por tipo** | **Implementado** | Tab "Fluxo de Tramitacao" para configurar etapas por tipo |
 | **Editor visual fluxo** | **Implementado** | FluxoTramitacaoEditor component com drag-and-drop |
 | Status de proposicao | Implementado | 8 status incluindo AGUARDANDO_PAUTA e EM_PAUTA |
-| Vinculacao com autor | Implementado | Parlamentar autor |
+| Vinculacao com autor | Implementado | Parlamentar autor (legado) |
+| **Sistema de Autores** | **Implementado** | Baseado no SAPL: tipos de autor (Parlamentar, Executivo, Comissao) |
+| **Gerenciamento de Autores** | **Implementado** | /admin/configuracoes/autores - CRUD de tipos e autores |
+| **Tipos de Autor Padrao** | **Implementado** | Parlamentar, Poder Executivo, Comissao, Mesa Diretora, Bancada, Iniciativa Popular |
 | Vinculacao com sessao | Implementado | Sessao onde foi apresentada (sessaoId) |
 | **Vinculacao sessao votacao** | **Implementado** | Sessao onde foi votada (sessaoVotacaoId) |
 | Numeracao automatica | Implementado | NUMERO/ANO |
@@ -167,6 +170,7 @@ Fluxo Validado:
 | **Data apresentacao editavel** | **Implementado** | Permite informar data historica para dados preteritos |
 | **URL documento externo** | **Implementado** | Campo urlDocumento para link Google Drive, Dropbox, etc |
 | **Cadastro historico** | **Implementado** | Suporta anos desde 1900 para migracao de dados antigos |
+| **Modal Nova Proposicao** | **Melhorado** | Layout ampliado (max-w-4xl), campos organizados em secoes, preview do identificador |
 
 ### 5.1 Emendas a Proposicoes
 

@@ -111,7 +111,7 @@ export interface UpdateProposicaoInput {
 export interface IProposicaoRepository {
   findById(id: string, include?: string[]): Promise<ProposicaoWithRelations | null>
   findBySlug(slug: string): Promise<ProposicaoWithRelations | null>
-  findByNumeroAno(numero: string, ano: number): Promise<ProposicaoWithRelations | null>
+  findByTipoNumeroAno(tipo: TipoProposicao, numero: string, ano: number): Promise<ProposicaoWithRelations | null>
   findMany(options?: QueryOptions<ProposicaoFilters, ProposicaoSortField>): Promise<PaginatedResult<ProposicaoWithRelations>>
   findAll(filter?: ProposicaoFilters): Promise<ProposicaoWithRelations[]>
   findByAutor(autorId: string, options?: QueryOptions<ProposicaoFilters, ProposicaoSortField>): Promise<PaginatedResult<ProposicaoWithRelations>>
@@ -250,9 +250,9 @@ export class PrismaProposicaoRepository
     }) as Promise<ProposicaoWithRelations | null>
   }
 
-  async findByNumeroAno(numero: string, ano: number): Promise<ProposicaoWithRelations | null> {
+  async findByTipoNumeroAno(tipo: TipoProposicao, numero: string, ano: number): Promise<ProposicaoWithRelations | null> {
     return prisma.proposicao.findUnique({
-      where: { numero_ano: { numero, ano } },
+      where: { tipo_numero_ano: { tipo, numero, ano } },
       include: this.defaultInclude
     }) as Promise<ProposicaoWithRelations | null>
   }

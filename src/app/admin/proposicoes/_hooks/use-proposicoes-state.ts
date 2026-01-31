@@ -307,7 +307,9 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       textoCompleto: proposicao.texto || '',
       dataApresentacao: dataFormatada,
       urlDocumento: (proposicao as any).urlDocumento || '',
-      autorId: proposicao.autorId,
+      autorId: proposicao.autorId || '',
+      autorEntidadeId: (proposicao as any).autorEntidadeId || '',
+      usarNovoSistemaAutor: !!(proposicao as any).autorEntidadeId,
       autores: [],
       coautores: [],
       assuntos: [],
@@ -572,18 +574,19 @@ export function useProposicoesState(): UseProposicoesStateReturn {
     }))
   }, [])
 
-  // Validação de número manual
+  // Validação de número manual - considera tipo + número + ano
   const validarNumeroManual = useCallback((numero: string): boolean => {
-    if (!formData.numeroAutomatico && numero) {
+    if (!formData.numeroAutomatico && numero && formData.tipo) {
       const existe = proposicoes.some(p =>
         p.numero === numero &&
         p.ano === formData.ano &&
+        p.tipo === formData.tipo.toUpperCase() &&
         p.id !== editingProposicao?.id
       )
       return !existe
     }
     return true
-  }, [formData.numeroAutomatico, formData.ano, proposicoes, editingProposicao])
+  }, [formData.numeroAutomatico, formData.ano, formData.tipo, proposicoes, editingProposicao])
 
   // Obter status detalhado
   const getStatusDetalhado = useCallback((proposicaoId: string) => {

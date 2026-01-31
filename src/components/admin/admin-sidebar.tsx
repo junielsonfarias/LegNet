@@ -376,6 +376,12 @@ const navigationCategories: NavCategory[] = [
         permissions: ['config.manage']
       },
       {
+        name: 'Autores',
+        href: '/admin/configuracoes/autores',
+        icon: UserCircle,
+        permissions: ['config.manage']
+      },
+      {
         name: 'Integrações',
         href: '/admin/integracoes',
         icon: Key,

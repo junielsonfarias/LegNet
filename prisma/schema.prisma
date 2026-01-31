@@ -208,6 +208,7 @@ model Parlamentar {
   emendasParecerRelator  Emenda[]               @relation("EmendaParecerRelator")
   votosEmenda            VotoEmenda[]
   pautaItensRelator      PautaItem[]            @relation("PautaItemRelator")
+  autorEntidade          Autor?                 @relation("AutorParlamentar") // Vínculo com sistema de autores
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -444,14 +445,19 @@ model Proposicao {
   resultado        ResultadoVotacao?
   sessaoId         String?           // Sessão onde foi APRESENTADA/LIDA
   sessaoVotacaoId  String?           // Sessão onde foi VOTADA
-  autorId          String
+
+  // Autoria - dois sistemas (migração gradual)
+  autorId          String?           // LEGADO: Parlamentar autor (opcional para compatibilidade)
+  autorEntidadeId  String?           // NOVO: Autor do sistema de autores (Parlamentar, Executivo, Comissão, etc.)
+
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
   // Relacionamentos
   sessao        Sessao?      @relation("ProposicaoApresentacao", fields: [sessaoId], references: [id])
   sessaoVotacao Sessao?      @relation("ProposicaoVotacao", fields: [sessaoVotacaoId], references: [id])
-  autor         Parlamentar  @relation(fields: [autorId], references: [id])
+  autor         Parlamentar? @relation(fields: [autorId], references: [id]) // LEGADO
+  autorEntidade Autor?       @relation("ProposicaoAutorEntidade", fields: [autorEntidadeId], references: [id]) // NOVO
   votacoes      Votacao[]
   pautaItens    PautaItem[]
   tramitacoes   Tramitacao[]
@@ -459,10 +465,11 @@ model Proposicao {
   pautasReuniaoComissao PautaReuniaoComissao[] // Itens de pauta de reunioes de comissao
   emendas       Emenda[]     // Emendas apresentadas a esta proposicao
 
-  @@unique([numero, ano])
+  @@unique([tipo, numero, ano], name: "tipo_numero_ano")
   @@index([status, dataApresentacao])
   @@index([tipo, status])
   @@index([autorId, ano])
+  @@index([autorEntidadeId])
   @@index([ano, tipo])
   @@index([dataApresentacao])
   @@index([sessaoVotacaoId])
@@ -500,6 +507,60 @@ model TipoProposicaoConfig {
   updatedAt       DateTime        @updatedAt
 
   @@map("tipos_proposicao_config")
+}
+
+// ============================================================
+// SISTEMA DE AUTORES (baseado no SAPL)
+// ============================================================
+
+// Tipos de autor - categorias de quem pode ser autor de proposições
+model TipoAutor {
+  id          String   @id @default(cuid())
+  nome        String   @unique // Ex: "Parlamentar", "Poder Executivo", "Comissão"
+  descricao   String?  @db.Text
+  ativo       Boolean  @default(true)
+  ordem       Int      @default(0) // Ordem de exibição
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  autores     Autor[]
+
+  @@index([ativo, ordem])
+  @@map("tipos_autor")
+}
+
+// Autor - entidade que pode ser autor de proposições
+// Pode ser vinculado a Parlamentar, Comissão, ou ser um autor externo
+model Autor {
+  id              String    @id @default(cuid())
+  tipoAutorId     String
+  nome            String    // Nome de exibição do autor
+  descricao       String?   @db.Text
+
+  // Vinculações opcionais (apenas uma deve ser preenchida)
+  parlamentarId   String?   @unique // Se for um parlamentar
+  comissaoId      String?   // Se for uma comissão
+
+  // Para autores externos (Poder Executivo, Iniciativa Popular, etc.)
+  cargo           String?   // Ex: "Prefeito Municipal", "Presidente da Câmara"
+  email           String?
+  telefone        String?
+
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relacionamentos
+  tipoAutor       TipoAutor    @relation(fields: [tipoAutorId], references: [id])
+  parlamentar     Parlamentar? @relation("AutorParlamentar", fields: [parlamentarId], references: [id])
+  comissao        Comissao?    @relation("AutorComissao", fields: [comissaoId], references: [id])
+  proposicoes     Proposicao[] @relation("ProposicaoAutorEntidade")
+
+  @@index([tipoAutorId])
+  @@index([parlamentarId])
+  @@index([comissaoId])
+  @@index([ativo])
+  @@map("autores")
 }
 
 // Protocolo de proposicao - numeracao sequencial separada do numero da proposicao
@@ -768,9 +829,10 @@ model Comissao {
   updatedAt DateTime     @updatedAt
 
   // Relacionamentos
-  membros   MembroComissao[]
-  pareceres Parecer[]    // Pareceres emitidos por esta comissão
-  reunioes  ReuniaoComissao[]  // Reunioes da comissao
+  membros        MembroComissao[]
+  pareceres      Parecer[]    // Pareceres emitidos por esta comissão
+  reunioes       ReuniaoComissao[]  // Reunioes da comissao
+  autorEntidades Autor[]      @relation("AutorComissao") // Vínculo com sistema de autores
 
   @@index([tipo, ativa])
   @@index([ativa])

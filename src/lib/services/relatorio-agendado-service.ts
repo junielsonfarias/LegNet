@@ -276,8 +276,8 @@ async function gerarRelatorioProducaoLegislativa(ano: number, filtros: any) {
     `
   ])
 
-  // Buscar nomes dos autores
-  const autoresIds = porAutor.map(a => a.autorId)
+  // Buscar nomes dos autores (filtrar nulls)
+  const autoresIds = porAutor.map(a => a.autorId).filter((id): id is string => id !== null)
   const autores = await prisma.parlamentar.findMany({
     where: { id: { in: autoresIds } },
     select: { id: true, nome: true, partido: true }
@@ -295,10 +295,10 @@ async function gerarRelatorioProducaoLegislativa(ano: number, filtros: any) {
     porTipo: porTipo.map(t => ({ tipo: t.tipo, quantidade: t._count })),
     porStatus: porStatus.map(s => ({ status: s.status, quantidade: s._count })),
     porAutor: porAutor.map(a => {
-      const autor = autoresMap.get(a.autorId)
+      const autor = a.autorId ? autoresMap.get(a.autorId) : null
       return {
         parlamentar: autor?.nome || 'Desconhecido',
-        partido: autor?.partido,
+        partido: autor?.partido || null,
         quantidade: a._count
       }
     }),

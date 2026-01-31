@@ -124,18 +124,19 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   // Validar dados
   const validatedData = ProposicaoSchema.parse(body)
   
-  // Verificar se já existe proposição com mesmo número/ano
+  // Verificar se já existe proposição com mesmo tipo/número/ano
   const existingProposicao = await prisma.proposicao.findUnique({
     where: {
-      numero_ano: {
+      tipo_numero_ano: {
+        tipo: validatedData.tipo,
         numero: validatedData.numero,
         ano: validatedData.ano
       }
     }
   })
-  
+
   if (existingProposicao) {
-    throw new ConflictError('Já existe uma proposição com este número e ano')
+    throw new ConflictError('Já existe uma proposição deste tipo com este número e ano')
   }
   
   // Verificar se o autor existe

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus } from 'lucide-react'
+import { Plus, FileText, Link2, Users, Paperclip, X } from 'lucide-react'
 import type {
   ProposicaoFormData,
   ProposicaoApi,
@@ -76,278 +76,365 @@ export function ProposicaoFormModal({
     return labels[tipo] || tipo
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <CardHeader>
-          <CardTitle>
-            {editingProposicao ? 'Editar Proposição' : 'Nova Proposição'}
-          </CardTitle>
-          <CardDescription>
-            {editingProposicao ? 'Atualize os dados da proposição' : 'Preencha os dados para criar uma nova proposição'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            {/* Controle de Numeração */}
-            <div className="bg-gray-50 p-4 rounded-lg border">
-              <div className="flex items-center space-x-2 mb-4">
-                <input
-                  type="checkbox"
-                  id="numeroAutomatico"
-                  checked={formData.numeroAutomatico}
-                  onChange={(e) => onNumeroAutomaticoChange(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <Label htmlFor="numeroAutomatico" className="text-sm font-medium">
-                  Numeração Automática Sequencial
-                </Label>
-              </div>
-              <p className="text-xs text-gray-600 mb-4">
-                {formData.numeroAutomatico
-                  ? "O número será gerado automaticamente de forma sequencial para cada tipo de proposição."
-                  : "Desmarque apenas para cadastrar dados históricos com numeração específica da Câmara."
-                }
-              </p>
-            </div>
+  // Encontra o tipo selecionado para exibir a sigla
+  const tipoSelecionado = tiposProposicao.find(t => t.codigo === formData.tipo)
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="numero">
-                  Número {formData.numeroAutomatico ? '(Gerado)' : '(Manual)'}
-                </Label>
-                <Input
-                  id="numero"
-                  value={formData.numero}
-                  onChange={(e) => onFormDataChange({ ...formData, numero: e.target.value })}
-                  disabled={formData.numeroAutomatico}
-                  required
-                  className={!validarNumeroManual(formData.numero) ? 'border-red-500' : ''}
-                />
-                {!validarNumeroManual(formData.numero) && (
-                  <p className="text-xs text-red-500 mt-1">
-                    Este número já existe para este tipo no ano selecionado.
-                  </p>
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+        <CardHeader className="border-b bg-gray-50/80 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">
+                {editingProposicao ? 'Editar Proposição' : 'Nova Proposição'}
+              </CardTitle>
+              <CardDescription className="mt-1">
+                {editingProposicao ? 'Atualize os dados da proposição' : 'Preencha os dados para criar uma nova proposição'}
+              </CardDescription>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="flex-1 overflow-y-auto p-6">
+          <form onSubmit={onSubmit} className="space-y-6">
+            {/* Seção: Identificação */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Identificação
+              </h3>
+
+              {/* Linha 1: Tipo e Numeração */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                {/* Tipo - Ocupa mais espaço */}
+                <div className="lg:col-span-5">
+                  <Label htmlFor="tipo">Tipo de Proposição</Label>
+                  <Select value={formData.tipo} onValueChange={onTipoChange}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingTiposProposicao ? (
+                        <SelectItem value="loading" disabled>Carregando tipos...</SelectItem>
+                      ) : tiposProposicao.length === 0 ? (
+                        <SelectItem value="empty" disabled>Nenhum tipo cadastrado</SelectItem>
+                      ) : (
+                        tiposProposicao.map((tipo) => (
+                          <SelectItem key={tipo.id} value={tipo.codigo}>
+                            <div className="flex items-center gap-2">
+                              {tipo.corBadge && (
+                                <span
+                                  className="w-3 h-3 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: tipo.corBadge }}
+                                />
+                              )}
+                              <span>{tipo.nome} ({tipo.sigla})</span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Número */}
+                <div className="lg:col-span-2">
+                  <Label htmlFor="numero">Número</Label>
+                  <Input
+                    id="numero"
+                    value={formData.numero}
+                    onChange={(e) => onFormDataChange({ ...formData, numero: e.target.value })}
+                    disabled={formData.numeroAutomatico}
+                    required
+                    className={`mt-1.5 ${!validarNumeroManual(formData.numero) ? 'border-red-500 focus:ring-red-500' : ''}`}
+                    placeholder={formData.numeroAutomatico ? 'Auto' : '001'}
+                  />
+                </div>
+
+                {/* Ano */}
+                <div className="lg:col-span-2">
+                  <Label htmlFor="ano">Ano</Label>
+                  <Input
+                    id="ano"
+                    type="number"
+                    value={formData.ano}
+                    onChange={(e) => onAnoChange(parseInt(e.target.value))}
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+
+                {/* Data de Apresentação */}
+                <div className="lg:col-span-3">
+                  <Label htmlFor="dataApresentacao">Data de Apresentação</Label>
+                  <Input
+                    id="dataApresentacao"
+                    type="date"
+                    value={formData.dataApresentacao}
+                    onChange={(e) => onFormDataChange({ ...formData, dataApresentacao: e.target.value })}
+                    required
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+
+              {/* Controle de Numeração e Preview */}
+              <div className="flex flex-wrap items-center gap-4 p-3 bg-gray-50 rounded-lg border">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="numeroAutomatico"
+                    checked={formData.numeroAutomatico}
+                    onChange={(e) => onNumeroAutomaticoChange(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                  />
+                  <span className="text-sm text-gray-700">Numeração automática sequencial</span>
+                </label>
+
+                {formData.numero && formData.tipo && (
+                  <div className="flex items-center gap-2 ml-auto">
+                    <span className="text-sm text-gray-500">Identificador:</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      {tipoSelecionado && (
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: tipoSelecionado.corBadge || '#3b82f6' }}
+                        />
+                      )}
+                      {tipoSelecionado?.sigla || 'PROP'} {formData.numero}/{formData.ano}
+                    </span>
+                  </div>
                 )}
               </div>
-              <div>
-                <Label htmlFor="ano">Ano</Label>
-                <Input
-                  id="ano"
-                  type="number"
-                  value={formData.ano}
-                  onChange={(e) => onAnoChange(parseInt(e.target.value))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="dataApresentacao">Data de Apresentação</Label>
-                <Input
-                  id="dataApresentacao"
-                  type="date"
-                  value={formData.dataApresentacao}
-                  onChange={(e) => onFormDataChange({ ...formData, dataApresentacao: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="tipo">Tipo</Label>
-                <Select value={formData.tipo} onValueChange={onTipoChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingTiposProposicao ? (
-                      <SelectItem value="loading" disabled>Carregando tipos...</SelectItem>
-                    ) : tiposProposicao.length === 0 ? (
-                      <SelectItem value="empty" disabled>Nenhum tipo cadastrado</SelectItem>
-                    ) : (
-                      tiposProposicao.map((tipo) => (
-                        <SelectItem key={tipo.id} value={tipo.codigo}>
-                          <div className="flex items-center gap-2">
-                            {tipo.corBadge && (
-                              <span
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: tipo.corBadge }}
-                              />
-                            )}
-                            <span>{tipo.nome} ({tipo.sigla})</span>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            {/* Preview do número final */}
-            {formData.numero && (
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <span className="font-medium">Número final:</span> {formData.numero}/{formData.ano}
+              {!validarNumeroManual(formData.numero) && (
+                <p className="text-xs text-red-500">
+                  Este número já existe para este tipo no ano selecionado.
                 </p>
+              )}
+            </div>
+
+            {/* Seção: Conteúdo */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Conteúdo
+              </h3>
+
+              <div>
+                <Label htmlFor="titulo">Título</Label>
+                <Input
+                  id="titulo"
+                  value={formData.titulo}
+                  onChange={(e) => onFormDataChange({ ...formData, titulo: e.target.value })}
+                  required
+                  className="mt-1.5"
+                  placeholder="Título da proposição"
+                />
               </div>
-            )}
 
-            <div>
-              <Label htmlFor="titulo">Título</Label>
-              <Input
-                id="titulo"
-                value={formData.titulo}
-                onChange={(e) => onFormDataChange({ ...formData, titulo: e.target.value })}
-                required
-              />
+              <div>
+                <Label htmlFor="ementa">Ementa</Label>
+                <Textarea
+                  id="ementa"
+                  value={formData.ementa}
+                  onChange={(e) => onFormDataChange({ ...formData, ementa: e.target.value })}
+                  rows={2}
+                  required
+                  className="mt-1.5 resize-none"
+                  placeholder="Resumo da proposição (será exibido nas listagens)"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="textoCompleto">Texto Completo (Opcional)</Label>
+                <Textarea
+                  id="textoCompleto"
+                  value={formData.textoCompleto}
+                  onChange={(e) => onFormDataChange({ ...formData, textoCompleto: e.target.value })}
+                  rows={4}
+                  className="mt-1.5 resize-none"
+                  placeholder="Texto integral da proposição"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="urlDocumento" className="flex items-center gap-1.5">
+                  <Link2 className="h-3.5 w-3.5" />
+                  URL do Documento (Opcional)
+                </Label>
+                <Input
+                  id="urlDocumento"
+                  type="url"
+                  value={formData.urlDocumento}
+                  onChange={(e) => onFormDataChange({ ...formData, urlDocumento: e.target.value })}
+                  placeholder="https://drive.google.com/... ou outro link"
+                  className="mt-1.5"
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="ementa">Ementa</Label>
-              <Textarea
-                id="ementa"
-                value={formData.ementa}
-                onChange={(e) => onFormDataChange({ ...formData, ementa: e.target.value })}
-                rows={3}
-                required
-              />
-            </div>
+            {/* Seção: Autoria */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Autoria
+              </h3>
 
-            <div>
-              <Label htmlFor="textoCompleto">Texto Completo</Label>
-              <Textarea
-                id="textoCompleto"
-                value={formData.textoCompleto}
-                onChange={(e) => onFormDataChange({ ...formData, textoCompleto: e.target.value })}
-                rows={5}
-              />
-            </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="autorId">Autor Principal *</Label>
+                  <Select value={formData.autorId} onValueChange={(value) => onFormDataChange({ ...formData, autorId: value })}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Selecione o autor principal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parlamentares.map((parlamentar) => (
+                        <SelectItem key={parlamentar.id} value={parlamentar.id}>
+                          {parlamentar.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label htmlFor="urlDocumento">URL do Documento (Opcional)</Label>
-              <Input
-                id="urlDocumento"
-                type="url"
-                value={formData.urlDocumento}
-                onChange={(e) => onFormDataChange({ ...formData, urlDocumento: e.target.value })}
-                placeholder="https://drive.google.com/..."
-              />
-            </div>
+                <div>
+                  <Label>Coautores (Opcional)</Label>
+                  <Select
+                    value=""
+                    onValueChange={(value) => {
+                      if (value && !formData.autores.includes(value)) {
+                        onFormDataChange({ ...formData, autores: [...formData.autores, value] })
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Adicionar coautor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parlamentares.filter(p => p.id !== formData.autorId).map((parlamentar) => (
+                        <SelectItem key={parlamentar.id} value={parlamentar.id}>
+                          {parlamentar.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-            <div>
-              <Label htmlFor="autorId">Autor Principal</Label>
-              <Select value={formData.autorId} onValueChange={(value) => onFormDataChange({ ...formData, autorId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o autor principal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {parlamentares.map((parlamentar) => (
-                    <SelectItem key={parlamentar.id} value={parlamentar.id}>
-                      {parlamentar.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Coautores</Label>
-              <Select
-                value=""
-                onValueChange={(value) => {
-                  if (value && !formData.autores.includes(value)) {
-                    onFormDataChange({ ...formData, autores: [...formData.autores, value] })
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Adicionar coautor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {parlamentares.filter(p => p.id !== formData.autorId).map((parlamentar) => (
-                    <SelectItem key={parlamentar.id} value={parlamentar.id}>
-                      {parlamentar.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               {formData.autores.length > 0 && (
-                <div className="mt-2 space-y-1">
+                <div className="flex flex-wrap gap-2">
                   {formData.autores.map((autorId) => {
                     const autor = parlamentares.find(p => p.id === autorId)
                     return autor ? (
-                      <div key={autorId} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
-                        <span>{autor.nome}</span>
+                      <span
+                        key={autorId}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                      >
+                        {autor.nome}
                         <button
                           type="button"
                           onClick={() => onFormDataChange({
                             ...formData,
                             autores: formData.autores.filter(id => id !== autorId)
                           })}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-gray-400 hover:text-red-500 transition-colors"
                         >
-                          ×
+                          <X className="h-3.5 w-3.5" />
                         </button>
-                      </div>
+                      </span>
                     ) : null
                   })}
                 </div>
               )}
             </div>
 
-            {/* Anexos */}
-            <div>
-              <Label>Anexos</Label>
-              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4">
-                <input
-                  type="file"
-                  id="anexos"
-                  multiple
-                  accept=".pdf,.doc,.docx"
-                  onChange={onFileUpload}
-                  className="hidden"
-                />
-                <label htmlFor="anexos" className="cursor-pointer flex flex-col items-center text-gray-500">
-                  <span className="text-sm">Clique para anexar arquivos (PDF, DOC, DOCX)</span>
-                  <span className="text-xs text-gray-400 mt-1">Máximo: 10MB por arquivo</span>
-                </label>
-              </div>
-              {formData.anexos.length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {formData.anexos.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded text-sm">
-                      <span>{file.name} ({formatFileSize(file.size)})</span>
-                      <button type="button" onClick={() => onRemoveFile(index)} className="text-red-500">×</button>
-                    </div>
-                  ))}
+            {/* Seção: Anexos e Referências */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Anexos */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  Anexos
+                </h3>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors">
+                  <input
+                    type="file"
+                    id="anexos"
+                    multiple
+                    accept=".pdf,.doc,.docx"
+                    onChange={onFileUpload}
+                    className="hidden"
+                  />
+                  <label htmlFor="anexos" className="cursor-pointer flex flex-col items-center text-gray-500">
+                    <Paperclip className="h-6 w-6 mb-1 text-gray-400" />
+                    <span className="text-sm">Clique para anexar arquivos</span>
+                    <span className="text-xs text-gray-400">PDF, DOC, DOCX (max. 10MB)</span>
+                  </label>
                 </div>
-              )}
-            </div>
-
-            {/* Leis Referenciadas */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label>Leis Referenciadas</Label>
-                <Button type="button" variant="outline" size="sm" onClick={onOpenLeiModal}>
-                  <Plus className="h-3 w-3 mr-1" /> Adicionar Lei
-                </Button>
-              </div>
-              {formData.leisReferenciadas.length > 0 && (
-                <div className="space-y-2">
-                  {formData.leisReferenciadas.map((lei, index) => (
-                    <div key={lei.id} className="flex items-center justify-between bg-gray-50 p-2 rounded text-sm">
-                      <div>
-                        <span className="font-medium">{lei.leiNumero}</span>
-                        <span className="mx-2">-</span>
-                        <span>{getTipoRelacaoLabel(lei.tipoRelacao)}</span>
-                        {lei.dispositivo && <span className="text-gray-500 ml-2">({lei.dispositivo})</span>}
+                {formData.anexos.length > 0 && (
+                  <div className="space-y-1.5">
+                    {formData.anexos.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded text-sm">
+                        <span className="truncate flex-1">{file.name}</span>
+                        <span className="text-gray-400 text-xs mx-2">{formatFileSize(file.size)}</span>
+                        <button
+                          type="button"
+                          onClick={() => onRemoveFile(index)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                      <button type="button" onClick={() => onRemoverLei(index)} className="text-red-500">×</button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Leis Referenciadas */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                    Leis Referenciadas
+                  </h3>
+                  <Button type="button" variant="outline" size="sm" onClick={onOpenLeiModal}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar
+                  </Button>
                 </div>
-              )}
+                {formData.leisReferenciadas.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {formData.leisReferenciadas.map((lei, index) => (
+                      <div key={lei.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded text-sm">
+                        <div className="flex-1">
+                          <span className="font-medium">{lei.leiNumero}</span>
+                          <span className="mx-1.5 text-gray-400">-</span>
+                          <span className="text-gray-600">{getTipoRelacaoLabel(lei.tipoRelacao)}</span>
+                          {lei.dispositivo && (
+                            <span className="text-gray-400 ml-1">({lei.dispositivo})</span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onRemoverLei(index)}
+                          className="text-gray-400 hover:text-red-500"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-4 border-2 border-dashed rounded-lg">
+                    Nenhuma lei referenciada
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            {/* Botões de Ação */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>

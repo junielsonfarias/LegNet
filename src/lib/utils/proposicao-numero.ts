@@ -6,7 +6,7 @@
  * Gera o próximo número disponível para uma proposição do tipo e ano especificados
  * @param tipo Tipo da proposição
  * @param ano Ano da proposição
- * @param proposicoesExistentes Lista de proposições existentes do mesmo tipo e ano
+ * @param proposicoesExistentes Lista de proposições existentes (já filtradas pela API por tipo e ano)
  * @returns Próximo número disponível (formato: "001", "002", etc.)
  */
 export function gerarNumeroAutomatico(
@@ -14,17 +14,17 @@ export function gerarNumeroAutomatico(
   ano: number,
   proposicoesExistentes: Array<{ numero: string; ano: number; tipo: string }>
 ): string {
-  // Filtrar proposições do mesmo tipo e ano
+  // A API já filtra por tipo e ano, mas fazemos verificação adicional
+  // O campo 'numero' é armazenado como "001", não "001/2025"
   const proposicoesDoTipoAno = proposicoesExistentes.filter(p => {
-    // Extrair número e ano do formato "001/2025"
-    const [numeroStr, anoStr] = p.numero.split('/')
-    return p.tipo === tipo && parseInt(anoStr) === ano
+    return p.tipo === tipo && p.ano === ano
   })
 
   // Encontrar o maior número usado
   let maiorNumero = 0
   proposicoesDoTipoAno.forEach(p => {
-    const [numeroStr] = p.numero.split('/')
+    // O número pode estar no formato "001" ou "001/2025" (compatibilidade)
+    const numeroStr = p.numero.includes('/') ? p.numero.split('/')[0] : p.numero
     const numero = parseInt(numeroStr)
     if (!isNaN(numero) && numero > maiorNumero) {
       maiorNumero = numero

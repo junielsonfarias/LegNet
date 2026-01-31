@@ -180,7 +180,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
           tipo: p.tipo,
           titulo: p.titulo,
           status: p.status,
-          autor: p.autor.apelido || p.autor.nome,
+          autor: p.autor ? (p.autor.apelido || p.autor.nome) : 'Não informado',
           dataApresentacao: p.dataApresentacao.toISOString(),
           resultado: p.resultado
         }))

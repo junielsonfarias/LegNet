@@ -171,20 +171,27 @@ export const PUT = withErrorHandler(async (
     throw new NotFoundError('Proposição')
   }
 
-  // Verificar duplicatas (se número/ano foram alterados)
-  if ((validatedData.numero || validatedData.ano) &&
-      (validatedData.numero !== existingProposicao.numero || validatedData.ano !== existingProposicao.ano)) {
+  // Verificar duplicatas (se tipo/número/ano foram alterados)
+  const tipoParaVerificar = validatedData.tipo || existingProposicao.tipo
+  const numeroParaVerificar = validatedData.numero || existingProposicao.numero
+  const anoParaVerificar = validatedData.ano || existingProposicao.ano
+
+  if ((validatedData.numero || validatedData.ano || validatedData.tipo) &&
+      (validatedData.numero !== existingProposicao.numero ||
+       validatedData.ano !== existingProposicao.ano ||
+       validatedData.tipo !== existingProposicao.tipo)) {
     const duplicateCheck = await prisma.proposicao.findUnique({
       where: {
-        numero_ano: {
-          numero: validatedData.numero || existingProposicao.numero,
-          ano: validatedData.ano || existingProposicao.ano
+        tipo_numero_ano: {
+          tipo: tipoParaVerificar,
+          numero: numeroParaVerificar,
+          ano: anoParaVerificar
         }
       }
     })
 
     if (duplicateCheck && duplicateCheck.id !== existingProposicao.id) {
-      throw new ConflictError('Já existe uma proposição com este número e ano')
+      throw new ConflictError('Já existe uma proposição deste tipo com este número e ano')
     }
   }
 

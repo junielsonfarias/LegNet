@@ -39,12 +39,36 @@ export interface ProposicaoFormData {
   textoCompleto: string
   dataApresentacao: string
   urlDocumento: string
-  autorId: string
+  autorId: string              // LEGADO: ID do parlamentar autor
+  autorEntidadeId: string      // NOVO: ID do autor do sistema de autores
+  usarNovoSistemaAutor: boolean // Flag para usar o novo sistema
   autores: string[]
   coautores: string[]
   assuntos: string[]
   anexos: File[]
   leisReferenciadas: LeiReferenciada[]
+}
+
+// Autor do novo sistema
+export interface AutorEntidade {
+  id: string
+  nome: string
+  cargo: string | null
+  tipoAutor: {
+    id: string
+    nome: string
+  }
+  parlamentar?: {
+    id: string
+    nome: string
+    foto: string | null
+    partido: string | null
+  } | null
+  comissao?: {
+    id: string
+    nome: string
+    sigla: string | null
+  } | null
 }
 
 // Lei referenciada em uma proposição
@@ -224,6 +248,8 @@ export const getFormDataInicial = (): ProposicaoFormData => ({
   dataApresentacao: new Date().toISOString().split('T')[0],
   urlDocumento: '',
   autorId: '',
+  autorEntidadeId: '',
+  usarNovoSistemaAutor: true, // Por padrão usa o novo sistema
   autores: [],
   coautores: [],
   assuntos: [],
