@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useProposicoes } from '@/lib/hooks/use-proposicoes'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
-import { tiposTramitacaoService, tiposOrgaosService } from '@/lib/tramitacao-service'
 import { leisService } from '@/lib/leis-service'
 import { buscarProximoNumero } from '@/lib/utils/proposicao-numero'
 import { tramitacoesApi } from '@/lib/api/tramitacoes-api'
@@ -179,21 +178,50 @@ export function useProposicoesState(): UseProposicoesStateReturn {
     }
   }, [])
 
-  const loadTiposTramitacao = useCallback(() => {
+  const loadTiposTramitacao = useCallback(async () => {
     try {
-      const data = tiposTramitacaoService.getAll()
-      setTiposTramitacao(data)
+      const response = await fetch('/api/configuracoes/tipos-tramitacao?ativo=true')
+      const result = await response.json()
+      if (result.success && result.data) {
+        // Mapear para o formato esperado pelo componente
+        const tipos = result.data.map((t: any) => ({
+          id: t.id,
+          nome: t.nome,
+          descricao: t.descricao,
+          prazoRegimental: t.prazoRegimental,
+          ativo: t.ativo,
+          unidadeResponsavelId: t.unidadeResponsavelId,
+          unidadeResponsavel: t.unidadeResponsavel
+        }))
+        setTiposTramitacao(tipos)
+      } else {
+        console.error('Erro ao carregar tipos de tramitação:', result.error)
+      }
     } catch (error) {
       console.error('Erro ao carregar tipos de tramitação:', error)
     }
   }, [])
 
-  const loadTiposOrgaos = useCallback(() => {
+  const loadTiposOrgaos = useCallback(async () => {
     try {
-      const data = tiposOrgaosService.getAll()
-      setTiposOrgaos(data)
+      const response = await fetch('/api/configuracoes/unidades-tramitacao?ativo=true')
+      const result = await response.json()
+      if (result.success && result.data) {
+        // Mapear para o formato esperado pelo componente
+        const unidades = result.data.map((u: any) => ({
+          id: u.id,
+          nome: u.nome,
+          sigla: u.sigla || '',
+          descricao: u.descricao,
+          tipo: u.tipo,
+          ativo: u.ativo
+        }))
+        setTiposOrgaos(unidades)
+      } else {
+        console.error('Erro ao carregar unidades de tramitação:', result.error)
+      }
     } catch (error) {
-      console.error('Erro ao carregar tipos de órgãos:', error)
+      console.error('Erro ao carregar unidades de tramitação:', error)
     }
   }, [])
 
@@ -211,8 +239,8 @@ export function useProposicoesState(): UseProposicoesStateReturn {
   // Efeito para carregar dados iniciais
   useEffect(() => {
     void loadTiposProposicao()
-    loadTiposTramitacao()
-    loadTiposOrgaos()
+    void loadTiposTramitacao()
+    void loadTiposOrgaos()
     void loadTramitacoes()
   }, [loadTiposProposicao, loadTiposTramitacao, loadTiposOrgaos, loadTramitacoes])
 
