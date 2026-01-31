@@ -181,8 +181,8 @@ export default function TramitacoesAdminPage() {
   const loadOptions = useCallback(async () => {
     try {
       const [tiposRes, unidadesRes] = await Promise.all([
-        fetch('/api/configuracoes/tipos-tramitacao'),
-        fetch('/api/configuracoes/unidades-tramitacao')
+        fetch('/api/configuracoes/tipos-tramitacao?ativo=true'),
+        fetch('/api/configuracoes/unidades-tramitacao?ativo=true')
       ])
 
       if (tiposRes.ok) {
