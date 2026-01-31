@@ -125,6 +125,12 @@ model Parecer {
   dataAprovacao       DateTime?
   status              StatusParecer       @default(ELABORACAO)
 
+  // Campos de anexo (adicionados em 2026-01-31)
+  arquivoUrl          String?             // URL do arquivo PDF no storage
+  arquivoNome         String?             // Nome original do arquivo
+  arquivoTamanho      Int?                // Tamanho em bytes
+  driveUrl            String?             // URL de compartilhamento do Google Drive/OneDrive
+
   proposicaoId        String
   proposicao          Proposicao          @relation(fields: [proposicaoId])
   comissaoId          String
@@ -213,12 +219,13 @@ enum TipoParecer {
 
 ```typescript
 enum StatusParecer {
-  ELABORACAO        // Sendo redigido pelo relator
-  APRESENTADO       // Pronto para votacao
-  EM_VOTACAO        // Votacao em andamento
-  APROVADO          // Aprovado pela comissao
-  REJEITADO         // Rejeitado pela comissao
-  ARQUIVADO         // Arquivado sem votacao
+  RASCUNHO                 // Relator esta elaborando
+  AGUARDANDO_PAUTA         // Concluido, aguardando inclusao em pauta de reuniao
+  AGUARDANDO_VOTACAO       // Incluido na pauta, aguardando votacao na comissao
+  APROVADO_COMISSAO        // Aprovado pela comissao
+  REJEITADO_COMISSAO       // Rejeitado pela comissao (volta ao relator)
+  EMITIDO                  // Parecer final emitido
+  ARQUIVADO                // Arquivado (materia arquivada)
 }
 ```
 
@@ -259,10 +266,12 @@ enum StatusParecer {
 | Rota | Metodo | Funcionalidade | Roles |
 |------|--------|----------------|-------|
 | `/api/pareceres` | GET | Listar pareceres | Publico |
-| `/api/pareceres` | POST | Criar parecer | EDITOR |
+| `/api/pareceres` | POST | Criar parecer (numeracao por comissao) | EDITOR |
 | `/api/pareceres/[id]` | GET | Obter parecer | Publico |
 | `/api/pareceres/[id]` | PUT | Atualizar parecer | EDITOR |
 | `/api/pareceres/[id]/votar` | POST | Votar parecer | PARLAMENTAR |
+| `/api/pareceres/proximo-numero` | GET | Obter proximo numero (por comissao) | Autenticado |
+| `/api/comissoes/[id]/proposicoes-pendentes` | GET | Proposicoes em tramitacao aguardando parecer | Autenticado |
 
 ---
 
@@ -1106,8 +1115,11 @@ await prisma.proposicao.update({
 ### Pareceres
 
 - [x] Criacao com relator
-- [x] Numeracao sequencial
-- [x] Tipos de parecer
+- [x] Numeracao sequencial por comissao (formato: NNN/YYYY-SIGLA)
+- [x] Tipos de parecer (FAVORAVEL, CONTRARIO, etc)
+- [x] Status AGUARDANDO_PAUTA para inclusao em reuniao
+- [x] Filtro de proposicoes em tramitacao para comissao
+- [x] Validacao de tramitacao antes de criar parecer
 - [x] Voto em separado
 - [x] Votacao em reuniao
 

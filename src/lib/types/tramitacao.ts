@@ -49,7 +49,7 @@ export interface Tramitacao {
   proposicaoId: string
   dataEntrada: string
   dataSaida?: string
-  status: 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  status: 'RECEBIDA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
   tipoTramitacaoId: string
   unidadeId: string
   observacoes?: string
@@ -109,6 +109,7 @@ export interface ConfiguracaoTramitacao {
 
 // Enums para status e tipos
 export enum StatusTramitacao {
+  RECEBIDA = 'RECEBIDA',
   EM_ANDAMENTO = 'EM_ANDAMENTO',
   CONCLUIDA = 'CONCLUIDA',
   CANCELADA = 'CANCELADA'

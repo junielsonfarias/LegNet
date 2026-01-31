@@ -533,6 +533,19 @@ src/app/admin/
 | RecentActivity | `src/components/admin/recent-activity.tsx` | Atividades recentes |
 | QuickActions | `src/components/admin/quick-actions.tsx` | Acoes rapidas |
 
+### Navegacao
+
+| Componente | Arquivo | Funcao |
+|------------|---------|--------|
+| AdminSidebar | `src/components/admin/admin-sidebar.tsx` | Menu lateral acordeao com indicadores visuais |
+
+**AdminSidebar - Caracteristicas**:
+- Comportamento de acordeao: apenas uma categoria/submenu aberta por vez
+- Indicador visual colorido (barra lateral) para item ativo
+- Auto-expansao baseada na rota atual
+- Cores adaptadas por role do usuario
+- Menu filtrado por permissoes do usuario
+
 ### Usuarios
 
 | Componente | Arquivo | Funcao |

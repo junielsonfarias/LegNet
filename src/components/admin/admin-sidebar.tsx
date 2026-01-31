@@ -47,7 +47,7 @@ import {
   Edit3,
   Briefcase
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 interface NavItem {
@@ -426,8 +426,8 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
   const pathname = usePathname()
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['Visão Geral', 'Processo Legislativo'])
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null)
   const { configuracao, legislatura } = useConfiguracaoInstitucional()
 
   const theme = getRoleTheme(userRole)
@@ -437,24 +437,68 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
   const cidade = configuracao.endereco.cidade || ''
   const periodoLegislatura = legislatura?.periodo || `${new Date().getFullYear()}/${new Date().getFullYear() + 3}`
 
+  // Auto-expandir categoria e menu ativo ao carregar ou mudar de rota
+  useEffect(() => {
+    // Encontrar categoria ativa baseada na rota atual
+    const findActiveCategory = () => {
+      for (const category of navigationCategories) {
+        for (const item of category.items) {
+          if (pathname === item.href || pathname.startsWith(item.href + '/')) {
+            return category.name
+          }
+          if (item.submenu) {
+            for (const subItem of item.submenu) {
+              if (pathname === subItem.href || pathname.startsWith(subItem.href + '/')) {
+                return category.name
+              }
+            }
+          }
+        }
+      }
+      return null
+    }
+
+    // Encontrar menu com submenu ativo baseado na rota atual
+    const findActiveMenu = () => {
+      for (const category of navigationCategories) {
+        for (const item of category.items) {
+          if (item.submenu) {
+            for (const subItem of item.submenu) {
+              if (pathname === subItem.href || pathname.startsWith(subItem.href + '/')) {
+                return item.name
+              }
+            }
+          }
+        }
+      }
+      return null
+    }
+
+    const activeCategory = findActiveCategory()
+    const activeMenu = findActiveMenu()
+
+    if (activeCategory) {
+      setExpandedCategory(activeCategory)
+    }
+    if (activeMenu) {
+      setExpandedMenu(activeMenu)
+    }
+  }, [pathname])
+
+  // Comportamento de acordeão: só uma categoria aberta por vez
   const toggleCategory = (categoryName: string) => {
-    setExpandedCategories(prev =>
-      prev.includes(categoryName)
-        ? prev.filter(name => name !== categoryName)
-        : [...prev, categoryName]
-    )
+    setExpandedCategory(prev => prev === categoryName ? null : categoryName)
+    // Fecha submenus quando troca de categoria
+    setExpandedMenu(null)
   }
 
+  // Comportamento de acordeão: só um submenu aberto por vez
   const toggleMenu = (menuName: string) => {
-    setExpandedMenus(prev =>
-      prev.includes(menuName)
-        ? prev.filter(name => name !== menuName)
-        : [...prev, menuName]
-    )
+    setExpandedMenu(prev => prev === menuName ? null : menuName)
   }
 
-  const isCategoryExpanded = (categoryName: string) => expandedCategories.includes(categoryName)
-  const isMenuExpanded = (menuName: string) => expandedMenus.includes(menuName)
+  const isCategoryExpanded = (categoryName: string) => expandedCategory === categoryName
+  const isMenuExpanded = (menuName: string) => expandedMenu === menuName
 
   const hasActiveSubmenu = (submenu: NavItem[]) => {
     return submenu.some(subItem => pathname === subItem.href)
@@ -592,21 +636,34 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                 <button
                   onClick={() => toggleCategory(category.name)}
                   className={cn(
-                    'w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all duration-200',
+                    'w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 relative',
                     hasActiveItem
-                      ? `${getCategoryIconClass()} bg-white/80 dark:bg-gray-800/80`
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60'
+                      ? `${getCategoryIconClass()} bg-white dark:bg-gray-800 shadow-sm`
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60',
+                    isExpanded && 'bg-white/80 dark:bg-gray-800/80'
                   )}
                 >
+                  {/* Barra indicadora lateral quando ativo */}
+                  {hasActiveItem && (
+                    <span className={cn(
+                      'absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full',
+                      userRole === 'ADMIN' && 'bg-violet-500',
+                      userRole === 'SECRETARIA' && 'bg-cyan-500',
+                      userRole === 'AUXILIAR_LEGISLATIVO' && 'bg-teal-500',
+                      userRole === 'EDITOR' && 'bg-blue-500',
+                      userRole === 'OPERADOR' && 'bg-emerald-500',
+                      userRole === 'PARLAMENTAR' && 'bg-amber-500',
+                      userRole === 'USER' && 'bg-gray-500'
+                    )} />
+                  )}
                   <div className="flex items-center gap-2">
                     <CategoryIcon className={cn('h-4 w-4', hasActiveItem ? getCategoryIconClass() : 'text-gray-400 dark:text-gray-500')} />
                     <span>{category.name}</span>
                   </div>
-                  {isExpanded ? (
-                    <ChevronDown className="h-3 w-3" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3" />
-                  )}
+                  <ChevronDown className={cn(
+                    'h-3 w-3 transition-transform duration-200',
+                    !isExpanded && '-rotate-90'
+                  )} />
                 </button>
 
                 {/* Itens da Categoria */}
@@ -626,12 +683,16 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                               <button
                                 onClick={() => toggleMenu(item.name)}
                                 className={cn(
-                                  'group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                                  'group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative',
                                   isActive || submenuActive
                                     ? getSidebarActiveClass()
                                     : `text-gray-600 dark:text-gray-300 ${getSidebarHoverClass()}`
                                 )}
                               >
+                                {/* Indicador de item ativo */}
+                                {(isActive || submenuActive) && (
+                                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-white/50" />
+                                )}
                                 <div className="flex items-center">
                                   <item.icon
                                     className={cn(
@@ -641,11 +702,10 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                                   />
                                   {item.name}
                                 </div>
-                                {isSubmenuExpanded ? (
-                                  <ChevronDown className="h-3 w-3" />
-                                ) : (
-                                  <ChevronRight className="h-3 w-3" />
-                                )}
+                                <ChevronDown className={cn(
+                                  'h-3 w-3 transition-transform duration-200',
+                                  !isSubmenuExpanded && '-rotate-90'
+                                )} />
                               </button>
                               {isSubmenuExpanded && (
                                 <ul className="ml-5 mt-1 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-700 pl-3">
@@ -656,12 +716,16 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                                         <Link
                                           href={subItem.href}
                                           className={cn(
-                                            'group flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-200',
+                                            'group flex items-center px-2 py-1.5 text-xs font-medium rounded-md transition-all duration-200 relative',
                                             isSubActive
                                               ? getSidebarActiveClass()
                                               : `text-gray-500 dark:text-gray-400 ${getSidebarHoverClass()}`
                                           )}
                                         >
+                                          {/* Indicador de subitem ativo */}
+                                          {isSubActive && (
+                                            <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-current" />
+                                          )}
                                           <subItem.icon
                                             className={cn(
                                               'mr-2 h-3.5 w-3.5 flex-shrink-0',
@@ -680,12 +744,16 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
                             <Link
                               href={item.href}
                               className={cn(
-                                'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200',
+                                'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative',
                                 isActive
                                   ? getSidebarActiveClass()
                                   : `text-gray-600 dark:text-gray-300 ${getSidebarHoverClass()}`
                               )}
                             >
+                              {/* Indicador de item ativo */}
+                              {isActive && (
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-white/50" />
+                              )}
                               <item.icon
                                 className={cn(
                                   'mr-2.5 h-4 w-4 flex-shrink-0 transition-colors',

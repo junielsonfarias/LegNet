@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
@@ -13,7 +13,7 @@ import {
 } from '@/lib/error-handler'
 import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 import { getFluxoByTipoProposicao, getEtapaInicial } from '@/lib/services/fluxo-tramitacao-service'
-import { iniciarTramitacaoComFluxo, iniciarTramitacaoPadrao } from '@/lib/services/tramitacao-service'
+import { iniciarTramitacaoComFluxo, iniciarTramitacaoPadrao, iniciarTramitacaoComUnidade } from '@/lib/services/tramitacao-service'
 import { createLogger } from '@/lib/logging/logger'
 
 const logger = createLogger('proposicoes-api')
@@ -35,7 +35,8 @@ const ProposicaoSchema = z.object({
   dataVotacao: z.string().optional(),
   resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).optional(),
   sessaoId: z.string().optional(),
-  autorId: z.string().min(1, 'ID do autor é obrigatório')
+  autorId: z.string().min(1, 'ID do autor é obrigatório'),
+  unidadeInicialId: z.string().optional() // RN-038: Unidade inicial para tramitação (prioridade sobre fluxo)
 })
 
 // GET - Listar proposições
@@ -180,67 +181,100 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
 
   // Auto-iniciar tramitação ao criar proposição
+  // RN-038: Prioridade: 1) Unidade escolhida pelo usuário, 2) Fluxo configurado, 3) Tramitação padrão (Secretaria Legislativa)
   let tramitacaoInfo: {
     tramitacaoId?: string
     fluxo?: string
     etapa?: string
+    unidade?: string
     message: string
     warnings?: string[]
   } | null = null
   try {
-    // Busca fluxo configurado para o tipo de proposição
-    const fluxo = await getFluxoByTipoProposicao(validatedData.tipo)
+    // RN-038: Se usuário especificou unidade inicial, tem prioridade sobre fluxo
+    if (validatedData.unidadeInicialId) {
+      const resultadoTramitacao = await iniciarTramitacaoComUnidade(
+        proposicao.id,
+        validatedData.unidadeInicialId,
+        'NORMAL'
+      )
 
-    if (fluxo) {
-      // Busca etapa inicial do fluxo
-      const etapaInicial = await getEtapaInicial(fluxo.id)
+      if (resultadoTramitacao.valid) {
+        tramitacaoInfo = {
+          tramitacaoId: resultadoTramitacao.tramitacaoId,
+          message: 'Tramitação iniciada na unidade especificada',
+          warnings: resultadoTramitacao.warnings
+        }
 
-      if (etapaInicial) {
-        // Inicia tramitação vinculada ao fluxo
-        const resultadoTramitacao = await iniciarTramitacaoComFluxo(
-          proposicao.id,
-          fluxo.id,
-          etapaInicial.id,
-          'NORMAL',
-          session.user.id
-        )
+        logger.info('Tramitação auto-iniciada com unidade específica', {
+          action: 'auto_iniciar_tramitacao_unidade',
+          proposicaoId: proposicao.id,
+          unidadeId: validatedData.unidadeInicialId
+        })
+      } else {
+        logger.warn('Falha ao auto-iniciar tramitação com unidade', {
+          action: 'auto_iniciar_tramitacao_unidade_falha',
+          proposicaoId: proposicao.id,
+          errors: resultadoTramitacao.errors
+        })
+      }
+    } else {
+      // Busca fluxo configurado para o tipo de proposição
+      const fluxo = await getFluxoByTipoProposicao(validatedData.tipo)
+
+      if (fluxo) {
+        // Busca etapa inicial do fluxo
+        const etapaInicial = await getEtapaInicial(fluxo.id)
+
+        if (etapaInicial) {
+          // Inicia tramitação vinculada ao fluxo
+          const resultadoTramitacao = await iniciarTramitacaoComFluxo(
+            proposicao.id,
+            fluxo.id,
+            etapaInicial.id,
+            'NORMAL',
+            session.user.id
+          )
+
+          if (resultadoTramitacao.valid) {
+            tramitacaoInfo = {
+              tramitacaoId: resultadoTramitacao.tramitacaoId,
+              fluxo: fluxo.nome,
+              etapa: etapaInicial.nome,
+              message: 'Tramitação iniciada automaticamente'
+            }
+
+            logger.info('Tramitação auto-iniciada com fluxo', {
+              action: 'auto_iniciar_tramitacao',
+              proposicaoId: proposicao.id,
+              fluxoId: fluxo.id,
+              etapaId: etapaInicial.id
+            })
+          } else {
+            logger.warn('Falha ao auto-iniciar tramitação com fluxo', {
+              action: 'auto_iniciar_tramitacao_falha',
+              proposicaoId: proposicao.id,
+              errors: resultadoTramitacao.errors
+            })
+          }
+        }
+      } else {
+        // Sem fluxo configurado - usa tramitação padrão (Secretaria Legislativa)
+        const resultadoTramitacao = await iniciarTramitacaoPadrao(proposicao.id, 'NORMAL')
 
         if (resultadoTramitacao.valid) {
           tramitacaoInfo = {
             tramitacaoId: resultadoTramitacao.tramitacaoId,
-            fluxo: fluxo.nome,
-            etapa: etapaInicial.nome,
-            message: 'Tramitação iniciada automaticamente'
+            message: 'Tramitação iniciada na Secretaria Legislativa (padrão)',
+            warnings: resultadoTramitacao.warnings
           }
 
-          logger.info('Tramitação auto-iniciada com fluxo', {
-            action: 'auto_iniciar_tramitacao',
+          logger.info('Tramitação auto-iniciada na Secretaria Legislativa', {
+            action: 'auto_iniciar_tramitacao_padrao',
             proposicaoId: proposicao.id,
-            fluxoId: fluxo.id,
-            etapaId: etapaInicial.id
-          })
-        } else {
-          logger.warn('Falha ao auto-iniciar tramitação com fluxo', {
-            action: 'auto_iniciar_tramitacao_falha',
-            proposicaoId: proposicao.id,
-            errors: resultadoTramitacao.errors
+            tramitacaoId: resultadoTramitacao.tramitacaoId
           })
         }
-      }
-    } else {
-      // Sem fluxo configurado - usa tramitação padrão
-      const resultadoTramitacao = await iniciarTramitacaoPadrao(proposicao.id, 'NORMAL')
-
-      if (resultadoTramitacao.valid) {
-        tramitacaoInfo = {
-          message: 'Tramitação iniciada (sem fluxo configurado)',
-          warnings: resultadoTramitacao.warnings
-        }
-
-        logger.info('Tramitação auto-iniciada sem fluxo', {
-          action: 'auto_iniciar_tramitacao_padrao',
-          proposicaoId: proposicao.id
-        })
       }
     }
   } catch (error) {

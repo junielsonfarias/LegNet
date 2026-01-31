@@ -190,7 +190,7 @@ export default function ParlamentaresPage() {
             <div className="text-2xl font-bold">
               {parlamentares.length > 0 ? parlamentares[0]?.legislatura || 'N/A' : 'N/A'}
             </div>
-            <p className="text-xs text-gray-500">Período atual</p>
+            <p className="text-xs text-gray-500">10ª Legislatura</p>
           </CardContent>
         </Card>
       </div>

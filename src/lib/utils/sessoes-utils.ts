@@ -47,6 +47,7 @@ export async function getLegislaturaAtual(): Promise<LegislaturaApi | null> {
 
 /**
  * Busca o período atual baseado na data fornecida
+ * Se não encontrar período exato, busca o mais recente da legislatura
  */
 export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promise<PeriodoLegislaturaApi | null> {
   try {
@@ -58,7 +59,8 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
       legId = legislatura.id
     }
 
-    const periodo = await prisma.periodoLegislatura.findFirst({
+    // Primeiro tenta encontrar período que contenha a data exata
+    const periodoExato = await prisma.periodoLegislatura.findFirst({
       where: {
         legislaturaId: legId,
         dataInicio: { lte: data },
@@ -70,16 +72,59 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
       orderBy: { numero: 'desc' }
     })
 
-    if (!periodo) return null
-
-    return {
-      id: periodo.id,
-      legislaturaId: periodo.legislaturaId,
-      numero: periodo.numero,
-      dataInicio: periodo.dataInicio.toISOString(),
-      dataFim: periodo.dataFim?.toISOString() || null,
-      descricao: periodo.descricao || null
+    if (periodoExato) {
+      return {
+        id: periodoExato.id,
+        legislaturaId: periodoExato.legislaturaId,
+        numero: periodoExato.numero,
+        dataInicio: periodoExato.dataInicio.toISOString(),
+        dataFim: periodoExato.dataFim?.toISOString() || null,
+        descricao: periodoExato.descricao || null
+      }
     }
+
+    // Se não encontrou período exato, busca o período mais recente da legislatura
+    // que já tenha começado (dataInicio <= data)
+    const periodoProximo = await prisma.periodoLegislatura.findFirst({
+      where: {
+        legislaturaId: legId,
+        dataInicio: { lte: data }
+      },
+      orderBy: { dataInicio: 'desc' }
+    })
+
+    if (periodoProximo) {
+      console.log(`⚠️ Usando período ${periodoProximo.numero} para data ${data.toISOString()} (período com dataFim expirada)`)
+      return {
+        id: periodoProximo.id,
+        legislaturaId: periodoProximo.legislaturaId,
+        numero: periodoProximo.numero,
+        dataInicio: periodoProximo.dataInicio.toISOString(),
+        dataFim: periodoProximo.dataFim?.toISOString() || null,
+        descricao: periodoProximo.descricao || null
+      }
+    }
+
+    // Último recurso: busca o período mais recente da legislatura
+    // (para quando a data é anterior ao início de todos os períodos)
+    const periodoRecente = await prisma.periodoLegislatura.findFirst({
+      where: { legislaturaId: legId },
+      orderBy: { numero: 'desc' }
+    })
+
+    if (periodoRecente) {
+      console.log(`⚠️ Usando período mais recente ${periodoRecente.numero} da legislatura`)
+      return {
+        id: periodoRecente.id,
+        legislaturaId: periodoRecente.legislaturaId,
+        numero: periodoRecente.numero,
+        dataInicio: periodoRecente.dataInicio.toISOString(),
+        dataFim: periodoRecente.dataFim?.toISOString() || null,
+        descricao: periodoRecente.descricao || null
+      }
+    }
+
+    return null
   } catch (error) {
     console.error('Erro ao buscar período atual:', error)
     return null

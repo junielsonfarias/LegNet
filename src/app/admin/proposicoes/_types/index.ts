@@ -47,6 +47,7 @@ export interface ProposicaoFormData {
   assuntos: string[]
   anexos: File[]
   leisReferenciadas: LeiReferenciada[]
+  unidadeInicialId: string     // Unidade para tramitação inicial (vazio = Secretaria Legislativa)
 }
 
 // Autor do novo sistema
@@ -254,7 +255,8 @@ export const getFormDataInicial = (): ProposicaoFormData => ({
   coautores: [],
   assuntos: [],
   anexos: [],
-  leisReferenciadas: []
+  leisReferenciadas: [],
+  unidadeInicialId: ''  // Vazio = usa Secretaria Legislativa (padrão)
 })
 
 export const getTramitacaoFormDataInicial = (): TramitacaoFormData => ({

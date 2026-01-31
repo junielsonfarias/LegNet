@@ -184,12 +184,19 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     // Validação de data no backend
     const dataSessao = combineDateAndTimeUTC(validatedData.data, validatedData.horario)
     const agora = new Date()
-    
-    // Se não for finalizada, a data deve ser futura
-    if (!validatedData.finalizada && dataSessao <= agora) {
-      throw new ValidationError('A data e hora da sessão deve ser futura para sessões não finalizadas')
+
+    // Se não for finalizada, verificar se a data é válida
+    // Permitimos sessões para hoje (independente do horário) ou futuras
+    if (!validatedData.finalizada) {
+      // Comparar apenas as datas (ignorando o horário)
+      const dataHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())
+      const dataSessaoSemHora = new Date(dataSessao.getFullYear(), dataSessao.getMonth(), dataSessao.getDate())
+
+      if (dataSessaoSemHora < dataHoje) {
+        throw new ValidationError('A data da sessão não pode ser no passado para sessões não finalizadas')
+      }
     }
-    
+
     // Se for finalizada, permitir data passada mas validar formato
     if (validatedData.finalizada && isNaN(dataSessao.getTime())) {
       throw new ValidationError('Data inválida')

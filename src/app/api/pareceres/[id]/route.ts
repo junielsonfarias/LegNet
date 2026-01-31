@@ -23,6 +23,7 @@ const UpdateParecerSchema = z.object({
   ]).optional(),
   status: z.enum([
     'RASCUNHO',
+    'AGUARDANDO_PAUTA',
     'AGUARDANDO_VOTACAO',
     'APROVADO_COMISSAO',
     'REJEITADO_COMISSAO',
@@ -39,7 +40,11 @@ const UpdateParecerSchema = z.object({
   dataEmissao: z.string().optional(),
   observacoes: z.string().optional(),
   motivoRejeicao: z.string().optional(),
-  arquivoUrl: z.string().optional(),
+  // Campos de anexo
+  arquivoUrl: z.string().optional().nullable(),
+  arquivoNome: z.string().optional().nullable(),
+  arquivoTamanho: z.number().int().optional().nullable(),
+  driveUrl: z.string().optional().nullable(),
   reuniaoId: z.string().optional() // Reuniao onde o parecer sera votado
 })
 
@@ -152,10 +157,12 @@ export const PUT = withErrorHandler(async (
   }
 
   // Validar transições de status
+  // Fluxo: RASCUNHO -> AGUARDANDO_PAUTA -> AGUARDANDO_VOTACAO -> APROVADO/REJEITADO -> EMITIDO -> ARQUIVADO
   if (validatedData.status) {
     const transicoesValidas: Record<string, string[]> = {
-      'RASCUNHO': ['AGUARDANDO_VOTACAO', 'ARQUIVADO'],
-      'AGUARDANDO_VOTACAO': ['APROVADO_COMISSAO', 'REJEITADO_COMISSAO', 'RASCUNHO'],
+      'RASCUNHO': ['AGUARDANDO_PAUTA', 'ARQUIVADO'],
+      'AGUARDANDO_PAUTA': ['AGUARDANDO_VOTACAO', 'RASCUNHO', 'ARQUIVADO'],
+      'AGUARDANDO_VOTACAO': ['APROVADO_COMISSAO', 'REJEITADO_COMISSAO', 'AGUARDANDO_PAUTA'],
       'REJEITADO_COMISSAO': ['RASCUNHO', 'ARQUIVADO'],
       'APROVADO_COMISSAO': ['EMITIDO', 'ARQUIVADO'],
       'EMITIDO': ['ARQUIVADO'],

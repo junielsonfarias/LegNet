@@ -32,6 +32,27 @@ import { useCargosMesaDiretora, type CargoMesaDiretoraCreate } from '@/lib/hooks
 import { LegislaturaDetalhes } from '@/components/admin/legislatura-detalhes'
 import { toast } from 'sonner'
 
+// Função para formatar data UTC sem conversão de timezone
+function formatDateUTC(dateString: string | Date | null | undefined): string {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const year = date.getUTCFullYear()
+  return `${day}/${month}/${year}`
+}
+
+function formatDateUTCLong(dateString: string | Date | null | undefined): string {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const month = months[date.getUTCMonth()]
+  const year = date.getUTCFullYear()
+  return `${day} de ${month} de ${year}`
+}
+
 export default function LegislaturasAdminPage() {
   const { legislaturas, loading, create, update, remove, refetch } = useLegislaturas()
   const [searchTerm, setSearchTerm] = useState('')
@@ -127,86 +148,148 @@ export default function LegislaturasAdminPage() {
         legislaturaId = nova.id
       }
       
-      // Criar períodos e cargos se fornecidos (apenas se não estiver editando ou se for novo)
-      if (periodos.length > 0 && !editingId) {
-        console.log('📋 Criando períodos e cargos:', periodos)
+      // Criar/Atualizar períodos e cargos
+      if (periodos.length > 0) {
+        console.log('📋 Salvando períodos e cargos:', periodos)
+
+        // Buscar períodos existentes da legislatura
+        const periodosExistentesResponse = await fetch(`/api/periodos-legislatura?legislaturaId=${legislaturaId}`)
+        const periodosExistentesData = await periodosExistentesResponse.json()
+        const periodosExistentes = periodosExistentesData.success ? periodosExistentesData.data : []
+
         for (const periodo of periodos) {
-          // Verificar se período já existe antes de criar
-          const periodoExistenteResponse = await fetch(`/api/periodos-legislatura?legislaturaId=${legislaturaId}`)
-          const periodoExistenteData = await periodoExistenteResponse.json()
-          const periodoJaExiste = periodoExistenteData.success && periodoExistenteData.data?.some(
-            (p: any) => p.numero === periodo.numero
-          )
-          
-          if (periodoJaExiste) {
-            console.log(`⚠️ Período ${periodo.numero} já existe, pulando criação`)
-            continue
-          }
-          
-          // Criar período
-          console.log(`📅 Criando período ${periodo.numero}...`)
-          const periodoResponse = await fetch('/api/periodos-legislatura', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              legislaturaId,
-              numero: periodo.numero,
-              dataInicio: periodo.dataInicio,
-              dataFim: periodo.dataFim,
-              descricao: periodo.descricao
+          // Verificar se período já existe
+          const periodoExistente = periodosExistentes.find((p: any) => p.numero === periodo.numero)
+          let periodoId: string
+
+          if (periodoExistente) {
+            // Atualizar período existente
+            console.log(`📅 Atualizando período ${periodo.numero}...`)
+            const updateResponse = await fetch(`/api/periodos-legislatura/${periodoExistente.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                dataInicio: periodo.dataInicio,
+                dataFim: periodo.dataFim,
+                descricao: periodo.descricao
+              })
             })
-          })
-          
-          if (!periodoResponse.ok) {
-            const error = await periodoResponse.json()
-            // Se for erro de conflito (409), apenas avisar mas continuar
-            if (periodoResponse.status === 409) {
-              console.warn(`⚠️ Período ${periodo.numero} já existe:`, error.error)
+
+            if (!updateResponse.ok) {
+              const error = await updateResponse.json()
+              console.error(`❌ Erro ao atualizar período ${periodo.numero}:`, error)
+              toast.error(`Erro ao atualizar período ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
+            } else {
+              console.log(`✅ Período ${periodo.numero} atualizado`)
+            }
+            periodoId = periodoExistente.id
+          } else {
+            // Criar novo período
+            console.log(`📅 Criando período ${periodo.numero}...`)
+            const periodoResponse = await fetch('/api/periodos-legislatura', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                legislaturaId,
+                numero: periodo.numero,
+                dataInicio: periodo.dataInicio,
+                dataFim: periodo.dataFim,
+                descricao: periodo.descricao
+              })
+            })
+
+            if (!periodoResponse.ok) {
+              const error = await periodoResponse.json()
+              if (periodoResponse.status === 409) {
+                console.warn(`⚠️ Período ${periodo.numero} já existe:`, error.error)
+                continue
+              }
+              console.error(`❌ Erro ao criar período ${periodo.numero}:`, error)
+              toast.error(`Erro ao criar período ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
               continue
             }
-            console.error(`❌ Erro ao criar período ${periodo.numero}:`, error)
-            toast.error(`Erro ao criar período ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
-            continue
+
+            const periodoData = await periodoResponse.json()
+            periodoId = periodoData.data.id
+            console.log(`✅ Período ${periodo.numero} criado com ID:`, periodoId)
           }
-          
-          const periodoData = await periodoResponse.json()
-          const periodoId = periodoData.data.id
-          console.log(`✅ Período ${periodo.numero} criado com ID:`, periodoId)
-          
-          // Criar cargos para o período
+
+          // Gerenciar cargos do período
           if (periodo.cargos.length > 0) {
-            console.log(`📝 Criando ${periodo.cargos.length} cargo(s) para o período ${periodo.numero}...`)
+            console.log(`📝 Salvando ${periodo.cargos.length} cargo(s) para o período ${periodo.numero}...`)
+
+            // Buscar cargos existentes do período
+            const cargosExistentesResponse = await fetch(`/api/cargos-mesa-diretora?periodoId=${periodoId}`)
+            const cargosExistentesData = await cargosExistentesResponse.json()
+            const cargosExistentes = cargosExistentesData.success ? cargosExistentesData.data : []
+
+            // Criar/Atualizar cargos
             for (const cargo of periodo.cargos) {
               if (!cargo.nome || cargo.nome.trim() === '') {
                 console.warn('⚠️ Cargo sem nome, pulando...')
                 continue
               }
-              
-              const cargoResponse = await fetch('/api/cargos-mesa-diretora', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  periodoId,
-                  nome: cargo.nome,
-                  ordem: cargo.ordem,
-                  obrigatorio: cargo.obrigatorio
+
+              // Verificar se cargo já existe (por nome e ordem)
+              const cargoExistente = cargosExistentes.find((c: any) => c.ordem === cargo.ordem)
+
+              if (cargoExistente) {
+                // Atualizar cargo existente
+                const updateCargoResponse = await fetch(`/api/cargos-mesa-diretora/${cargoExistente.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    nome: cargo.nome,
+                    ordem: cargo.ordem,
+                    obrigatorio: cargo.obrigatorio
+                  })
                 })
-              })
-              
-              if (!cargoResponse.ok) {
-                const error = await cargoResponse.json()
-                console.error(`❌ Erro ao criar cargo ${cargo.nome}:`, error)
-                toast.error(`Erro ao criar cargo ${cargo.nome}: ${error.error || 'Erro desconhecido'}`)
+
+                if (!updateCargoResponse.ok) {
+                  const error = await updateCargoResponse.json()
+                  console.error(`❌ Erro ao atualizar cargo ${cargo.nome}:`, error)
+                } else {
+                  console.log(`✅ Cargo "${cargo.nome}" atualizado`)
+                }
               } else {
-                console.log(`✅ Cargo "${cargo.nome}" criado com sucesso`)
+                // Criar novo cargo
+                const cargoResponse = await fetch('/api/cargos-mesa-diretora', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    periodoId,
+                    nome: cargo.nome,
+                    ordem: cargo.ordem,
+                    obrigatorio: cargo.obrigatorio
+                  })
+                })
+
+                if (!cargoResponse.ok) {
+                  const error = await cargoResponse.json()
+                  console.error(`❌ Erro ao criar cargo ${cargo.nome}:`, error)
+                  toast.error(`Erro ao criar cargo ${cargo.nome}: ${error.error || 'Erro desconhecido'}`)
+                } else {
+                  console.log(`✅ Cargo "${cargo.nome}" criado com sucesso`)
+                }
+              }
+            }
+
+            // Remover cargos que não estão mais na lista
+            for (const cargoExistente of cargosExistentes) {
+              const cargoAindaExiste = periodo.cargos.some((c: any) => c.ordem === cargoExistente.ordem)
+              if (!cargoAindaExiste) {
+                console.log(`🗑️ Removendo cargo "${cargoExistente.nome}" que foi excluído...`)
+                await fetch(`/api/cargos-mesa-diretora/${cargoExistente.id}`, {
+                  method: 'DELETE'
+                })
               }
             }
           }
         }
-        
-        toast.success('Legislatura e períodos criados com sucesso!')
+
+        toast.success(editingId ? 'Legislatura atualizada com sucesso!' : 'Legislatura e períodos criados com sucesso!')
       } else {
-        toast.success('Legislatura criada com sucesso!')
+        toast.success(editingId ? 'Legislatura atualizada com sucesso!' : 'Legislatura criada com sucesso!')
       }
       
       console.log('🔄 Fechando formulário e recarregando lista...')
@@ -572,9 +655,9 @@ export default function LegislaturasAdminPage() {
                         </div>
                         {(legislatura.dataInicio || legislatura.dataFim) && (
                           <p className="text-xs text-blue-600 mt-1">
-                            {legislatura.dataInicio ? new Date(legislatura.dataInicio).toLocaleDateString('pt-BR') : '?'}
+                            {legislatura.dataInicio ? formatDateUTC(legislatura.dataInicio) : '?'}
                             {' → '}
-                            {legislatura.dataFim ? new Date(legislatura.dataFim).toLocaleDateString('pt-BR') : 'Em andamento'}
+                            {legislatura.dataFim ? formatDateUTC(legislatura.dataFim) : 'Em andamento'}
                           </p>
                         )}
                         <p className="text-sm text-gray-500 mt-1">
@@ -961,7 +1044,7 @@ export default function LegislaturasAdminPage() {
                     <p className="text-sm text-blue-600 font-medium">Data de Início</p>
                     <p className="text-lg font-bold text-blue-800">
                       {viewingLegislatura.dataInicio
-                        ? new Date(viewingLegislatura.dataInicio).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+                        ? formatDateUTCLong(viewingLegislatura.dataInicio)
                         : 'Não informada'}
                     </p>
                   </div>
@@ -969,7 +1052,7 @@ export default function LegislaturasAdminPage() {
                     <p className="text-sm text-blue-600 font-medium">Data de Fim</p>
                     <p className="text-lg font-bold text-blue-800">
                       {viewingLegislatura.dataFim
-                        ? new Date(viewingLegislatura.dataFim).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+                        ? formatDateUTCLong(viewingLegislatura.dataFim)
                         : 'Em andamento'}
                     </p>
                   </div>
@@ -1000,8 +1083,8 @@ export default function LegislaturasAdminPage() {
                             {periodo.descricao && ` - ${periodo.descricao}`}
                           </CardTitle>
                           <p className="text-sm text-gray-500">
-                            {new Date(periodo.dataInicio).toLocaleDateString('pt-BR')}
-                            {periodo.dataFim ? ` ate ${new Date(periodo.dataFim).toLocaleDateString('pt-BR')}` : ' - Em andamento'}
+                            {formatDateUTC(periodo.dataInicio)}
+                            {periodo.dataFim ? ` ate ${formatDateUTC(periodo.dataFim)}` : ' - Em andamento'}
                           </p>
                         </CardHeader>
                         <CardContent>

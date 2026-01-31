@@ -8,6 +8,13 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -297,108 +304,104 @@ export default function TiposTramitacaoPage() {
       </Card>
 
       {/* Modal de Cadastro/Edição */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-lg">
-            <CardHeader>
-              <CardTitle>
-                {editingTipo ? 'Editar Tipo de Tramitação' : 'Novo Tipo de Tramitação'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="nome">Nome *</Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    placeholder="Ex: Encaminhada à Comissão"
-                    required
-                  />
-                </div>
+      <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTipo ? 'Editar Tipo de Tramitação' : 'Novo Tipo de Tramitação'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="nome">Nome *</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                placeholder="Ex: Encaminhada à Comissão"
+                required
+              />
+            </div>
 
-                <div>
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    placeholder="Descreva o processo de tramitação..."
-                    rows={3}
-                  />
-                </div>
+            <div>
+              <Label htmlFor="descricao">Descrição</Label>
+              <Textarea
+                id="descricao"
+                value={formData.descricao}
+                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                placeholder="Descreva o processo de tramitação..."
+                rows={3}
+              />
+            </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="prazoRegimental">Prazo Regimental (dias)</Label>
-                    <Input
-                      id="prazoRegimental"
-                      type="number"
-                      min="0"
-                      value={formData.prazoRegimental}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        prazoRegimental: parseInt(e.target.value) || 0
-                      })}
-                      placeholder="15"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="prazoLegal">Prazo Legal (dias)</Label>
-                    <Input
-                      id="prazoLegal"
-                      type="number"
-                      min="0"
-                      value={formData.prazoLegal}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        prazoLegal: parseInt(e.target.value) || 0
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="prazoRegimental">Prazo Regimental (dias)</Label>
+                <Input
+                  id="prazoRegimental"
+                  type="number"
+                  min="0"
+                  value={formData.prazoRegimental}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    prazoRegimental: parseInt(e.target.value) || 0
+                  })}
+                  placeholder="15"
+                />
+              </div>
+              <div>
+                <Label htmlFor="prazoLegal">Prazo Legal (dias)</Label>
+                <Input
+                  id="prazoLegal"
+                  type="number"
+                  min="0"
+                  value={formData.prazoLegal}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    prazoLegal: parseInt(e.target.value) || 0
+                  })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="ordem">Ordem de Exibição</Label>
-                    <Input
-                      id="ordem"
-                      type="number"
-                      min="0"
-                      value={formData.ordem}
-                      onChange={(e) => setFormData({
-                        ...formData,
-                        ordem: parseInt(e.target.value) || 0
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2 pt-6">
-                    <Switch
-                      id="ativo"
-                      checked={formData.ativo}
-                      onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })}
-                    />
-                    <Label htmlFor="ativo">Ativo</Label>
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="ordem">Ordem de Exibição</Label>
+                <Input
+                  id="ordem"
+                  type="number"
+                  min="0"
+                  value={formData.ordem}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    ordem: parseInt(e.target.value) || 0
+                  })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex items-center space-x-2 pt-6">
+                <Switch
+                  id="ativo"
+                  checked={formData.ativo}
+                  onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })}
+                />
+                <Label htmlFor="ativo">Ativo</Label>
+              </div>
+            </div>
 
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={handleClose} disabled={saving}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={saving}>
-                    {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    {editingTipo ? 'Atualizar' : 'Criar'}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={handleClose} disabled={saving}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editingTipo ? 'Atualizar' : 'Criar'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

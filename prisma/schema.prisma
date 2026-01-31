@@ -1405,9 +1405,10 @@ model AuditLog {
 }
 
 enum TramitacaoStatus {
-  EM_ANDAMENTO
-  CONCLUIDA
-  CANCELADA
+  RECEBIDA      // Proposição recebida na unidade, aguardando análise
+  EM_ANDAMENTO  // Em análise/tramitação
+  CONCLUIDA     // Finalizada na unidade
+  CANCELADA     // Cancelada
 }
 
 enum TramitacaoResultado {
@@ -2059,7 +2060,8 @@ enum TipoParecer {
 
 enum StatusParecer {
   RASCUNHO                 // Relator esta elaborando
-  AGUARDANDO_VOTACAO       // Pronto para votacao na comissao
+  AGUARDANDO_PAUTA         // Concluido, aguardando inclusao em pauta de reuniao
+  AGUARDANDO_VOTACAO       // Incluido na pauta, aguardando votacao na comissao
   APROVADO_COMISSAO        // Aprovado pela comissao
   REJEITADO_COMISSAO       // Rejeitado pela comissao (volta ao relator)
   EMITIDO                  // Parecer final emitido
@@ -2104,8 +2106,13 @@ model Parecer {
   observacoes       String?       @db.Text
   motivoRejeicao    String?       @db.Text   // Se rejeitado pela comissao
 
-  // Arquivo do parecer
-  arquivoUrl        String?
+  // Arquivo do parecer (PDF anexado)
+  arquivoUrl        String?       // URL do arquivo no storage
+  arquivoNome       String?       // Nome original do arquivo
+  arquivoTamanho    Int?          // Tamanho em bytes
+
+  // Link externo (Google Drive, OneDrive, etc)
+  driveUrl          String?       // URL do arquivo em servico externo
 
   // Controle
   createdAt         DateTime      @default(now())

@@ -72,6 +72,7 @@ const STATUS_CONFIG: Record<
   { label: string; className: string }
 > = {
   PENDENTE: { label: 'Pendente', className: 'bg-gray-100 text-gray-700' },
+  RECEBIDA: { label: 'Recebida', className: 'bg-purple-100 text-purple-700' },
   EM_ANDAMENTO: { label: 'Em andamento', className: 'bg-blue-100 text-blue-700' },
   CONCLUIDA: { label: 'Concluída', className: 'bg-green-100 text-green-700' },
   CANCELADA: { label: 'Cancelada', className: 'bg-red-100 text-red-700' }
@@ -187,7 +188,7 @@ export default function TramitacoesAdminPage() {
 
       if (tiposRes.ok) {
         const tiposData = await tiposRes.json()
-        const tipos = tiposData.data ?? []
+        const tipos = (tiposData.success && Array.isArray(tiposData.data)) ? tiposData.data : []
         setTiposTramitacao(tipos)
 
         if (!createForm.tipoTramitacaoId && tipos.length > 0) {
@@ -201,10 +202,10 @@ export default function TramitacoesAdminPage() {
 
       if (unidadesRes.ok) {
         const unidadesData = await unidadesRes.json()
-        setUnidades(unidadesData.data ?? [])
+        const unidadesList = (unidadesData.success && Array.isArray(unidadesData.data)) ? unidadesData.data : []
+        setUnidades(unidadesList)
       }
     } catch (err) {
-      console.error('Erro ao carregar opções de tramitação', err)
       toast.error('Não foi possível carregar dados auxiliares de tramitação')
     }
   }, [createForm.tipoTramitacaoId])

@@ -76,6 +76,7 @@ function ProposicoesContent() {
     handleRemoveFile,
     validarNumeroManual,
     getStatusDetalhado,
+    handleSubmitTramitacao,
     handleAdvanceTramitacao,
     handleReopenTramitacao,
     handleFinalizeTramitacao,
@@ -290,6 +291,7 @@ function ProposicoesContent() {
         tiposProposicao={tiposProposicao}
         loadingTiposProposicao={loadingTiposProposicao}
         parlamentares={parlamentares}
+        unidades={tiposOrgaos}
         onClose={handleClose}
         onSubmit={handleSubmit}
         onFormDataChange={setFormData}
@@ -333,6 +335,7 @@ function ProposicoesContent() {
         onAdvance={handleAdvanceTramitacao}
         onReopen={handleReopenTramitacao}
         onFinalize={handleFinalizeTramitacao}
+        onSubmitTramitacao={handleSubmitTramitacao}
         onTramitacaoFormDataChange={setTramitacaoFormData}
         onComentarioChange={setComentarioAcao}
         onResultadoChange={setResultadoFinalizacao}

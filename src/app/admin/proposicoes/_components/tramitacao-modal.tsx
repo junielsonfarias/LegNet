@@ -12,7 +12,8 @@ import {
   ArrowRight,
   Loader2,
   Check,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react'
 import type {
   ProposicaoApi,
@@ -55,12 +56,13 @@ interface TramitacaoModalProps {
   notificacoes: Notificacao[]
   comentarioAcao: string
   resultadoFinalizacao: '__sem__' | TramitacaoResultado
-  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | null
+  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | 'create' | null
   ultimoAvanco: TramitacaoAdvanceResponse | null
   onClose: () => void
   onAdvance: () => void
   onReopen: () => void
   onFinalize: () => void
+  onSubmitTramitacao: (e: React.FormEvent) => void
   onTramitacaoFormDataChange: (data: TramitacaoFormData) => void
   onComentarioChange: (comentario: string) => void
   onResultadoChange: (resultado: '__sem__' | TramitacaoResultado) => void
@@ -82,6 +84,7 @@ export function TramitacaoModal({
   onAdvance,
   onReopen,
   onFinalize,
+  onSubmitTramitacao,
   onTramitacaoFormDataChange,
   onComentarioChange,
   onResultadoChange
@@ -95,205 +98,229 @@ export function TramitacaoModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl font-semibold text-camara-primary">
-            Tramitação - {proposicao.numero}/{proposicao.ano}
-          </CardTitle>
-          <CardDescription>{proposicao.titulo}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Status Atual */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Atual</h3>
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-gray-500" />
-                <div>
-                  <span className="font-medium">Localização:</span>
-                  <span className="ml-2">{statusDetalhado?.localizacao ?? 'Não iniciada'}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Calendar className="h-5 w-5 text-gray-500" />
-                <div>
-                  <span className="font-medium">Prazo:</span>
-                  <span className="ml-2">
-                    {statusDetalhado?.prazo
-                      ? new Date(statusDetalhado.prazo).toLocaleDateString('pt-BR')
-                      : 'Sem prazo definido'}
-                  </span>
-                </div>
-              </div>
+      <Card className="w-full max-w-6xl">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-xl font-semibold text-camara-primary">
+                Tramitação - {proposicao.numero}/{proposicao.ano}
+              </CardTitle>
+              <CardDescription className="line-clamp-1">{proposicao.titulo}</CardDescription>
             </div>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-
-          {/* Ações de Tramitação */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold">Ações sobre a Tramitação</h3>
-                <p className="text-sm text-gray-600">Avançar, reabrir ou finalizar a tramitação</p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {/* Layout em duas colunas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Coluna Esquerda */}
+            <div className="space-y-4">
+              {/* Status Atual - Compacto */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">Status Atual</h4>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-600">{statusDetalhado?.localizacao ?? 'Não iniciada'}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-600">
+                      {statusDetalhado?.prazo
+                        ? new Date(statusDetalhado.prazo).toLocaleDateString('pt-BR')
+                        : 'Sem prazo'}
+                    </span>
+                  </div>
+                  {tramitacaoAtual && (
+                    <Badge variant="outline" className="ml-auto">
+                      {tramitacaoAtual.tipoTramitacao?.nome ?? 'N/A'}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              {tramitacaoAtual && (
-                <Badge variant="outline">
-                  Etapa: {tramitacaoAtual.tipoTramitacao?.nome ?? 'Não identificada'}
-                </Badge>
+
+              {/* Ações de Tramitação */}
+              <div className="border border-gray-200 rounded-lg p-3">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Ações da Etapa Atual</h4>
+
+                {ultimoAvanco && (
+                  <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
+                    {ultimoAvanco.novaEtapa
+                      ? `Avançada para ${ultimoAvanco.novaEtapa.tipoTramitacao?.nome ?? 'próxima etapa'}`
+                      : 'Etapa finalizada.'}
+                  </div>
+                )}
+
+                <div className="flex gap-2 mb-3">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={onAdvance}
+                    disabled={!podeAvancar || acaoEmProcesso !== null}
+                  >
+                    {acaoEmProcesso === 'advance' ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <ArrowRight className="h-3 w-3 mr-1" />
+                    )}
+                    Avançar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    onClick={onFinalize}
+                    disabled={!podeFinalizar || acaoEmProcesso !== null}
+                  >
+                    {acaoEmProcesso === 'finalize' ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <Check className="h-3 w-3 mr-1" />
+                    )}
+                    Finalizar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={onReopen}
+                    disabled={!podeReabrir || acaoEmProcesso !== null}
+                  >
+                    {acaoEmProcesso === 'reopen' ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                    )}
+                    Reabrir
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Comentário</Label>
+                    <Textarea
+                      value={comentarioAcao}
+                      onChange={(e) => onComentarioChange(e.target.value)}
+                      placeholder="Observações..."
+                      rows={2}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Resultado</Label>
+                    <Select
+                      value={resultadoFinalizacao}
+                      onValueChange={(valor) => onResultadoChange(valor as '__sem__' | TramitacaoResultado)}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={RESULTADO_PADRAO}>Sem resultado</SelectItem>
+                        {RESULTADOS_TRAMITACAO.map(r => (
+                          <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notificações - Compacto */}
+              {notificacoes.length > 0 && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Notificações</h4>
+                  <div className="space-y-1 max-h-20 overflow-y-auto">
+                    {notificacoes.map(notif => (
+                      <div key={notif.id} className="flex items-center gap-2 text-xs">
+                        <Badge variant="outline" className="text-[10px]">{notif.canal}</Badge>
+                        <span className="text-gray-600 truncate">{notif.destinatario}</span>
+                        <Badge variant="secondary" className="text-[10px] ml-auto">{notif.status ?? 'pendente'}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
 
-            {ultimoAvanco && (
-              <div className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-                {ultimoAvanco.novaEtapa
-                  ? `Avançada para ${ultimoAvanco.novaEtapa.tipoTramitacao?.nome ?? 'próxima etapa'}`
-                  : 'Etapa finalizada sem próxima etapa configurada.'}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              <Button
-                type="button"
-                onClick={onAdvance}
-                disabled={!podeAvancar || acaoEmProcesso !== null}
-              >
-                {acaoEmProcesso === 'advance' ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <ArrowRight className="h-4 w-4 mr-2" />
-                )}
-                Avançar Etapa
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onFinalize}
-                disabled={!podeFinalizar || acaoEmProcesso !== null}
-              >
-                {acaoEmProcesso === 'finalize' ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Check className="h-4 w-4 mr-2" />
-                )}
-                Finalizar
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onReopen}
-                disabled={!podeReabrir || acaoEmProcesso !== null}
-              >
-                {acaoEmProcesso === 'reopen' ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                Reabrir
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="comentarioAcao">Comentário</Label>
-                <Textarea
-                  id="comentarioAcao"
-                  value={comentarioAcao}
-                  onChange={(e) => onComentarioChange(e.target.value)}
-                  placeholder="Observações para a ação executada"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <Label htmlFor="resultadoFinalizacao">Resultado (para finalização)</Label>
-                <Select
-                  value={resultadoFinalizacao}
-                  onValueChange={(valor) => onResultadoChange(valor as '__sem__' | TramitacaoResultado)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o resultado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={RESULTADO_PADRAO}>Sem resultado</SelectItem>
-                    {RESULTADOS_TRAMITACAO.map(r => (
-                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Notificações */}
-          {notificacoes.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Notificações Automáticas</h3>
-              <div className="space-y-2">
-                {notificacoes.map(notif => (
-                  <div key={notif.id} className="bg-gray-50 p-3 rounded-lg text-sm">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{notif.canal.toUpperCase()}</Badge>
-                      <span>{notif.destinatario}</span>
-                      <Badge variant="secondary" className="ml-auto">{notif.status ?? 'pendente'}</Badge>
+            {/* Coluna Direita - Nova Tramitação */}
+            <div className="border border-gray-200 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Nova Tramitação Manual</h4>
+              <form onSubmit={onSubmitTramitacao}>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Tipo de Tramitação *</Label>
+                      <Select
+                        value={tramitacaoFormData.tipoTramitacaoId}
+                        onValueChange={(value) => onTramitacaoFormDataChange({ ...tramitacaoFormData, tipoTramitacaoId: value })}
+                      >
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tiposTramitacao.map((tipo) => (
+                            <SelectItem key={tipo.id} value={tipo.id}>
+                              {tipo.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Unidade de Destino</Label>
+                      <Select
+                        value={tramitacaoFormData.unidadeId}
+                        onValueChange={(value) => onTramitacaoFormDataChange({ ...tramitacaoFormData, unidadeId: value })}
+                      >
+                        <SelectTrigger className="text-sm">
+                          <SelectValue placeholder="Selecione a unidade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={SELECT_AUTO}>Automática</SelectItem>
+                          {tiposOrgaos.map((orgao) => (
+                            <SelectItem key={orgao.id} value={orgao.id}>
+                              {orgao.nome} {orgao.sigla && `(${orgao.sigla})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Nova Tramitação Manual */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Registrar Nova Tramitação Manual</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Tipo de Tramitação</Label>
-                <Select
-                  value={tramitacaoFormData.tipoTramitacaoId}
-                  onValueChange={(value) => onTramitacaoFormDataChange({ ...tramitacaoFormData, tipoTramitacaoId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tiposTramitacao.map((tipo) => (
-                      <SelectItem key={tipo.id} value={tipo.id}>
-                        {tipo.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Unidade de Destino</Label>
-                <Select
-                  value={tramitacaoFormData.unidadeId}
-                  onValueChange={(value) => onTramitacaoFormDataChange({ ...tramitacaoFormData, unidadeId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a unidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={SELECT_AUTO}>Automática</SelectItem>
-                    {tiposOrgaos.map((orgao) => (
-                      <SelectItem key={orgao.id} value={orgao.id}>
-                        {orgao.nome} ({orgao.sigla})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Label>Observações</Label>
-              <Textarea
-                value={tramitacaoFormData.observacoes}
-                onChange={(e) => onTramitacaoFormDataChange({ ...tramitacaoFormData, observacoes: e.target.value })}
-                rows={2}
-              />
+                  <div>
+                    <Label className="text-xs">Observações</Label>
+                    <Textarea
+                      value={tramitacaoFormData.observacoes}
+                      onChange={(e) => onTramitacaoFormDataChange({ ...tramitacaoFormData, observacoes: e.target.value })}
+                      rows={2}
+                      className="text-sm"
+                      placeholder="Observações da tramitação..."
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={!tramitacaoFormData.tipoTramitacaoId || acaoEmProcesso === 'create'}
+                    >
+                      {acaoEmProcesso === 'create' ? (
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      ) : (
+                        <Check className="h-3 w-3 mr-1" />
+                      )}
+                      Salvar Tramitação
+                    </Button>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
+          {/* Rodapé */}
+          <div className="flex justify-end mt-4 pt-3 border-t">
+            <Button type="button" variant="outline" size="sm" onClick={onClose}>
               Fechar
             </Button>
           </div>

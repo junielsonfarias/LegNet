@@ -26,7 +26,11 @@ export interface Parecer {
   votosAbstencao: number
   observacoes: string | null
   motivoRejeicao: string | null
+  // Campos de anexo
   arquivoUrl: string | null
+  arquivoNome: string | null
+  arquivoTamanho: number | null
+  driveUrl: string | null
   createdAt: string
   updatedAt: string
   proposicao?: {
@@ -99,6 +103,11 @@ export interface CreateParecerInput {
   emendasPropostas?: string
   prazoEmissao?: string
   observacoes?: string
+  // Campos de anexo
+  arquivoUrl?: string | null
+  arquivoNome?: string | null
+  arquivoTamanho?: number | null
+  driveUrl?: string | null
 }
 
 export interface UpdateParecerInput {
@@ -114,7 +123,11 @@ export interface UpdateParecerInput {
   dataEmissao?: string
   observacoes?: string
   motivoRejeicao?: string
-  arquivoUrl?: string
+  // Campos de anexo
+  arquivoUrl?: string | null
+  arquivoNome?: string | null
+  arquivoTamanho?: number | null
+  driveUrl?: string | null
 }
 
 export interface VotarInput {

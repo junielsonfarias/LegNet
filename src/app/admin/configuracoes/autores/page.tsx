@@ -472,7 +472,7 @@ export default function AutoresPage() {
                 <div className="text-center py-8 text-gray-500">
                   <UserCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>Nenhum autor cadastrado</p>
-                  <p className="text-sm">Clique em "Novo Autor" para adicionar</p>
+                  <p className="text-sm">Clique em &quot;Novo Autor&quot; para adicionar</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -580,7 +580,7 @@ export default function AutoresPage() {
                 <div className="text-center py-8 text-gray-500">
                   <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>Nenhum tipo de autor cadastrado</p>
-                  <p className="text-sm">Clique em "Criar Tipos Padrão" para iniciar</p>
+                  <p className="text-sm">Clique em &quot;Criar Tipos Padrao&quot; para iniciar</p>
                 </div>
               ) : (
                 <div className="space-y-2">

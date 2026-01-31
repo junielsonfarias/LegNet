@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-31 (Correcoes Sistema Comissoes + API meeting-defaults + Auth APIs)
+> **Ultima Atualizacao**: 2026-01-31 (Correcao dados legislatura, mandatos e timezone)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
@@ -256,6 +256,9 @@ Fluxo Validado:
 | **API avancar etapa** | **Implementado** | POST /api/proposicoes/[id]/tramitar |
 | **Validacao CLJ bloqueante** | **Implementado** | RN-030 bloqueia inclusao em ORDEM_DO_DIA sem parecer CLJ |
 | **Historico com auditoria** | **Implementado** | Registra usuario, IP, dados anteriores/novos |
+| **Status RECEBIDA** | **Implementado** | RN-038: Novo status inicial para tramitacoes (antes de EM_ANDAMENTO) |
+| **Unidade inicial Secretaria** | **Implementado** | RN-038: Secretaria Legislativa como unidade padrao |
+| **Selecao unidade no form** | **Implementado** | Usuario pode escolher unidade inicial ao criar proposicao |
 
 ### 11. Publicacoes
 
@@ -1163,6 +1166,305 @@ sudo ./scripts/uninstall.sh --full
 
 ## Historico de Atualizacoes
 
+### 2026-01-31 - Correcao de Dados da Legislatura e Mandatos
+
+**Problema**: A legislatura 10 (2025-2028) estava com datas incorretas no banco de dados (2021-2024 em vez de 2025-2028), e os mandatos dos parlamentares tambem estavam com datas erradas.
+
+**Dados Corrigidos**:
+
+1. **Legislatura 10**:
+   - dataInicio: 2021-01-01 → 2025-01-01
+   - dataFim: 2024-12-31 → 2028-12-31
+
+2. **Periodos Legislativos**:
+   - Periodo 1 (1º Bienio): Criado com datas 2025-01-01 a 2026-12-31
+   - Periodo 2 (2º Bienio): Corrigido para 2027-01-01 a 2028-12-31
+
+3. **Mandatos dos Parlamentares**:
+   - 12 mandatos atualizados de 2021-01-01 para 2025-01-01
+
+**Problema de Exibicao de Datas (Timezone)**:
+- Datas UTC exibidas incorretamente devido a conversao de timezone
+- Solucao: Criadas funcoes `formatDateUTC()` e `formatDateUTCLong()` que usam metodos UTC
+
+**Arquivos Modificados**:
+- `src/app/admin/legislaturas/page.tsx` - Funcoes de formatacao UTC e correcao de exibicao
+- `src/app/api/legislaturas/route.ts` - Schema com campos dataInicio/dataFim
+- `src/app/api/legislaturas/[id]/route.ts` - Schema de atualizacao com datas
+- `src/app/api/periodos-legislatura/[id]/route.ts` - NOVA API PUT/DELETE
+- `src/app/api/cargos-mesa-diretora/[id]/route.ts` - NOVA API PUT/DELETE
+
+**Logica de Salvamento de Legislaturas**:
+- Corrigida logica que so salvava periodos/cargos para novas legislaturas
+- Agora funciona tanto para criar quanto para editar legislaturas existentes
+
+---
+
+### 2026-01-31 - Correcao Validacao de Data de Sessao
+
+**Problema**: Ao tentar criar uma sessao para o dia atual, o sistema retornava erro "A data da sessao nao pode ser no passado para sessoes nao finalizadas", mesmo que a data fosse hoje.
+
+**Causa**: A validacao comparava data+hora completa, fazendo com que uma sessao agendada para hoje as 14:00 falhasse se criada apos as 14:00.
+
+**Solucao**: Modificar a validacao para comparar apenas a parte da data (ignorando horario):
+
+```typescript
+// Comparar apenas as datas (ignorando o horario)
+const dataHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())
+const dataSessaoSemHora = new Date(dataSessao.getFullYear(), dataSessao.getMonth(), dataSessao.getDate())
+
+if (dataSessaoSemHora < dataHoje) {
+  throw new ValidationError('A data da sessao nao pode ser no passado para sessoes nao finalizadas')
+}
+```
+
+**Arquivo Modificado**: `src/app/api/sessoes/route.ts` (linhas 185-198)
+
+**Comportamento Corrigido**:
+- Sessoes para hoje: PERMITIDO (independente do horario atual)
+- Sessoes para dias futuros: PERMITIDO
+- Sessoes para dias passados (nao finalizadas): BLOQUEADO
+- Sessoes passadas marcadas como finalizadas: PERMITIDO (dados preteritos)
+
+---
+
+### 2026-01-31 - Campos de Anexo no Sistema de Pareceres
+
+**Objetivo**: Adicionar campos para anexar arquivos PDF e links de drive aos pareceres.
+
+**Novos Campos no Modelo Parecer**:
+- `arquivoUrl` - URL do arquivo PDF no storage
+- `arquivoNome` - Nome original do arquivo anexado
+- `arquivoTamanho` - Tamanho do arquivo em bytes
+- `driveUrl` - URL de compartilhamento do Google Drive/OneDrive
+
+**Alteracoes**:
+
+1. **Schema Prisma** (`prisma/schema.prisma`):
+   - Adicionados campos `arquivoNome`, `arquivoTamanho`, `driveUrl` ao modelo Parecer
+
+2. **API de Pareceres**:
+   - `POST /api/pareceres` - Schema de criacao atualizado com campos de anexo
+   - `PUT /api/pareceres/[id]` - Schema de atualizacao com campos de anexo
+
+3. **Hook de Pareceres** (`src/lib/hooks/use-pareceres.ts`):
+   - Interface `Parecer` atualizada com novos campos
+   - Interface `CreateParecerInput` atualizada
+   - Interface `UpdateParecerInput` atualizada
+
+4. **Pagina de Pareceres** (`src/app/admin/pareceres/page.tsx`):
+   - Formulario com secao de anexos (upload PDF + link drive)
+   - Validacao de tipo (apenas PDF) e tamanho (max 10MB)
+   - Exibicao de arquivo selecionado com opcao de remover
+   - Campo de URL do Drive com preview do link
+   - Indicadores de anexo na listagem de pareceres
+   - Secao de anexos no dialog de detalhes
+
+**Arquivos Modificados**:
+- `prisma/schema.prisma`
+- `src/app/api/pareceres/route.ts`
+- `src/app/api/pareceres/[id]/route.ts`
+- `src/lib/hooks/use-pareceres.ts`
+- `src/app/admin/pareceres/page.tsx`
+
+**Observacao**: O upload real do arquivo para storage (S3, Supabase Storage) esta pendente de implementacao. Atualmente, o campo `arquivoUrl` deve ser preenchido manualmente ou via integracao externa. O campo `driveUrl` funciona normalmente para links de compartilhamento.
+
+---
+
+### 2026-01-31 - Sistema de Pareceres Melhorado (Numeracao por Comissao)
+
+**Objetivo**: Implementar numeracao sequencial de pareceres por comissao, filtro de proposicoes em tramitacao e novo status AGUARDANDO_PAUTA.
+
+**Baseado no SAPL**: Analise do sistema SAPL (Interlegis) para entender o modelo de Relatoria e Parecer, onde o parecer esta vinculado a relatoria que por sua vez esta vinculada a comissao.
+
+**Alteracoes**:
+
+1. **Novo Status: AGUARDANDO_PAUTA**
+   - Adicionado ao enum StatusParecer
+   - Fluxo: RASCUNHO -> AGUARDANDO_PAUTA -> AGUARDANDO_VOTACAO -> APROVADO/REJEITADO -> EMITIDO -> ARQUIVADO
+   - Todo parecer criado inicia com status AGUARDANDO_PAUTA (disponivel para inclusao em pauta)
+
+2. **Numeracao Sequencial por Comissao**
+   - Formato: NNN/YYYY-SIGLA (ex: 001/2026-CLJ, 002/2026-CFO)
+   - Cada comissao tem sua propria sequencia de numeracao
+   - Numero e exibido no formulario antes de criar o parecer
+
+3. **Filtro de Proposicoes em Tramitacao**
+   - Ao selecionar comissao, mostra apenas proposicoes em tramitacao para ela
+   - Valida que proposicao esta em tramitacao para comissao antes de criar parecer
+   - Impede criar parecer para proposicao de outra comissao
+
+4. **Novos Endpoints API**
+   - `GET /api/pareceres/proximo-numero?comissaoId=xxx` - Retorna proximo numero do parecer
+   - `GET /api/comissoes/[id]/proposicoes-pendentes` - Retorna proposicoes aguardando parecer
+
+**Arquivos Criados**:
+- `src/app/api/pareceres/proximo-numero/route.ts`
+- `src/app/api/comissoes/[id]/proposicoes-pendentes/route.ts`
+
+**Arquivos Modificados**:
+- `prisma/schema.prisma` - Novo status AGUARDANDO_PAUTA
+- `src/app/api/pareceres/route.ts` - Numeracao por comissao, validacao de tramitacao
+- `src/app/api/pareceres/[id]/route.ts` - Transicoes de status atualizadas
+- `src/app/admin/pareceres/page.tsx` - Formulario com filtros dinamicos
+
+**Regras de Negocio**:
+- RN-110: Parecer deve ser criado apenas para proposicao em tramitacao para a comissao
+- RN-111: Numeracao de parecer e sequencial por comissao e ano
+- RN-112: Parecer criado inicia com status AGUARDANDO_PAUTA (disponivel para pauta)
+
+---
+
+### 2026-01-31 - Revisao Tecnica e Correcoes de Consistencia
+
+**Objetivo**: Revisao completa da aplicacao e correcao de problemas identificados.
+
+**Resultado da Revisao**:
+- TypeScript: Compila sem erros
+- APIs: Todas seguem padrao `{ success: true, data: [...] }`
+- Status RECEBIDA: Implementado em todas as camadas
+- Hidratacao: Nenhum problema encontrado
+
+**Correcoes Realizadas**:
+
+1. **Import nao utilizado removido**:
+   - `NextResponse` removido de `src/app/api/proposicoes/route.ts`
+
+2. **Status inicial unificado para RECEBIDA**:
+   - `iniciarTramitacaoComFluxo()` alterado de EM_ANDAMENTO para RECEBIDA
+   - Query de tramitacao existente atualizada para incluir RECEBIDA
+
+3. **Console.logs de debug removidos**:
+   - `src/app/admin/proposicoes/[id]/page.tsx` - removidos 6 logs
+   - `src/app/admin/tramitacoes/page.tsx` - removidos 6 logs
+
+**Arquivos Modificados**:
+- `src/app/api/proposicoes/route.ts`
+- `src/lib/services/tramitacao-service.ts`
+- `src/app/admin/proposicoes/[id]/page.tsx`
+- `src/app/admin/tramitacoes/page.tsx`
+
+---
+
+### 2026-01-31 - Correcao API Tramitacoes para Status RECEBIDA
+
+**Objetivo**: Corrigir erro 400 ao criar tramitacao com status RECEBIDA.
+
+**Problema Identificado**:
+- POST /api/tramitacoes retornava 400 Bad Request
+- O schema Zod so aceitava: `EM_ANDAMENTO`, `CONCLUIDA`, `CANCELADA`
+- Status `RECEBIDA` foi adicionado ao enum Prisma mas faltava na API
+
+**Correcao**:
+1. Adicionado `RECEBIDA` ao StatusEnum no schema Zod
+2. Alterado status padrao de `EM_ANDAMENTO` para `RECEBIDA`
+3. Atualizado calculo de prazo para incluir status RECEBIDA
+
+**Arquivo Modificado**:
+- `src/app/api/tramitacoes/route.ts`
+
+---
+
+### 2026-01-31 - Correcao Hidratacao em Tipos de Tramitacao
+
+**Objetivo**: Corrigir erro de hidratacao React na pagina `/admin/configuracoes/tipos-tramitacao`.
+
+**Problema Identificado**:
+- Erro: `Expected server HTML to contain a matching <div> in <div>`
+- Causa: Modal implementado com renderizacao condicional manual e `position: fixed`
+- O servidor renderizava HTML diferente do cliente, causando mismatch
+
+**Correcao**:
+- Substituido modal manual pelo componente Dialog do Radix UI
+- Dialog usa Portal e e hidratacao-safe por design
+- Importado Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+
+**Dados no Banco**:
+- Verificado: 9 tipos de tramitacao existem e estao ativos
+- Recebimento, Analise de Constitucionalidade, Analise de Merito, Parecer, Pauta, Votacao, Sancao/Veto, Publicacao, Arquivamento
+
+**Arquivo Modificado**:
+- `src/app/admin/configuracoes/tipos-tramitacao/page.tsx`
+
+---
+
+### 2026-01-31 - Correcao Carregamento Tipos Tramitacao em /admin/tramitacoes
+
+**Objetivo**: Corrigir problema onde os tipos de tramitacao nao eram carregados ao criar nova tramitacao na pagina /admin/tramitacoes.
+
+**Problema Identificado**:
+- A funcao `loadOptions()` assumia acesso direto a `tiposData.data`
+- Formato correto da API: `{ success: true, data: [...] }`
+- Dropdown de tipos ficava vazio ao abrir modal de nova tramitacao
+
+**Correcao**:
+- Verificacao explicita: `(tiposData.success && Array.isArray(tiposData.data)) ? tiposData.data : []`
+- Mesma correcao aplicada para unidades
+- Adicionados logs de debug para diagnostico
+
+**Arquivo Modificado**:
+- `src/app/admin/tramitacoes/page.tsx`
+
+---
+
+### 2026-01-31 - Campo Tipo de Tramitacao no Formulario Inline
+
+**Objetivo**: Permitir selecao do tipo de tramitacao ao criar nova tramitacao inline na pagina de detalhes da proposicao.
+
+**Problema Identificado**:
+- O formulario inline de tramitacao usava automaticamente o primeiro tipo disponivel
+- Usuario nao podia escolher o tipo de tramitacao adequado
+- Tipos de tramitacao eram carregados mas nao exibidos
+
+**Correcoes**:
+1. **Novo estado para tipo selecionado**:
+   - `tipoTramitacaoSelecionado` - armazena ID do tipo escolhido
+
+2. **Dropdown de Tipo de Tramitacao**:
+   - Adicionado Select com todos os tipos ativos
+   - Mostra contador "(X disponiveis)"
+   - Placeholder dinamico durante carregamento
+
+3. **Validacao no submit**:
+   - Botao desabilitado ate selecionar tipo E unidade
+   - Alert se tentar submeter sem selecionar
+
+4. **Reset ao cancelar**:
+   - Limpa tipo selecionado junto com outros campos
+
+**Arquivo Modificado**:
+- `src/app/admin/proposicoes/[id]/page.tsx`
+
+---
+
+### 2026-01-31 - Correcao Dropdown Unidades na Tramitacao Inline
+
+**Objetivo**: Corrigir problema onde o dropdown de unidades na pagina de detalhe da proposicao nao exibia todas as opcoes.
+
+**Problema Identificado**:
+- A resposta da API estava sendo parseada incorretamente
+- Formato esperado: `{ success: true, data: [...] }` mas codigo assumia acesso direto ao array
+- Dropdown vazio ou com poucas opcoes ao criar nova tramitacao inline
+
+**Correcoes**:
+1. **Parsing correto da resposta API** em `page.tsx`:
+   - Verificacao explicita de `result.success && Array.isArray(result.data)`
+   - Mapeamento de campos `id`, `nome`, `sigla` apos validacao
+
+2. **Melhorias visuais no dropdown**:
+   - Adicionado contador de unidades disponiveis no label
+   - Placeholder dinamico: "Carregando unidades..." quando vazio
+   - Props `position="popper"` e `sideOffset={4}` para melhor posicionamento
+   - Exibe sigla junto com nome quando disponivel (ex: "SL - Secretaria Legislativa")
+
+3. **Debug temporario**:
+   - Console.log adicionados para diagnostico (remover apos validacao)
+
+**Arquivo Modificado**:
+- `src/app/admin/proposicoes/[id]/page.tsx`
+
+---
+
 ### 2026-01-31 - Sistema Simplificado de Gerenciamento de Comissoes
 
 **Objetivo**: Simplificar o gerenciamento de reunioes, pautas e pareceres das comissoes, reduzindo tempo de tarefas rotineiras em 75-85%.
@@ -1259,6 +1561,118 @@ sudo ./scripts/uninstall.sh --full
 - `src/app/admin/comissoes/[id]/page.tsx`
 - `src/app/api/comissoes/[id]/dashboard/route.ts`
 - `src/app/api/reunioes-comissao/[id]/pauta/bulk/route.ts`
+
+---
+
+### 2026-01-31 - Historico de Tramitacao na Visualizacao de Proposicao
+
+**Objetivo**: Exibir historico completo de tramitacao na pagina de detalhes de proposicao e usar URL amigavel (slug).
+
+**Alteracoes Realizadas**:
+
+1. **URL amigavel para proposicoes**:
+   - Card de proposicao agora usa slug (ex: `pl-003-2026`) em vez de ID tecnico
+   - Pagina de detalhes redireciona automaticamente de ID para slug
+   - API ja suportava busca por slug, agora frontend usa corretamente
+
+2. **Visualizacao de unidade atual**:
+   - Card "Situacao Atual" mostra em qual unidade a proposicao esta localizada
+   - Destaque visual para a unidade atual com badge "Atual"
+
+3. **Historico de tramitacao completo**:
+   - Substituido timeline estatico por historico real de tramitacoes
+   - Mostra todas as unidades por onde a proposicao passou
+   - Exibe data de entrada/saida, status e observacoes
+   - Cores diferenciadas por status (RECEBIDA, EM_ANDAMENTO, CONCLUIDA, CANCELADA)
+
+4. **Formulario inline para criar tramitacao**:
+   - Quando nao ha tramitacao, mostra alerta e botao "Registrar Tramitacao"
+   - Formulario permite selecionar unidade e adicionar observacoes
+   - Cria tramitacao diretamente na pagina sem sair
+
+**Arquivos Modificados**:
+- `src/app/admin/proposicoes/_components/proposicao-card.tsx` - Usa slug na URL
+- `src/app/admin/proposicoes/[id]/page.tsx` - Historico de tramitacao + formulario inline
+
+---
+
+### 2026-01-31 - Ajuste Fluxo Inicial de Tramitacao (RN-038)
+
+**Objetivo**: Ajustar o fluxo para que proposicoes iniciem na Secretaria Legislativa com status RECEBIDA, e permitir selecao de unidade inicial no formulario.
+
+**Alteracoes Realizadas**:
+
+1. **Novo status RECEBIDA** (Prisma Schema):
+   - Adicionado `RECEBIDA` ao enum `TramitacaoStatus`
+   - Status inicial para tramitacoes antes de `EM_ANDAMENTO`
+   - Indica proposicao aguardando analise
+
+2. **Secretaria Legislativa como unidade padrao**:
+   - Funcao `iniciarTramitacaoPadrao()` agora busca `SECRETARIA` com nome "Legislativa"
+   - Fallback: qualquer unidade tipo `SECRETARIA`, depois `Protocolo/MESA_DIRETORA`
+   - Status inicial: `RECEBIDA` (antes era `EM_ANDAMENTO`)
+
+3. **Nova funcao `iniciarTramitacaoComUnidade()`**:
+   - Permite especificar unidade inicial diretamente
+   - Util para pareceres de comissoes (enviar direto para comissao)
+   - Tem prioridade sobre fluxo configurado
+
+4. **Campo unidade no formulario de proposicao**:
+   - Novo campo `unidadeInicialId` em `ProposicaoFormData`
+   - Select de unidade no modal de criacao (opcional)
+   - Se vazio, usa Secretaria Legislativa
+
+5. **API de proposicoes atualizada**:
+   - Schema aceita `unidadeInicialId` opcional
+   - Prioridade: unidade escolhida > fluxo configurado > padrao
+
+**Arquivos Modificados**:
+- `prisma/schema.prisma` - Enum TramitacaoStatus
+- `src/lib/services/tramitacao-service.ts` - Funcoes de inicio de tramitacao
+- `src/app/admin/proposicoes/_types/index.ts` - ProposicaoFormData
+- `src/app/admin/proposicoes/_components/proposicao-form-modal.tsx` - Campo Select
+- `src/app/admin/proposicoes/page.tsx` - Prop unidades para modal
+- `src/app/api/proposicoes/route.ts` - Logica de tramitacao inicial
+- `src/app/admin/tramitacoes/page.tsx` - STATUS_CONFIG com RECEBIDA
+- `src/lib/types/tramitacao.ts` - Interface e enum
+- `src/lib/api/tramitacoes-api.ts` - Type TramitacaoStatus
+
+**Nova Regra de Negocio**: RN-038 (documentada em REGRAS-DE-NEGOCIO.md)
+
+---
+
+### 2026-01-31 - Correcao Carregamento de Tramitacao
+
+**Objetivo**: Corrigir problema onde nem todas as unidades de destino apareciam ao registrar nova tramitacao manual.
+
+**Problema Identificado**:
+- O hook `use-proposicoes-state.ts` usava servicos mock (`tiposOrgaosService`, `tiposTramitacaoService`) de `@/lib/tramitacao-service` para popular os dropdowns de tramitacao
+- Esses servicos leem dados em memoria (mock), nao refletindo as unidades cadastradas no banco de dados
+
+**Correcao**:
+- `loadTiposOrgaos()` - Alterado para buscar de `/api/configuracoes/unidades-tramitacao?ativo=true`
+- `loadTiposTramitacao()` - Alterado para buscar de `/api/configuracoes/tipos-tramitacao?ativo=true`
+- Removido import dos servicos mock nao mais utilizados
+
+**Arquivo Modificado**:
+- `src/app/admin/proposicoes/_hooks/use-proposicoes-state.ts`
+
+---
+
+### 2026-01-31 - Correcao Filtro Ativos em Tramitacoes Admin
+
+**Objetivo**: Corrigir problema onde nem todas as unidades responsaveis apareciam ao criar nova tramitacao em /admin/tramitacoes.
+
+**Problema Identificado**:
+- As paginas de tramitacao chamavam as APIs sem o filtro `?ativo=true`
+- Sem filtro, a API retorna todos os registros, mas para formularios de criacao deve-se mostrar apenas os ativos
+
+**Correcao**:
+- Adicionado `?ativo=true` nas chamadas de `/api/configuracoes/tipos-tramitacao` e `/api/configuracoes/unidades-tramitacao`
+
+**Arquivos Modificados**:
+- `src/app/admin/tramitacoes/page.tsx`
+- `src/app/admin/tramitacoes/regras/page.tsx`
 
 ---
 

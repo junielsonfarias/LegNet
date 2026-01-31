@@ -10,7 +10,7 @@ import {
 } from '@/lib/tramitacao-service'
 import type { Tramitacao } from '@/lib/types/tramitacao'
 
-export type TramitacaoStatus = 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+export type TramitacaoStatus = 'RECEBIDA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
 export type TramitacaoResultado = 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO'
 
 export interface TramitacaoHistoricoApi {

@@ -36,7 +36,12 @@ import {
   ThumbsDown,
   Minus,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  Upload,
+  Link,
+  File,
+  X,
+  ExternalLink
 } from 'lucide-react'
 import { usePareceres, Parecer, CreateParecerInput, UpdateParecerInput } from '@/lib/hooks/use-pareceres'
 import { useComissoes } from '@/lib/hooks/use-comissoes'
@@ -55,12 +60,32 @@ const TIPOS_PARECER = [
 
 const STATUS_PARECER = [
   { value: 'RASCUNHO', label: 'Rascunho', color: 'bg-gray-100 text-gray-800' },
+  { value: 'AGUARDANDO_PAUTA', label: 'Aguardando Pauta', color: 'bg-cyan-100 text-cyan-800' },
   { value: 'AGUARDANDO_VOTACAO', label: 'Aguardando Votação', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'APROVADO_COMISSAO', label: 'Aprovado pela Comissão', color: 'bg-green-100 text-green-800' },
   { value: 'REJEITADO_COMISSAO', label: 'Rejeitado pela Comissão', color: 'bg-red-100 text-red-800' },
   { value: 'EMITIDO', label: 'Emitido', color: 'bg-blue-100 text-blue-800' },
   { value: 'ARQUIVADO', label: 'Arquivado', color: 'bg-purple-100 text-purple-800' }
 ]
+
+interface ProposicaoPendente {
+  id: string
+  numero: string
+  ano: number
+  tipo: string
+  titulo: string
+  ementa?: string
+  status: string
+  autor?: { id: string; nome: string; apelido?: string }
+}
+
+interface ProximoNumeroInfo {
+  proximoNumero: number
+  numeroFormatado: string
+  comissao: { id: string; nome: string; sigla: string }
+  ano: number
+  totalPareceresAno: number
+}
 
 export default function PareceresAdminPage() {
   const [filters, setFilters] = useState<{
@@ -105,10 +130,21 @@ export default function PareceresAdminPage() {
     ementa: '',
     emendasPropostas: '',
     prazoEmissao: '',
-    observacoes: ''
+    observacoes: '',
+    // Campos de anexo
+    arquivoUrl: null,
+    arquivoNome: null,
+    arquivoTamanho: null,
+    driveUrl: null
   })
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadingFile, setUploadingFile] = useState(false)
+
   const [membrosComissao, setMembrosComissao] = useState<any[]>([])
+  const [proposicoesPendentes, setProposicoesPendentes] = useState<ProposicaoPendente[]>([])
+  const [proximoNumeroInfo, setProximoNumeroInfo] = useState<ProximoNumeroInfo | null>(null)
+  const [loadingProposicoes, setLoadingProposicoes] = useState(false)
 
   // Atualiza membros quando comissão muda
   useEffect(() => {
@@ -121,6 +157,46 @@ export default function PareceresAdminPage() {
       setMembrosComissao([])
     }
   }, [formData.comissaoId, comissoes])
+
+  // Busca proposições pendentes quando comissão muda
+  useEffect(() => {
+    const fetchProposicoesPendentes = async () => {
+      if (!formData.comissaoId) {
+        setProposicoesPendentes([])
+        setProximoNumeroInfo(null)
+        return
+      }
+
+      setLoadingProposicoes(true)
+      try {
+        // Buscar proposições pendentes
+        const propResponse = await fetch(`/api/comissoes/${formData.comissaoId}/proposicoes-pendentes`)
+        const propData = await propResponse.json()
+        if (propData.success && propData.data?.proposicoes) {
+          setProposicoesPendentes(propData.data.proposicoes)
+        } else {
+          setProposicoesPendentes([])
+        }
+
+        // Buscar próximo número
+        const numResponse = await fetch(`/api/pareceres/proximo-numero?comissaoId=${formData.comissaoId}`)
+        const numData = await numResponse.json()
+        if (numData.success && numData.data) {
+          setProximoNumeroInfo(numData.data)
+        } else {
+          setProximoNumeroInfo(null)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados da comissão:', error)
+        setProposicoesPendentes([])
+        setProximoNumeroInfo(null)
+      } finally {
+        setLoadingProposicoes(false)
+      }
+    }
+
+    fetchProposicoesPendentes()
+  }, [formData.comissaoId])
 
   const getTipoLabel = (tipo: string) => {
     return TIPOS_PARECER.find(t => t.value === tipo)?.label || tipo
@@ -145,6 +221,10 @@ export default function PareceresAdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // TODO: Implementar upload real de arquivo para storage (S3, Supabase Storage, etc.)
+    // Por enquanto, o arquivoUrl será null para novos arquivos (funcionalidade de upload pendente)
+    // O campo driveUrl funciona normalmente como URL externa
+
     if (editingParecer) {
       const updateData: UpdateParecerInput = {
         tipo: formData.tipo,
@@ -153,11 +233,20 @@ export default function PareceresAdminPage() {
         ementa: formData.ementa || undefined,
         emendasPropostas: formData.emendasPropostas || undefined,
         prazoEmissao: formData.prazoEmissao || undefined,
-        observacoes: formData.observacoes || undefined
+        observacoes: formData.observacoes || undefined,
+        // Campos de anexo
+        arquivoUrl: formData.arquivoUrl,
+        arquivoNome: formData.arquivoNome,
+        arquivoTamanho: formData.arquivoTamanho,
+        driveUrl: formData.driveUrl || undefined
       }
       await update(editingParecer.id, updateData)
     } else {
-      await create(formData)
+      const createData: CreateParecerInput = {
+        ...formData,
+        driveUrl: formData.driveUrl || undefined
+      }
+      await create(createData)
     }
 
     resetForm()
@@ -174,8 +263,13 @@ export default function PareceresAdminPage() {
       ementa: '',
       emendasPropostas: '',
       prazoEmissao: '',
-      observacoes: ''
+      observacoes: '',
+      arquivoUrl: null,
+      arquivoNome: null,
+      arquivoTamanho: null,
+      driveUrl: null
     })
+    setSelectedFile(null)
     setShowForm(false)
     setEditingParecer(null)
   }
@@ -192,8 +286,13 @@ export default function PareceresAdminPage() {
       ementa: parecer.ementa || '',
       emendasPropostas: parecer.emendasPropostas || '',
       prazoEmissao: parecer.prazoEmissao ? parecer.prazoEmissao.split('T')[0] : '',
-      observacoes: parecer.observacoes || ''
+      observacoes: parecer.observacoes || '',
+      arquivoUrl: parecer.arquivoUrl,
+      arquivoNome: parecer.arquivoNome,
+      arquivoTamanho: parecer.arquivoTamanho,
+      driveUrl: parecer.driveUrl
     })
+    setSelectedFile(null)
     setShowForm(true)
   }
 
@@ -260,6 +359,47 @@ export default function PareceresAdminPage() {
     setShowDetalhesDialog(true)
   }
 
+  // Manipulação de arquivo
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validar tipo de arquivo (PDF)
+      if (file.type !== 'application/pdf') {
+        toast.error('Por favor, selecione apenas arquivos PDF')
+        return
+      }
+      // Validar tamanho (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('O arquivo deve ter no máximo 10MB')
+        return
+      }
+      setSelectedFile(file)
+      setFormData({
+        ...formData,
+        arquivoNome: file.name,
+        arquivoTamanho: file.size
+      })
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null)
+    setFormData({
+      ...formData,
+      arquivoUrl: null,
+      arquivoNome: null,
+      arquivoTamanho: null
+    })
+  }
+
+  const formatFileSize = (bytes: number | null | undefined): string => {
+    if (!bytes) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
+
   const filteredPareceres = pareceres.filter(parecer => {
     if (!searchTerm) return true
     const search = searchTerm.toLowerCase()
@@ -275,6 +415,7 @@ export default function PareceresAdminPage() {
   const stats = {
     total: pareceres.length,
     rascunho: pareceres.filter(p => p.status === 'RASCUNHO').length,
+    aguardandoPauta: pareceres.filter(p => p.status === 'AGUARDANDO_PAUTA').length,
     aguardandoVotacao: pareceres.filter(p => p.status === 'AGUARDANDO_VOTACAO').length,
     aprovados: pareceres.filter(p => p.status === 'APROVADO_COMISSAO').length,
     emitidos: pareceres.filter(p => p.status === 'EMITIDO').length
@@ -311,17 +452,23 @@ export default function PareceresAdminPage() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <p className="text-sm text-gray-600">Total de Pareceres</p>
+            <p className="text-sm text-gray-600">Total</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-gray-600">{stats.rascunho}</div>
-            <p className="text-sm text-gray-600">Em Rascunho</p>
+            <p className="text-sm text-gray-600">Rascunho</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold text-cyan-600">{stats.aguardandoPauta}</div>
+            <p className="text-sm text-gray-600">Aguard. Pauta</p>
           </CardContent>
         </Card>
         <Card>
@@ -419,13 +566,33 @@ export default function PareceresAdminPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Exibição do próximo número do parecer */}
+              {!editingParecer && proximoNumeroInfo && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-600 font-medium">Próximo Parecer</p>
+                      <p className="text-2xl font-bold text-blue-800">{proximoNumeroInfo.numeroFormatado}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-blue-600">
+                        {proximoNumeroInfo.comissao.sigla || proximoNumeroInfo.comissao.nome}
+                      </p>
+                      <p className="text-xs text-blue-500">
+                        {proximoNumeroInfo.totalPareceresAno} parecer(es) em {proximoNumeroInfo.ano}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {!editingParecer && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="comissaoId">Comissão *</Label>
                     <Select
                       value={formData.comissaoId}
-                      onValueChange={(value) => setFormData({ ...formData, comissaoId: value, relatorId: '' })}
+                      onValueChange={(value) => setFormData({ ...formData, comissaoId: value, relatorId: '', proposicaoId: '' })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione a comissão" />
@@ -440,24 +607,41 @@ export default function PareceresAdminPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="proposicaoId">Proposição *</Label>
+                    <Label htmlFor="proposicaoId">Proposição em Tramitação *</Label>
                     <Select
                       value={formData.proposicaoId}
                       onValueChange={(value) => setFormData({ ...formData, proposicaoId: value })}
+                      disabled={!formData.comissaoId || loadingProposicoes}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a proposição" />
+                        <SelectValue placeholder={
+                          !formData.comissaoId
+                            ? "Selecione a comissão primeiro"
+                            : loadingProposicoes
+                              ? "Carregando..."
+                              : proposicoesPendentes.length === 0
+                                ? "Nenhuma proposição pendente"
+                                : "Selecione a proposição"
+                        } />
                       </SelectTrigger>
                       <SelectContent>
-                        {proposicoes
-                          .filter((p: any) => p.status === 'EM_TRAMITACAO' || p.status === 'APRESENTADA')
-                          .map((proposicao: any) => (
-                            <SelectItem key={proposicao.id} value={proposicao.id}>
-                              {proposicao.tipo} {proposicao.numero}/{proposicao.ano} - {proposicao.titulo}
-                            </SelectItem>
-                          ))}
+                        {proposicoesPendentes.map((proposicao) => (
+                          <SelectItem key={proposicao.id} value={proposicao.id}>
+                            {proposicao.tipo} {proposicao.numero}/{proposicao.ano} - {proposicao.titulo}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    {formData.comissaoId && !loadingProposicoes && proposicoesPendentes.length === 0 && (
+                      <p className="text-xs text-amber-600">
+                        Não há proposições em tramitação para esta comissão sem parecer.
+                      </p>
+                    )}
+                    {formData.comissaoId && proposicoesPendentes.length > 0 && (
+                      <p className="text-xs text-gray-500">
+                        {proposicoesPendentes.length} proposição(ões) aguardando parecer
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="relatorId">Relator *</Label>
@@ -566,6 +750,97 @@ export default function PareceresAdminPage() {
                   placeholder="Observações adicionais..."
                   rows={2}
                 />
+              </div>
+
+              {/* Seção de Anexos */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Anexos do Parecer
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Upload de Arquivo PDF */}
+                  <div className="space-y-2">
+                    <Label htmlFor="arquivoPdf">Arquivo PDF do Parecer</Label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-blue-400 transition-colors">
+                      {selectedFile || formData.arquivoNome ? (
+                        <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <File className="h-5 w-5 text-blue-600" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {selectedFile?.name || formData.arquivoNome}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {formatFileSize(selectedFile?.size || formData.arquivoTamanho)}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveFile}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <label htmlFor="arquivoPdf" className="cursor-pointer block text-center">
+                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">
+                            Clique para selecionar ou arraste o arquivo
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Apenas PDF, máximo 10MB
+                          </p>
+                          <input
+                            type="file"
+                            id="arquivoPdf"
+                            accept=".pdf,application/pdf"
+                            className="hidden"
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Anexe o documento PDF do parecer assinado
+                    </p>
+                  </div>
+
+                  {/* Link do Drive */}
+                  <div className="space-y-2">
+                    <Label htmlFor="driveUrl">Link do Drive (Google Drive, OneDrive, etc.)</Label>
+                    <div className="relative">
+                      <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        id="driveUrl"
+                        type="url"
+                        value={formData.driveUrl || ''}
+                        onChange={(e) => setFormData({ ...formData, driveUrl: e.target.value || null })}
+                        placeholder="https://drive.google.com/..."
+                        className="pl-10"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Cole o link de compartilhamento do arquivo no Google Drive, OneDrive ou outro serviço
+                    </p>
+                    {formData.driveUrl && (
+                      <a
+                        href={formData.driveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Abrir link
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center gap-4">
@@ -747,6 +1022,42 @@ export default function PareceresAdminPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Indicadores de Anexo */}
+                {(parecer.arquivoUrl || parecer.arquivoNome || parecer.driveUrl) && (
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t">
+                    {(parecer.arquivoUrl || parecer.arquivoNome) && (
+                      <div className="flex items-center gap-1 text-sm text-blue-600">
+                        <File className="h-4 w-4" />
+                        <span>PDF anexado</span>
+                        {parecer.arquivoUrl && (
+                          <a
+                            href={parecer.arquivoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                          </a>
+                        )}
+                      </div>
+                    )}
+                    {parecer.driveUrl && (
+                      <a
+                        href={parecer.driveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Link className="h-4 w-4" />
+                        <span>Link do Drive</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )
@@ -1041,6 +1352,70 @@ export default function PareceresAdminPage() {
                 <div>
                   <Label className="text-gray-500">Observações</Label>
                   <p className="text-gray-600">{selectedParecer.observacoes}</p>
+                </div>
+              )}
+
+              {/* Anexos */}
+              {(selectedParecer.arquivoUrl || selectedParecer.arquivoNome || selectedParecer.driveUrl) && (
+                <div className="border-t pt-4">
+                  <Label className="text-gray-500 flex items-center gap-2 mb-3">
+                    <Upload className="h-4 w-4" />
+                    Anexos
+                  </Label>
+                  <div className="space-y-2">
+                    {(selectedParecer.arquivoUrl || selectedParecer.arquivoNome) && (
+                      <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <File className="h-5 w-5 text-blue-600" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {selectedParecer.arquivoNome || 'Documento PDF'}
+                            </p>
+                            {selectedParecer.arquivoTamanho && (
+                              <p className="text-xs text-gray-500">
+                                {formatFileSize(selectedParecer.arquivoTamanho)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {selectedParecer.arquivoUrl && (
+                          <a
+                            href={selectedParecer.arquivoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Abrir
+                          </a>
+                        )}
+                      </div>
+                    )}
+                    {selectedParecer.driveUrl && (
+                      <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Link className="h-5 w-5 text-green-600" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              Link do Drive
+                            </p>
+                            <p className="text-xs text-gray-500 truncate max-w-[300px]">
+                              {selectedParecer.driveUrl}
+                            </p>
+                          </div>
+                        </div>
+                        <a
+                          href={selectedParecer.driveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Abrir
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

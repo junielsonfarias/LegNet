@@ -8,7 +8,7 @@ import { addBusinessDays } from '@/lib/utils/date'
 
 export const dynamic = 'force-dynamic'
 
-const StatusEnum = z.enum(['EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'])
+const StatusEnum = z.enum(['RECEBIDA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'])
 const ResultadoEnum = z.enum(['APROVADO', 'REJEITADO', 'APROVADO_COM_EMENDAS', 'ARQUIVADO'])
 
 const CreateTramitacaoSchema = z.object({
@@ -175,7 +175,7 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
     throw new ValidationError('Unidade responsável não encontrada')
   }
 
-  const status = (payload.status ?? 'EM_ANDAMENTO') as 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  const status = (payload.status ?? 'RECEBIDA') as 'RECEBIDA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
   const dataEntrada = payload.dataEntrada ? new Date(payload.dataEntrada) : new Date()
   let dataSaida = payload.dataSaida ? new Date(payload.dataSaida) : undefined
 
@@ -183,9 +183,9 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
     dataSaida = new Date()
   }
 
-  // Calcular prazo de vencimento
+  // Calcular prazo de vencimento (para status ativos: RECEBIDA ou EM_ANDAMENTO)
   let prazoVencimento: Date | undefined = payload.prazoVencimento ? new Date(payload.prazoVencimento) : undefined
-  if (!prazoVencimento && status === 'EM_ANDAMENTO' && tipo.prazoRegimental > 0) {
+  if (!prazoVencimento && (status === 'RECEBIDA' || status === 'EM_ANDAMENTO') && tipo.prazoRegimental > 0) {
     prazoVencimento = addBusinessDays(dataEntrada, tipo.prazoRegimental) ?? undefined
   }
 

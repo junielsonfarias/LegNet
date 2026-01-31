@@ -24,6 +24,8 @@ const LegislaturaUpdateSchema = z.object({
     .min(1900, 'Ano de fim inválido')
     .max(2100, 'Ano de fim inválido')
     .optional(),
+  dataInicio: z.string().optional().nullable(),
+  dataFim: z.string().optional().nullable(),
   ativa: z.boolean().optional(),
   descricao: z.string().optional()
 })
@@ -99,9 +101,20 @@ export const PUT = withAuth(async (
     }
   }
   
+  // Preparar dados para atualização
+  const updateData: any = { ...validatedData }
+
+  // Converter datas de string para Date se fornecidas
+  if (validatedData.dataInicio !== undefined) {
+    updateData.dataInicio = validatedData.dataInicio ? new Date(validatedData.dataInicio) : null
+  }
+  if (validatedData.dataFim !== undefined) {
+    updateData.dataFim = validatedData.dataFim ? new Date(validatedData.dataFim) : null
+  }
+
   const legislatura = await prisma.legislatura.update({
     where: { id },
-    data: validatedData
+    data: updateData
   })
   
   await logAudit({

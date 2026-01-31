@@ -342,7 +342,8 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       coautores: [],
       assuntos: [],
       anexos: [],
-      leisReferenciadas: []
+      leisReferenciadas: [],
+      unidadeInicialId: '' // Não aplicável na edição
     })
     setIsModalOpen(true)
   }, [])

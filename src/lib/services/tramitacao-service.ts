@@ -460,16 +460,28 @@ export async function obterHistoricoTramitacao(
 
 /**
  * Fluxo padrão de tramitação para novos projetos
+ * RN-038: Unidade inicial padrão é Secretaria Legislativa com status RECEBIDA
  */
 export async function iniciarTramitacaoPadrao(
   proposicaoId: string,
   regime: RegimeTramitacao = 'NORMAL'
-): Promise<ValidationResult> {
+): Promise<ValidationResult & { tramitacaoId?: string }> {
   const errors: string[] = []
   const warnings: string[] = []
 
-  // Busca unidade de protocolo (pode ser OUTROS ou MESA_DIRETORA)
-  const protocolo = await prisma.tramitacaoUnidade.findFirst({
+  // RN-038: Busca Secretaria Legislativa como unidade padrão
+  const secretariaLegislativa = await prisma.tramitacaoUnidade.findFirst({
+    where: {
+      ativo: true,
+      tipo: 'SECRETARIA',
+      nome: { contains: 'Legislativa', mode: 'insensitive' }
+    }
+  }) ?? await prisma.tramitacaoUnidade.findFirst({
+    where: {
+      ativo: true,
+      tipo: 'SECRETARIA'
+    }
+  }) ?? await prisma.tramitacaoUnidade.findFirst({
     where: {
       ativo: true,
       OR: [
@@ -485,8 +497,8 @@ export async function iniciarTramitacaoPadrao(
     orderBy: { ordem: 'asc' }
   })
 
-  if (!protocolo) {
-    warnings.push('Unidade de Protocolo não encontrada.')
+  if (!secretariaLegislativa) {
+    warnings.push('Unidade inicial não encontrada (Secretaria Legislativa ou Protocolo).')
     return { valid: true, errors, warnings }
   }
 
@@ -497,16 +509,16 @@ export async function iniciarTramitacaoPadrao(
 
   const prazo = calcularPrazoParecer(regime)
 
-  // Cria tramitação inicial
+  // Cria tramitação inicial com status RECEBIDA
   const tramitacao = await prisma.tramitacao.create({
     data: {
       proposicaoId,
       tipoTramitacaoId: tipoTramitacao.id,
-      unidadeId: protocolo.id,
+      unidadeId: secretariaLegislativa.id,
       dataEntrada: new Date(),
-      status: 'EM_ANDAMENTO',
+      status: 'RECEBIDA',
       prazoVencimento: prazo.prazo || undefined,
-      observacoes: `Tramitação iniciada em regime ${regime}. Prazo: ${prazo.diasUteis} dias úteis.`
+      observacoes: `Proposição recebida em regime ${regime}. Prazo: ${prazo.diasUteis} dias úteis.`
     }
   })
 
@@ -522,13 +534,91 @@ export async function iniciarTramitacaoPadrao(
     action: 'iniciar_tramitacao_padrao',
     proposicaoId,
     tramitacaoId: tramitacao.id,
+    unidadeId: secretariaLegislativa.id,
     regime
   })
 
   return {
     valid: errors.length === 0,
     errors,
-    warnings
+    warnings,
+    tramitacaoId: tramitacao.id
+  }
+}
+
+/**
+ * Inicia tramitação com unidade específica escolhida pelo usuário
+ * RN-038: Permite usuário escolher unidade inicial (prioridade sobre fluxo)
+ */
+export async function iniciarTramitacaoComUnidade(
+  proposicaoId: string,
+  unidadeId: string,
+  regime: RegimeTramitacao = 'NORMAL'
+): Promise<ValidationResult & { tramitacaoId?: string }> {
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  // Valida se unidade existe e está ativa
+  const unidade = await prisma.tramitacaoUnidade.findFirst({
+    where: {
+      id: unidadeId,
+      ativo: true
+    }
+  })
+
+  if (!unidade) {
+    errors.push('Unidade especificada não encontrada ou inativa.')
+    return { valid: false, errors, warnings }
+  }
+
+  // Busca tipo de tramitação padrão
+  const tipoTramitacao = await prisma.tramitacaoTipo.findFirst({
+    where: { ativo: true },
+    orderBy: { ordem: 'asc' }
+  })
+
+  if (!tipoTramitacao) {
+    warnings.push('Tipo de tramitação não encontrado.')
+    return { valid: true, errors, warnings }
+  }
+
+  const prazo = calcularPrazoParecer(regime)
+
+  // Cria tramitação com status RECEBIDA na unidade escolhida
+  const tramitacao = await prisma.tramitacao.create({
+    data: {
+      proposicaoId,
+      tipoTramitacaoId: tipoTramitacao.id,
+      unidadeId: unidade.id,
+      dataEntrada: new Date(),
+      status: 'RECEBIDA',
+      prazoVencimento: prazo.prazo || undefined,
+      observacoes: `Proposição recebida diretamente em ${unidade.nome}. Regime: ${regime}. Prazo: ${prazo.diasUteis} dias úteis.`
+    }
+  })
+
+  // Atualiza status da proposição
+  await prisma.proposicao.update({
+    where: { id: proposicaoId },
+    data: {
+      status: 'EM_TRAMITACAO'
+    }
+  })
+
+  logger.info('Tramitação iniciada com unidade específica', {
+    action: 'iniciar_tramitacao_com_unidade',
+    proposicaoId,
+    tramitacaoId: tramitacao.id,
+    unidadeId: unidade.id,
+    unidadeNome: unidade.nome,
+    regime
+  })
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+    tramitacaoId: tramitacao.id
   }
 }
 
@@ -827,16 +917,16 @@ export async function iniciarTramitacaoComFluxo(
       return { valid: false, errors, warnings }
     }
 
-    // Verifica se já tem tramitação em andamento
+    // Verifica se já tem tramitação ativa (RECEBIDA ou EM_ANDAMENTO)
     const tramitacaoExistente = await prisma.tramitacao.findFirst({
       where: {
         proposicaoId,
-        status: 'EM_ANDAMENTO'
+        status: { in: ['RECEBIDA', 'EM_ANDAMENTO'] }
       }
     })
 
     if (tramitacaoExistente) {
-      warnings.push('Proposição já possui tramitação em andamento.')
+      warnings.push('Proposição já possui tramitação ativa.')
       return { valid: true, errors, warnings, tramitacaoId: tramitacaoExistente.id }
     }
 
@@ -893,7 +983,7 @@ export async function iniciarTramitacaoComFluxo(
 
     const prazoVencimento = prazoDias > 0 ? addBusinessDays(new Date(), prazoDias) : null
 
-    // Cria tramitação
+    // Cria tramitação com status inicial RECEBIDA
     const tramitacao = await prisma.tramitacao.create({
       data: {
         proposicaoId,
@@ -901,7 +991,7 @@ export async function iniciarTramitacaoComFluxo(
         unidadeId,
         fluxoEtapaId: etapaInicial.id,
         dataEntrada: new Date(),
-        status: 'EM_ANDAMENTO',
+        status: 'RECEBIDA',
         prazoVencimento: prazoVencimento || undefined,
         observacoes: `Tramitação iniciada no fluxo "${etapaInicial.fluxo.nome}", etapa "${etapaInicial.nome}". Regime: ${regime}.`
       }

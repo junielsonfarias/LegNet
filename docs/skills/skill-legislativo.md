@@ -359,6 +359,19 @@ async function iniciarTramitacaoComFluxo(
   ip?: string
 ): Promise<ValidationResult & { tramitacaoId?: string }>
 
+// RN-038: Inicia tramitacao padrao (Secretaria Legislativa, status RECEBIDA)
+async function iniciarTramitacaoPadrao(
+  proposicaoId: string,
+  regime?: RegimeTramitacao
+): Promise<ValidationResult & { tramitacaoId?: string }>
+
+// RN-038: Inicia tramitacao com unidade especifica (prioridade sobre fluxo)
+async function iniciarTramitacaoComUnidade(
+  proposicaoId: string,
+  unidadeId: string,
+  regime?: RegimeTramitacao
+): Promise<ValidationResult & { tramitacaoId?: string }>
+
 // Registra nova tramitacao com auditoria completa
 async function registrarMovimentacaoComAuditoria(
   data: TramitacaoData & {
@@ -516,6 +529,7 @@ async function finalizarItemPauta(
 | **RN-035** | Toda movimentacao DEVE ser registrada com data, usuario, IP, dados anteriores/novos |
 | **RN-036** | Urgencia urgentissima: votacao na mesma sessao (2/3 para aprovar) |
 | **RN-037** | Preferencia altera ordem de votacao na pauta |
+| **RN-038** | Tramitacao inicial: status RECEBIDA, unidade Secretaria Legislativa (usuario pode escolher outra) |
 | **RN-057** | Proposicao so pode ser incluida na pauta se estiver em etapa que habilita (habilitaPauta=true) |
 
 ### Pauta de Sessao e Ordem do Dia

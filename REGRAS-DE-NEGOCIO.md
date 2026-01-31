@@ -315,6 +315,15 @@ O sistema DEVE:
 - Alertar sobre prazos vencidos
 - Destacar visualmente materias atrasadas
 - Gerar relatorio de produtividade por comissao
+
+REGRA RN-038: TRAMITACAO INICIAL DE PROPOSICAO
+Toda proposicao criada DEVE iniciar com tramitacao automatica:
+- Status inicial da tramitacao: RECEBIDA (aguardando analise)
+- Unidade inicial padrao: Secretaria Legislativa
+- Usuario PODE escolher unidade diferente na criacao (prioridade sobre fluxo configurado)
+- Da Secretaria Legislativa, a proposicao sera tramitada conforme regras existentes
+- Status RECEBIDA indica que a proposicao foi recebida e aguarda analise
+- Ao iniciar analise, status muda para EM_ANDAMENTO
 ```
 
 ---

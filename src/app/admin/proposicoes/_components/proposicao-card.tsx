@@ -12,6 +12,7 @@ import {
   getTipoBadgeStyle,
   formatarStatus
 } from '../_types'
+import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 
 interface ProposicaoCardProps {
   proposicao: ProposicaoApi
@@ -98,7 +99,10 @@ export function ProposicaoCard({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push(`/admin/proposicoes/${proposicao.id}`)}
+            onClick={() => {
+              const slug = proposicao.slug || gerarSlugProposicao(proposicao.tipo, proposicao.numero, proposicao.ano)
+              router.push(`/admin/proposicoes/${slug}`)
+            }}
             title="Visualizar"
           >
             <Eye className="h-4 w-4 text-gray-500" />

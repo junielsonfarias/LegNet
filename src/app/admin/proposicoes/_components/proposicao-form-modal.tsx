@@ -12,7 +12,8 @@ import type {
   ProposicaoApi,
   TipoProposicaoConfig,
   ParlamentarSimples,
-  LeiReferenciada
+  LeiReferenciada,
+  TipoOrgao
 } from '../_types'
 
 interface ProposicaoFormModalProps {
@@ -22,6 +23,7 @@ interface ProposicaoFormModalProps {
   tiposProposicao: TipoProposicaoConfig[]
   loadingTiposProposicao: boolean
   parlamentares: ParlamentarSimples[]
+  unidades: TipoOrgao[]
   onClose: () => void
   onSubmit: (e: React.FormEvent) => void
   onFormDataChange: (data: ProposicaoFormData) => void
@@ -42,6 +44,7 @@ export function ProposicaoFormModal({
   tiposProposicao,
   loadingTiposProposicao,
   parlamentares,
+  unidades,
   onClose,
   onSubmit,
   onFormDataChange,
@@ -350,6 +353,43 @@ export function ProposicaoFormModal({
                 </div>
               )}
             </div>
+
+            {/* Seção: Tramitação Inicial */}
+            {!editingProposicao && (
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  Tramitacao Inicial
+                </h3>
+
+                <div>
+                  <Label htmlFor="unidadeInicialId">Unidade Responsavel (Opcional)</Label>
+                  <Select
+                    value={formData.unidadeInicialId || '__auto__'}
+                    onValueChange={(value) =>
+                      onFormDataChange({
+                        ...formData,
+                        unidadeInicialId: value === '__auto__' ? '' : value
+                      })
+                    }
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue placeholder="Secretaria Legislativa (padrao)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__auto__">Secretaria Legislativa (padrao)</SelectItem>
+                      {unidades.map((unidade) => (
+                        <SelectItem key={unidade.id} value={unidade.id}>
+                          {unidade.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Deixe em branco para enviar automaticamente para Secretaria Legislativa
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Seção: Anexos e Referências */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

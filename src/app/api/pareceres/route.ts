@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -27,7 +28,12 @@ const CreateParecerSchema = z.object({
   ementa: z.string().optional(),
   emendasPropostas: z.string().optional(),
   prazoEmissao: z.string().optional(),
-  observacoes: z.string().optional()
+  observacoes: z.string().optional(),
+  // Campos de anexo
+  arquivoUrl: z.string().url().optional().nullable(),
+  arquivoNome: z.string().optional().nullable(),
+  arquivoTamanho: z.number().int().optional().nullable(),
+  driveUrl: z.string().url().optional().nullable()
 })
 
 // GET - Listar pareceres com filtros
@@ -149,24 +155,57 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new ValidationError('O relator deve ser membro ativo da comissão')
   }
 
-  // Gerar número do parecer
+  // Verificar se a proposição está em tramitação para esta comissão
+  // Busca tramitação ativa (RECEBIDA ou EM_ANDAMENTO) para uma unidade que corresponde à comissão
+  const unidadeFilter: Prisma.TramitacaoUnidadeWhereInput = {
+    OR: [
+      { nome: { contains: comissao.nome, mode: 'insensitive' as Prisma.QueryMode } },
+      ...(comissao.sigla ? [{ nome: { contains: comissao.sigla, mode: 'insensitive' as Prisma.QueryMode } }] : []),
+      ...(comissao.sigla ? [{ sigla: comissao.sigla }] : [])
+    ]
+  }
+
+  const tramitacaoParaComissao = await prisma.tramitacao.findFirst({
+    where: {
+      proposicaoId: validatedData.proposicaoId,
+      status: { in: ['RECEBIDA', 'EM_ANDAMENTO'] },
+      unidade: unidadeFilter
+    }
+  })
+
+  if (!tramitacaoParaComissao) {
+    throw new ValidationError(
+      `A proposição não está em tramitação para a ${comissao.sigla || comissao.nome}. ` +
+      'Verifique se a proposição foi tramitada para esta comissão.'
+    )
+  }
+
+  // Gerar número do parecer SEQUENCIAL POR COMISSÃO
+  // Formato: NNN/YYYY-SIGLA (ex: 001/2026-CLJ, 002/2026-CFO)
   const anoAtual = new Date().getFullYear()
-  const ultimoParecer = await prisma.parecer.findFirst({
-    where: { ano: anoAtual },
-    orderBy: { numero: 'desc' }
+  const siglaComissao = comissao.sigla || comissao.nome.substring(0, 3).toUpperCase()
+
+  // Buscar último parecer DESTA comissão no ano atual
+  const ultimoParecerComissao = await prisma.parecer.findFirst({
+    where: {
+      ano: anoAtual,
+      comissaoId: validatedData.comissaoId
+    },
+    orderBy: { createdAt: 'desc' }
   })
 
   let proximoNumero = 1
-  if (ultimoParecer?.numero) {
-    const numMatch = ultimoParecer.numero.match(/^(\d+)/)
+  if (ultimoParecerComissao?.numero) {
+    // Extrai o número do formato NNN/YYYY-SIGLA ou NNN/YYYY
+    const numMatch = ultimoParecerComissao.numero.match(/^(\d+)/)
     if (numMatch) {
       proximoNumero = parseInt(numMatch[1]) + 1
     }
   }
 
-  const numero = String(proximoNumero).padStart(3, '0') + '/' + anoAtual
+  const numero = `${String(proximoNumero).padStart(3, '0')}/${anoAtual}-${siglaComissao}`
 
-  // Criar o parecer
+  // Criar o parecer com status AGUARDANDO_PAUTA (disponível para inclusão em pauta)
   const parecer = await prisma.parecer.create({
     data: {
       proposicaoId: validatedData.proposicaoId,
@@ -175,14 +214,19 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       numero,
       ano: anoAtual,
       tipo: validatedData.tipo,
-      status: 'RASCUNHO',
+      status: 'AGUARDANDO_PAUTA',
       fundamentacao: validatedData.fundamentacao,
       conclusao: validatedData.conclusao,
       ementa: validatedData.ementa,
       emendasPropostas: validatedData.emendasPropostas,
       dataDistribuicao: new Date(),
       prazoEmissao: validatedData.prazoEmissao ? new Date(validatedData.prazoEmissao) : null,
-      observacoes: validatedData.observacoes
+      observacoes: validatedData.observacoes,
+      // Anexos
+      arquivoUrl: validatedData.arquivoUrl,
+      arquivoNome: validatedData.arquivoNome,
+      arquivoTamanho: validatedData.arquivoTamanho,
+      driveUrl: validatedData.driveUrl
     },
     include: {
       proposicao: {

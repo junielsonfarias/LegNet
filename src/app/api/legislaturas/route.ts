@@ -21,6 +21,8 @@ const LegislaturaSchema = z.object({
     .int('Ano de fim deve ser um inteiro')
     .min(1900, 'Ano de fim inválido')
     .max(2100, 'Ano de fim inválido'),
+  dataInicio: z.string().optional().nullable(),
+  dataFim: z.string().optional().nullable(),
   ativa: z.boolean().default(false),
   descricao: z.string().optional()
 })
@@ -106,6 +108,8 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       numero: validatedData.numero,
       anoInicio: validatedData.anoInicio,
       anoFim: validatedData.anoFim,
+      dataInicio: validatedData.dataInicio ? new Date(validatedData.dataInicio) : null,
+      dataFim: validatedData.dataFim ? new Date(validatedData.dataFim) : null,
       ativa: validatedData.ativa ?? false,
       descricao: validatedData.descricao || null
     }
