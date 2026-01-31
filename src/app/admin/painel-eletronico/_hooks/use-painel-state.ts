@@ -52,6 +52,7 @@ export function usePainelState(): UsePainelStateReturn {
   // === CARREGAR SESSÕES DISPONÍVEIS ===
   const carregarSessoesDisponiveis = useCallback(async (): Promise<SessaoDisponivel[]> => {
     try {
+      setLoading(true)
       const response = await fetch('/api/sessoes?limit=100')
       const data = await response.json()
 
@@ -67,7 +68,10 @@ export function usePainelState(): UsePainelStateReturn {
       return []
     } catch (error) {
       console.error('Erro ao carregar sessões disponíveis:', error)
+      toast.error('Erro ao carregar sessões disponíveis')
       return []
+    } finally {
+      setLoading(false)
     }
   }, [])
 
