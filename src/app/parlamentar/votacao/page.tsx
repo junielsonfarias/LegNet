@@ -1,11 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import {
   Vote,
@@ -23,7 +30,9 @@ import {
   BookOpen,
   User,
   Building2,
-  MapPin
+  MapPin,
+  LogOut,
+  ChevronDown
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { sessoesApi } from '@/lib/api/sessoes-api'
@@ -497,38 +506,57 @@ export default function VotacaoParlamentarPage() {
             </div>
           </div>
 
-          {/* Barra do parlamentar - Maior */}
+          {/* Barra do parlamentar - Maior - Com menu dropdown */}
           <div className="px-3 sm:px-4 py-2.5 sm:py-3">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                {parlamentarInfo?.foto ? (
-                  <Image
-                    src={parlamentarInfo.foto}
-                    alt={nomeParlamentar}
-                    width={48}
-                    height={48}
-                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-blue-500/50"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
-                    <span className="text-blue-300 font-bold text-sm sm:text-base">{iniciais}</span>
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-white font-bold text-base sm:text-lg truncate">
-                      {nomeParlamentar}
-                    </p>
-                    {parlamentarInfo?.partido && (
-                      <Badge className="bg-blue-600 text-white border-0 text-[10px] sm:text-xs px-2 py-0.5">
-                        {parlamentarInfo.partido}
-                      </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2.5 sm:gap-3 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+                    {parlamentarInfo?.foto ? (
+                      <Image
+                        src={parlamentarInfo.foto}
+                        alt={nomeParlamentar}
+                        width={48}
+                        height={48}
+                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-blue-500/50"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
+                        <span className="text-blue-300 font-bold text-sm sm:text-base">{iniciais}</span>
+                      </div>
                     )}
-                  </div>
-                  <p className="text-slate-400 text-xs sm:text-sm">Vereador(a)</p>
-                </div>
-              </div>
+                    <div className="min-w-0 text-left">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-white font-bold text-base sm:text-lg truncate">
+                          {nomeParlamentar}
+                        </p>
+                        {parlamentarInfo?.partido && (
+                          <Badge className="bg-blue-600 text-white border-0 text-[10px] sm:text-xs px-2 py-0.5">
+                            {parlamentarInfo.partido}
+                          </Badge>
+                        )}
+                        <ChevronDown className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <p className="text-slate-400 text-xs sm:text-sm">Vereador(a)</p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem disabled className="text-sm text-gray-500">
+                    <User className="h-4 w-4 mr-2" />
+                    {nomeParlamentar}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair da Sessão
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs sm:text-sm px-3 py-1 animate-pulse">
                 <Vote className="h-4 w-4 mr-1.5" />
                 VOTAÇÃO
@@ -742,38 +770,57 @@ export default function VotacaoParlamentarPage() {
             </div>
           </div>
 
-          {/* Barra do parlamentar */}
+          {/* Barra do parlamentar - Com menu dropdown */}
           <div className="px-3 sm:px-4 py-2.5 sm:py-3">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                {parlamentarInfo?.foto ? (
-                  <Image
-                    src={parlamentarInfo.foto}
-                    alt={nomeParlamentar}
-                    width={48}
-                    height={48}
-                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-blue-500/50"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
-                    <span className="text-blue-300 font-bold text-sm sm:text-base">{iniciais}</span>
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-white font-bold text-base sm:text-lg truncate">
-                      {nomeParlamentar}
-                    </p>
-                    {parlamentarInfo?.partido && (
-                      <Badge className="bg-blue-600 text-white border-0 text-[10px] sm:text-xs px-2 py-0.5">
-                        {parlamentarInfo.partido}
-                      </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2.5 sm:gap-3 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+                    {parlamentarInfo?.foto ? (
+                      <Image
+                        src={parlamentarInfo.foto}
+                        alt={nomeParlamentar}
+                        width={48}
+                        height={48}
+                        className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-blue-500/50"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
+                        <span className="text-blue-300 font-bold text-sm sm:text-base">{iniciais}</span>
+                      </div>
                     )}
-                  </div>
-                  <p className="text-slate-400 text-xs sm:text-sm">Vereador(a)</p>
-                </div>
-              </div>
+                    <div className="min-w-0 text-left">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-white font-bold text-base sm:text-lg truncate">
+                          {nomeParlamentar}
+                        </p>
+                        {parlamentarInfo?.partido && (
+                          <Badge className="bg-blue-600 text-white border-0 text-[10px] sm:text-xs px-2 py-0.5">
+                            {parlamentarInfo.partido}
+                          </Badge>
+                        )}
+                        <ChevronDown className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <p className="text-slate-400 text-xs sm:text-sm">Vereador(a)</p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem disabled className="text-sm text-gray-500">
+                    <User className="h-4 w-4 mr-2" />
+                    {nomeParlamentar}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair da Sessão
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge className={cn(
                 "text-xs sm:text-sm px-3 py-1",
                 foiAprovado
@@ -1004,38 +1051,57 @@ export default function VotacaoParlamentarPage() {
             </div>
           </div>
 
-          {/* Barra do parlamentar */}
+          {/* Barra do parlamentar - Com menu dropdown */}
           <div className="px-3 py-1.5 sm:py-2">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                {parlamentarInfo?.foto ? (
-                  <Image
-                    src={parlamentarInfo.foto}
-                    alt={nomeParlamentar}
-                    width={32}
-                    height={32}
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-blue-500/50"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
-                    <span className="text-blue-300 font-bold text-[10px] sm:text-xs">{iniciais}</span>
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-white font-semibold text-xs sm:text-sm truncate">
-                      {nomeParlamentar}
-                    </p>
-                    {parlamentarInfo?.partido && (
-                      <Badge className="bg-blue-600/30 text-blue-300 border-0 text-[9px] sm:text-[10px] px-1.5 py-0">
-                        {parlamentarInfo.partido}
-                      </Badge>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+                    {parlamentarInfo?.foto ? (
+                      <Image
+                        src={parlamentarInfo.foto}
+                        alt={nomeParlamentar}
+                        width={32}
+                        height={32}
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-blue-500/50"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
+                        <span className="text-blue-300 font-bold text-[10px] sm:text-xs">{iniciais}</span>
+                      </div>
                     )}
-                  </div>
-                  <p className="text-slate-500 text-[9px] sm:text-[10px]">Vereador(a)</p>
-                </div>
-              </div>
+                    <div className="min-w-0 text-left">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-white font-semibold text-xs sm:text-sm truncate">
+                          {nomeParlamentar}
+                        </p>
+                        {parlamentarInfo?.partido && (
+                          <Badge className="bg-blue-600/30 text-blue-300 border-0 text-[9px] sm:text-[10px] px-1.5 py-0">
+                            {parlamentarInfo.partido}
+                          </Badge>
+                        )}
+                        <ChevronDown className="h-3 w-3 text-slate-400" />
+                      </div>
+                      <p className="text-slate-500 text-[9px] sm:text-[10px]">Vereador(a)</p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem disabled className="text-sm text-gray-500">
+                    <User className="h-4 w-4 mr-2" />
+                    {nomeParlamentar}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair da Sessão
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Badge className="bg-slate-700/50 text-slate-400 border border-slate-600/50 text-[9px] sm:text-xs">
                 <Clock className="h-3 w-3 mr-1" />
                 AGUARDANDO
@@ -1202,38 +1268,57 @@ export default function VotacaoParlamentarPage() {
           </div>
         </div>
 
-        {/* Barra do parlamentar */}
+        {/* Barra do parlamentar - Com menu dropdown */}
         <div className="px-3 sm:px-4 py-2 sm:py-2.5">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              {parlamentarInfo?.foto ? (
-                <Image
-                  src={parlamentarInfo.foto}
-                  alt={nomeParlamentar}
-                  width={40}
-                  height={40}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white/30"
-                  unoptimized
-                />
-              ) : (
-                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center ring-2 ring-white/30 flex-shrink-0">
-                  <span className="text-white font-bold text-xs sm:text-sm">{iniciais}</span>
-                </div>
-              )}
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-white font-semibold text-sm sm:text-base truncate">
-                    {nomeParlamentar}
-                  </p>
-                  {parlamentarInfo?.partido && (
-                    <Badge className="bg-white/20 text-white border-0 text-[9px] sm:text-[10px] px-1.5 py-0">
-                      {parlamentarInfo.partido}
-                    </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 sm:gap-3 min-w-0 hover:opacity-80 transition-opacity cursor-pointer">
+                  {parlamentarInfo?.foto ? (
+                    <Image
+                      src={parlamentarInfo.foto}
+                      alt={nomeParlamentar}
+                      width={40}
+                      height={40}
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-white/30"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center ring-2 ring-white/30 flex-shrink-0">
+                      <span className="text-white font-bold text-xs sm:text-sm">{iniciais}</span>
+                    </div>
                   )}
-                </div>
-                <p className="text-blue-200 text-[10px] sm:text-xs">Vereador(a)</p>
-              </div>
-            </div>
+                  <div className="min-w-0 text-left">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-white font-semibold text-sm sm:text-base truncate">
+                        {nomeParlamentar}
+                      </p>
+                      {parlamentarInfo?.partido && (
+                        <Badge className="bg-white/20 text-white border-0 text-[9px] sm:text-[10px] px-1.5 py-0">
+                          {parlamentarInfo.partido}
+                        </Badge>
+                      )}
+                      <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-blue-200" />
+                    </div>
+                    <p className="text-blue-200 text-[10px] sm:text-xs">Vereador(a)</p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem disabled className="text-sm text-gray-500">
+                  <User className="h-4 w-4 mr-2" />
+                  {nomeParlamentar}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair da Sessão
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Badge className="bg-green-500/20 text-green-200 border border-green-400/30 text-[10px] sm:text-xs">
               <Vote className="h-3 w-3 mr-1" />
               EM SESSÃO
