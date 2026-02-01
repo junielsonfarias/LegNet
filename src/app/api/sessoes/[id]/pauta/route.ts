@@ -11,6 +11,7 @@ import {
   MAPEAMENTO_TIPO_SECAO
 } from '@/lib/services/proposicao-validacao-service'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
+import { tramitarParaPlenario } from '@/lib/services/tramitacao-service'
 
 const PAUTA_SECAO_ORDER = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
 const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
@@ -229,12 +230,16 @@ export const POST = withAuth(async (
           )
         }
 
-        // Se passou na validação, atualizar status da proposição para EM_PAUTA
+        // Se passou na validação, tramitar proposição para o Plenário
         if (proposicao.status !== 'EM_PAUTA') {
-          await prisma.proposicao.update({
-            where: { id: payload.data.proposicaoId },
-            data: { status: 'EM_PAUTA' }
-          })
+          // Usa serviço de tramitação para criar registro e atualizar status
+          await tramitarParaPlenario(
+            payload.data.proposicaoId,
+            sessaoId,
+            `Incluída na pauta - Seção: ${payload.data.secao}`,
+            session?.user?.id,
+            request.headers.get('x-forwarded-for') || undefined
+          )
         }
       }
     }

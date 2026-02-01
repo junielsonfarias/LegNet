@@ -9,10 +9,16 @@ import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, NotFoundError, ValidationError, validateId } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
 import { prisma } from '@/lib/prisma'
-import { avancarEtapaFluxo, obterEtapaAtual } from '@/lib/services/tramitacao-service'
+import {
+  avancarEtapaFluxo,
+  obterEtapaAtual,
+  tramitarParaAguardandoPauta
+} from '@/lib/services/tramitacao-service'
 
 // Schema de validação
 const TramitarSchema = z.object({
+  // Ação a ser executada (padrão: AVANCAR_ETAPA)
+  acao: z.enum(['AVANCAR_ETAPA', 'AGUARDANDO_PAUTA']).optional().default('AVANCAR_ETAPA'),
   observacoes: z.string().optional(),
   parecer: z.enum([
     'FAVORAVEL',
@@ -64,14 +70,54 @@ export const POST = withAuth(async (
     throw new ValidationError(payload.error.issues[0]?.message ?? 'Dados inválidos')
   }
 
-  const { observacoes, parecer, resultado } = payload.data
+  const { acao, observacoes, parecer, resultado } = payload.data
 
   // Obtém IP do cliente
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')
     || 'unknown'
 
-  // Executa avanço de etapa
+  // Executa ação conforme solicitado
+  if (acao === 'AGUARDANDO_PAUTA') {
+    // Tramita diretamente para Aguardando Pauta (Secretaria Legislativa)
+    const resultadoTramitar = await tramitarParaAguardandoPauta(
+      proposicaoId,
+      observacoes,
+      session.user.id,
+      ip
+    )
+
+    if (!resultadoTramitar.valid) {
+      throw new ValidationError(resultadoTramitar.errors.join('; '))
+    }
+
+    // Registra auditoria
+    await logAudit({
+      request,
+      session,
+      action: 'TRAMITACAO_AGUARDANDO_PAUTA',
+      entity: 'Tramitacao',
+      entityId: resultadoTramitar.tramitacaoId || proposicaoId,
+      metadata: {
+        proposicaoId,
+        proposicaoNumero: `${proposicao.numero}/${proposicao.ano}`,
+        novoStatus: 'AGUARDANDO_PAUTA',
+        observacoes
+      }
+    })
+
+    return createSuccessResponse(
+      {
+        proposicaoId,
+        tramitacaoId: resultadoTramitar.tramitacaoId,
+        proposicaoStatus: 'AGUARDANDO_PAUTA',
+        warnings: resultadoTramitar.warnings
+      },
+      'Proposição tramitada para Aguardando Pauta'
+    )
+  }
+
+  // Ação padrão: AVANCAR_ETAPA
   const resultadoAvancar = await avancarEtapaFluxo(
     proposicaoId,
     observacoes,

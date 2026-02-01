@@ -1217,3 +1217,318 @@ export async function obterEtapaAtual(proposicaoId: string): Promise<{
     } : undefined
   }
 }
+
+/**
+ * Tramita proposição para "Aguardando Pauta"
+ * Unidade destino: Secretaria Legislativa
+ * Status da proposição: AGUARDANDO_PAUTA
+ */
+export async function tramitarParaAguardandoPauta(
+  proposicaoId: string,
+  observacoes?: string,
+  usuarioId?: string,
+  ip?: string
+): Promise<ValidationResult & { tramitacaoId?: string }> {
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  try {
+    // Busca proposição
+    const proposicao = await prisma.proposicao.findUnique({
+      where: { id: proposicaoId },
+      include: {
+        tramitacoes: {
+          where: { status: { in: ['RECEBIDA', 'EM_ANDAMENTO'] } },
+          orderBy: { dataEntrada: 'desc' },
+          take: 1
+        }
+      }
+    })
+
+    if (!proposicao) {
+      errors.push('Proposição não encontrada.')
+      return { valid: false, errors, warnings }
+    }
+
+    // Busca unidade "Secretaria Legislativa"
+    const secretariaLegislativa = await prisma.tramitacaoUnidade.findFirst({
+      where: {
+        ativo: true,
+        OR: [
+          { tipo: 'SECRETARIA', nome: { contains: 'Legislativa', mode: 'insensitive' } },
+          { nome: { contains: 'Secretaria Legislativa', mode: 'insensitive' } }
+        ]
+      }
+    })
+
+    // Se não encontrou, tenta buscar qualquer secretaria
+    const unidadeDestino = secretariaLegislativa || await prisma.tramitacaoUnidade.findFirst({
+      where: {
+        ativo: true,
+        tipo: 'SECRETARIA'
+      }
+    })
+
+    if (!unidadeDestino) {
+      errors.push('Unidade "Secretaria Legislativa" não encontrada no sistema.')
+      return { valid: false, errors, warnings }
+    }
+
+    // Busca tipo de tramitação padrão
+    const tipoTramitacao = await prisma.tramitacaoTipo.findFirst({
+      where: { ativo: true },
+      orderBy: { ordem: 'asc' }
+    })
+
+    if (!tipoTramitacao) {
+      errors.push('Tipo de tramitação não configurado.')
+      return { valid: false, errors, warnings }
+    }
+
+    // Conclui tramitação anterior se houver
+    const tramitacaoAtual = proposicao.tramitacoes[0]
+    if (tramitacaoAtual) {
+      await prisma.tramitacao.update({
+        where: { id: tramitacaoAtual.id },
+        data: {
+          status: 'CONCLUIDA',
+          dataSaida: new Date(),
+          observacoes: observacoes
+            ? `${tramitacaoAtual.observacoes || ''}\nEncaminhado para Aguardando Pauta: ${observacoes}`.trim()
+            : tramitacaoAtual.observacoes
+        }
+      })
+
+      // Registra histórico
+      await prisma.tramitacaoHistorico.create({
+        data: {
+          tramitacaoId: tramitacaoAtual.id,
+          acao: 'ENCAMINHAMENTO_PAUTA',
+          descricao: 'Proposição encaminhada para aguardar inclusão em pauta',
+          data: new Date(),
+          usuarioId,
+          ip
+        }
+      })
+    }
+
+    // Cria nova tramitação na Secretaria Legislativa
+    const novaTramitacao = await prisma.tramitacao.create({
+      data: {
+        proposicaoId,
+        tipoTramitacaoId: tipoTramitacao.id,
+        unidadeId: unidadeDestino.id,
+        dataEntrada: new Date(),
+        status: 'EM_ANDAMENTO',
+        observacoes: observacoes || 'Proposição aguardando inclusão em pauta de sessão.'
+      }
+    })
+
+    // Registra histórico da nova tramitação
+    await prisma.tramitacaoHistorico.create({
+      data: {
+        tramitacaoId: novaTramitacao.id,
+        acao: 'AGUARDANDO_PAUTA',
+        descricao: `Proposição recebida em ${unidadeDestino.nome} aguardando inclusão em pauta`,
+        data: new Date(),
+        usuarioId,
+        ip,
+        dadosNovos: {
+          unidade: unidadeDestino.nome,
+          status: 'AGUARDANDO_PAUTA'
+        } as Prisma.InputJsonValue
+      }
+    })
+
+    // Atualiza status da proposição para AGUARDANDO_PAUTA
+    await prisma.proposicao.update({
+      where: { id: proposicaoId },
+      data: { status: 'AGUARDANDO_PAUTA' }
+    })
+
+    logger.info('Proposição tramitada para Aguardando Pauta', {
+      action: 'tramitar_aguardando_pauta',
+      proposicaoId,
+      tramitacaoId: novaTramitacao.id,
+      unidade: unidadeDestino.nome
+    })
+
+    return {
+      valid: true,
+      errors,
+      warnings,
+      tramitacaoId: novaTramitacao.id
+    }
+  } catch (error) {
+    logger.error('Erro ao tramitar para Aguardando Pauta', error)
+    errors.push('Erro interno ao tramitar proposição.')
+    return { valid: false, errors, warnings }
+  }
+}
+
+/**
+ * Tramita proposição para o Plenário (ao incluir na pauta)
+ * Unidade destino: Plenário
+ * Status da proposição: EM_PAUTA
+ */
+export async function tramitarParaPlenario(
+  proposicaoId: string,
+  sessaoId?: string,
+  observacoes?: string,
+  usuarioId?: string,
+  ip?: string
+): Promise<ValidationResult & { tramitacaoId?: string }> {
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  try {
+    // Busca proposição
+    const proposicao = await prisma.proposicao.findUnique({
+      where: { id: proposicaoId },
+      include: {
+        tramitacoes: {
+          where: { status: { in: ['RECEBIDA', 'EM_ANDAMENTO'] } },
+          orderBy: { dataEntrada: 'desc' },
+          take: 1
+        }
+      }
+    })
+
+    if (!proposicao) {
+      errors.push('Proposição não encontrada.')
+      return { valid: false, errors, warnings }
+    }
+
+    // Busca unidade "Plenário"
+    const plenario = await prisma.tramitacaoUnidade.findFirst({
+      where: {
+        ativo: true,
+        OR: [
+          { tipo: 'PLENARIO' },
+          { nome: { contains: 'Plenário', mode: 'insensitive' } },
+          { nome: { contains: 'Plenario', mode: 'insensitive' } }
+        ]
+      }
+    })
+
+    if (!plenario) {
+      // Se não encontrou plenário, apenas atualiza o status sem criar tramitação
+      warnings.push('Unidade "Plenário" não encontrada. Status atualizado sem tramitação.')
+
+      await prisma.proposicao.update({
+        where: { id: proposicaoId },
+        data: {
+          status: 'EM_PAUTA',
+          sessaoId: sessaoId || proposicao.sessaoId
+        }
+      })
+
+      return { valid: true, errors, warnings }
+    }
+
+    // Busca tipo de tramitação padrão
+    const tipoTramitacao = await prisma.tramitacaoTipo.findFirst({
+      where: { ativo: true },
+      orderBy: { ordem: 'asc' }
+    })
+
+    if (!tipoTramitacao) {
+      errors.push('Tipo de tramitação não configurado.')
+      return { valid: false, errors, warnings }
+    }
+
+    // Conclui tramitação anterior se houver
+    const tramitacaoAtual = proposicao.tramitacoes[0]
+    if (tramitacaoAtual) {
+      await prisma.tramitacao.update({
+        where: { id: tramitacaoAtual.id },
+        data: {
+          status: 'CONCLUIDA',
+          dataSaida: new Date(),
+          observacoes: `${tramitacaoAtual.observacoes || ''}\nIncluída em pauta de sessão.`.trim()
+        }
+      })
+
+      // Registra histórico
+      await prisma.tramitacaoHistorico.create({
+        data: {
+          tramitacaoId: tramitacaoAtual.id,
+          acao: 'INCLUSAO_PAUTA',
+          descricao: 'Proposição incluída em pauta de sessão',
+          data: new Date(),
+          usuarioId,
+          ip
+        }
+      })
+    }
+
+    // Busca informações da sessão se fornecido
+    let descricaoSessao = ''
+    if (sessaoId) {
+      const sessao = await prisma.sessao.findUnique({
+        where: { id: sessaoId },
+        select: { numero: true, data: true, tipo: true }
+      })
+      if (sessao) {
+        descricaoSessao = ` (${sessao.numero}ª Sessão ${sessao.tipo} - ${new Date(sessao.data).toLocaleDateString('pt-BR')})`
+      }
+    }
+
+    // Cria nova tramitação no Plenário
+    const novaTramitacao = await prisma.tramitacao.create({
+      data: {
+        proposicaoId,
+        tipoTramitacaoId: tipoTramitacao.id,
+        unidadeId: plenario.id,
+        dataEntrada: new Date(),
+        status: 'EM_ANDAMENTO',
+        observacoes: observacoes || `Proposição incluída em pauta${descricaoSessao}.`
+      }
+    })
+
+    // Registra histórico da nova tramitação
+    await prisma.tramitacaoHistorico.create({
+      data: {
+        tramitacaoId: novaTramitacao.id,
+        acao: 'EM_PAUTA',
+        descricao: `Proposição encaminhada ao Plenário${descricaoSessao}`,
+        data: new Date(),
+        usuarioId,
+        ip,
+        dadosNovos: {
+          unidade: plenario.nome,
+          status: 'EM_PAUTA',
+          sessaoId
+        } as Prisma.InputJsonValue
+      }
+    })
+
+    // Atualiza status da proposição para EM_PAUTA e vincula à sessão
+    await prisma.proposicao.update({
+      where: { id: proposicaoId },
+      data: {
+        status: 'EM_PAUTA',
+        sessaoId: sessaoId || proposicao.sessaoId
+      }
+    })
+
+    logger.info('Proposição tramitada para Plenário', {
+      action: 'tramitar_plenario',
+      proposicaoId,
+      tramitacaoId: novaTramitacao.id,
+      sessaoId,
+      unidade: plenario.nome
+    })
+
+    return {
+      valid: true,
+      errors,
+      warnings,
+      tramitacaoId: novaTramitacao.id
+    }
+  } catch (error) {
+    logger.error('Erro ao tramitar para Plenário', error)
+    errors.push('Erro interno ao tramitar proposição.')
+    return { valid: false, errors, warnings }
+  }
+}
