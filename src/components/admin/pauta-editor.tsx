@@ -403,6 +403,59 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
               />
             </div>
 
+            {/* Campo de Proposição */}
+            <div>
+              <Label>Vincular Proposição (opcional)</Label>
+              <Select
+                value={formData.proposicaoId || 'none'}
+                onValueChange={(value) => {
+                  if (value === 'none') {
+                    setFormData({ ...formData, proposicaoId: undefined })
+                  } else {
+                    // Encontrar a sugestão correspondente para preencher campos
+                    const suggestion = suggestionsArray.find(s => s.proposicao?.id === value || s.id === value)
+                    if (suggestion) {
+                      setFormData({
+                        ...formData,
+                        proposicaoId: value,
+                        titulo: formData.titulo || suggestion.titulo,
+                        secao: suggestion.secao || formData.secao,
+                        tipoAcao: suggestion.tipoAcao || formData.tipoAcao,
+                        tempoEstimado: suggestion.tempoEstimado || formData.tempoEstimado,
+                        descricao: formData.descricao || suggestion.descricao || ''
+                      })
+                    } else {
+                      setFormData({ ...formData, proposicaoId: value })
+                    }
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma proposição..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma proposição</SelectItem>
+                  {suggestionsArray.map(suggestion => (
+                    <SelectItem key={suggestion.id} value={suggestion.proposicao?.id || suggestion.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {suggestion.proposicao?.tipo} {suggestion.proposicao?.numero}/{suggestion.proposicao?.ano}
+                        </span>
+                        <span className="text-xs text-gray-500 truncate max-w-[300px]">
+                          {suggestion.titulo}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {suggestionsArray.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Nenhuma proposição com status "Aguardando Pauta" disponível
+                </p>
+              )}
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={handleCancelEdit} disabled={saving}>
                 <X className="h-4 w-4 mr-1" />
