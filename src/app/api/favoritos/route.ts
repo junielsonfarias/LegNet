@@ -312,7 +312,8 @@ async function verificarItemExiste(tipo: string, itemId: string): Promise<boolea
       default:
         return false
     }
-  } catch {
+  } catch (error) {
+    console.error(`Erro ao verificar existência do item ${tipo}/${itemId}:`, error)
     return false
   }
 }

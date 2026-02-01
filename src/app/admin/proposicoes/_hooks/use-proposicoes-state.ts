@@ -317,7 +317,8 @@ export function useProposicoesState(): UseProposicoesStateReturn {
     } catch (error) {
       console.error('Erro ao salvar proposição:', error)
     }
-  }, [formData, editingProposicao, create, update])
+    // Note: handleClose is defined after this useCallback but is stable (empty deps)
+  }, [formData, editingProposicao, create, update]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleEdit = useCallback((proposicao: ProposicaoApi) => {
     setEditingProposicao(proposicao)

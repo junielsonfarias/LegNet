@@ -177,8 +177,9 @@ export const pautaApi = {
     }
   },
 
-  async getSuggestions(sessaoId: string): Promise<PautaSugestaoApi[]> {
-    const response = await fetch(`/api/sessoes/${sessaoId}/pauta/sugestoes`, {
+  async getSuggestions(sessaoId: string, retroativo = false): Promise<PautaSugestaoApi[]> {
+    const url = `/api/sessoes/${sessaoId}/pauta/sugestoes${retroativo ? '?retroativo=true' : ''}`
+    const response = await fetch(url, {
       method: 'GET',
       cache: 'no-store'
     })
@@ -188,7 +189,14 @@ export const pautaApi = {
       throw new Error(error?.error || 'Erro ao carregar sugestões de pauta')
     }
 
-    return handleResponse<PautaSugestaoApi[]>(response)
+    const result = await handleResponse<{
+      sugestoes: PautaSugestaoApi[]
+      isRetroativo: boolean
+      sessaoStatus: string
+      totalProposicoesDisponiveis: number
+    }>(response)
+
+    return result.sugestoes || result as unknown as PautaSugestaoApi[]
   },
 
   // ==================== AÇÕES DE TURNO ====================

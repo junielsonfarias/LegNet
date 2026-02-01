@@ -13,12 +13,19 @@ export const dynamic = 'force-dynamic'
 export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const incluirComPauta = searchParams.get('incluirComPauta') === 'true'
+  const incluirFinalizadas = searchParams.get('incluirFinalizadas') === 'true'
 
   // Buscar sessões que ainda NÃO têm pauta vinculada
+  // Se incluirFinalizadas, inclui também sessões CONCLUIDAS
+  const whereClause: any = incluirComPauta ? {} : { pautaSessao: null }
+
+  // Por padrão, não incluir sessões canceladas
+  if (!incluirFinalizadas) {
+    whereClause.status = { not: 'CANCELADA' }
+  }
+
   const sessoes = await prisma.sessao.findMany({
-    where: incluirComPauta ? {} : {
-      pautaSessao: null
-    },
+    where: whereClause,
     include: {
       legislatura: {
         select: {
@@ -72,13 +79,19 @@ export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
 
   const semPauta = sessoesFormatadas.filter(s => !s.temPauta)
   const comPauta = sessoesFormatadas.filter(s => s.temPauta)
+  const finalizadas = semPauta.filter(s => s.status === 'CONCLUIDA')
+  const agendadas = semPauta.filter(s => s.status === 'AGENDADA')
 
   return createSuccessResponse({
     sessoesSemPauta: semPauta,
     sessoesComPauta: incluirComPauta ? comPauta : [],
+    sessoesFinaliadasSemPauta: finalizadas,
+    sessoesAgendadasSemPauta: agendadas,
     totais: {
       semPauta: semPauta.length,
-      comPauta: comPauta.length
+      comPauta: comPauta.length,
+      finalizadasSemPauta: finalizadas.length,
+      agendadasSemPauta: agendadas.length
     }
   }, `${semPauta.length} sessão(ões) disponível(is) para nova pauta`)
 }), { permissions: 'pauta.manage' })

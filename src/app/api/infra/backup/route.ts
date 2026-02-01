@@ -13,7 +13,8 @@ const parseJsonBody = async <T>(request: NextRequest, fallback: T): Promise<T> =
   try {
     const body = await request.json()
     return body ?? fallback
-  } catch {
+  } catch (error) {
+    console.debug('Corpo da requisição não é JSON válido, usando fallback:', error)
     return fallback
   }
 }

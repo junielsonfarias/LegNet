@@ -33,6 +33,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -110,6 +120,11 @@ export default function PublicacoesPage() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [formData, setFormData] = useState(DEFAULT_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string; titulo: string }>({
+    open: false,
+    id: '',
+    titulo: ''
+  })
 
   const {
     publicacoes,
@@ -196,15 +211,21 @@ export default function PublicacoesPage() {
     [publicacoes]
   )
 
+  const openDeleteConfirm = useCallback(
+    (id: string, titulo: string) => {
+      setDeleteConfirm({ open: true, id, titulo })
+    },
+    []
+  )
+
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('Tem certeza que deseja excluir esta publicação?')) {
-        return
-      }
-      setIsDeleting(id)
+    async () => {
+      if (!deleteConfirm.id) return
+      setIsDeleting(deleteConfirm.id)
       try {
-        await remove(id)
+        await remove(deleteConfirm.id)
         toast.success('Publicação removida com sucesso!')
+        setDeleteConfirm({ open: false, id: '', titulo: '' })
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Erro ao remover publicação.'
         toast.error(message)
@@ -212,7 +233,7 @@ export default function PublicacoesPage() {
         setIsDeleting(null)
       }
     },
-    [remove]
+    [remove, deleteConfirm.id]
   )
 
   const handleSubmit = useCallback(async () => {
@@ -582,7 +603,7 @@ export default function PublicacoesPage() {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={() => handleDelete(publicacao.id)}
+                        onClick={() => openDeleteConfirm(publicacao.id, publicacao.titulo)}
                         aria-label={`Remover publicação ${publicacao.titulo}`}
                         disabled={isDeleting === publicacao.id}
                       >
@@ -874,6 +895,30 @@ export default function PublicacoesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => !isDeleting && setDeleteConfirm(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir publicação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a publicação <strong>{deleteConfirm.titulo}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={!!isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

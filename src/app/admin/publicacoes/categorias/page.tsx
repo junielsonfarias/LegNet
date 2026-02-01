@@ -12,6 +12,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -33,6 +43,11 @@ export default function CategoriasPublicacaoPage() {
   const [formData, setFormData] = useState(DEFAULT_FORM)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isRemoving, setIsRemoving] = useState<string | null>(null)
+  const [removeConfirm, setRemoveConfirm] = useState<{ open: boolean; id: string; nome: string }>({
+    open: false,
+    id: '',
+    nome: ''
+  })
 
   const totalAtivas = useMemo(() => categorias.filter(cat => cat.ativa).length, [categorias])
 
@@ -98,16 +113,22 @@ export default function CategoriasPublicacaoPage() {
     [toggle]
   )
 
+  const openRemoveConfirm = useCallback(
+    (id: string, nome: string) => {
+      setRemoveConfirm({ open: true, id, nome })
+    },
+    []
+  )
+
   const handleRemove = useCallback(
-    async (id: string) => {
-      if (!window.confirm('Remover esta categoria? As publicações relacionadas ficarão sem categoria.')) {
-        return
-      }
-      setIsRemoving(id)
+    async () => {
+      if (!removeConfirm.id) return
+      setIsRemoving(removeConfirm.id)
       try {
-        await remove(id)
+        await remove(removeConfirm.id)
         await refetch()
         toast.success('Categoria removida com sucesso!')
+        setRemoveConfirm({ open: false, id: '', nome: '' })
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Erro ao remover categoria.'
         toast.error(message)
@@ -115,7 +136,7 @@ export default function CategoriasPublicacaoPage() {
         setIsRemoving(null)
       }
     },
-    [refetch, remove]
+    [refetch, remove, removeConfirm.id]
   )
 
   return (
@@ -246,7 +267,7 @@ export default function CategoriasPublicacaoPage() {
                       <Button
                         variant="destructive"
                         size="icon"
-                        onClick={() => handleRemove(categoria.id)}
+                        onClick={() => openRemoveConfirm(categoria.id, categoria.nome)}
                         aria-label={`Remover categoria ${categoria.nome}`}
                         disabled={isRemoving === categoria.id}
                       >
@@ -333,6 +354,30 @@ export default function CategoriasPublicacaoPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de confirmação de remoção */}
+      <AlertDialog open={removeConfirm.open} onOpenChange={(open) => !isRemoving && setRemoveConfirm(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover categoria</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover a categoria <strong>{removeConfirm.nome}</strong>?
+              As publicações relacionadas ficarão sem categoria.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!isRemoving}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemove}
+              disabled={!!isRemoving}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isRemoving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

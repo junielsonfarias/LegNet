@@ -31,7 +31,8 @@ const formatDate = (value?: string | null) => {
       month: '2-digit',
       year: 'numeric'
     })
-  } catch {
+  } catch (error) {
+    console.error('Erro ao formatar data:', error)
     return '—'
   }
 }

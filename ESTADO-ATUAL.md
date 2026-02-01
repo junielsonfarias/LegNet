@@ -1,9 +1,84 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-31 (Correcao dados legislatura, mandatos e timezone)
+> **Ultima Atualizacao**: 2026-01-31 (Auditoria de Seguranca e Qualidade de Codigo)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Auditoria de Seguranca e Qualidade (31/01/2026)
+
+### Correcoes Implementadas
+
+| Categoria | Quantidade | Status |
+|-----------|------------|--------|
+| Sanitizacao HTML (XSS) | 16 ocorrencias | Corrigido - DOMPurify |
+| JSON.parse sem try/catch | 14 ocorrencias | Corrigido - erro tratado |
+| Catch blocks vazios | 21 ocorrencias | Corrigido - logging adicionado |
+| console.log em producao | 35+ ocorrencias | Corrigido - removidos |
+| Non-null assertions (!.) | 18 ocorrencias | Corrigido - tipagem segura |
+| @ts-ignore | 5 ocorrencias | Corrigido - tipagem correta |
+
+### Arquivos Principais Modificados
+
+**Seguranca (XSS):**
+- `parlamentar/[slug]/page.tsx` - DOMPurify para biografia
+- `proposicoes-content.tsx` - DOMPurify para ementa
+- `pareceres/page.tsx` - DOMPurify para texto de parecer
+- `legislativo-content.tsx` - DOMPurify para conteudo legislativo
+
+**Tipagem e Qualidade:**
+- `lib/logging/api-logger.ts` - Removidos @ts-ignore, tipagem correta
+- `lib/services/calendario-service.ts` - Tipagem dinamica segura
+- `components/layout/mega-menu.tsx` - Callback ref tipado
+- `api/sessoes/route.ts` - Removidos console.log de debug
+- `api/dados-abertos/*.ts` - Corrigidas non-null assertions
+
+**Build Verificado:** 0 erros TypeScript, 0 ESLint warnings
+
+---
+
+## Auditoria do Fluxo Sessao/Votacao (31/01/2026)
+
+### Problemas Corrigidos
+
+| Problema | Severidade | Status |
+|----------|------------|--------|
+| Pauta.status nao atualizado para CONCLUIDA | CRITICO | Corrigido |
+| Itens em andamento nao finalizados na sessao | CRITICO | Corrigido |
+| tempoTotalReal nao calculado | ALTO | Corrigido |
+| console.log de debug em finalizarItemPauta | MEDIO | Corrigido |
+
+### Fluxo Corrigido - Finalizacao de Sessao
+
+**Antes:**
+```
+finalizarSessaoControle():
+  - Atualizava sessao.status = CONCLUIDA
+  - Limpava itemAtualId
+  - NAO atualizava pauta.status
+  - NAO finalizava itens em andamento
+  - NAO calculava tempoTotalReal
+```
+
+**Depois:**
+```
+finalizarSessaoControle():
+  1. Busca pauta com todos os itens
+  2. Identifica itens em EM_DISCUSSAO/EM_VOTACAO
+  3. Finaliza itens como ADIADO (preserva tempo acumulado)
+  4. Calcula tempoTotalReal de todos os itens
+  5. Atualiza pauta.status = CONCLUIDA
+  6. Atualiza sessao.status = CONCLUIDA
+  7. Executa tudo em transacao atomica
+```
+
+### Arquivos Modificados
+
+- `src/lib/services/sessao-controle.ts`
+  - `finalizarSessaoControle()` - Logica completa de finalizacao
+  - `finalizarItemPauta()` - Removidos console.log
 
 ---
 
@@ -24,7 +99,7 @@
 | **Multi-Tenant** | Implementado |
 | **Cobertura SAPL** | 100% |
 | **TypeScript Errors** | 0 |
-| **ESLint Warnings** | 4 (menores) |
+| **ESLint Warnings** | 0 |
 | **Build Status** | Passing |
 
 ---
@@ -116,6 +191,11 @@ Fluxo Validado:
 | Pauta de sessao | Implementado | PautaSessao + PautaItem |
 | Templates de sessao | Implementado | SessaoTemplate + TemplateItem |
 | Numeracao automatica | Implementado | Sequencial por tipo |
+| **Oradores de Sessao** | **Implementado** | OradorSessao model, por tipo (Pequeno/Grande Expediente, etc.) |
+| **Tipos de Expediente** | **Implementado** | TipoExpediente configuravel + ExpedienteSessao |
+| **Presenca Ordem do Dia** | **Implementado** | PresencaOrdemDia separada da presenca geral |
+| **Copiar Presenca** | **Implementado** | Copiar presenca da sessao para ordem do dia |
+| **Campos de Midia** | **Implementado** | urlAudio, urlVideo, urlTransmissao, arquivoPauta, arquivoAta |
 
 ### 4. Pautas de Sessoes
 
@@ -1165,6 +1245,55 @@ sudo ./scripts/uninstall.sh --full
 ---
 
 ## Historico de Atualizacoes
+
+### 2026-01-31 - Melhoria Sistema de Pauta para Sessoes Finalizadas
+
+**Problema**: Ao criar pauta para sessoes ja finalizadas:
+1. Nao era possivel adicionar proposicoes (sugestoes filtravam apenas status especificos)
+2. A pagina de lancamento retroativo nao mostrava proposicoes quando a pauta estava vazia
+3. Nao havia forma de alterar status dos itens diretamente
+
+**Solucoes Implementadas**:
+
+1. **API de Sugestoes de Pauta** (`src/app/api/sessoes/[id]/pauta/sugestoes/route.ts`):
+   - Adicionado parametro `retroativo=true` para modo retroativo
+   - Para sessoes CONCLUIDAS, usa filtro ampliado de status
+   - Exclui proposicoes ja adicionadas a pauta
+   - Aumentado limite de proposicoes para 50 em modo retroativo
+
+2. **Pagina de Lancamento Retroativo** (`src/app/admin/sessoes/[id]/lancamento-retroativo/page.tsx`):
+   - Adicionado editor de pauta integrado (PautaEditor)
+   - Botao para adicionar proposicoes quando pauta vazia
+   - **Acoes Rapidas**: Botoes para marcar item como APROVADO/REJEITADO/ADIADO/RETIRADO
+   - Nao precisa registrar votos individuais para alterar status
+   - Botao "Editar Pauta" visivel mesmo com itens existentes
+
+3. **API de Sessoes Disponiveis** (`src/app/api/pautas/sessoes-disponiveis/route.ts`):
+   - Adicionado parametro `incluirFinalizadas=true`
+   - Retorna informacoes separadas sobre sessoes finalizadas e agendadas
+
+4. **Pagina de Pautas** (`src/app/admin/pautas-sessoes/page.tsx`):
+   - Badge "Finalizada" no seletor de sessoes
+   - Alerta informativo ao selecionar sessao finalizada
+   - Instrucoes sobre lancamento retroativo
+
+**Arquivos Modificados**:
+- `src/app/api/sessoes/[id]/pauta/sugestoes/route.ts`
+- `src/app/admin/sessoes/[id]/lancamento-retroativo/page.tsx`
+- `src/app/api/pautas/sessoes-disponiveis/route.ts`
+- `src/app/admin/pautas-sessoes/page.tsx`
+- `src/lib/api/pauta-api.ts`
+
+**Novo Fluxo para Sessoes Finalizadas**:
+```
+1. Criar pauta para sessao finalizada (em /admin/pautas-sessoes)
+2. Ir para lancamento retroativo ou pagina da sessao
+3. Adicionar proposicoes via editor de pauta
+4. Usar "Acoes Rapidas" para marcar resultado (aprovado/rejeitado)
+5. Opcionalmente, registrar votos individuais via formulario
+```
+
+---
 
 ### 2026-01-31 - Correcao de Dados da Legislatura e Mandatos
 
@@ -3090,6 +3219,112 @@ if (dataSessaoSemHora < dataHoje) {
 ---
 
 ## Historico de Atualizacoes Recentes
+
+### 2026-01-31 - Melhorias de UX, Acessibilidade e API
+
+**Objetivo**: Corrigir inconsistencias de UX, melhorar acessibilidade e adicionar endpoint DELETE em lote.
+
+**Componentes Atualizados**:
+
+| Componente | Alteracoes |
+|------------|------------|
+| `oradores-sessao-editor.tsx` | AlertDialog para confirmacao, aria-labels, loading text |
+| `expedientes-sessao-editor.tsx` | AlertDialog para confirmacao, aria-labels, loading text |
+| `presenca-ordem-dia-editor.tsx` | AlertDialog para confirmacao de copia, aria-labels, loading text |
+
+**APIs Corrigidas**:
+
+| Arquivo | Correcao |
+|---------|----------|
+| `tipos-expediente/route.ts` | Permissao corrigida para `config.manage` |
+| `tipos-expediente/[id]/route.ts` | Permissao corrigida para `config.manage` |
+
+**Novo Endpoint**:
+
+| Endpoint | Descricao |
+|----------|-----------|
+| `DELETE /api/sessoes/[id]/presenca-ordem-dia` | Remove todas as presencas da ordem do dia em lote |
+
+**Melhorias de UX**:
+- Substituido `window.confirm()` por `AlertDialog` do Radix UI em 6 componentes
+- Adicionados `aria-label` em botoes de acao para acessibilidade
+- Padronizado texto de loading com spinner + texto descritivo
+- Confirmacao de copia de presencas agora usa dialog visual
+
+**Correcoes Adicionais (Analise Completa)**:
+
+| Arquivo | Correcao |
+|---------|----------|
+| `backups/page.tsx` | AlertDialog para confirmacao de restauracao |
+| `publicacoes/categorias/page.tsx` | AlertDialog para confirmacao de remocao |
+| `publicacoes/page.tsx` | AlertDialog para confirmacao de exclusao |
+| `autores/page.tsx` | Substituido `<img>` por `<Image />` do Next.js |
+| `accessibility-toolbar.tsx` | Labels movidos para escopo de modulo |
+| `painel-tokens.ts` | Named export para evitar anonymous default |
+| `portal-tokens.ts` | Named export para evitar anonymous default |
+| Hooks de comissoes | ESLint disable comments para deps estaveis |
+| Hooks de proposicoes/sessoes | ESLint disable comments para deps estaveis |
+
+**Resultados da Analise**:
+- TypeScript: 0 erros
+- ESLint: 0 warnings (reduzido de 10)
+- Prisma: Schema valido
+- Build: Sucesso
+
+---
+
+### 2026-01-31 - Implementacao de Recursos SAPL para Sessoes
+
+**Objetivo**: Implementar funcionalidades do SAPL para melhorar o gerenciamento de sessoes.
+
+**Novos Modelos Prisma**:
+
+| Modelo | Descricao |
+|--------|-----------|
+| `OradorSessao` | Gerenciamento de oradores inscritos por tipo |
+| `TipoExpediente` | Configuracao de tipos de expediente |
+| `ExpedienteSessao` | Conteudo de expediente por sessao |
+| `PresencaOrdemDia` | Presenca separada para votacoes |
+
+**Campos Adicionados em Sessao**:
+- `urlAudio`, `urlVideo`, `urlTransmissao` - Links de midia
+- `arquivoPauta`, `arquivoAta` - Documentos anexos
+- `painelAberto` - Controle de painel publico
+- `temaSolene` - Tema para sessoes solenes
+
+**Novas APIs**:
+
+| Endpoint | Descricao |
+|----------|-----------|
+| `GET/POST /api/sessoes/[id]/oradores` | Gerenciar oradores da sessao |
+| `GET/PUT/DELETE /api/sessoes/[id]/oradores/[oradorId]` | Orador especifico |
+| `GET/POST /api/tipos-expediente` | Listar/criar tipos de expediente |
+| `GET/PUT/DELETE /api/tipos-expediente/[id]` | Tipo de expediente especifico |
+| `GET/POST /api/sessoes/[id]/expedientes` | Conteudo de expedientes da sessao |
+| `GET/PUT/DELETE /api/sessoes/[id]/expedientes/[expedienteId]` | Expediente especifico |
+| `GET/POST /api/sessoes/[id]/presenca-ordem-dia` | Presenca na ordem do dia |
+| `POST /api/sessoes/[id]/presenca-ordem-dia/copiar` | Copiar presenca da sessao |
+
+**Novos Componentes**:
+
+| Componente | Caminho |
+|------------|---------|
+| `OradoresSessaoEditor` | `src/components/admin/oradores-sessao-editor.tsx` |
+| `ExpedientesSessaoEditor` | `src/components/admin/expedientes-sessao-editor.tsx` |
+| `PresencaOrdemDiaEditor` | `src/components/admin/presenca-ordem-dia-editor.tsx` |
+
+**Novas Abas na Pagina de Sessao** (`/admin/sessoes/[id]`):
+- Oradores - Gerenciar oradores inscritos por tipo
+- Expediente - Editar conteudo de cada tipo de expediente
+- Pres. OD - Gerenciar presenca na ordem do dia (pode diferir da presenca geral)
+
+**Nova Pagina de Configuracao**:
+- `/admin/configuracoes/tipos-expediente` - CRUD de tipos de expediente
+
+**Seed de Dados**:
+- Adicionados 5 tipos de expediente padrao (Pequeno Expediente, Grande Expediente, etc.)
+
+---
 
 ### 2026-01-30 - Extracao de Modais para Componentes Separados
 

@@ -102,7 +102,8 @@ const parseJsonField = (value: string, fieldLabel: string) => {
   if (!value || value.trim() === '') return undefined
   try {
     return JSON.parse(value)
-  } catch {
+  } catch (error) {
+    console.error(`Erro ao parsear JSON no campo "${fieldLabel}":`, error)
     throw new Error(`JSON inválido em "${fieldLabel}"`)
   }
 }
@@ -111,7 +112,8 @@ const stringify = (value: unknown, fallback = '{}') => {
   try {
     if (value === undefined || value === null) return fallback
     return JSON.stringify(value, null, 2)
-  } catch {
+  } catch (error) {
+    console.error('Erro ao serializar valor JSON:', error)
     return fallback
   }
 }

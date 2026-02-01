@@ -152,21 +152,23 @@ class ApiLogger {
     let filteredLogs = [...this.logs]
 
     if (filter) {
-      if (filter.level && filter.level.length > 0) {
-        filteredLogs = filteredLogs.filter(log => filter.level!.includes(log.level))
+      const { level, startDate, endDate, endpoint } = filter
+
+      if (level && level.length > 0) {
+        filteredLogs = filteredLogs.filter(log => level.includes(log.level))
       }
 
-      if (filter.startDate) {
-        filteredLogs = filteredLogs.filter(log => log.timestamp >= filter.startDate!)
+      if (startDate) {
+        filteredLogs = filteredLogs.filter(log => log.timestamp >= startDate)
       }
 
-      if (filter.endDate) {
-        filteredLogs = filteredLogs.filter(log => log.timestamp <= filter.endDate!)
+      if (endDate) {
+        filteredLogs = filteredLogs.filter(log => log.timestamp <= endDate)
       }
 
-      if (filter.endpoint) {
-        filteredLogs = filteredLogs.filter(log => 
-          log.context?.endpoint?.includes(filter.endpoint!)
+      if (endpoint) {
+        filteredLogs = filteredLogs.filter(log =>
+          log.context?.endpoint?.includes(endpoint)
         )
       }
 
@@ -183,8 +185,9 @@ class ApiLogger {
       }
 
       if (filter.tags && filter.tags.length > 0) {
-        filteredLogs = filteredLogs.filter(log => 
-          log.tags && filter.tags!.some(tag => log.tags!.includes(tag))
+        const filterTags = filter.tags
+        filteredLogs = filteredLogs.filter(log =>
+          log.tags && filterTags.some(tag => log.tags?.includes(tag))
         )
       }
 
@@ -232,8 +235,8 @@ class ApiLogger {
 
     // Tempo médio de resposta
     const responseTimes = logsToAnalyze
-      .filter(log => log.context?.duration)
-      .map(log => log.context!.duration!)
+      .filter(log => log.context?.duration !== undefined)
+      .map(log => log.context?.duration ?? 0)
     
     const averageResponseTime = responseTimes.length > 0
       ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length

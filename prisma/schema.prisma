@@ -209,6 +209,8 @@ model Parlamentar {
   votosEmenda            VotoEmenda[]
   pautaItensRelator      PautaItem[]            @relation("PautaItemRelator")
   autorEntidade          Autor?                 @relation("AutorParlamentar") // Vínculo com sistema de autores
+  oradoresSessao         OradorSessao[]         // Inscrições como orador em sessões
+  presencasOrdemDia      PresencaOrdemDia[]     // Presenças na ordem do dia
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -238,6 +240,16 @@ model Sessao {
   legislaturaId String? // Relacionamento com Legislatura
   periodoId     String? // Relacionamento com PeriodoLegislatura
   tempoInicio   DateTime?    // Data/hora real em que a sessão foi iniciada (para cronômetro)
+
+  // === CAMPOS DE MÍDIA (SAPL) ===
+  urlAudio       String?     // Link do áudio da sessão (YouTube, etc)
+  urlVideo       String?     // Link do vídeo da sessão
+  urlTransmissao String?     // Link da transmissão ao vivo
+  arquivoPauta   String?     // URL do PDF da pauta publicada
+  arquivoAta     String?     // URL do PDF da ata aprovada
+  painelAberto   Boolean     @default(false) // Se o painel eletrônico está aberto para votação
+  temaSolene     String?     @db.Text // Tema da sessão (para sessões solenes)
+
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -250,6 +262,9 @@ model Sessao {
   pautaSessao         PautaSessao?
   emendasVotadas      Emenda[]            @relation("EmendaVotacao")          // Emendas VOTADAS nesta sessão
   mesaSessao          MesaSessao?         // Mesa que presidiu esta sessão específica
+  oradores            OradorSessao[]      // Oradores inscritos na sessão
+  expedientes         ExpedienteSessao[]  // Conteúdo dos expedientes
+  presencasOrdemDia   PresencaOrdemDia[]  // Presença específica para ordem do dia
 
   @@index([status, data])
   @@index([tipo, status])
@@ -291,6 +306,115 @@ model MembroMesaSessao {
 
   @@unique([mesaSessaoId, cargo]) // Apenas um parlamentar por cargo na mesa da sessão
   @@map("membros_mesa_sessao")
+}
+
+// =============================================================================
+// ORADORES DA SESSÃO (SAPL)
+// =============================================================================
+
+// Oradores inscritos para falar na sessão
+model OradorSessao {
+  id            String        @id @default(cuid())
+  sessaoId      String
+  parlamentarId String
+  tipo          TipoOrador    // Tipo de inscrição
+  ordem         Int           // Ordem de inscrição/fala
+  tempoLimite   Int?          // Tempo limite em minutos
+  tempoUsado    Int?          // Tempo utilizado em minutos
+  assunto       String?       @db.Text // Assunto do pronunciamento
+  status        StatusOrador  @default(INSCRITO)
+  iniciadoEm    DateTime?     // Quando começou a falar
+  finalizadoEm  DateTime?     // Quando terminou
+  observacoes   String?       @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  sessao      Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@index([sessaoId, tipo, ordem])
+  @@index([parlamentarId])
+  @@map("oradores_sessao")
+}
+
+enum TipoOrador {
+  PEQUENO_EXPEDIENTE    // Pequeno expediente (tempo menor)
+  GRANDE_EXPEDIENTE     // Grande expediente (tempo maior)
+  LIDERANCA             // Pronunciamento de líder de bancada
+  ORDEM_DO_DIA          // Durante discussão da ordem do dia
+  EXPLICACAO_PESSOAL    // Explicação pessoal
+  APARTE                // Aparte durante discurso de outro
+  TRIBUNA_LIVRE         // Tribuna livre/popular
+  COMUNICACAO           // Comunicação breve
+}
+
+enum StatusOrador {
+  INSCRITO              // Inscrito, aguardando vez
+  FALANDO               // Em uso da palavra
+  CONCLUIDO             // Terminou o pronunciamento
+  DESISTIU              // Desistiu da inscrição
+  TEMPO_ESGOTADO        // Tempo esgotado
+}
+
+// =============================================================================
+// TIPOS DE EXPEDIENTE (SAPL)
+// =============================================================================
+
+// Tipos de expediente configuráveis
+model TipoExpediente {
+  id          String   @id @default(cuid())
+  nome        String   // Ex: "Pequeno Expediente", "Grande Expediente"
+  descricao   String?  @db.Text
+  ordem       Int      @default(0) // Ordem de exibição
+  tempoMaximo Int?     // Tempo máximo em minutos (opcional)
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  expedientes ExpedienteSessao[]
+
+  @@index([ordem])
+  @@map("tipos_expediente")
+}
+
+// Conteúdo do expediente por sessão
+model ExpedienteSessao {
+  id               String   @id @default(cuid())
+  sessaoId         String
+  tipoExpedienteId String
+  conteudo         String   @db.Text // Texto livre do expediente
+  ordem            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sessao         Sessao         @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  tipoExpediente TipoExpediente @relation(fields: [tipoExpedienteId], references: [id], onDelete: Cascade)
+
+  @@unique([sessaoId, tipoExpedienteId])
+  @@index([sessaoId])
+  @@map("expedientes_sessao")
+}
+
+// =============================================================================
+// PRESENÇA NA ORDEM DO DIA (SAPL)
+// =============================================================================
+
+// Presença específica para votação na ordem do dia
+// Pode diferir da presença geral da sessão (parlamentar pode sair e voltar)
+model PresencaOrdemDia {
+  id            String   @id @default(cuid())
+  sessaoId      String
+  parlamentarId String
+  presente      Boolean  @default(true)
+  registradoEm  DateTime @default(now())
+  observacoes   String?  @db.Text
+
+  sessao      Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+
+  @@unique([sessaoId, parlamentarId])
+  @@index([sessaoId, presente])
+  @@map("presencas_ordem_dia")
 }
 
 enum TipoSessao {

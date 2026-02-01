@@ -382,6 +382,12 @@ const navigationCategories: NavCategory[] = [
         permissions: ['config.manage']
       },
       {
+        name: 'Tipos de Expediente',
+        href: '/admin/configuracoes/tipos-expediente',
+        icon: BookOpen,
+        permissions: ['config.manage']
+      },
+      {
         name: 'Integrações',
         href: '/admin/integracoes',
         icon: Key,

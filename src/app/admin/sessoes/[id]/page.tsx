@@ -28,7 +28,8 @@ import {
   UserCheck,
   UserX,
   BookOpen,
-  PenLine
+  PenLine,
+  Mic
 } from 'lucide-react'
 import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
@@ -36,6 +37,9 @@ import { cn } from '@/lib/utils'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 import { MesaSessaoEditor } from '@/components/admin/mesa-sessao-editor'
 import { PautaEditor } from '@/components/admin/pauta-editor'
+import { OradoresSessaoEditor } from '@/components/admin/oradores-sessao-editor'
+import { ExpedientesSessaoEditor } from '@/components/admin/expedientes-sessao-editor'
+import { PresencaOrdemDiaEditor } from '@/components/admin/presenca-ordem-dia-editor'
 
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
@@ -341,18 +345,30 @@ export default function SessaoDetailPage() {
         {/* Left column - Tabs with Pauta and Presenca */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="pauta" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
               <TabsTrigger value="pauta" className="flex items-center gap-2">
                 <ClipboardList className="h-4 w-4" />
-                Pauta
+                <span className="hidden sm:inline">Pauta</span>
               </TabsTrigger>
               <TabsTrigger value="presenca" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Presenca
+                <span className="hidden sm:inline">Presenca</span>
+              </TabsTrigger>
+              <TabsTrigger value="oradores" className="flex items-center gap-2">
+                <Mic className="h-4 w-4" />
+                <span className="hidden sm:inline">Oradores</span>
+              </TabsTrigger>
+              <TabsTrigger value="expediente" className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Expediente</span>
+              </TabsTrigger>
+              <TabsTrigger value="presenca-od" className="flex items-center gap-2">
+                <Vote className="h-4 w-4" />
+                <span className="hidden sm:inline">Pres. OD</span>
               </TabsTrigger>
               <TabsTrigger value="info" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Informacoes
+                <span className="hidden sm:inline">Info</span>
               </TabsTrigger>
             </TabsList>
 
@@ -527,6 +543,30 @@ export default function SessaoDetailPage() {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Oradores Tab */}
+            <TabsContent value="oradores" className="mt-4">
+              <OradoresSessaoEditor
+                sessaoId={sessao.id}
+                readOnly={sessao.status === 'CANCELADA'}
+              />
+            </TabsContent>
+
+            {/* Expediente Tab */}
+            <TabsContent value="expediente" className="mt-4">
+              <ExpedientesSessaoEditor
+                sessaoId={sessao.id}
+                readOnly={sessao.status === 'CANCELADA'}
+              />
+            </TabsContent>
+
+            {/* Presença na Ordem do Dia Tab */}
+            <TabsContent value="presenca-od" className="mt-4">
+              <PresencaOrdemDiaEditor
+                sessaoId={sessao.id}
+                readOnly={sessao.status === 'CANCELADA'}
+              />
             </TabsContent>
 
             {/* Info Tab */}

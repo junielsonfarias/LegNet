@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -482,12 +483,15 @@ export default function AutoresPage() {
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                           {autor.parlamentar?.foto ? (
-                            <img
+                            <Image
                               src={autor.parlamentar.foto}
                               alt={autor.nome}
+                              width={40}
+                              height={40}
                               className="h-10 w-10 rounded-full object-cover"
+                              unoptimized
                             />
                           ) : (
                             <UserCircle className="h-6 w-6 text-gray-400" />

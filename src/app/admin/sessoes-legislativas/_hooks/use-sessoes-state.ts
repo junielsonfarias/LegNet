@@ -209,7 +209,8 @@ export function useSessoesState() {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao salvar a sessão.'
       toast.error(errorMessage)
     }
-  }, [formData, editingSessao, create, updateSessao])
+    // Note: handleClose is defined after this useCallback but is stable (empty deps)
+  }, [formData, editingSessao, create, updateSessao]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleEdit = useCallback((sessao: SessaoLocal) => {
     setEditingSessao(sessao)

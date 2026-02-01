@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { sanitizeHtml } from '@/lib/utils/sanitize-html'
 import {
   Search,
   FileText,
@@ -300,7 +301,7 @@ function BuscaContent() {
                                 <p
                                   className="text-sm text-gray-600 line-clamp-2"
                                   dangerouslySetInnerHTML={{
-                                    __html: item.destaque || item.descricao
+                                    __html: sanitizeHtml(item.destaque || item.descricao)
                                   }}
                                 />
                                 {item.metadata && (() => {

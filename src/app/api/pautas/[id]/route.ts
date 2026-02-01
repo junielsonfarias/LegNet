@@ -188,8 +188,8 @@ export const DELETE = withAuth(withErrorHandler(async (request: NextRequest, con
 
   // Reverter status das proposições que estavam na pauta
   const proposicoesIds = pauta.itens
-    .filter(i => i.proposicaoId)
-    .map(i => i.proposicaoId!)
+    .map(i => i.proposicaoId)
+    .filter((id): id is string => id !== null && id !== undefined)
 
   if (proposicoesIds.length > 0) {
     await prisma.proposicao.updateMany({

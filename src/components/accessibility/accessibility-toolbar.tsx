@@ -45,6 +45,19 @@ const defaultSettings: AccessibilitySettings = {
 
 const STORAGE_KEY = 'accessibility-settings'
 
+// Labels para os tamanhos de fonte e altura de linha
+const fontSizeLabels: Record<FontSize, string> = {
+  normal: 'Normal',
+  medium: 'Medio',
+  large: 'Grande',
+}
+
+const lineHeightLabels: Record<LineHeight, string> = {
+  normal: 'Normal',
+  comfortable: 'Confortavel',
+  spacious: 'Amplo',
+}
+
 // =============================================================================
 // HOOK: useAccessibility
 // =============================================================================
@@ -138,18 +151,6 @@ export function AccessibilityToolbar({
   const [isOpen, setIsOpen] = useState(false)
   const { settings, updateSetting, resetSettings, isLoaded } = useAccessibility()
   const { announce } = useAnnounce()
-
-  const fontSizeLabels: Record<FontSize, string> = {
-    normal: 'Normal',
-    medium: 'Medio',
-    large: 'Grande',
-  }
-
-  const lineHeightLabels: Record<LineHeight, string> = {
-    normal: 'Normal',
-    comfortable: 'Confortavel',
-    spacious: 'Amplo',
-  }
 
   const positionClasses: Record<string, string> = {
     'top-right': 'top-20 right-4',

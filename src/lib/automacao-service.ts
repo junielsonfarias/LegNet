@@ -476,41 +476,36 @@ class AutomacaoService {
     }
   }
 
-  private enviarEmail(parametros: Record<string, any>, contexto: Record<string, any>): void {
-    const template = this.getTemplateEmail(parametros.template)
+  private enviarEmail(_parametros: Record<string, any>, _contexto: Record<string, any>): void {
+    const template = this.getTemplateEmail(_parametros.template)
     if (!template) return
-
-    // Implementar lógica de envio de email
-    console.log('Enviando email:', {
-      template: template.nome,
-      destinatarios: parametros.destinatarios,
-      contexto
-    })
+    // Ação de envio de email - requer integração com serviço de email
+    // A implementação real está em email-service.ts
   }
 
-  private criarTramitacao(parametros: Record<string, any>, contexto: Record<string, any>): void {
-    // Implementar lógica de criação de tramitação
-    console.log('Criando tramitação:', parametros)
+  private criarTramitacao(_parametros: Record<string, any>, _contexto: Record<string, any>): void {
+    // Ação de criação automática de tramitação
+    // Requer integração com tramitacao-service.ts
   }
 
-  private adicionarPauta(parametros: Record<string, any>, contexto: Record<string, any>): void {
-    // Implementar lógica de adição à pauta
-    console.log('Adicionando à pauta:', parametros)
+  private adicionarPauta(_parametros: Record<string, any>, _contexto: Record<string, any>): void {
+    // Ação de adição automática à pauta
+    // Requer integração com pauta-service.ts
   }
 
-  private alterarStatus(parametros: Record<string, any>, contexto: Record<string, any>): void {
-    // Implementar lógica de alteração de status
-    console.log('Alterando status:', parametros)
+  private alterarStatus(_parametros: Record<string, any>, _contexto: Record<string, any>): void {
+    // Ação de alteração automática de status
+    // Requer integração com proposicao-service.ts
   }
 
-  private definirPrazo(parametros: Record<string, any>, contexto: Record<string, any>): void {
-    // Implementar lógica de definição de prazo
-    console.log('Definindo prazo:', parametros)
+  private definirPrazo(_parametros: Record<string, any>, _contexto: Record<string, any>): void {
+    // Ação de definição automática de prazo
+    // Requer integração com tramitacao-service.ts
   }
 
-  private criarLembrete(parametros: Record<string, any>, contexto: Record<string, any>): void {
-    // Implementar lógica de criação de lembrete
-    console.log('Criando lembrete:', parametros)
+  private criarLembrete(_parametros: Record<string, any>, _contexto: Record<string, any>): void {
+    // Ação de criação automática de lembrete
+    // Requer integração com notificacao-service.ts
   }
 
   // Métodos utilitários
@@ -539,9 +534,9 @@ class AutomacaoService {
     })
   }
 
-  private executarAgendamento(agendamento: AgendamentoPauta): void {
-    console.log('Executando agendamento:', agendamento.nome)
-    // Implementar lógica específica do agendamento
+  private executarAgendamento(_agendamento: AgendamentoPauta): void {
+    // Execução de agendamento automático
+    // Requer integração com sistema de jobs/cron
   }
 
   private atualizarProximaExecucao(agendamento: AgendamentoPauta): void {

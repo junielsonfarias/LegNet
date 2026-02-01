@@ -258,13 +258,51 @@ export async function finalizarSessaoControle(sessaoId: string) {
     throw new ValidationError('Sessão cancelada não pode ser finalizada')
   }
 
-  const pauta = await prisma.pautaSessao.findUnique({ where: { sessaoId } })
+  const pauta = await prisma.pautaSessao.findUnique({
+    where: { sessaoId },
+    include: {
+      itens: true
+    }
+  })
 
   if (!pauta) {
     throw new ValidationError('Sessão sem pauta vinculada')
   }
 
+  // Identificar itens que ainda estão em andamento
+  const itensEmAndamento = pauta.itens.filter(item =>
+    ['EM_DISCUSSAO', 'EM_VOTACAO', 'PENDENTE'].includes(item.status)
+  )
+
+  // Finalizar itens em andamento como ADIADO e itens pendentes mantêm PENDENTE
+  const atualizacoesItens = itensEmAndamento.map(item => {
+    const acumulado = calcularTempoAcumulado(item.iniciadoEm, item.tempoAcumulado)
+    const novoStatus = item.status === 'PENDENTE' ? 'PENDENTE' : 'ADIADO'
+
+    return prisma.pautaItem.update({
+      where: { id: item.id },
+      data: {
+        status: novoStatus,
+        tempoAcumulado: acumulado,
+        tempoReal: item.status !== 'PENDENTE' ? acumulado : null,
+        iniciadoEm: null,
+        finalizadoEm: item.status !== 'PENDENTE' ? new Date() : null
+      }
+    })
+  })
+
+  // Calcular tempo total real
+  const todosItens = pauta.itens
+  const tempoTotal = todosItens.reduce((acc, item) => {
+    const tempo = item.tempoReal ?? item.tempoAcumulado ?? 0
+    return acc + tempo
+  }, 0)
+
+  // Executar todas as atualizações em transação
   await prisma.$transaction([
+    // Finalizar itens em andamento
+    ...atualizacoesItens,
+    // Atualizar sessão
     prisma.sessao.update({
       where: { id: sessaoId },
       data: {
@@ -272,10 +310,13 @@ export async function finalizarSessaoControle(sessaoId: string) {
         finalizada: true
       }
     }),
+    // Atualizar pauta com status CONCLUIDA e tempo total
     prisma.pautaSessao.update({
       where: { id: pauta.id },
       data: {
-        itemAtualId: null
+        itemAtualId: null,
+        status: 'CONCLUIDA',
+        tempoTotalReal: tempoTotal
       }
     })
   ])
@@ -863,13 +904,7 @@ export async function finalizarItemPauta(
     })
 
     // Se o operador escolheu APROVADO/REJEITADO, usar a escolha dele
-    // mas também calcular o resultado real baseado nos votos
-    console.log(`[Votação] Proposição ${item.proposicao!.numero}/${item.proposicao!.ano}:`, {
-      votos: contagemVotos,
-      resultadoOperador: resultado,
-      resultadoCalculado: contagemVotos.resultado,
-      detalhesQuorum: contagemVotos.detalhesQuorum
-    })
+    // O resultado calculado e detalhes de quórum são armazenados na proposição
   }
 
   // Atualizar o item da pauta
@@ -893,13 +928,6 @@ export async function finalizarItemPauta(
       resultado,
       sessaoId  // Registra a sessão onde a proposição foi votada
     )
-
-    console.log(`[Votação] Proposição ${item.proposicao!.numero}/${item.proposicao!.ano} atualizada:`, {
-      resultado: contagemVotos.resultado,
-      status: resultado === 'APROVADO' ? 'APROVADA' : 'REJEITADA',
-      dataVotacao: new Date().toISOString(),
-      sessaoVotacaoId: sessaoId
-    })
   }
 
   // GAP #2: Sincronizar status da proposição para casos sem votação efetiva

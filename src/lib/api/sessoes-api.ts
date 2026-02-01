@@ -87,36 +87,19 @@ class SessoesApiService {
   private baseUrl = '/api/sessoes'
 
   private async handleResponse<T>(response: Response): Promise<T> {
-    console.log('📥 handleResponse - Status:', response.status, response.statusText)
-    
     let data: ApiResponse<T>
     try {
       data = await response.json()
-      console.log('📦 handleResponse - Dados parseados:', {
-        success: data.success,
-        hasData: !!data.data,
-        error: data.error,
-        details: (data as any).details
-      })
     } catch (error) {
-      console.error('❌ Erro ao parsear JSON da resposta:', error)
-      const text = await response.text()
-      console.error('❌ Resposta como texto:', text)
       throw new Error('Resposta inválida do servidor')
     }
-    
+
     if (!response.ok || !data.success) {
       const error = data.error || 'Erro ao processar requisição'
       const details = (data as any).details
-      console.error('❌ Erro na resposta:', {
-        error,
-        details,
-        status: response.status
-      })
       throw new Error(details ? `${error}: ${JSON.stringify(details)}` : error)
     }
-    
-    console.log('✅ handleResponse - Sucesso, retornando dados')
+
     return data.data
   }
 
@@ -163,35 +146,15 @@ class SessoesApiService {
   }
 
   async create(sessao: SessaoCreate): Promise<SessaoApi> {
-    console.log('📤 sessoesApi.create chamado com:', sessao)
-    console.log('📤 URL:', this.baseUrl)
-    console.log('📤 Body stringified:', JSON.stringify(sessao))
-    
-    try {
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sessao),
-      })
-      
-      console.log('📥 Resposta recebida:', {
-        ok: response.ok,
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      })
-      
-      // Sempre tentar processar a resposta, mesmo se não for ok
-      const result = await this.handleResponse<SessaoApi>(response)
-      console.log('✅ Sessão criada via API:', result)
-      return result
-    } catch (error) {
-      console.error('❌ Erro ao criar sessão na API:', error)
-      console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'N/A')
-      throw error
-    }
+    const response = await fetch(this.baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(sessao),
+    })
+
+    return this.handleResponse<SessaoApi>(response)
   }
 
   async update(id: string, sessao: SessaoUpdate): Promise<SessaoApi> {

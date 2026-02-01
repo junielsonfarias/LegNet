@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
   ArchiveRestore,
@@ -8,6 +8,7 @@ import {
   Database,
   Download,
   FileWarning,
+  Loader2,
   RefreshCw,
   Upload
 } from 'lucide-react'
@@ -17,6 +18,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import { useBackupManager } from '@/lib/hooks/use-backup'
 import { BackupSnapshotMeta } from '@/lib/api/infra-backup-api'
 import { cn } from '@/lib/utils'
@@ -28,7 +39,8 @@ const formatDateTime = (iso?: string) => {
       dateStyle: 'short',
       timeStyle: 'short'
     })
-  } catch {
+  } catch (error) {
+    console.error('Erro ao formatar data:', error)
     return iso
   }
 }
@@ -63,6 +75,10 @@ export default function BackupsPage() {
     restoreFromFile
   } = useBackupManager()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [restoreConfirm, setRestoreConfirm] = useState<{ open: boolean; id: string }>({
+    open: false,
+    id: ''
+  })
 
   const lastBackup = useMemo(() => history[0] ?? null, [history])
 
@@ -73,10 +89,14 @@ export default function BackupsPage() {
     }
   }
 
-  const handleRestore = async (id: string) => {
-    const confirmed = window.confirm('Deseja realmente restaurar este backup? Essa ação substituirá os dados atuais.')
-    if (!confirmed) return
-    await restoreFromId(id)
+  const openRestoreConfirm = (id: string) => {
+    setRestoreConfirm({ open: true, id })
+  }
+
+  const handleRestore = async () => {
+    if (!restoreConfirm.id) return
+    await restoreFromId(restoreConfirm.id)
+    setRestoreConfirm({ open: false, id: '' })
   }
 
   const handleFileUpload = () => {
@@ -317,7 +337,7 @@ export default function BackupsPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleRestore(snapshot.id)}
+                      onClick={() => openRestoreConfirm(snapshot.id)}
                       disabled={restoring}
                       aria-label={`Restaurar backup ${snapshot.id}`}
                       className="inline-flex items-center gap-2"
@@ -347,6 +367,30 @@ export default function BackupsPage() {
           </table>
         </CardContent>
       </Card>
+
+      {/* Dialog de confirmação de restauração */}
+      <AlertDialog open={restoreConfirm.open} onOpenChange={(open) => !restoring && setRestoreConfirm(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restaurar backup</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja realmente restaurar este backup? Essa ação substituirá os dados atuais.
+              Esta operação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={restoring}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRestore}
+              disabled={restoring}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {restoring && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Restaurar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

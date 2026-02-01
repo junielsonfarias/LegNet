@@ -43,7 +43,8 @@ export default function ForgotPasswordPage() {
       } else {
         setError(data.error || 'Erro ao processar solicitação')
       }
-    } catch {
+    } catch (error) {
+      console.error('Erro na requisição de recuperação de senha:', error)
       setError('Erro de conexão. Tente novamente.')
     } finally {
       setIsLoading(false)

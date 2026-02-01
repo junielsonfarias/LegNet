@@ -56,7 +56,8 @@ export default function ResetPasswordPage({ params }: PageProps) {
           setTokenValid(false)
           setTokenError(data.error || 'Link inválido ou expirado')
         }
-      } catch {
+      } catch (error) {
+        console.error('Erro ao verificar token de reset:', error)
         setTokenValid(false)
         setTokenError('Erro ao verificar link')
       } finally {
@@ -107,7 +108,8 @@ export default function ResetPasswordPage({ params }: PageProps) {
       } else {
         setError(data.error || 'Erro ao redefinir senha')
       }
-    } catch {
+    } catch (error) {
+      console.error('Erro ao redefinir senha:', error)
       setError('Erro de conexão. Tente novamente.')
     } finally {
       setIsLoading(false)

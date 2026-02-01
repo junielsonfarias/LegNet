@@ -109,7 +109,7 @@ export const POST = withErrorHandler(async (
   const itensCriados = await prisma.pautaReuniaoComissao.findMany({
     where: {
       reuniaoId,
-      proposicaoId: { in: itensParaCriar.map(i => i.proposicaoId!) }
+      proposicaoId: { in: itensParaCriar.map(i => i.proposicaoId) }
     },
     include: {
       proposicao: true

@@ -56,7 +56,8 @@ export function QuickAddPautaItems({
       setSelecionados([])
       setBusca('')
     }
-  }, [open, comissaoId])
+    // carregarProposicoes é definida no mesmo escopo e estável para estes deps
+  }, [open, comissaoId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function carregarProposicoes() {
     try {

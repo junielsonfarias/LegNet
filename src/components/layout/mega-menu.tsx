@@ -61,9 +61,17 @@ interface MegaMenuPanelProps {
 }
 
 function MegaMenuPanel({ section, isOpen, onClose }: MegaMenuPanelProps) {
-  const panelRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
   const { announce } = useAnnounce()
   const { ref: focusTrapRef } = useFocusTrap({ enabled: isOpen, returnFocus: true })
+
+  // Callback ref que combina panelRef e focusTrapRef
+  const combinedRef = useCallback((el: HTMLDivElement | null) => {
+    panelRef.current = el
+    if (focusTrapRef && el) {
+      focusTrapRef(el)
+    }
+  }, [focusTrapRef])
 
   // Fechar com ESC
   useEffect(() => {
@@ -86,11 +94,7 @@ function MegaMenuPanel({ section, isOpen, onClose }: MegaMenuPanelProps) {
 
   return (
     <div
-      ref={(el) => {
-        // @ts-ignore - combinando refs
-        if (panelRef) panelRef.current = el
-        if (focusTrapRef) focusTrapRef(el as HTMLDivElement)
-      }}
+      ref={combinedRef}
       className={cn(
         'absolute top-full left-0 right-0 w-full bg-white shadow-xl border-t border-gray-200',
         'transition-all duration-300 ease-in-out',

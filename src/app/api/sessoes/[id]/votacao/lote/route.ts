@@ -288,14 +288,6 @@ export const POST = withErrorHandler(async (
         timestamp: new Date().toISOString()
       }
     })
-
-    console.log(`[Auditoria] Votação retroativa registrada:`, {
-      sessaoId,
-      proposicao: `${proposicao.numero}/${proposicao.ano}`,
-      usuario: session.user.email,
-      motivo: validatedData.motivo,
-      votosRegistrados: resultado.votosRegistrados.length
-    })
   }
 
   return createSuccessResponse({

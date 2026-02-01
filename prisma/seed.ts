@@ -749,6 +749,68 @@ async function main() {
   console.log('✅ Configurações criadas/atualizadas:', configuracoes.length)
 
   // ========================================
+  // 13. CRIAR TIPOS DE EXPEDIENTE
+  // ========================================
+  const tiposExpediente = [
+    {
+      id: 'tipo-exp-pequeno',
+      nome: 'Pequeno Expediente',
+      descricao: 'Tempo destinado à leitura de correspondências, comunicações e documentos oficiais',
+      ordem: 1,
+      tempoMaximo: 10,
+      ativo: true,
+    },
+    {
+      id: 'tipo-exp-grande',
+      nome: 'Grande Expediente',
+      descricao: 'Tempo destinado aos discursos dos parlamentares inscritos',
+      ordem: 2,
+      tempoMaximo: 20,
+      ativo: true,
+    },
+    {
+      id: 'tipo-exp-comunicacoes',
+      nome: 'Comunicações',
+      descricao: 'Informes e comunicados oficiais da Mesa Diretora',
+      ordem: 3,
+      tempoMaximo: null,
+      ativo: true,
+    },
+    {
+      id: 'tipo-exp-explicacao',
+      nome: 'Explicação Pessoal',
+      descricao: 'Tempo para parlamentar explicar posicionamento ou fato pessoal',
+      ordem: 4,
+      tempoMaximo: 5,
+      ativo: true,
+    },
+    {
+      id: 'tipo-exp-homenagens',
+      nome: 'Homenagens',
+      descricao: 'Tempo dedicado a homenagens, moções e congratulações',
+      ordem: 5,
+      tempoMaximo: 15,
+      ativo: true,
+    },
+  ]
+
+  for (const tipoExp of tiposExpediente) {
+    await prisma.tipoExpediente.upsert({
+      where: { id: tipoExp.id },
+      update: {
+        nome: tipoExp.nome,
+        descricao: tipoExp.descricao,
+        ordem: tipoExp.ordem,
+        tempoMaximo: tipoExp.tempoMaximo,
+        ativo: tipoExp.ativo,
+      },
+      create: tipoExp,
+    })
+  }
+
+  console.log('✅ Tipos de Expediente criados:', tiposExpediente.length)
+
+  // ========================================
   // RESUMO FINAL
   // ========================================
   console.log('')

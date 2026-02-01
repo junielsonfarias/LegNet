@@ -364,7 +364,7 @@ export function getCSSVariables() {
 }
 
 // Export default
-export default {
+const portalTokens = {
   spacing,
   componentSpacing,
   typography,
@@ -381,3 +381,5 @@ export default {
   tailwindTokens,
   getCSSVariables,
 }
+
+export default portalTokens

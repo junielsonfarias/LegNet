@@ -135,7 +135,9 @@ export default function ParticiparConsultaPage() {
     if (!opcoes) return []
     try {
       return JSON.parse(opcoes)
-    } catch {
+    } catch (error) {
+      // Opções não estão em formato JSON, tentando split por vírgula
+      console.debug('Opções não são JSON válido, usando split:', error)
       return opcoes.split(',').map(o => o.trim())
     }
   }

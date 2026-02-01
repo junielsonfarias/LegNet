@@ -246,18 +246,18 @@ export const PUT = withErrorHandler(async (
     throw new ValidationError('Item não está em votação')
   }
 
-  if (!item.proposicaoId) {
+  if (!item.proposicaoId || !item.proposicao) {
     throw new ValidationError('Item não possui proposição vinculada para votação')
   }
 
   // Contabilizar votos
   const contagemVotos = await contabilizarVotos(item.proposicaoId, {
-    tipoProposicao: item.proposicao!.tipo,
+    tipoProposicao: item.proposicao.tipo,
     sessaoId
   })
 
   // Determinar tipo de quórum baseado no tipo de proposição
-  const aplicacaoQuorum = determinarAplicacaoQuorum(item.proposicao!.tipo)
+  const aplicacaoQuorum = determinarAplicacaoQuorum(item.proposicao.tipo)
 
   // Buscar totais
   const whereClause: any = { ativo: true }
@@ -321,7 +321,7 @@ export const PUT = withErrorHandler(async (
     itemId,
     turno,
     resultadoFinal as any,
-    item.proposicao!.tipo
+    item.proposicao.tipo
   )
 
   // Se foi resultado final (não há próximo turno), atualizar proposição

@@ -87,7 +87,8 @@ export function QuickParecerForm({
     if (open && proposicaoInicial) {
       setFormData(prev => ({ ...prev, proposicaoId: proposicaoInicial.id }))
     }
-  }, [open, proposicaoInicial, comissaoId])
+    // carregarProposicoes é definida no mesmo escopo e estável para estes deps
+  }, [open, proposicaoInicial, comissaoId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Selecionar relator automaticamente se houver apenas um com cargo RELATOR
   useEffect(() => {

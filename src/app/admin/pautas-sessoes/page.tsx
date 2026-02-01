@@ -126,11 +126,11 @@ export default function PautasSessoesAdminPage() {
     }
   }, [filterStatus, meta.page, meta.limit])
 
-  // Carregar sessoes disponiveis para vinculacao
+  // Carregar sessoes disponiveis para vinculacao (inclui finalizadas)
   const carregarSessoesDisponiveis = async () => {
     try {
       setLoadingSessoes(true)
-      const response = await fetch('/api/pautas/sessoes-disponiveis')
+      const response = await fetch('/api/pautas/sessoes-disponiveis?incluirFinalizadas=true')
       const result = await response.json()
 
       if (result.success) {
@@ -451,6 +451,11 @@ export default function PautasSessoesAdminPage() {
                                 as {sessao.horario}
                               </span>
                             )}
+                            {sessao.status === 'CONCLUIDA' && (
+                              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                                Finalizada
+                              </span>
+                            )}
                           </div>
                         </SelectItem>
                       ))}
@@ -505,6 +510,15 @@ export default function PautasSessoesAdminPage() {
                             <p className="text-xs text-gray-500">
                               {sessao.legislatura.numero}a Legislatura ({sessao.legislatura.periodo})
                             </p>
+                          )}
+                          {sessao.status === 'CONCLUIDA' && (
+                            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                              <p className="text-sm text-amber-800">
+                                <AlertCircle className="h-4 w-4 inline mr-1" />
+                                <strong>Sessao finalizada:</strong> Apos criar a pauta, voce podera adicionar proposicoes
+                                e registrar votacoes retroativamente na pagina de lancamento retroativo.
+                              </p>
+                            </div>
                           )}
                         </div>
                       )

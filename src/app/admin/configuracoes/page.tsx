@@ -74,7 +74,8 @@ const buildDraftValue = (config: SystemConfigApi): string | boolean => {
     case 'json':
       try {
         return JSON.stringify(config.valor ?? null, null, 2)
-      } catch {
+      } catch (error) {
+        console.error('Erro ao serializar valor de configuração:', error)
         return String(config.valor ?? '')
       }
     default:
@@ -93,7 +94,8 @@ const isEqualValue = (tipo: SystemConfigType, original: any, draft: string | boo
         const originalString = JSON.stringify(original ?? null)
         const draftParsed = typeof draft === 'string' ? JSON.parse(draft) : draft
         return originalString === JSON.stringify(draftParsed ?? null)
-      } catch {
+      } catch (error) {
+        console.error('Erro ao comparar valores JSON:', error)
         return false
       }
     default:
@@ -109,7 +111,11 @@ const parseDraftForUpdate = (tipo: SystemConfigType, draft: string | boolean): a
       return Number(draft)
     case 'json':
       if (typeof draft !== 'string') return draft
-      return JSON.parse(draft || 'null')
+      try {
+        return JSON.parse(draft || 'null')
+      } catch {
+        return null
+      }
     default:
       return typeof draft === 'string' ? draft : String(draft)
   }

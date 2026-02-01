@@ -9,6 +9,7 @@ import { Calendar, ArrowLeft, Share2, Loader2, AlertCircle, Newspaper, User } fr
 import Link from 'next/link'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 
 interface Noticia {
   id: string
@@ -206,7 +207,7 @@ export default function NoticiaDetalhePage() {
             <CardContent className="p-6 md:p-8">
               <div
                 className="prose prose-lg max-w-none"
-                dangerouslySetInnerHTML={{ __html: noticia.conteudo.replace(/\n/g, '<br/>') }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(noticia.conteudo.replace(/\n/g, '<br/>')) }}
               />
             </CardContent>
           </Card>

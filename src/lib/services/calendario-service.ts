@@ -150,13 +150,12 @@ async function buscarAudienciasPublicas(inicio: Date, fim: Date): Promise<Evento
   try {
     // Verificar se existe o modelo AudienciaPublica
     // Por ora, retornar array vazio se não existir
-    // @ts-ignore - modelo pode não existir
-    if (!prisma.audienciaPublica) {
+    const prismaAny = prisma as any
+    if (!prismaAny.audienciaPublica) {
       return []
     }
 
-    // @ts-ignore
-    const audiencias = await prisma.audienciaPublica.findMany({
+    const audiencias = await prismaAny.audienciaPublica.findMany({
       where: {
         data: {
           gte: inicio,
@@ -203,13 +202,12 @@ async function buscarReunioesComissoes(
   try {
     // Verificar se existe o modelo ReuniaoComissao
     // Por ora, retornar array vazio se não existir
-    // @ts-ignore - modelo pode não existir
-    if (!prisma.reuniaoComissao) {
+    const prismaAny = prisma as any
+    if (!prismaAny.reuniaoComissao) {
       return []
     }
 
-    // @ts-ignore
-    const reunioes = await prisma.reuniaoComissao.findMany({
+    const reunioes = await prismaAny.reuniaoComissao.findMany({
       where: {
         data: {
           gte: inicio,

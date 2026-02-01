@@ -70,9 +70,13 @@ export function CommandPalette({ open: controlledOpen, onOpenChange }: CommandPa
 
   // Carregar buscas recentes do localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('recentSearches')
-    if (saved) {
-      setRecentSearches(JSON.parse(saved))
+    try {
+      const saved = localStorage.getItem('recentSearches')
+      if (saved) {
+        setRecentSearches(JSON.parse(saved))
+      }
+    } catch {
+      // Ignora JSON inválido no localStorage
     }
   }, [])
 

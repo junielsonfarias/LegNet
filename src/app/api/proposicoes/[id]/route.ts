@@ -44,8 +44,9 @@ async function findProposicaoByIdOrSlug(idOrSlug: string) {
       proposicao = await prisma.proposicao.findUnique({
         where: { slug: idOrSlug }
       })
-    } catch {
-      // Campo slug pode não existir no banco ainda
+    } catch (error) {
+      // Campo slug pode não existir no banco ainda - isso é esperado durante migração
+      console.debug('Erro ao buscar proposição por slug:', error)
     }
 
     // Se não encontrar pelo slug, tenta buscar por número/ano/tipo
@@ -102,8 +103,9 @@ export const GET = withErrorHandler(async (
       if (bySlug) {
         return createSuccessResponse(bySlug, 'Proposição encontrada com sucesso')
       }
-    } catch {
-      // Campo slug pode não existir no banco ainda, continuar com busca por número/ano/tipo
+    } catch (error) {
+      // Campo slug pode não existir no banco ainda - tentará busca alternativa
+      console.debug('Erro ao buscar proposição por slug, tentando busca por número/ano/tipo:', error)
     }
 
     // Se não encontrou pelo slug, tenta por número/ano/tipo

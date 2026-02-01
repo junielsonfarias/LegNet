@@ -187,7 +187,7 @@ export const COMMON_CLASSES = {
   input: 'bg-slate-700 border-slate-600 text-white placeholder:text-slate-400'
 } as const
 
-export default {
+const painelTokens = {
   BREAKPOINTS,
   FONT_SIZES,
   SPACING,
@@ -202,3 +202,5 @@ export default {
   getVereadorCardSize,
   getVereadorGridClasses
 }
+
+export default painelTokens

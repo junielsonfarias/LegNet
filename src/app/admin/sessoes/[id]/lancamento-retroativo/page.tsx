@@ -24,13 +24,17 @@ import {
   MinusCircle,
   XCircle,
   Info,
-  History
+  History,
+  Plus,
+  PenLine,
+  ClipboardList
 } from 'lucide-react'
 import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
+import { PautaEditor } from '@/components/admin/pauta-editor'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,6 +77,36 @@ export default function LancamentoRetroativoPage() {
   const [motivo, setMotivo] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [carregandoVotos, setCarregandoVotos] = useState(false)
+  const [editandoPauta, setEditandoPauta] = useState(false)
+  const [alterandoStatus, setAlterandoStatus] = useState<string | null>(null)
+
+  // Alterar status diretamente (sem votos individuais)
+  const alterarStatusItem = async (itemId: string, novoStatus: 'APROVADO' | 'REJEITADO' | 'ADIADO' | 'RETIRADO') => {
+    setAlterandoStatus(itemId)
+    try {
+      const response = await fetch(`/api/pauta/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: novoStatus,
+          observacoes: `Status alterado retroativamente para ${novoStatus}`
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Erro ao alterar status')
+      }
+
+      toast.success(`Item marcado como ${novoStatus}`)
+      router.refresh()
+    } catch (err) {
+      console.error('Erro ao alterar status:', err)
+      toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
+    } finally {
+      setAlterandoStatus(null)
+    }
+  }
 
   // Carregar votos existentes quando item for selecionado
   const carregarVotosExistentes = useCallback(async (proposicaoId: string) => {
@@ -345,59 +379,160 @@ export default function LancamentoRetroativoPage() {
         {/* Selecao de Proposicao */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Vote className="h-5 w-5" />
-              Selecione a Proposicao
-            </CardTitle>
-            <CardDescription>
-              Escolha o item da pauta para registrar os votos
-            </CardDescription>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Vote className="h-5 w-5" />
+                  Selecione a Proposição
+                </CardTitle>
+                <CardDescription>
+                  Escolha o item da pauta para registrar os votos
+                </CardDescription>
+              </div>
+              {!editandoPauta && itensPauta.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditandoPauta(true)}
+                >
+                  <PenLine className="h-4 w-4 mr-1" />
+                  Editar Pauta
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {itensPauta.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">
-                Nenhuma proposicao na pauta desta sessao
-              </p>
+            {editandoPauta ? (
+              <PautaEditor
+                sessaoId={sessao.id}
+                onClose={() => {
+                  setEditandoPauta(false)
+                  router.refresh()
+                }}
+              />
+            ) : itensPauta.length === 0 ? (
+              <div className="text-center py-8">
+                <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">
+                  Nenhuma proposição na pauta desta sessão.
+                </p>
+                <p className="text-sm text-gray-400 mb-6">
+                  Para lançar votações retroativas, primeiro adicione as proposições que foram votadas na sessão.
+                </p>
+                <Button onClick={() => setEditandoPauta(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Proposições à Pauta
+                </Button>
+              </div>
             ) : (
-              itensPauta.map(item => (
-                <div
-                  key={item.id}
-                  className={cn(
-                    'p-3 rounded-lg border cursor-pointer transition-colors',
-                    itemSelecionado?.id === item.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  )}
-                  onClick={() => setItemSelecionado(item)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">
-                          {item.proposicao?.tipo} {item.proposicao?.numero}/{item.proposicao?.ano}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'text-xs',
-                            item.status === 'APROVADO' && 'bg-green-50 text-green-700 border-green-200',
-                            item.status === 'REJEITADO' && 'bg-red-50 text-red-700 border-red-200',
-                            item.status === 'PENDENTE' && 'bg-gray-50 text-gray-700'
-                          )}
-                        >
-                          {item.status}
-                        </Badge>
+              <div className="space-y-3">
+                {itensPauta.map(item => (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      'p-3 rounded-lg border transition-colors',
+                      itemSelecionado?.id === item.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    )}
+                  >
+                    <div
+                      className="flex items-start justify-between cursor-pointer"
+                      onClick={() => setItemSelecionado(item)}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">
+                            {item.proposicao?.tipo} {item.proposicao?.numero}/{item.proposicao?.ano}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              'text-xs',
+                              item.status === 'APROVADO' && 'bg-green-50 text-green-700 border-green-200',
+                              item.status === 'REJEITADO' && 'bg-red-50 text-red-700 border-red-200',
+                              item.status === 'ADIADO' && 'bg-orange-50 text-orange-700 border-orange-200',
+                              item.status === 'RETIRADO' && 'bg-purple-50 text-purple-700 border-purple-200',
+                              item.status === 'PENDENTE' && 'bg-gray-50 text-gray-700'
+                            )}
+                          >
+                            {item.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {item.proposicao?.titulo || item.titulo}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {item.proposicao?.titulo || item.titulo}
-                      </p>
+                      {itemSelecionado?.id === item.id && (
+                        <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                      )}
                     </div>
-                    {itemSelecionado?.id === item.id && (
-                      <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
+
+                    {/* Ações Rápidas - alterar status diretamente */}
+                    {item.status === 'PENDENTE' && (
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+                        <span className="text-xs text-gray-500 mr-2">Ação rápida:</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs text-green-600 hover:bg-green-50"
+                          disabled={alterandoStatus === item.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            alterarStatusItem(item.id, 'APROVADO')
+                          }}
+                        >
+                          {alterandoStatus === item.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <>
+                              <ThumbsUp className="h-3 w-3 mr-1" />
+                              Aprovado
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs text-red-600 hover:bg-red-50"
+                          disabled={alterandoStatus === item.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            alterarStatusItem(item.id, 'REJEITADO')
+                          }}
+                        >
+                          <ThumbsDown className="h-3 w-3 mr-1" />
+                          Rejeitado
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs text-orange-600 hover:bg-orange-50"
+                          disabled={alterandoStatus === item.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            alterarStatusItem(item.id, 'ADIADO')
+                          }}
+                        >
+                          Adiado
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs text-purple-600 hover:bg-purple-50"
+                          disabled={alterandoStatus === item.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            alterarStatusItem(item.id, 'RETIRADO')
+                          }}
+                        >
+                          Retirado
+                        </Button>
+                      </div>
                     )}
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>

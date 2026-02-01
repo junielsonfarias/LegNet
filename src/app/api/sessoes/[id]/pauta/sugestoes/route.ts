@@ -9,6 +9,12 @@ import { MAPEAMENTO_TIPO_SECAO } from '@/lib/services/proposicao-validacao-servi
 // Incluir novos status que permitem inclusão na pauta
 const STATUS_SUGESTAO: StatusProposicao[] = ['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA']
 
+// Status para sessões finalizadas (retroativo) - inclui mais opções
+const STATUS_RETROATIVO: StatusProposicao[] = [
+  'APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA',
+  'APROVADA', 'REJEITADA', 'ARQUIVADA', 'SANCIONADA', 'PROMULGADA', 'VETADA'
+]
+
 const mapTipoToSecao = (tipo: string): 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS' => {
   // Usar mapeamento do serviço de validação
   const mapeamento = MAPEAMENTO_TIPO_SECAO[tipo]
@@ -92,18 +98,42 @@ export const GET = withAuth(async (
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
+  const { searchParams } = new URL(_request.url)
+  const retroativo = searchParams.get('retroativo') === 'true'
+
   const sessao = await prisma.sessao.findUnique({
-    where: { id: params.id }
+    where: { id: params.id },
+    include: {
+      pautaSessao: {
+        include: {
+          itens: {
+            select: { proposicaoId: true }
+          }
+        }
+      }
+    }
   })
 
   if (!sessao) {
     throw new NotFoundError('Sessão')
   }
 
+  // Para sessões finalizadas ou modo retroativo, usar filtro mais amplo
+  const isRetroativo = retroativo || sessao.status === 'CONCLUIDA'
+  const statusFiltro = isRetroativo ? STATUS_RETROATIVO : STATUS_SUGESTAO
+
+  // IDs das proposições já na pauta (para não sugerir duplicados)
+  const idsNaPauta = sessao.pautaSessao?.itens
+    ?.map(item => item.proposicaoId)
+    .filter((id): id is string => !!id) || []
+
   const proposicoes = await prisma.proposicao.findMany({
     where: {
-      sessaoId: null,
-      status: { in: STATUS_SUGESTAO }
+      // Para retroativo, não exigir sessaoId null
+      ...(isRetroativo ? {} : { sessaoId: null }),
+      status: { in: statusFiltro },
+      // Excluir proposições já na pauta
+      id: { notIn: idsNaPauta }
     },
     include: {
       autor: {
@@ -125,7 +155,8 @@ export const GET = withAuth(async (
     orderBy: {
       dataApresentacao: 'asc'
     },
-    take: 15
+    // Mais proposições para modo retroativo
+    take: isRetroativo ? 50 : 15
   })
 
   const sugestoes = proposicoes.map((proposicao) => {
@@ -169,6 +200,11 @@ export const GET = withAuth(async (
     }
   })
 
-  return createSuccessResponse(sugestoes, 'Sugestões geradas com sucesso')
+  return createSuccessResponse({
+    sugestoes,
+    isRetroativo,
+    sessaoStatus: sessao.status,
+    totalProposicoesDisponiveis: proposicoes.length
+  }, 'Sugestões geradas com sucesso')
 }, { permissions: 'pauta.manage' })
 

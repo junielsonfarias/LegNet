@@ -88,7 +88,8 @@ export function QuickMeetingDialog({
       setStep(1)
       setItensSelecionados([])
     }
-  }, [open, comissaoId])
+    // carregarDefaults é definida no mesmo escopo e estável para estes deps
+  }, [open, comissaoId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function carregarDefaults() {
     try {

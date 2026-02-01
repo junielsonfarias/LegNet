@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -227,7 +228,7 @@ export default function NormaPublicaPage() {
                   <div className="prose max-w-none">
                     <div
                       className="whitespace-pre-wrap text-gray-700 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: norma.texto || 'Texto nao disponivel' }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(norma.texto) || 'Texto nao disponivel' }}
                     />
                   </div>
                 </TabsContent>
@@ -243,7 +244,7 @@ export default function NormaPublicaPage() {
                     <div className="prose max-w-none">
                       <div
                         className="whitespace-pre-wrap text-gray-700 leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: norma.textoCompilado }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(norma.textoCompilado) }}
                       />
                     </div>
                   </TabsContent>

@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
-    const ano = searchParams.get('ano') ? parseInt(searchParams.get('ano')!) : undefined
+    const anoParam = searchParams.get('ano')
+    const ano = anoParam ? parseInt(anoParam, 10) : undefined
     const tipo = searchParams.get('tipo')
     const status = searchParams.get('status')
     const page = parseInt(searchParams.get('page') || '1')

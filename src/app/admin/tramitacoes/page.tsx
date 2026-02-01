@@ -101,7 +101,8 @@ const formatDateTime = (value?: string | null) => {
       hour: '2-digit',
       minute: '2-digit'
     })
-  } catch {
+  } catch (error) {
+    console.error('Erro ao formatar data/hora:', error)
     return '—'
   }
 }
@@ -116,7 +117,8 @@ const formatDate = (value?: string | null) => {
       month: '2-digit',
       year: 'numeric'
     })
-  } catch {
+  } catch (error) {
+    console.error('Erro ao formatar data:', error)
     return '—'
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,34 +40,6 @@ export default function SessoesAdminPage() {
     descricao: ''
   })
 
-  // Log quando o componente monta - FORÇAR LOG DIRETO
-  React.useEffect(() => {
-    console.log('🔄 SessoesAdminPage renderizado, showForm:', showForm)
-    console.log('🔄 formData:', formData)
-    console.log('🔄 editingId:', editingId)
-    
-    // Listener de erros globais
-    const handleError = (event: ErrorEvent) => {
-      console.error('🚨 Erro global capturado:', event.error)
-      console.error('🚨 Mensagem:', event.message)
-      console.error('🚨 Stack:', event.error?.stack)
-      // Forçar exibição no alert também
-      alert('Erro JavaScript: ' + event.message)
-    }
-    
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      console.error('🚨 Promise rejeitada:', event.reason)
-      alert('Promise rejeitada: ' + String(event.reason))
-    }
-    
-    window.addEventListener('error', handleError)
-    window.addEventListener('unhandledrejection', handleUnhandledRejection)
-    
-    return () => {
-      window.removeEventListener('error', handleError)
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-    }
-  }, [showForm, formData, editingId])
 
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
@@ -131,23 +103,15 @@ export default function SessoesAdminPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log('🚀 handleSubmit INICIADO')
-    console.log('📝 editingId:', editingId)
-    console.log('📝 formData:', formData)
-    
-    // Validar campos obrigatórios manualmente
+
+    // Validar campos obrigatórios
     if (!formData.numero || !formData.data) {
-      console.error('❌ Campos obrigatórios não preenchidos:', {
-        numero: formData.numero,
-        data: formData.data
-      })
       toast.error('Preencha todos os campos obrigatórios')
       return
     }
     
     try {
       if (editingId) {
-        console.log('✏️ Atualizando sessão...')
         const updated = await update(editingId, {
           numero: parseInt(formData.numero),
           tipo: formData.tipo,
@@ -161,7 +125,6 @@ export default function SessoesAdminPage() {
           toast.success('Sessão atualizada com sucesso')
         }
       } else {
-        console.log('➕ Criando nova sessão...')
         const dadosParaEnviar = {
           numero: parseInt(formData.numero),
           tipo: formData.tipo,
@@ -170,14 +133,11 @@ export default function SessoesAdminPage() {
           status: formData.status,
           descricao: formData.descricao || undefined
         }
-        console.log('📤 Dados que serão enviados:', dadosParaEnviar)
-        
+
         try {
           const nova = await create(dadosParaEnviar)
-          console.log('📥 Resposta do create:', nova)
-          
+
           if (nova) {
-            console.log('✅ Sessão criada com sucesso, ID:', nova.id)
             toast.success('Sessão criada com sucesso')
             
             // Limpar formulário
@@ -192,11 +152,9 @@ export default function SessoesAdminPage() {
             setShowForm(false)
             setEditingId(null)
           } else {
-            console.error('❌ create retornou null')
             toast.error('Erro ao criar sessão')
           }
         } catch (error) {
-          console.error('❌ Erro ao criar sessão:', error)
           toast.error(error instanceof Error ? error.message : 'Erro ao criar sessão')
         }
       }
@@ -213,7 +171,6 @@ export default function SessoesAdminPage() {
       setShowForm(false)
       setEditingId(null)
     } catch (error) {
-      console.error('❌ Erro ao salvar sessão:', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao salvar sessão')
     }
   }
@@ -251,14 +208,6 @@ export default function SessoesAdminPage() {
     const matchesNumero = sessao.numero.toString().includes(searchTerm)
     
     return matchesTipo || matchesStatus || matchesDescricao || matchesNumero
-  })
-
-  console.log('🔍 Filtro aplicado:', {
-    totalSessoes: sessoes.length,
-    searchTerm,
-    filteredCount: filteredSessoes.length,
-    sessoesIds: sessoes.map(s => s.id),
-    filteredIds: filteredSessoes.map(s => s.id)
   })
 
   if (loading) {
@@ -385,10 +334,7 @@ export default function SessoesAdminPage() {
                     type="number"
                     min="1"
                     value={formData.numero}
-                    onChange={(e) => {
-                      console.log('📝 Campo numero alterado:', e.target.value)
-                      setFormData({...formData, numero: e.target.value})
-                    }}
+                    onChange={(e) => setFormData({...formData, numero: e.target.value})}
                     required
                   />
                 </div>
@@ -416,10 +362,7 @@ export default function SessoesAdminPage() {
                     name="data"
                     type="datetime-local"
                     value={formData.data}
-                    onChange={(e) => {
-                      console.log('📅 Campo data alterado:', e.target.value)
-                      setFormData({...formData, data: e.target.value})
-                    }}
+                    onChange={(e) => setFormData({...formData, data: e.target.value})}
                     required
                   />
                 </div>

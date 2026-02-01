@@ -53,10 +53,6 @@ export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
     where.tipo = tipo
   }
 
-  console.log('🔍 GET /api/sessoes - Tipo de banco:', prisma.constructor.name)
-  console.log('🔍 Filtros aplicados:', where)
-  console.log('🔍 Paginação:', { page, limit, skip: (page - 1) * limit })
-  
   const [sessoes, total] = await Promise.all([
     prisma.sessao.findMany({
       where,
@@ -121,20 +117,6 @@ export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
     prisma.sessao.count({ where })
   ])
 
-  console.log('📋 Sessões retornadas da API GET:', {
-    total: sessoes.length,
-    totalCount: total,
-    filtros: where,
-    usandoMock: prisma.constructor.name !== 'PrismaClient',
-    sessoes: sessoes.map(s => ({ id: s.id, numero: s.numero, tipo: s.tipo, status: s.status }))
-  })
-  
-  // Se estiver usando mock, verificar todas as sessões sem filtro
-  if (prisma.constructor.name !== 'PrismaClient') {
-    const todasSessoes = await prisma.sessao.findMany({})
-    console.log('📊 Total de sessões no mock (sem filtro):', todasSessoes.length)
-  }
-
   return createSuccessResponse(
     sessoes,
     'Sessões listadas com sucesso',
@@ -151,35 +133,22 @@ export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
 
 // POST - Criar sessão
 export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
-  console.log('📥 POST /api/sessoes - Requisição recebida')
   let body
   try {
     body = await request.json()
-    console.log('📦 Body recebido (raw):', JSON.stringify(body))
-    console.log('📦 Body recebido (parsed):', body)
-    console.log('📦 Tipos dos dados:', {
-      numero: typeof body.numero,
-      tipo: typeof body.tipo,
-      data: typeof body.data,
-      status: typeof body.status
-    })
   } catch (error) {
-    console.error('❌ Erro ao parsear JSON:', error)
     throw new ValidationError('Body inválido')
   }
-  
+
   // Validar dados
-  console.log('✅ Validando dados com Zod...')
   let validatedData
   try {
     // Converter numero para number se for string
     if (typeof body.numero === 'string') {
       body.numero = parseInt(body.numero, 10)
-      console.log('🔄 numero convertido de string para number:', body.numero)
     }
-    
+
     validatedData = SessaoSchema.parse(body)
-    console.log('✅ Dados validados com sucesso:', validatedData)
     
     // Validação de data no backend
     const dataSessao = combineDateAndTimeUTC(validatedData.data, validatedData.horario)
@@ -202,12 +171,6 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       throw new ValidationError('Data inválida')
     }
   } catch (error: any) {
-    console.error('❌ Erro na validação Zod:', error)
-    console.error('❌ Detalhes do erro:', {
-      errors: error.errors,
-      message: error.message,
-      issues: error.issues
-    })
     throw new ValidationError(error.errors?.[0]?.message || error.message || 'Dados inválidos')
   }
   
@@ -232,7 +195,6 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       )
     }
     legislaturaId = legislatura.id
-    console.log('📋 Legislatura identificada automaticamente:', legislatura.numero, ehDadoPreterito ? '(dados pretéritos)' : '')
   }
 
   if (!periodoId && legislaturaId) {
@@ -250,14 +212,12 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       )
     }
     periodoId = periodo.id
-    console.log('📋 Período identificado automaticamente:', periodo.numero, ehDadoPreterito ? '(dados pretéritos)' : '')
   }
   
   // Calcular número sequencial se não fornecido (apenas para sessões ordinárias)
   let numeroSessao = validatedData.numero
   if (!numeroSessao && validatedData.tipo === 'ORDINARIA' && legislaturaId && periodoId) {
     numeroSessao = await getProximoNumeroSessaoOrdinaria(legislaturaId, periodoId)
-    console.log('📋 Número sequencial calculado:', numeroSessao)
   } else if (!numeroSessao) {
     // Para outros tipos, buscar o maior número e adicionar 1
     const ultimaSessao = await prisma.sessao.findFirst({
@@ -268,7 +228,6 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       orderBy: { numero: 'desc' }
     })
     numeroSessao = ultimaSessao ? ultimaSessao.numero + 1 : 1
-    console.log('📋 Número calculado para sessão não-ordinária:', numeroSessao)
   }
   
   // Verificar se já existe sessão com mesmo número na mesma legislatura/período
@@ -337,9 +296,8 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
         where: { id: sessao.id },
         data: { ata: ataGerada }
       })
-      console.log('📋 Ata gerada automaticamente')
     } catch (error) {
-      console.error('⚠️ Erro ao gerar ata (não crítico):', error)
+      // Erro ao gerar ata não é crítico, sessão ainda foi criada
     }
   }
 
@@ -384,14 +342,6 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     }
   })
 
-  console.log('✅ Sessão criada no banco de dados:', {
-    id: sessao.id,
-    numero: sessao.numero,
-    tipo: sessao.tipo,
-    data: sessao.data,
-    status: sessao.status
-  })
-  
   await logAudit({
     request,
     session,

@@ -295,8 +295,9 @@ export async function GET(request: NextRequest) {
         try {
           const eventString = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
           controller.enqueue(encoder.encode(eventString))
-        } catch {
-          // Ignorar erro se conexao fechada
+        } catch (error) {
+          // Conexão provavelmente foi fechada pelo cliente
+          console.debug('Erro ao enviar evento SSE (conexão fechada?):', error)
         }
       }
 
@@ -306,8 +307,9 @@ export async function GET(request: NextRequest) {
 
         try {
           controller.enqueue(encoder.encode(': heartbeat\n\n'))
-        } catch {
-          // Ignorar erro se conexao fechada
+        } catch (error) {
+          // Conexão provavelmente foi fechada pelo cliente
+          console.debug('Erro ao enviar heartbeat SSE (conexão fechada?):', error)
         }
       }
 
@@ -361,7 +363,7 @@ export async function GET(request: NextRequest) {
                 if (votosAtuais > votosAnteriores) {
                   // Encontrar quem votou
                   const novoVoto = estado.vereadores.find(v => {
-                    const anterior = ultimoEstado!.vereadores.find(a => a.id === v.id)
+                    const anterior = ultimoEstado?.vereadores.find(a => a.id === v.id)
                     return v.voto !== null && anterior?.voto === null
                   })
                   if (novoVoto) {

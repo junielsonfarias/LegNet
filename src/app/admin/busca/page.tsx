@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { sanitizeHtml } from '@/lib/utils/sanitize-html'
 import {
   Search,
   FileText,
@@ -443,7 +444,7 @@ export default function BuscaPage() {
 
                         <p className="text-sm text-gray-600 line-clamp-2">
                           {resultado.destaque ? (
-                            <span dangerouslySetInnerHTML={{ __html: resultado.destaque }} />
+                            <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(resultado.destaque) }} />
                           ) : (
                             resultado.descricao
                           )}

@@ -180,15 +180,16 @@ export const POST = withAuth(async (
 
   // Usar transação para garantir atomicidade na atualização
   if (sessao.mesaSessao) {
+    const mesaSessaoId = sessao.mesaSessao.id
     const mesaAtualizada = await prisma.$transaction(async (tx) => {
       // Deletar membros antigos
       await tx.membroMesaSessao.deleteMany({
-        where: { mesaSessaoId: sessao.mesaSessao!.id }
+        where: { mesaSessaoId }
       })
 
       // Atualizar mesa e criar novos membros
       return tx.mesaSessao.update({
-        where: { id: sessao.mesaSessao!.id },
+        where: { id: mesaSessaoId },
         data: {
           observacoes,
           criadoPor: userId,
