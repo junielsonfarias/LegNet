@@ -325,29 +325,9 @@ export async function gerarPautaAutomatica(
     }
   ]
 
-  const proposicoesPrioritarias = await prisma.proposicao.findMany({
-    where: {
-      sessaoId: null,
-      status: { in: ['APRESENTADA', 'EM_TRAMITACAO'] }
-    },
-    orderBy: {
-      dataApresentacao: 'asc'
-    },
-    take: 5
-  })
-
-  const ordemInicial = itens.length + 1
-
-  proposicoesPrioritarias.forEach((proposicao, index) => {
-    const ano = proposicao.dataApresentacao.getFullYear()
-    itens.push({
-      secao: 'ORDEM_DO_DIA',
-      ordem: ordemInicial + index,
-      titulo: `${proposicao.tipo.replace('_', ' ')} nº ${proposicao.numero}/${ano}`,
-      descricao: proposicao.ementa?.slice(0, 180) || 'Discussão e votação da matéria apresentada',
-      tempoEstimado: 25
-    })
-  })
+  // NOTA: Proposições NÃO são mais adicionadas automaticamente.
+  // O usuário deve adicionar manualmente através da interface de pauta,
+  // selecionando as proposições disponíveis para incluir na sessão.
 
   itens.push({
     secao: 'COMUNICACOES',

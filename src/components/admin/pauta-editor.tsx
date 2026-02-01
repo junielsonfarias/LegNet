@@ -135,8 +135,11 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
     return acc
   }, {} as Record<string, PautaItemApi[]>) || {}
 
+  // Garantir que suggestions seja um array antes de filtrar
+  const suggestionsArray = Array.isArray(suggestions) ? suggestions : []
+
   // Filtrar sugestões
-  const filteredSuggestions = suggestions.filter(s =>
+  const filteredSuggestions = suggestionsArray.filter(s =>
     !searchTerm ||
     s.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.proposicao?.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -299,10 +302,10 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
                 variant="outline"
                 size="sm"
                 onClick={() => setShowSuggestions(true)}
-                disabled={suggestions.length === 0}
+                disabled={suggestionsArray.length === 0}
               >
                 <Search className="h-4 w-4 mr-1" />
-                Proposições ({suggestions.length})
+                Proposições ({suggestionsArray.length})
               </Button>
               <Button
                 size="sm"

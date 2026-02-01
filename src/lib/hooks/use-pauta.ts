@@ -72,9 +72,11 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
     try {
       setLoadingSuggestions(true)
       const data = await pautaApi.getSuggestions(sessaoId)
-      setSuggestions(data)
+      // Garantir que data seja sempre um array
+      setSuggestions(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('Erro ao carregar sugestões de pauta:', err)
+      setSuggestions([]) // Garantir array vazio em caso de erro
     } finally {
       setLoadingSuggestions(false)
     }

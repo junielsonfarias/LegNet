@@ -1,9 +1,48 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-01-31 (Auditoria de Seguranca e Qualidade de Codigo)
+> **Ultima Atualizacao**: 2026-02-01 (Correcao Pauta Sessao e Editor)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcoes de Pauta (01/02/2026)
+
+### Problemas Corrigidos
+
+| Problema | Severidade | Status |
+|----------|------------|--------|
+| Proposicoes vinculadas automaticamente na criacao da sessao | MEDIO | Corrigido |
+| Erro `suggestions.filter is not a function` no PautaEditor | CRITICO | Corrigido |
+
+### Descricao das Correcoes
+
+**1. Pauta criada com proposicoes automaticamente:**
+- **Problema**: Ao criar uma sessao, a pauta ja vinha com proposicoes vinculadas automaticamente
+- **Causa**: Funcao `gerarPautaAutomatica()` buscava proposicoes e as adicionava automaticamente
+- **Solucao**: Removida a busca automatica de proposicoes. A pauta agora inicia apenas com itens padrao (Expediente e Comunicacoes)
+- **Comportamento correto**: Usuario adiciona manualmente as proposicoes atraves da interface de pauta
+
+**2. Erro ao editar pauta:**
+- **Problema**: TypeError ao acessar menu de pautas e editar
+- **Causa**: Estado `suggestions` podia nao ser array quando API falhava ou retornava formato inesperado
+- **Solucao**: Adicionada validacao para garantir que `suggestions` sempre seja array
+- **Arquivos corrigidos**:
+  - `use-pauta.ts` - Validacao no fetchSuggestions
+  - `pauta-editor.tsx` - Validacao antes do filter
+
+### Arquivos Modificados
+
+- `src/lib/utils/sessoes-utils.ts`
+  - `gerarPautaAutomatica()` - Removida busca e inclusao automatica de proposicoes
+
+- `src/lib/hooks/use-pauta.ts`
+  - `fetchSuggestions()` - Validacao Array.isArray e fallback para array vazio
+
+- `src/components/admin/pauta-editor.tsx`
+  - Adicionada variavel `suggestionsArray` com validacao
+  - Botao de proposicoes usa `suggestionsArray.length`
 
 ---
 
