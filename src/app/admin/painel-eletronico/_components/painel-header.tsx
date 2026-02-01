@@ -67,6 +67,15 @@ export function PainelHeader({
         </div>
       </CardHeader>
       <CardContent>
+        {/* Aviso para sessão agendada */}
+        {sessao.status === 'agendada' && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-800">
+              <strong>Sessão agendada.</strong> Clique em &quot;Iniciar Sessão&quot; no painel de controles acima para começar.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Informações da Sessão */}
           <div className="space-y-2">
@@ -80,7 +89,12 @@ export function PainelHeader({
               <strong>Local:</strong> {sessao.local}
             </div>
             <div className="text-sm text-muted-foreground">
-              <strong>Presidente:</strong> {sessao.presidente}
+              <strong>Presidente:</strong>{' '}
+              {sessao.presidente && sessao.presidente !== 'Não definido' ? (
+                sessao.presidente
+              ) : (
+                <span className="italic text-amber-600">A definir</span>
+              )}
             </div>
           </div>
 
@@ -100,7 +114,7 @@ export function PainelHeader({
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {sessao.estatisticas.percentualPresenca}%
+                {!isNaN(sessao.estatisticas.percentualPresenca) ? sessao.estatisticas.percentualPresenca : 0}%
               </div>
               <div className="text-xs text-muted-foreground">Quórum</div>
             </div>

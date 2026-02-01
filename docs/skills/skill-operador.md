@@ -11,6 +11,11 @@ O Painel do Operador e a interface central para controle de sessoes legislativas
 | Arquivo | Funcao |
 |---------|--------|
 | `src/app/painel-operador/[sessaoId]/page.tsx` | Painel principal do operador |
+| `src/app/admin/painel-eletronico/page.tsx` | Painel eletronico admin (selecao de sessao) |
+| `src/app/admin/painel-eletronico/[sessaoId]/page.tsx` | Painel eletronico detalhado |
+| `src/app/admin/painel-eletronico/_components/painel-header.tsx` | Header com info da sessao e estatisticas |
+| `src/app/admin/painel-eletronico/_components/painel-controles.tsx` | Controles de sessao (iniciar/finalizar) |
+| `src/app/admin/painel-eletronico/_hooks/use-painel-state.ts` | Hook de estado do painel admin |
 | `src/lib/services/sessao-controle.ts` | Controle de estado da sessao |
 | `src/lib/services/votacao-service.ts` | Gerenciamento de votacoes |
 | `src/lib/services/painel-tempo-real-service.ts` | Estado em tempo real |

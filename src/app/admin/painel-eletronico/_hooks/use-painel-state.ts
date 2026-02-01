@@ -97,8 +97,8 @@ export function usePainelState(): UsePainelStateReturn {
             status: sessao.status === 'CONCLUIDA' ? 'concluida' :
                    sessao.status === 'EM_ANDAMENTO' ? 'em_andamento' :
                    sessao.status === 'CANCELADA' ? 'cancelada' : 'agendada',
-            presidente: sessao.presidente || 'Não definido',
-            secretario: sessao.secretario || 'Não definido',
+            presidente: sessao.presidente?.nome || sessao.presidente?.apelido || (typeof sessao.presidente === 'string' ? sessao.presidente : 'Não definido'),
+            secretario: sessao.secretario?.nome || sessao.secretario?.apelido || (typeof sessao.secretario === 'string' ? sessao.secretario : 'Não definido'),
             local: sessao.local || 'Plenário da Câmara Municipal',
             transmissao: {
               ativa: false,

@@ -1,9 +1,64 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Registro de Leitura de Proposicoes)
+> **Ultima Atualizacao**: 2026-02-01 (Correcoes Painel Eletronico)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcoes no Painel Eletronico Admin (01/02/2026)
+
+### Problemas Corrigidos
+
+| Problema | Status | Arquivo |
+|----------|--------|---------|
+| "NaN%" no percentual de presenca | Corrigido | `painel-header.tsx` |
+| "Nao definido" como presidente sem tratamento visual | Corrigido | `painel-header.tsx` |
+| Presidente/Secretario nao extraindo nome de relacionamento | Corrigido | `use-painel-state.ts` |
+| Falta de feedback visual para sessao agendada | Corrigido | `painel-header.tsx` |
+| Falta de mensagem quando nao ha presencas | Corrigido | `page.tsx` |
+| Sem indicacao para sessao concluida/cancelada | Corrigido | `painel-controles.tsx` |
+
+### Descricao das Mudancas
+
+**1. Correcao do NaN% no Header:**
+- **Arquivo**: `src/app/admin/painel-eletronico/_components/painel-header.tsx`
+- **Mudanca**: Adicionada verificacao `!isNaN()` antes de exibir percentual
+- **Antes**: `{sessao.estatisticas.percentualPresenca}%`
+- **Depois**: `{!isNaN(sessao.estatisticas.percentualPresenca) ? sessao.estatisticas.percentualPresenca : 0}%`
+
+**2. Tratamento Visual para Presidente:**
+- **Arquivo**: `src/app/admin/painel-eletronico/_components/painel-header.tsx`
+- **Mudanca**: Exibe "A definir" em italico amber quando presidente nao esta definido
+- **Objetivo**: Melhor experiencia visual em vez de "Nao definido"
+
+**3. Extracao de Nome do Relacionamento:**
+- **Arquivo**: `src/app/admin/painel-eletronico/_hooks/use-painel-state.ts`
+- **Mudanca**: Extrai `presidente?.nome || presidente?.apelido` do objeto relacionado
+- **Objetivo**: Funcionar tanto com string quanto com objeto de relacionamento
+
+**4. Aviso para Sessao Agendada:**
+- **Arquivo**: `src/app/admin/painel-eletronico/_components/painel-header.tsx`
+- **Mudanca**: Adicionado aviso visual "Sessao agendada. Clique em Iniciar Sessao..."
+- **Objetivo**: Guiar o usuario sobre como iniciar a sessao
+
+**5. Mensagem de Presenca Vazia:**
+- **Arquivo**: `src/app/admin/painel-eletronico/page.tsx`
+- **Mudanca**: Card de presenca exibe "Nenhuma presenca registrada" com icone
+- **Objetivo**: Feedback visual quando nao ha dados de presenca
+
+**6. Status de Sessao Concluida/Cancelada:**
+- **Arquivo**: `src/app/admin/painel-eletronico/_components/painel-controles.tsx`
+- **Mudanca**: Exibe texto informativo quando sessao esta concluida/cancelada
+- **Objetivo**: Usuario sabe que nao pode mais controlar a sessao
+
+### Arquivos Modificados
+
+- `src/app/admin/painel-eletronico/_components/painel-header.tsx`
+- `src/app/admin/painel-eletronico/_components/painel-controles.tsx`
+- `src/app/admin/painel-eletronico/_hooks/use-painel-state.ts`
+- `src/app/admin/painel-eletronico/page.tsx`
 
 ---
 

@@ -187,30 +187,38 @@ export default function PainelEletronicoPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span>Total:</span>
-                    <span className="font-semibold">{presenca.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Presentes:</span>
-                    <span className="font-semibold text-green-600">
-                      {presenca.filter(p => p.presente).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Ausentes:</span>
-                    <span className="font-semibold text-red-600">
-                      {presenca.filter(p => !p.presente).length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Quórum:</span>
-                    <span className="font-semibold">
-                      {presenca.length > 0
-                        ? Math.round((presenca.filter(p => p.presente).length / presenca.length) * 100)
-                        : 0}%
-                    </span>
-                  </div>
+                  {presenca.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Nenhuma presença registrada</p>
+                      <p className="text-xs mt-1">Inicie a sessão para registrar presenças</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span>Total:</span>
+                        <span className="font-semibold">{presenca.length}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Presentes:</span>
+                        <span className="font-semibold text-green-600">
+                          {presenca.filter(p => p.presente).length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Ausentes:</span>
+                        <span className="font-semibold text-red-600">
+                          {presenca.filter(p => !p.presente).length}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Quórum:</span>
+                        <span className="font-semibold">
+                          {Math.round((presenca.filter(p => p.presente).length / presenca.length) * 100)}%
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 

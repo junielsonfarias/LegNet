@@ -102,6 +102,12 @@ export function PainelControles({
                 Finalizar Sessão
               </Button>
             )}
+
+            {(sessao?.status === 'concluida' || sessao?.status === 'cancelada') && (
+              <span className="text-sm text-muted-foreground italic">
+                Sessão {sessao.status === 'concluida' ? 'concluída' : 'cancelada'}
+              </span>
+            )}
           </div>
 
           {/* Controles de Mídia */}
