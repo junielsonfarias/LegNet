@@ -1254,27 +1254,20 @@ export async function tramitarParaAguardandoPauta(
       return { valid: false, errors, warnings }
     }
 
-    // Busca unidade "Secretaria Legislativa"
-    const secretariaLegislativa = await prisma.tramitacaoUnidade.findFirst({
+    // Busca unidade "Secretaria" (pode ser "Secretaria Legislativa" ou apenas "Secretaria")
+    const unidadeDestino = await prisma.tramitacaoUnidade.findFirst({
       where: {
         ativo: true,
         OR: [
           { tipo: 'SECRETARIA', nome: { contains: 'Legislativa', mode: 'insensitive' } },
-          { nome: { contains: 'Secretaria Legislativa', mode: 'insensitive' } }
+          { nome: { contains: 'Secretaria Legislativa', mode: 'insensitive' } },
+          { tipo: 'SECRETARIA' } // Fallback para qualquer secretaria
         ]
       }
     })
 
-    // Se não encontrou, tenta buscar qualquer secretaria
-    const unidadeDestino = secretariaLegislativa || await prisma.tramitacaoUnidade.findFirst({
-      where: {
-        ativo: true,
-        tipo: 'SECRETARIA'
-      }
-    })
-
     if (!unidadeDestino) {
-      errors.push('Unidade "Secretaria Legislativa" não encontrada no sistema.')
+      errors.push('Unidade de Secretaria não encontrada no sistema.')
       return { valid: false, errors, warnings }
     }
 
