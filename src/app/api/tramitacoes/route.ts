@@ -238,11 +238,44 @@ export const POST = withAuth(async (request: NextRequest, { user }) => {
     }
   })
 
-  // Atualizar status da proposição se necessário
-  if (proposicao.status === 'APRESENTADA') {
+  // Atualizar status da proposição baseado no tipo de tramitação/unidade
+  const tipoNomeLower = tipo.nome.toLowerCase()
+  const unidadeNomeLower = unidade.nome.toLowerCase()
+  const observacoesLower = (payload.observacoes || '').toLowerCase()
+
+  // Detecta se é tramitação para "Aguardando Pauta"
+  const isAguardandoPauta =
+    tipoNomeLower.includes('aguardando pauta') ||
+    tipoNomeLower.includes('pauta') ||
+    observacoesLower.includes('aguardando pauta') ||
+    (unidade.tipo === 'SECRETARIA' && (
+      observacoesLower.includes('pauta') ||
+      observacoesLower.includes('aguardando')
+    ))
+
+  // Detecta se é tramitação para "Plenário" (em pauta)
+  const isEmPauta =
+    unidade.tipo === 'PLENARIO' ||
+    unidadeNomeLower.includes('plenário') ||
+    unidadeNomeLower.includes('plenario') ||
+    tipoNomeLower.includes('plenário') ||
+    tipoNomeLower.includes('plenario')
+
+  // Determinar novo status da proposição
+  let novoStatusProposicao: string | null = null
+
+  if (isEmPauta) {
+    novoStatusProposicao = 'EM_PAUTA'
+  } else if (isAguardandoPauta) {
+    novoStatusProposicao = 'AGUARDANDO_PAUTA'
+  } else if (proposicao.status === 'APRESENTADA') {
+    novoStatusProposicao = 'EM_TRAMITACAO'
+  }
+
+  if (novoStatusProposicao && novoStatusProposicao !== proposicao.status) {
     await prisma.proposicao.update({
       where: { id: payload.proposicaoId },
-      data: { status: 'EM_TRAMITACAO' }
+      data: { status: novoStatusProposicao as any }
     })
   }
 

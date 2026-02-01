@@ -1,9 +1,52 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Editor de Presenca Sessao)
+> **Ultima Atualizacao**: 2026-02-01 (Correcao Status Tramitacao Manual)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcao na Atualizacao de Status ao Criar Tramitacao (01/02/2026)
+
+### Problema
+Ao criar uma nova tramitacao manual (formulario "Nova Tramitacao Manual") com destino "Secretaria" ou tipo "Aguardando Pauta", o status da proposicao nao era atualizado de `EM_TRAMITACAO` para `AGUARDANDO_PAUTA`.
+
+### Causa Raiz
+A API `POST /api/tramitacoes` apenas atualizava o status de `APRESENTADA` para `EM_TRAMITACAO`, mas nao detectava quando a tramitacao indicava "Aguardando Pauta" para atualizar o status corretamente.
+
+### Solucao Implementada
+
+**Arquivo**: `src/app/api/tramitacoes/route.ts`
+
+A API agora detecta automaticamente o contexto da tramitacao:
+
+```typescript
+// Detecta se é tramitação para "Aguardando Pauta"
+const isAguardandoPauta =
+  tipoNomeLower.includes('aguardando pauta') ||
+  tipoNomeLower.includes('pauta') ||
+  observacoesLower.includes('aguardando pauta') ||
+  (unidade.tipo === 'SECRETARIA' && (
+    observacoesLower.includes('pauta') ||
+    observacoesLower.includes('aguardando')
+  ))
+
+// Detecta se é tramitação para "Plenário" (em pauta)
+const isEmPauta =
+  unidade.tipo === 'PLENARIO' ||
+  unidadeNomeLower.includes('plenário') ||
+  tipoNomeLower.includes('plenário')
+```
+
+### Regras de Atualizacao de Status
+
+| Condicao | Novo Status |
+|----------|-------------|
+| Unidade = PLENARIO ou nome contem "Plenário" | `EM_PAUTA` |
+| Tipo/Observacoes contem "Aguardando Pauta" ou "Pauta" | `AGUARDANDO_PAUTA` |
+| Unidade SECRETARIA + observacoes contem "pauta" | `AGUARDANDO_PAUTA` |
+| Status anterior = APRESENTADA | `EM_TRAMITACAO` |
 
 ---
 
