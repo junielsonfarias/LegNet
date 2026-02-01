@@ -127,7 +127,58 @@ export const POST = withAuth(async (
     ip
   )
 
+  // Se não há tramitação ativa, tenta atualizar o status diretamente baseado no resultado
   if (!resultadoAvancar.success) {
+    // Verifica se o erro é por falta de tramitação
+    const erroSemTramitacao = resultadoAvancar.errors.some(e =>
+      e.includes('não possui tramitação') || e.includes('tramitação em andamento')
+    )
+
+    if (erroSemTramitacao && resultado) {
+      // Atualiza status da proposição diretamente baseado no resultado
+      let novoStatus: 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'EM_TRAMITACAO' = 'EM_TRAMITACAO'
+      if (resultado === 'APROVADO' || resultado === 'APROVADO_COM_EMENDAS') {
+        novoStatus = 'APROVADA'
+      } else if (resultado === 'REJEITADO') {
+        novoStatus = 'REJEITADA'
+      } else if (resultado === 'ARQUIVADO') {
+        novoStatus = 'ARQUIVADA'
+      }
+
+      await prisma.proposicao.update({
+        where: { id: proposicaoId },
+        data: { status: novoStatus }
+      })
+
+      // Registra auditoria
+      await logAudit({
+        request,
+        session,
+        action: 'TRAMITACAO_STATUS_DIRETO',
+        entity: 'Proposicao',
+        entityId: proposicaoId,
+        metadata: {
+          proposicaoId,
+          proposicaoNumero: `${proposicao.numero}/${proposicao.ano}`,
+          resultado,
+          novoStatus,
+          observacoes
+        }
+      })
+
+      return createSuccessResponse(
+        {
+          proposicaoId,
+          tramitacaoAnterior: null,
+          tramitacaoNova: null,
+          etapaFinal: true,
+          proposicaoStatus: novoStatus,
+          warnings: ['Status atualizado diretamente (sem fluxo de tramitação configurado)']
+        },
+        'Status da proposição atualizado com sucesso'
+      )
+    }
+
     throw new ValidationError(resultadoAvancar.errors.join('; '))
   }
 

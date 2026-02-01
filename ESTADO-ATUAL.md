@@ -1,9 +1,45 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Correcoes Painel Eletronico)
+> **Ultima Atualizacao**: 2026-02-01 (Correcao Tramitacao Status)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcao na Tramitacao de Proposicoes (01/02/2026)
+
+### Problema
+Ao fazer tramitacao de indicacoes e outros tipos de proposicao, o status da proposicao nao era atualizado.
+
+### Causa Raiz
+1. A funcao `advance()` na API de tramitacoes chamava a rota errada (`/api/tramitacoes/${id}`) usando ID de proposicao em vez de ID de tramitacao
+2. A API de tramitacao da proposicao falhava silenciosamente quando nao havia fluxo de tramitacao configurado
+
+### Solucoes Implementadas
+
+| Correcao | Arquivo |
+|----------|---------|
+| Funcao `advance()` agora chama `/api/proposicoes/${id}/tramitar` | `tramitacoes-api.ts` |
+| API aceita atualizar status direto quando nao ha fluxo | `tramitar/route.ts` |
+| Tipos atualizados com `parecer`, `resultado`, `etapaFinal`, `proposicaoStatus` | `tramitacoes-api.ts` |
+
+### Descricao Tecnica
+
+**1. Correcao na funcao advance():**
+- **Arquivo**: `src/lib/api/tramitacoes-api.ts`
+- **Antes**: Chamava `/api/tramitacoes/${id}` com ID de proposicao
+- **Depois**: Chama `/api/proposicoes/${proposicaoId}/tramitar` com acao `AVANCAR_ETAPA`
+
+**2. Fallback para proposicoes sem fluxo:**
+- **Arquivo**: `src/app/api/proposicoes/[id]/tramitar/route.ts`
+- **Mudanca**: Quando nao ha tramitacao ativa, atualiza status diretamente baseado no resultado
+- **Comportamento**: APROVADO -> APROVADA, REJEITADO -> REJEITADA, ARQUIVADO -> ARQUIVADA
+
+### Arquivos Modificados
+
+- `src/lib/api/tramitacoes-api.ts`
+- `src/app/api/proposicoes/[id]/tramitar/route.ts`
 
 ---
 

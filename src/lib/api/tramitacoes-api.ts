@@ -205,6 +205,8 @@ export interface TramitacaoAdvancePayload {
   comentario?: string | null
   regraId?: string
   etapaId?: string
+  parecer?: string | null
+  resultado?: string | null
 }
 
 export interface TramitacaoReopenPayload {
@@ -217,12 +219,14 @@ export interface TramitacaoFinalizePayload {
 }
 
 export interface TramitacaoAdvanceResponse {
-  etapaFinalizada: TramitacaoApi
+  etapaFinalizada: TramitacaoApi | null
   novaEtapa?: TramitacaoApi | null
   historicos: TramitacaoHistoricoApi[]
   notificacoes: TramitacaoNotificacaoApi[]
   regraAplicada?: TramitacaoRegraApi | null
   etapaDestino?: TramitacaoRegraEtapaApi | null
+  etapaFinal?: boolean
+  proposicaoStatus?: string
 }
 
 interface ListResponse<T> {
@@ -958,24 +962,52 @@ class TramitacoesApiService {
     }
   }
 
-  async advance(id: string, payload: TramitacaoAdvancePayload = {}): Promise<TramitacaoAdvanceResponse> {
+  /**
+   * Avança a tramitação de uma proposição para a próxima etapa
+   * @param proposicaoId - ID da proposição (não da tramitação)
+   */
+  async advance(proposicaoId: string, payload: TramitacaoAdvancePayload = {}): Promise<TramitacaoAdvanceResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/${id}`, {
-        method: 'PUT',
+      // Chama a API de tramitação da proposição que atualiza o status corretamente
+      const response = await fetch(`/api/proposicoes/${proposicaoId}/tramitar`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          action: 'advance',
-          comentario: payload.comentario ?? undefined,
-          regraId: payload.regraId,
-          etapaId: payload.etapaId
+          acao: 'AVANCAR_ETAPA',
+          observacoes: payload.comentario ?? undefined,
+          parecer: payload.parecer ?? undefined,
+          resultado: payload.resultado ?? undefined
         })
       })
 
-      return this.handleResponse<TramitacaoAdvanceResponse>(response, () => fallbackAdvanceTramitacao(id, payload))
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao avançar tramitação')
+      }
+
+      // Converte resposta para o formato esperado
+      return {
+        etapaFinalizada: data.data.tramitacaoAnterior ? {
+          id: data.data.tramitacaoAnterior.id,
+          etapa: data.data.tramitacaoAnterior.etapa,
+          status: 'CONCLUIDA'
+        } as any : null,
+        novaEtapa: data.data.tramitacaoNova ? {
+          id: data.data.tramitacaoNova.id,
+          etapa: data.data.tramitacaoNova.etapa
+        } as any : null,
+        historicos: [],
+        notificacoes: [],
+        regraAplicada: null,
+        etapaDestino: null,
+        etapaFinal: data.data.etapaFinal,
+        proposicaoStatus: data.data.proposicaoStatus
+      }
     } catch (error) {
-      return fallbackAdvanceTramitacao(id, payload)
+      return fallbackAdvanceTramitacao(proposicaoId, payload)
     }
   }
 
