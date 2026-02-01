@@ -239,7 +239,8 @@ model Sessao {
   finalizada    Boolean      @default(false) // Indica se é uma sessão já finalizada (para inclusão de dados pretéritos)
   legislaturaId String? // Relacionamento com Legislatura
   periodoId     String? // Relacionamento com PeriodoLegislatura
-  tempoInicio   DateTime?    // Data/hora real em que a sessão foi iniciada (para cronômetro)
+  tempoInicio    DateTime?   // Data/hora real em que a sessão foi iniciada (para cronômetro)
+  tempoAcumulado Int         @default(0) // Segundos acumulados (usado para suspensão)
 
   // === CAMPOS DE MÍDIA (SAPL) ===
   urlAudio       String?     // Link do áudio da sessão (YouTube, etc)
@@ -427,6 +428,7 @@ enum TipoSessao {
 enum StatusSessao {
   AGENDADA
   EM_ANDAMENTO
+  SUSPENSA
   CONCLUIDA
   CANCELADA
 }
@@ -527,7 +529,7 @@ model TemplateItem {
   titulo         String
   descricao      String?         @db.Text
   tempoEstimado  Int?
-  tipoProposicao TipoProposicao?
+  tipoProposicao String?         // Codigo do tipo de proposicao (flexivel, nao mais enum)
   obrigatorio    Boolean         @default(false)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -558,7 +560,7 @@ model Proposicao {
   slug             String?           @unique // URL amigável: pl-0022-2025
   numero           String
   ano              Int
-  tipo             TipoProposicao
+  tipo             String            // Codigo do tipo (ex: PROJETO_LEI, INDICACAO, ou customizado)
   titulo           String
   ementa           String            @db.Text
   texto            String?           @db.Text
@@ -615,7 +617,7 @@ enum TipoProposicao {
 // Configurações de tipos de proposição (gerenciável pelo admin)
 model TipoProposicaoConfig {
   id              String          @id @default(cuid())
-  codigo          TipoProposicao  @unique  // Vincula ao enum
+  codigo          String          @unique  // Codigo unico do tipo (ex: PROJETO_LEI, INDICACAO, HOMENAGEM_ESPECIAL)
   nome            String                    // Nome completo (ex: "Projeto de Lei")
   sigla           String                    // Sigla (ex: "PL")
   descricao       String?         @db.Text  // Descrição do tipo
@@ -1558,7 +1560,7 @@ enum TramitacaoUnidadeTipo {
 
 model TramitacaoTipoProposicao {
   id             String          @id @default(cuid())
-  tipoProposicao TipoProposicao?
+  tipoProposicao String?         // Codigo do tipo de proposicao (flexivel)
   nome           String
   sigla          String
   descricao      String?
@@ -1740,7 +1742,7 @@ model ConfiguracaoTramitacao {
 
 model FluxoTramitacao {
   id              String          @id @default(cuid())
-  tipoProposicao  TipoProposicao  @unique
+  tipoProposicao  String          @unique  // Codigo do tipo de proposicao (flexivel)
   nome            String
   descricao       String?         @db.Text
   ativo           Boolean         @default(true)

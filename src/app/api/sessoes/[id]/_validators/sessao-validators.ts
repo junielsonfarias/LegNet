@@ -9,13 +9,14 @@ export const UpdateSessaoSchema = z.object({
   data: z.string().optional(),
   horario: z.string().optional(),
   local: z.string().optional(),
-  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA']).optional(),
+  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA']).optional(),
   descricao: z.string().optional(),
   ata: z.string().optional(),
   finalizada: z.boolean().optional(),
   legislaturaId: z.string().optional(),
   periodoId: z.string().optional(),
-  tempoInicio: z.string().nullable().optional()
+  tempoInicio: z.string().nullable().optional(),
+  tempoAcumulado: z.number().min(0).optional()
 })
 
 export type UpdateSessaoInput = z.infer<typeof UpdateSessaoSchema>

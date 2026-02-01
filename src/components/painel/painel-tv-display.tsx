@@ -40,6 +40,7 @@ export interface EstadoPainel {
     data: string
     horarioInicio?: string
     tempoInicio?: string | null
+    tempoAcumulado?: number
   } | null
   itemAtual: ItemPautaAtivo | null
   votacao: {
@@ -88,12 +89,16 @@ export function PainelTvDisplay({
     if (!sessao) return ''
     switch (sessao.status) {
       case 'EM_ANDAMENTO': return 'EM ANDAMENTO'
+      case 'SUSPENSA': return 'SUSPENSA'
       case 'AGENDADA': return 'AGENDADA'
       case 'CONCLUIDA': return 'CONCLUIDA'
       case 'CANCELADA': return 'CANCELADA'
       default: return sessao.status
     }
   }, [sessao])
+
+  // Verificar se a sessao esta suspensa
+  const sessaoSuspensa = sessao?.status === 'SUSPENSA'
 
   // Tipo de sessao para exibicao
   const tipoSessaoLabel = useMemo(() => {
@@ -236,7 +241,9 @@ export function PainelTvDisplay({
                 <div className="flex items-center gap-3 text-sm">
                   <span className={cn(
                     'px-2 py-0.5 rounded-full font-semibold',
-                    sessao?.status === 'EM_ANDAMENTO' ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
+                    sessao?.status === 'EM_ANDAMENTO' ? 'bg-green-600 text-white' :
+                    sessao?.status === 'SUSPENSA' ? 'bg-orange-600 text-white animate-pulse' :
+                    'bg-gray-600 text-white'
                   )}>
                     {statusSessaoLabel}
                   </span>
@@ -257,9 +264,15 @@ export function PainelTvDisplay({
               <div className="flex items-center justify-end gap-4 text-sm text-gray-300 mt-1">
                 {/* Cronômetro da sessão */}
                 {cronometroSessao && (
-                  <div className="flex items-center gap-1 text-blue-300">
-                    <Timer className="w-4 h-4" />
+                  <div className={cn(
+                    "flex items-center gap-1",
+                    sessaoSuspensa ? "text-orange-300" : "text-blue-300"
+                  )}>
+                    <Timer className={cn("w-4 h-4", sessaoSuspensa && "animate-pulse")} />
                     <span className="font-mono font-semibold">{cronometroSessao}</span>
+                    {sessaoSuspensa && (
+                      <span className="text-xs bg-orange-500/30 px-1.5 py-0.5 rounded text-orange-300">PAUSADO</span>
+                    )}
                   </div>
                 )}
                 <div className="flex items-center gap-1">

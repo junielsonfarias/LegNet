@@ -140,13 +140,6 @@ function buildUpdateData(
   }
 
   // Validações finais
-  const finalizada = updateData.finalizada ?? existingSessao.finalizada
-  const status = updateData.status ?? existingSessao.status
-
-  if (validatedData.data !== undefined && status === 'AGENDADA' && !finalizada && dataAtualizada <= new Date()) {
-    throw new ValidationError('A data da sessão deve ser futura para sessões agendadas')
-  }
-
   if (updateData.tempoInicio && Number.isNaN((updateData.tempoInicio as Date).getTime())) {
     throw new ValidationError('Tempo de início inválido')
   }
@@ -175,18 +168,43 @@ function processStatusTransition(
     case 'AGENDADA':
       updateData.finalizada = false
       updateData.tempoInicio = null
+      updateData.tempoAcumulado = 0
       break
 
     case 'EM_ANDAMENTO':
       updateData.finalizada = false
-      if (!existingSessao.tempoInicio) {
+      // Se retomando de SUSPENSA, apenas define tempoInicio (mantém tempoAcumulado)
+      // Se iniciando pela primeira vez, define tempoInicio e mantém tempoAcumulado em 0
+      if (statusAnterior === 'SUSPENSA') {
         updateData.tempoInicio = new Date()
+      } else if (!existingSessao.tempoInicio) {
+        updateData.tempoInicio = new Date()
+      }
+      break
+
+    case 'SUSPENSA':
+      // Ao suspender, calcular tempo decorrido e acumular
+      if (statusAnterior === 'EM_ANDAMENTO' && existingSessao.tempoInicio) {
+        const agora = new Date()
+        const tempoDecorrido = Math.floor(
+          (agora.getTime() - new Date(existingSessao.tempoInicio).getTime()) / 1000
+        )
+        updateData.tempoAcumulado = (existingSessao.tempoAcumulado || 0) + tempoDecorrido
+        updateData.tempoInicio = null
       }
       break
 
     case 'CONCLUIDA':
     case 'CANCELADA':
       updateData.finalizada = true
+      // Se estava em andamento, calcular tempo final
+      if (statusAnterior === 'EM_ANDAMENTO' && existingSessao.tempoInicio) {
+        const agora = new Date()
+        const tempoDecorrido = Math.floor(
+          (agora.getTime() - new Date(existingSessao.tempoInicio).getTime()) / 1000
+        )
+        updateData.tempoAcumulado = (existingSessao.tempoAcumulado || 0) + tempoDecorrido
+      }
       break
   }
 }

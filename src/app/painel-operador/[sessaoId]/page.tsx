@@ -43,7 +43,12 @@ import {
   ListOrdered,
   UserCheck,
   UserX,
-  Minus
+  Minus,
+  BookOpen,
+  MessageSquare,
+  Award,
+  Megaphone,
+  AlertCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -51,7 +56,7 @@ import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import type { PautaItemApi } from '@/lib/api/pauta-api'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 import { PresencaControl } from '@/components/admin/presenca-control'
-import { VotacaoAcompanhamento } from '@/components/admin/votacao-acompanhamento'
+import { VotacaoLancamento } from '@/components/admin/votacao-lancamento'
 import { VotacaoEdicao } from '@/components/admin/votacao-edicao'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { cn } from '@/lib/utils'
@@ -68,6 +73,7 @@ const getSessaoStatusBadge = (status: string) => {
   switch (status) {
     case 'AGENDADA': return 'bg-blue-600 text-white'
     case 'EM_ANDAMENTO': return 'bg-green-600 text-white'
+    case 'SUSPENSA': return 'bg-orange-600 text-white'
     case 'CONCLUIDA': return 'bg-gray-600 text-white'
     case 'CANCELADA': return 'bg-red-600 text-white'
     default: return 'bg-slate-600 text-white'
@@ -78,6 +84,7 @@ const getSessaoStatusLabel = (status: string) => {
   switch (status) {
     case 'AGENDADA': return 'Agendada'
     case 'EM_ANDAMENTO': return 'Em andamento'
+    case 'SUSPENSA': return 'Suspensa'
     case 'CONCLUIDA': return 'Concluida'
     case 'CANCELADA': return 'Cancelada'
     default: return status
@@ -97,12 +104,12 @@ const getTipoSessaoLabel = (tipo: string) => {
 const getItemStatusConfig = (status: string) => {
   switch (status) {
     case 'PENDENTE': return { bg: 'bg-slate-600', text: 'text-slate-200', label: 'Pendente' }
-    case 'EM_DISCUSSAO': return { bg: 'bg-blue-600', text: 'text-white', label: 'Em Discussao' }
-    case 'EM_VOTACAO': return { bg: 'bg-purple-600', text: 'text-white', label: 'Em Votacao' }
+    case 'EM_DISCUSSAO': return { bg: 'bg-blue-600', text: 'text-white', label: 'Em Discussão' }
+    case 'EM_VOTACAO': return { bg: 'bg-purple-600', text: 'text-white', label: 'Em Votação' }
     case 'APROVADO': return { bg: 'bg-green-600', text: 'text-white', label: 'Aprovado' }
     case 'REJEITADO': return { bg: 'bg-red-600', text: 'text-white', label: 'Rejeitado' }
     case 'ADIADO': return { bg: 'bg-yellow-600', text: 'text-black', label: 'Adiado' }
-    case 'CONCLUIDO': return { bg: 'bg-teal-600', text: 'text-white', label: 'Concluido' }
+    case 'CONCLUIDO': return { bg: 'bg-teal-600', text: 'text-white', label: 'Concluído' }
     case 'RETIRADO': return { bg: 'bg-orange-600', text: 'text-white', label: 'Retirado' }
     case 'VISTA': return { bg: 'bg-indigo-600', text: 'text-white', label: 'Vista' }
     default: return { bg: 'bg-slate-600', text: 'text-slate-200', label: status }
@@ -111,12 +118,90 @@ const getItemStatusConfig = (status: string) => {
 
 const getTipoAcaoConfig = (tipoAcao: string) => {
   switch (tipoAcao) {
-    case 'VOTACAO': return { icon: Vote, color: 'text-purple-400' }
-    case 'LEITURA': return { icon: FileText, color: 'text-blue-400' }
-    case 'DISCUSSAO': return { icon: Users, color: 'text-teal-400' }
-    case 'COMUNICACAO': return { icon: Monitor, color: 'text-amber-400' }
-    default: return { icon: FileText, color: 'text-slate-400' }
+    case 'VOTACAO': return { icon: Vote, color: 'text-purple-400', label: 'Votação' }
+    case 'LEITURA': return { icon: BookOpen, color: 'text-sky-400', label: 'Leitura' }
+    case 'DISCUSSAO': return { icon: MessageSquare, color: 'text-teal-400', label: 'Discussão' }
+    case 'COMUNICADO': return { icon: Megaphone, color: 'text-amber-400', label: 'Comunicado' }
+    case 'HOMENAGEM': return { icon: Award, color: 'text-pink-400', label: 'Homenagem' }
+    default: return { icon: FileText, color: 'text-slate-400', label: 'Item' }
   }
+}
+
+// Configuração de ações baseada no tipoAcao e status do item
+const getAcoesDisponiveis = (item: PautaItemApi) => {
+  const tipoAcao = item.tipoAcao || 'LEITURA'
+  const status = item.status
+
+  // Ações para quando o item está PENDENTE
+  if (status === 'PENDENTE') {
+    switch (tipoAcao) {
+      case 'LEITURA':
+        return { iniciar: { label: 'Iniciar Leitura', icon: BookOpen, color: 'text-sky-400 hover:text-sky-300 hover:bg-sky-900/30' } }
+      case 'VOTACAO':
+        return { iniciar: { label: 'Iniciar Leitura', icon: BookOpen, color: 'text-sky-400 hover:text-sky-300 hover:bg-sky-900/30' } }
+      case 'DISCUSSAO':
+        return { iniciar: { label: 'Iniciar Discussão', icon: MessageSquare, color: 'text-teal-400 hover:text-teal-300 hover:bg-teal-900/30' } }
+      case 'COMUNICADO':
+        return { iniciar: { label: 'Iniciar Comunicado', icon: Megaphone, color: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30' } }
+      case 'HOMENAGEM':
+        return { iniciar: { label: 'Iniciar Homenagem', icon: Award, color: 'text-pink-400 hover:text-pink-300 hover:bg-pink-900/30' } }
+      default:
+        return { iniciar: { label: 'Iniciar', icon: Play, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30' } }
+    }
+  }
+
+  // Ações para quando o item está EM_DISCUSSAO
+  if (status === 'EM_DISCUSSAO') {
+    switch (tipoAcao) {
+      case 'LEITURA':
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          finalizar: { label: 'Concluir Leitura', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' }
+        }
+      case 'VOTACAO':
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          votacao: { label: 'Abrir Votação', icon: Vote, color: 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/30' },
+          finalizar: { label: 'Finalizar', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' }
+        }
+      case 'DISCUSSAO':
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          finalizar: { label: 'Concluir Discussão', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' }
+        }
+      case 'COMUNICADO':
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          finalizar: { label: 'Concluir', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' }
+        }
+      case 'HOMENAGEM':
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          finalizar: { label: 'Concluir', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' }
+        }
+      default:
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          finalizar: { label: 'Finalizar', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' }
+        }
+    }
+  }
+
+  // Ações para quando o item está EM_VOTACAO
+  if (status === 'EM_VOTACAO') {
+    return {
+      finalizar: { label: 'Encerrar Votação', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' }
+    }
+  }
+
+  // Ações para quando o item está ADIADO ou pausado
+  if (status === 'ADIADO' || (item.iniciadoEm === null && item.tempoAcumulado && item.tempoAcumulado > 0)) {
+    return {
+      retomar: { label: 'Retomar', icon: RotateCcw, color: 'text-blue-400 hover:text-blue-300 hover:bg-blue-900/30' }
+    }
+  }
+
+  return {}
 }
 
 export default function PainelOperadorPage() {
@@ -153,15 +238,23 @@ export default function PainelOperadorPage() {
 
   const iniciarSessaoTimer = useCallback((dadosSessao: SessaoApi) => {
     if (sessaoIntervalRef.current) clearInterval(sessaoIntervalRef.current)
+    const tempoAcumulado = (dadosSessao as any).tempoAcumulado || 0
+
     if (dadosSessao.status === 'EM_ANDAMENTO' && dadosSessao.tempoInicio) {
       const calcularTempo = () => {
         const inicio = new Date(dadosSessao.tempoInicio!)
         const agora = new Date()
         const diff = Math.floor((agora.getTime() - inicio.getTime()) / 1000)
-        setCronometroSessao(diff > 0 ? diff : 0)
+        setCronometroSessao(tempoAcumulado + (diff > 0 ? diff : 0))
       }
       calcularTempo()
       sessaoIntervalRef.current = setInterval(calcularTempo, 1000)
+    } else if (dadosSessao.status === 'SUSPENSA') {
+      // Sessão suspensa - mostrar tempo acumulado (pausado)
+      setCronometroSessao(tempoAcumulado)
+    } else if (dadosSessao.status === 'CONCLUIDA') {
+      // Sessão concluída - mostrar tempo total final
+      setCronometroSessao(tempoAcumulado)
     } else {
       setCronometroSessao(0)
     }
@@ -200,8 +293,8 @@ export default function PainelOperadorPage() {
         null
       )
     } catch (error: any) {
-      console.error('Erro ao carregar sessao:', error)
-      toast.error(error?.message || 'Erro ao carregar sessao')
+      console.error('Erro ao carregar sessão:', error)
+      toast.error(error?.message || 'Erro ao carregar sessão')
     } finally {
       if (mostrarLoader) setLoading(false)
     }
@@ -217,7 +310,7 @@ export default function PainelOperadorPage() {
     }
   }, [carregarSessao])
 
-  const alterarStatusSessao = async (novoStatus: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA') => {
+  const alterarStatusSessao = async (novoStatus: 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA') => {
     if (!sessao) return
     try {
       setExecutando(true)
@@ -233,7 +326,7 @@ export default function PainelOperadorPage() {
       await carregarSessao(false)
       toast.success(`Status alterado para ${getSessaoStatusLabel(novoStatus)}`)
     } catch (error: any) {
-      toast.error(error?.message || 'Erro ao alterar status da sessao')
+      toast.error(error?.message || 'Erro ao alterar status da sessão')
     } finally {
       setExecutando(false)
     }
@@ -244,18 +337,19 @@ export default function PainelOperadorPage() {
     acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar',
     resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
   ) => {
+    if (!sessao) return
     try {
       setExecutando(true)
-      await sessoesApi.controlItem(sessaoId, itemId, acao, resultado)
+      await sessoesApi.controlItem(sessao.id, itemId, acao, resultado)
       await carregarSessao(false)
       toast.success(
         acao === 'iniciar' ? 'Item iniciado' :
         acao === 'pausar' ? 'Item pausado' :
         acao === 'retomar' ? 'Item retomado' :
-        acao === 'votacao' ? 'Votacao iniciada' : 'Item finalizado'
+        acao === 'votacao' ? 'Votação iniciada' : 'Item finalizado'
       )
     } catch (error: any) {
-      toast.error(error?.message || 'Erro ao executar acao no item')
+      toast.error(error?.message || 'Erro ao executar ação no item')
     } finally {
       setExecutando(false)
     }
@@ -340,7 +434,7 @@ export default function PainelOperadorPage() {
             <div className="flex items-center gap-2">
               <Monitor className="h-5 w-5 text-blue-400 flex-shrink-0" />
               <span className="font-bold text-lg truncate">
-                {sessao.numero}a {getTipoSessaoLabel(sessao.tipo)}
+                {sessao.numero}ª {getTipoSessaoLabel(sessao.tipo)}
               </span>
             </div>
             <div className="hidden md:flex items-center gap-3 text-sm text-slate-400">
@@ -372,7 +466,7 @@ export default function PainelOperadorPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
-                {['AGENDADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'].map(s => (
+                {['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA'].map(s => (
                   <DropdownMenuItem
                     key={s}
                     onClick={() => alterarStatusSessao(s as any)}
@@ -418,14 +512,92 @@ export default function PainelOperadorPage() {
       {/* Barra de Status / Cronometro */}
       <div className="flex-shrink-0 bg-slate-800/50 border-b border-slate-700 px-4 py-2">
         <div className="flex items-center justify-between gap-4">
-          {/* Cronometro da Sessao */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Timer className="h-4 w-4 text-blue-400" />
-              <span className="text-xl font-mono font-bold text-blue-400">{formatSeconds(cronometroSessao)}</span>
+          {/* Botoes de Controle da Sessao */}
+          <div className="flex items-center gap-3">
+            {sessao.status === 'AGENDADA' && (
+              <Button
+                size="sm"
+                className="h-9 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                onClick={() => alterarStatusSessao('EM_ANDAMENTO')}
+                disabled={executando}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Iniciar Sessão
+              </Button>
+            )}
+            {sessao.status === 'EM_ANDAMENTO' && (
+              <>
+                <Button
+                  size="sm"
+                  className="h-9 px-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                  onClick={() => alterarStatusSessao('SUSPENSA')}
+                  disabled={executando}
+                >
+                  <Pause className="h-4 w-4 mr-2" />
+                  Suspender
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                  onClick={() => alterarStatusSessao('CONCLUIDA')}
+                  disabled={executando}
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  Finalizar
+                </Button>
+              </>
+            )}
+            {sessao.status === 'SUSPENSA' && (
+              <>
+                <Button
+                  size="sm"
+                  className="h-9 px-4 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                  onClick={() => alterarStatusSessao('EM_ANDAMENTO')}
+                  disabled={executando}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Retomar
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-9 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                  onClick={() => alterarStatusSessao('CONCLUIDA')}
+                  disabled={executando}
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  Finalizar
+                </Button>
+              </>
+            )}
+
+            {/* Cronometro da Sessao */}
+            <div className="flex items-center gap-2 ml-2">
+              <Timer className={cn(
+                "h-4 w-4",
+                sessao.status === 'EM_ANDAMENTO' ? "text-green-400" :
+                sessao.status === 'SUSPENSA' ? "text-orange-400 animate-pulse" :
+                "text-blue-400"
+              )} />
+              <span className={cn(
+                "text-xl font-mono font-bold",
+                sessao.status === 'EM_ANDAMENTO' ? "text-green-400" :
+                sessao.status === 'SUSPENSA' ? "text-orange-400" :
+                "text-blue-400"
+              )}>
+                {formatSeconds(cronometroSessao)}
+              </span>
+              {sessao.status === 'SUSPENSA' && (
+                <Badge className="bg-orange-500/30 text-orange-300 text-xs ml-1">
+                  PAUSADO
+                </Badge>
+              )}
             </div>
+          </div>
+
+          {/* Item em Execucao e Resumo da Pauta */}
+          <div className="flex items-center gap-4">
             {itemEmExecucao && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="hidden lg:flex items-center gap-2 text-sm">
                 <Minus className="h-3 w-3 text-slate-500" />
                 <span className="text-slate-400">Item:</span>
                 <span className="font-medium text-white truncate max-w-[200px]">
@@ -436,16 +608,16 @@ export default function PainelOperadorPage() {
                 <Badge variant="outline" className="font-mono text-xs h-5">{formatSeconds(cronometroItem)}</Badge>
               </div>
             )}
-          </div>
 
-          {/* Resumo da Pauta */}
-          <div className="hidden md:flex items-center gap-3 text-xs">
-            <span className="text-slate-400">Pauta:</span>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-slate-700 rounded">{totalItens} total</span>
-              <span className="px-2 py-0.5 bg-green-900/50 text-green-400 rounded">{itensAprovados} aprov</span>
-              <span className="px-2 py-0.5 bg-red-900/50 text-red-400 rounded">{itensRejeitados} rej</span>
-              <span className="px-2 py-0.5 bg-slate-600 rounded">{itensPendentes} pend</span>
+            {/* Resumo da Pauta */}
+            <div className="hidden md:flex items-center gap-3 text-xs">
+              <span className="text-slate-400">Pauta:</span>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 bg-slate-700 rounded">{totalItens} total</span>
+                <span className="px-2 py-0.5 bg-green-900/50 text-green-400 rounded">{itensAprovados} aprov</span>
+                <span className="px-2 py-0.5 bg-red-900/50 text-red-400 rounded">{itensRejeitados} rej</span>
+                <span className="px-2 py-0.5 bg-slate-600 rounded">{itensPendentes} pend</span>
+              </div>
             </div>
           </div>
         </div>
@@ -461,10 +633,10 @@ export default function PainelOperadorPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-white text-base">
                     <ListOrdered className="h-4 w-4 text-blue-400" />
-                    Pauta da Sessao
+                    Pauta da Sessão
                   </CardTitle>
                   <Badge variant="outline" className="text-slate-400 text-xs">
-                    {itensConcluidos}/{totalItens} concluidos
+                    {itensConcluidos}/{totalItens} concluídos
                   </Badge>
                 </div>
               </CardHeader>
@@ -517,6 +689,9 @@ export default function PainelOperadorPage() {
                                       <Badge className={cn(statusConfig.bg, statusConfig.text, "text-[10px] h-5 px-1.5")}>
                                         {statusConfig.label}
                                       </Badge>
+                                      <Badge variant="outline" className={cn("text-[10px] h-5 px-1.5", tipoConfig.color)}>
+                                        {tipoConfig.label}
+                                      </Badge>
                                       <span className="text-xs text-slate-500">#{item.ordem}</span>
                                     </div>
                                     <p className="text-sm font-medium text-white truncate mt-0.5">
@@ -538,74 +713,87 @@ export default function PainelOperadorPage() {
 
                                   {/* Acoes */}
                                   <div className="flex-shrink-0 flex items-center gap-1">
-                                    {sessao.status === 'EM_ANDAMENTO' && (
+                                    {(sessao.status === 'EM_ANDAMENTO' || sessao.status === 'SUSPENSA') && (
                                       <>
-                                        {item.status === 'PENDENTE' && (
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-7 w-7 p-0 text-green-400 hover:text-green-300 hover:bg-green-900/30"
-                                            onClick={() => executarAcaoItem(item.id, 'iniciar')}
-                                            disabled={executando}
-                                          >
-                                            <Play className="h-3.5 w-3.5" />
-                                          </Button>
-                                        )}
-                                        {item.status === 'EM_DISCUSSAO' && (
-                                          <>
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              className="h-7 w-7 p-0 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30"
-                                              onClick={() => executarAcaoItem(item.id, 'pausar')}
-                                              disabled={executando}
-                                            >
-                                              <Pause className="h-3.5 w-3.5" />
-                                            </Button>
-                                            {item.tipoAcao === 'VOTACAO' && (
-                                              <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                className="h-7 w-7 p-0 text-purple-400 hover:text-purple-300 hover:bg-purple-900/30"
-                                                onClick={() => executarAcaoItem(item.id, 'votacao')}
-                                                disabled={executando}
-                                              >
-                                                <Vote className="h-3.5 w-3.5" />
-                                              </Button>
-                                            )}
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
-                                              className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                                              onClick={() => abrirModalFinalizar(item.id, item.titulo)}
-                                              disabled={executando}
-                                            >
-                                              <Square className="h-3.5 w-3.5" />
-                                            </Button>
-                                          </>
-                                        )}
-                                        {item.status === 'EM_VOTACAO' && (
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                                            onClick={() => abrirModalFinalizar(item.id, item.titulo)}
-                                            disabled={executando}
-                                          >
-                                            <Square className="h-3.5 w-3.5" />
-                                          </Button>
-                                        )}
-                                        {(item.status === 'ADIADO' || (item.iniciadoEm === null && item.tempoAcumulado && item.tempoAcumulado > 0)) && (
-                                          <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-7 w-7 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
-                                            onClick={() => executarAcaoItem(item.id, 'retomar')}
-                                            disabled={executando}
-                                          >
-                                            <RotateCcw className="h-3.5 w-3.5" />
-                                          </Button>
-                                        )}
+                                        {(() => {
+                                          const acoes = getAcoesDisponiveis(item)
+                                          return (
+                                            <>
+                                              {acoes.iniciar && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className={cn("h-7 px-2 gap-1", acoes.iniciar.color)}
+                                                  onClick={() => executarAcaoItem(item.id, 'iniciar')}
+                                                  disabled={executando}
+                                                  title={acoes.iniciar.label}
+                                                >
+                                                  <acoes.iniciar.icon className="h-3.5 w-3.5" />
+                                                  <span className="text-xs hidden xl:inline">{acoes.iniciar.label}</span>
+                                                </Button>
+                                              )}
+                                              {acoes.pausar && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className={cn("h-7 w-7 p-0", acoes.pausar.color)}
+                                                  onClick={() => executarAcaoItem(item.id, 'pausar')}
+                                                  disabled={executando}
+                                                  title={acoes.pausar.label}
+                                                >
+                                                  <acoes.pausar.icon className="h-3.5 w-3.5" />
+                                                </Button>
+                                              )}
+                                              {acoes.votacao && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className={cn("h-7 px-2 gap-1", acoes.votacao.color)}
+                                                  onClick={() => executarAcaoItem(item.id, 'votacao')}
+                                                  disabled={executando}
+                                                  title={acoes.votacao.label}
+                                                >
+                                                  <acoes.votacao.icon className="h-3.5 w-3.5" />
+                                                  <span className="text-xs hidden xl:inline">{acoes.votacao.label}</span>
+                                                </Button>
+                                              )}
+                                              {acoes.finalizar && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className={cn("h-7 px-2 gap-1", acoes.finalizar.color)}
+                                                  onClick={() => {
+                                                    // Se tem resultado direto (ex: CONCLUIDO para leituras), executa direto
+                                                    if ((acoes.finalizar as any).resultado) {
+                                                      executarAcaoItem(item.id, 'finalizar', (acoes.finalizar as any).resultado)
+                                                    } else {
+                                                      // Senão abre modal para escolher resultado
+                                                      abrirModalFinalizar(item.id, item.titulo)
+                                                    }
+                                                  }}
+                                                  disabled={executando}
+                                                  title={acoes.finalizar.label}
+                                                >
+                                                  <acoes.finalizar.icon className="h-3.5 w-3.5" />
+                                                  <span className="text-xs hidden xl:inline">{acoes.finalizar.label}</span>
+                                                </Button>
+                                              )}
+                                              {acoes.retomar && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="ghost"
+                                                  className={cn("h-7 px-2 gap-1", acoes.retomar.color)}
+                                                  onClick={() => executarAcaoItem(item.id, 'retomar')}
+                                                  disabled={executando}
+                                                  title={acoes.retomar.label}
+                                                >
+                                                  <acoes.retomar.icon className="h-3.5 w-3.5" />
+                                                  <span className="text-xs hidden xl:inline">{acoes.retomar.label}</span>
+                                                </Button>
+                                              )}
+                                            </>
+                                          )
+                                        })()}
                                       </>
                                     )}
                                     {sessao.status === 'CONCLUIDA' && item.tipoAcao === 'VOTACAO' && item.proposicao && (
@@ -698,30 +886,54 @@ export default function PainelOperadorPage() {
                   </ScrollArea>
                 )}
 
-                {/* Botao para Controle de Presenca */}
-                {(sessao.status === 'EM_ANDAMENTO' || sessao.status === 'CONCLUIDA') && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-2 h-7 text-xs border-slate-600 text-slate-300 hover:bg-slate-700"
-                    onClick={() => setMostrarControlePresenca(true)}
-                  >
-                    <Pencil className="h-3 w-3 mr-1" />
-                    Editar Presencas
-                  </Button>
-                )}
+                {/* Botao para Controle de Presenca - disponivel 15 min antes da sessao */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2 h-8 text-sm border-blue-500 text-blue-400 hover:bg-blue-900/50 hover:text-blue-300 font-medium"
+                  onClick={() => setMostrarControlePresenca(true)}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  {sessao.status === 'AGENDADA' ? 'Lancar Presencas' : 'Editar Presencas'}
+                </Button>
               </CardContent>
             </Card>
 
-            {/* Votacao em Andamento */}
-            {itemEmExecucao?.status === 'EM_VOTACAO' && itemEmExecucao.proposicao && (
-              <div className="flex-1 min-h-0 overflow-hidden">
-                <VotacaoAcompanhamento
-                  sessaoId={sessao.id}
-                  itemEmVotacao={itemEmExecucao}
-                />
-              </div>
-            )}
+            {/* Votacao em Andamento - Lancamento de votos */}
+            {(() => {
+              // Encontrar item em votação (pode ser itemEmExecucao ou qualquer item com status EM_VOTACAO)
+              const itemVotacao = itemEmExecucao?.status === 'EM_VOTACAO'
+                ? itemEmExecucao
+                : sessao.pautaSessao?.itens.find(i => i.status === 'EM_VOTACAO')
+
+              if (!itemVotacao) return null
+
+              // Se não tem proposição vinculada, mostrar aviso
+              if (!itemVotacao.proposicao) {
+                return (
+                  <Card className="bg-amber-900/30 border-amber-500/50">
+                    <CardContent className="py-6 text-center">
+                      <AlertCircle className="h-8 w-8 text-amber-400 mx-auto mb-2" />
+                      <p className="text-amber-200 font-medium mb-1">Item sem Proposição</p>
+                      <p className="text-amber-300/70 text-sm">
+                        Este item não tem uma proposição vinculada.
+                        Para lançar votos, vincule uma proposição ao item.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )
+              }
+
+              return (
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <VotacaoLancamento
+                    sessaoId={sessao.id}
+                    itemEmVotacao={itemVotacao}
+                    onVotoRegistrado={() => carregarSessao(false)}
+                  />
+                </div>
+              )
+            })()}
           </div>
         </div>
       </div>
@@ -742,6 +954,8 @@ export default function PainelOperadorPage() {
         open={mostrarControlePresenca}
         sessaoId={sessao.id}
         sessaoStatus={sessao.status}
+        sessaoData={sessao.data ? (typeof sessao.data === 'string' ? sessao.data.split('T')[0] : new Date(sessao.data).toISOString().split('T')[0]) : undefined}
+        sessaoHorario={sessao.horario || undefined}
         onClose={() => setMostrarControlePresenca(false)}
         onRefresh={() => carregarSessao(false)}
       />

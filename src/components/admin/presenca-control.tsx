@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog'
-import { Users, UserCheck, UserX, Loader2, FileText } from 'lucide-react'
+import { Users, UserCheck, UserX, Loader2, FileText, Clock, AlertCircle } from 'lucide-react'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { toast } from 'sonner'
 
@@ -32,11 +32,14 @@ interface Presenca {
 
 interface PresencaControlProps {
   sessaoId: string
-  sessaoStatus?: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  sessaoStatus?: 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
+  sessaoData?: string
+  sessaoHorario?: string
 }
 
-export function PresencaControl({ sessaoId, sessaoStatus }: PresencaControlProps) {
-  const { parlamentares } = useParlamentares()
+export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHorario }: PresencaControlProps) {
+  // Busca apenas parlamentares ativos
+  const { parlamentares } = useParlamentares({ ativo: true })
   const [presencas, setPresencas] = useState<Presenca[]>([])
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
@@ -48,6 +51,39 @@ export function PresencaControl({ sessaoId, sessaoStatus }: PresencaControlProps
     parlamentarNome: string
   }>({ open: false, parlamentarId: '', parlamentarNome: '' })
   const [justificativaTexto, setJustificativaTexto] = useState('')
+
+  // Calcular se estamos dentro do periodo de 15 minutos antes da sessao
+  const calcularPeriodoPresenca = useCallback(() => {
+    if (!sessaoData || !sessaoHorario) return { permitido: true, mensagem: '' }
+
+    try {
+      const dataHoraSessao = new Date(`${sessaoData}T${sessaoHorario}:00`)
+      const agora = new Date()
+      const quinzeMinutosAntes = new Date(dataHoraSessao.getTime() - 15 * 60 * 1000)
+
+      if (sessaoStatus === 'AGENDADA') {
+        if (agora < quinzeMinutosAntes) {
+          const minutosRestantes = Math.ceil((quinzeMinutosAntes.getTime() - agora.getTime()) / (60 * 1000))
+          const horasRestantes = Math.floor(minutosRestantes / 60)
+          const mins = minutosRestantes % 60
+
+          return {
+            permitido: true, // Ainda permite, mas mostra aviso
+            mensagem: horasRestantes > 0
+              ? `Lancamento de presenca disponivel em ${horasRestantes}h ${mins}min`
+              : `Lancamento de presenca disponivel em ${mins} minutos`
+          }
+        }
+        return { permitido: true, mensagem: 'Presenca pode ser registrada (15 min antes da sessao)' }
+      }
+
+      return { permitido: true, mensagem: '' }
+    } catch {
+      return { permitido: true, mensagem: '' }
+    }
+  }, [sessaoData, sessaoHorario, sessaoStatus])
+
+  const periodoPresenca = calcularPeriodoPresenca()
 
   const carregarPresencas = useCallback(async () => {
     try {
@@ -186,12 +222,36 @@ export function PresencaControl({ sessaoId, sessaoStatus }: PresencaControlProps
 
   return (
     <div className="space-y-4">
+      {/* Indicador de periodo de presenca - 15 minutos antes */}
+      {sessaoStatus === 'AGENDADA' && periodoPresenca.mensagem && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-blue-600" />
+            <p className="text-sm text-blue-700">
+              {periodoPresenca.mensagem}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Alerta de modo edição para sessões concluídas */}
       {sessaoStatus === 'CONCLUIDA' && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
           <p className="text-sm text-amber-700 text-center">
-            Modo de edição de dados pretéritos - As presenças serão registradas para esta sessão já concluída
+            Modo de edicao de dados preteritos - As presencas serao registradas para esta sessao ja concluida
           </p>
+        </div>
+      )}
+
+      {/* Indicador de sessao suspensa */}
+      {sessaoStatus === 'SUSPENSA' && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-orange-600" />
+            <p className="text-sm text-orange-700">
+              Sessao suspensa - Presencas podem ser ajustadas
+            </p>
+          </div>
         </div>
       )}
 

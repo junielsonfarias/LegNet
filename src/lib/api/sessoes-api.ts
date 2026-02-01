@@ -8,7 +8,7 @@ export interface SessaoApi {
   data: string
   horario?: string | null
   local?: string | null
-  status: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  status: 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
   descricao: string | null
   ata: string | null
   finalizada: boolean
@@ -16,6 +16,7 @@ export interface SessaoApi {
   periodoId?: string | null
   pauta?: string | null
   tempoInicio?: string | null
+  tempoAcumulado?: number
   createdAt: string
   updatedAt: string
   pautaSessao?: PautaSessaoApi | null
@@ -57,7 +58,7 @@ export interface SessaoCreate {
   data: string
   horario?: string
   local?: string
-  status?: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  status?: 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
   descricao?: string
   ata?: string
   finalizada?: boolean
@@ -65,6 +66,7 @@ export interface SessaoCreate {
   periodoId?: string // Opcional - será identificado automaticamente se não fornecido
   pauta?: string // JSON da pauta
   tempoInicio?: string // Data/hora real em que a sessão foi iniciada
+  tempoAcumulado?: number // Segundos acumulados (para suspensão)
 }
 
 export interface SessaoUpdate {
@@ -73,7 +75,7 @@ export interface SessaoUpdate {
   data?: string
   horario?: string
   local?: string
-  status?: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  status?: 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
   descricao?: string
   ata?: string
   finalizada?: boolean
@@ -81,6 +83,7 @@ export interface SessaoUpdate {
   periodoId?: string
   pauta?: string
   tempoInicio?: string
+  tempoAcumulado?: number
 }
 
 class SessoesApiService {

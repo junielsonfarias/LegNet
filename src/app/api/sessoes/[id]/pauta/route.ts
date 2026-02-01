@@ -294,6 +294,22 @@ export const POST = withAuth(async (
     }
   }
 
+  // Validar se proposição já está na pauta (evitar duplicação)
+  if (payload.data.proposicaoId) {
+    const itemExistente = await prisma.pautaItem.findFirst({
+      where: {
+        pautaId: pautaSessao.id,
+        proposicaoId: payload.data.proposicaoId
+      }
+    })
+    if (itemExistente) {
+      throw new ValidationError(
+        'Esta proposição já está na pauta desta sessão. ' +
+        'Não é permitido adicionar a mesma proposição duas vezes.'
+      )
+    }
+  }
+
   // RN-065: Validar relatorId com mandato ativo
   if (payload.data.relatorId) {
     const relator = await prisma.parlamentar.findUnique({

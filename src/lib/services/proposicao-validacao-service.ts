@@ -5,12 +5,15 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
-import type { TipoProposicao, StatusProposicao } from '@prisma/client'
+import type { StatusProposicao } from '@prisma/client'
 
 const logger = createLogger('proposicao-validacao')
 
+// Tipo para codigo de proposicao (agora e string flexivel)
+export type TipoProposicaoCodigo = string
+
 // Re-exporta tipos do Prisma para uso externo
-export type { TipoProposicao, StatusProposicao }
+export type { StatusProposicao }
 
 // Matérias de iniciativa privativa do Executivo (RN-020)
 const MATERIAS_INICIATIVA_EXECUTIVO = [
@@ -147,7 +150,7 @@ export async function gerarNumeroProposicao(
   // Busca último número do tipo no ano (usando contagem como proxy)
   const count = await prisma.proposicao.count({
     where: {
-      tipo: tipo as TipoProposicao,
+      tipo: tipo,
       ano: anoAtual
     }
   })
@@ -541,8 +544,13 @@ export async function validarInclusaoOrdemDoDia(
   // RN-057: Verificar status de tramitação antes de validar parecer
   const tramitacaoAtual = proposicao.tramitacoes[0]
 
-  // Verificar se etapa habilita pauta
-  if (tramitacaoAtual?.fluxoEtapa) {
+  // Status da proposição que já habilitam inclusão na pauta
+  const statusHabilitaPauta = ['AGUARDANDO_PAUTA', 'EM_PAUTA']
+  if (statusHabilitaPauta.includes(proposicao.status)) {
+    // Proposição já está aguardando pauta ou em pauta - permitir inclusão
+    // (validação de parecer ainda será feita abaixo se necessário)
+  } else if (tramitacaoAtual?.fluxoEtapa) {
+    // Verificar se etapa habilita pauta
     if (!tramitacaoAtual.fluxoEtapa.habilitaPauta) {
       errors.push(
         `RN-057: Proposição deve estar na etapa que habilita inclusão na pauta. ` +
@@ -552,18 +560,33 @@ export async function validarInclusaoOrdemDoDia(
   } else if (tramitacaoAtual) {
     // Fallback: verificar por nome do tipo de tramitação (compatibilidade)
     const nomeAtual = tramitacaoAtual.tipoTramitacao?.nome?.toLowerCase() || ''
-    if (!nomeAtual.includes('plenario') && !nomeAtual.includes('plenário')) {
+    const observacoes = tramitacaoAtual.observacoes?.toLowerCase() || ''
+
+    // Aceitar tramitações que indicam pauta/plenário/secretaria
+    const habilitaPauta =
+      nomeAtual.includes('plenario') ||
+      nomeAtual.includes('plenário') ||
+      nomeAtual.includes('pauta') ||
+      nomeAtual.includes('aguardando') ||
+      nomeAtual.includes('secretaria') ||
+      observacoes.includes('pauta') ||
+      observacoes.includes('aguardando')
+
+    if (!habilitaPauta) {
       errors.push(
-        'RN-057: Proposição deve estar com status "Encaminhado para Plenário" para ser incluída na pauta. ' +
+        'RN-057: Proposição deve estar com status que habilite inclusão na pauta ' +
+        '(ex: "Aguardando Pauta", "Encaminhado para Plenário"). ' +
         `Status atual: "${tramitacaoAtual.tipoTramitacao?.nome || 'Desconhecido'}".`
       )
     }
   } else {
-    // Sem tramitação em andamento
-    errors.push(
-      'RN-057: Proposição não possui tramitação em andamento. ' +
-      'Inicie a tramitação e avance até a etapa de encaminhamento para Plenário.'
-    )
+    // Sem tramitação em andamento - verificar status da proposição
+    if (!statusHabilitaPauta.includes(proposicao.status)) {
+      errors.push(
+        'RN-057: Proposição não possui tramitação em andamento e não está aguardando pauta. ' +
+        'Tramite a proposição até a etapa de "Aguardando Pauta" para incluí-la na pauta da sessão.'
+      )
+    }
   }
 
   // Tipos que PRECISAM de parecer da CLJ
@@ -713,9 +736,9 @@ export const MAPEAMENTO_TIPO_SECAO: Record<string, {
     requerParecerCLJ: true
   },
   REQUERIMENTO: {
-    secaoPrimeira: 'EXPEDIENTE',
+    secaoPrimeira: 'ORDEM_DO_DIA',  // Requerimentos vão direto para votação
     secaoVotacao: 'ORDEM_DO_DIA',
-    tipoAcaoPrimeira: 'LEITURA',
+    tipoAcaoPrimeira: 'VOTACAO',    // Mesmo sendo "primeira", já é para votação
     tipoAcaoVotacao: 'VOTACAO',
     requerParecerCLJ: false
   },

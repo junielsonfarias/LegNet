@@ -46,7 +46,8 @@ export default function PainelTvPage() {
     sessao: estadoSSE.sessao ? {
       ...estadoSSE.sessao,
       horarioInicio: estadoSSE.sessao.horarioInicio ?? undefined,
-      tempoInicio: estadoSSE.sessao.tempoInicio ?? null
+      tempoInicio: estadoSSE.sessao.tempoInicio ?? null,
+      tempoAcumulado: (estadoSSE.sessao as any).tempoAcumulado ?? 0
     } : null,
     itemAtual: estadoSSE.itemAtual as any,
     votacao: estadoSSE.votacao,
@@ -58,25 +59,35 @@ export default function PainelTvPage() {
 
   const conectado = !erro && estado !== null
 
-  // Calcular cronômetro da sessão (baseado no tempoInicio)
+  // Calcular cronômetro da sessão (baseado no tempoInicio e tempoAcumulado)
   const tempoInicioSessao = estado?.sessao?.tempoInicio
+  const tempoAcumuladoSessao = estado?.sessao?.tempoAcumulado || 0
+  const statusSessao = estado?.sessao?.status
+
   useEffect(() => {
-    if (!tempoInicioSessao) {
-      setCronometroSegundos(0)
+    // Se a sessão está em andamento e tem tempoInicio, calcular tempo corrente
+    if (statusSessao === 'EM_ANDAMENTO' && tempoInicioSessao) {
+      const calcularCronometro = () => {
+        const inicio = new Date(tempoInicioSessao)
+        const agora = new Date()
+        const diff = Math.floor((agora.getTime() - inicio.getTime()) / 1000)
+        setCronometroSegundos(tempoAcumuladoSessao + (diff > 0 ? diff : 0))
+      }
+
+      calcularCronometro()
+      const interval = setInterval(calcularCronometro, 1000)
+      return () => clearInterval(interval)
+    }
+
+    // Se a sessão está suspensa ou concluída, mostrar apenas o tempo acumulado
+    if (statusSessao === 'SUSPENSA' || statusSessao === 'CONCLUIDA') {
+      setCronometroSegundos(tempoAcumuladoSessao)
       return
     }
 
-    const calcularCronometro = () => {
-      const inicio = new Date(tempoInicioSessao)
-      const agora = new Date()
-      const diff = Math.floor((agora.getTime() - inicio.getTime()) / 1000)
-      setCronometroSegundos(diff > 0 ? diff : 0)
-    }
-
-    calcularCronometro()
-    const interval = setInterval(calcularCronometro, 1000)
-    return () => clearInterval(interval)
-  }, [tempoInicioSessao])
+    // Caso contrário, zerar
+    setCronometroSegundos(0)
+  }, [tempoInicioSessao, tempoAcumuladoSessao, statusSessao])
 
   // String formatada do cronômetro
   const cronometroSessao = useMemo(() => {
@@ -116,8 +127,8 @@ export default function PainelTvPage() {
       <div className={`min-h-screen flex items-center justify-center ${transparente ? 'bg-transparent' : 'bg-slate-900'}`}>
         <div className="text-center p-8 bg-slate-800 rounded-xl border border-red-500">
           <WifiOff className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Erro de Conexao</h2>
-          <p className="text-gray-400 mb-4">{erro?.message || 'Nao foi possivel carregar a sessao'}</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Erro de Conexão</h2>
+          <p className="text-gray-400 mb-4">{erro?.message || 'Não foi possível carregar a sessão'}</p>
           <button
             onClick={atualizar}
             className="flex items-center gap-2 mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"

@@ -156,6 +156,7 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
       titulo: suggestion.titulo,
       descricao: suggestion.descricao ?? undefined,
       tempoEstimado: suggestion.tempoEstimado ?? undefined,
+      tipoAcao: suggestion.tipoAcao ?? undefined,
       proposicaoId: suggestion.proposicao?.id
     })
     setSuggestions(prev => prev.filter(item => item.id !== suggestion.id))

@@ -1,9 +1,497 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Correcao Status Tramitacao Manual)
+> **Ultima Atualizacao**: 2026-02-01 (Correcao VotacaoLancamento)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcao Exibicao VotacaoLancamento (01/02/2026)
+
+### Problema
+O componente VotacaoLancamento nao aparecia no painel do operador quando um item era colocado em votacao ("Em Votacao").
+
+### Causa
+1. A logica condicional verificava apenas `itemEmExecucao` mas nao buscava outros itens com status `EM_VOTACAO`
+2. O icone `AlertCircle` nao estava importado, causando erro de renderizacao
+
+### Solucao
+1. **Logica de busca melhorada**: Agora busca qualquer item com status `EM_VOTACAO` na pauta
+2. **Aviso para itens sem proposicao**: Mostra card de aviso se item em votacao nao tiver proposicao vinculada
+3. **Import corrigido**: Adicionado `AlertCircle` aos imports de lucide-react
+
+### Arquivo Modificado
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Logica melhorada para encontrar item em votacao + import AlertCircle |
+
+### Codigo da Correcao
+
+```typescript
+{/* Votacao em Andamento - Lancamento de votos */}
+{(() => {
+  // Encontrar item em votacao (pode ser itemEmExecucao ou qualquer item com status EM_VOTACAO)
+  const itemVotacao = itemEmExecucao?.status === 'EM_VOTACAO'
+    ? itemEmExecucao
+    : sessao.pautaSessao?.itens.find(i => i.status === 'EM_VOTACAO')
+
+  if (!itemVotacao) return null
+
+  // Se nao tem proposicao vinculada, mostrar aviso
+  if (!itemVotacao.proposicao) {
+    return (
+      <Card className="bg-amber-900/30 border-amber-500/50">
+        <CardContent className="py-6 text-center">
+          <AlertCircle className="h-8 w-8 text-amber-400 mx-auto mb-2" />
+          <p className="text-amber-200 font-medium mb-1">Item sem Proposicao</p>
+          <p className="text-amber-300/70 text-sm">
+            Este item nao tem uma proposicao vinculada.
+            Para lancar votos, vincule uma proposicao ao item.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <VotacaoLancamento
+      sessaoId={sessao.id}
+      itemEmVotacao={itemVotacao}
+      onVotoRegistrado={() => carregarSessao(false)}
+    />
+  )
+})()}
+```
+
+---
+
+## Sistema de Votacao em Tempo Real (01/02/2026)
+
+### Funcionalidade
+Sistema completo de lancamento e acompanhamento de votacao em tempo real:
+1. **Painel do Operador**: Lista todos os parlamentares presentes com botoes SIM/NAO/ABSTENCAO
+2. **Painel Publico**: Mostra andamento da votacao com totais e votos individuais coloridos
+3. **Sincronizacao**: Atualizacao automatica a cada 5 segundos em ambos os paineis
+
+### Arquivos Criados
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/components/admin/votacao-lancamento.tsx` | Componente para operador lancar votos de parlamentares |
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Integra VotacaoLancamento na sidebar quando item em votacao |
+| `src/app/painel-publico/page.tsx` | Secao "Andamento da Votacao" substitui parlamentares durante votacao |
+
+### Fluxo de Votacao
+
+```
+Painel Operador                          Painel Publico
+------------------                       ---------------
+Item em EM_VOTACAO                       Titulo: "Andamento da Votacao"
+       |                                        |
+Lista de parlamentares                   Totais: SIM / NAO / ABSTENCAO
+presentes com botoes                            |
+       |                                        |
+Clica SIM/NAO/ABSTENCAO  ---POST---->    Voto aparece com cor do voto
+       |                                (Verde=SIM, Vermelho=NAO, Amarelo=ABST)
+       v                                        |
+Atualiza totais                          Barra de progresso atualiza
+```
+
+### Componente VotacaoLancamento
+
+```typescript
+interface Props {
+  sessaoId: string
+  itemEmVotacao: PautaItem
+  onVotoRegistrado?: () => void
+}
+```
+
+- Lista parlamentares presentes com foto/iniciais
+- Botoes coloridos: CheckCircle (SIM), XCircle (NAO), MinusCircle (ABSTENCAO)
+- Card muda de cor conforme voto registrado
+- Resumo de votos no topo
+- Auto-refresh a cada 5 segundos
+
+### Painel Publico - Modo Votacao
+
+Durante votacao, a secao de parlamentares mostra:
+- Titulo: "Andamento da Votacao" (icone Vote animado)
+- Grid 3 colunas: totais SIM/NAO/ABSTENCAO
+- Barra de progresso: votos registrados / total presentes
+- Lista de votos: Grid 2 colunas com parlamentar e voto colorido
+
+### API Utilizada
+
+```
+POST /api/sessoes/{sessaoId}/votacao
+Body: { proposicaoId, parlamentarId, voto: 'SIM' | 'NAO' | 'ABSTENCAO' }
+```
+
+### Cores dos Votos
+
+| Voto | Cor Fundo | Cor Texto | Borda |
+|------|-----------|-----------|-------|
+| SIM | green-500/20 | green-300 | green-400/30 |
+| NAO | red-500/20 | red-300 | red-400/30 |
+| ABSTENCAO | yellow-500/20 | yellow-300 | yellow-400/30 |
+
+---
+
+## Botoes de Acao Especificos por Tipo de Item (01/02/2026)
+
+### Funcionalidade
+Melhorias no controle de itens de pauta no painel do operador:
+1. **Botoes Contextuais**: Cada tipo de item (LEITURA, VOTACAO, DISCUSSAO, COMUNICADO, HOMENAGEM) tem botoes especificos
+2. **Labels Claros**: Botoes mostram labels como "Iniciar Leitura", "Abrir Votacao", "Concluir Leitura"
+3. **Fluxo Visual**: Operador sabe exatamente qual acao executar baseado no tipo do item
+4. **Banners no Painel Publico**: Cada tipo de acao exibe banner colorido diferente
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Funcao getAcoesDisponiveis(), botoes contextuais por tipoAcao |
+| `src/app/painel-publico/page.tsx` | Banners especificos para VOTACAO, LEITURA, DISCUSSAO, COMUNICADO, HOMENAGEM |
+
+### Acoes por Tipo de Item
+
+| tipoAcao | PENDENTE | EM_DISCUSSAO | EM_VOTACAO |
+|----------|----------|--------------|------------|
+| LEITURA | Iniciar Leitura | Pausar, Concluir Leitura | - |
+| VOTACAO | Iniciar Leitura | Pausar, Abrir Votacao, Finalizar | Encerrar Votacao |
+| DISCUSSAO | Iniciar Discussao | Pausar, Concluir Discussao | - |
+| COMUNICADO | Iniciar Comunicado | Pausar, Concluir | - |
+| HOMENAGEM | Iniciar Homenagem | Pausar, Concluir | - |
+
+### Banners do Painel Publico
+
+| Tipo | Cor | Icone | Titulo |
+|------|-----|-------|--------|
+| LEITURA | Sky/Cyan | BookOpen | EM LEITURA |
+| VOTACAO (discussao) | Purple/Indigo | BookOpen + Vote | LEITURA DA MATERIA |
+| VOTACAO (votando) | Orange/Red | Vote | VOTACAO EM ANDAMENTO |
+| DISCUSSAO | Teal/Emerald | Users | EM DISCUSSAO |
+| COMUNICADO | Amber/Yellow | FileText | COMUNICADO |
+| HOMENAGEM | Pink/Rose | Award | HOMENAGEM |
+
+### Intervalo de Atualizacao
+- **Antes**: 10 segundos
+- **Depois**: 5 segundos (melhor sincronizacao)
+
+### Fluxo Visual
+
+```
+Painel Operador                          Painel Publico
+------------------                       ---------------
+Clica "Iniciar Leitura"  ------>        Banner "EM LEITURA" (azul)
+       |                                       |
+       v                                       v
+Clica "Abrir Votacao"    ------>        Banner "VOTACAO EM ANDAMENTO" (laranja)
+       |                                       |
+       v                                       v
+Clica "Encerrar Votacao" ------>        Resultado exibido
+```
+
+---
+
+## Sincronizacao Painel Publico com Operador (01/02/2026)
+
+### Funcionalidade
+Melhorias no painel publico para melhor acompanhamento das sessoes:
+1. **Ordenacao de Itens**: Itens agora seguem a mesma ordem do painel do operador (EXPEDIENTE primeiro, depois ORDEM_DO_DIA, etc.)
+2. **Sincronizacao Automatica**: Durante sessao EM_ANDAMENTO, o painel publico sincroniza automaticamente com o item atual sendo discutido pelo operador
+3. **Navegacao Oculta**: Botoes "Anterior/Proximo" sao ocultados durante sessao em andamento (navegacao controlada pelo operador)
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/painel-publico/page.tsx` | Ordenacao de itens por secao, sync com itemAtual, ocultacao de botoes de navegacao |
+
+### Ordem das Secoes
+```
+1. EXPEDIENTE
+2. ORDEM_DO_DIA
+3. COMUNICACOES
+4. HONRAS
+5. EXPLICACOES_PESSOAIS
+6. OUTROS
+7. SEM_SECAO
+```
+
+### Comportamento por Status
+
+| Status Sessao | Navegacao | Sincronizacao |
+|---------------|-----------|---------------|
+| AGENDADA | Manual (botoes visiveis) | - |
+| EM_ANDAMENTO | Automatica (botoes ocultos) | Sync com itemAtual do operador |
+| SUSPENSA | Automatica (botoes ocultos) | Mantem ultimo item |
+| CONCLUIDA | Manual (botoes visiveis) | - |
+
+### Interface Sessao (pautaSessao)
+```typescript
+pautaSessao?: {
+  itens: PautaItem[]
+  itemAtual?: {
+    id: string
+    titulo: string
+    secao: string
+    ordem: number
+    status: string
+  } | null
+}
+```
+
+---
+
+## Tipos de Proposicao Personalizados (01/02/2026)
+
+### Funcionalidade
+Sistema agora permite criar tipos de proposicao personalizados alem dos 8 tipos padrao. O campo `tipo` foi convertido de enum para string flexivel.
+
+### Alteracoes no Schema Prisma
+
+```prisma
+// ANTES: tipo era enum fixo
+// tipo TipoProposicao
+
+// DEPOIS: tipo e string flexivel
+// tipo String  // Codigo do tipo (ex: PROJETO_LEI, HOMENAGEM_ESPECIAL)
+```
+
+### Tabelas Afetadas
+- `proposicoes.tipo` - String (era enum)
+- `tipos_proposicao_config.codigo` - String (era enum)
+- `template_itens.tipoProposicao` - String (era enum)
+- `tramitacao_tipo_proposicoes.tipoProposicao` - String (era enum)
+- `fluxos_tramitacao.tipoProposicao` - String (era enum)
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `prisma/schema.prisma` | Converteu TipoProposicao de enum para String em varios modelos |
+| `src/app/api/tipos-proposicao/route.ts` | Validacao flexivel para codigo (regex: A-Z0-9_) |
+| `src/app/admin/configuracoes/tipos-proposicoes/page.tsx` | Input de texto com sugestoes em vez de select fixo |
+| `src/lib/services/proposicao-validacao-service.ts` | Removido import de TipoProposicao enum |
+| `src/lib/services/turno-service.ts` | Usa string[] para tipos de dois turnos |
+| `src/lib/services/fluxo-tramitacao-service.ts` | Funcoes usam string para tipo |
+
+### Como Criar Novo Tipo
+1. Acesse `/admin/configuracoes/tipos-proposicoes`
+2. Clique em "Novo Tipo"
+3. Digite um codigo unico (ex: `HOMENAGEM_ESPECIAL`, `PARECER_COMISSAO`)
+4. Preencha nome, sigla e demais configuracoes
+5. Salve
+
+### Regras do Codigo
+- Apenas letras maiusculas, numeros e underscore
+- Minimo 3 caracteres, maximo 50
+- Deve ser unico no sistema
+
+---
+
+## Ajustes no Controle de Presenca (01/02/2026)
+
+### Funcionalidade
+Aprimorado o controle de presenca no painel do operador para:
+1. Listar apenas vereadores ativos (com mandato)
+2. Exibir indicador de periodo de presenca (15 min antes da sessao)
+3. Mostrar alertas visuais para sessoes suspensas
+4. Propagar atualizacoes para o portal publico (refresh a cada 10s)
+5. **Botao visivel para TODAS as sessoes** (nao apenas EM_ANDAMENTO)
+6. **Botao com cores mais visíveis** (azul em vez de cinza claro)
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/components/admin/presenca-control.tsx` | Filtro por parlamentares ativos, indicador 15 min, alerta SUSPENSA |
+| `src/app/painel-operador/[sessaoId]/_components/controle-presenca-modal.tsx` | Props para data/horario da sessao |
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Botao visivel para todas sessoes, cores mais destacadas |
+
+### Fluxo de Presenca
+
+```
+Sessao AGENDADA
+       ↓
+Operador clica em "Lancar Presencas" (botao azul visivel)
+       ↓
+Lista todos os vereadores ativos
+       ↓
+Registra presencas (Presente / Ausente / Falta Justificada)
+       ↓
+Portal publico atualiza a cada 10 segundos
+       ↓
+Sessao inicia (EM_ANDAMENTO) com presencas ja registradas
+```
+
+### Regras de Negocio
+- **Presenca permitida para sessoes: AGENDADA, EM_ANDAMENTO, SUSPENSA, CONCLUIDA**
+- Sessoes CANCELADAS nao permitem alteracao de presenca
+- Apenas parlamentares com `ativo: true` sao listados
+- Botao muda de texto: "Lancar Presencas" (AGENDADA) / "Editar Presencas" (outras)
+
+---
+
+## Flexibilizacao da Validacao RN-057 para Inclusao na Pauta (01/02/2026)
+
+### Problema
+A validacao RN-057 exigia especificamente tramitacao "Encaminhado para Plenario" para incluir proposicoes na pauta, mas muitas proposicoes estavam "Aguardando Pauta" na Secretaria.
+
+### Solucao Implementada
+Flexibilizada a validacao para aceitar:
+1. Proposicoes com status `AGUARDANDO_PAUTA` ou `EM_PAUTA`
+2. Tramitacoes que contenham: "plenario", "pauta", "aguardando", "secretaria"
+3. Tramitacoes com observacoes que mencionem "pauta" ou "aguardando"
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/lib/services/proposicao-validacao-service.ts` | Flexibilizada funcao `validarInclusaoOrdemDoDia` |
+| `src/components/admin/sessao-wizard/StepMontarPauta.tsx` | Atualizada mensagem de ajuda |
+
+### Fluxo Atualizado
+
+```
+Proposicao criada
+       ↓
+Tramitada para Secretaria (status: AGUARDANDO_PAUTA)
+       ↓
+[✓] Pode ser incluida na pauta da sessao
+       ↓
+Ao incluir: status muda para EM_PAUTA automaticamente
+```
+
+---
+
+## Correcao na Edicao de Data de Sessao (01/02/2026)
+
+### Problema
+Nao era possivel editar a data de uma sessao AGENDADA para uma data passada ou atual.
+
+### Solucao
+Removida validacao que exigia data futura para sessoes agendadas.
+
+### Arquivo Modificado
+`src/app/api/sessoes/[id]/_handlers/update-sessao.ts`
+
+---
+
+## Controle de Sessao com Suspensao/Retomada (01/02/2026)
+
+### Funcionalidade
+Adicionado controle completo de suspensao e retomada de sessoes, com cronometro que pausa e retoma corretamente.
+
+### Alteracoes no Schema Prisma
+
+```prisma
+enum StatusSessao {
+  AGENDADA
+  EM_ANDAMENTO
+  SUSPENSA        // NOVO
+  CONCLUIDA
+  CANCELADA
+}
+
+model Sessao {
+  // ... campos existentes ...
+  tempoAcumulado   Int         @default(0)  // NOVO - segundos acumulados
+}
+```
+
+### Logica de Transicao de Status
+
+| Transicao | Acao |
+|-----------|------|
+| AGENDADA → EM_ANDAMENTO | Define `tempoInicio = now()`, `tempoAcumulado = 0` |
+| EM_ANDAMENTO → SUSPENSA | Acumula tempo: `tempoAcumulado += (now - tempoInicio)`, `tempoInicio = null` |
+| SUSPENSA → EM_ANDAMENTO | Define `tempoInicio = now()` (mantem tempoAcumulado) |
+| EM_ANDAMENTO → CONCLUIDA | Acumula tempo final |
+| SUSPENSA → CONCLUIDA | Mantem tempoAcumulado (tempo total da sessao) |
+
+### Calculo do Cronometro
+
+```
+Tempo Total = tempoAcumulado + (agora - tempoInicio)
+
+Quando SUSPENSA:  Exibe apenas tempoAcumulado (pausado)
+Quando CONCLUIDA: Exibe tempoAcumulado (tempo total final)
+```
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `prisma/schema.prisma` | Adicionado `SUSPENSA` ao enum, campo `tempoAcumulado` |
+| `src/app/api/sessoes/[id]/_handlers/update-sessao.ts` | Logica de suspender/retomar com calculo de tempo |
+| `src/app/api/sessoes/[id]/_validators/sessao-validators.ts` | Adicionado `SUSPENSA` e `tempoAcumulado` ao schema Zod |
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Botoes Iniciar/Suspender/Retomar/Finalizar, cronometro com tempoAcumulado |
+| `src/app/painel-publico/page.tsx` | Banner de sessao suspensa, cronometro pausado |
+| `src/app/painel-tv/[sessaoId]/page.tsx` | Cronometro com suporte a SUSPENSA |
+| `src/components/painel/painel-tv-display.tsx` | Status SUSPENSA com estilo visual |
+
+### Interface do Painel do Operador
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ AGENDADA:                                                       │
+│  [▶ Iniciar Sessão]                                            │
+├─────────────────────────────────────────────────────────────────┤
+│ EM_ANDAMENTO:    ⏱ 00:45:30 (verde)                            │
+│  [⏸ Suspender]  [⏹ Finalizar]                                  │
+├─────────────────────────────────────────────────────────────────┤
+│ SUSPENSA:        ⏱ 00:45:30 [PAUSADO] (laranja, pulsando)      │
+│  [▶ Retomar]    [⏹ Finalizar]                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Cores de Status
+
+| Status | Cor |
+|--------|-----|
+| AGENDADA | Azul |
+| EM_ANDAMENTO | Verde |
+| SUSPENSA | Laranja (pulsando) |
+| CONCLUIDA | Cinza |
+| CANCELADA | Vermelho |
+
+---
+
+## Correcao de Ordinais e Acentuacao no Frontend (01/02/2026)
+
+### Problema
+Numeros ordinais estavam sendo exibidos como "1a Sessao" ao inves de "1ª Sessão" em diversas partes do frontend.
+
+### Solucao Implementada
+Corrigido o formato de exibicao de ordinais de "a" para "ª" em todos os componentes frontend.
+
+### Arquivos Corrigidos
+
+| Arquivo | Correcao |
+|---------|----------|
+| `src/app/admin/pautas-sessoes/page.tsx` | `{sessao.numero}a` → `{sessao.numero}ª` (4 ocorrencias) |
+| `src/app/painel-operador/[sessaoId]/page.tsx` | `{sessao.numero}a` → `{sessao.numero}ª` |
+| `src/components/admin/comissoes/ComissaoDashboard.tsx` | `{reuniao.numero}a Reuniao` → `{reuniao.numero}ª Reunião` |
+| `src/components/admin/comissoes/QuickMeetingDialog.tsx` | `{formData.numero}a Reuniao` → `{formData.numero}ª Reunião` |
+| `src/app/admin/parlamentares/[id]/page.tsx` | `numero}a Legislatura` → `numero}ª Legislatura` |
+| `src/app/admin/comissoes/reunioes/page.tsx` | `{reuniao.numero}a Reuniao` → `{reuniao.numero}ª Reunião` |
+| `src/app/admin/comissoes/reunioes/[id]/page.tsx` | `{reuniao.numero}a Reuniao` → `{reuniao.numero}ª Reunião` |
+| `src/app/admin/sessoes/[id]/page.tsx` | `{sessao.numero}a Sessao` → `{sessao.numero}ª Sessão` |
+| `src/app/admin/sessoes/[id]/lancamento-retroativo/page.tsx` | `{sessao.numero}a Sessao` → `{sessao.numero}ª Sessão` |
+| `src/components/admin/sessao-wizard/*.tsx` | Corrigidos 3 arquivos do wizard |
+| `src/app/painel-publico/page.tsx` | `plenario` → `plenário`, `Em Votacao` → `Em Votação`, `Em Discussao` → `Em Discussão` |
+| `src/app/painel-tv/[sessaoId]/page.tsx` | `Erro de Conexao` → `Erro de Conexão`, mensagens de erro |
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Labels de status, mensagens de erro, `Pauta da Sessao` → `Pauta da Sessão` |
 
 ---
 

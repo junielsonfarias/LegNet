@@ -25,7 +25,8 @@ import {
   ChevronRight,
   Flag,
   History,
-  BookOpen
+  BookOpen,
+  Award
 } from 'lucide-react'
 
 interface Sessao {
@@ -38,8 +39,16 @@ interface Sessao {
   status: string
   descricao: string | null
   tempoInicio: string | null
+  tempoAcumulado?: number
   pautaSessao?: {
     itens: PautaItem[]
+    itemAtual?: {
+      id: string
+      titulo: string
+      secao: string
+      ordem: number
+      status: string
+    } | null
   }
   presencas?: Presenca[]
   quorum?: {
@@ -123,18 +132,26 @@ function PainelPublicoContent() {
     return () => clearInterval(interval)
   }, [])
 
-  // Calcular tempo da sessão (apenas se em andamento)
+  // Calcular tempo da sessão (considera tempoAcumulado para suspensão)
   useEffect(() => {
-    if (sessao?.tempoInicio && sessao.status === 'EM_ANDAMENTO') {
+    const tempoAcumulado = sessao?.tempoAcumulado || 0
+
+    if (sessao?.status === 'EM_ANDAMENTO' && sessao?.tempoInicio) {
       const interval = setInterval(() => {
         const inicio = new Date(sessao.tempoInicio!)
         const agora = new Date()
         const diff = Math.floor((agora.getTime() - inicio.getTime()) / 1000)
-        setTempoSessao(diff > 0 ? diff : 0)
+        setTempoSessao(tempoAcumulado + (diff > 0 ? diff : 0))
       }, 1000)
       return () => clearInterval(interval)
+    } else if (sessao?.status === 'SUSPENSA') {
+      // Sessão suspensa - mostrar tempo acumulado (pausado)
+      setTempoSessao(tempoAcumulado)
+    } else if (sessao?.status === 'CONCLUIDA') {
+      // Sessão concluída - mostrar tempo total final
+      setTempoSessao(tempoAcumulado)
     }
-  }, [sessao?.tempoInicio, sessao?.status])
+  }, [sessao?.tempoInicio, sessao?.status, sessao?.tempoAcumulado])
 
   // Carregar dados da sessão
   const carregarDados = useCallback(async (isInitialLoad = false) => {
@@ -214,10 +231,32 @@ function PainelPublicoContent() {
   useEffect(() => {
     // Carga inicial com loading
     carregarDados(true)
-    // Atualizações periódicas sem loading (silent refresh)
-    const interval = setInterval(() => carregarDados(false), 10000)
+    // Atualizações periódicas sem loading (silent refresh) - 5 segundos para melhor sincronização
+    const interval = setInterval(() => carregarDados(false), 5000)
     return () => clearInterval(interval)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sincronizar com item atual do operador quando sessao em andamento
+  useEffect(() => {
+    if (sessao?.status === 'EM_ANDAMENTO' && sessao?.pautaSessao?.itemAtual) {
+      // Ordenar itens da mesma forma que fazemos no render
+      const ordemSecoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'EXPLICACOES_PESSOAIS', 'OUTROS', 'SEM_SECAO']
+      const itensOrdenados = [...(sessao.pautaSessao?.itens || [])].sort((a, b) => {
+        const secaoA = ordemSecoes.indexOf(a.secao) !== -1 ? ordemSecoes.indexOf(a.secao) : 999
+        const secaoB = ordemSecoes.indexOf(b.secao) !== -1 ? ordemSecoes.indexOf(b.secao) : 999
+        if (secaoA !== secaoB) return secaoA - secaoB
+        return (a.ordem || 0) - (b.ordem || 0)
+      })
+
+      // Encontrar indice do item atual na lista ordenada
+      const itemAtualId = sessao.pautaSessao.itemAtual.id
+      const novoIndex = itensOrdenados.findIndex(item => item.id === itemAtualId)
+
+      if (novoIndex !== -1 && novoIndex !== itemAtualIndex) {
+        setItemAtualIndex(novoIndex)
+      }
+    }
+  }, [sessao?.pautaSessao?.itemAtual?.id, sessao?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Formatar tempo
   const formatarTempo = (segundos: number) => {
@@ -298,8 +337,19 @@ function PainelPublicoContent() {
     )
   }
 
-  // Dados da sessão
-  const itens = sessao.pautaSessao?.itens || []
+  // Ordem das secoes (mesma do painel do operador)
+  const ordemSecoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'EXPLICACOES_PESSOAIS', 'OUTROS', 'SEM_SECAO']
+
+  // Dados da sessão - ordenar itens por secao e depois por ordem
+  const itensOrdenados = [...(sessao.pautaSessao?.itens || [])].sort((a, b) => {
+    // Primeiro ordena por secao
+    const secaoA = ordemSecoes.indexOf(a.secao) !== -1 ? ordemSecoes.indexOf(a.secao) : 999
+    const secaoB = ordemSecoes.indexOf(b.secao) !== -1 ? ordemSecoes.indexOf(b.secao) : 999
+    if (secaoA !== secaoB) return secaoA - secaoB
+    // Depois ordena por ordem dentro da secao
+    return (a.ordem || 0) - (b.ordem || 0)
+  })
+  const itens = itensOrdenados
   const itemAtual = itens[itemAtualIndex] || null
   const totalItens = itens.length
   const sessaoConcluida = sessao.status === 'CONCLUIDA'
@@ -324,9 +374,11 @@ function PainelPublicoContent() {
   }[sessao.tipo] || sessao.tipo
 
   // Status da sessão
+  const sessaoSuspensa = sessao.status === 'SUSPENSA'
   const statusConfig = {
     'AGENDADA': { label: 'Agendada', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30', icon: Clock },
     'EM_ANDAMENTO': { label: 'Em Andamento', color: 'bg-green-500/20 text-green-300 border-green-400/30', icon: Timer },
+    'SUSPENSA': { label: 'Sessão Suspensa', color: 'bg-orange-500/20 text-orange-300 border-orange-400/30', icon: Clock },
     'CONCLUIDA': { label: 'Sessão Finalizada', color: 'bg-blue-500/20 text-blue-300 border-blue-400/30', icon: Flag },
     'CANCELADA': { label: 'Cancelada', color: 'bg-red-500/20 text-red-300 border-red-400/30', icon: XCircle }
   }[sessao.status] || { label: sessao.status, color: 'bg-gray-500/20 text-gray-300', icon: AlertCircle }
@@ -393,10 +445,15 @@ function PainelPublicoContent() {
                   <FileText className="h-4 w-4" />
                   {totalItens} itens na pauta
                 </div>
-                {sessaoEmAndamento && (
-                  <div className="flex items-center gap-1 text-green-300 font-mono text-lg">
-                    <Timer className="h-5 w-5" />
+                {(sessaoEmAndamento || sessaoSuspensa) && (
+                  <div className={`flex items-center gap-1 font-mono text-lg ${sessaoSuspensa ? 'text-orange-300' : 'text-green-300'}`}>
+                    <Timer className={`h-5 w-5 ${sessaoSuspensa ? 'animate-pulse' : ''}`} />
                     {formatarTempo(tempoSessao)}
+                    {sessaoSuspensa && (
+                      <Badge className="bg-orange-500/30 text-orange-300 text-xs ml-1">
+                        PAUSADO
+                      </Badge>
+                    )}
                   </div>
                 )}
               </div>
@@ -405,122 +462,22 @@ function PainelPublicoContent() {
         </div>
       </div>
 
-      {/* Banner de Votação em Andamento */}
-      {sessaoEmAndamento && itemAtual?.status === 'EM_VOTACAO' && (
-        <div className="bg-gradient-to-r from-orange-600/40 to-red-600/40 border-b border-orange-400/50 px-6 py-6 animate-pulse">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="relative">
-                <Vote className="h-8 w-8 text-orange-300" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-              </div>
-              <h2 className="text-3xl font-bold text-white tracking-wider">
-                VOTAÇÃO EM ANDAMENTO
-              </h2>
-              <div className="relative">
-                <Vote className="h-8 w-8 text-orange-300" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-              </div>
-            </div>
-
-            {/* Matéria em votação */}
-            <div className="text-center mb-4">
-              <p className="text-lg text-orange-200">
-                {itemAtual.proposicao
-                  ? `${itemAtual.proposicao.tipo} nº ${itemAtual.proposicao.numero}/${itemAtual.proposicao.ano}`
-                  : itemAtual.titulo
-                }
-              </p>
-              <p className="text-sm text-orange-300 mt-1">
-                {itemAtual.proposicao?.titulo || itemAtual.descricao || ''}
-              </p>
-            </div>
-
-            {/* Contagem de votos em tempo real */}
-            <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-4">
-              <div className="bg-green-600/50 rounded-xl p-4 text-center border border-green-400/50">
-                <div className="text-4xl font-extrabold text-green-200">{estatisticasVotacao.sim}</div>
-                <div className="text-green-300 font-semibold">SIM</div>
-              </div>
-              <div className="bg-red-600/50 rounded-xl p-4 text-center border border-red-400/50">
-                <div className="text-4xl font-extrabold text-red-200">{estatisticasVotacao.nao}</div>
-                <div className="text-red-300 font-semibold">NÃO</div>
-              </div>
-              <div className="bg-yellow-600/50 rounded-xl p-4 text-center border border-yellow-400/50">
-                <div className="text-4xl font-extrabold text-yellow-200">{estatisticasVotacao.abstencao}</div>
-                <div className="text-yellow-300 font-semibold">ABSTENÇÃO</div>
-              </div>
-            </div>
-
-            {/* Barra de progresso de quem votou */}
-            <div className="max-w-md mx-auto">
-              <div className="flex items-center justify-between text-sm text-orange-200 mb-2">
-                <span>Parlamentares que votaram</span>
-                <span className="font-bold">{estatisticasVotacao.total} / {presentes.length}</span>
-              </div>
-              <div className="h-3 bg-gray-700/50 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-500 relative"
-                  style={{ width: `${presentes.length > 0 ? (estatisticasVotacao.total / presentes.length) * 100 : 0}%` }}
-                >
-                  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                </div>
-              </div>
-              {presentes.length > 0 && estatisticasVotacao.total < presentes.length && (
-                <p className="text-center text-sm text-orange-300 mt-2">
-                  Aguardando {presentes.length - estatisticasVotacao.total} voto(s)...
-                </p>
-              )}
-            </div>
+      {/* Banner de Sessão Suspensa */}
+      {sessaoSuspensa && (
+        <div className="bg-gradient-to-r from-orange-600/40 to-amber-600/40 border-b border-orange-400/50 px-6 py-4">
+          <div className="flex items-center justify-center gap-3">
+            <Clock className="h-6 w-6 text-orange-300 animate-pulse" />
+            <h2 className="text-xl font-bold text-white">
+              SESSÃO SUSPENSA
+            </h2>
+            <Clock className="h-6 w-6 text-orange-300 animate-pulse" />
           </div>
-        </div>
-      )}
-
-      {/* Banner de Leitura em Andamento */}
-      {sessaoEmAndamento && itemAtual?.status === 'EM_DISCUSSAO' && itemAtual?.tipoAcao === 'LEITURA' && (
-        <div className="bg-gradient-to-r from-sky-600/40 to-cyan-600/40 border-b border-sky-400/50 px-6 py-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="relative">
-                <BookOpen className="h-8 w-8 text-sky-300" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
-              </div>
-              <h2 className="text-3xl font-bold text-white tracking-wider">
-                EM LEITURA
-              </h2>
-              <div className="relative">
-                <BookOpen className="h-8 w-8 text-sky-300" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
-              </div>
-            </div>
-
-            {/* Matéria em leitura */}
-            <div className="text-center bg-sky-900/30 rounded-xl p-6 border border-sky-400/30">
-              <p className="text-2xl font-bold text-white mb-2">
-                {itemAtual.proposicao
-                  ? `${itemAtual.proposicao.tipo} n${'\u00BA'} ${itemAtual.proposicao.numero}/${itemAtual.proposicao.ano}`
-                  : itemAtual.titulo
-                }
-              </p>
-              <p className="text-lg text-sky-200 mb-3">
-                {itemAtual.proposicao?.titulo || itemAtual.descricao || ''}
-              </p>
-              {itemAtual.proposicao?.autor && (
-                <div className="flex items-center justify-center gap-2 text-sky-300">
-                  <User className="h-4 w-4" />
-                  <span>
-                    Autor: <span className="font-semibold text-white">
-                      {itemAtual.proposicao.autor.apelido || itemAtual.proposicao.autor.nome}
-                    </span>
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <p className="text-center text-sm text-sky-300 mt-4">
-              Acompanhe a leitura da matéria em plenario
-            </p>
-          </div>
+          <p className="text-center text-orange-200 mt-2">
+            A sessão está temporariamente suspensa. Aguarde a retomada dos trabalhos.
+          </p>
+          <p className="text-center text-orange-300 font-mono mt-2">
+            Tempo decorrido: {formatarTempo(tempoSessao)}
+          </p>
         </div>
       )}
 
@@ -593,37 +550,52 @@ function PainelPublicoContent() {
           {/* Coluna 1: Item Atual / Votação */}
           <div className="xl:col-span-2 space-y-6">
 
-            {/* Navegação entre Itens da Pauta */}
+            {/* Navegação entre Itens da Pauta - oculta quando sessao em andamento */}
             {totalItens > 0 && (
               <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
-                    <Button
-                      onClick={irParaAnterior}
-                      disabled={itemAtualIndex === 0}
-                      variant="outline"
-                      className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
-                    >
-                      <ChevronLeft className="h-5 w-5 mr-1" />
-                      Anterior
-                    </Button>
+                    {/* Botao Anterior - oculto durante sessao em andamento */}
+                    {!sessaoEmAndamento ? (
+                      <Button
+                        onClick={irParaAnterior}
+                        disabled={itemAtualIndex === 0}
+                        variant="outline"
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
+                      >
+                        <ChevronLeft className="h-5 w-5 mr-1" />
+                        Anterior
+                      </Button>
+                    ) : (
+                      <div className="w-24" />
+                    )}
 
                     <div className="text-center">
-                      <p className="text-sm text-blue-300">Item da Pauta</p>
+                      <p className="text-sm text-blue-300">
+                        {sessaoEmAndamento ? 'Item em Discussao' : 'Item da Pauta'}
+                      </p>
                       <p className="text-2xl font-bold text-white">
                         {itemAtualIndex + 1} <span className="text-blue-400">de</span> {totalItens}
                       </p>
+                      {sessaoEmAndamento && itemAtual?.secao && (
+                        <p className="text-xs text-blue-300 mt-1">{itemAtual.secao.replace(/_/g, ' ')}</p>
+                      )}
                     </div>
 
-                    <Button
-                      onClick={irParaProximo}
-                      disabled={itemAtualIndex >= totalItens - 1}
-                      variant="outline"
-                      className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
-                    >
-                      Próximo
-                      <ChevronRight className="h-5 w-5 ml-1" />
-                    </Button>
+                    {/* Botao Proximo - oculto durante sessao em andamento */}
+                    {!sessaoEmAndamento ? (
+                      <Button
+                        onClick={irParaProximo}
+                        disabled={itemAtualIndex >= totalItens - 1}
+                        variant="outline"
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
+                      >
+                        Próximo
+                        <ChevronRight className="h-5 w-5 ml-1" />
+                      </Button>
+                    ) : (
+                      <div className="w-24" />
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -655,9 +627,9 @@ function PainelPublicoContent() {
                     }>
                       {itemAtual.status === 'APROVADO' || itemAtual.status === 'CONCLUIDO' ? 'Aprovado' :
                        itemAtual.status === 'REJEITADO' ? 'Rejeitado' :
-                       itemAtual.status === 'EM_VOTACAO' ? 'Em Votacao' :
+                       itemAtual.status === 'EM_VOTACAO' ? 'Em Votação' :
                        itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'LEITURA' ? 'Em Leitura' :
-                       itemAtual.status === 'EM_DISCUSSAO' ? 'Em Discussao' :
+                       itemAtual.status === 'EM_DISCUSSAO' ? 'Em Discussão' :
                        itemAtual.status === 'PENDENTE' ? 'Pendente' :
                        itemAtual.status === 'VISTA' ? 'Vista' :
                        itemAtual.status}
@@ -804,155 +776,395 @@ function PainelPublicoContent() {
               </Card>
             )}
 
-            {/* Mensagem quando não há votação registrada */}
+            {/* Informações do Item (quando não há votação registrada) */}
             {itemAtual && votacoesItemAtual.length === 0 && (
               <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
                 <CardContent className="py-8 text-center">
-                  <Vote className="h-12 w-12 text-blue-400 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg text-blue-200">
-                    {itemAtual.proposicao
-                      ? 'Nenhuma votação registrada para esta proposição'
-                      : 'Este item não possui proposição vinculada para votação'
-                    }
-                  </p>
+                  {/* Item em Leitura (tipoAcao LEITURA) */}
+                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'LEITURA' && (
+                    <>
+                      <BookOpen className="h-12 w-12 text-sky-400 mx-auto mb-4" />
+                      <p className="text-xl text-sky-200 font-bold mb-2">
+                        EM LEITURA
+                      </p>
+                      <p className="text-sm text-blue-300">
+                        Acompanhe a leitura em plenário
+                      </p>
+                    </>
+                  )}
+                  {/* Item em Leitura para Votação (tipoAcao VOTACAO mas em discussão) */}
+                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'VOTACAO' && (
+                    <>
+                      <BookOpen className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+                      <p className="text-xl text-purple-200 font-bold mb-2">
+                        LEITURA DA MATÉRIA
+                      </p>
+                      <p className="text-sm text-purple-300">
+                        Após a leitura, será colocada em votação
+                      </p>
+                    </>
+                  )}
+                  {/* Item em Discussão */}
+                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'DISCUSSAO' && (
+                    <>
+                      <Users className="h-12 w-12 text-teal-400 mx-auto mb-4" />
+                      <p className="text-xl text-teal-200 font-bold mb-2">
+                        EM DISCUSSÃO
+                      </p>
+                      <p className="text-sm text-teal-300">
+                        Parlamentares discutindo a matéria
+                      </p>
+                    </>
+                  )}
+                  {/* Item em Comunicado */}
+                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'COMUNICADO' && (
+                    <>
+                      <FileText className="h-12 w-12 text-amber-400 mx-auto mb-4" />
+                      <p className="text-xl text-amber-200 font-bold mb-2">
+                        COMUNICADO
+                      </p>
+                      <p className="text-sm text-amber-300">
+                        Comunicado em andamento
+                      </p>
+                    </>
+                  )}
+                  {/* Item em Homenagem */}
+                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'HOMENAGEM' && (
+                    <>
+                      <Award className="h-12 w-12 text-pink-400 mx-auto mb-4" />
+                      <p className="text-xl text-pink-200 font-bold mb-2">
+                        HOMENAGEM
+                      </p>
+                      <p className="text-sm text-pink-300">
+                        Homenagem em andamento
+                      </p>
+                    </>
+                  )}
+                  {/* Item em Discussão sem tipoAcao definido */}
+                  {itemAtual.status === 'EM_DISCUSSAO' && !itemAtual.tipoAcao && (
+                    <>
+                      <FileText className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+                      <p className="text-xl text-blue-200 font-bold mb-2">
+                        EM ANDAMENTO
+                      </p>
+                      <p className="text-sm text-blue-300">
+                        Acompanhe os trabalhos em plenário
+                      </p>
+                    </>
+                  )}
+                  {/* Item em Votação */}
+                  {itemAtual.status === 'EM_VOTACAO' && (
+                    <>
+                      <Vote className="h-10 w-10 text-orange-400 mx-auto mb-3 animate-pulse" />
+                      <p className="text-xl text-orange-200 font-bold mb-3">
+                        VOTAÇÃO EM ANDAMENTO
+                      </p>
+                      {/* Totais de Votos */}
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        <div className="text-center p-2 bg-green-900/40 rounded-lg">
+                          <div className="text-2xl font-bold text-green-400">{estatisticasVotacao.sim}</div>
+                          <div className="text-[10px] text-green-300">SIM</div>
+                        </div>
+                        <div className="text-center p-2 bg-red-900/40 rounded-lg">
+                          <div className="text-2xl font-bold text-red-400">{estatisticasVotacao.nao}</div>
+                          <div className="text-[10px] text-red-300">NÃO</div>
+                        </div>
+                        <div className="text-center p-2 bg-yellow-900/40 rounded-lg">
+                          <div className="text-2xl font-bold text-yellow-400">{estatisticasVotacao.abstencao}</div>
+                          <div className="text-[10px] text-yellow-300">ABST.</div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-orange-300">
+                        {estatisticasVotacao.total}/{presentes.length} votos registrados
+                      </p>
+                    </>
+                  )}
+                  {/* Item Pendente */}
+                  {itemAtual.status === 'PENDENTE' && (
+                    <>
+                      <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg text-slate-300">
+                        Aguardando início
+                      </p>
+                      <p className="text-sm text-slate-400 mt-1">
+                        Este item ainda não foi iniciado
+                      </p>
+                    </>
+                  )}
+                  {/* Item Concluído sem votação */}
+                  {itemAtual.status === 'CONCLUIDO' && (
+                    <>
+                      <CheckCircle className="h-12 w-12 text-teal-400 mx-auto mb-4" />
+                      <p className="text-lg text-teal-200">
+                        Item Concluído
+                      </p>
+                      <p className="text-sm text-teal-300 mt-1">
+                        {itemAtual.tipoAcao === 'LEITURA' ? 'Leitura finalizada' :
+                         itemAtual.tipoAcao === 'COMUNICADO' ? 'Comunicado realizado' :
+                         itemAtual.tipoAcao === 'HOMENAGEM' ? 'Homenagem realizada' :
+                         'Finalizado com sucesso'}
+                      </p>
+                    </>
+                  )}
+                  {/* Item Aprovado */}
+                  {itemAtual.status === 'APROVADO' && (
+                    <>
+                      <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                      <p className="text-lg text-green-200">
+                        Item Aprovado
+                      </p>
+                    </>
+                  )}
+                  {/* Item Rejeitado */}
+                  {itemAtual.status === 'REJEITADO' && (
+                    <>
+                      <XCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                      <p className="text-lg text-red-200">
+                        Item Rejeitado
+                      </p>
+                    </>
+                  )}
+                  {/* Item Adiado */}
+                  {itemAtual.status === 'ADIADO' && (
+                    <>
+                      <Clock className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+                      <p className="text-lg text-yellow-200">
+                        Item Adiado
+                      </p>
+                    </>
+                  )}
+                  {/* Item Retirado */}
+                  {itemAtual.status === 'RETIRADO' && (
+                    <>
+                      <Minus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-lg text-gray-200">
+                        Item Retirado
+                      </p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             )}
 
           </div>
 
-          {/* Coluna 2: Presença dos Parlamentares - Layout em Duas Colunas (Presentes | Ausentes) */}
+          {/* Coluna 2: Presença dos Parlamentares ou Andamento da Votação */}
           <div className="space-y-6">
             <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-bold flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-blue-400" />
-                  Parlamentares
+                  {itemAtual?.status === 'EM_VOTACAO' ? (
+                    <>
+                      <Vote className="h-5 w-5 mr-2 text-orange-400 animate-pulse" />
+                      Andamento da Votação
+                    </>
+                  ) : (
+                    <>
+                      <Users className="h-5 w-5 mr-2 text-blue-400" />
+                      Parlamentares
+                    </>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-2">
-                {/* Estatísticas Compactas */}
-                <div className="flex items-center justify-between gap-2 mb-3 p-2 bg-white/5 rounded-lg">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle className="h-4 w-4 text-green-400" />
-                    <span className="text-green-300 font-semibold">{presentes.length}</span>
-                    <span className="text-green-300/70 text-xs">Presentes</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <XCircle className="h-4 w-4 text-red-400" />
-                    <span className="text-red-300 font-semibold">{ausentes.length}</span>
-                    <span className="text-red-300/70 text-xs">Ausentes</span>
-                  </div>
-                  <Badge className="bg-blue-500/30 text-blue-200 border-blue-400/30">
-                    {percentualPresenca}% Quorum
-                  </Badge>
-                </div>
+                {/* MODO VOTAÇÃO EM ANDAMENTO */}
+                {itemAtual?.status === 'EM_VOTACAO' ? (
+                  <>
+                    {/* Estatísticas de Votos */}
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <div className="text-center p-2 bg-green-900/40 rounded-lg border border-green-500/30">
+                        <div className="text-2xl font-bold text-green-400">{estatisticasVotacao.sim}</div>
+                        <div className="text-[10px] text-green-300 font-medium">SIM</div>
+                      </div>
+                      <div className="text-center p-2 bg-red-900/40 rounded-lg border border-red-500/30">
+                        <div className="text-2xl font-bold text-red-400">{estatisticasVotacao.nao}</div>
+                        <div className="text-[10px] text-red-300 font-medium">NÃO</div>
+                      </div>
+                      <div className="text-center p-2 bg-yellow-900/40 rounded-lg border border-yellow-500/30">
+                        <div className="text-2xl font-bold text-yellow-400">{estatisticasVotacao.abstencao}</div>
+                        <div className="text-[10px] text-yellow-300 font-medium">ABSTENÇÃO</div>
+                      </div>
+                    </div>
 
-                {/* Barra de Progresso Compacta */}
-                <div className="mb-4">
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
-                      style={{ width: `${percentualPresenca}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-center text-blue-300 mt-1">
-                    {presentes.length}/{totalParlamentares} parlamentares
-                  </p>
-                </div>
+                    {/* Barra de Progresso da Votação */}
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-orange-300">Votos registrados</span>
+                        <span className="text-orange-200 font-semibold">
+                          {estatisticasVotacao.total}/{presentes.length}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-500"
+                          style={{ width: `${presentes.length > 0 ? (estatisticasVotacao.total / presentes.length) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
 
-                {/* Grid Único: Presentes primeiro, Ausentes depois */}
-                <div className="grid grid-cols-2 gap-1">
-                  {/* Presentes */}
-                  {presentes
-                    .sort((a, b) => {
-                      const nomeA = a.parlamentar.apelido || a.parlamentar.nome
-                      const nomeB = b.parlamentar.apelido || b.parlamentar.nome
-                      return nomeA.localeCompare(nomeB)
-                    })
-                    .map((p) => {
-                      const nome = p.parlamentar.apelido || p.parlamentar.nome
-                      const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                      return (
+                    {/* Lista de Votos Registrados */}
+                    <div className="grid grid-cols-2 gap-1">
+                      {votacoesItemAtual.map((voto: VotacaoRegistro) => {
+                        const nome = voto.parlamentar.apelido || voto.parlamentar.nome.split(' ')[0]
+                        const initials = nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                        const votoConfig = voto.voto === 'SIM'
+                          ? { bg: 'bg-green-500/20', border: 'border-green-400/30', text: 'text-green-300', label: 'SIM' }
+                          : voto.voto === 'NAO'
+                            ? { bg: 'bg-red-500/20', border: 'border-red-400/30', text: 'text-red-300', label: 'NÃO' }
+                            : { bg: 'bg-yellow-500/20', border: 'border-yellow-400/30', text: 'text-yellow-300', label: 'ABST.' }
+
+                        return (
+                          <div
+                            key={voto.id}
+                            className={`flex items-center gap-1.5 p-1 rounded-md ${votoConfig.bg} border ${votoConfig.border}`}
+                          >
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white ${
+                              voto.voto === 'SIM' ? 'bg-green-600' :
+                              voto.voto === 'NAO' ? 'bg-red-600' : 'bg-yellow-600'
+                            }`}>
+                              {initials}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-medium text-white truncate leading-tight">{nome}</p>
+                              <p className={`text-[9px] font-semibold ${votoConfig.text}`}>{votoConfig.label}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {estatisticasVotacao.total === 0 && (
+                        <p className="text-[10px] text-orange-300/70 text-center py-4 col-span-full">
+                          Aguardando votos...
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* MODO NORMAL - Lista de Presentes/Ausentes */}
+                    {/* Estatísticas Compactas */}
+                    <div className="flex items-center justify-between gap-2 mb-3 p-2 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle className="h-4 w-4 text-green-400" />
+                        <span className="text-green-300 font-semibold">{presentes.length}</span>
+                        <span className="text-green-300/70 text-xs">Presentes</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <XCircle className="h-4 w-4 text-red-400" />
+                        <span className="text-red-300 font-semibold">{ausentes.length}</span>
+                        <span className="text-red-300/70 text-xs">Ausentes</span>
+                      </div>
+                      <Badge className="bg-blue-500/30 text-blue-200 border-blue-400/30">
+                        {percentualPresenca}% Quorum
+                      </Badge>
+                    </div>
+
+                    {/* Barra de Progresso Compacta */}
+                    <div className="mb-4">
+                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
                         <div
-                          key={p.id}
-                          className="flex items-center gap-1.5 p-1 rounded-md bg-green-500/10 border border-green-400/20"
-                        >
-                          {/* Foto/Avatar */}
-                          <div className="relative flex-shrink-0">
-                            {p.parlamentar.foto ? (
-                              <Image
-                                src={p.parlamentar.foto}
-                                alt={nome}
-                                width={32}
-                                height={32}
-                                className="w-8 h-8 rounded-full object-cover ring-2 ring-green-400/50"
-                                unoptimized
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-green-600">
-                                {initials}
+                          className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
+                          style={{ width: `${percentualPresenca}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-center text-blue-300 mt-1">
+                        {presentes.length}/{totalParlamentares} parlamentares
+                      </p>
+                    </div>
+
+                    {/* Grid Único: Presentes primeiro, Ausentes depois */}
+                    <div className="grid grid-cols-2 gap-1">
+                      {/* Presentes */}
+                      {presentes
+                        .sort((a, b) => {
+                          const nomeA = a.parlamentar.apelido || a.parlamentar.nome
+                          const nomeB = b.parlamentar.apelido || b.parlamentar.nome
+                          return nomeA.localeCompare(nomeB)
+                        })
+                        .map((p) => {
+                          const nome = p.parlamentar.apelido || p.parlamentar.nome
+                          const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                          return (
+                            <div
+                              key={p.id}
+                              className="flex items-center gap-1.5 p-1 rounded-md bg-green-500/10 border border-green-400/20"
+                            >
+                              {/* Foto/Avatar */}
+                              <div className="relative flex-shrink-0">
+                                {p.parlamentar.foto ? (
+                                  <Image
+                                    src={p.parlamentar.foto}
+                                    alt={nome}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 rounded-full object-cover ring-2 ring-green-400/50"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-green-600">
+                                    {initials}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          {/* Nome e Partido */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
-                            <p className="text-[9px] text-green-300 leading-tight">
-                              {p.parlamentar.partido || '-'}
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    })
-                  }
-                  {/* Ausentes - aparecem logo após os presentes */}
-                  {ausentes
-                    .sort((a, b) => {
-                      const nomeA = a.parlamentar.apelido || a.parlamentar.nome
-                      const nomeB = b.parlamentar.apelido || b.parlamentar.nome
-                      return nomeA.localeCompare(nomeB)
-                    })
-                    .map((p) => {
-                      const nome = p.parlamentar.apelido || p.parlamentar.nome
-                      const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                      return (
-                        <div
-                          key={p.id}
-                          className="flex items-center gap-1.5 p-1 rounded-md bg-red-500/10 border border-red-400/20 opacity-70"
-                        >
-                          {/* Foto/Avatar */}
-                          <div className="relative flex-shrink-0">
-                            {p.parlamentar.foto ? (
-                              <Image
-                                src={p.parlamentar.foto}
-                                alt={nome}
-                                width={32}
-                                height={32}
-                                className="w-8 h-8 rounded-full object-cover ring-2 ring-red-400/40 grayscale"
-                                unoptimized
-                              />
-                            ) : (
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-red-600">
-                                {initials}
+                              {/* Nome e Partido */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
+                                <p className="text-[9px] text-green-300 leading-tight">
+                                  {p.parlamentar.partido || '-'}
+                                </p>
                               </div>
-                            )}
-                          </div>
-                          {/* Nome e Partido */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
-                            <p className="text-[9px] text-red-300 leading-tight">
-                              {p.parlamentar.partido || '-'}
-                            </p>
-                          </div>
-                        </div>
-                      )
-                    })
-                  }
-                  {presentes.length === 0 && ausentes.length === 0 && (
-                    <p className="text-[10px] text-gray-400 text-center py-2 col-span-full">Nenhum parlamentar registrado</p>
-                  )}
-                </div>
+                            </div>
+                          )
+                        })
+                      }
+                      {/* Ausentes - aparecem logo após os presentes */}
+                      {ausentes
+                        .sort((a, b) => {
+                          const nomeA = a.parlamentar.apelido || a.parlamentar.nome
+                          const nomeB = b.parlamentar.apelido || b.parlamentar.nome
+                          return nomeA.localeCompare(nomeB)
+                        })
+                        .map((p) => {
+                          const nome = p.parlamentar.apelido || p.parlamentar.nome
+                          const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                          return (
+                            <div
+                              key={p.id}
+                              className="flex items-center gap-1.5 p-1 rounded-md bg-red-500/10 border border-red-400/20 opacity-70"
+                            >
+                              {/* Foto/Avatar */}
+                              <div className="relative flex-shrink-0">
+                                {p.parlamentar.foto ? (
+                                  <Image
+                                    src={p.parlamentar.foto}
+                                    alt={nome}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 rounded-full object-cover ring-2 ring-red-400/40 grayscale"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-red-600">
+                                    {initials}
+                                  </div>
+                                )}
+                              </div>
+                              {/* Nome e Partido */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
+                                <p className="text-[9px] text-red-300 leading-tight">
+                                  {p.parlamentar.partido || '-'}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        })
+                      }
+                      {presentes.length === 0 && ausentes.length === 0 && (
+                        <p className="text-[10px] text-gray-400 text-center py-2 col-span-full">Nenhum parlamentar registrado</p>
+                      )}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 

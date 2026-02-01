@@ -11,12 +11,14 @@ import {
 import { Users } from 'lucide-react'
 import { PresencaControl } from '@/components/admin/presenca-control'
 
-type SessaoStatus = 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+type SessaoStatus = 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
 
 interface ControlePresencaModalProps {
   open: boolean
   sessaoId: string
   sessaoStatus: SessaoStatus
+  sessaoData?: string
+  sessaoHorario?: string
   onClose: () => void
   onRefresh: () => void
 }
@@ -25,6 +27,8 @@ export function ControlePresencaModal({
   open,
   sessaoId,
   sessaoStatus,
+  sessaoData,
+  sessaoHorario,
   onClose,
   onRefresh
 }: ControlePresencaModalProps) {
@@ -38,7 +42,12 @@ export function ControlePresencaModal({
           </DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-auto py-2">
-          <PresencaControl sessaoId={sessaoId} sessaoStatus={sessaoStatus} />
+          <PresencaControl
+            sessaoId={sessaoId}
+            sessaoStatus={sessaoStatus}
+            sessaoData={sessaoData}
+            sessaoHorario={sessaoHorario}
+          />
         </div>
         <DialogFooter className="border-t pt-4">
           <Button variant="outline" onClick={() => { onClose(); onRefresh() }}>
