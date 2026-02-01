@@ -47,6 +47,7 @@ interface PautaItem {
     autor?: {
       nome: string
       apelido: string | null
+      partido?: string | null
     }
   }
 }
@@ -349,39 +350,39 @@ export default function VotacaoParlamentarPage() {
 
     return (
       <div className="h-[100dvh] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
-        {/* Header Institucional */}
-        <header className="flex-shrink-0 bg-slate-800/80 border-b border-slate-700">
+        {/* Header Institucional - Maior e mais proeminente */}
+        <header className="flex-shrink-0 bg-slate-800/90 border-b border-slate-700">
           {/* Barra superior - Câmara */}
-          <div className="border-b border-slate-700/50 px-3 py-1.5 sm:py-2">
+          <div className="border-b border-slate-700/50 px-3 sm:px-4 py-2.5 sm:py-3">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 {configuracao.logoUrl ? (
                   <Image
                     src={configuracao.logoUrl}
                     alt="Logo"
-                    width={28}
-                    height={28}
-                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-contain bg-white p-0.5"
+                    width={44}
+                    height={44}
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-contain bg-white p-0.5"
                     unoptimized
                   />
                 ) : (
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 bg-blue-600/30 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-white/90 font-semibold text-[10px] sm:text-xs truncate">
+                  <p className="text-white font-bold text-sm sm:text-base truncate">
                     {configuracao.nomeCasa || 'Câmara Municipal'}
                   </p>
-                  <p className="text-slate-400 text-[9px] sm:text-[10px] flex items-center gap-1">
-                    <MapPin className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                  <p className="text-slate-400 text-xs sm:text-sm flex items-center gap-1">
+                    <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     {cidade}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3 text-slate-400">
-                <div className="flex items-center gap-1 text-[10px] sm:text-xs">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <div className="flex items-center gap-2 sm:gap-4 text-slate-300">
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   <span className="hidden sm:inline">
                     {sessaoAtiva.numero}ª Sessão {
                       { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
@@ -394,8 +395,8 @@ export default function VotacaoParlamentarPage() {
                   </span>
                 </div>
                 {sessaoAtiva.tempoInicio && (
-                  <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-blue-400">
-                    <Timer className="h-3 w-3" />
+                  <div className="flex items-center gap-1.5 font-mono text-sm sm:text-base text-blue-400 font-semibold">
+                    <Timer className="h-4 w-4" />
                     {formatarTempo(tempoSessao)}
                   </div>
                 )}
@@ -403,40 +404,40 @@ export default function VotacaoParlamentarPage() {
             </div>
           </div>
 
-          {/* Barra do parlamentar */}
-          <div className="px-3 py-1.5 sm:py-2">
+          {/* Barra do parlamentar - Maior */}
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 {parlamentarInfo?.foto ? (
                   <Image
                     src={parlamentarInfo.foto}
                     alt={nomeParlamentar}
-                    width={32}
-                    height={32}
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-blue-500/50"
+                    width={48}
+                    height={48}
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-blue-500/50"
                     unoptimized
                   />
                 ) : (
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
-                    <span className="text-blue-300 font-bold text-[10px] sm:text-xs">{iniciais}</span>
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
+                    <span className="text-blue-300 font-bold text-sm sm:text-base">{iniciais}</span>
                   </div>
                 )}
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-white font-semibold text-xs sm:text-sm truncate">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-white font-bold text-base sm:text-lg truncate">
                       {nomeParlamentar}
                     </p>
                     {parlamentarInfo?.partido && (
-                      <Badge className="bg-blue-600/30 text-blue-300 border-0 text-[9px] sm:text-[10px] px-1.5 py-0">
+                      <Badge className="bg-blue-600 text-white border-0 text-[10px] sm:text-xs px-2 py-0.5">
                         {parlamentarInfo.partido}
                       </Badge>
                     )}
                   </div>
-                  <p className="text-slate-500 text-[9px] sm:text-[10px]">Vereador(a)</p>
+                  <p className="text-slate-400 text-xs sm:text-sm">Vereador(a)</p>
                 </div>
               </div>
-              <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/40 text-[9px] sm:text-xs animate-pulse">
-                <Vote className="h-3 w-3 mr-1" />
+              <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs sm:text-sm px-3 py-1 animate-pulse">
+                <Vote className="h-4 w-4 mr-1.5" />
                 VOTAÇÃO
               </Badge>
             </div>
@@ -447,32 +448,37 @@ export default function VotacaoParlamentarPage() {
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           <div className="flex-1 flex flex-col justify-center p-3 sm:p-4">
             <div className="w-full max-w-xl mx-auto space-y-3 sm:space-y-4">
-              {/* Card da proposição - compacto em mobile */}
-              <div className="bg-slate-800/80 rounded-xl sm:rounded-2xl border border-slate-700 p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
+              {/* Card da proposição */}
+              <div className="bg-slate-800/80 rounded-xl sm:rounded-2xl border border-slate-700 p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4">
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                  <Badge className="bg-blue-600 text-white text-xs sm:text-sm">
+                  <Badge className="bg-green-600 text-white text-xs sm:text-sm px-2.5 py-1">
                     {itemEmVotacao.proposicao.tipo.replace('_', ' ')}
                   </Badge>
-                  <span className="text-white font-bold text-base sm:text-lg md:text-xl">
-                    nº {itemEmVotacao.proposicao.numero}/{itemEmVotacao.proposicao.ano}
+                  <span className="text-white font-bold text-lg sm:text-xl md:text-2xl">
+                    Nº {itemEmVotacao.proposicao.numero}/{itemEmVotacao.proposicao.ano}
                   </span>
                 </div>
 
-                <h2 className="text-white text-lg sm:text-xl md:text-2xl font-semibold leading-tight line-clamp-2">
+                <h2 className="text-white text-xl sm:text-2xl md:text-3xl font-semibold leading-tight line-clamp-2">
                   {itemEmVotacao.proposicao.titulo}
                 </h2>
 
                 {itemEmVotacao.proposicao.ementa && (
-                  <p className="text-slate-300 text-sm sm:text-base leading-relaxed line-clamp-2 sm:line-clamp-3">
+                  <p className="text-slate-300 text-sm sm:text-base md:text-lg leading-relaxed line-clamp-2 sm:line-clamp-3">
                     {itemEmVotacao.proposicao.ementa}
                   </p>
                 )}
 
                 {itemEmVotacao.proposicao.autor && (
-                  <div className="flex items-center gap-2 text-slate-400 text-xs sm:text-sm pt-2 border-t border-slate-700">
-                    <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="truncate">
+                  <div className="flex items-center gap-2 text-slate-400 text-sm sm:text-base pt-3 border-t border-slate-700">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span>
                       Autor: {itemEmVotacao.proposicao.autor.apelido || itemEmVotacao.proposicao.autor.nome}
+                      {itemEmVotacao.proposicao.autor.partido && (
+                        <span className="text-blue-400 ml-1">
+                          ({itemEmVotacao.proposicao.autor.partido})
+                        </span>
+                      )}
                     </span>
                   </div>
                 )}
@@ -844,7 +850,7 @@ export default function VotacaoParlamentarPage() {
                           {itemEmDiscussao.proposicao.tipo.replace('_', ' ')}
                         </Badge>
                         <span className="font-bold text-sm sm:text-base md:text-lg">
-                          nº {itemEmDiscussao.proposicao.numero}/{itemEmDiscussao.proposicao.ano}
+                          Nº {itemEmDiscussao.proposicao.numero}/{itemEmDiscussao.proposicao.ano}
                         </span>
                       </div>
                       <h3 className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 mb-2">
@@ -858,8 +864,13 @@ export default function VotacaoParlamentarPage() {
                       {itemEmDiscussao.proposicao.autor && (
                         <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
                           <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                          <span className="truncate">
+                          <span>
                             <strong>Autor:</strong> {itemEmDiscussao.proposicao.autor.apelido || itemEmDiscussao.proposicao.autor.nome}
+                            {itemEmDiscussao.proposicao.autor.partido && (
+                              <span className="text-blue-600 ml-1">
+                                ({itemEmDiscussao.proposicao.autor.partido})
+                              </span>
+                            )}
                           </span>
                         </div>
                       )}
@@ -934,7 +945,7 @@ export default function VotacaoParlamentarPage() {
                             <div className="flex-1 min-w-0">
                               <p className={`font-medium text-xs sm:text-sm md:text-base truncate ${isAtivo ? 'text-blue-900' : 'text-gray-900'}`}>
                                 {item.proposicao
-                                  ? `${item.proposicao.tipo} nº ${item.proposicao.numero}/${item.proposicao.ano}`
+                                  ? `${item.proposicao.tipo} Nº ${item.proposicao.numero}/${item.proposicao.ano}`
                                   : item.titulo
                                 }
                               </p>

@@ -477,7 +477,7 @@ export default function HistoricoSessaoPage() {
                         <span className="text-sm text-gray-500">Item {item.ordem}</span>
                       </div>
                       <h3 className="font-semibold text-gray-900">
-                        {item.proposicao?.tipo} nº {item.proposicao?.numero}/{item.proposicao?.ano}
+                        {item.proposicao?.tipo} Nº {item.proposicao?.numero}/{item.proposicao?.ano}
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
                         {item.proposicao?.titulo}

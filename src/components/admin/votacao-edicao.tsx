@@ -248,7 +248,7 @@ export function VotacaoEdicao({ sessaoId, item, open, onClose, onSaved }: Votaca
                   {item.proposicao.tipo.replace('_', ' ')}
                 </Badge>
                 <span className="font-bold text-lg">
-                  nº {item.proposicao.numero}/{item.proposicao.ano}
+                  Nº {item.proposicao.numero}/{item.proposicao.ano}
                 </span>
                 <Badge variant="outline" className={
                   item.status === 'APROVADO' ? 'border-green-500 text-green-700' :

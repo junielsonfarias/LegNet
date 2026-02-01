@@ -261,7 +261,7 @@ export default function LeisPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <CardTitle className="text-xl font-semibold text-gray-900">
-                          Lei nº {lei.numero}/{lei.ano}
+                          Lei Nº {lei.numero}/{lei.ano}
                         </CardTitle>
                         <Badge className="bg-green-100 text-green-800">Vigente</Badge>
                       </div>

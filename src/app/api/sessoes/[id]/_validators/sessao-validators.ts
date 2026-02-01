@@ -73,13 +73,15 @@ export const sessaoIncludeFull = {
               numero: true,
               ano: true,
               titulo: true,
+              ementa: true,
               tipo: true,
               status: true,
               autor: {
                 select: {
                   id: true,
                   nome: true,
-                  apelido: true
+                  apelido: true,
+                  partido: true
                 }
               },
               votacoes: {

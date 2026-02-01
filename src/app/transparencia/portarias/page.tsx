@@ -241,7 +241,7 @@ export default function PortariasPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <CardTitle className="text-xl font-semibold text-gray-900">
-                          Portaria nº {portaria.numero}/{portaria.ano}
+                          Portaria Nº {portaria.numero}/{portaria.ano}
                         </CardTitle>
                         <Badge className="bg-green-100 text-green-800">Vigente</Badge>
                       </div>

@@ -163,7 +163,7 @@ export function VotacaoAcompanhamento({ sessaoId, itemEmVotacao }: VotacaoAcompa
                 {proposicao.tipo.replace('_', ' ')}
               </Badge>
               <span className="font-bold text-lg">
-                nº {proposicao.numero}/{proposicao.ano}
+                Nº {proposicao.numero}/{proposicao.ano}
               </span>
             </div>
             <h3 className="text-lg font-semibold text-gray-900">
