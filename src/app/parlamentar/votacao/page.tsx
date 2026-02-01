@@ -74,6 +74,27 @@ interface ParlamentarInfo {
   partido: string | null
 }
 
+interface ResultadoVotacao {
+  proposicao: {
+    id: string
+    numero: number
+    ano: number
+    titulo: string
+    tipo: string
+    autor?: {
+      nome: string
+      apelido: string | null
+      partido?: string | null
+    }
+  }
+  resultado: 'APROVADO' | 'REJEITADO'
+  votosSim: number
+  votosNao: number
+  votosAbstencao: number
+  totalVotos: number
+  meuVoto: string | null
+}
+
 export default function VotacaoParlamentarPage() {
   const sessionData = useSession()
   const session = sessionData?.data
@@ -88,6 +109,8 @@ export default function VotacaoParlamentarPage() {
   const [votoRegistrado, setVotoRegistrado] = useState<string | null>(null)
   const [tempoSessao, setTempoSessao] = useState(0)
   const [parlamentarInfo, setParlamentarInfo] = useState<ParlamentarInfo | null>(null)
+  const [resultadoVotacao, setResultadoVotacao] = useState<ResultadoVotacao | null>(null)
+  const [itemEmVotacaoAnterior, setItemEmVotacaoAnterior] = useState<string | null>(null)
 
   const parlamentarId = (session?.user as any)?.parlamentarId
 
@@ -182,6 +205,11 @@ export default function VotacaoParlamentarPage() {
         )
 
         if (itemEmVotacao?.proposicao) {
+          // Atualizar o item em votação anterior
+          setItemEmVotacaoAnterior(itemEmVotacao.proposicao.id)
+          // Limpar resultado anterior quando nova votação começa
+          setResultadoVotacao(null)
+
           const votacaoResponse = await fetch(`/api/sessoes/${sessaoEmAndamento.id}/votacao`)
           if (votacaoResponse.ok) {
             const { data: proposicoesVotacao } = await votacaoResponse.json()
@@ -198,6 +226,46 @@ export default function VotacaoParlamentarPage() {
             }
           }
         } else {
+          // Não há item em votação - verificar se acabou de encerrar uma votação
+          if (itemEmVotacaoAnterior) {
+            // Buscar o resultado da votação que acabou de encerrar
+            const itemEncerrado = sessaoData.data?.pautaSessao?.itens?.find(
+              (item: PautaItem) =>
+                item.proposicao?.id === itemEmVotacaoAnterior &&
+                (item.status === 'APROVADO' || item.status === 'REJEITADO')
+            )
+
+            if (itemEncerrado?.proposicao) {
+              // Buscar votos da proposição encerrada
+              const votacaoResponse = await fetch(`/api/sessoes/${sessaoEmAndamento.id}/votacao`)
+              if (votacaoResponse.ok) {
+                const { data: proposicoesVotacao } = await votacaoResponse.json()
+                const proposicaoComVotos = proposicoesVotacao.find(
+                  (p: any) => p.id === itemEncerrado.proposicao!.id
+                )
+
+                if (proposicaoComVotos) {
+                  const votos = proposicaoComVotos.votacoes || []
+                  const votosSim = votos.filter((v: any) => v.voto === 'SIM').length
+                  const votosNao = votos.filter((v: any) => v.voto === 'NAO').length
+                  const votosAbstencao = votos.filter((v: any) => v.voto === 'ABSTENCAO').length
+                  const meuVoto = votos.find((v: any) => v.parlamentarId === parlamentarId)?.voto || null
+
+                  setResultadoVotacao({
+                    proposicao: itemEncerrado.proposicao,
+                    resultado: itemEncerrado.status as 'APROVADO' | 'REJEITADO',
+                    votosSim,
+                    votosNao,
+                    votosAbstencao,
+                    totalVotos: votosSim + votosNao + votosAbstencao,
+                    meuVoto
+                  })
+                }
+              }
+            }
+            // Limpar o item anterior após processar
+            setItemEmVotacaoAnterior(null)
+          }
           setVotoRegistrado(null)
         }
       }
@@ -207,7 +275,7 @@ export default function VotacaoParlamentarPage() {
     } finally {
       setLoading(false)
     }
-  }, [session?.user])
+  }, [session?.user, itemEmVotacaoAnterior])
 
   // Carregar dados inicialmente e atualizar a cada 5 segundos
   useEffect(() => {
@@ -575,6 +643,258 @@ export default function VotacaoParlamentarPage() {
         </div>
 
         {/* Footer - fixo no rodapé */}
+        <div className="flex-shrink-0 bg-slate-800/50 border-t border-slate-700 px-3 py-2">
+          <div className="max-w-4xl mx-auto flex items-center justify-between text-slate-500 text-[10px] sm:text-xs">
+            <span>{configuracao.sigla || 'CM'} - Sistema Legislativo</span>
+            <div className="flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Atualização automática</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ==========================================
+  // TELA DE RESULTADO (após encerrar votação)
+  // ==========================================
+  if (resultadoVotacao) {
+    const nomeParlamentar = parlamentarInfo?.apelido || parlamentarInfo?.nome || (session?.user as any)?.name || 'Parlamentar'
+    const iniciais = nomeParlamentar.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    const cidade = configuracao.endereco?.cidade || 'Mojuí dos Campos'
+    const foiAprovado = resultadoVotacao.resultado === 'APROVADO'
+
+    return (
+      <div className="h-[100dvh] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
+        {/* Header Institucional */}
+        <header className="flex-shrink-0 bg-slate-800/90 border-b border-slate-700">
+          {/* Barra superior - Câmara */}
+          <div className="border-b border-slate-700/50 px-3 sm:px-4 py-2.5 sm:py-3">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                {configuracao.logoUrl ? (
+                  <Image
+                    src={configuracao.logoUrl}
+                    alt="Logo"
+                    width={44}
+                    height={44}
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-contain bg-white p-0.5"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-600/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-white font-bold text-sm sm:text-base truncate">
+                    {configuracao.nomeCasa || 'Câmara Municipal'}
+                  </p>
+                  <p className="text-slate-400 text-xs sm:text-sm flex items-center gap-1">
+                    <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    {cidade}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 sm:gap-4 text-slate-300">
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="hidden sm:inline">
+                    {sessaoAtiva.numero}ª Sessão {
+                      { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
+                    }
+                  </span>
+                  <span className="sm:hidden">
+                    {sessaoAtiva.numero}ª {
+                      { ORDINARIA: 'Ord.', EXTRAORDINARIA: 'Ext.', SOLENE: 'Sol.', ESPECIAL: 'Esp.' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Barra do parlamentar */}
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                {parlamentarInfo?.foto ? (
+                  <Image
+                    src={parlamentarInfo.foto}
+                    alt={nomeParlamentar}
+                    width={48}
+                    height={48}
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-blue-500/50"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
+                    <span className="text-blue-300 font-bold text-sm sm:text-base">{iniciais}</span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-white font-bold text-base sm:text-lg truncate">
+                      {nomeParlamentar}
+                    </p>
+                    {parlamentarInfo?.partido && (
+                      <Badge className="bg-blue-600 text-white border-0 text-[10px] sm:text-xs px-2 py-0.5">
+                        {parlamentarInfo.partido}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-slate-400 text-xs sm:text-sm">Vereador(a)</p>
+                </div>
+              </div>
+              <Badge className={cn(
+                "text-xs sm:text-sm px-3 py-1",
+                foiAprovado
+                  ? "bg-green-500/20 text-green-300 border border-green-500/40"
+                  : "bg-red-500/20 text-red-300 border border-red-500/40"
+              )}>
+                {foiAprovado ? (
+                  <CheckCircle className="h-4 w-4 mr-1.5" />
+                ) : (
+                  <XCircle className="h-4 w-4 mr-1.5" />
+                )}
+                RESULTADO
+              </Badge>
+            </div>
+          </div>
+        </header>
+
+        {/* Conteúdo - Resultado da Votação */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+          <div className="flex-1 flex flex-col justify-center p-3 sm:p-4">
+            <div className="w-full max-w-xl mx-auto space-y-4 sm:space-y-5">
+              {/* Card do resultado */}
+              <div className={cn(
+                "rounded-xl sm:rounded-2xl border-2 p-4 sm:p-6 text-center",
+                foiAprovado
+                  ? "bg-green-900/30 border-green-500/50"
+                  : "bg-red-900/30 border-red-500/50"
+              )}>
+                <div className={cn(
+                  "w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4",
+                  foiAprovado ? "bg-green-500/30" : "bg-red-500/30"
+                )}>
+                  {foiAprovado ? (
+                    <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-green-400" />
+                  ) : (
+                    <XCircle className="h-10 w-10 sm:h-12 sm:w-12 text-red-400" />
+                  )}
+                </div>
+                <h2 className={cn(
+                  "text-2xl sm:text-3xl md:text-4xl font-bold mb-2",
+                  foiAprovado ? "text-green-400" : "text-red-400"
+                )}>
+                  {foiAprovado ? 'APROVADO' : 'REJEITADO'}
+                </h2>
+                <p className="text-slate-400 text-sm sm:text-base">
+                  Votação encerrada
+                </p>
+              </div>
+
+              {/* Card da proposição */}
+              <div className="bg-slate-800/80 rounded-xl sm:rounded-2xl border border-slate-700 p-4 sm:p-5">
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap mb-2">
+                  <Badge className="bg-blue-600 text-white text-xs sm:text-sm px-2.5 py-1">
+                    {resultadoVotacao.proposicao.tipo.replace('_', ' ')}
+                  </Badge>
+                  <span className="text-white font-bold text-base sm:text-lg">
+                    Nº {resultadoVotacao.proposicao.numero}/{resultadoVotacao.proposicao.ano}
+                  </span>
+                </div>
+                <h3 className="text-white text-lg sm:text-xl font-semibold leading-tight line-clamp-2">
+                  {resultadoVotacao.proposicao.titulo}
+                </h3>
+                {resultadoVotacao.proposicao.autor && (
+                  <div className="flex items-center gap-2 text-slate-400 text-sm mt-2">
+                    <User className="h-4 w-4 flex-shrink-0" />
+                    <span>
+                      Autor: {resultadoVotacao.proposicao.autor.apelido || resultadoVotacao.proposicao.autor.nome}
+                      {resultadoVotacao.proposicao.autor.partido && (
+                        <span className="text-blue-400 ml-1">
+                          ({resultadoVotacao.proposicao.autor.partido})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Contagem de votos */}
+              <div className="bg-slate-800/80 rounded-xl sm:rounded-2xl border border-slate-700 p-4 sm:p-5">
+                <h4 className="text-white font-semibold text-sm sm:text-base mb-3 text-center">
+                  Resultado da Votação
+                </h4>
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  <div className="text-center p-3 bg-green-900/30 rounded-lg border border-green-500/30">
+                    <div className="text-2xl sm:text-3xl font-bold text-green-400">
+                      {resultadoVotacao.votosSim}
+                    </div>
+                    <div className="text-xs sm:text-sm text-green-300">SIM</div>
+                  </div>
+                  <div className="text-center p-3 bg-red-900/30 rounded-lg border border-red-500/30">
+                    <div className="text-2xl sm:text-3xl font-bold text-red-400">
+                      {resultadoVotacao.votosNao}
+                    </div>
+                    <div className="text-xs sm:text-sm text-red-300">NÃO</div>
+                  </div>
+                  <div className="text-center p-3 bg-yellow-900/30 rounded-lg border border-yellow-500/30">
+                    <div className="text-2xl sm:text-3xl font-bold text-yellow-400">
+                      {resultadoVotacao.votosAbstencao}
+                    </div>
+                    <div className="text-xs sm:text-sm text-yellow-300">ABSTENÇÃO</div>
+                  </div>
+                </div>
+                <div className="text-center text-slate-400 text-xs sm:text-sm mt-3">
+                  Total: {resultadoVotacao.totalVotos} votos
+                </div>
+              </div>
+
+              {/* Seu voto */}
+              <div className="bg-slate-800/80 rounded-xl sm:rounded-2xl border border-slate-700 p-4 sm:p-5">
+                <h4 className="text-white font-semibold text-sm sm:text-base mb-3 text-center">
+                  Seu Voto
+                </h4>
+                {resultadoVotacao.meuVoto ? (
+                  <div className="flex items-center justify-center">
+                    <div className={cn(
+                      "flex items-center gap-2 px-6 py-3 rounded-full text-lg sm:text-xl font-bold text-white",
+                      resultadoVotacao.meuVoto === 'SIM' ? 'bg-green-600' :
+                      resultadoVotacao.meuVoto === 'NAO' ? 'bg-red-600' :
+                      'bg-yellow-600'
+                    )}>
+                      {resultadoVotacao.meuVoto === 'SIM' && <CheckCircle className="h-6 w-6" />}
+                      {resultadoVotacao.meuVoto === 'NAO' && <XCircle className="h-6 w-6" />}
+                      {resultadoVotacao.meuVoto === 'ABSTENCAO' && <MinusCircle className="h-6 w-6" />}
+                      {resultadoVotacao.meuVoto === 'NAO' ? 'NÃO' :
+                       resultadoVotacao.meuVoto === 'ABSTENCAO' ? 'ABSTENÇÃO' :
+                       resultadoVotacao.meuVoto}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-slate-400">
+                    <MinusCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>Você não registrou voto nesta matéria</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Botão para continuar */}
+              <Button
+                onClick={() => setResultadoVotacao(null)}
+                className="w-full h-12 sm:h-14 text-base sm:text-lg bg-blue-600 hover:bg-blue-500"
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
         <div className="flex-shrink-0 bg-slate-800/50 border-t border-slate-700 px-3 py-2">
           <div className="max-w-4xl mx-auto flex items-center justify-between text-slate-500 text-[10px] sm:text-xs">
             <span>{configuracao.sigla || 'CM'} - Sistema Legislativo</span>
