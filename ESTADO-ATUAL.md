@@ -23,6 +23,8 @@ Ao fazer tramitacao de indicacoes e outros tipos de proposicao, o status da prop
 | Funcao `advance()` agora chama `/api/proposicoes/${id}/tramitar` | `tramitacoes-api.ts` |
 | API aceita atualizar status direto quando nao ha fluxo | `tramitar/route.ts` |
 | Tipos atualizados com `parecer`, `resultado`, `etapaFinal`, `proposicaoStatus` | `tramitacoes-api.ts` |
+| `avancarEtapaFluxo` busca RECEBIDA alem de EM_ANDAMENTO | `tramitacao-service.ts` |
+| Tramitacoes sem fluxoEtapa sao tratadas como etapa final | `tramitacao-service.ts` |
 
 ### Descricao Tecnica
 
@@ -36,10 +38,18 @@ Ao fazer tramitacao de indicacoes e outros tipos de proposicao, o status da prop
 - **Mudanca**: Quando nao ha tramitacao ativa, atualiza status diretamente baseado no resultado
 - **Comportamento**: APROVADO -> APROVADA, REJEITADO -> REJEITADA, ARQUIVADO -> ARQUIVADA
 
+**3. Correcao na funcao avancarEtapaFluxo():**
+- **Arquivo**: `src/lib/services/tramitacao-service.ts`
+- **Problema**: So buscava tramitacoes com status `EM_ANDAMENTO`, mas INDICACOES tinham `RECEBIDA`
+- **Mudanca 1**: Query agora inclui `{ status: { in: ['EM_ANDAMENTO', 'RECEBIDA'] } }`
+- **Mudanca 2**: Tramitacoes sem `fluxoEtapa` configurada sao tratadas como etapa final
+- **Comportamento**: Proposicao sem fluxo -> status atualizado para AGUARDANDO_PAUTA
+
 ### Arquivos Modificados
 
 - `src/lib/api/tramitacoes-api.ts`
 - `src/app/api/proposicoes/[id]/tramitar/route.ts`
+- `src/lib/services/tramitacao-service.ts`
 
 ---
 
