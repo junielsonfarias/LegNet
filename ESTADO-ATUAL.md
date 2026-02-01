@@ -3282,6 +3282,7 @@ if (dataSessaoSemHora < dataHoje) {
 | Dropdown listando todas proposicoes | Filtro `AGUARDANDO_PAUTA` em `use-sessoes-state.ts` |
 | API listando status amplos | API sugestoes filtrada apenas para `AGUARDANDO_PAUTA` |
 | URL usando CUID ao inves de slug | Adicionado `resolverSessaoId` na API de sugestoes |
+| Falta campo de proposicao no formulario | Adicionado Select no editor de pauta para vincular proposicao |
 
 **Arquivos Modificados**:
 
