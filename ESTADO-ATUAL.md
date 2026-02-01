@@ -1,9 +1,73 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Correcao Tramitacao Status)
+> **Ultima Atualizacao**: 2026-02-01 (Editor de Presenca Sessao)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Novo Editor de Presenca de Sessao (01/02/2026)
+
+### Problema
+Na aba "Presenca" da pagina de sessao (`/admin/sessoes/[id]`), so eram listados parlamentares com presenca ja registrada, nao permitindo registrar presenca para todos os parlamentares ativos.
+
+### Solucoes Implementadas
+
+| Melhoria | Descricao |
+|----------|-----------|
+| Novo componente `PresencaSessaoEditor` | Lista TODOS os parlamentares ativos com mandatos |
+| Regra de 15 minutos | Permite registrar presenca 15 minutos antes do horario da sessao |
+| Estatisticas em tempo real | Exibe total, presentes, ausentes e percentual |
+| Acoes em massa | Botoes "Marcar todos presentes" e "Marcar todos ausentes" |
+| Justificativa de ausencia | Dialog para informar justificativa quando parlamentar esta ausente |
+| Busca de parlamentares | Filtro para buscar parlamentares por nome |
+
+### Correcao no Editor de Oradores
+
+| Correcao | Descricao |
+|----------|-----------|
+| Tipos de orador atualizados | Valores corrigidos para corresponder ao schema da API |
+| Valores antigos | `APARTES`, `ORDEM`, `OUTROS` |
+| Valores corretos | `APARTE`, `ORDEM_DO_DIA`, `TRIBUNA_LIVRE`, `COMUNICACAO` |
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/components/admin/presenca-sessao-editor.tsx` | **NOVO** - Componente completo de edicao de presenca |
+| `src/components/admin/oradores-sessao-editor.tsx` | Corrigido TIPOS_ORADOR e interface Orador |
+| `src/app/admin/sessoes/[id]/page.tsx` | Usa novo componente PresencaSessaoEditor |
+
+### Funcionalidades do PresencaSessaoEditor
+
+```
+┌───────────────────────────────────────────────────────────┐
+│ PRESENCA DE SESSAO                                        │
+├───────────────────────────────────────────────────────────┤
+│ [Buscar parlamentar...]                                   │
+│                                                           │
+│ ┌─────────────────────────────────────────────────────┐   │
+│ │ Total: 11 │ Presentes: 8 │ Ausentes: 3 │ 72.7%    │   │
+│ └─────────────────────────────────────────────────────┘   │
+│                                                           │
+│ [Marcar todos presentes] [Marcar todos ausentes]          │
+│                                                           │
+│ ┌─────────────────────────────────────────────────────┐   │
+│ │ [✓] Vereador Silva - PL          ✓ Presente         │   │
+│ │ [✓] Vereadora Maria - MDB        ✓ Presente         │   │
+│ │ [ ] Vereador João - PT           ✗ Ausente          │   │
+│ │     Justificativa: Licenca medica                   │   │
+│ └─────────────────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────┘
+```
+
+### Regra de Liberacao de Presenca
+
+- **Sessao AGENDADA**: Presenca liberada 15 minutos antes do horario
+- **Sessao EM_ANDAMENTO**: Presenca sempre liberada
+- **Sessao CONCLUIDA**: Presenca liberada (ajustes)
+- **Sessao CANCELADA**: Presenca bloqueada (somente leitura)
 
 ---
 

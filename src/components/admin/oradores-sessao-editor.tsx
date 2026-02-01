@@ -58,7 +58,7 @@ interface Parlamentar {
 interface Orador {
   id: string
   parlamentarId: string
-  tipo: 'PEQUENO_EXPEDIENTE' | 'GRANDE_EXPEDIENTE' | 'EXPLICACAO_PESSOAL' | 'APARTES' | 'ORDEM' | 'LIDERANCA' | 'OUTROS'
+  tipo: 'PEQUENO_EXPEDIENTE' | 'GRANDE_EXPEDIENTE' | 'EXPLICACAO_PESSOAL' | 'APARTE' | 'ORDEM_DO_DIA' | 'LIDERANCA' | 'TRIBUNA_LIVRE' | 'COMUNICACAO'
   ordem: number
   tempoLimite: number | null
   tempoUsado: number | null
@@ -83,10 +83,11 @@ const TIPOS_ORADOR = [
   { value: 'PEQUENO_EXPEDIENTE', label: 'Pequeno Expediente', tempo: 5 },
   { value: 'GRANDE_EXPEDIENTE', label: 'Grande Expediente', tempo: 15 },
   { value: 'EXPLICACAO_PESSOAL', label: 'Explicação Pessoal', tempo: 3 },
-  { value: 'APARTES', label: 'Apartes', tempo: 1 },
-  { value: 'ORDEM', label: 'Questão de Ordem', tempo: 3 },
+  { value: 'APARTE', label: 'Aparte', tempo: 1 },
+  { value: 'ORDEM_DO_DIA', label: 'Ordem do Dia', tempo: 5 },
   { value: 'LIDERANCA', label: 'Liderança', tempo: 5 },
-  { value: 'OUTROS', label: 'Outros', tempo: 5 }
+  { value: 'TRIBUNA_LIVRE', label: 'Tribuna Livre', tempo: 10 },
+  { value: 'COMUNICACAO', label: 'Comunicação', tempo: 3 }
 ]
 
 const STATUS_CONFIG: Record<string, { label: string; className: string; icon: any }> = {

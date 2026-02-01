@@ -40,6 +40,7 @@ import { PautaEditor } from '@/components/admin/pauta-editor'
 import { OradoresSessaoEditor } from '@/components/admin/oradores-sessao-editor'
 import { ExpedientesSessaoEditor } from '@/components/admin/expedientes-sessao-editor'
 import { PresencaOrdemDiaEditor } from '@/components/admin/presenca-ordem-dia-editor'
+import { PresencaSessaoEditor } from '@/components/admin/presenca-sessao-editor'
 
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
@@ -491,58 +492,13 @@ export default function SessaoDetailPage() {
 
             {/* Presenca Tab */}
             <TabsContent value="presenca" className="mt-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Presenca dos Parlamentares
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {presencas.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p>Nenhuma presenca registrada</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {presencas.map(presenca => (
-                        <div
-                          key={presenca.id}
-                          className={cn(
-                            'flex items-center justify-between p-3 rounded-lg border',
-                            presenca.presente ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            {presenca.presente ? (
-                              <UserCheck className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <UserX className="h-5 w-5 text-red-600" />
-                            )}
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {presenca.parlamentar.apelido || presenca.parlamentar.nome}
-                              </p>
-                              {presenca.parlamentar.partido && (
-                                <p className="text-xs text-gray-500">{presenca.parlamentar.partido}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge className={presenca.presente ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                              {presenca.presente ? 'Presente' : 'Ausente'}
-                            </Badge>
-                            {presenca.justificativa && (
-                              <p className="text-xs text-gray-500 mt-1">{presenca.justificativa}</p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <PresencaSessaoEditor
+                sessaoId={sessao.id}
+                sessaoStatus={sessao.status}
+                sessaoData={sessao.data}
+                sessaoHorario={sessao.horario ?? null}
+                readOnly={sessao.status === 'CANCELADA'}
+              />
             </TabsContent>
 
             {/* Oradores Tab */}
