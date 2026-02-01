@@ -105,6 +105,8 @@ interface VotacaoRegistro {
     id: string
     nome: string
     apelido: string | null
+    foto?: string | null
+    partido?: string | null
   }
 }
 
@@ -675,8 +677,55 @@ function PainelPublicoContent() {
               </Card>
             )}
 
-            {/* Resultado da Votação do Item */}
-            {itemAtual && votacoesItemAtual.length > 0 && (
+            {/* Votação em Andamento - Mostra apenas durante a votação */}
+            {itemAtual && itemAtual.status === 'EM_VOTACAO' && (
+              <Card className="bg-white/10 backdrop-blur-lg border border-purple-400/50 text-white">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold flex items-center justify-center">
+                    <Vote className="h-6 w-6 mr-2 text-purple-400 animate-pulse" />
+                    Votação em Andamento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Totais parciais */}
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
+                      <div className="text-4xl font-extrabold text-green-300 mb-1">{estatisticasVotacao.sim}</div>
+                      <div className="text-lg text-green-200 font-semibold">SIM</div>
+                    </div>
+                    <div className="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
+                      <div className="text-4xl font-extrabold text-red-300 mb-1">{estatisticasVotacao.nao}</div>
+                      <div className="text-lg text-red-200 font-semibold">NÃO</div>
+                    </div>
+                    <div className="p-4 bg-yellow-600/30 rounded-xl border border-yellow-400/30">
+                      <div className="text-4xl font-extrabold text-yellow-300 mb-1">{estatisticasVotacao.abstencao}</div>
+                      <div className="text-lg text-yellow-200 font-semibold">ABST.</div>
+                    </div>
+                  </div>
+
+                  {/* Barra de progresso */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-blue-200">
+                      <span>Votos registrados</span>
+                      <span>{estatisticasVotacao.total} de {presentes.length}</span>
+                    </div>
+                    <div className="w-full bg-gray-700/50 rounded-full h-3">
+                      <div
+                        className="bg-purple-500 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${presentes.length > 0 ? (estatisticasVotacao.total / presentes.length) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <p className="text-center text-purple-200 text-sm">
+                    Acompanhe os votos individuais na coluna lateral
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Resultado da Votação - Mostra apenas após encerrar a votação */}
+            {itemAtual && votacoesItemAtual.length > 0 && itemAtual.status !== 'EM_VOTACAO' && (
               <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
                 <CardHeader>
                   <CardTitle className="text-xl font-bold flex items-center justify-center">
@@ -693,8 +742,8 @@ function PainelPublicoContent() {
                     )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Resultados */}
+                <CardContent>
+                  {/* Resultados finais */}
                   <div className="grid grid-cols-4 gap-4 text-center">
                     <div className="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
                       <div className="text-4xl font-extrabold text-green-300 mb-1">{estatisticasVotacao.sim}</div>
@@ -731,45 +780,6 @@ function PainelPublicoContent() {
                           {Math.round((estatisticasVotacao.ausente / estatisticasVotacao.total) * 100)}%
                         </div>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Votos Individuais */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
-                      <Users className="h-5 w-5 mr-2 text-blue-400" />
-                      Votos Individuais
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                      {votacoesItemAtual.map((voto: VotacaoRegistro) => (
-                        <div
-                          key={voto.id}
-                          className={`flex items-center gap-2 p-2 rounded-lg border ${
-                            voto.voto === 'SIM' ? 'bg-green-500/20 border-green-400/30' :
-                            voto.voto === 'NAO' ? 'bg-red-500/20 border-red-400/30' :
-                            voto.voto === 'ABSTENCAO' ? 'bg-yellow-500/20 border-yellow-400/30' :
-                            'bg-gray-500/20 border-gray-400/30'
-                          }`}
-                        >
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            voto.voto === 'SIM' ? 'bg-green-600' :
-                            voto.voto === 'NAO' ? 'bg-red-600' :
-                            voto.voto === 'ABSTENCAO' ? 'bg-yellow-600' :
-                            'bg-gray-600'
-                          }`}>
-                            {voto.voto === 'SIM' && <CheckCircle className="h-4 w-4 text-white" />}
-                            {voto.voto === 'NAO' && <XCircle className="h-4 w-4 text-white" />}
-                            {voto.voto === 'ABSTENCAO' && <Minus className="h-4 w-4 text-white" />}
-                            {voto.voto === 'AUSENTE' && <AlertCircle className="h-4 w-4 text-white" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate">
-                              {voto.parlamentar.apelido || voto.parlamentar.nome.split(' ')[0]}
-                            </p>
-                            <p className="text-xs text-blue-300">{voto.voto}</p>
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 </CardContent>
@@ -1003,36 +1013,50 @@ function PainelPublicoContent() {
                     </div>
 
                     {/* Lista de Votos Registrados */}
-                    <div className="grid grid-cols-2 gap-1">
+                    <div className="grid grid-cols-2 gap-2">
                       {votacoesItemAtual.map((voto: VotacaoRegistro) => {
                         const nome = voto.parlamentar.apelido || voto.parlamentar.nome.split(' ')[0]
                         const initials = nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                        // Buscar foto da presença se não tiver no voto
+                        const presenca = presentes.find(p => p.parlamentar.id === voto.parlamentar.id)
+                        const foto = voto.parlamentar.foto || presenca?.parlamentar.foto
                         const votoConfig = voto.voto === 'SIM'
-                          ? { bg: 'bg-green-500/20', border: 'border-green-400/30', text: 'text-green-300', label: 'SIM' }
+                          ? { bg: 'bg-green-500/20', border: 'border-green-500/50', text: 'text-green-300', label: 'SIM', ring: 'ring-green-500' }
                           : voto.voto === 'NAO'
-                            ? { bg: 'bg-red-500/20', border: 'border-red-400/30', text: 'text-red-300', label: 'NÃO' }
-                            : { bg: 'bg-yellow-500/20', border: 'border-yellow-400/30', text: 'text-yellow-300', label: 'ABST.' }
+                            ? { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-300', label: 'NÃO', ring: 'ring-red-500' }
+                            : { bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', text: 'text-yellow-300', label: 'ABST.', ring: 'ring-yellow-500' }
 
                         return (
                           <div
                             key={voto.id}
-                            className={`flex items-center gap-1.5 p-1 rounded-md ${votoConfig.bg} border ${votoConfig.border}`}
+                            className={`flex items-center gap-2 p-2 rounded-lg ${votoConfig.bg} border ${votoConfig.border}`}
                           >
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white ${
-                              voto.voto === 'SIM' ? 'bg-green-600' :
-                              voto.voto === 'NAO' ? 'bg-red-600' : 'bg-yellow-600'
-                            }`}>
-                              {initials}
-                            </div>
+                            {foto ? (
+                              <Image
+                                src={foto}
+                                alt={nome}
+                                width={40}
+                                height={40}
+                                className={`w-10 h-10 rounded-full object-cover ring-2 ${votoConfig.ring}`}
+                                unoptimized
+                              />
+                            ) : (
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white ring-2 ${votoConfig.ring} ${
+                                voto.voto === 'SIM' ? 'bg-green-600' :
+                                voto.voto === 'NAO' ? 'bg-red-600' : 'bg-yellow-600'
+                              }`}>
+                                {initials}
+                              </div>
+                            )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-[10px] font-medium text-white truncate leading-tight">{nome}</p>
-                              <p className={`text-[9px] font-semibold ${votoConfig.text}`}>{votoConfig.label}</p>
+                              <p className="text-xs font-semibold text-white truncate">{nome}</p>
+                              <p className={`text-[10px] font-bold ${votoConfig.text}`}>{votoConfig.label}</p>
                             </div>
                           </div>
                         )
                       })}
                       {estatisticasVotacao.total === 0 && (
-                        <p className="text-[10px] text-orange-300/70 text-center py-4 col-span-full">
+                        <p className="text-sm text-orange-300/70 text-center py-6 col-span-full">
                           Aguardando votos...
                         </p>
                       )}

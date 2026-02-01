@@ -51,17 +51,17 @@ export const sessaoIncludeFull = {
   pautaSessao: {
     include: {
       itemAtual: {
-        select: {
-          id: true,
-          titulo: true,
-          secao: true,
-          ordem: true,
-          tempoEstimado: true,
-          tempoReal: true,
-          tempoAcumulado: true,
-          iniciadoEm: true,
-          finalizadoEm: true,
-          status: true
+        include: {
+          proposicao: {
+            select: {
+              id: true,
+              numero: true,
+              ano: true,
+              titulo: true,
+              tipo: true,
+              status: true
+            }
+          }
         }
       },
       itens: {

@@ -48,7 +48,9 @@ export const GET = withErrorHandler(async (
                         select: {
                           id: true,
                           nome: true,
-                          apelido: true
+                          apelido: true,
+                          foto: true,
+                          partido: true
                         }
                       }
                     }
@@ -68,7 +70,9 @@ export const GET = withErrorHandler(async (
                 select: {
                   id: true,
                   nome: true,
-                  apelido: true
+                  apelido: true,
+                  foto: true,
+                  partido: true
                 }
               }
             }

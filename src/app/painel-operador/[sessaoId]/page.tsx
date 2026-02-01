@@ -56,7 +56,7 @@ import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import type { PautaItemApi } from '@/lib/api/pauta-api'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 import { PresencaControl } from '@/components/admin/presenca-control'
-import { VotacaoLancamento } from '@/components/admin/votacao-lancamento'
+import { VotacaoModal } from '@/components/admin/votacao-modal'
 import { VotacaoEdicao } from '@/components/admin/votacao-edicao'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { cn } from '@/lib/utils'
@@ -235,6 +235,7 @@ export default function PainelOperadorPage() {
   }>({ open: false, itemId: '', titulo: '' })
   const [resultadoSelecionado, setResultadoSelecionado] = useState<string>('')
   const [itemParaEditarVotacao, setItemParaEditarVotacao] = useState<PautaItemApi | null>(null)
+  const [modalVotacaoAberto, setModalVotacaoAberto] = useState(false)
 
   const iniciarSessaoTimer = useCallback((dadosSessao: SessaoApi) => {
     if (sessaoIntervalRef.current) clearInterval(sessaoIntervalRef.current)
@@ -348,6 +349,10 @@ export default function PainelOperadorPage() {
         acao === 'retomar' ? 'Item retomado' :
         acao === 'votacao' ? 'Votação iniciada' : 'Item finalizado'
       )
+      // Abrir modal de votação automaticamente
+      if (acao === 'votacao') {
+        setModalVotacaoAberto(true)
+      }
     } catch (error: any) {
       toast.error(error?.message || 'Erro ao executar ação no item')
     } finally {
@@ -899,7 +904,7 @@ export default function PainelOperadorPage() {
               </CardContent>
             </Card>
 
-            {/* Votacao em Andamento - Lancamento de votos */}
+            {/* Votacao em Andamento - Botão para abrir modal */}
             {(() => {
               // Encontrar item em votação (pode ser itemEmExecucao ou qualquer item com status EM_VOTACAO)
               const itemVotacao = itemEmExecucao?.status === 'EM_VOTACAO'
@@ -925,13 +930,22 @@ export default function PainelOperadorPage() {
               }
 
               return (
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  <VotacaoLancamento
-                    sessaoId={sessao.id}
-                    itemEmVotacao={itemVotacao}
-                    onVotoRegistrado={() => carregarSessao(false)}
-                  />
-                </div>
+                <Card className="bg-purple-900/30 border-purple-500/50 border-2">
+                  <CardContent className="py-6 text-center">
+                    <Vote className="h-10 w-10 text-purple-400 mx-auto mb-3 animate-pulse" />
+                    <p className="text-purple-200 font-semibold mb-1">Votação em Andamento</p>
+                    <p className="text-purple-300/70 text-sm mb-4">
+                      {itemVotacao.proposicao.tipo} {itemVotacao.proposicao.numero}/{itemVotacao.proposicao.ano}
+                    </p>
+                    <Button
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => setModalVotacaoAberto(true)}
+                    >
+                      <Vote className="h-4 w-4 mr-2" />
+                      Abrir Painel de Votos
+                    </Button>
+                  </CardContent>
+                </Card>
               )
             })()}
           </div>
@@ -970,6 +984,28 @@ export default function PainelOperadorPage() {
           onSaved={() => carregarSessao(false)}
         />
       )}
+
+      {/* Modal de Lançamento de Votação */}
+      <VotacaoModal
+        open={modalVotacaoAberto}
+        onClose={() => setModalVotacaoAberto(false)}
+        sessaoId={sessao.id}
+        itemEmVotacao={
+          itemEmExecucao?.status === 'EM_VOTACAO'
+            ? itemEmExecucao
+            : sessao.pautaSessao?.itens.find(i => i.status === 'EM_VOTACAO') || null
+        }
+        onVotoRegistrado={() => carregarSessao(false)}
+        onEncerrarVotacao={() => {
+          const itemVotacao = itemEmExecucao?.status === 'EM_VOTACAO'
+            ? itemEmExecucao
+            : sessao.pautaSessao?.itens.find(i => i.status === 'EM_VOTACAO')
+          if (itemVotacao) {
+            setModalVotacaoAberto(false)
+            abrirModalFinalizar(itemVotacao.id, itemVotacao.titulo)
+          }
+        }}
+      />
     </div>
   )
 }
