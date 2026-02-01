@@ -25,6 +25,7 @@ Ao fazer tramitacao de indicacoes e outros tipos de proposicao, o status da prop
 | Tipos atualizados com `parecer`, `resultado`, `etapaFinal`, `proposicaoStatus` | `tramitacoes-api.ts` |
 | `avancarEtapaFluxo` busca RECEBIDA alem de EM_ANDAMENTO | `tramitacao-service.ts` |
 | Tramitacoes sem fluxoEtapa sao tratadas como etapa final | `tramitacao-service.ts` |
+| `tramitarParaAguardandoPauta` busca "Secretaria" ou "Secretaria Legislativa" | `tramitacao-service.ts` |
 
 ### Descricao Tecnica
 
@@ -44,6 +45,12 @@ Ao fazer tramitacao de indicacoes e outros tipos de proposicao, o status da prop
 - **Mudanca 1**: Query agora inclui `{ status: { in: ['EM_ANDAMENTO', 'RECEBIDA'] } }`
 - **Mudanca 2**: Tramitacoes sem `fluxoEtapa` configurada sao tratadas como etapa final
 - **Comportamento**: Proposicao sem fluxo -> status atualizado para AGUARDANDO_PAUTA
+
+**4. Correcao na funcao tramitarParaAguardandoPauta():**
+- **Arquivo**: `src/lib/services/tramitacao-service.ts`
+- **Problema**: Buscava especificamente "Secretaria Legislativa", mas banco tinha apenas "Secretaria"
+- **Mudanca**: Busca unificada: "Secretaria Legislativa" OU tipo SECRETARIA (fallback)
+- **Comportamento**: Funciona com qualquer nome de secretaria cadastrada
 
 ### Arquivos Modificados
 
