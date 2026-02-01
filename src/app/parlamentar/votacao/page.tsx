@@ -1349,7 +1349,7 @@ export default function VotacaoParlamentarPage() {
                             ? <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                             : item.status === 'REJEITADO'
                               ? <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                              : item.ordem
+                              : index + 1
                           }
                         </div>
 
