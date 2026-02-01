@@ -5,9 +5,10 @@ import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { MAPEAMENTO_TIPO_SECAO } from '@/lib/services/proposicao-validacao-service'
+import { resolverSessaoId } from '@/lib/services/sessao-controle'
 
-// Incluir novos status que permitem inclusão na pauta
-const STATUS_SUGESTAO: StatusProposicao[] = ['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA']
+// Apenas proposições prontas para inclusão em pauta (já tramitaram e têm pareceres necessários)
+const STATUS_SUGESTAO: StatusProposicao[] = ['AGUARDANDO_PAUTA']
 
 // Status para sessões finalizadas (retroativo) - inclui mais opções
 const STATUS_RETROATIVO: StatusProposicao[] = [
@@ -101,8 +102,11 @@ export const GET = withAuth(async (
   const { searchParams } = new URL(_request.url)
   const retroativo = searchParams.get('retroativo') === 'true'
 
+  // Suporta tanto ID quanto slug (ex: sessao-1-2026)
+  const sessaoId = await resolverSessaoId(params.id)
+
   const sessao = await prisma.sessao.findUnique({
-    where: { id: params.id },
+    where: { id: sessaoId },
     include: {
       pautaSessao: {
         include: {
