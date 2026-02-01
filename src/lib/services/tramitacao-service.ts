@@ -674,12 +674,12 @@ export async function avancarEtapaFluxo(
   const warnings: string[] = []
 
   try {
-    // 1. Busca proposição com tramitação atual
+    // 1. Busca proposição com tramitação atual (inclui RECEBIDA e EM_ANDAMENTO)
     const proposicao = await prisma.proposicao.findUnique({
       where: { id: proposicaoId },
       include: {
         tramitacoes: {
-          where: { status: 'EM_ANDAMENTO' },
+          where: { status: { in: ['EM_ANDAMENTO', 'RECEBIDA'] } },
           orderBy: { dataEntrada: 'desc' },
           take: 1,
           include: {
@@ -719,7 +719,11 @@ export async function avancarEtapaFluxo(
     let proximaEtapa: ProximaEtapaType = null
     let ehEtapaFinal = tramitacaoAtual.fluxoEtapa?.ehEtapaFinal || false
 
-    if (tramitacaoAtual.fluxoEtapa && !ehEtapaFinal) {
+    // Se não tem fluxoEtapa configurada, trata como etapa final (tramitação simples)
+    if (!tramitacaoAtual.fluxoEtapa) {
+      ehEtapaFinal = true
+      warnings.push('Proposição sem fluxo de tramitação configurado. Tramitação concluída diretamente.')
+    } else if (!ehEtapaFinal) {
       proximaEtapa = await prisma.fluxoTramitacaoEtapa.findFirst({
         where: {
           fluxoId: tramitacaoAtual.fluxoEtapa.fluxoId,
