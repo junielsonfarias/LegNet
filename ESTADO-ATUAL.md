@@ -1,9 +1,78 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Correcao VotacaoLancamento)
+> **Ultima Atualizacao**: 2026-02-01 (Responsividade Mobile - Area Parlamentar)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Responsividade Mobile - Area do Parlamentar (01/02/2026)
+
+### Funcionalidade
+Ajustes de responsividade para dispositivos moveis (tablets e celulares) na area do parlamentar, eliminando scrolls desnecessarios.
+
+### Tecnicas Utilizadas
+- `h-[100dvh]` - Dynamic viewport height para lidar com barra de endereco em mobile
+- `overflow-hidden` - Previne scroll externo
+- Classes responsivas `sm:`, `md:` para tamanhos de fonte, padding e gaps
+- `line-clamp-2/3` - Limita texto longo em dispositivos pequenos
+- `active:scale-95` - Feedback tatil para touch em mobile
+- Flex com `flex-shrink-0` para headers/footers fixos
+
+### Breakpoints
+- Mobile (< 640px): Padding compacto, fontes menores, botoes h-16
+- Tablet (>= 640px): Padding medio, fontes medias, botoes h-20
+- Desktop (>= 768px): Padding normal, fontes normais, botoes h-24
+
+---
+
+## Interface Focada de Votacao do Parlamentar (01/02/2026)
+
+### Funcionalidade
+Melhoria na experiencia do parlamentar durante votacoes. Quando ha uma votacao em andamento, o parlamentar ve APENAS a interface de votacao (tela focada, escura, sem distracao).
+
+### Comportamentos por Estado
+1. **Votacao em andamento (EM_VOTACAO)**: Tela focada exclusiva para votar
+   - Fundo escuro com gradiente
+   - Card da proposicao centralizado
+   - Botoes grandes de voto (SIM/NAO/ABSTENCAO)
+   - Timer da sessao no header
+
+2. **Discussao em andamento (EM_DISCUSSAO)**: Tela com pauta completa
+   - Mostra item em discussao destacado
+   - Lista completa da pauta com status
+   - Aviso para aguardar inicio da votacao
+
+3. **Nenhum item ativo**: Tela de espera
+   - Mensagem "Aguardando Materia"
+   - Timer da sessao
+   - Quantidade de itens restantes
+
+### Arquivo Modificado
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/parlamentar/votacao/page.tsx` | Tela focada durante votacao, timer com tempoAcumulado |
+
+### Fluxo Visual
+
+```
+Durante VOTACAO:                      Durante DISCUSSAO/ESPERA:
++---------------------------+         +---------------------------+
+| Header: Sessao | Timer    |         | Header: Sessao | Timer    |
++---------------------------+         +---------------------------+
+|                           |         | [Card Discussao/Espera]   |
+|   VOTACAO EM ANDAMENTO    |         +---------------------------+
+|   +-------------------+   |         | Ordem do Dia:             |
+|   | Proposicao Info   |   |         | [x] Item 1 - Concluido    |
+|   +-------------------+   |         | [>] Item 2 - Em Discussao |
+|   +-----+ +-----+ +-----+ |         | [ ] Item 3 - Pendente     |
+|   | SIM | | NAO | |ABST | |         +---------------------------+
+|   +-----+ +-----+ +-----+ |         | Info: Atualizacao auto    |
+|                           |         +---------------------------+
++---------------------------+
+```
 
 ---
 
