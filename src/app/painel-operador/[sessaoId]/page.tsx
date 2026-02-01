@@ -60,7 +60,7 @@ import { VotacaoModal } from '@/components/admin/votacao-modal'
 import { VotacaoEdicao } from '@/components/admin/votacao-edicao'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { cn } from '@/lib/utils'
-import { FinalizarItemModal, ControlePresencaModal } from './_components'
+import { FinalizarItemModal, ControlePresencaModal, RetirarPautaModal } from './_components'
 
 const formatSeconds = (seconds: number) => {
   const horas = Math.floor(seconds / 3600)
@@ -131,6 +131,12 @@ const getTipoAcaoConfig = (tipoAcao: string) => {
 const getAcoesDisponiveis = (item: PautaItemApi) => {
   const tipoAcao = item.tipoAcao || 'LEITURA'
   const status = item.status
+  const temProposicao = !!item.proposicao
+
+  // Ação de retirada de pauta (disponível para itens com proposição em discussão ou votação)
+  const acaoRetirarPauta = temProposicao
+    ? { retirarPauta: { label: 'Retirar de Pauta', icon: XCircle, color: 'text-orange-400 hover:text-orange-300 hover:bg-orange-900/30' } }
+    : {}
 
   // Ações para quando o item está PENDENTE
   if (status === 'PENDENTE') {
@@ -156,18 +162,21 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
       case 'LEITURA':
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
-          finalizar: { label: 'Concluir Leitura', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' }
+          finalizar: { label: 'Concluir Leitura', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' },
+          ...acaoRetirarPauta
         }
       case 'VOTACAO':
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
           votacao: { label: 'Abrir Votação', icon: Vote, color: 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/30' },
-          finalizar: { label: 'Finalizar', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' }
+          finalizar: { label: 'Finalizar', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' },
+          ...acaoRetirarPauta
         }
       case 'DISCUSSAO':
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
-          finalizar: { label: 'Concluir Discussão', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' }
+          finalizar: { label: 'Concluir Discussão', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' },
+          ...acaoRetirarPauta
         }
       case 'COMUNICADO':
         return {
@@ -182,7 +191,8 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
       default:
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
-          finalizar: { label: 'Finalizar', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' }
+          finalizar: { label: 'Finalizar', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' },
+          ...acaoRetirarPauta
         }
     }
   }
@@ -190,7 +200,8 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
   // Ações para quando o item está EM_VOTACAO
   if (status === 'EM_VOTACAO') {
     return {
-      finalizar: { label: 'Encerrar Votação', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' }
+      finalizar: { label: 'Encerrar Votação', icon: Square, color: 'text-red-400 hover:text-red-300 hover:bg-red-900/30' },
+      ...acaoRetirarPauta
     }
   }
 
@@ -236,6 +247,13 @@ export default function PainelOperadorPage() {
   const [resultadoSelecionado, setResultadoSelecionado] = useState<string>('')
   const [itemParaEditarVotacao, setItemParaEditarVotacao] = useState<PautaItemApi | null>(null)
   const [modalVotacaoAberto, setModalVotacaoAberto] = useState(false)
+
+  // Estado para modal de retirada de pauta
+  const [modalRetiradaPauta, setModalRetiradaPauta] = useState<{
+    open: boolean
+    itemId: string
+    titulo: string
+  }>({ open: false, itemId: '', titulo: '' })
 
   const iniciarSessaoTimer = useCallback((dadosSessao: SessaoApi) => {
     if (sessaoIntervalRef.current) clearInterval(sessaoIntervalRef.current)
@@ -372,6 +390,33 @@ export default function PainelOperadorPage() {
     }
     await executarAcaoItem(modalFinalizar.itemId, 'finalizar', resultadoSelecionado as any)
     setModalFinalizar({ open: false, itemId: '', titulo: '' })
+  }
+
+  // Funções para retirada de pauta
+  const abrirModalRetiradaPauta = (itemId: string, titulo: string) => {
+    setModalRetiradaPauta({ open: true, itemId, titulo })
+  }
+
+  const confirmarRetiradaPauta = async (motivo: string) => {
+    if (!sessao || !modalRetiradaPauta.itemId) return
+    try {
+      setExecutando(true)
+      await sessoesApi.controlItem(
+        sessao.id,
+        modalRetiradaPauta.itemId,
+        'finalizar',
+        'RETIRADA_PAUTA',
+        undefined, // parlamentarId
+        motivo     // observacoes (motivo da retirada)
+      )
+      await carregarSessao(false)
+      toast.success('Item retirado de pauta com sucesso. A proposicao esta disponivel para inclusao em sessoes futuras.')
+      setModalRetiradaPauta({ open: false, itemId: '', titulo: '' })
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao retirar item de pauta')
+    } finally {
+      setExecutando(false)
+    }
   }
 
   const itensPorSecao = useMemo(() => {
@@ -722,82 +767,104 @@ export default function PainelOperadorPage() {
                                       <>
                                         {(() => {
                                           const acoes = getAcoesDisponiveis(item)
-                                          return (
-                                            <>
-                                              {acoes.iniciar && (
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  className={cn("h-7 px-2 gap-1", acoes.iniciar.color)}
-                                                  onClick={() => executarAcaoItem(item.id, 'iniciar')}
-                                                  disabled={executando}
-                                                  title={acoes.iniciar.label}
-                                                >
-                                                  <acoes.iniciar.icon className="h-3.5 w-3.5" />
-                                                  <span className="text-xs hidden xl:inline">{acoes.iniciar.label}</span>
-                                                </Button>
-                                              )}
-                                              {acoes.pausar && (
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  className={cn("h-7 w-7 p-0", acoes.pausar.color)}
-                                                  onClick={() => executarAcaoItem(item.id, 'pausar')}
-                                                  disabled={executando}
-                                                  title={acoes.pausar.label}
-                                                >
-                                                  <acoes.pausar.icon className="h-3.5 w-3.5" />
-                                                </Button>
-                                              )}
-                                              {acoes.votacao && (
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  className={cn("h-7 px-2 gap-1", acoes.votacao.color)}
-                                                  onClick={() => executarAcaoItem(item.id, 'votacao')}
-                                                  disabled={executando}
-                                                  title={acoes.votacao.label}
-                                                >
-                                                  <acoes.votacao.icon className="h-3.5 w-3.5" />
-                                                  <span className="text-xs hidden xl:inline">{acoes.votacao.label}</span>
-                                                </Button>
-                                              )}
-                                              {acoes.finalizar && (
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  className={cn("h-7 px-2 gap-1", acoes.finalizar.color)}
-                                                  onClick={() => {
-                                                    // Se tem resultado direto (ex: CONCLUIDO para leituras), executa direto
-                                                    if ((acoes.finalizar as any).resultado) {
-                                                      executarAcaoItem(item.id, 'finalizar', (acoes.finalizar as any).resultado)
-                                                    } else {
-                                                      // Senão abre modal para escolher resultado
-                                                      abrirModalFinalizar(item.id, item.titulo)
-                                                    }
-                                                  }}
-                                                  disabled={executando}
-                                                  title={acoes.finalizar.label}
-                                                >
-                                                  <acoes.finalizar.icon className="h-3.5 w-3.5" />
-                                                  <span className="text-xs hidden xl:inline">{acoes.finalizar.label}</span>
-                                                </Button>
-                                              )}
-                                              {acoes.retomar && (
-                                                <Button
-                                                  size="sm"
-                                                  variant="ghost"
-                                                  className={cn("h-7 px-2 gap-1", acoes.retomar.color)}
-                                                  onClick={() => executarAcaoItem(item.id, 'retomar')}
-                                                  disabled={executando}
-                                                  title={acoes.retomar.label}
-                                                >
-                                                  <acoes.retomar.icon className="h-3.5 w-3.5" />
-                                                  <span className="text-xs hidden xl:inline">{acoes.retomar.label}</span>
-                                                </Button>
-                                              )}
-                                            </>
-                                          )
+                                          {
+                                            // Cast para any para evitar erros de tipo com propriedades opcionais
+                                            const a = acoes as any
+                                            return (
+                                              <>
+                                                {a.iniciar && (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className={cn("h-7 px-2 gap-1", a.iniciar.color)}
+                                                    onClick={() => executarAcaoItem(item.id, 'iniciar')}
+                                                    disabled={executando}
+                                                    title={a.iniciar.label}
+                                                  >
+                                                    <a.iniciar.icon className="h-3.5 w-3.5" />
+                                                    <span className="text-xs hidden xl:inline">{a.iniciar.label}</span>
+                                                  </Button>
+                                                )}
+                                                {a.pausar && (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className={cn("h-7 w-7 p-0", a.pausar.color)}
+                                                    onClick={() => executarAcaoItem(item.id, 'pausar')}
+                                                    disabled={executando}
+                                                    title={a.pausar.label}
+                                                  >
+                                                    <a.pausar.icon className="h-3.5 w-3.5" />
+                                                  </Button>
+                                                )}
+                                                {a.votacao && (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className={cn("h-7 px-2 gap-1", a.votacao.color)}
+                                                    onClick={() => executarAcaoItem(item.id, 'votacao')}
+                                                    disabled={executando}
+                                                    title={a.votacao.label}
+                                                  >
+                                                    <a.votacao.icon className="h-3.5 w-3.5" />
+                                                    <span className="text-xs hidden xl:inline">{a.votacao.label}</span>
+                                                  </Button>
+                                                )}
+                                                {a.finalizar && (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className={cn("h-7 px-2 gap-1", a.finalizar.color)}
+                                                    onClick={() => {
+                                                      // Se tem resultado direto (ex: CONCLUIDO para leituras), executa direto
+                                                      if (a.finalizar.resultado) {
+                                                        executarAcaoItem(item.id, 'finalizar', a.finalizar.resultado)
+                                                      } else {
+                                                        // Senão abre modal para escolher resultado
+                                                        abrirModalFinalizar(item.id, item.titulo)
+                                                      }
+                                                    }}
+                                                    disabled={executando}
+                                                    title={a.finalizar.label}
+                                                  >
+                                                    <a.finalizar.icon className="h-3.5 w-3.5" />
+                                                    <span className="text-xs hidden xl:inline">{a.finalizar.label}</span>
+                                                  </Button>
+                                                )}
+                                                {a.retomar && (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className={cn("h-7 px-2 gap-1", a.retomar.color)}
+                                                    onClick={() => executarAcaoItem(item.id, 'retomar')}
+                                                    disabled={executando}
+                                                    title={a.retomar.label}
+                                                  >
+                                                    <a.retomar.icon className="h-3.5 w-3.5" />
+                                                    <span className="text-xs hidden xl:inline">{a.retomar.label}</span>
+                                                  </Button>
+                                                )}
+                                                {a.retirarPauta && (
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className={cn("h-7 px-2 gap-1", a.retirarPauta.color)}
+                                                    onClick={() => {
+                                                      const titulo = item.proposicao
+                                                        ? `${item.proposicao.tipo} ${item.proposicao.numero}/${item.proposicao.ano}`
+                                                        : item.titulo
+                                                      abrirModalRetiradaPauta(item.id, titulo)
+                                                    }}
+                                                    disabled={executando}
+                                                    title={a.retirarPauta.label}
+                                                  >
+                                                    <XCircle className="h-3.5 w-3.5" />
+                                                    <span className="text-xs hidden 2xl:inline">{a.retirarPauta.label}</span>
+                                                  </Button>
+                                                )}
+                                              </>
+                                            )
+                                          }
                                         })()}
                                       </>
                                     )}
@@ -961,6 +1028,14 @@ export default function PainelOperadorPage() {
         onClose={() => setModalFinalizar({ open: false, itemId: '', titulo: '' })}
         onConfirm={confirmarFinalizar}
         onResultadoChange={setResultadoSelecionado}
+      />
+
+      {/* Modal Retirar de Pauta */}
+      <RetirarPautaModal
+        open={modalRetiradaPauta.open}
+        onClose={() => setModalRetiradaPauta({ open: false, itemId: '', titulo: '' })}
+        onConfirm={confirmarRetiradaPauta}
+        itemTitulo={modalRetiradaPauta.titulo}
       />
 
       {/* Modal Controle de Presenca */}

@@ -30,7 +30,8 @@ const MAPEAMENTO_STATUS_PAUTA_PROPOSICAO: Record<string, StatusProposicao | null
   'APROVADO': 'APROVADA',
   'REJEITADO': 'REJEITADA',
   'ADIADO': 'EM_PAUTA',       // Adiado volta para EM_PAUTA
-  'RETIRADO': 'ARQUIVADA',    // Retirado = arquivada
+  'RETIRADO': 'ARQUIVADA',    // Retirado permanente = arquivada
+  'RETIRADA_PAUTA': 'AGUARDANDO_PAUTA', // Retirada de pauta = volta para aguardando pauta (disponível para sessões futuras)
   'VISTA': null,               // Vista mantém status atual
   'CONCLUIDO': null            // Concluído mantém status atual (usado para itens sem proposição)
 }
@@ -866,11 +867,79 @@ export async function reordenarItemPauta(
   })
 }
 
+/**
+ * Registra a retirada de pauta no histórico de tramitação
+ * Proposição volta para AGUARDANDO_PAUTA, ficando disponível para pautas futuras
+ */
+async function registrarRetiradaPauta(
+  proposicaoId: string,
+  sessaoId: string,
+  observacoes?: string,
+  usuarioId?: string
+) {
+  // Buscar unidade "Secretaria Legislativa" ou a primeira disponível
+  const unidadeSecretaria = await prisma.tramitacaoUnidade.findFirst({
+    where: { tipo: 'SECRETARIA' }
+  }) || await prisma.tramitacaoUnidade.findFirst()
+
+  if (!unidadeSecretaria) {
+    console.warn('[RetiradaPauta] Nenhuma unidade de tramitação encontrada, pulando registro de tramitação')
+    return
+  }
+
+  // Buscar tipo de tramitação adequado ou criar genérico
+  const tipoTramitacao = await prisma.tramitacaoTipo.findFirst({
+    where: { nome: { contains: 'Retirada', mode: 'insensitive' } }
+  }) || await prisma.tramitacaoTipo.findFirst()
+
+  if (!tipoTramitacao) {
+    console.warn('[RetiradaPauta] Nenhum tipo de tramitação encontrado, pulando registro de tramitação')
+    return
+  }
+
+  // Buscar sessão para dados do log
+  const sessao = await prisma.sessao.findUnique({
+    where: { id: sessaoId },
+    select: { numero: true, data: true }
+  })
+
+  const dataSessao = sessao?.data ? new Date(sessao.data).toLocaleDateString('pt-BR') : ''
+  const descricaoSessao = sessao ? `${sessao.numero}ª Sessão (${dataSessao})` : sessaoId
+
+  // Criar tramitação
+  const tramitacao = await prisma.tramitacao.create({
+    data: {
+      proposicaoId,
+      tipoTramitacaoId: tipoTramitacao.id,
+      unidadeId: unidadeSecretaria.id,
+      dataEntrada: new Date(),
+      status: 'CONCLUIDA',
+      observacoes: observacoes
+        ? `Retirada de pauta da ${descricaoSessao}. Motivo: ${observacoes}`
+        : `Retirada de pauta da ${descricaoSessao}. Disponível para inclusão em sessão futura.`,
+      automatica: true
+    }
+  })
+
+  // Registrar no histórico
+  await prisma.tramitacaoHistorico.create({
+    data: {
+      tramitacaoId: tramitacao.id,
+      acao: 'RETIRADA_PAUTA',
+      descricao: `Proposição retirada da pauta da ${descricaoSessao}. ${observacoes || 'Disponível para inclusão em sessão futura.'}`,
+      usuarioId
+    }
+  })
+
+  console.log(`[RetiradaPauta] Proposição ${proposicaoId} retirada de pauta, tramitação ${tramitacao.id} registrada`)
+}
+
 export async function finalizarItemPauta(
   sessaoId: string,
   itemId: string,
-  resultado: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO' = 'CONCLUIDO',
-  observacoes?: string  // Motivo da retirada ou outras observações
+  resultado: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO' | 'RETIRADA_PAUTA' = 'CONCLUIDO',
+  observacoes?: string,  // Motivo da retirada ou outras observações
+  usuarioId?: string     // ID do usuário para rastreabilidade
 ) {
   const item = await prisma.pautaItem.findUnique({
     where: { id: itemId },
@@ -907,11 +976,15 @@ export async function finalizarItemPauta(
     // O resultado calculado e detalhes de quórum são armazenados na proposição
   }
 
+  // Para RETIRADA_PAUTA, o status do item é RETIRADO (enum PautaItemStatus não tem RETIRADA_PAUTA)
+  // A diferença está no status da proposição: RETIRADO -> ARQUIVADA, RETIRADA_PAUTA -> AGUARDANDO_PAUTA
+  const statusItem = (resultado === 'RETIRADA_PAUTA' ? 'RETIRADO' : resultadoCalculado) as 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
+
   // Atualizar o item da pauta
   const atualizado = await prisma.pautaItem.update({
     where: { id: itemId },
     data: {
-      status: resultadoCalculado,
+      status: statusItem,
       tempoAcumulado: acumulado,
       tempoReal: acumulado,
       iniciadoEm: null,
@@ -937,6 +1010,17 @@ export async function finalizarItemPauta(
       resultado,
       sessaoId
     )
+  }
+
+  // RETIRADA DE PAUTA: Registrar tramitação e atualizar proposição para AGUARDANDO_PAUTA
+  if (resultado === 'RETIRADA_PAUTA' && temProposicao) {
+    await registrarRetiradaPauta(item.proposicaoId!, sessaoId, observacoes, usuarioId)
+    // Forçar atualização do status da proposição para AGUARDANDO_PAUTA
+    // (a função sincronizarStatusProposicao já fez isso pelo mapeamento, mas garantimos aqui)
+    await prisma.proposicao.update({
+      where: { id: item.proposicaoId! },
+      data: { status: 'AGUARDANDO_PAUTA' }
+    })
   }
 
   // Registrar leitura da proposição quando item de LEITURA é finalizado com sucesso

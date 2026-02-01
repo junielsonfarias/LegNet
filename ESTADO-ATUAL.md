@@ -1,9 +1,88 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Header Institucional - Area Parlamentar)
+> **Ultima Atualizacao**: 2026-02-01 (Retirada de Pauta - Painel Operador)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Funcionalidade de Retirada de Pauta (01/02/2026)
+
+### Funcionalidade
+Nova funcionalidade que permite ao operador retirar uma proposicao da pauta da sessao atual, retornando-a ao status `AGUARDANDO_PAUTA` para inclusao em sessoes futuras. Diferente do "Retirado" que arquiva permanentemente.
+
+### Comportamento
+1. **Botao "Retirar de Pauta"**: Disponivel para itens EM_DISCUSSAO ou EM_VOTACAO que tenham proposicao vinculada
+2. **Modal de confirmacao**: Solicita motivo da retirada (obrigatorio)
+3. **Apos confirmacao**:
+   - Item da pauta: status muda para `RETIRADO` (badge laranja)
+   - Proposicao: status muda para `AGUARDANDO_PAUTA` (disponivel para pautas futuras)
+   - Tramitacao: Registra historico com motivo da retirada
+   - Toast de sucesso informa que proposicao esta disponivel para sessoes futuras
+
+### Diferenca entre RETIRADO e RETIRADA_PAUTA
+| Resultado | Status Item | Status Proposicao | Uso |
+|-----------|-------------|-------------------|-----|
+| RETIRADO | RETIRADO | ARQUIVADA | Retirada permanente (arquivamento) |
+| RETIRADA_PAUTA | RETIRADO | AGUARDANDO_PAUTA | Retirada temporaria (volta para pauta futura) |
+
+### Arquivos Criados
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/app/painel-operador/[sessaoId]/_components/retirar-pauta-modal.tsx` | Modal para confirmar retirada com campo de motivo |
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/lib/services/sessao-controle.ts` | Mapeamento RETIRADA_PAUTA -> AGUARDANDO_PAUTA, funcao registrarRetiradaPauta |
+| `src/app/api/sessoes/[id]/pauta/[itemId]/controle/route.ts` | Schema Zod com RETIRADA_PAUTA |
+| `src/lib/api/sessoes-api.ts` | Tipo de resultado com RETIRADA_PAUTA |
+| `src/app/painel-operador/[sessaoId]/page.tsx` | Botao e modal de retirada integrados |
+| `src/app/painel-operador/[sessaoId]/_components/index.ts` | Export do novo modal |
+
+### Fluxo Visual
+
+```
++----------------------------------------------------+
+| PAINEL DO OPERADOR                                 |
+|----------------------------------------------------|
+| Item: PROJETO DE LEI No 001/2026                   |
+| Status: EM DISCUSSAO                               |
+|                                                    |
+| Acoes: [Pausar] [Votacao] [Finalizar] [Retirar]   |
+|                                      ^-- NOVO      |
++----------------------------------------------------+
+
+[Ao clicar em Retirar de Pauta]
+
++----------------------------------------------------+
+| Modal: Retirar de Pauta                            |
+|----------------------------------------------------|
+| A proposicao sera retirada desta sessao e ficara   |
+| disponivel para inclusao em pautas futuras.        |
+|                                                    |
+| [PROJETO DE LEI No 001/2026]                       |
+|                                                    |
+| Motivo da retirada: *                              |
+| [                                               ]  |
+|                                                    |
+| [Cancelar]              [Confirmar Retirada]       |
++----------------------------------------------------+
+
+[Apos confirmacao]
+
+Item: RETIRADO (badge laranja)
+Proposicao: AGUARDANDO_PAUTA (pode ser incluida em outra sessao)
+Tramitacao: Historico registrado com motivo
+```
+
+### Regras de Negocio
+- RN-NEW: Proposicao retirada de pauta volta para AGUARDANDO_PAUTA, nao ARQUIVADA
+- RN-NEW: Motivo da retirada e obrigatorio e registrado na tramitacao
+- RN-NEW: So itens com proposicao vinculada podem ser retirados de pauta (itens avulsos usam o modal padrao)
 
 ---
 

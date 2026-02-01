@@ -27,7 +27,7 @@ const ControleItemSchema = z.object({
     // Ações de turno
     'iniciar-turno', 'finalizar-turno', 'verificar-intersticio', 'segundo-turno', 'listar-intersticio'
   ]),
-  resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO']).optional(),
+  resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO', 'RETIRADA_PAUTA']).optional(),
   parlamentarId: z.string().optional(), // Para pedido de vista
   prazoDias: z.number().optional(),     // Prazo para devolução da vista
   observacoes: z.string().optional()    // Observações (motivo de retirada, etc.)

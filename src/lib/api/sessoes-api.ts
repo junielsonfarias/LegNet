@@ -202,9 +202,9 @@ class SessoesApiService {
     sessaoId: string,
     itemId: string,
     acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar' | 'vista' | 'retomarVista' | 'subir' | 'descer',
-    resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO',
+    resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO' | 'RETIRADA_PAUTA',
     parlamentarId?: string,
-    observacoes?: string  // Motivo da retirada, etc.
+    observacoes?: string  // Motivo da retirada de pauta, etc.
   ): Promise<PautaItemApi> {
     const response = await fetch(`${this.baseUrl}/${sessaoId}/pauta/${itemId}/controle`, {
       method: 'POST',
