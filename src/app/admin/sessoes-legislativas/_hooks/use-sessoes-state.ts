@@ -35,7 +35,8 @@ export function useSessoesState() {
   const { legislaturas } = useLegislaturas({ ativa: true })
   const legislaturaAtiva = legislaturas.find(l => l.ativa) || legislaturas[0]
   const { periodos } = usePeriodosLegislatura(legislaturaAtiva?.id)
-  const { proposicoes } = useProposicoes()
+  // Filtrar apenas proposições aguardando inclusão em pauta
+  const { proposicoes } = useProposicoes({ status: 'AGUARDANDO_PAUTA' })
   const { templates: templatesSessao, loading: loadingTemplates } = useSessaoTemplates({ ativo: true })
 
   // Estado local de sessões (any[] para flexibilidade com tipos da API)

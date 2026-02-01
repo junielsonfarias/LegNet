@@ -15,6 +15,7 @@
 |----------|------------|--------|
 | Proposicoes vinculadas automaticamente na criacao da sessao | MEDIO | Corrigido |
 | Erro `suggestions.filter is not a function` no PautaEditor | CRITICO | Corrigido |
+| Dropdown de proposicoes listando todas ao inves de aguardando pauta | MEDIO | Corrigido |
 
 ### Descricao das Correcoes
 
@@ -32,6 +33,12 @@
   - `use-pauta.ts` - Validacao no fetchSuggestions
   - `pauta-editor.tsx` - Validacao antes do filter
 
+**3. Dropdown de proposicoes no modal de pauta:**
+- **Problema**: Ao adicionar item a pauta, dropdown listava TODAS as proposicoes
+- **Causa**: Hook `useProposicoes()` era chamado sem filtro de status
+- **Solucao**: Adicionado filtro `status: 'AGUARDANDO_PAUTA'` no hook
+- **Comportamento correto**: Lista apenas proposicoes prontas para inclusao em pauta
+
 ### Arquivos Modificados
 
 - `src/lib/utils/sessoes-utils.ts`
@@ -43,6 +50,9 @@
 - `src/components/admin/pauta-editor.tsx`
   - Adicionada variavel `suggestionsArray` com validacao
   - Botao de proposicoes usa `suggestionsArray.length`
+
+- `src/app/admin/sessoes-legislativas/_hooks/use-sessoes-state.ts`
+  - `useProposicoes()` agora filtra por `status: 'AGUARDANDO_PAUTA'`
 
 ---
 
