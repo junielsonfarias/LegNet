@@ -3269,6 +3269,38 @@ if (dataSessaoSemHora < dataHoje) {
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-02-01 - Correcoes no Sistema de Pauta de Sessoes
+
+**Objetivo**: Corrigir problemas na pauta de sessoes relacionados a proposicoes auto-adicionadas e erros de filtro.
+
+**Problemas Corrigidos**:
+
+| Problema | Solucao |
+|----------|---------|
+| Proposicoes adicionadas automaticamente na pauta | Removida logica automatica em `gerarPautaAutomatica()` |
+| Erro `suggestions.filter is not a function` | Validacao de array em `use-pauta.ts` e `pauta-editor.tsx` |
+| Dropdown listando todas proposicoes | Filtro `AGUARDANDO_PAUTA` em `use-sessoes-state.ts` |
+| API listando status amplos | API sugestoes filtrada apenas para `AGUARDANDO_PAUTA` |
+| URL usando CUID ao inves de slug | Adicionado `resolverSessaoId` na API de sugestoes |
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/lib/utils/sessoes-utils.ts` | `gerarPautaAutomatica()` nao adiciona proposicoes |
+| `src/lib/hooks/use-pauta.ts` | Validacao `Array.isArray()` para sugestoes |
+| `src/components/admin/pauta-editor.tsx` | Validacao de array antes de filtrar |
+| `src/app/admin/sessoes-legislativas/_hooks/use-sessoes-state.ts` | Filtro `status: 'AGUARDANDO_PAUTA'` |
+| `src/app/api/sessoes/[id]/pauta/sugestoes/route.ts` | Filtro `AGUARDANDO_PAUTA` e suporte a slug |
+
+**Comportamento Esperado**:
+- Pauta criada vazia (apenas itens padrao de Expediente e Comunicacoes)
+- Usuario adiciona proposicoes manualmente atraves da interface
+- Apenas proposicoes com status `AGUARDANDO_PAUTA` aparecem nas sugestoes
+- URLs amigaveis funcionam em todas as APIs de sessao
+
+---
+
 ### 2026-01-31 - Melhorias de UX, Acessibilidade e API
 
 **Objetivo**: Corrigir inconsistencias de UX, melhorar acessibilidade e adicionar endpoint DELETE em lote.
