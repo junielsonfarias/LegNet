@@ -799,6 +799,56 @@ function determinarAplicacaoQuorum(
     +-------------------+
 ```
 
+### Fluxo de Leitura de Proposicoes
+
+```
+    ITEM DE LEITURA (tipoAcao = LEITURA)
+          |
+          v
+    +-------------------+
+    | [Iniciar Leitura] |
+    | (botao azul/sky)  |
+    +-------------------+
+          |
+          v
+    +-------------------+
+    | EM_DISCUSSAO      |
+    | + indicador       |
+    | "EM LEITURA"      |
+    +-------------------+
+          |
+    [Painel Publico exibe banner "EM LEITURA"]
+          |
+          v
+    +-------------------+
+    | [Materia Lida]    |
+    | (botao verde)     |
+    +-------------------+
+          |
+          v
+    +-------------------+
+    | Sistema registra: |
+    | - sessaoId        |
+    | - dataLeitura     |
+    +-------------------+
+          |
+          v
+    +-------------------+
+    | status: CONCLUIDO |
+    +-------------------+
+```
+
+#### Campos Atualizados na Leitura
+
+Quando o operador clica "Materia Lida":
+
+| Campo | Modelo | Valor |
+|-------|--------|-------|
+| `sessaoId` | Proposicao | ID da sessao atual |
+| `dataLeitura` | Proposicao | Timestamp da leitura |
+| `status` | PautaItem | CONCLUIDO |
+| `finalizadoEm` | PautaItem | Timestamp |
+
 ### Fluxo de Dois Turnos
 
 ```

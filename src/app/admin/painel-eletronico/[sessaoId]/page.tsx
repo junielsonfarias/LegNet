@@ -840,15 +840,27 @@ export default function PainelEletronicoOperadorPage() {
                 <div className="space-y-3">
                   {grupo.itens.map(item => {
                     const isAtual = currentItem?.id === item.id
+                    const isEmLeitura = item.status === 'EM_DISCUSSAO' && item.tipoAcao === 'LEITURA'
                     return (
                       <div
                         key={item.id}
                         className={`flex flex-col gap-3 rounded-lg border p-4 transition ${
-                          isAtual ? 'border-blue-500 bg-blue-900/30 shadow-lg' : 'border-slate-600 bg-slate-700/50'
+                          isEmLeitura
+                            ? 'border-sky-500 bg-sky-900/30 shadow-lg shadow-sky-500/20'
+                            : isAtual
+                              ? 'border-blue-500 bg-blue-900/30 shadow-lg'
+                              : 'border-slate-600 bg-slate-700/50'
                         }`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
+                            {/* Indicador EM LEITURA em destaque */}
+                            {isEmLeitura && (
+                              <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-sky-600/30 border border-sky-400/50 rounded-md animate-pulse">
+                                <BookOpen className="h-4 w-4 text-sky-300" />
+                                <span className="text-sm font-semibold text-sky-200">EM LEITURA</span>
+                              </div>
+                            )}
                             <div className="flex items-center gap-3 flex-wrap">
                               <Badge className={getItemStatusBadge(item.status)}>{item.status.replace(/_/g, ' ')}</Badge>
                               {item.tipoAcao && (
@@ -936,7 +948,18 @@ export default function PainelEletronicoOperadorPage() {
                                   </Button>
                                 </>
                               )}
-                              {['PENDENTE', 'ADIADO'].includes(item.status) && (
+                              {/* Botão de Iniciar - diferenciado para LEITURA */}
+                              {['PENDENTE', 'ADIADO'].includes(item.status) && item.tipoAcao === 'LEITURA' && (
+                                <Button
+                                  size="sm"
+                                  disabled={executando}
+                                  onClick={() => executarAcaoItem(item.id, 'iniciar')}
+                                  className="bg-sky-600 hover:bg-sky-700"
+                                >
+                                  <BookOpen className="mr-2 h-4 w-4" /> Iniciar Leitura
+                                </Button>
+                              )}
+                              {['PENDENTE', 'ADIADO'].includes(item.status) && item.tipoAcao !== 'LEITURA' && (
                                 <Button
                                   size="sm"
                                   disabled={executando}

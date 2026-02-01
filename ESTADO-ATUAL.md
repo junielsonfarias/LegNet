@@ -1,9 +1,141 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Correcao Pauta Sessao e Editor)
+> **Ultima Atualizacao**: 2026-02-01 (Registro de Leitura de Proposicoes)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Registro de Leitura de Proposicoes em Plenario (01/02/2026)
+
+### Novas Funcionalidades
+
+| Funcionalidade | Status |
+|----------------|--------|
+| Campo `dataLeitura` no modelo Proposicao | Implementado |
+| Registro automatico de leitura ao finalizar item | Implementado |
+| Botao "Iniciar Leitura" no painel do operador | Implementado |
+| Banner "EM LEITURA" no painel publico | Implementado |
+| Indicador visual de leitura em andamento | Implementado |
+
+### Descricao das Mudancas
+
+**1. Schema Prisma - Campo dataLeitura:**
+- **Arquivo**: `prisma/schema.prisma`
+- **Mudanca**: Adicionado campo `dataLeitura DateTime?` ao modelo `Proposicao`
+- **Objetivo**: Registrar data/hora exata em que a proposicao foi lida em plenario
+
+**2. Servico de Controle de Sessao:**
+- **Arquivo**: `src/lib/services/sessao-controle.ts`
+- **Funcao**: `finalizarItemPauta()`
+- **Mudanca**: Quando `tipoAcao === 'LEITURA'` e `resultado === 'CONCLUIDO'`, atualiza:
+  - `Proposicao.sessaoId` - Sessao onde foi lida
+  - `Proposicao.dataLeitura` - Timestamp da leitura
+
+**3. Painel do Operador - Fluxo de Leitura:**
+- **Arquivo**: `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`
+- **Mudancas**:
+  - Botao "Iniciar Leitura" diferenciado (cor sky/azul claro) para itens com `tipoAcao === 'LEITURA'`
+  - Indicador visual "EM LEITURA" com animacao pulse quando item esta sendo lido
+  - Destaque visual com borda sky-500 para itens em leitura
+
+**4. Painel Publico - Banner de Leitura:**
+- **Arquivo**: `src/app/painel-publico/page.tsx`
+- **Mudancas**:
+  - Banner "EM LEITURA" similar ao banner de votacao
+  - Exibe proposicao, titulo e autor quando item esta em leitura
+  - Badge de status diferenciado para "Em Leitura" vs "Em Discussao"
+
+### Fluxo de Leitura
+
+```
+OPERADOR                              PUBLICO
+   |                                     |
+   | [Iniciar Leitura]                   |
+   |       |                             |
+   |       V                             |
+   |  Status: EM_DISCUSSAO               | Banner: "EM LEITURA"
+   |  tipoAcao: LEITURA                  | Proposicao em destaque
+   |       |                             |
+   | [Materia Lida]                      |
+   |       |                             |
+   |       V                             |
+   |  Registra:                          | Leitura concluida
+   |  - sessaoId na proposicao           |
+   |  - dataLeitura com timestamp        |
+   |       |                             |
+   |  Status: CONCLUIDO                  |
+```
+
+### Arquivos Modificados
+
+- `prisma/schema.prisma`
+  - Adicionado campo `dataLeitura DateTime?` ao modelo `Proposicao`
+
+- `src/lib/services/sessao-controle.ts`
+  - Atualizada funcao `finalizarItemPauta()` para registrar leitura
+
+- `src/app/admin/painel-eletronico/[sessaoId]/page.tsx`
+  - Botao "Iniciar Leitura" diferenciado
+  - Indicador "EM LEITURA" com destaque visual
+
+- `src/app/painel-publico/page.tsx`
+  - Banner "EM LEITURA" em tempo real
+  - Badge de status para leitura
+
+---
+
+## Fluxo de Tramitacao para Pauta (01/02/2026)
+
+### Novas Funcionalidades
+
+| Funcionalidade | Status |
+|----------------|--------|
+| Botao "Enviar para Pauta" no modal de tramitacao | Implementado |
+| API tramitar para AGUARDANDO_PAUTA | Implementado |
+| Tramitacao automatica para Plenario ao incluir em pauta | Implementado |
+
+### Descricao das Mudancas
+
+**1. Botao "Enviar para Pauta" no Modal de Tramitacao:**
+- **Objetivo**: Permitir ao usuario enviar proposicao para aguardando pauta diretamente pelo modal
+- **Funcionalidade**: Atualiza status da proposicao para `AGUARDANDO_PAUTA` e cria tramitacao para Secretaria Legislativa
+- **Arquivos modificados**:
+  - `tramitacao-modal.tsx` - Adicionado botao "Enviar para Pauta"
+  - `use-proposicoes-state.ts` - Adicionado handler `handleSendToAgenda`
+  - `page.tsx` (proposicoes) - Passagem da nova prop ao modal
+
+**2. API de Tramitacao para Aguardando Pauta:**
+- **Endpoint**: POST `/api/proposicoes/[id]/tramitar` com `acao: 'AGUARDANDO_PAUTA'`
+- **Comportamento**:
+  - Cria tramitacao com destino "Secretaria Legislativa"
+  - Atualiza status da proposicao para `AGUARDANDO_PAUTA`
+  - Registra auditoria da operacao
+- **Arquivos**: `tramitar/route.ts`, `tramitacao-service.ts`
+
+**3. Tramitacao para Plenario (ao incluir em pauta):**
+- **Funcao**: `tramitarParaPlenario()` em `tramitacao-service.ts`
+- **Comportamento**:
+  - Ao adicionar proposicao a pauta da sessao
+  - Cria tramitacao com destino "Plenario"
+  - Atualiza status da proposicao para `EM_PAUTA`
+
+### Arquivos Modificados
+
+- `src/app/admin/proposicoes/_hooks/use-proposicoes-state.ts`
+  - Adicionado `handleSendToAgenda` handler
+  - Adicionado tipo `sendToAgenda` em `acaoEmProcesso`
+
+- `src/app/admin/proposicoes/_components/tramitacao-modal.tsx`
+  - Adicionada prop `onSendToAgenda`
+  - Adicionado botao "Enviar para Pauta" com icone CalendarCheck
+
+- `src/app/admin/proposicoes/page.tsx`
+  - Passagem de `handleSendToAgenda` e `onSendToAgenda` ao modal
+
+- `src/components/admin/pauta-editor.tsx`
+  - Corrigida escapagem de aspas para ESLint
 
 ---
 

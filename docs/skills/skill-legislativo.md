@@ -64,6 +64,9 @@ model Proposicao {
 - `tipo`: Tipo da proposicao (PL, PR, PD, etc.)
 - `status`: Estado atual no fluxo legislativo
 - `turnoAtual`/`turnoMaximo`: Controle de votacao em turnos
+- `sessaoId`: Sessao onde a proposicao foi LIDA em plenario
+- `sessaoVotacaoId`: Sessao onde a proposicao foi VOTADA
+- `dataLeitura`: Data/hora em que foi lida em plenario (registrada automaticamente pelo painel do operador)
 
 ### Model: Emenda
 

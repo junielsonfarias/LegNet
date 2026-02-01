@@ -939,6 +939,18 @@ export async function finalizarItemPauta(
     )
   }
 
+  // Registrar leitura da proposição quando item de LEITURA é finalizado com sucesso
+  // Atualiza sessaoId (sessão onde foi lida) e dataLeitura (timestamp da leitura)
+  if (temProposicao && item.tipoAcao === 'LEITURA' && resultado === 'CONCLUIDO') {
+    await prisma.proposicao.update({
+      where: { id: item.proposicaoId! },
+      data: {
+        sessaoId: sessaoId,       // Registra a sessão onde foi lida
+        dataLeitura: new Date()   // Registra data/hora da leitura
+      }
+    })
+  }
+
   await prisma.pautaSessao.update({
     where: { id: item.pautaId },
     data: {

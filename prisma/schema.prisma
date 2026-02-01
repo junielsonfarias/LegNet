@@ -569,6 +569,7 @@ model Proposicao {
   resultado        ResultadoVotacao?
   sessaoId         String?           // Sessão onde foi APRESENTADA/LIDA
   sessaoVotacaoId  String?           // Sessão onde foi VOTADA
+  dataLeitura      DateTime?         // Data/hora em que foi lida em plenário
 
   // Autoria - dois sistemas (migração gradual)
   autorId          String?           // LEGADO: Parlamentar autor (opcional para compatibilidade)

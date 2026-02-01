@@ -24,7 +24,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Flag,
-  History
+  History,
+  BookOpen
 } from 'lucide-react'
 
 interface Sessao {
@@ -475,6 +476,54 @@ function PainelPublicoContent() {
         </div>
       )}
 
+      {/* Banner de Leitura em Andamento */}
+      {sessaoEmAndamento && itemAtual?.status === 'EM_DISCUSSAO' && itemAtual?.tipoAcao === 'LEITURA' && (
+        <div className="bg-gradient-to-r from-sky-600/40 to-cyan-600/40 border-b border-sky-400/50 px-6 py-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="relative">
+                <BookOpen className="h-8 w-8 text-sky-300" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
+              </div>
+              <h2 className="text-3xl font-bold text-white tracking-wider">
+                EM LEITURA
+              </h2>
+              <div className="relative">
+                <BookOpen className="h-8 w-8 text-sky-300" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
+              </div>
+            </div>
+
+            {/* Matéria em leitura */}
+            <div className="text-center bg-sky-900/30 rounded-xl p-6 border border-sky-400/30">
+              <p className="text-2xl font-bold text-white mb-2">
+                {itemAtual.proposicao
+                  ? `${itemAtual.proposicao.tipo} n${'\u00BA'} ${itemAtual.proposicao.numero}/${itemAtual.proposicao.ano}`
+                  : itemAtual.titulo
+                }
+              </p>
+              <p className="text-lg text-sky-200 mb-3">
+                {itemAtual.proposicao?.titulo || itemAtual.descricao || ''}
+              </p>
+              {itemAtual.proposicao?.autor && (
+                <div className="flex items-center justify-center gap-2 text-sky-300">
+                  <User className="h-4 w-4" />
+                  <span>
+                    Autor: <span className="font-semibold text-white">
+                      {itemAtual.proposicao.autor.apelido || itemAtual.proposicao.autor.nome}
+                    </span>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <p className="text-center text-sm text-sky-300 mt-4">
+              Acompanhe a leitura da matéria em plenario
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Banner de Sessão Concluída com Resumo */}
       {sessaoConcluida && (
         <div className="bg-blue-600/30 border-b border-blue-400/30 px-6 py-4">
@@ -596,6 +645,8 @@ function PainelPublicoContent() {
                         ? 'bg-red-600/30 text-red-200 border-red-400/50' :
                       itemAtual.status === 'EM_VOTACAO'
                         ? 'bg-orange-600/30 text-orange-200 border-orange-400/50' :
+                      itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'LEITURA'
+                        ? 'bg-sky-600/30 text-sky-200 border-sky-400/50' :
                       itemAtual.status === 'EM_DISCUSSAO'
                         ? 'bg-yellow-600/30 text-yellow-200 border-yellow-400/50' :
                       itemAtual.status === 'VISTA'
@@ -604,8 +655,9 @@ function PainelPublicoContent() {
                     }>
                       {itemAtual.status === 'APROVADO' || itemAtual.status === 'CONCLUIDO' ? 'Aprovado' :
                        itemAtual.status === 'REJEITADO' ? 'Rejeitado' :
-                       itemAtual.status === 'EM_VOTACAO' ? 'Em Votação' :
-                       itemAtual.status === 'EM_DISCUSSAO' ? 'Em Discussão' :
+                       itemAtual.status === 'EM_VOTACAO' ? 'Em Votacao' :
+                       itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'LEITURA' ? 'Em Leitura' :
+                       itemAtual.status === 'EM_DISCUSSAO' ? 'Em Discussao' :
                        itemAtual.status === 'PENDENTE' ? 'Pendente' :
                        itemAtual.status === 'VISTA' ? 'Vista' :
                        itemAtual.status}
