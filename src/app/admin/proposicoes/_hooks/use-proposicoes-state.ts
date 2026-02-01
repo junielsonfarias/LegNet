@@ -63,7 +63,7 @@ export interface UseProposicoesStateReturn {
   // Estado de ações
   comentarioAcao: string
   resultadoFinalizacao: '__sem__' | TramitacaoResultado
-  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | null
+  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | 'sendToAgenda' | null
   ultimoAvanco: TramitacaoAdvanceResponse | null
 
   // Leis referenciadas
@@ -85,6 +85,7 @@ export interface UseProposicoesStateReturn {
   handleAdvanceTramitacao: () => Promise<void>
   handleReopenTramitacao: () => Promise<void>
   handleFinalizeTramitacao: () => Promise<void>
+  handleSendToAgenda: () => Promise<void>
   handleTipoChange: (novoTipo: string) => Promise<void>
   handleAnoChange: (novoAno: number) => Promise<void>
   handleAdicionarLei: () => void
@@ -147,7 +148,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
   // Estados de ações
   const [comentarioAcao, setComentarioAcao] = useState('')
   const [resultadoFinalizacao, setResultadoFinalizacao] = useState<'__sem__' | TramitacaoResultado>(RESULTADO_PADRAO)
-  const [acaoEmProcesso, setAcaoEmProcesso] = useState<'advance' | 'reopen' | 'finalize' | null>(null)
+  const [acaoEmProcesso, setAcaoEmProcesso] = useState<'advance' | 'reopen' | 'finalize' | 'sendToAgenda' | null>(null)
   const [ultimoAvanco, setUltimoAvanco] = useState<TramitacaoAdvanceResponse | null>(null)
 
   // Estados de leis referenciadas
@@ -489,6 +490,26 @@ export function useProposicoesState(): UseProposicoesStateReturn {
     }
   }, [selectedProposicao, resultadoFinalizacao, comentarioAcao, handleCloseTramitacao, loadTramitacoes])
 
+  // Handler para enviar para Aguardando Pauta
+  const handleSendToAgenda = useCallback(async () => {
+    if (!selectedProposicao) return
+
+    try {
+      setAcaoEmProcesso('sendToAgenda')
+      await tramitacoesApi.sendToAgenda(selectedProposicao.id, comentarioAcao || undefined)
+      toast.success('Proposição enviada para Aguardando Pauta!')
+      handleCloseTramitacao()
+      void loadTramitacoes()
+      // Recarrega proposições para atualizar status
+      window.location.reload()
+    } catch (error) {
+      console.error('Erro ao enviar para pauta:', error)
+      toast.error(error instanceof Error ? error.message : 'Erro ao enviar para pauta.')
+    } finally {
+      setAcaoEmProcesso(null)
+    }
+  }, [selectedProposicao, comentarioAcao, handleCloseTramitacao, loadTramitacoes])
+
   // Handlers de tipo e ano
   const handleTipoChange = useCallback(async (novoTipo: string) => {
     if (formData.numeroAutomatico) {
@@ -690,6 +711,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
     handleAdvanceTramitacao,
     handleReopenTramitacao,
     handleFinalizeTramitacao,
+    handleSendToAgenda,
     handleTipoChange,
     handleAnoChange,
     handleAdicionarLei,

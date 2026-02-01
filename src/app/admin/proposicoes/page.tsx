@@ -80,6 +80,7 @@ function ProposicoesContent() {
     handleAdvanceTramitacao,
     handleReopenTramitacao,
     handleFinalizeTramitacao,
+    handleSendToAgenda,
     handleCloseTramitacao,
 
     // Setters
@@ -335,6 +336,7 @@ function ProposicoesContent() {
         onAdvance={handleAdvanceTramitacao}
         onReopen={handleReopenTramitacao}
         onFinalize={handleFinalizeTramitacao}
+        onSendToAgenda={handleSendToAgenda}
         onSubmitTramitacao={handleSubmitTramitacao}
         onTramitacaoFormDataChange={setTramitacaoFormData}
         onComentarioChange={setComentarioAcao}

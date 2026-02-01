@@ -451,7 +451,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
               </Select>
               {suggestionsArray.length === 0 && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Nenhuma proposição com status "Aguardando Pauta" disponível
+                  Nenhuma proposição com status &quot;Aguardando Pauta&quot; disponível
                 </p>
               )}
             </div>

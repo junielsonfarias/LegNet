@@ -1056,6 +1056,36 @@ class TramitacoesApiService {
       return fallbackDashboard()
     }
   }
+
+  /**
+   * Envia proposição para "Aguardando Pauta"
+   * Cria tramitação na Secretaria Legislativa e atualiza status para AGUARDANDO_PAUTA
+   */
+  async sendToAgenda(proposicaoId: string, observacoes?: string): Promise<{
+    proposicaoId: string
+    tramitacaoId?: string
+    proposicaoStatus: string
+    warnings?: string[]
+  }> {
+    const response = await fetch(`/api/proposicoes/${proposicaoId}/tramitar`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        acao: 'AGUARDANDO_PAUTA',
+        observacoes
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Erro ao enviar proposição para pauta')
+    }
+
+    return data.data
+  }
 }
 
 class TramitacaoRegrasApiService {

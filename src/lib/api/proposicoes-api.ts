@@ -10,7 +10,7 @@ export interface ProposicaoApi {
   ementa: string
   texto: string | null
   urlDocumento: string | null // URL externa do documento (Google Drive, etc)
-  status: 'APRESENTADA' | 'EM_TRAMITACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA'
+  status: 'APRESENTADA' | 'EM_TRAMITACAO' | 'AGUARDANDO_PAUTA' | 'EM_PAUTA' | 'EM_DISCUSSAO' | 'EM_VOTACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA' | 'SANCIONADA' | 'PROMULGADA'
   dataApresentacao: string
   dataVotacao: string | null
   resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE' | null
@@ -48,7 +48,7 @@ export interface ProposicaoCreate {
   ementa: string
   texto?: string
   urlDocumento?: string // URL externa do documento (Google Drive, etc)
-  status?: 'APRESENTADA' | 'EM_TRAMITACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA'
+  status?: 'APRESENTADA' | 'EM_TRAMITACAO' | 'AGUARDANDO_PAUTA' | 'EM_PAUTA' | 'EM_DISCUSSAO' | 'EM_VOTACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA' | 'SANCIONADA' | 'PROMULGADA'
   dataApresentacao: string
   dataVotacao?: string
   resultado?: 'APROVADA' | 'REJEITADA' | 'EMPATE'
@@ -64,7 +64,7 @@ export interface ProposicaoUpdate {
   ementa?: string
   texto?: string
   urlDocumento?: string // URL externa do documento (Google Drive, etc)
-  status?: 'APRESENTADA' | 'EM_TRAMITACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA'
+  status?: 'APRESENTADA' | 'EM_TRAMITACAO' | 'AGUARDANDO_PAUTA' | 'EM_PAUTA' | 'EM_DISCUSSAO' | 'EM_VOTACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA' | 'SANCIONADA' | 'PROMULGADA'
   dataApresentacao?: string
   dataVotacao?: string
   resultado?: 'APROVADA' | 'REJEITADA' | 'EMPATE'

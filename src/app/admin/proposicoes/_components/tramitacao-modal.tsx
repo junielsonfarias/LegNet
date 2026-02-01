@@ -13,7 +13,8 @@ import {
   Loader2,
   Check,
   RefreshCw,
-  X
+  X,
+  CalendarCheck
 } from 'lucide-react'
 import type {
   ProposicaoApi,
@@ -56,12 +57,13 @@ interface TramitacaoModalProps {
   notificacoes: Notificacao[]
   comentarioAcao: string
   resultadoFinalizacao: '__sem__' | TramitacaoResultado
-  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | 'create' | null
+  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | 'create' | 'sendToAgenda' | null
   ultimoAvanco: TramitacaoAdvanceResponse | null
   onClose: () => void
   onAdvance: () => void
   onReopen: () => void
   onFinalize: () => void
+  onSendToAgenda: () => void
   onSubmitTramitacao: (e: React.FormEvent) => void
   onTramitacaoFormDataChange: (data: TramitacaoFormData) => void
   onComentarioChange: (comentario: string) => void
@@ -84,6 +86,7 @@ export function TramitacaoModal({
   onAdvance,
   onReopen,
   onFinalize,
+  onSendToAgenda,
   onSubmitTramitacao,
   onTramitacaoFormDataChange,
   onComentarioChange,
@@ -194,6 +197,21 @@ export function TramitacaoModal({
                       <RefreshCw className="h-3 w-3 mr-1" />
                     )}
                     Reabrir
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="default"
+                    className="bg-amber-600 hover:bg-amber-700"
+                    onClick={onSendToAgenda}
+                    disabled={acaoEmProcesso !== null}
+                  >
+                    {acaoEmProcesso === 'sendToAgenda' ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <CalendarCheck className="h-3 w-3 mr-1" />
+                    )}
+                    Enviar para Pauta
                   </Button>
                 </div>
 
