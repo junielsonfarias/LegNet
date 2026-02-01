@@ -3269,6 +3269,51 @@ if (dataSessaoSemHora < dataHoje) {
 
 ## Historico de Atualizacoes Recentes
 
+### 2026-02-01 - Tramitacao Automatica para Pauta e Plenario
+
+**Objetivo**: Implementar tramitacao automatica para proposicoes ao enviar para pauta e ao incluir em sessao.
+
+**Novas Funcoes em `tramitacao-service.ts`**:
+
+| Funcao | Descricao |
+|--------|-----------|
+| `tramitarParaAguardandoPauta()` | Tramita para Secretaria Legislativa, status AGUARDANDO_PAUTA |
+| `tramitarParaPlenario()` | Tramita para Plenario, status EM_PAUTA |
+
+**Nova Acao na API de Tramitacao**:
+
+```
+POST /api/proposicoes/[id]/tramitar
+{
+  "acao": "AGUARDANDO_PAUTA",  // Nova opcao
+  "observacoes": "texto opcional"
+}
+```
+
+**Fluxo Implementado**:
+
+```
+Proposicao EM_TRAMITACAO
+       |
+       v (acao: AGUARDANDO_PAUTA)
+Secretaria Legislativa
+Status: AGUARDANDO_PAUTA
+       |
+       v (incluir na pauta - automatico)
+Plenario
+Status: EM_PAUTA
+```
+
+**Arquivos Modificados**:
+
+| Arquivo | Alteracao |
+|---------|-----------|
+| `src/lib/services/tramitacao-service.ts` | Novas funcoes de tramitacao |
+| `src/app/api/proposicoes/[id]/tramitar/route.ts` | Nova acao AGUARDANDO_PAUTA |
+| `src/app/api/sessoes/[id]/pauta/route.ts` | Integracao com tramitarParaPlenario() |
+
+---
+
 ### 2026-02-01 - Correcoes no Sistema de Pauta de Sessoes
 
 **Objetivo**: Corrigir problemas na pauta de sessoes relacionados a proposicoes auto-adicionadas e erros de filtro.
