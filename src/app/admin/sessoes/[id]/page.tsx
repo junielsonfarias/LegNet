@@ -41,6 +41,7 @@ import { OradoresSessaoEditor } from '@/components/admin/oradores-sessao-editor'
 import { ExpedientesSessaoEditor } from '@/components/admin/expedientes-sessao-editor'
 import { PresencaOrdemDiaEditor } from '@/components/admin/presenca-ordem-dia-editor'
 import { PresencaSessaoEditor } from '@/components/admin/presenca-sessao-editor'
+import { toast } from 'sonner'
 
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
@@ -49,8 +50,35 @@ export default function SessaoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = params?.id as string | undefined
-  const { sessao, loading, error } = useSessao(id || null)
+  const { sessao, loading, error, mutate } = useSessao(id || null)
   const [editingPauta, setEditingPauta] = useState(false)
+  const [atualizandoPauta, setAtualizandoPauta] = useState(false)
+
+  // Função para publicar/despublicar pauta
+  const alterarStatusPauta = async (novoStatus: 'RASCUNHO' | 'APROVADA') => {
+    if (!sessao?.pautaSessao?.id) return
+
+    try {
+      setAtualizandoPauta(true)
+      const response = await fetch(`/api/pautas/${sessao.pautaSessao.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: novoStatus })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Erro ao atualizar pauta')
+      }
+
+      toast.success(novoStatus === 'APROVADA' ? 'Pauta publicada com sucesso!' : 'Pauta revertida para rascunho')
+      mutate() // Recarregar dados da sessão
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao atualizar status da pauta')
+    } finally {
+      setAtualizandoPauta(false)
+    }
+  }
 
   if (!id) {
     return (
@@ -208,7 +236,7 @@ export default function SessaoDetailPage() {
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-                {sessao.numero}a Sessao {getTipoLabel(sessao.tipo)}
+                {sessao.numero}ª Sessão {getTipoLabel(sessao.tipo)}
               </h1>
               <Badge className={cn(statusConfig.bg, statusConfig.text, 'text-sm')}>
                 <StatusIcon className="h-3.5 w-3.5 mr-1" />
@@ -391,9 +419,53 @@ export default function SessaoDetailPage() {
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         {sessao.pautaSessao && (
-                          <Badge variant="outline">
-                            {sessao.pautaSessao.status === 'APROVADA' ? 'Publicada' : sessao.pautaSessao.status}
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              sessao.pautaSessao.status === 'APROVADA' && 'bg-green-50 text-green-700 border-green-300',
+                              sessao.pautaSessao.status === 'RASCUNHO' && 'bg-yellow-50 text-yellow-700 border-yellow-300'
+                            )}
+                          >
+                            {sessao.pautaSessao.status === 'APROVADA' ? 'Publicada' :
+                             sessao.pautaSessao.status === 'RASCUNHO' ? 'Rascunho' :
+                             sessao.pautaSessao.status}
                           </Badge>
+                        )}
+                        {sessao.status !== 'CANCELADA' && sessao.pautaSessao && (
+                          <>
+                            {sessao.pautaSessao.status === 'RASCUNHO' && pautaItens.length > 0 && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => alterarStatusPauta('APROVADA')}
+                                disabled={atualizandoPauta}
+                              >
+                                {atualizandoPauta ? (
+                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                                )}
+                                Publicar Pauta
+                              </Button>
+                            )}
+                            {sessao.pautaSessao.status === 'APROVADA' && !['EM_ANDAMENTO', 'CONCLUIDA'].includes(sessao.status) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                                onClick={() => alterarStatusPauta('RASCUNHO')}
+                                disabled={atualizandoPauta}
+                              >
+                                {atualizandoPauta ? (
+                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                  <Edit className="h-4 w-4 mr-1" />
+                                )}
+                                Voltar p/ Rascunho
+                              </Button>
+                            )}
+                          </>
                         )}
                         {sessao.status !== 'CANCELADA' && (
                           <Button
@@ -635,7 +707,7 @@ export default function SessaoDetailPage() {
                 <div className="flex items-center justify-between py-2 border-b">
                   <span className="text-sm text-gray-500">Legislatura</span>
                   <span className="font-medium">
-                    {sessao.legislatura.numero}a ({sessao.legislatura.anoInicio}-{sessao.legislatura.anoFim})
+                    {sessao.legislatura.numero}ª ({sessao.legislatura.anoInicio}-{sessao.legislatura.anoFim})
                   </span>
                 </div>
               )}

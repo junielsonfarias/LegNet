@@ -11,11 +11,13 @@ import {
 } from './base-repository'
 import type {
   Proposicao,
-  TipoProposicao,
   StatusProposicao,
   ResultadoVotacao,
   Prisma
 } from '@prisma/client'
+
+// Tipo para codigo de proposicao (agora e string flexivel)
+type TipoProposicaoCodigo = string
 
 // ============================================================
 // TIPOS
@@ -49,7 +51,7 @@ export interface ProposicaoWithRelations extends Proposicao {
  */
 export interface ProposicaoFilters {
   status?: StatusProposicao | StatusProposicao[]
-  tipo?: TipoProposicao | TipoProposicao[]
+  tipo?: TipoProposicaoCodigo | TipoProposicaoCodigo[]
   autorId?: string
   ano?: number
   resultado?: ResultadoVotacao
@@ -74,7 +76,7 @@ export type ProposicaoSortField =
 export interface CreateProposicaoInput {
   numero: string
   ano: number
-  tipo: TipoProposicao
+  tipo: TipoProposicaoCodigo
   titulo: string
   ementa: string
   texto?: string
@@ -111,21 +113,21 @@ export interface UpdateProposicaoInput {
 export interface IProposicaoRepository {
   findById(id: string, include?: string[]): Promise<ProposicaoWithRelations | null>
   findBySlug(slug: string): Promise<ProposicaoWithRelations | null>
-  findByTipoNumeroAno(tipo: TipoProposicao, numero: string, ano: number): Promise<ProposicaoWithRelations | null>
+  findByTipoNumeroAno(tipo: TipoProposicaoCodigo, numero: string, ano: number): Promise<ProposicaoWithRelations | null>
   findMany(options?: QueryOptions<ProposicaoFilters, ProposicaoSortField>): Promise<PaginatedResult<ProposicaoWithRelations>>
   findAll(filter?: ProposicaoFilters): Promise<ProposicaoWithRelations[]>
   findByAutor(autorId: string, options?: QueryOptions<ProposicaoFilters, ProposicaoSortField>): Promise<PaginatedResult<ProposicaoWithRelations>>
   findBySessao(sessaoId: string): Promise<ProposicaoWithRelations[]>
   count(filter?: ProposicaoFilters): Promise<number>
   countByStatus(): Promise<Record<StatusProposicao, number>>
-  countByTipo(): Promise<Record<TipoProposicao, number>>
+  countByTipo(): Promise<Record<TipoProposicaoCodigo, number>>
   exists(filter: Partial<ProposicaoFilters>): Promise<boolean>
   create(data: CreateProposicaoInput): Promise<ProposicaoWithRelations>
   update(id: string, data: UpdateProposicaoInput): Promise<ProposicaoWithRelations>
   updateStatus(id: string, status: StatusProposicao): Promise<ProposicaoWithRelations>
   delete(id: string): Promise<void>
-  generateSlug(tipo: TipoProposicao, numero: string, ano: number): string
-  getNextNumero(tipo: TipoProposicao, ano: number): Promise<string>
+  generateSlug(tipo: TipoProposicaoCodigo, numero: string, ano: number): string
+  getNextNumero(tipo: TipoProposicaoCodigo, ano: number): Promise<string>
 }
 
 // ============================================================
@@ -250,7 +252,7 @@ export class PrismaProposicaoRepository
     }) as Promise<ProposicaoWithRelations | null>
   }
 
-  async findByTipoNumeroAno(tipo: TipoProposicao, numero: string, ano: number): Promise<ProposicaoWithRelations | null> {
+  async findByTipoNumeroAno(tipo: TipoProposicaoCodigo, numero: string, ano: number): Promise<ProposicaoWithRelations | null> {
     return prisma.proposicao.findUnique({
       where: { tipo_numero_ano: { tipo, numero, ano } },
       include: this.defaultInclude
@@ -340,18 +342,18 @@ export class PrismaProposicaoRepository
     return counts as Record<StatusProposicao, number>
   }
 
-  async countByTipo(): Promise<Record<TipoProposicao, number>> {
+  async countByTipo(): Promise<Record<TipoProposicaoCodigo, number>> {
     const results = await prisma.proposicao.groupBy({
       by: ['tipo'],
       _count: { tipo: true }
     })
 
-    const counts: Partial<Record<TipoProposicao, number>> = {}
+    const counts: Partial<Record<TipoProposicaoCodigo, number>> = {}
     for (const result of results) {
       counts[result.tipo] = result._count.tipo
     }
 
-    return counts as Record<TipoProposicao, number>
+    return counts as Record<TipoProposicaoCodigo, number>
   }
 
   async exists(filter: Partial<ProposicaoFilters>): Promise<boolean> {
@@ -434,8 +436,8 @@ export class PrismaProposicaoRepository
   /**
    * Gera slug para proposição
    */
-  generateSlug(tipo: TipoProposicao, numero: string, ano: number): string {
-    const siglas: Record<TipoProposicao, string> = {
+  generateSlug(tipo: TipoProposicaoCodigo, numero: string, ano: number): string {
+    const siglas: Record<TipoProposicaoCodigo, string> = {
       PROJETO_LEI: 'pl',
       PROJETO_RESOLUCAO: 'pr',
       PROJETO_DECRETO: 'pd',
@@ -455,7 +457,7 @@ export class PrismaProposicaoRepository
   /**
    * Obtém próximo número disponível para tipo/ano
    */
-  async getNextNumero(tipo: TipoProposicao, ano: number): Promise<string> {
+  async getNextNumero(tipo: TipoProposicaoCodigo, ano: number): Promise<string> {
     const count = await prisma.proposicao.count({
       where: { tipo, ano }
     })

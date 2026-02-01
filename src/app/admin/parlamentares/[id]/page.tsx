@@ -222,7 +222,7 @@ export default function VisualizarParlamentarPage() {
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">
                         {mandato.legislatura?.numero
-                          ? `${mandato.legislatura.numero}a Legislatura`
+                          ? `${mandato.legislatura.numero}ª Legislatura`
                           : 'Legislatura'}
                       </Badge>
                       <Badge className={getCargoBadgeColor(mandato.cargo)}>

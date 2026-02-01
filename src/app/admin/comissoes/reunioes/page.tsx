@@ -392,7 +392,7 @@ export default function ReunioesComissaoPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-gray-900">
-                            {reuniao.numero}a Reuniao {TIPO_LABELS[reuniao.tipo]} - {reuniao.ano}
+                            {reuniao.numero}ª Reunião {TIPO_LABELS[reuniao.tipo]} - {reuniao.ano}
                           </h3>
                           <Badge className={STATUS_COLORS[reuniao.status]}>
                             {STATUS_LABELS[reuniao.status]}

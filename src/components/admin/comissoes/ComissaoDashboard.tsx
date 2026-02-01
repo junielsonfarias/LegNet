@@ -361,7 +361,7 @@ export function ComissaoDashboard({
                   >
                     <div>
                       <p className="font-medium text-gray-900">
-                        {reuniao.numero}a Reuniao {reuniao.tipo}
+                        {reuniao.numero}ª Reunião {reuniao.tipo}
                       </p>
                       <p className="text-sm text-gray-500">
                         {format(new Date(reuniao.data), "dd 'de' MMMM", { locale: ptBR })}

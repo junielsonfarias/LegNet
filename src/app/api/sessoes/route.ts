@@ -25,7 +25,7 @@ const SessaoSchema = z.object({
   data: z.string().min(1, 'Data é obrigatória'),
   horario: z.string().optional(),
   local: z.string().optional(),
-  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA']).default('AGENDADA'),
+  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA']).default('AGENDADA'),
   descricao: z.string().optional(),
   ata: z.string().optional(),
   finalizada: z.boolean().default(false),

@@ -18,7 +18,10 @@
  * Executar: npx ts-node scripts/teste-processo-legislativo-completo.ts
  */
 
-import { PrismaClient, UserRole, TipoProposicao, StatusProposicao, TipoVoto, TipoParecer, StatusParecer } from '@prisma/client'
+import { PrismaClient, UserRole, StatusProposicao, TipoVoto, TipoParecer, StatusParecer } from '@prisma/client'
+
+// Tipo de proposicao agora e string flexivel
+type TipoProposicaoCodigo = string
 
 const prisma = new PrismaClient()
 

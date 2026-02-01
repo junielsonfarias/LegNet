@@ -82,7 +82,7 @@ export function StepConfirmar({
           <div>
             <p className="text-sm text-gray-500">Tipo</p>
             <p className="font-medium">
-              {sessaoInfo.numero}a Sessao {TIPOS_SESSAO_LABELS[sessaoInfo.tipo]}
+              {sessaoInfo.numero}ª Sessão {TIPOS_SESSAO_LABELS[sessaoInfo.tipo]}
             </p>
           </div>
 

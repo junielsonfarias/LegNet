@@ -440,7 +440,7 @@ export default function PautasSessoesAdminPage() {
                         <SelectItem key={sessao.id} value={sessao.id}>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">
-                              {sessao.numero}a {getTipoLabel(sessao.tipo)}
+                              {sessao.numero}ª {getTipoLabel(sessao.tipo)}
                             </span>
                             <span className="text-gray-500">-</span>
                             <span className="text-gray-600">
@@ -483,7 +483,7 @@ export default function PautasSessoesAdminPage() {
                             </Badge>
                           </div>
                           <h4 className="font-semibold text-gray-900">
-                            {sessao.numero}a Sessao {getTipoLabel(sessao.tipo)}
+                            {sessao.numero}ª Sessão {getTipoLabel(sessao.tipo)}
                           </h4>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
@@ -508,7 +508,7 @@ export default function PautasSessoesAdminPage() {
                           )}
                           {sessao.legislatura && (
                             <p className="text-xs text-gray-500">
-                              {sessao.legislatura.numero}a Legislatura ({sessao.legislatura.periodo})
+                              {sessao.legislatura.numero}ª Legislatura ({sessao.legislatura.periodo})
                             </p>
                           )}
                           {sessao.status === 'CONCLUIDA' && (
@@ -625,7 +625,7 @@ export default function PautasSessoesAdminPage() {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-3">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {pauta.sessao.numero}a Sessao {getTipoLabel(pauta.sessao.tipo)}
+                      {pauta.sessao.numero}ª Sessão {getTipoLabel(pauta.sessao.tipo)}
                     </h3>
                     <Badge className={getStatusColor(pauta.status)}>
                       {getStatusLabel(pauta.status)}
@@ -660,7 +660,7 @@ export default function PautasSessoesAdminPage() {
                     </div>
                     {pauta.sessao.legislatura && (
                       <div className="flex items-center text-xs">
-                        {pauta.sessao.legislatura.numero}a Leg. ({pauta.sessao.legislatura.periodo})
+                        {pauta.sessao.legislatura.numero}ª Leg. ({pauta.sessao.legislatura.periodo})
                       </div>
                     )}
                   </div>

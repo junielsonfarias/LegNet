@@ -29,7 +29,7 @@ export default function EditarSessaoPage() {
     horario: '',
     local: '',
     descricao: '',
-    status: 'AGENDADA' as 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+    status: 'AGENDADA' as 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
   })
 
   useEffect(() => {

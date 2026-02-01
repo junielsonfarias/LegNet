@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { TipoSessao, TipoProposicao } from '@prisma/client'
+import { TipoSessao } from '@prisma/client'
 
 import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, ConflictError } from '@/lib/error-handler'
@@ -15,7 +15,7 @@ const TemplateItemSchema = z.object({
   titulo: z.string().min(1, 'Título é obrigatório'),
   descricao: z.string().optional(),
   tempoEstimado: z.number().int().min(0).optional(),
-  tipoProposicao: z.nativeEnum(TipoProposicao).optional(),
+  tipoProposicao: z.string().optional(), // Codigo do tipo de proposicao (flexivel)
   obrigatorio: z.boolean().optional()
 })
 

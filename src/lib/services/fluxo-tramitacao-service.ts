@@ -5,7 +5,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
-import type { TipoProposicao, FluxoTramitacao, FluxoTramitacaoEtapa, TipoCondicaoEtapa } from '@prisma/client'
+import type { FluxoTramitacao, FluxoTramitacaoEtapa, TipoCondicaoEtapa } from '@prisma/client'
 
 const logger = createLogger('fluxo-tramitacao')
 
@@ -28,7 +28,7 @@ export interface ElegibilidadePautaResult {
  * Busca o fluxo configurado para um tipo de proposicao
  */
 export async function getFluxoByTipoProposicao(
-  tipo: TipoProposicao
+  tipo: string
 ): Promise<FluxoTramitacaoComEtapas | null> {
   const fluxo = await prisma.fluxoTramitacao.findUnique({
     where: { tipoProposicao: tipo },
@@ -187,7 +187,7 @@ export async function listarProposicoesElegiveisPauta(): Promise<{
   id: string
   numero: string
   ano: number
-  tipo: TipoProposicao
+  tipo: string
   titulo: string
   ementa: string
   etapaAtual?: string
@@ -222,7 +222,7 @@ export async function listarProposicoesElegiveisPauta(): Promise<{
     id: string
     numero: string
     ano: number
-    tipo: TipoProposicao
+    tipo: string
     titulo: string
     ementa: string
     etapaAtual: string
@@ -293,7 +293,7 @@ export async function criarFluxosPadrao(): Promise<void> {
   // Define fluxos por tipo de proposicao
   const fluxosConfig = [
     {
-      tipo: 'PROJETO_LEI' as TipoProposicao,
+      tipo: 'PROJETO_LEI' ,
       nome: 'Fluxo Projeto de Lei',
       descricao: 'Tramitacao padrao para Projetos de Lei',
       etapas: [
@@ -304,7 +304,7 @@ export async function criarFluxosPadrao(): Promise<void> {
       ]
     },
     {
-      tipo: 'PROJETO_RESOLUCAO' as TipoProposicao,
+      tipo: 'PROJETO_RESOLUCAO' ,
       nome: 'Fluxo Projeto de Resolucao',
       descricao: 'Tramitacao padrao para Projetos de Resolucao',
       etapas: [
@@ -314,7 +314,7 @@ export async function criarFluxosPadrao(): Promise<void> {
       ]
     },
     {
-      tipo: 'PROJETO_DECRETO' as TipoProposicao,
+      tipo: 'PROJETO_DECRETO' ,
       nome: 'Fluxo Projeto de Decreto Legislativo',
       descricao: 'Tramitacao padrao para Projetos de Decreto Legislativo',
       etapas: [
@@ -324,7 +324,7 @@ export async function criarFluxosPadrao(): Promise<void> {
       ]
     },
     {
-      tipo: 'REQUERIMENTO' as TipoProposicao,
+      tipo: 'REQUERIMENTO' ,
       nome: 'Fluxo Requerimento',
       descricao: 'Tramitacao simplificada para Requerimentos',
       etapas: [
@@ -333,7 +333,7 @@ export async function criarFluxosPadrao(): Promise<void> {
       ]
     },
     {
-      tipo: 'INDICACAO' as TipoProposicao,
+      tipo: 'INDICACAO' ,
       nome: 'Fluxo Indicacao',
       descricao: 'Tramitacao para Indicacoes (sem votacao)',
       etapas: [
@@ -342,7 +342,7 @@ export async function criarFluxosPadrao(): Promise<void> {
       ]
     },
     {
-      tipo: 'MOCAO' as TipoProposicao,
+      tipo: 'MOCAO' ,
       nome: 'Fluxo Mocao',
       descricao: 'Tramitacao para Mocoes',
       etapas: [
@@ -351,7 +351,7 @@ export async function criarFluxosPadrao(): Promise<void> {
       ]
     },
     {
-      tipo: 'VOTO_PESAR' as TipoProposicao,
+      tipo: 'VOTO_PESAR' ,
       nome: 'Fluxo Voto de Pesar',
       descricao: 'Tramitacao simplificada para Votos de Pesar',
       etapas: [
@@ -359,7 +359,7 @@ export async function criarFluxosPadrao(): Promise<void> {
       ]
     },
     {
-      tipo: 'VOTO_APLAUSO' as TipoProposicao,
+      tipo: 'VOTO_APLAUSO' ,
       nome: 'Fluxo Voto de Aplauso',
       descricao: 'Tramitacao simplificada para Votos de Aplauso',
       etapas: [

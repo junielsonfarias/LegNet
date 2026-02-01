@@ -56,16 +56,16 @@ interface TipoProposicaoConfig {
   updatedAt: string
 }
 
-// Codigos de tipos de proposicao (enum do Prisma)
-const CODIGOS_TIPOS = [
-  { value: 'PROJETO_LEI', label: 'Projeto de Lei' },
-  { value: 'PROJETO_RESOLUCAO', label: 'Projeto de Resolucao' },
-  { value: 'PROJETO_DECRETO', label: 'Projeto de Decreto Legislativo' },
-  { value: 'INDICACAO', label: 'Indicacao' },
-  { value: 'REQUERIMENTO', label: 'Requerimento' },
-  { value: 'MOCAO', label: 'Mocao' },
-  { value: 'VOTO_PESAR', label: 'Voto de Pesar' },
-  { value: 'VOTO_APLAUSO', label: 'Voto de Aplauso' }
+// Codigos sugeridos de tipos de proposicao (podem ser criados outros)
+const CODIGOS_SUGERIDOS = [
+  { value: 'PROJETO_LEI', label: 'Projeto de Lei', sigla: 'PL' },
+  { value: 'PROJETO_RESOLUCAO', label: 'Projeto de Resolucao', sigla: 'PR' },
+  { value: 'PROJETO_DECRETO', label: 'Projeto de Decreto Legislativo', sigla: 'PDL' },
+  { value: 'INDICACAO', label: 'Indicacao', sigla: 'IND' },
+  { value: 'REQUERIMENTO', label: 'Requerimento', sigla: 'REQ' },
+  { value: 'MOCAO', label: 'Mocao', sigla: 'MOC' },
+  { value: 'VOTO_PESAR', label: 'Voto de Pesar', sigla: 'VP' },
+  { value: 'VOTO_APLAUSO', label: 'Voto de Aplauso', sigla: 'VA' }
 ]
 
 export default function TiposProposicoesPage() {
@@ -75,6 +75,7 @@ export default function TiposProposicoesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTipo, setEditingTipo] = useState<TipoProposicaoConfig | null>(null)
   const [codigosUsados, setCodigosUsados] = useState<string[]>([])
+  const [mostrarSugestoes, setMostrarSugestoes] = useState(false)
   const [activeTab, setActiveTab] = useState('dados')
   const [formData, setFormData] = useState({
     codigo: '',
@@ -301,8 +302,8 @@ export default function TiposProposicoesPage() {
     )
   }
 
-  // Codigos disponiveis para criacao (nao usados ainda)
-  const codigosDisponiveis = CODIGOS_TIPOS.filter(c => !codigosUsados.includes(c.value))
+  // Codigos sugeridos nao usados ainda
+  const sugestoesDisponiveis = CODIGOS_SUGERIDOS.filter(c => !codigosUsados.includes(c.value))
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -335,7 +336,6 @@ export default function TiposProposicoesPage() {
           <Button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2"
-            disabled={codigosDisponiveis.length === 0}
           >
             <Plus className="h-4 w-4" />
             Novo Tipo
@@ -353,6 +353,23 @@ export default function TiposProposicoesPage() {
                 <h3 className="font-semibold text-yellow-800">Nenhum tipo configurado</h3>
                 <p className="text-yellow-700 text-sm mt-1">
                   Clique em &quot;Popular Padrao&quot; para criar os 8 tipos de proposicao com configuracoes recomendadas.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Info sobre tipos personalizados */}
+      {!loading && tipos.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <FileText className="h-6 w-6 text-blue-600 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-blue-800">{tipos.length} tipos configurados</h3>
+                <p className="text-blue-700 text-sm mt-1">
+                  Voce pode criar tipos personalizados alem dos 8 tipos padrao. Use o botao &quot;Novo Tipo&quot; para adicionar.
                 </p>
               </div>
             </div>
@@ -488,35 +505,54 @@ export default function TiposProposicoesPage() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                       {/* Codigo (apenas para criacao) */}
                       {!editingTipo && (
-                        <div>
-                          <Label htmlFor="codigo">Tipo de Proposicao *</Label>
-                          <Select
-                            value={formData.codigo}
-                            onValueChange={(value) => {
-                              const tipoSelecionado = CODIGOS_TIPOS.find(c => c.value === value)
-                              setFormData({
-                                ...formData,
-                                codigo: value,
-                                nome: tipoSelecionado?.label || '',
-                                sigla: value.split('_').map(w => w[0]).join(''),
-                                prefixoNumeracao: value.split('_').map(w => w[0]).join('')
-                              })
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tipo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {codigosDisponiveis.map((codigo) => (
-                                <SelectItem key={codigo.value} value={codigo.value}>
-                                  {codigo.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {codigosDisponiveis.length === 0 && (
-                            <p className="text-sm text-yellow-600 mt-1">
-                              Todos os tipos ja foram configurados.
+                        <div className="space-y-2">
+                          <Label htmlFor="codigo">Codigo do Tipo *</Label>
+                          <div className="relative">
+                            <Input
+                              id="codigo"
+                              value={formData.codigo}
+                              onChange={(e) => {
+                                const valor = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '')
+                                setFormData({ ...formData, codigo: valor })
+                              }}
+                              onFocus={() => setMostrarSugestoes(true)}
+                              onBlur={() => setTimeout(() => setMostrarSugestoes(false), 200)}
+                              placeholder="Ex: PROJETO_LEI, HOMENAGEM_ESPECIAL"
+                              required
+                            />
+                            {/* Dropdown de sugestoes */}
+                            {mostrarSugestoes && sugestoesDisponiveis.length > 0 && !formData.codigo && (
+                              <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                <div className="p-2 text-xs text-gray-500 border-b">Sugestoes (clique para usar):</div>
+                                {sugestoesDisponiveis.map((sugestao) => (
+                                  <button
+                                    key={sugestao.value}
+                                    type="button"
+                                    className="w-full px-3 py-2 text-left hover:bg-gray-100 text-sm"
+                                    onClick={() => {
+                                      setFormData({
+                                        ...formData,
+                                        codigo: sugestao.value,
+                                        nome: sugestao.label,
+                                        sigla: sugestao.sigla,
+                                        prefixoNumeracao: sugestao.sigla
+                                      })
+                                      setMostrarSugestoes(false)
+                                    }}
+                                  >
+                                    <span className="font-medium">{sugestao.value}</span>
+                                    <span className="text-gray-500 ml-2">- {sugestao.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            Use letras maiusculas, numeros e underscore. Ex: PROJETO_LEI, HOMENAGEM_ESPECIAL
+                          </p>
+                          {codigosUsados.includes(formData.codigo) && formData.codigo && (
+                            <p className="text-sm text-red-600">
+                              Este codigo ja esta em uso.
                             </p>
                           )}
                         </div>
@@ -666,7 +702,10 @@ export default function TiposProposicoesPage() {
                         <Button type="button" variant="outline" onClick={handleClose}>
                           Cancelar
                         </Button>
-                        <Button type="submit" disabled={saving || (!editingTipo && !formData.codigo)}>
+                        <Button
+                          type="submit"
+                          disabled={saving || (!editingTipo && (!formData.codigo || codigosUsados.includes(formData.codigo)))}
+                        >
                           {saving ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           ) : (

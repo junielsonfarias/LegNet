@@ -253,7 +253,7 @@ export function getStatusItemStyle(status: string): StatusStyleConfig {
 /**
  * Status da sessao
  */
-export type StatusSessao = 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+export type StatusSessao = 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
 
 export interface StatusSessaoStyleConfig {
   bg: string
@@ -296,6 +296,14 @@ export const STATUS_SESSAO_STYLES: Record<StatusSessao, StatusSessaoStyleConfig>
     border: 'border-red-500',
     icon: 'x-circle',
     label: 'Cancelada'
+  },
+  SUSPENSA: {
+    bg: 'bg-orange-600',
+    bgLight: 'bg-orange-600/20',
+    text: 'text-orange-100',
+    border: 'border-orange-500',
+    icon: 'pause-circle',
+    label: 'Suspensa'
   }
 }
 

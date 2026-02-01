@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         }
       }),
       ...(tipo && { tipo: tipo as 'ORDINARIA' | 'EXTRAORDINARIA' | 'SOLENE' | 'ESPECIAL' }),
-      ...(status && { status: status as 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' })
+      ...(status && { status: status as 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA' })
     }
 
     const [sessoes, total] = await Promise.all([

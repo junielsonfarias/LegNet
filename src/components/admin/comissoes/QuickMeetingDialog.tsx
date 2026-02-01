@@ -319,7 +319,7 @@ export function QuickMeetingDialog({
 
             <div className="p-3 bg-blue-50 rounded-lg text-sm">
               <p className="text-blue-700">
-                <strong>{formData.numero}a Reuniao {formData.tipo}</strong> de {formData.ano}
+                <strong>{formData.numero}ª Reunião {formData.tipo}</strong> de {formData.ano}
               </p>
             </div>
           </div>

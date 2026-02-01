@@ -11,14 +11,15 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
-import type { TipoProposicao, ResultadoVotacaoAgrupada, TipoQuorum, TipoVotacao } from '@prisma/client'
+import type { ResultadoVotacaoAgrupada, TipoQuorum, TipoVotacao } from '@prisma/client'
 
 const logger = createLogger('turno')
 
-// Tipos de proposição que exigem 2 turnos
-const TIPOS_DOIS_TURNOS: TipoProposicao[] = [
-  // Nota: PROJETO_LEI_COMPLEMENTAR e PROJETO_EMENDA_LEI_ORGANICA não existem no enum atual
-  // Usamos os tipos existentes como placeholder
+// Tipos de proposição que exigem 2 turnos (codigos de tipo como string)
+const TIPOS_DOIS_TURNOS: string[] = [
+  'PROJETO_LEI_COMPLEMENTAR',
+  'PROJETO_EMENDA_LEI_ORGANICA'
+  // Adicione outros tipos personalizados que exigem 2 turnos
 ]
 
 // Mapeamento de tipos para configuração de turnos

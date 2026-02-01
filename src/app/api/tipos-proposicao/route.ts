@@ -12,16 +12,10 @@ export const dynamic = 'force-dynamic'
 
 // Schema de validação para criar/atualizar tipo de proposição
 const TipoProposicaoSchema = z.object({
-  codigo: z.enum([
-    'PROJETO_LEI',
-    'PROJETO_RESOLUCAO',
-    'PROJETO_DECRETO',
-    'INDICACAO',
-    'REQUERIMENTO',
-    'MOCAO',
-    'VOTO_PESAR',
-    'VOTO_APLAUSO'
-  ]),
+  codigo: z.string()
+    .min(3, 'Codigo deve ter no minimo 3 caracteres')
+    .max(50, 'Codigo deve ter no maximo 50 caracteres')
+    .regex(/^[A-Z0-9_]+$/, 'Codigo deve conter apenas letras maiusculas, numeros e underscore'),
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   sigla: z.string().min(1, 'Sigla é obrigatória').max(10, 'Sigla deve ter no máximo 10 caracteres'),
   descricao: z.string().optional().nullable(),

@@ -143,7 +143,7 @@ export function StepSessaoInfo({ data, onChange }: StepSessaoInfoProps) {
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <h3 className="font-medium text-blue-900 mb-2">Preview</h3>
           <p className="text-blue-800">
-            <strong>{data.numero}a Sessao {TIPOS_SESSAO.find(t => t.value === data.tipo)?.label}</strong>
+            <strong>{data.numero}ª Sessão {TIPOS_SESSAO.find(t => t.value === data.tipo)?.label}</strong>
           </p>
           <p className="text-sm text-blue-700">
             {data.data && new Date(data.data + 'T00:00:00').toLocaleDateString('pt-BR', {

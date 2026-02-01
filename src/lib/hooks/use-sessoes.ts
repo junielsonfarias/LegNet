@@ -112,30 +112,35 @@ export function useSessao(id: string | null) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const fetchSessao = useCallback(async () => {
     if (!id) {
       setLoading(false)
       return
     }
 
-    const fetchSessao = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await sessoesApi.getById(id)
-        setSessao(data)
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar sessão'
-        setError(errorMessage)
-        toast.error(errorMessage)
-      } finally {
-        setLoading(false)
-      }
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await sessoesApi.getById(id)
+      setSessao(data)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar sessão'
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
     }
-
-    fetchSessao()
   }, [id])
 
-  return { sessao, loading, error }
+  useEffect(() => {
+    fetchSessao()
+  }, [fetchSessao])
+
+  // Função para recarregar os dados
+  const mutate = useCallback(() => {
+    fetchSessao()
+  }, [fetchSessao])
+
+  return { sessao, loading, error, mutate }
 }
 

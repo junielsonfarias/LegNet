@@ -36,7 +36,7 @@ export default function SessoesAdminPage() {
     tipo: 'ORDINARIA' as 'ORDINARIA' | 'EXTRAORDINARIA' | 'SOLENE' | 'ESPECIAL',
     data: '',
     local: '',
-    status: 'AGENDADA' as 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA',
+    status: 'AGENDADA' as 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA',
     descricao: ''
   })
 
@@ -383,7 +383,7 @@ export default function SessoesAdminPage() {
                     <select
                       id="status"
                       value={formData.status}
-                      onChange={(e) => setFormData({...formData, status: e.target.value as 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'})}
+                      onChange={(e) => setFormData({...formData, status: e.target.value as 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'})}
                       className="w-full p-2 border border-gray-300 rounded-md"
                     >
                   <option value="AGENDADA">Agendada</option>

@@ -379,7 +379,7 @@ export default function ReuniaoDetalhesPage() {
           </Link>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
             <Calendar className="h-7 w-7 text-blue-600" />
-            {reuniao.numero}a Reuniao {reuniao.tipo} - {reuniao.ano}
+            {reuniao.numero}ª Reunião {reuniao.tipo} - {reuniao.ano}
           </h1>
           <p className="mt-1 text-gray-600">
             {reuniao.comissao.sigla ? `${reuniao.comissao.sigla} - ` : ''}

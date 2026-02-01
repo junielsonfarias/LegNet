@@ -351,7 +351,7 @@ export default function LancamentoRetroativoPage() {
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
             <span className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              {sessao.numero}a Sessao {sessao.tipo}
+              {sessao.numero}ª Sessão {sessao.tipo}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />

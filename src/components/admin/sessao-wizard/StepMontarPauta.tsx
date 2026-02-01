@@ -136,7 +136,7 @@ export function StepMontarPauta({ sessaoInfo, itens, onChange }: StepMontarPauta
       <div className="text-center mb-6">
         <h2 className="text-xl font-semibold">Montar Pauta</h2>
         <p className="text-sm text-gray-500">
-          Sessao: <strong>{sessaoInfo.numero}a {TIPOS_SESSAO_LABELS[sessaoInfo.tipo]}</strong>
+          Sessão: <strong>{sessaoInfo.numero}ª {TIPOS_SESSAO_LABELS[sessaoInfo.tipo]}</strong>
           {sessaoInfo.data && ` - ${new Date(sessaoInfo.data + 'T00:00:00').toLocaleDateString('pt-BR')}`}
           {sessaoInfo.horario && ` as ${sessaoInfo.horario}`}
         </p>
@@ -171,7 +171,7 @@ export function StepMontarPauta({ sessaoInfo, itens, onChange }: StepMontarPauta
           <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
           <div>
             <p className="text-blue-800">
-              <strong>RN-057:</strong> Apenas proposicoes com tramitacao &quot;Encaminhado para Plenario&quot; podem ser adicionadas na Ordem do Dia.
+              <strong>RN-057:</strong> Apenas proposicoes com status &quot;Aguardando Pauta&quot; ou tramitacao para Plenario podem ser adicionadas na Ordem do Dia.
             </p>
           </div>
         </div>
