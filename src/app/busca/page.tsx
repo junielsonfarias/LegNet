@@ -47,10 +47,10 @@ const tipoIcones: Record<TipoResultado, React.ReactNode> = {
 const tipoLabels: Record<TipoResultado, string> = {
   proposicao: 'Proposicoes',
   parlamentar: 'Parlamentares',
-  sessao: 'Sessoes',
-  publicacao: 'Publicacoes',
-  noticia: 'Noticias',
-  comissao: 'Comissoes',
+  sessao: 'Sessões',
+  publicacao: 'Publicações',
+  noticia: 'Notícias',
+  comissao: 'Comissões',
 }
 
 const tipoCores: Record<TipoResultado, string> = {
@@ -383,11 +383,11 @@ function BuscaContent() {
                   Busque em todo o sistema
                 </h3>
                 <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-                  Encontre proposicoes, parlamentares, sessoes, publicacoes e muito mais.
+                  Encontre proposições, parlamentares, sessões, publicações e muito mais.
                   Digite pelo menos 2 caracteres para iniciar a busca.
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  {['Projeto de Lei', 'Sessao Ordinaria', 'Vereador', 'Comissao de Justica'].map(sugestao => (
+                  {['Projeto de Lei', 'Sessão Ordinária', 'Vereador', 'Comissão de Justiça'].map(sugestao => (
                     <button
                       key={sugestao}
                       onClick={() => { setQuery(sugestao); router.push(`/busca?q=${encodeURIComponent(sugestao)}`); }}

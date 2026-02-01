@@ -294,7 +294,7 @@ export function ItemPautaCard({
                     className="text-purple-400 hover:text-purple-300 hover:bg-purple-900/30"
                     onClick={onVotacao}
                     disabled={executando}
-                    title="Iniciar Votacao"
+                    title="Iniciar Votação"
                   >
                     <Vote className="h-4 w-4" />
                   </Button>
@@ -322,7 +322,7 @@ export function ItemPautaCard({
                 className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
                 onClick={onFinalizar}
                 disabled={executando}
-                title="Finalizar Votacao"
+                title="Finalizar Votação"
               >
                 <Square className="h-4 w-4" />
               </Button>

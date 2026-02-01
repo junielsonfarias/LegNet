@@ -128,9 +128,9 @@ export default function NormaPublicaPage() {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Norma nao encontrada</h2>
+            <h2 className="text-xl font-bold mb-2">Norma não encontrada</h2>
             <p className="text-gray-600 mb-4">
-              A norma juridica solicitada nao foi encontrada.
+              A norma jurídica solicitada não foi encontrada.
             </p>
             <Button asChild>
               <Link href="/legislativo/normas">

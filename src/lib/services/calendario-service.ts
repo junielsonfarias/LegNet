@@ -47,12 +47,12 @@ const coresEventos: Record<TipoEvento, string> = {
 
 // Labels por tipo de evento
 export const labelsEventos: Record<TipoEvento, string> = {
-  sessao_ordinaria: 'Sessao Ordinaria',
-  sessao_extraordinaria: 'Sessao Extraordinaria',
-  sessao_solene: 'Sessao Solene',
-  sessao_especial: 'Sessao Especial',
-  audiencia_publica: 'Audiencia Publica',
-  reuniao_comissao: 'Reuniao de Comissao',
+  sessao_ordinaria: 'Sessão Ordinária',
+  sessao_extraordinaria: 'Sessão Extraordinária',
+  sessao_solene: 'Sessão Solene',
+  sessao_especial: 'Sessão Especial',
+  audiencia_publica: 'Audiência Pública',
+  reuniao_comissao: 'Reunião de Comissão',
   evento_especial: 'Evento Especial',
 }
 

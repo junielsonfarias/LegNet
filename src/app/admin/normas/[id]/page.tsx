@@ -135,7 +135,7 @@ export default function EditarNormaPage() {
           observacao: data.data.observacao || ''
         })
       } else {
-        toast.error('Norma nao encontrada')
+        toast.error('Norma não encontrada')
         router.push('/admin/normas')
       }
     } catch (error) {

@@ -354,7 +354,7 @@ export default function ReuniaoDetalhesPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium">Reuniao nao encontrada</h3>
+            <h3 className="text-lg font-medium">Reunião não encontrada</h3>
           </CardContent>
         </Card>
       </div>

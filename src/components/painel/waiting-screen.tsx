@@ -90,10 +90,10 @@ export function WaitingScreen({
         </div>
       </div>
 
-      {/* Titulo da Sessao */}
+      {/* Título da Sessão */}
       <div className="text-center mb-8 animate-slide-in-up">
         <h1 className="text-4xl font-bold text-white mb-2">
-          {sessao.numero}ª Sessao {tipoSessaoLabel}
+          {sessao.numero}ª Sessão {tipoSessaoLabel}
         </h1>
         <p className="text-xl text-blue-300">
           {nomeCasa}

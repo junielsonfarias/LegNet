@@ -426,7 +426,7 @@ export default function ReunioesComissaoPage() {
                           <FileText className="h-4 w-4" />
                           <span>{reuniao._count.itens}</span>
                         </div>
-                        <div className="flex items-center gap-1" title="Presencas">
+                        <div className="flex items-center gap-1" title="Presenças">
                           <Users className="h-4 w-4" />
                           <span>{reuniao._count.presencas}</span>
                         </div>

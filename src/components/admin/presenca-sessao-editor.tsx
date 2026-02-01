@@ -177,7 +177,7 @@ export function PresencaSessaoEditor({
         [parlamentarId]: result.data
       }))
 
-      toast.success(presente ? 'Presenca registrada' : 'Ausencia registrada')
+      toast.success(presente ? 'Presença registrada' : 'Ausência registrada')
     } catch (err) {
       // Reverte em caso de erro
       if (presencaAnterior) {

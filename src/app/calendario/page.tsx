@@ -15,12 +15,12 @@ import { CalendarioLegislativo } from '@/components/calendario/calendario-legisl
 import type { EventoCalendario } from '@/lib/services/calendario-service'
 
 const TIPOS_EVENTO_INFO: Record<string, { label: string; cor: string }> = {
-  sessao_ordinaria: { label: 'Sessao Ordinaria', cor: '#3B82F6' },
-  sessao_extraordinaria: { label: 'Sessao Extraordinaria', cor: '#EF4444' },
-  sessao_solene: { label: 'Sessao Solene', cor: '#8B5CF6' },
-  sessao_especial: { label: 'Sessao Especial', cor: '#F59E0B' },
-  audiencia_publica: { label: 'Audiencia Publica', cor: '#10B981' },
-  reuniao_comissao: { label: 'Reuniao de Comissao', cor: '#6366F1' },
+  sessao_ordinaria: { label: 'Sessão Ordinária', cor: '#3B82F6' },
+  sessao_extraordinaria: { label: 'Sessão Extraordinária', cor: '#EF4444' },
+  sessao_solene: { label: 'Sessão Solene', cor: '#8B5CF6' },
+  sessao_especial: { label: 'Sessão Especial', cor: '#F59E0B' },
+  audiencia_publica: { label: 'Audiência Pública', cor: '#10B981' },
+  reuniao_comissao: { label: 'Reunião de Comissão', cor: '#6366F1' },
 }
 
 export default function CalendarioPage() {

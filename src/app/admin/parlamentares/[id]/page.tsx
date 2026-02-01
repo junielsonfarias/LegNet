@@ -73,8 +73,8 @@ export default function VisualizarParlamentarPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="text-center py-8">
           <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Parlamentar nao encontrado</h2>
-          <p className="text-gray-500 mb-4">O parlamentar solicitado nao existe ou foi removido.</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Parlamentar não encontrado</h2>
+          <p className="text-gray-500 mb-4">O parlamentar solicitado não existe ou foi removido.</p>
           <Button
             variant="outline"
             onClick={() => router.push('/admin/parlamentares')}

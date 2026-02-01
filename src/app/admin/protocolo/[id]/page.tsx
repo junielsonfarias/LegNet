@@ -184,7 +184,7 @@ export default function DetalhesProtocoloPage() {
           sigiloso: data.data.sigiloso
         })
       } else {
-        toast.error('Protocolo nao encontrado')
+        toast.error('Protocolo não encontrado')
         router.push('/admin/protocolo')
       }
     } catch (error) {

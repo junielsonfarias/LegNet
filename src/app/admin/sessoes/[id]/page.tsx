@@ -86,11 +86,11 @@ export default function SessaoDetailPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-red-600 mb-4">{error || 'Sessao nao encontrada'}</p>
+            <p className="text-red-600 mb-4">{error || 'Sessão não encontrada'}</p>
             <Button asChild>
               <Link href="/admin/sessoes">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar para Sessoes
+                Voltar para Sessões
               </Link>
             </Button>
           </CardContent>

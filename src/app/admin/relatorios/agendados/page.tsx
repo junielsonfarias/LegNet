@@ -70,16 +70,16 @@ interface RelatorioAgendado {
 }
 
 const TIPOS_RELATORIO = [
-  { value: 'PRODUCAO_LEGISLATIVA', label: 'Producao Legislativa' },
-  { value: 'PRESENCA_SESSOES', label: 'Presenca em Sessoes' },
-  { value: 'VOTACOES', label: 'Votacoes' },
-  { value: 'TRAMITACAO', label: 'Tramitacao' },
+  { value: 'PRODUCAO_LEGISLATIVA', label: 'Produção Legislativa' },
+  { value: 'PRESENCA_SESSOES', label: 'Presença em Sessões' },
+  { value: 'VOTACOES', label: 'Votações' },
+  { value: 'TRAMITACAO', label: 'Tramitação' },
   { value: 'PROTOCOLO', label: 'Protocolo' },
-  { value: 'COMISSOES', label: 'Comissoes' }
+  { value: 'COMISSOES', label: 'Comissões' }
 ]
 
 const FREQUENCIAS = [
-  { value: 'DIARIO', label: 'Diario' },
+  { value: 'DIARIO', label: 'Diário' },
   { value: 'SEMANAL', label: 'Semanal' },
   { value: 'MENSAL', label: 'Mensal' },
   { value: 'SOB_DEMANDA', label: 'Sob Demanda' }

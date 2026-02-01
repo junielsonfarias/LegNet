@@ -305,8 +305,8 @@ export default function PainelOperadorPage() {
         <Card className="bg-slate-800 border-slate-700 text-white max-w-md">
           <CardContent className="pt-6 text-center">
             <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Sessao nao encontrada</h2>
-            <p className="text-slate-400">A sessao solicitada nao existe ou foi removida.</p>
+            <h2 className="text-xl font-bold mb-2">Sessão não encontrada</h2>
+            <p className="text-slate-400">A sessão solicitada não existe ou foi removida.</p>
           </CardContent>
         </Card>
       </div>

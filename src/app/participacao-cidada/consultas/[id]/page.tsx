@@ -67,7 +67,7 @@ export default function ParticiparConsultaPage() {
       if (data.success) {
         setConsulta(data.data)
       } else {
-        toast.error('Consulta nao encontrada')
+        toast.error('Consulta não encontrada')
         router.push('/participacao-cidada/consultas')
       }
     } catch (error) {

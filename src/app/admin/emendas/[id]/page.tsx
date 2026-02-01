@@ -216,7 +216,7 @@ export default function EmendaDetalhePage() {
   if (!emenda) {
     return (
       <div className="p-6 text-center text-gray-500">
-        Emenda nao encontrada
+        Emenda não encontrada
       </div>
     )
   }
@@ -497,13 +497,13 @@ export default function EmendaDetalhePage() {
                           onValueChange={(value) => setParecer(prev => ({ ...prev, comissao: value }))}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione a comissao" />
+                            <SelectValue placeholder="Selecione a comissão" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="CLJ">Comissao de Legislacao e Justica</SelectItem>
-                            <SelectItem value="COF">Comissao de Orcamento e Financas</SelectItem>
-                            <SelectItem value="CES">Comissao de Educacao e Saude</SelectItem>
-                            <SelectItem value="COI">Comissao de Obras e Infraestrutura</SelectItem>
+                            <SelectItem value="CLJ">Comissão de Legislação e Justiça</SelectItem>
+                            <SelectItem value="COF">Comissão de Orçamento e Finanças</SelectItem>
+                            <SelectItem value="CES">Comissão de Educação e Saúde</SelectItem>
+                            <SelectItem value="COI">Comissão de Obras e Infraestrutura</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

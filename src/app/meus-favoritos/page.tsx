@@ -27,11 +27,11 @@ import { useFavoritos, type TipoFavorito } from '@/lib/hooks/use-favoritos'
 
 const tiposFavorito: { value: TipoFavorito | 'TODOS'; label: string; icon: React.ElementType }[] = [
   { value: 'TODOS', label: 'Todos', icon: Heart },
-  { value: 'PROPOSICAO', label: 'Proposicoes', icon: FileText },
-  { value: 'SESSAO', label: 'Sessoes', icon: Gavel },
+  { value: 'PROPOSICAO', label: 'Proposições', icon: FileText },
+  { value: 'SESSAO', label: 'Sessões', icon: Gavel },
   { value: 'PARLAMENTAR', label: 'Parlamentares', icon: User },
-  { value: 'COMISSAO', label: 'Comissoes', icon: Users },
-  { value: 'PUBLICACAO', label: 'Publicacoes', icon: BookOpen },
+  { value: 'COMISSAO', label: 'Comissões', icon: Users },
+  { value: 'PUBLICACAO', label: 'Publicações', icon: BookOpen },
 ]
 
 export default function MeusFavoritosPage() {
