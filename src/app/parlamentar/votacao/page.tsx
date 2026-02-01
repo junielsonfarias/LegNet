@@ -423,8 +423,8 @@ export default function VotacaoParlamentarPage() {
     )
   }
 
-  // Dados da pauta (ordenados pela ordem definida)
-  const itens = [...(sessaoAtiva.pautaSessao?.itens || [])].sort((a, b) => a.ordem - b.ordem)
+  // Dados da pauta (ordenados pela ordem de criação - usando ID que é cronológico)
+  const itens = [...(sessaoAtiva.pautaSessao?.itens || [])].sort((a, b) => a.id.localeCompare(b.id))
   const itemEmVotacao = itens.find(item => item.status === 'EM_VOTACAO' && item.proposicao)
   const itemEmDiscussao = itens.find(item => item.status === 'EM_DISCUSSAO')
   const itemEmAndamento = itemEmVotacao || itemEmDiscussao
