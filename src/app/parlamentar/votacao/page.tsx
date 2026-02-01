@@ -169,6 +169,27 @@ export default function VotacaoParlamentarPage() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
 
+  // Formatar tipo da sessão
+  const formatarTipoSessao = (tipo: string, abreviado = false) => {
+    const tipos: Record<string, { completo: string; abreviado: string }> = {
+      ORDINARIA: { completo: 'Ordinária', abreviado: 'Ord.' },
+      EXTRAORDINARIA: { completo: 'Extraordinária', abreviado: 'Ext.' },
+      SOLENE: { completo: 'Solene', abreviado: 'Sol.' },
+      ESPECIAL: { completo: 'Especial', abreviado: 'Esp.' }
+    }
+    return tipos[tipo]?.[abreviado ? 'abreviado' : 'completo'] || tipo
+  }
+
+  // Formatar data da sessão
+  const formatarDataSessao = (dataStr: string) => {
+    const data = new Date(dataStr)
+    return data.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
   const carregarDados = useCallback(async () => {
     try {
       // Buscar sessão em andamento
@@ -448,26 +469,30 @@ export default function VotacaoParlamentarPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4 text-slate-300">
+              <div className="flex flex-col items-end gap-0.5 text-slate-300">
                 <div className="flex items-center gap-1.5 text-xs sm:text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="hidden sm:inline">
-                    {sessaoAtiva.numero}ª Sessão {
-                      { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-                    }
+                  <span className="hidden md:inline">
+                    {sessaoAtiva.numero}ª Sessão {formatarTipoSessao(sessaoAtiva.tipo)}
+                  </span>
+                  <span className="hidden sm:inline md:hidden">
+                    {sessaoAtiva.numero}ª {formatarTipoSessao(sessaoAtiva.tipo)}
                   </span>
                   <span className="sm:hidden">
-                    {sessaoAtiva.numero}ª {
-                      { ORDINARIA: 'Ord.', EXTRAORDINARIA: 'Ext.', SOLENE: 'Sol.', ESPECIAL: 'Esp.' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-                    }
+                    {sessaoAtiva.numero}ª {formatarTipoSessao(sessaoAtiva.tipo, true)}
                   </span>
                 </div>
-                {sessaoAtiva.tempoInicio && (
-                  <div className="flex items-center gap-1.5 font-mono text-sm sm:text-base text-blue-400 font-semibold">
-                    <Timer className="h-4 w-4" />
-                    {formatarTempo(tempoSessao)}
-                  </div>
-                )}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-[10px] sm:text-xs text-slate-400">
+                    {formatarDataSessao(sessaoAtiva.data)}
+                  </span>
+                  {sessaoAtiva.tempoInicio && (
+                    <div className="flex items-center gap-1 font-mono text-xs sm:text-sm text-blue-400 font-semibold">
+                      <Timer className="h-3 w-3 sm:h-4 sm:w-4" />
+                      {formatarTempo(tempoSessao)}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -697,20 +722,22 @@ export default function VotacaoParlamentarPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-4 text-slate-300">
+              <div className="flex flex-col items-end gap-0.5 text-slate-300">
                 <div className="flex items-center gap-1.5 text-xs sm:text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="hidden sm:inline">
-                    {sessaoAtiva.numero}ª Sessão {
-                      { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-                    }
+                  <span className="hidden md:inline">
+                    {sessaoAtiva.numero}ª Sessão {formatarTipoSessao(sessaoAtiva.tipo)}
+                  </span>
+                  <span className="hidden sm:inline md:hidden">
+                    {sessaoAtiva.numero}ª {formatarTipoSessao(sessaoAtiva.tipo)}
                   </span>
                   <span className="sm:hidden">
-                    {sessaoAtiva.numero}ª {
-                      { ORDINARIA: 'Ord.', EXTRAORDINARIA: 'Ext.', SOLENE: 'Sol.', ESPECIAL: 'Esp.' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-                    }
+                    {sessaoAtiva.numero}ª {formatarTipoSessao(sessaoAtiva.tipo, true)}
                   </span>
                 </div>
+                <span className="text-[10px] sm:text-xs text-slate-400">
+                  {formatarDataSessao(sessaoAtiva.data)}
+                </span>
               </div>
             </div>
           </div>
@@ -949,26 +976,30 @@ export default function VotacaoParlamentarPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3 text-slate-400">
+              <div className="flex flex-col items-end gap-0.5 text-slate-400">
                 <div className="flex items-center gap-1 text-[10px] sm:text-xs">
                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                  <span className="hidden sm:inline">
-                    {sessaoAtiva.numero}ª Sessão {
-                      { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-                    }
+                  <span className="hidden md:inline">
+                    {sessaoAtiva.numero}ª Sessão {formatarTipoSessao(sessaoAtiva.tipo)}
+                  </span>
+                  <span className="hidden sm:inline md:hidden">
+                    {sessaoAtiva.numero}ª {formatarTipoSessao(sessaoAtiva.tipo)}
                   </span>
                   <span className="sm:hidden">
-                    {sessaoAtiva.numero}ª {
-                      { ORDINARIA: 'Ord.', EXTRAORDINARIA: 'Ext.', SOLENE: 'Sol.', ESPECIAL: 'Esp.' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-                    }
+                    {sessaoAtiva.numero}ª {formatarTipoSessao(sessaoAtiva.tipo, true)}
                   </span>
                 </div>
-                {sessaoAtiva.tempoInicio && (
-                  <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-blue-400">
-                    <Timer className="h-3 w-3" />
-                    {formatarTempo(tempoSessao)}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] sm:text-[10px] text-slate-500">
+                    {formatarDataSessao(sessaoAtiva.data)}
+                  </span>
+                  {sessaoAtiva.tempoInicio && (
+                    <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-blue-400">
+                      <Timer className="h-3 w-3" />
+                      {formatarTempo(tempoSessao)}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1052,14 +1083,6 @@ export default function VotacaoParlamentarPage() {
     )
   }
 
-  // Formatar tipo de sessão
-  const tipoSessaoLabel = {
-    'ORDINARIA': 'Ordinária',
-    'EXTRAORDINARIA': 'Extraordinária',
-    'SOLENE': 'Solene',
-    'ESPECIAL': 'Especial'
-  }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-
   // Função para obter ícone do status (responsivo)
   const getStatusIcon = (itemStatus: string) => {
     const iconClass = "h-3 w-3 sm:h-4 sm:w-4"
@@ -1126,7 +1149,12 @@ export default function VotacaoParlamentarPage() {
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
                   <Vote className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-                  <span className="truncate">{sessaoAtiva.numero}ª Sessão {tipoSessaoLabel}</span>
+                  <span className="hidden sm:inline truncate">
+                    {sessaoAtiva.numero}ª Sessão {formatarTipoSessao(sessaoAtiva.tipo)}
+                  </span>
+                  <span className="sm:hidden truncate">
+                    {sessaoAtiva.numero}ª {formatarTipoSessao(sessaoAtiva.tipo, true)}
+                  </span>
                 </CardTitle>
                 <Badge className="bg-green-100 text-green-800 border border-green-300 text-xs sm:text-sm">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5 sm:mr-2 animate-pulse"></div>
@@ -1139,7 +1167,7 @@ export default function VotacaoParlamentarPage() {
                 <div className="flex items-center gap-2 sm:gap-4">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                    {new Date(sessaoAtiva.data).toLocaleDateString('pt-BR')}
+                    {formatarDataSessao(sessaoAtiva.data)}
                   </span>
                 </div>
                 {sessaoAtiva.tempoInicio && (
