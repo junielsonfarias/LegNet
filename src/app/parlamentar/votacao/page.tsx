@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import {
   Vote,
   CheckCircle,
@@ -19,7 +21,9 @@ import {
   ListOrdered,
   MessageSquare,
   BookOpen,
-  User
+  User,
+  Building2,
+  MapPin
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { sessoesApi } from '@/lib/api/sessoes-api'
@@ -61,10 +65,20 @@ interface SessaoCompleta {
   }
 }
 
+interface ParlamentarInfo {
+  id: string
+  nome: string
+  apelido: string | null
+  foto: string | null
+  partido: string | null
+}
+
 export default function VotacaoParlamentarPage() {
   const sessionData = useSession()
   const session = sessionData?.data
   const status = sessionData?.status ?? 'loading'
+
+  const { configuracao } = useConfiguracaoInstitucional()
 
   const [sessaoAtiva, setSessaoAtiva] = useState<SessaoCompleta | null>(null)
   const [loading, setLoading] = useState(true)
@@ -72,6 +86,36 @@ export default function VotacaoParlamentarPage() {
   const [presencaConfirmada, setPresencaConfirmada] = useState(false)
   const [votoRegistrado, setVotoRegistrado] = useState<string | null>(null)
   const [tempoSessao, setTempoSessao] = useState(0)
+  const [parlamentarInfo, setParlamentarInfo] = useState<ParlamentarInfo | null>(null)
+
+  const parlamentarId = (session?.user as any)?.parlamentarId
+
+  // Buscar informações do parlamentar
+  useEffect(() => {
+    const buscarParlamentar = async () => {
+      if (!parlamentarId) return
+      try {
+        const response = await fetch(`/api/parlamentares/${parlamentarId}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.data) {
+            setParlamentarInfo({
+              id: data.data.id,
+              nome: data.data.nome,
+              apelido: data.data.apelido,
+              foto: data.data.foto,
+              partido: data.data.partido
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar parlamentar:', error)
+      }
+    }
+    if (status === 'authenticated' && parlamentarId) {
+      buscarParlamentar()
+    }
+  }, [status, parlamentarId])
 
   // Timer da sessão (com suporte a tempoAcumulado para sessões suspensas)
   useEffect(() => {
@@ -299,42 +343,112 @@ export default function VotacaoParlamentarPage() {
   // TELA FOCADA DE VOTAÇÃO (quando há item em votação)
   // ==========================================
   if (itemEmVotacao && itemEmVotacao.proposicao) {
+    const nomeParlamentar = parlamentarInfo?.apelido || parlamentarInfo?.nome || (session?.user as any)?.name || 'Parlamentar'
+    const iniciais = nomeParlamentar.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    const cidade = configuracao.endereco?.cidade || 'Mojuí dos Campos'
+
     return (
       <div className="h-[100dvh] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
-        {/* Header compacto - fixo no topo */}
-        <div className="flex-shrink-0 bg-slate-800/50 border-b border-slate-700 px-3 py-2 sm:px-4 sm:py-3">
-          <div className="max-w-2xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-slate-300 text-xs sm:text-sm truncate">
-                {sessaoAtiva.numero}ª Sessão {
-                  { ORDINARIA: 'Ord.', EXTRAORDINARIA: 'Ext.', SOLENE: 'Sol.', ESPECIAL: 'Esp.' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-                }
-              </span>
-            </div>
-            {sessaoAtiva.tempoInicio && (
-              <div className="flex items-center gap-1 sm:gap-2 text-slate-400 font-mono text-xs sm:text-sm">
-                <Timer className="h-3 w-3 sm:h-4 sm:w-4" />
-                {formatarTempo(tempoSessao)}
+        {/* Header Institucional */}
+        <header className="flex-shrink-0 bg-slate-800/80 border-b border-slate-700">
+          {/* Barra superior - Câmara */}
+          <div className="border-b border-slate-700/50 px-3 py-1.5 sm:py-2">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {configuracao.logoUrl ? (
+                  <Image
+                    src={configuracao.logoUrl}
+                    alt="Logo"
+                    width={28}
+                    height={28}
+                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-contain bg-white p-0.5"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 bg-blue-600/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-white/90 font-semibold text-[10px] sm:text-xs truncate">
+                    {configuracao.nomeCasa || 'Câmara Municipal'}
+                  </p>
+                  <p className="text-slate-400 text-[9px] sm:text-[10px] flex items-center gap-1">
+                    <MapPin className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                    {cidade}
+                  </p>
+                </div>
               </div>
-            )}
+              <div className="flex items-center gap-2 sm:gap-3 text-slate-400">
+                <div className="flex items-center gap-1 text-[10px] sm:text-xs">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                  <span className="hidden sm:inline">
+                    {sessaoAtiva.numero}ª Sessão {
+                      { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
+                    }
+                  </span>
+                  <span className="sm:hidden">
+                    {sessaoAtiva.numero}ª {
+                      { ORDINARIA: 'Ord.', EXTRAORDINARIA: 'Ext.', SOLENE: 'Sol.', ESPECIAL: 'Esp.' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
+                    }
+                  </span>
+                </div>
+                {sessaoAtiva.tempoInicio && (
+                  <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-blue-400">
+                    <Timer className="h-3 w-3" />
+                    {formatarTempo(tempoSessao)}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* Barra do parlamentar */}
+          <div className="px-3 py-1.5 sm:py-2">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {parlamentarInfo?.foto ? (
+                  <Image
+                    src={parlamentarInfo.foto}
+                    alt={nomeParlamentar}
+                    width={32}
+                    height={32}
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-blue-500/50"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
+                    <span className="text-blue-300 font-bold text-[10px] sm:text-xs">{iniciais}</span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-white font-semibold text-xs sm:text-sm truncate">
+                      {nomeParlamentar}
+                    </p>
+                    {parlamentarInfo?.partido && (
+                      <Badge className="bg-blue-600/30 text-blue-300 border-0 text-[9px] sm:text-[10px] px-1.5 py-0">
+                        {parlamentarInfo.partido}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-slate-500 text-[9px] sm:text-[10px]">Vereador(a)</p>
+                </div>
+              </div>
+              <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/40 text-[9px] sm:text-xs animate-pulse">
+                <Vote className="h-3 w-3 mr-1" />
+                VOTAÇÃO
+              </Badge>
+            </div>
+          </div>
+        </header>
 
         {/* Conteúdo principal - Votação (scrollável apenas se necessário) */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           <div className="flex-1 flex flex-col justify-center p-3 sm:p-4">
             <div className="w-full max-w-xl mx-auto space-y-3 sm:space-y-4">
-              {/* Badge de votação */}
-              <div className="text-center">
-                <Badge className="bg-orange-500/20 text-orange-300 border border-orange-500/50 px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-lg animate-pulse">
-                  <Vote className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2" />
-                  VOTAÇÃO EM ANDAMENTO
-                </Badge>
-              </div>
-
               {/* Card da proposição - compacto em mobile */}
-              <div className="bg-slate-800/80 rounded-xl sm:rounded-2xl border border-slate-700 p-3 sm:p-4 md:p-6 space-y-2 sm:space-y-3">
+              <div className="bg-slate-800/80 rounded-xl sm:rounded-2xl border border-slate-700 p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3">
                 <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                   <Badge className="bg-blue-600 text-white text-xs sm:text-sm">
                     {itemEmVotacao.proposicao.tipo.replace('_', ' ')}
@@ -366,40 +480,48 @@ export default function VotacaoParlamentarPage() {
 
               {/* Área de votação */}
               {votoRegistrado ? (
-                <div className="bg-green-900/30 rounded-xl sm:rounded-2xl border border-green-500/30 p-4 sm:p-6 text-center space-y-3 sm:space-y-4">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-                    <CheckCircle className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 text-green-400" />
+                <div className="bg-green-900/30 rounded-xl sm:rounded-2xl border border-green-500/30 p-4 sm:p-5 text-center space-y-3">
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-green-500/20 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-6 w-6 sm:h-7 sm:w-7 text-green-400" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-green-300 text-base sm:text-lg font-semibold">
+                        Voto Registrado
+                      </h3>
+                      <p className="text-slate-400 text-xs">
+                        Você pode alterar antes do encerramento
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-green-300 text-lg sm:text-xl font-semibold">
-                    Voto Registrado
-                  </h3>
-                  <div className={cn(
-                    "inline-flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-full text-lg sm:text-xl font-bold text-white",
-                    votoRegistrado === 'SIM' ? 'bg-green-600' :
-                    votoRegistrado === 'NAO' ? 'bg-red-600' :
-                    'bg-yellow-600'
-                  )}>
-                    {votoRegistrado === 'SIM' && <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
-                    {votoRegistrado === 'NAO' && <XCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
-                    {votoRegistrado === 'ABSTENCAO' && <MinusCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
-                    {votoRegistrado === 'NAO' ? 'NÃO' : votoRegistrado === 'ABSTENCAO' ? 'ABSTENÇÃO' : votoRegistrado}
+
+                  <div className="flex items-center justify-center gap-3 sm:gap-4">
+                    <div className={cn(
+                      "flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-lg sm:text-xl font-bold text-white",
+                      votoRegistrado === 'SIM' ? 'bg-green-600' :
+                      votoRegistrado === 'NAO' ? 'bg-red-600' :
+                      'bg-yellow-600'
+                    )}>
+                      {votoRegistrado === 'SIM' && <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
+                      {votoRegistrado === 'NAO' && <XCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
+                      {votoRegistrado === 'ABSTENCAO' && <MinusCircle className="h-5 w-5 sm:h-6 sm:w-6" />}
+                      {votoRegistrado === 'NAO' ? 'NÃO' : votoRegistrado === 'ABSTENCAO' ? 'ABSTENÇÃO' : votoRegistrado}
+                    </div>
+
+                    <Button
+                      onClick={() => setVotoRegistrado(null)}
+                      variant="outline"
+                      className="border-orange-500/50 text-orange-300 hover:bg-orange-500/20 hover:text-orange-200 h-10 sm:h-12 px-4 sm:px-5"
+                      disabled={votando}
+                    >
+                      <Vote className="h-4 w-4 mr-2" />
+                      Alterar
+                    </Button>
                   </div>
-                  <p className="text-slate-400 text-xs sm:text-sm">
-                    Você pode alterar seu voto antes do encerramento.
-                  </p>
-                  <Button
-                    onClick={() => setVotoRegistrado(null)}
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                    disabled={votando}
-                  >
-                    Alterar Voto
-                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3 sm:space-y-4">
-                  <p className="text-center text-slate-300 font-medium text-sm sm:text-base md:text-lg">
+                  <p className="text-center text-slate-300 font-medium text-sm sm:text-base">
                     Selecione sua opção de voto:
                   </p>
                   <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -435,9 +557,9 @@ export default function VotacaoParlamentarPage() {
                     </Button>
                   </div>
                   {votando && (
-                    <div className="text-center py-2 sm:py-4">
+                    <div className="text-center py-2 sm:py-3">
                       <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-blue-400 mx-auto" />
-                      <p className="text-slate-400 mt-1 sm:mt-2 text-sm">Registrando voto...</p>
+                      <p className="text-slate-400 mt-1 text-sm">Registrando voto...</p>
                     </div>
                   )}
                 </div>
@@ -447,10 +569,13 @@ export default function VotacaoParlamentarPage() {
         </div>
 
         {/* Footer - fixo no rodapé */}
-        <div className="flex-shrink-0 bg-slate-800/50 border-t border-slate-700 px-3 py-2 sm:px-4 sm:py-3">
-          <div className="max-w-2xl mx-auto flex items-center justify-center gap-2 text-slate-500 text-xs sm:text-sm">
-            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-            Atualização automática
+        <div className="flex-shrink-0 bg-slate-800/50 border-t border-slate-700 px-3 py-2">
+          <div className="max-w-4xl mx-auto flex items-center justify-between text-slate-500 text-[10px] sm:text-xs">
+            <span>{configuracao.sigla || 'CM'} - Sistema Legislativo</span>
+            <div className="flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Atualização automática</span>
+            </div>
           </div>
         </div>
       </div>
@@ -462,39 +587,139 @@ export default function VotacaoParlamentarPage() {
   // ==========================================
   if (!itemEmAndamento) {
     const itensRestantes = itens.filter(item => item.status === 'PENDENTE').length
+    const nomeParlamentar = parlamentarInfo?.apelido || parlamentarInfo?.nome || (session?.user as any)?.name || 'Parlamentar'
+    const iniciais = nomeParlamentar.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+    const cidade = configuracao.endereco?.cidade || 'Mojuí dos Campos'
+
     return (
-      <div className="h-[100dvh] bg-slate-900 flex flex-col items-center justify-center p-4 overflow-hidden">
-        <div className="text-center space-y-4 sm:space-y-6 max-w-lg">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-slate-800 flex items-center justify-center mx-auto">
-            <Clock className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-slate-400 animate-pulse" />
+      <div className="h-[100dvh] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
+        {/* Header Institucional */}
+        <header className="flex-shrink-0 bg-slate-800/80 border-b border-slate-700">
+          {/* Barra superior - Câmara */}
+          <div className="border-b border-slate-700/50 px-3 py-1.5 sm:py-2">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {configuracao.logoUrl ? (
+                  <Image
+                    src={configuracao.logoUrl}
+                    alt="Logo"
+                    width={28}
+                    height={28}
+                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-contain bg-white p-0.5"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 bg-blue-600/30 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-white/90 font-semibold text-[10px] sm:text-xs truncate">
+                    {configuracao.nomeCasa || 'Câmara Municipal'}
+                  </p>
+                  <p className="text-slate-400 text-[9px] sm:text-[10px] flex items-center gap-1">
+                    <MapPin className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                    {cidade}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 sm:gap-3 text-slate-400">
+                <div className="flex items-center gap-1 text-[10px] sm:text-xs">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                  <span className="hidden sm:inline">
+                    {sessaoAtiva.numero}ª Sessão {
+                      { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
+                    }
+                  </span>
+                  <span className="sm:hidden">
+                    {sessaoAtiva.numero}ª {
+                      { ORDINARIA: 'Ord.', EXTRAORDINARIA: 'Ext.', SOLENE: 'Sol.', ESPECIAL: 'Esp.' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
+                    }
+                  </span>
+                </div>
+                {sessaoAtiva.tempoInicio && (
+                  <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs text-blue-400">
+                    <Timer className="h-3 w-3" />
+                    {formatarTempo(tempoSessao)}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-semibold">
-            Aguardando Matéria
-          </h1>
-          <p className="text-slate-400 text-base sm:text-lg">
-            Nenhuma matéria em votação no momento.
-          </p>
-          <div className="pt-3 sm:pt-4 border-t border-slate-800">
-            <p className="text-slate-500 text-xs sm:text-sm">
-              {sessaoAtiva.numero}ª Sessão {
-                { ORDINARIA: 'Ordinária', EXTRAORDINARIA: 'Extraordinária', SOLENE: 'Solene', ESPECIAL: 'Especial' }[sessaoAtiva.tipo] || sessaoAtiva.tipo
-              }
-            </p>
-            {sessaoAtiva.tempoInicio && (
-              <p className="text-slate-400 text-sm sm:text-base mt-2 font-mono">
-                <Timer className="h-4 w-4 inline mr-1" />
-                {formatarTempo(tempoSessao)}
+
+          {/* Barra do parlamentar */}
+          <div className="px-3 py-1.5 sm:py-2">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {parlamentarInfo?.foto ? (
+                  <Image
+                    src={parlamentarInfo.foto}
+                    alt={nomeParlamentar}
+                    width={32}
+                    height={32}
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-blue-500/50"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600/30 rounded-full flex items-center justify-center ring-2 ring-blue-500/50 flex-shrink-0">
+                    <span className="text-blue-300 font-bold text-[10px] sm:text-xs">{iniciais}</span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-white font-semibold text-xs sm:text-sm truncate">
+                      {nomeParlamentar}
+                    </p>
+                    {parlamentarInfo?.partido && (
+                      <Badge className="bg-blue-600/30 text-blue-300 border-0 text-[9px] sm:text-[10px] px-1.5 py-0">
+                        {parlamentarInfo.partido}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-slate-500 text-[9px] sm:text-[10px]">Vereador(a)</p>
+                </div>
+              </div>
+              <Badge className="bg-slate-700/50 text-slate-400 border border-slate-600/50 text-[9px] sm:text-xs">
+                <Clock className="h-3 w-3 mr-1" />
+                AGUARDANDO
+              </Badge>
+            </div>
+          </div>
+        </header>
+
+        {/* Conteúdo - Aguardando */}
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="text-center space-y-4 sm:space-y-5 max-w-md">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 flex items-center justify-center mx-auto ring-4 ring-slate-700/50">
+              <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-slate-400 animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-white text-xl sm:text-2xl md:text-3xl font-semibold">
+                Aguardando Matéria
+              </h1>
+              <p className="text-slate-400 text-sm sm:text-base mt-2">
+                Nenhuma matéria em votação no momento
               </p>
-            )}
+            </div>
             {itensRestantes > 0 && (
-              <p className="text-slate-500 text-xs sm:text-sm mt-2">
-                {itensRestantes} {itensRestantes === 1 ? 'item restante' : 'itens restantes'} na pauta
-              </p>
+              <div className="bg-slate-800/50 rounded-lg px-4 py-2 inline-block">
+                <p className="text-slate-300 text-sm">
+                  <FileText className="h-4 w-4 inline mr-1.5" />
+                  {itensRestantes} {itensRestantes === 1 ? 'item restante' : 'itens restantes'} na pauta
+                </p>
+              </div>
             )}
           </div>
-          <div className="flex items-center justify-center gap-2 text-slate-500 text-xs sm:text-sm pt-3 sm:pt-4">
-            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-            Atualizando automaticamente...
+        </div>
+
+        {/* Footer */}
+        <div className="flex-shrink-0 bg-slate-800/50 border-t border-slate-700 px-3 py-2">
+          <div className="max-w-4xl mx-auto flex items-center justify-between text-slate-500 text-[10px] sm:text-xs">
+            <span>{configuracao.sigla || 'CM'} - Sistema Legislativo</span>
+            <div className="flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Atualização automática</span>
+            </div>
           </div>
         </div>
       </div>

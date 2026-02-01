@@ -1,9 +1,49 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Responsividade Mobile - Area Parlamentar)
+> **Ultima Atualizacao**: 2026-02-01 (Header Institucional - Area Parlamentar)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Header Institucional - Area do Parlamentar (01/02/2026)
+
+### Funcionalidade
+Novo header institucional completo na area do parlamentar com informacoes do municipio, camara e parlamentar.
+
+### Elementos do Header
+1. **Barra Institucional** (topo):
+   - Logo da Camara (configuravel via API)
+   - Nome da Casa Legislativa
+   - Cidade/Municipio (com icone MapPin)
+   - Legislatura atual (desktop)
+   - Data atual por extenso (desktop)
+
+2. **Barra do Parlamentar**:
+   - Foto do parlamentar (ou iniciais como fallback)
+   - Nome/Apelido do parlamentar
+   - Partido (badge)
+   - Cargo (Vereador/a)
+   - Status da sessao (sem sessao em andamento)
+   - Botao de logout
+
+3. **Footer Compacto**:
+   - Nome do sistema
+   - Sigla da Camara e ano
+
+### Responsividade
+- Mobile: Informacoes de legislatura/data em linha separada abaixo do header
+- Tablet/Desktop: Informacoes de legislatura/data na barra superior
+- Todos os textos e elementos com tamanhos responsivos (text-[10px] sm:text-xs md:text-sm)
+
+### Hook Utilizado
+- `useConfiguracaoInstitucional()` - Busca dados institucionais da API
+
+### Arquivo Modificado
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/parlamentar/layout.tsx` | Novo header institucional completo |
 
 ---
 
