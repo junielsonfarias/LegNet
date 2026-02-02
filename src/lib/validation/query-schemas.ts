@@ -81,10 +81,11 @@ export function safeParseQueryParams<T extends z.ZodTypeAny>(
 
 /**
  * Schema para query params de proposições
+ * O campo 'tipo' aceita qualquer código de tipo cadastrado em TipoProposicaoConfig
  */
 export const ProposicaoQuerySchema = BaseQuerySchema.extend({
   status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA']).optional(),
-  tipo: z.enum(['PROJETO_LEI', 'PROJETO_RESOLUCAO', 'PROJETO_DECRETO', 'INDICACAO', 'REQUERIMENTO', 'MOCAO', 'VOTO_PESAR', 'VOTO_APLAUSO']).optional(),
+  tipo: z.string().max(50).optional(), // Tipos são dinâmicos - validados contra TipoProposicaoConfig
   autorId: z.string().optional(),
   ano: z.coerce.number().int().min(2000).max(2100).optional()
 })

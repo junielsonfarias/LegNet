@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from '@/lib/error-handler'
 import {
   calcularResultadoVotacao as calcularResultadoComQuorum,
   determinarAplicacaoQuorum,
+  determinarAplicacaoQuorumDinamico,
   type AplicacaoQuorum
 } from '@/lib/services/quorum-service'
 import {
@@ -530,6 +531,7 @@ export async function contabilizarVotos(
     regimeUrgencia?: boolean
     isDerrubadaVeto?: boolean
     sessaoId?: string
+    turno?: number  // Número do turno (1 ou 2) para quórum diferenciado
   }
 ): Promise<{
   sim: number
@@ -559,7 +561,7 @@ export async function contabilizarVotos(
 
   const total = contagem.sim + contagem.nao + contagem.abstencao
 
-  // Se tiver tipo de proposição, usar quórum configurável
+  // Se tiver tipo de proposição, usar quórum configurável (versão dinâmica)
   if (options?.tipoProposicao) {
     try {
       // Buscar total de membros e presentes
@@ -592,8 +594,10 @@ export async function contabilizarVotos(
         })
       }
 
-      const aplicacao = determinarAplicacaoQuorum(
+      // Usar versão dinâmica que busca configuração do banco
+      const aplicacao = await determinarAplicacaoQuorumDinamico(
         options.tipoProposicao,
+        options.turno || 1,        // Passar turno para quórum diferenciado
         options.regimeUrgencia || false,
         options.isDerrubadaVeto || false,
         false

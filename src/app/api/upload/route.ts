@@ -3,6 +3,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import path from 'path'
 import { withAuth } from '@/lib/auth/permissions'
+import { generateSecureShortId } from '@/lib/utils/secure-id'
 
 // Configurar para renderizacao dinamica
 export const dynamic = 'force-dynamic'
@@ -44,8 +45,9 @@ export const POST = withAuth(async (request: NextRequest) => {
   }
 
   // Criar nome unico para o arquivo
+  // SEGURANÇA: Usa crypto em vez de Math.random() para nome de arquivo
   const timestamp = Date.now()
-  const randomSuffix = Math.random().toString(36).substring(2, 8)
+  const randomSuffix = generateSecureShortId()
   const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
   const fileName = `${timestamp}-${randomSuffix}-${originalName}`
 

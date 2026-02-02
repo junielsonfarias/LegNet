@@ -85,11 +85,11 @@ export const SessaoLegislativaSchema = z.object({
 })
 
 // Schema para Proposição
+// O campo 'tipo' aceita qualquer código de tipo cadastrado em TipoProposicaoConfig
+// Tipos são dinâmicos e configuráveis pelo administrador
 export const ProposicaoSchema = z.object({
   numero: z.string().min(1, 'Número da proposição é obrigatório'),
-  tipo: z.enum(['projeto_lei', 'projeto_resolucao', 'projeto_decreto', 'indicacao', 'requerimento', 'mocao', 'voto_apreco', 'voto_condolencias'], {
-    errorMap: () => ({ message: 'Tipo deve ser um dos valores válidos' })
-  }),
+  tipo: z.string().min(1, 'Tipo da proposição é obrigatório').max(50, 'Código do tipo deve ter no máximo 50 caracteres'),
   titulo: z.string().min(1, 'Título é obrigatório'),
   ementa: z.string().min(1, 'Ementa é obrigatória'),
   texto: z.string().min(1, 'Texto é obrigatório'),

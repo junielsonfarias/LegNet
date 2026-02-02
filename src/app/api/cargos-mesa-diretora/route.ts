@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { 
-  withErrorHandler, 
-  createSuccessResponse, 
+import {
+  withErrorHandler,
+  createSuccessResponse,
   ValidationError,
   ConflictError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -47,21 +48,22 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 })
 
 // POST - Criar cargo
-export const POST = withErrorHandler(async (request: NextRequest) => {
+// SEGURANÇA: Requer autenticação e permissão de gestão da câmara
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = CargoMesaDiretoraSchema.parse(body)
-  
+
   // Verificar se período existe
   const periodo = await prisma.periodoLegislatura.findUnique({
     where: { id: validatedData.periodoId }
   })
-  
+
   if (!periodo) {
     throw new ValidationError('Período não encontrado')
   }
-  
+
   // Verificar se já existe cargo com mesmo nome no período
   const cargoExistente = await prisma.cargoMesaDiretora.findUnique({
     where: {
@@ -71,11 +73,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       }
     }
   })
-  
+
   if (cargoExistente) {
     throw new ConflictError('Já existe um cargo com este nome neste período')
   }
-  
+
   const cargo = await prisma.cargoMesaDiretora.create({
     data: {
       periodoId: validatedData.periodoId,
@@ -91,7 +93,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       }
     }
   })
-  
+
   return createSuccessResponse(cargo, 'Cargo criado com sucesso', undefined, 201)
-})
+}, { permissions: 'mesa.manage' })
 

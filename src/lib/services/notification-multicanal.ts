@@ -1,4 +1,5 @@
 import { mockData } from '@/lib/db'
+import { generateSecureId } from '@/lib/utils/secure-id'
 
 export type CanalNotificacao = 'email' | 'push' | 'sms'
 
@@ -36,7 +37,7 @@ export const notificationQueueService = {
     const queue = ensureQueue()
     const payload: NotificacaoMulticanalPayload = {
       ...data,
-      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: generateSecureId('notif'),
       status: 'pendente',
       tentativas: data.tentativas ?? 0,
       integration: data.integration ?? false,

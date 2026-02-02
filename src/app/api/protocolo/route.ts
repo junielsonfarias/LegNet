@@ -5,6 +5,7 @@ import {
   createSuccessResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -104,13 +105,9 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
 /**
  * POST - Criar novo protocolo
+ * SEGURANÇA: Requer autenticação e permissão de protocolo
  */
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CriarProtocoloSchema.parse(body)
 
@@ -121,4 +118,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
 
   return createSuccessResponse(resultado, 'Protocolo criado com sucesso')
-})
+}, { permissions: 'protocolo.manage' })

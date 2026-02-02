@@ -10,6 +10,14 @@ import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
 
+// Aplicações de quórum válidas
+const APLICACOES_QUORUM = [
+  'VOTACAO_SIMPLES',
+  'VOTACAO_ABSOLUTA',
+  'VOTACAO_QUALIFICADA',
+  'VOTACAO_URGENCIA'
+] as const
+
 // Schema de validação para criar/atualizar tipo de proposição
 const TipoProposicaoSchema = z.object({
   codigo: z.string()
@@ -27,7 +35,12 @@ const TipoProposicaoSchema = z.object({
   ativo: z.boolean().default(true),
   ordem: z.number().int().default(0),
   corBadge: z.string().optional().nullable(),
-  icone: z.string().optional().nullable()
+  icone: z.string().optional().nullable(),
+  // Configuração de Quorum e Turnos
+  quorumAplicacao: z.enum(APLICACOES_QUORUM).optional().nullable(),
+  quorumAplicacao2Turno: z.enum(APLICACOES_QUORUM).optional().nullable(),
+  totalTurnos: z.number().int().min(1).max(2).default(1),
+  intersticioDias: z.number().int().min(0).max(30).default(0)
 })
 
 // GET - Listar tipos de proposição

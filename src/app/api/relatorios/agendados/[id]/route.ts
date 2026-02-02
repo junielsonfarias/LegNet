@@ -7,6 +7,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -53,57 +54,48 @@ export const GET = withErrorHandler(async (
 
 /**
  * PUT - Atualizar relatório agendado
+ * SEGURANÇA: Requer autenticação e permissão de relatórios
  */
-export const PUT = withErrorHandler(async (
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Relatório')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Relatório')
   const body = await request.json()
   const validatedData = AtualizarSchema.parse(body)
 
   const relatorio = await atualizarRelatorioAgendado(id, validatedData)
 
   return createSuccessResponse(relatorio, 'Relatório atualizado')
-})
+}, { permissions: 'relatorio.manage' })
 
 /**
  * POST - Executar relatório
+ * SEGURANÇA: Requer autenticação e permissão de relatórios
  */
-export const POST = withErrorHandler(async (
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Relatório')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Relatório')
   const resultado = await executarRelatorio(id)
 
   return createSuccessResponse(resultado, 'Relatório executado')
-})
+}, { permissions: 'relatorio.manage' })
 
 /**
  * DELETE - Remover relatório agendado
+ * SEGURANÇA: Requer autenticação e permissão de relatórios
  */
-export const DELETE = withErrorHandler(async (
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Relatório')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Relatório')
   await removerRelatorioAgendado(id)
 
   return createSuccessResponse({ id }, 'Relatório removido')
-})
+}, { permissions: 'relatorio.manage' })

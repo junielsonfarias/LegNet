@@ -1,106 +1,106 @@
-import { NextRequest, NextResponse } from 'next/server'
+/**
+ * API: Reunião de Comissão por ID
+ * GET - Busca reunião
+ * PUT - Atualiza reunião
+ * DELETE - Exclui reunião
+ * SEGURANÇA: PUT/DELETE requerem permissão comissao.manage
+ */
+
+import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, ValidationError, NotFoundError, validateId } from '@/lib/error-handler'
 import { ReuniaoComissaoService } from '@/lib/services/reuniao-comissao-service'
 
-// GET - Buscar reuniao por ID
-export async function GET(
+export const dynamic = 'force-dynamic'
+
+// Schema de validação para atualização
+const AtualizarReuniaoSchema = z.object({
+  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'ESPECIAL']).optional(),
+  data: z.string().datetime().optional(),
+  horaInicio: z.string().datetime().optional().nullable(),
+  horaFim: z.string().datetime().optional().nullable(),
+  local: z.string().optional().nullable(),
+  motivoConvocacao: z.string().optional().nullable(),
+  pautaTexto: z.string().optional().nullable(),
+  ataTexto: z.string().optional().nullable(),
+  quorumMinimo: z.number().int().min(1).optional(),
+  observacoes: z.string().optional().nullable()
+})
+
+/**
+ * GET - Buscar reunião por ID
+ * Requer autenticação básica
+ */
+export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
-
-    const { id } = await params
-    const reuniao = await ReuniaoComissaoService.buscarReuniaoPorId(id)
-
-    if (!reuniao) {
-      return NextResponse.json(
-        { success: false, error: 'Reuniao nao encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: reuniao
-    })
-  } catch (error) {
-    console.error('Erro ao buscar reuniao:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao buscar reuniao' },
-      { status: 500 }
-    )
+  context: { params: Promise<{ id: string }> }
+) => {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    throw new ValidationError('Não autorizado')
   }
-}
 
-// PUT - Atualizar reuniao
-export async function PUT(
+  const { id } = await context.params
+  const reuniao = await ReuniaoComissaoService.buscarReuniaoPorId(id)
+
+  if (!reuniao) {
+    throw new NotFoundError('Reunião')
+  }
+
+  return createSuccessResponse(reuniao, 'Reunião encontrada')
+})
+
+/**
+ * PUT - Atualizar reunião
+ * SEGURANÇA: Requer permissão comissao.manage
+ */
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+  context: { params: Promise<{ id: string }> }
+) => {
+  const { id } = await context.params
+  validateId(id, 'Reunião')
 
-    const { id } = await params
-    const body = await request.json()
+  const body = await request.json()
+  const validation = AtualizarReuniaoSchema.safeParse(body)
 
-    const reuniao = await ReuniaoComissaoService.atualizarReuniao(id, {
-      tipo: body.tipo,
-      data: body.data ? new Date(body.data) : undefined,
-      horaInicio: body.horaInicio ? new Date(body.horaInicio) : undefined,
-      horaFim: body.horaFim ? new Date(body.horaFim) : undefined,
-      local: body.local,
-      motivoConvocacao: body.motivoConvocacao,
-      pautaTexto: body.pautaTexto,
-      ataTexto: body.ataTexto,
-      quorumMinimo: body.quorumMinimo,
-      observacoes: body.observacoes
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: reuniao,
-      message: 'Reuniao atualizada com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao atualizar reuniao:', error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Erro ao atualizar reuniao' },
-      { status: 500 }
-    )
+  if (!validation.success) {
+    throw new ValidationError(validation.error.errors[0].message)
   }
-}
 
-// DELETE - Excluir reuniao
-export async function DELETE(
+  const dados = validation.data
+
+  const reuniao = await ReuniaoComissaoService.atualizarReuniao(id, {
+    tipo: dados.tipo,
+    data: dados.data ? new Date(dados.data) : undefined,
+    horaInicio: dados.horaInicio ? new Date(dados.horaInicio) : undefined,
+    horaFim: dados.horaFim ? new Date(dados.horaFim) : undefined,
+    local: dados.local ?? undefined,
+    motivoConvocacao: dados.motivoConvocacao ?? undefined,
+    pautaTexto: dados.pautaTexto ?? undefined,
+    ataTexto: dados.ataTexto ?? undefined,
+    quorumMinimo: dados.quorumMinimo,
+    observacoes: dados.observacoes ?? undefined
+  })
+
+  return createSuccessResponse(reuniao, 'Reunião atualizada com sucesso')
+}, { permissions: 'comissao.manage' })
+
+/**
+ * DELETE - Excluir reunião
+ * SEGURANÇA: Requer permissão comissao.manage
+ */
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+  context: { params: Promise<{ id: string }> }
+) => {
+  const { id } = await context.params
+  validateId(id, 'Reunião')
 
-    const { id } = await params
-    await ReuniaoComissaoService.excluirReuniao(id)
+  await ReuniaoComissaoService.excluirReuniao(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Reuniao excluida com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao excluir reuniao:', error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Erro ao excluir reuniao' },
-      { status: 500 }
-    )
-  }
-}
+  return createSuccessResponse({ deleted: true }, 'Reunião excluída com sucesso')
+}, { permissions: 'comissao.manage' })

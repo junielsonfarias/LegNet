@@ -8,6 +8,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -140,11 +141,13 @@ export const GET = withErrorHandler(async (
 })
 
 // PUT - Atualizar parecer
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Parecer')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Parecer')
   const body = await request.json()
   const validatedData = UpdateParecerSchema.parse(body)
 
@@ -248,14 +251,16 @@ export const PUT = withErrorHandler(async (
   })
 
   return createSuccessResponse(parecer, 'Parecer atualizado com sucesso')
-})
+}, { permissions: 'comissao.manage' })
 
 // DELETE - Excluir parecer
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Parecer')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Parecer')
 
   const parecer = await prisma.parecer.findUnique({
     where: { id }
@@ -278,4 +283,4 @@ export const DELETE = withErrorHandler(async (
   })
 
   return createSuccessResponse(null, 'Parecer excluído com sucesso')
-})
+}, { permissions: 'comissao.manage' })

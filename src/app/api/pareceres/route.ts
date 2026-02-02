@@ -7,6 +7,7 @@ import {
   createSuccessResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,7 +103,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 })
 
 // POST - Criar novo parecer
-export const POST = withErrorHandler(async (request: NextRequest) => {
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CreateParecerSchema.parse(body)
 
@@ -256,4 +258,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
 
   return createSuccessResponse(parecer, 'Parecer criado com sucesso')
-})
+}, { permissions: 'comissao.manage' })

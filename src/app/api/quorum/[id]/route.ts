@@ -7,6 +7,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,11 +55,13 @@ export const GET = withErrorHandler(async (
 })
 
 // PUT - Atualizar configuracao
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de configuração
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Configuracao de Quorum')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Configuracao de Quorum')
   const body = await request.json()
   const validatedData = UpdateQuorumSchema.parse(body)
 
@@ -98,14 +101,16 @@ export const PUT = withErrorHandler(async (
   })
 
   return createSuccessResponse(configuracao, 'Configuracao de quorum atualizada com sucesso')
-})
+}, { permissions: 'config.manage' })
 
 // DELETE - Excluir configuracao
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de configuração
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Configuracao de Quorum')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Configuracao de Quorum')
 
   const configuracao = await prisma.configuracaoQuorum.findUnique({
     where: { id }
@@ -120,4 +125,4 @@ export const DELETE = withErrorHandler(async (
   })
 
   return createSuccessResponse(null, 'Configuracao de quorum excluida com sucesso')
-})
+}, { permissions: 'config.manage' })

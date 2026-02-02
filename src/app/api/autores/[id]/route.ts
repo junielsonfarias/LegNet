@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
-import { authOptions } from '@/lib/auth'
 import {
   withErrorHandler,
   createSuccessResponse,
   NotFoundError,
   ValidationError,
-  ConflictError,
-  UnauthorizedError
+  ConflictError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,16 +82,12 @@ export const GET = withErrorHandler(async (
 })
 
 // PUT - Atualizar autor
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de proposições
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new UnauthorizedError('Autenticação necessária')
-  }
-
-  const { id } = await params
+  const { id } = await context.params
   const body = await request.json()
   const validatedData = UpdateAutorSchema.parse(body)
 
@@ -141,19 +135,15 @@ export const PUT = withErrorHandler(async (
   })
 
   return createSuccessResponse(autor, 'Autor atualizado com sucesso')
-})
+}, { permissions: 'proposicao.manage' })
 
 // DELETE - Excluir autor
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de proposições
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new UnauthorizedError('Autenticação necessária')
-  }
-
-  const { id } = await params
+  const { id } = await context.params
 
   // Verificar se existe
   const existing = await prisma.autor.findUnique({
@@ -179,4 +169,4 @@ export const DELETE = withErrorHandler(async (
   })
 
   return createSuccessResponse(null, 'Autor excluído com sucesso')
-})
+}, { permissions: 'proposicao.manage' })

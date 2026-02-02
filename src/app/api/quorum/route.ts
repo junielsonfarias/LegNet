@@ -6,6 +6,7 @@ import {
   createSuccessResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,7 +74,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 })
 
 // POST - Criar nova configuracao de quorum
-export const POST = withErrorHandler(async (request: NextRequest) => {
+// SEGURANÇA: Requer autenticação e permissão de configuração
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CreateQuorumSchema.parse(body)
 
@@ -112,4 +114,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
 
   return createSuccessResponse(configuracao, 'Configuracao de quorum criada com sucesso')
-})
+}, { permissions: 'config.manage' })

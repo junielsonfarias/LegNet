@@ -35,6 +35,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { FluxoTramitacaoEditor } from '@/components/admin/fluxo-tramitacao-editor'
+import { QuorumConfigForm } from '@/components/admin/quorum-config-form'
 
 // Interface para o tipo de proposicao do banco
 interface TipoProposicaoConfig {
@@ -52,6 +53,11 @@ interface TipoProposicaoConfig {
   ordem: number
   corBadge: string | null
   icone: string | null
+  // Configuracao de Quorum e Turnos
+  quorumAplicacao: string | null
+  quorumAplicacao2Turno: string | null
+  totalTurnos: number
+  intersticioDias: number
   createdAt: string
   updatedAt: string
 }
@@ -239,7 +245,7 @@ export default function TiposProposicoesPage() {
   }
 
   const handlePopularTipos = async () => {
-    if (!confirm('Deseja popular os tipos de proposicao com os dados padrao? Isso ira criar ou atualizar todos os 8 tipos.')) {
+    if (!confirm('Deseja popular os tipos de proposicao com os dados padrao? Isso ira criar os tipos iniciais recomendados.')) {
       return
     }
 
@@ -302,6 +308,23 @@ export default function TiposProposicoesPage() {
     )
   }
 
+  const getQuorumLabel = (aplicacao: string | null) => {
+    const labels: Record<string, string> = {
+      'VOTACAO_SIMPLES': 'Simples',
+      'VOTACAO_ABSOLUTA': 'Absoluta',
+      'VOTACAO_QUALIFICADA': '2/3',
+      'VOTACAO_URGENCIA': 'Urgencia'
+    }
+    return labels[aplicacao || ''] || 'Simples'
+  }
+
+  const getTurnosLabel = (turnos: number, intersticio: number) => {
+    if (turnos === 2) {
+      return `2T (${intersticio}d)`
+    }
+    return '1T'
+  }
+
   // Codigos sugeridos nao usados ainda
   const sugestoesDisponiveis = CODIGOS_SUGERIDOS.filter(c => !codigosUsados.includes(c.value))
 
@@ -352,7 +375,7 @@ export default function TiposProposicoesPage() {
               <div>
                 <h3 className="font-semibold text-yellow-800">Nenhum tipo configurado</h3>
                 <p className="text-yellow-700 text-sm mt-1">
-                  Clique em &quot;Popular Padrao&quot; para criar os 8 tipos de proposicao com configuracoes recomendadas.
+                  Clique em &quot;Popular Padrao&quot; para criar os tipos iniciais ou use &quot;Novo Tipo&quot; para criar tipos personalizados.
                 </p>
               </div>
             </div>
@@ -369,7 +392,7 @@ export default function TiposProposicoesPage() {
               <div>
                 <h3 className="font-semibold text-blue-800">{tipos.length} tipos configurados</h3>
                 <p className="text-blue-700 text-sm mt-1">
-                  Voce pode criar tipos personalizados alem dos 8 tipos padrao. Use o botao &quot;Novo Tipo&quot; para adicionar.
+                  Voce pode criar quantos tipos precisar. Use o botao &quot;Novo Tipo&quot; para adicionar tipos personalizados como Homenagem, Titulo de Cidadao, etc.
                 </p>
               </div>
             </div>
@@ -428,7 +451,7 @@ export default function TiposProposicoesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <span>
@@ -438,7 +461,19 @@ export default function TiposProposicoesPage() {
                   <div className="flex items-center gap-2">
                     <Vote className="h-4 w-4 text-gray-500" />
                     <span>
-                      <strong>Votacao:</strong> {getRequerimentoBadge(tipo.requerVotacao)}
+                      <strong>Quorum:</strong>{' '}
+                      <Badge variant="outline" className="ml-1">
+                        {getQuorumLabel(tipo.quorumAplicacao)}
+                      </Badge>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-gray-500" />
+                    <span>
+                      <strong>Turnos:</strong>{' '}
+                      <Badge variant="outline" className="ml-1">
+                        {getTurnosLabel(tipo.totalTurnos, tipo.intersticioDias)}
+                      </Badge>
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -454,8 +489,7 @@ export default function TiposProposicoesPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <GitBranch className="h-4 w-4 text-gray-500" />
-                    <span>
+                    <span className="text-gray-500">
                       <strong>Ordem:</strong> {tipo.ordem}
                     </span>
                   </div>
@@ -483,10 +517,18 @@ export default function TiposProposicoesPage() {
             <CardContent className="flex-1 overflow-hidden p-0">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
                 <div className="px-6 border-b">
-                  <TabsList className="grid w-full grid-cols-2 max-w-md">
+                  <TabsList className="grid w-full grid-cols-3 max-w-lg">
                     <TabsTrigger value="dados" className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Dados Basicos
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="quorum"
+                      className="flex items-center gap-2"
+                      disabled={!editingTipo}
+                    >
+                      <Vote className="h-4 w-4" />
+                      Quorum
                     </TabsTrigger>
                     <TabsTrigger
                       value="fluxo"
@@ -494,7 +536,7 @@ export default function TiposProposicoesPage() {
                       disabled={!editingTipo}
                     >
                       <GitBranch className="h-4 w-4" />
-                      Fluxo de Tramitacao
+                      Fluxo
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -715,6 +757,27 @@ export default function TiposProposicoesPage() {
                         </Button>
                       </div>
                     </form>
+                  </TabsContent>
+
+                  {/* Tab Quorum */}
+                  <TabsContent value="quorum" className="mt-0">
+                    {editingTipo ? (
+                      <QuorumConfigForm
+                        tipoId={editingTipo.id}
+                        tipoCodigo={editingTipo.codigo}
+                        tipoNome={editingTipo.nome}
+                        quorumAplicacao={editingTipo.quorumAplicacao}
+                        quorumAplicacao2Turno={editingTipo.quorumAplicacao2Turno}
+                        totalTurnos={editingTipo.totalTurnos}
+                        intersticioDias={editingTipo.intersticioDias}
+                        onSave={() => loadTipos()}
+                      />
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Vote className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>Salve o tipo de proposicao primeiro para configurar o quorum.</p>
+                      </div>
+                    )}
                   </TabsContent>
 
                   {/* Tab Fluxo de Tramitacao */}

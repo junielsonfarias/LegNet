@@ -1,123 +1,104 @@
-import { NextRequest, NextResponse } from 'next/server'
+/**
+ * API: Presença em Reunião de Comissão
+ * GET - Lista presenças
+ * POST - Registra presença
+ * PUT - Registra saída
+ * SEGURANÇA: POST/PUT requerem permissão comissao.manage
+ */
+
+import { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { ReuniaoComissaoService } from '@/lib/services/reuniao-comissao-service'
 
-// GET - Listar presencas da reuniao
-export async function GET(
+export const dynamic = 'force-dynamic'
+
+// Schema de validação
+const PresencaSchema = z.object({
+  membroComissaoId: z.string().min(1, 'ID do membro é obrigatório'),
+  presente: z.boolean().optional().default(true),
+  justificativa: z.string().optional()
+})
+
+const SaidaSchema = z.object({
+  membroComissaoId: z.string().min(1, 'ID do membro é obrigatório')
+})
+
+/**
+ * GET - Listar presenças da reunião
+ * Requer autenticação básica
+ */
+export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
-
-    const { id: reuniaoId } = await params
-    const presencas = await ReuniaoComissaoService.obterPresencas(reuniaoId)
-    const quorum = await ReuniaoComissaoService.verificarQuorum(reuniaoId)
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        presencas,
-        quorum
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao listar presencas:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao listar presencas' },
-      { status: 500 }
-    )
+  context: { params: Promise<{ id: string }> }
+) => {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    throw new ValidationError('Não autorizado')
   }
-}
 
-// POST - Registrar presenca
-export async function POST(
+  const { id: reuniaoId } = await context.params
+  const presencas = await ReuniaoComissaoService.obterPresencas(reuniaoId)
+  const quorum = await ReuniaoComissaoService.verificarQuorum(reuniaoId)
+
+  return createSuccessResponse({ presencas, quorum }, 'Presenças listadas')
+})
+
+/**
+ * POST - Registrar presença
+ * SEGURANÇA: Requer permissão comissao.manage
+ */
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+  context: { params: Promise<{ id: string }> }
+) => {
+  const { id: reuniaoId } = await context.params
+  const body = await request.json()
 
-    const { id: reuniaoId } = await params
-    const body = await request.json()
-
-    if (!body.membroComissaoId) {
-      return NextResponse.json(
-        { success: false, error: 'ID do membro e obrigatorio' },
-        { status: 400 }
-      )
-    }
-
-    const presenca = await ReuniaoComissaoService.registrarPresenca(
-      reuniaoId,
-      body.membroComissaoId,
-      body.presente ?? true,
-      body.justificativa
-    )
-
-    // Verificar quorum apos registrar presenca
-    const quorum = await ReuniaoComissaoService.verificarQuorum(reuniaoId)
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        presenca,
-        quorum
-      },
-      message: 'Presenca registrada'
-    })
-  } catch (error) {
-    console.error('Erro ao registrar presenca:', error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Erro ao registrar presenca' },
-      { status: 500 }
-    )
+  const validation = PresencaSchema.safeParse(body)
+  if (!validation.success) {
+    throw new ValidationError(validation.error.errors[0].message)
   }
-}
 
-// PUT - Registrar saida
-export async function PUT(
+  const { membroComissaoId, presente, justificativa } = validation.data
+
+  const presenca = await ReuniaoComissaoService.registrarPresenca(
+    reuniaoId,
+    membroComissaoId,
+    presente,
+    justificativa
+  )
+
+  const quorum = await ReuniaoComissaoService.verificarQuorum(reuniaoId)
+
+  return createSuccessResponse({ presenca, quorum }, 'Presença registrada')
+}, { permissions: 'comissao.manage' })
+
+/**
+ * PUT - Registrar saída
+ * SEGURANÇA: Requer permissão comissao.manage
+ */
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+  context: { params: Promise<{ id: string }> }
+) => {
+  const { id: reuniaoId } = await context.params
+  const body = await request.json()
 
-    const { id: reuniaoId } = await params
-    const body = await request.json()
-
-    if (!body.membroComissaoId) {
-      return NextResponse.json(
-        { success: false, error: 'ID do membro e obrigatorio' },
-        { status: 400 }
-      )
-    }
-
-    const presenca = await ReuniaoComissaoService.registrarSaida(
-      reuniaoId,
-      body.membroComissaoId
-    )
-
-    return NextResponse.json({
-      success: true,
-      data: presenca,
-      message: 'Saida registrada'
-    })
-  } catch (error) {
-    console.error('Erro ao registrar saida:', error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Erro ao registrar saida' },
-      { status: 500 }
-    )
+  const validation = SaidaSchema.safeParse(body)
+  if (!validation.success) {
+    throw new ValidationError(validation.error.errors[0].message)
   }
-}
+
+  const { membroComissaoId } = validation.data
+
+  const presenca = await ReuniaoComissaoService.registrarSaida(
+    reuniaoId,
+    membroComissaoId
+  )
+
+  return createSuccessResponse(presenca, 'Saída registrada')
+}, { permissions: 'comissao.manage' })

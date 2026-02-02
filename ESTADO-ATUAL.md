@@ -1,9 +1,485 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-01 (Retirada de Pauta - Painel Operador)
+> **Ultima Atualizacao**: 2026-02-02 (Alertas de Seguranca com Persistencia)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Rate Limiting de Login com Redis (02/02/2026)
+
+### Problema Resolvido
+Rate limiting de login era apenas em memoria, nao compartilhando estado entre multiplas instancias.
+
+### Solucao Implementada
+Criada API interna `/api/auth/rate-limit` que usa Redis, chamada pelo `auth.ts` via fetch.
+
+**Arquivos Criados:**
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/app/api/auth/rate-limit/route.ts` | API server-only que usa Redis para rate limit |
+| `src/lib/rate-limit-client.ts` | Cliente client-safe que chama API via fetch |
+
+**Arquivos Modificados:**
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/lib/auth.ts` | Usa `rate-limit-client.ts` com suporte a Redis |
+
+**Arquitetura:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ auth.ts (authorize)                                             │
+│   │                                                             │
+│   ├── checkRateLimitWithRedis() ──► rate-limit-client.ts        │
+│   │                                    │                        │
+│   │                                    ├── [Server] fetch API   │
+│   │                                    │      │                 │
+│   │                                    │      ▼                 │
+│   │                                    │   /api/auth/rate-limit │
+│   │                                    │      │                 │
+│   │                                    │      ▼                 │
+│   │                                    │   redis/rate-limiter   │
+│   │                                    │      │                 │
+│   │                                    │      ▼                 │
+│   │                                    │   Redis (compartilhado)│
+│   │                                    │                        │
+│   │                                    └── [Fallback] memoria   │
+│   │                                                             │
+│   └── resetRateLimitWithRedis() ──► (mesmo fluxo)              │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Caracteristicas:**
+- Rate limit de login compartilhado entre todas as instancias
+- Fallback automatico para memoria se Redis indisponivel
+- Timeout de 2 segundos para nao atrasar login
+- Cache local de 1 segundo para evitar chamadas repetidas
+- Header secreto `x-internal-secret` para proteger API
+
+**Variavel de Ambiente (opcional):**
+```env
+INTERNAL_API_SECRET=sua-chave-secreta-aqui
+```
+
+---
+
+## Alertas de Seguranca com Persistencia (02/02/2026)
+
+### Problema Resolvido
+Alertas de seguranca eram perdidos ao reiniciar o servidor (armazenados apenas em memoria).
+
+### Solucao Implementada
+Criado modelo `SecurityAlert` no Prisma com persistencia no banco de dados PostgreSQL.
+
+**Schema Prisma Adicionado:**
+```prisma
+enum AlertSeverity { LOW, MEDIUM, HIGH, CRITICAL }
+enum AlertStatus { NEW, ACKNOWLEDGED, RESOLVED, FALSE_POSITIVE }
+enum AlertType { BRUTE_FORCE_ATTEMPT, SQL_INJECTION_ATTEMPT, XSS_ATTEMPT, ... }
+
+model SecurityAlert {
+  id, type, severity, status, title, description, metadata,
+  sourceIp, userId, userName, createdAt, acknowledgedAt, acknowledgedBy,
+  resolvedAt, resolvedBy, notes
+}
+```
+
+**Arquivos Modificados:**
+| Arquivo | Mudanca |
+|---------|---------|
+| `prisma/schema.prisma` | Adicionados enums e modelo SecurityAlert |
+| `src/lib/security/alert-service.ts` | Persistencia no banco via Prisma |
+| `src/app/api/security/alerts/route.ts` | Usa metodos assincronos do servico |
+
+**Funcionalidades:**
+- Alertas persistidos no banco de dados PostgreSQL
+- Nao perde alertas ao reiniciar servidor
+- Estatisticas agregadas com `groupBy` do Prisma
+- Busca por status, severidade e tipo
+- Historico completo de alertas para auditoria
+
+---
+
+## Correcao Client-Side Bundling (02/02/2026)
+
+### Problema Identificado
+Erro de runtime: `Module not found: Can't resolve 'dns'` causado pelo bundling do ioredis em codigo client-side.
+
+**Cadeia de Importacao Problematica:**
+```
+admin-sidebar-mobile.tsx
+  -> permissions.ts
+    -> auth.ts
+      -> redis/rate-limiter.ts
+        -> client.ts
+          -> ioredis (usa modulo 'dns' do Node.js)
+```
+
+### Solucao Implementada
+Criado rate limiter client-safe separado (`rate-limit-simple.ts`) que nao importa ioredis.
+
+**Arquivos Criados:**
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/lib/rate-limit-simple.ts` | Rate limiter client-safe em memoria |
+
+**Arquivos Modificados:**
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/lib/auth.ts` | Agora importa de `rate-limit-simple.ts` em vez de `redis/rate-limiter.ts` |
+| `src/lib/middleware/rate-limit.ts` | Agora importa de `rate-limit-simple.ts` |
+
+**Arquitetura de Rate Limiting:**
+- **Client-safe code** (pode ser importado em componentes): usa `rate-limit-simple.ts` (memoria)
+- **Server-only code** (APIs): pode usar `redis/rate-limiter.ts` (Redis) se necessario
+- O `redis/client.ts` tem comentario SERVER-ONLY e usa dynamic import para ioredis
+
+---
+
+## Melhorias de Seguranca para Producao (02/02/2026)
+
+### 1. Rate Limiting com Redis
+
+Implementado sistema de rate limiting escalavel com suporte a Redis para producao.
+
+**Arquivos Criados:**
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/lib/redis/client.ts` | Cliente Redis com fallback para memoria (SERVER-ONLY) |
+| `src/lib/redis/rate-limiter.ts` | Rate limiter com suporte a Redis (SERVER-ONLY) |
+| `src/lib/rate-limit-simple.ts` | Rate limiter client-safe em memoria |
+
+**Arquivos Modificados:**
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/lib/auth.ts` | Usa rate-limit-simple (client-safe) |
+| `src/lib/middleware/rate-limit.ts` | Usa rate-limit-simple (client-safe) |
+| `scripts/templates/docker-compose.prod.yml` | Redis habilitado com config otimizada |
+| `package.json` | Adicionada dependencia ioredis |
+
+**Configuracao Docker:**
+```yaml
+redis:
+  image: redis:7-alpine
+  command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+```
+
+**Variaveis de Ambiente:**
+- `REDIS_URL`: URL de conexao Redis (ex: redis://redis:6379)
+- `REDIS_ENABLED`: "true" para habilitar Redis
+
+---
+
+### 2. Sistema de Alertas de Seguranca
+
+Implementado sistema de monitoramento e alertas para atividades suspeitas.
+
+**Arquivos Criados:**
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/lib/security/alert-service.ts` | Servico de deteccao e alertas |
+| `src/app/api/security/alerts/route.ts` | API para gerenciar alertas |
+
+**Tipos de Alertas Detectados:**
+- `BRUTE_FORCE_ATTEMPT` - Multiplas tentativas de login falhadas
+- `UNUSUAL_ACCESS_PATTERN` - Acesso fora do horario comercial (22h-6h)
+- `DATA_EXFILTRATION` - Download massivo de dados
+- `SQL_INJECTION_ATTEMPT` - Tentativa de SQL injection
+- `XSS_ATTEMPT` - Tentativa de XSS
+- `MASS_DELETE` - Exclusao em massa de registros
+- `CONFIGURATION_CHANGE` - Alteracao em configuracoes criticas
+- `UNAUTHORIZED_ACCESS` - Tentativas de acesso nao autorizado
+- `RATE_LIMIT_EXCEEDED` - Rate limit excedido multiplas vezes
+
+**Integracao com Audit Log:**
+O arquivo `src/lib/audit.ts` foi atualizado para registrar eventos automaticamente no security alert service.
+
+**API de Alertas:**
+- `GET /api/security/alerts` - Lista alertas (requer audit.manage)
+- `GET /api/security/alerts?tipo=stats` - Estatisticas de alertas
+- `PUT /api/security/alerts` - Atualiza status de alerta
+
+---
+
+### 3. NPM Audit Automatico
+
+Implementado sistema de auditoria automatica de dependencias.
+
+**Arquivos Criados:**
+| Arquivo | Descricao |
+|---------|-----------|
+| `scripts/security-audit.js` | Script de auditoria com relatorios visuais |
+| `.github/workflows/security-audit.yml` | Workflow CI para auditoria semanal |
+
+**Scripts NPM Adicionados:**
+```bash
+npm run security:audit      # Executa auditoria visual
+npm run security:audit:fix  # Auditoria + fix automatico
+npm run security:audit:json # Gera relatorio JSON
+npm run security:check      # npm audit --audit-level=high
+```
+
+**GitHub Actions:**
+- Executa semanalmente (segunda 9h UTC)
+- Executa em PRs que modificam package.json/package-lock.json
+- Gera relatorios como artefatos
+- Cria issue automatica se houver vulnerabilidades criticas/altas
+
+---
+
+## Correcoes de Seguranca (02/02/2026)
+
+### Resumo
+Implementadas correcoes de seguranca criticas identificadas na auditoria de seguranca da aplicacao.
+
+### Correcoes Implementadas
+
+| ID | Severidade | Descricao | Status |
+|----|------------|-----------|--------|
+| SEC-001 | CRITICA | APIs de proposicoes protegidas com withAuth | Corrigido |
+| SEC-002 | ALTA | Headers de seguranca (CSP, HSTS, X-Frame-Options, etc) | Corrigido |
+| SEC-003 | ALTA | CORS configurado corretamente por tipo de endpoint | Corrigido |
+| SEC-004 | MEDIA | Senha minima aumentada para 8 caracteres | Corrigido |
+| SEC-005 | MEDIA | Removidos console.warn que expunham tentativas de login | Corrigido |
+| SEC-006 | MEDIA | Criada validacao de variaveis de ambiente | Corrigido |
+| SEC-007 | ALTA | API de servidores protegida com autenticacao | Corrigido |
+| SEC-008 | MEDIA | Geracao de IDs com crypto em vez de Math.random() | Corrigido |
+| SEC-009 | CRITICA | API de usuarios protegida com withAuth (GET/PUT/DELETE) | Corrigido |
+| SEC-010 | ALTA | API de comissoes protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-011 | ALTA | API de autores protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-012 | ALTA | API de cargos mesa diretora protegida (POST) | Corrigido |
+| SEC-013 | ALTA | API de emendas protegida (GET/PUT/POST/DELETE) | Corrigido |
+| SEC-014 | ALTA | API de quorum protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-015 | ALTA | API de tipos-autor protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-016 | ALTA | API de noticias protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-017 | ALTA | API de pareceres protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-018 | CRITICA | API de parlamentares protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-019 | CRITICA | API de votacao em sessoes protegida (POST) | Corrigido |
+| SEC-020 | ALTA | API de turno de votacao protegida (POST/PUT) | Corrigido |
+| SEC-021 | ALTA | API de votacao em lote protegida (POST) | Corrigido |
+| SEC-022 | ALTA | API de presenca em sessoes protegida (POST) | Corrigido |
+| SEC-023 | ALTA | API de normas protegida (POST/PUT) | Corrigido |
+| SEC-024 | ALTA | API de protocolo protegida (POST/PUT) | Corrigido |
+| SEC-025 | ALTA | API de pauta bulk de reunioes protegida (POST) | Corrigido |
+| SEC-026 | MEDIA | API de relatorios agendados protegida (POST/PUT/DELETE) | Corrigido |
+| SEC-027 | MEDIA | API de participacao/consultas protegida (POST/PUT/DELETE admin) | Corrigido |
+| SEC-028 | MEDIA | API de participacao/sugestoes protegida (PUT moderar) | Corrigido |
+| SEC-029 | CRITICA | Rate limiting no login NextAuth (brute force protection) | Corrigido |
+| SEC-030 | ALTA | Rate limiting em reset-password atualizado | Corrigido |
+| SEC-031 | CRITICA | API painel/votacao protegida com votacao.manage | Corrigido |
+| SEC-032 | CRITICA | API painel/presenca protegida com presenca.manage | Corrigido |
+| SEC-033 | CRITICA | API painel/sessao protegida com sessao.manage | Corrigido |
+| SEC-034 | ALTA | API painel/streaming POST protegida com painel.manage | Corrigido |
+| SEC-035 | ALTA | API reunioes-comissao POST protegida com comissao.manage | Corrigido |
+| SEC-036 | ALTA | API reunioes-comissao/[id] PUT/DELETE protegidos com comissao.manage | Corrigido |
+| SEC-037 | ALTA | API reunioes-comissao/[id]/presenca POST/PUT protegidos com comissao.manage | Corrigido |
+| SEC-038 | ALTA | API reunioes-comissao/[id]/controle POST protegido com comissao.manage | Corrigido |
+| SEC-039 | ALTA | API reunioes-comissao/[id]/pauta POST/PUT/DELETE protegidos com comissao.manage | Corrigido |
+| SEC-040 | ALTA | API automacao GET protegido com automacao.view | Corrigido |
+| SEC-041 | ALTA | API automacao/executar GET protegido com automacao.view | Corrigido |
+| SEC-042 | CRITICA | API servidores/[id] GET protegido com financeiro.view (expunha CPF/salario) | Corrigido |
+
+### Analise Profunda de Seguranca (02/02/2026)
+
+#### Rotas Publicas Intencionais (Transparencia e Participacao Cidada)
+As seguintes rotas sao publicas intencionalmente para cumprir requisitos de transparencia (PNTP/LAI):
+- `/api/dados-abertos/*` - APIs de dados abertos para transparencia
+- `/api/publico/*` - APIs publicas para cidadaos (tramitacoes, audiencias, pautas)
+- `/api/transparencia/*` - Portal de transparencia
+- `/api/bens-patrimoniais/*` GET - Transparencia patrimonial
+- `/api/contratos/*`, `/api/convenios/*`, `/api/despesas/*`, `/api/receitas/*`, `/api/licitacoes/*` GET - Transparencia financeira
+- `/api/publicacoes/*` GET - Publicacoes sao publicas
+- `/api/institucional/*` GET - Informacoes institucionais
+- `/api/health`, `/api/readiness` - Health checks
+- `/api/painel/estado`, `/api/painel/hora-servidor`, `/api/painel/stream` - Painel publico de sessoes
+
+#### Rotas com Autenticacao Manual (Verificadas como Seguras)
+Algumas rotas usam verificacao manual de sessao em vez do wrapper `withAuth`, mas estao seguras:
+- `/api/auditoria` GET - Verifica session e role (ADMIN/SECRETARIA)
+- `/api/tenants/*` - Verifica session e role (ADMIN)
+- `/api/favoritos/*` - Verifica session e ownership do usuario
+
+#### Rotas de Auth (Devem ser Publicas)
+- `/api/auth/forgot-password`, `/api/auth/reset-password`, `/api/auth/verify-reset-token`
+
+#### Protecoes de Seguranca Ativas
+1. **Autenticacao**: NextAuth.js com JWT
+2. **Autorizacao**: withAuth com RBAC (permissions)
+3. **CSRF**: Token automatico no withAuth
+4. **Rate Limiting**: Login (5 tentativas/15min), Reset password
+5. **Headers**: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+6. **Validacao**: Zod schemas em todas as rotas
+7. **Sanitizacao**: DOMPurify para HTML
+8. **Upload**: Validacao de tipo, tamanho e prevencao de path traversal
+9. **IDs**: Gerados com crypto (nao Math.random)
+10. **Audit Log**: Todas as acoes criticas registradas
+
+### Arquivos Criados
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/lib/env-validation.ts` | Validacao Zod para variaveis de ambiente |
+| `src/lib/utils/secure-id.ts` | Utilitarios para geracao segura de IDs com crypto |
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/middleware.ts` | Adicionados headers de seguranca (CSP, HSTS, X-Frame-Options, etc) |
+| `vercel.json` | CORS separado por tipo de endpoint (publico vs autenticado) |
+| `src/lib/auth.ts` | Senha minima 8 caracteres, removidos console.warn |
+| `src/app/api/proposicoes/route.ts` | POST protegido com withAuth |
+| `src/app/api/proposicoes/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/servidores/route.ts` | GET protegido com withAuth (dados sensiveis) |
+| `src/lib/logging/api-logger.ts` | IDs gerados com crypto |
+| `src/app/api/upload/route.ts` | Nome de arquivo gerado com crypto |
+| `src/lib/services/protocolo-service.ts` | Codigo de etiqueta gerado com crypto |
+| `src/lib/tramitacao-service.ts` | IDs gerados com crypto |
+| `src/lib/services/notification-multicanal.ts` | IDs gerados com crypto |
+| `src/lib/hooks/use-notifications.ts` | IDs gerados com crypto |
+| `src/app/api/usuarios/[id]/route.ts` | GET/PUT/DELETE protegidos com withAuth |
+| `src/app/api/comissoes/route.ts` | POST protegido com withAuth |
+| `src/app/api/comissoes/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/autores/route.ts` | POST protegido com withAuth |
+| `src/app/api/autores/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/cargos-mesa-diretora/route.ts` | POST protegido com withAuth |
+| `src/app/api/emendas/[id]/route.ts` | GET/PUT/POST/DELETE protegidos com withAuth |
+| `src/app/api/quorum/route.ts` | POST protegido com withAuth |
+| `src/app/api/quorum/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/tipos-autor/route.ts` | POST protegido com withAuth |
+| `src/app/api/tipos-autor/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/noticias/route.ts` | POST protegido com withAuth |
+| `src/app/api/noticias/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/pareceres/route.ts` | POST protegido com withAuth |
+| `src/app/api/pareceres/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/pareceres/[id]/votar/route.ts` | POST protegido com withAuth |
+| `src/app/api/parlamentares/route.ts` | POST protegido com withAuth |
+| `src/app/api/parlamentares/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/sessoes/[id]/votacao/route.ts` | POST protegido com withAuth |
+| `src/app/api/sessoes/[id]/votacao/turno/route.ts` | POST/PUT protegidos com withAuth |
+| `src/app/api/sessoes/[id]/votacao/lote/route.ts` | POST protegido com withAuth |
+| `src/app/api/sessoes/[id]/presenca/route.ts` | POST protegido com withAuth |
+| `src/app/api/normas/route.ts` | POST protegido com withAuth |
+| `src/app/api/normas/[id]/route.ts` | PUT/POST protegidos com withAuth |
+| `src/app/api/protocolo/route.ts` | POST protegido com withAuth |
+| `src/app/api/protocolo/[id]/route.ts` | PUT/POST protegidos com withAuth |
+| `src/app/api/reunioes-comissao/[id]/pauta/bulk/route.ts` | POST protegido com withAuth |
+| `src/app/api/relatorios/agendados/route.ts` | POST protegido com withAuth |
+| `src/app/api/relatorios/agendados/[id]/route.ts` | PUT/POST/DELETE protegidos com withAuth |
+| `src/app/api/participacao/consultas/route.ts` | POST protegido com withAuth |
+| `src/app/api/participacao/consultas/[id]/route.ts` | PUT/DELETE protegidos com withAuth |
+| `src/app/api/participacao/sugestoes/[id]/route.ts` | PUT protegido com withAuth |
+| `src/lib/auth.ts` | Rate limiting no login (5 tentativas/15 min), protecao brute force |
+| `src/app/api/auth/reset-password/route.ts` | Corrigido iteracao Map para compatibilidade TypeScript |
+| `src/app/api/painel/votacao/route.ts` | POST protegido com votacao.manage, padrao withAuth |
+| `src/app/api/painel/presenca/route.ts` | POST protegido com presenca.manage, padrao withAuth |
+| `src/app/api/painel/sessao/route.ts` | POST protegido com sessao.manage, padrao withAuth |
+| `src/app/api/painel/streaming/route.ts` | POST protegido com painel.manage, validacao Zod |
+| `src/app/api/reunioes-comissao/route.ts` | POST protegido com comissao.manage, validacao Zod |
+| `src/app/api/reunioes-comissao/[id]/route.ts` | PUT/DELETE protegidos com comissao.manage |
+| `src/app/api/reunioes-comissao/[id]/presenca/route.ts` | POST/PUT protegidos com comissao.manage |
+| `src/app/api/reunioes-comissao/[id]/controle/route.ts` | POST protegido com comissao.manage |
+| `src/app/api/reunioes-comissao/[id]/pauta/route.ts` | POST/PUT/DELETE protegidos com comissao.manage |
+| `src/app/api/automacao/route.ts` | GET protegido com automacao.view, padrao withAuth |
+| `src/app/api/automacao/executar/route.ts` | GET protegido com automacao.view, padrao withAuth |
+| `src/app/api/servidores/[id]/route.ts` | GET protegido com financeiro.view (dados sensiveis) |
+
+### Headers de Seguranca Implementados
+
+- X-Frame-Options: SAMEORIGIN (previne clickjacking)
+- X-Content-Type-Options: nosniff (previne MIME-sniffing)
+- X-XSS-Protection: 1; mode=block (protecao XSS legada)
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+- Strict-Transport-Security: max-age=31536000 (HSTS, apenas em producao)
+- Content-Security-Policy: Configurado para Next.js
+
+---
+
+## Vinculacao Dinamica de Quorum por Tipo de Proposicao (02/02/2026)
+
+### Funcionalidade
+Sistema agora permite configurar o tipo de quorum (maioria simples, absoluta, 2/3, etc.) para cada tipo de proposicao, com calculo automatico do resultado da votacao. Tambem permite configurar numero de turnos (1 ou 2) e dias de intersticio.
+
+### Novos Campos no Modelo TipoProposicaoConfig
+- `quorumAplicacao`: Aplicacao de quorum do 1o turno (VOTACAO_SIMPLES, VOTACAO_ABSOLUTA, VOTACAO_QUALIFICADA, VOTACAO_URGENCIA)
+- `quorumAplicacao2Turno`: Aplicacao de quorum do 2o turno (opcional, se diferente do 1o)
+- `totalTurnos`: Numero de turnos (1 ou 2)
+- `intersticioDias`: Dias uteis de intersticio entre turnos
+
+### Arquivos Criados
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/components/admin/quorum-config-form.tsx` | Formulario para configurar quorum na aba "Quorum" do modal de tipos |
+
+### Arquivos Modificados
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `prisma/schema.prisma` | Adicionados 4 campos de quorum/turno em TipoProposicaoConfig |
+| `src/lib/services/quorum-service.ts` | Novas funcoes: determinarAplicacaoQuorumDinamico(), getQuorumConfigParaTipo(), mapAplicacaoToTipoQuorum() |
+| `src/lib/services/turno-service.ts` | Novas funcoes: getConfiguracaoTurnoDinamico(), requerDoisTurnosDinamico() |
+| `src/lib/services/sessao-controle.ts` | contabilizarVotos() agora usa quorum dinamico com suporte a turno |
+| `src/app/api/tipos-proposicao/route.ts` | Schema Zod aceita novos campos de quorum |
+| `src/app/api/tipos-proposicao/[id]/route.ts` | Schema Zod aceita novos campos de quorum |
+| `src/app/admin/configuracoes/tipos-proposicoes/page.tsx` | Nova aba "Quorum" no modal, exibicao de quorum/turnos na listagem |
+
+### Fluxo de Configuracao
+1. Acesse `/admin/configuracoes/tipos-proposicoes`
+2. Clique para editar um tipo
+3. Acesse a aba "Quorum"
+4. Configure: tipo de quorum, numero de turnos, intersticio, quorum do 2o turno
+5. Salve - configuracao aplicada automaticamente nas votacoes
+
+### Calculo Automatico de Resultado
+O sistema busca a configuracao do tipo no banco e calcula o resultado:
+- Se nao encontrar configuracao, usa fallback hardcoded
+- Suporta quorum diferenciado por turno (1o e 2o turno)
+- Exibe preview de calculo no formulario
+
+### Mapeamento Padrao (Fallback)
+
+| Tipo | Quorum |
+|------|--------|
+| PROJETO_LEI | VOTACAO_ABSOLUTA |
+| PROJETO_RESOLUCAO | VOTACAO_ABSOLUTA |
+| PROJETO_DECRETO_LEGISLATIVO | VOTACAO_ABSOLUTA |
+| PROJETO_EMENDA_LEI_ORGANICA | VOTACAO_QUALIFICADA |
+| PROJETO_LEI_COMPLEMENTAR | VOTACAO_QUALIFICADA |
+| INDICACAO, REQUERIMENTO, MOCAO, etc. | VOTACAO_SIMPLES |
+
+---
+
+## Tipos de Proposicao Ilimitados (02/02/2026)
+
+### Funcionalidade
+Sistema agora permite criar quantos tipos de proposicao forem necessarios, sem limitacao. Anteriormente havia validacoes Zod que limitavam a apenas 8 tipos fixos.
+
+### Alteracoes Realizadas
+
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/api/proposicoes/route.ts` | Campo `tipo` agora aceita qualquer string (antes era enum fixo) |
+| `src/app/api/proposicoes/[id]/route.ts` | Campo `tipo` agora aceita qualquer string |
+| `src/lib/validation/schemas.ts` | ProposicaoSchema aceita tipos dinamicos |
+| `src/lib/validation/query-schemas.ts` | ProposicaoQuerySchema aceita tipos dinamicos |
+| `src/app/admin/configuracoes/tipos-proposicoes/page.tsx` | Mensagem atualizada para indicar tipos ilimitados |
+
+### Exemplos de Novos Tipos Possiveis
+- HOMENAGEM_ESPECIAL
+- TITULO_CIDADAO
+- VOTO_LOUVOR
+- DECLARACAO_UTILIDADE_PUBLICA
+- PROJETO_EMENDA_LEI_ORGANICA
+- Qualquer outro tipo necessario
+
+### Fluxo de Criacao
+1. Acesse `/admin/configuracoes/tipos-proposicoes`
+2. Clique em "Novo Tipo"
+3. Preencha: codigo (ex: TITULO_CIDADAO), nome, sigla, cor, configuracoes
+4. Salve - tipo ja disponivel para uso em proposicoes
 
 ---
 
@@ -443,7 +919,7 @@ pautaSessao?: {
 ## Tipos de Proposicao Personalizados (01/02/2026)
 
 ### Funcionalidade
-Sistema agora permite criar tipos de proposicao personalizados alem dos 8 tipos padrao. O campo `tipo` foi convertido de enum para string flexivel.
+Sistema permite criar tipos de proposicao ilimitados. O campo `tipo` e uma string flexivel validada contra a tabela TipoProposicaoConfig.
 
 ### Alteracoes no Schema Prisma
 
@@ -1299,7 +1775,7 @@ Fluxo Validado:
 | Funcionalidade | Status | Observacoes |
 |---------------|--------|-------------|
 | CRUD de proposicoes | Implementado | /admin/proposicoes |
-| Tipos de proposicao | Implementado | 8 tipos configuraveis via /admin/configuracoes/tipos-proposicoes |
+| Tipos de proposicao | Implementado | Tipos ilimitados e configuraveis via /admin/configuracoes/tipos-proposicoes |
 | **Gerenciamento de tipos** | **Implementado** | CRUD completo: nome, sigla, cor, prazo, votacao, sancao |
 | **API tipos-proposicao** | **Implementado** | GET/POST/PUT/DELETE + seed com dados padrao |
 | **Fluxo por tipo** | **Implementado** | Tab "Fluxo de Tramitacao" para configurar etapas por tipo |

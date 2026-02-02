@@ -10,6 +10,14 @@ import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
 
+// Aplicações de quórum válidas
+const APLICACOES_QUORUM = [
+  'VOTACAO_SIMPLES',
+  'VOTACAO_ABSOLUTA',
+  'VOTACAO_QUALIFICADA',
+  'VOTACAO_URGENCIA'
+] as const
+
 // Schema de validação para atualizar tipo de proposição
 const TipoProposicaoUpdateSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres').optional(),
@@ -23,7 +31,12 @@ const TipoProposicaoUpdateSchema = z.object({
   ativo: z.boolean().optional(),
   ordem: z.number().int().optional(),
   corBadge: z.string().optional().nullable(),
-  icone: z.string().optional().nullable()
+  icone: z.string().optional().nullable(),
+  // Configuração de Quorum e Turnos
+  quorumAplicacao: z.enum(APLICACOES_QUORUM).optional().nullable(),
+  quorumAplicacao2Turno: z.enum(APLICACOES_QUORUM).optional().nullable(),
+  totalTurnos: z.number().int().min(1).max(2).optional(),
+  intersticioDias: z.number().int().min(0).max(30).optional()
 })
 
 interface RouteParams {

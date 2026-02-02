@@ -6,6 +6,7 @@ import {
   createSuccessResponse,
   ConflictError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { syncComissaoHistorico } from '@/lib/participation-history'
 
 // Configurar para renderização dinâmica
@@ -79,12 +80,13 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 })
 
 // POST - Criar comissão
-export const POST = withErrorHandler(async (request: NextRequest) => {
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = ComissaoSchema.parse(body)
-  
+
   // Verificar se já existe comissão com mesmo nome
   const existingComissao = await prisma.comissao.findFirst({
     where: {
@@ -94,11 +96,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       }
     }
   })
-  
+
   if (existingComissao) {
     throw new ConflictError('Já existe uma comissão com este nome')
   }
-  
+
   const comissao = await prisma.comissao.create({
     data: {
       nome: validatedData.nome,
@@ -123,11 +125,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
 
   await syncComissaoHistorico(comissao.id)
-  
+
   return createSuccessResponse(
     comissao,
     'Comissão criada com sucesso',
     undefined,
     201
   )
-})
+}, { permissions: 'comissao.manage' })

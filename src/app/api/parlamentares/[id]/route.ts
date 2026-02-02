@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { 
-  withErrorHandler, 
-  createSuccessResponse, 
+import {
+  withErrorHandler,
+  createSuccessResponse,
   NotFoundError,
   ConflictError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -77,11 +78,13 @@ export const GET = withErrorHandler(async (
 })
 
 // PUT - Atualizar parlamentar
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de parlamentares
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Parlamentar')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Parlamentar')
   const body = await request.json()
   
   // Validar dados
@@ -181,14 +184,16 @@ export const PUT = withErrorHandler(async (
     updatedParlamentar,
     'Parlamentar atualizado com sucesso'
   )
-})
+}, { permissions: 'parlamentar.manage' })
 
 // DELETE - Excluir parlamentar
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de parlamentares
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Parlamentar')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Parlamentar')
   
   // Verificar se parlamentar existe
   const existingParlamentar = await prisma.parlamentar.findUnique({
@@ -209,4 +214,4 @@ export const DELETE = withErrorHandler(async (
     null,
     'Parlamentar excluído com sucesso'
   )
-})
+}, { permissions: 'parlamentar.manage' })

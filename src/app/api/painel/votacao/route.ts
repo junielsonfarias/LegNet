@@ -1,12 +1,13 @@
 /**
  * API do Painel - Controle de Votacao
  * POST: Inicia/Finaliza votacao, registra votos
+ * SEGURANÇA: Requer autenticação e permissão votacao.manage
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { authOptions } from '@/lib/auth'
+import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import {
   iniciarVotacao,
   finalizarVotacao,
@@ -42,129 +43,74 @@ const VotacaoVotarSchema = VotacaoBaseSchema.extend({
   })
 })
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
+/**
+ * POST - Controle de votação (iniciar, finalizar, votar)
+ * SEGURANÇA: Requer permissão votacao.manage
+ */
+export const POST = withAuth(async (request: NextRequest) => {
+  const body = await request.json()
 
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    const body = await request.json()
-
-    // Validação inicial para determinar a ação
-    const baseValidation = VotacaoBaseSchema.safeParse(body)
-    if (!baseValidation.success) {
-      return NextResponse.json(
-        { success: false, error: baseValidation.error.errors[0].message },
-        { status: 400 }
-      )
-    }
-
-    const { acao, sessaoId } = baseValidation.data
-
-    switch (acao) {
-      case 'iniciar': {
-        const validation = VotacaoIniciarSchema.safeParse(body)
-        if (!validation.success) {
-          return NextResponse.json(
-            { success: false, error: validation.error.errors[0].message },
-            { status: 400 }
-          )
-        }
-        const { proposicaoId, tempoVotacao } = validation.data
-        const votacaoIniciada = await iniciarVotacao(sessaoId, proposicaoId, tempoVotacao)
-        if (!votacaoIniciada) {
-          return NextResponse.json(
-            { success: false, error: 'Erro ao iniciar votação' },
-            { status: 400 }
-          )
-        }
-        return NextResponse.json({
-          success: true,
-          message: 'Votação iniciada com sucesso',
-          data: votacaoIniciada
-        })
-      }
-
-      case 'finalizar': {
-        const votacaoFinalizada = await finalizarVotacao(sessaoId)
-        if (!votacaoFinalizada) {
-          return NextResponse.json(
-            { success: false, error: 'Nenhuma votação ativa para finalizar' },
-            { status: 400 }
-          )
-        }
-        return NextResponse.json({
-          success: true,
-          message: 'Votação finalizada',
-          data: votacaoFinalizada
-        })
-      }
-
-      case 'votar': {
-        const validation = VotacaoVotarSchema.safeParse(body)
-        if (!validation.success) {
-          return NextResponse.json(
-            { success: false, error: validation.error.errors[0].message },
-            { status: 400 }
-          )
-        }
-        const { parlamentarId, voto } = validation.data
-        const votoRegistrado = await registrarVoto(sessaoId, parlamentarId, voto)
-        if (!votoRegistrado) {
-          return NextResponse.json(
-            { success: false, error: 'Erro ao registrar voto. Votação pode estar fechada ou parlamentar não encontrado.' },
-            { status: 400 }
-          )
-        }
-        return NextResponse.json({
-          success: true,
-          message: 'Voto registrado com sucesso'
-        })
-      }
-
-      default:
-        return NextResponse.json(
-          { success: false, error: 'Ação inválida' },
-          { status: 400 }
-        )
-    }
-  } catch (error) {
-    console.error('Erro no controle de votação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno no controle de votação' },
-      { status: 500 }
-    )
+  // Validação inicial para determinar a ação
+  const baseValidation = VotacaoBaseSchema.safeParse(body)
+  if (!baseValidation.success) {
+    throw new ValidationError(baseValidation.error.errors[0].message)
   }
-}
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const sessaoId = searchParams.get('sessaoId')
+  const { acao, sessaoId } = baseValidation.data
 
-    if (!sessaoId) {
-      return NextResponse.json(
-        { success: false, error: 'sessaoId é obrigatório' },
-        { status: 400 }
-      )
+  switch (acao) {
+    case 'iniciar': {
+      const validation = VotacaoIniciarSchema.safeParse(body)
+      if (!validation.success) {
+        throw new ValidationError(validation.error.errors[0].message)
+      }
+      const { proposicaoId, tempoVotacao } = validation.data
+      const votacaoIniciada = await iniciarVotacao(sessaoId, proposicaoId, tempoVotacao)
+      if (!votacaoIniciada) {
+        throw new ValidationError('Erro ao iniciar votação')
+      }
+      return createSuccessResponse(votacaoIniciada, 'Votação iniciada com sucesso')
     }
 
-    const estado = await getEstadoPainel(sessaoId)
+    case 'finalizar': {
+      const votacaoFinalizada = await finalizarVotacao(sessaoId)
+      if (!votacaoFinalizada) {
+        throw new ValidationError('Nenhuma votação ativa para finalizar')
+      }
+      return createSuccessResponse(votacaoFinalizada, 'Votação finalizada')
+    }
 
-    return NextResponse.json({
-      success: true,
-      data: estado?.votacaoAtiva || null
-    })
-  } catch (error) {
-    console.error('Erro ao buscar votação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao buscar votação' },
-      { status: 500 }
-    )
+    case 'votar': {
+      const validation = VotacaoVotarSchema.safeParse(body)
+      if (!validation.success) {
+        throw new ValidationError(validation.error.errors[0].message)
+      }
+      const { parlamentarId, voto } = validation.data
+      const votoRegistrado = await registrarVoto(sessaoId, parlamentarId, voto)
+      if (!votoRegistrado) {
+        throw new ValidationError('Erro ao registrar voto. Votação pode estar fechada ou parlamentar não encontrado.')
+      }
+      return createSuccessResponse({ registered: true }, 'Voto registrado com sucesso')
+    }
+
+    default:
+      throw new ValidationError('Ação inválida')
   }
-}
+}, { permissions: 'votacao.manage' })
+
+/**
+ * GET - Buscar estado da votação
+ * SEGURANÇA: Requer autenticação (GET é menos restritivo)
+ */
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const sessaoId = searchParams.get('sessaoId')
+
+  if (!sessaoId) {
+    throw new ValidationError('sessaoId é obrigatório')
+  }
+
+  const estado = await getEstadoPainel(sessaoId)
+
+  return createSuccessResponse(estado?.votacaoAtiva || null, 'Estado da votação')
+})

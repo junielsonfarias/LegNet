@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { NotificationProps } from '@/components/ui/notification'
+import { generateSecureShortId } from '@/lib/utils/secure-id'
 
 export interface Notification extends Omit<NotificationProps, 'onClose'> {
   id: string
@@ -9,7 +10,8 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
 
   const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9)
+    // SEGURANÇA: Usa crypto em vez de Math.random()
+    const id = generateSecureShortId('notif')
     const newNotification: Notification = {
       ...notification,
       id

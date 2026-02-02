@@ -4,10 +4,11 @@
 # =============================================================================
 #
 # Variáveis a serem substituídas:
-#   {{DB_NAME}}       - Nome do banco de dados
-#   {{DB_USER}}       - Usuário do banco de dados
-#   {{DB_PASSWORD}}   - Senha do banco de dados
-#   {{DOMAIN}}        - Domínio do site
+#   {{DB_NAME}}              - Nome do banco de dados
+#   {{DB_USER}}              - Usuário do banco de dados
+#   {{DB_PASSWORD}}          - Senha do banco de dados
+#   {{DOMAIN}}               - Domínio do site
+#   {{INTERNAL_API_SECRET}}  - Chave secreta para APIs internas (gere com: openssl rand -base64 32)
 #
 # Uso:
 #   docker compose -f docker-compose.prod.yml up -d
@@ -32,10 +33,15 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://{{DB_USER}}:{{DB_PASSWORD}}@db:5432/{{DB_NAME}}?schema=public
       - DIRECT_URL=postgresql://{{DB_USER}}:{{DB_PASSWORD}}@db:5432/{{DB_NAME}}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - REDIS_ENABLED=true
+      - INTERNAL_API_SECRET={{INTERNAL_API_SECRET}}
     env_file:
       - .env.production
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - camara-network
@@ -113,22 +119,27 @@ services:
         max-file: "3"
 
   # ===========================================================================
-  # Redis (Cache - Opcional)
+  # Redis (Cache e Rate Limiting)
   # ===========================================================================
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: camara-redis
-  #   restart: unless-stopped
-  #   command: redis-server --appendonly yes
-  #   volumes:
-  #     - redis_data:/data
-  #   networks:
-  #     - camara-network
-  #   healthcheck:
-  #     test: ["CMD", "redis-cli", "ping"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
+  redis:
+    image: redis:7-alpine
+    container_name: camara-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - camara-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   # ===========================================================================
   # Certbot (Renovação SSL)
@@ -159,5 +170,5 @@ volumes:
     driver: local
   app_uploads:
     driver: local
-  # redis_data:
-  #   driver: local
+  redis_data:
+    driver: local

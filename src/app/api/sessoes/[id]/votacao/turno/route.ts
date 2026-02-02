@@ -7,6 +7,7 @@ import {
   ValidationError,
   NotFoundError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import {
   assertSessaoPermiteVotacao,
   obterSessaoParaControle,
@@ -144,12 +145,14 @@ export const GET = withErrorHandler(async (
 
 /**
  * POST - Iniciar votação de turno específico
+ * SEGURANÇA: Requer autenticação e permissão de votação
  */
-export const POST = withErrorHandler(async (
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
+  const { id: rawId } = await context.params
+  const sessaoId = await resolverSessaoId(rawId)
   const body = await request.json()
 
   const { itemId, turno } = IniciarTurnoSchema.parse(body)
@@ -212,16 +215,18 @@ export const POST = withErrorHandler(async (
       ? `Votação em 1º turno iniciada. Esta matéria requer 2 turnos com interstício de ${config.intersticioDias} dia(s).`
       : 'Votação iniciada (turno único).'
   }, 'Votação iniciada')
-})
+}, { permissions: 'votacao.manage' })
 
 /**
  * PUT - Finalizar turno e registrar resultado
+ * SEGURANÇA: Requer autenticação e permissão de votação
  */
-export const PUT = withErrorHandler(async (
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
+  const { id: rawId } = await context.params
+  const sessaoId = await resolverSessaoId(rawId)
   const body = await request.json()
 
   const { itemId, turno, resultado: resultadoManual } = FinalizarTurnoSchema.parse(body)
@@ -360,4 +365,4 @@ export const PUT = withErrorHandler(async (
     mensagem: resultadoTurno.mensagem,
     detalhesQuorum: resultadoQuorum.detalhes
   }, `Turno ${turno} finalizado`)
-})
+}, { permissions: 'votacao.manage' })

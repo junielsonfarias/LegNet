@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import {
-  withErrorHandler,
   createSuccessResponse,
   ValidationError,
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { withAuth } from '@/lib/auth/permissions'
 import {
   criarEmenda,
   listarEmendasProposicao,
@@ -37,17 +35,14 @@ const CriarEmendaSchema = z.object({
 
 /**
  * GET - Listar emendas da proposição ou buscar informações
+ * SEGURANÇA: Requer autenticação
  */
-export const GET = withErrorHandler(async (
+export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const proposicaoId = validateId(params.id, 'Proposição')
+  const { id: rawId } = await context.params
+  const proposicaoId = validateId(rawId, 'Proposição')
   const { searchParams } = new URL(request.url)
   const acao = searchParams.get('acao')
 
@@ -77,21 +72,18 @@ export const GET = withErrorHandler(async (
   )
 
   return createSuccessResponse(emendas, 'Emendas da proposição')
-})
+}, { permissions: 'proposicao.view' })
 
 /**
  * POST - Criar nova emenda
+ * SEGURANÇA: Requer autenticação e permissão de gestão
  */
-export const POST = withErrorHandler(async (
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const proposicaoId = validateId(params.id, 'Proposição')
+  const { id: rawId } = await context.params
+  const proposicaoId = validateId(rawId, 'Proposição')
 
   // Verificar prazo
   const prazo = await verificarPrazoEmendas(proposicaoId)
@@ -108,4 +100,4 @@ export const POST = withErrorHandler(async (
   })
 
   return createSuccessResponse(emenda, 'Emenda criada com sucesso')
-})
+}, { permissions: 'proposicao.manage' })

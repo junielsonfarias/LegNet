@@ -11,11 +11,12 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
+import { mapAplicacaoToTipoQuorum } from '@/lib/services/quorum-service'
 import type { ResultadoVotacaoAgrupada, TipoQuorum, TipoVotacao } from '@prisma/client'
 
 const logger = createLogger('turno')
 
-// Tipos de proposição que exigem 2 turnos (codigos de tipo como string)
+// Tipos de proposição que exigem 2 turnos (codigos de tipo como string) - FALLBACK
 const TIPOS_DOIS_TURNOS: string[] = [
   'PROJETO_LEI_COMPLEMENTAR',
   'PROJETO_EMENDA_LEI_ORGANICA'
@@ -23,7 +24,7 @@ const TIPOS_DOIS_TURNOS: string[] = [
 ]
 
 // Mapeamento de tipos para configuração de turnos
-interface ConfiguracaoTurno {
+export interface ConfiguracaoTurno {
   totalTurnos: number
   intersticioDias: number
   tipoQuorum: TipoQuorum
@@ -93,10 +94,63 @@ const CONFIGURACAO_TURNOS: Record<string, ConfiguracaoTurno> = {
 }
 
 /**
- * Obtém a configuração de turnos para um tipo de proposição
+ * Obtém a configuração de turnos para um tipo de proposição (versão estática/fallback)
  */
 export function getConfiguracaoTurno(tipoProposicao: string): ConfiguracaoTurno {
   return CONFIGURACAO_TURNOS[tipoProposicao] || CONFIGURACAO_TURNOS['DEFAULT']
+}
+
+/**
+ * Obtém a configuração de turnos para um tipo de proposição (versão dinâmica)
+ * Busca a configuração no banco de dados e usa fallback estático se não encontrar
+ *
+ * @param tipoProposicao - Código do tipo de proposição (ex: PROJETO_LEI)
+ */
+export async function getConfiguracaoTurnoDinamico(tipoProposicao: string): Promise<ConfiguracaoTurno> {
+  try {
+    const tipoConfig = await prisma.tipoProposicaoConfig.findUnique({
+      where: { codigo: tipoProposicao },
+      select: {
+        totalTurnos: true,
+        intersticioDias: true,
+        quorumAplicacao: true,
+        nome: true
+      }
+    })
+
+    if (tipoConfig && tipoConfig.totalTurnos !== null) {
+      logger.info('Usando configuração de turno do banco', {
+        action: 'configuracao_turno_dinamico',
+        tipoProposicao,
+        totalTurnos: tipoConfig.totalTurnos,
+        intersticioDias: tipoConfig.intersticioDias
+      })
+
+      return {
+        totalTurnos: tipoConfig.totalTurnos,
+        intersticioDias: tipoConfig.intersticioDias ?? 0,
+        tipoQuorum: mapAplicacaoToTipoQuorum(tipoConfig.quorumAplicacao),
+        descricao: `${tipoConfig.nome} - Configuração dinâmica`
+      }
+    }
+  } catch (error) {
+    logger.warn('Erro ao buscar configuração de turno dinâmico, usando fallback', {
+      action: 'configuracao_turno_fallback',
+      tipoProposicao,
+      error
+    })
+  }
+
+  // FALLBACK: configuração estática
+  return CONFIGURACAO_TURNOS[tipoProposicao] || CONFIGURACAO_TURNOS['DEFAULT']
+}
+
+/**
+ * Verifica se uma proposição requer dois turnos (versão dinâmica)
+ */
+export async function requerDoisTurnosDinamico(tipoProposicao: string): Promise<boolean> {
+  const config = await getConfiguracaoTurnoDinamico(tipoProposicao)
+  return config.totalTurnos === 2
 }
 
 /**

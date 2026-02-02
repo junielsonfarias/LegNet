@@ -5,6 +5,7 @@ import {
   createSuccessResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -52,16 +53,12 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
 /**
  * POST - Criar relatório agendado
+ * SEGURANÇA: Requer autenticação e permissão de relatórios
  */
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CriarRelatorioSchema.parse(body)
   const relatorio = await criarRelatorioAgendado(validatedData)
 
   return createSuccessResponse(relatorio, 'Relatório agendado criado')
-})
+}, { permissions: 'relatorio.manage' })

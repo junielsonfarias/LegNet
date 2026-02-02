@@ -7,6 +7,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -117,38 +118,32 @@ export const GET = withErrorHandler(async (
 
 /**
  * PUT - Atualizar norma
+ * SEGURANÇA: Requer autenticação e permissão de gestão legislativa
  */
-export const PUT = withErrorHandler(async (
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Norma')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Norma')
   const body = await request.json()
   const validatedData = AtualizarNormaSchema.parse(body)
 
   const norma = await atualizarNorma(id, validatedData)
 
   return createSuccessResponse(norma, 'Norma atualizada')
-})
+}, { permissions: 'proposicao.manage' })
 
 /**
  * POST - Ações específicas: artigo, paragrafo, alteracao, compilar, indexar
+ * SEGURANÇA: Requer autenticação e permissão de gestão legislativa
  */
-export const POST = withErrorHandler(async (
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Norma')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Norma')
   const { searchParams } = new URL(request.url)
   const acao = searchParams.get('acao')
   const body = await request.json().catch(() => ({}))
@@ -191,4 +186,4 @@ export const POST = withErrorHandler(async (
     default:
       throw new ValidationError('Ação inválida. Use: artigo, paragrafo, alteracao, compilar ou indexar')
   }
-})
+}, { permissions: 'proposicao.manage' })

@@ -1,139 +1,140 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+/**
+ * API: Pauta de Reunião de Comissão
+ * POST - Adiciona item na pauta
+ * PUT - Atualiza item ou reordena pauta
+ * DELETE - Remove item da pauta
+ * SEGURANÇA: Todas as operações requerem permissão comissao.manage
+ */
+
+import { NextRequest } from 'next/server'
+import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { ReuniaoComissaoService } from '@/lib/services/reuniao-comissao-service'
 
-// POST - Adicionar item na pauta
-export async function POST(
+export const dynamic = 'force-dynamic'
+
+// Tipos de item de pauta (conforme reuniao-comissao-service.ts)
+const TIPOS_ITEM_PAUTA = ['ANALISE_PROPOSICAO', 'VOTACAO_PARECER', 'DESIGNACAO_RELATOR', 'COMUNICACAO', 'OUTROS'] as const
+const STATUS_ITEM_PAUTA = ['PENDENTE', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADO', 'REJEITADO', 'ADIADO', 'RETIRADO'] as const
+
+// Schema de validação para adicionar item
+const AdicionarItemSchema = z.object({
+  titulo: z.string().min(1, 'Título do item é obrigatório'),
+  descricao: z.string().optional(),
+  tipo: z.enum(TIPOS_ITEM_PAUTA).optional(),
+  proposicaoId: z.string().optional(),
+  parecerId: z.string().optional(),
+  tempoEstimado: z.number().int().min(1).optional()
+})
+
+// Schema para reordenação
+const ReordenarItemSchema = z.object({
+  id: z.string(),
+  ordem: z.number().int().min(0)
+})
+
+// Schema para atualização ou reordenação
+const AtualizarPautaSchema = z.object({
+  itemId: z.string().optional(),
+  itensOrdenados: z.array(ReordenarItemSchema).optional(),
+  titulo: z.string().optional(),
+  descricao: z.string().optional(),
+  tipo: z.enum(TIPOS_ITEM_PAUTA).optional(),
+  status: z.enum(STATUS_ITEM_PAUTA).optional(),
+  resultado: z.string().optional(),
+  observacoes: z.string().optional(),
+  tempoReal: z.number().int().min(0).optional()
+})
+
+/**
+ * POST - Adicionar item na pauta
+ * SEGURANÇA: Requer permissão comissao.manage
+ */
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+  context: { params: Promise<{ id: string }> }
+) => {
+  const { id: reuniaoId } = await context.params
+  const body = await request.json()
 
-    const { id: reuniaoId } = await params
-    const body = await request.json()
-
-    if (!body.titulo) {
-      return NextResponse.json(
-        { success: false, error: 'Titulo do item e obrigatorio' },
-        { status: 400 }
-      )
-    }
-
-    const item = await ReuniaoComissaoService.adicionarItemPauta(reuniaoId, {
-      titulo: body.titulo,
-      descricao: body.descricao,
-      tipo: body.tipo,
-      proposicaoId: body.proposicaoId,
-      parecerId: body.parecerId,
-      tempoEstimado: body.tempoEstimado
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: item,
-      message: 'Item adicionado a pauta'
-    })
-  } catch (error) {
-    console.error('Erro ao adicionar item na pauta:', error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Erro ao adicionar item' },
-      { status: 500 }
-    )
+  const validation = AdicionarItemSchema.safeParse(body)
+  if (!validation.success) {
+    throw new ValidationError(validation.error.errors[0].message)
   }
-}
 
-// PUT - Atualizar item da pauta ou reordenar
-export async function PUT(
+  const dados = validation.data
+
+  const item = await ReuniaoComissaoService.adicionarItemPauta(reuniaoId, {
+    titulo: dados.titulo,
+    descricao: dados.descricao,
+    tipo: dados.tipo,
+    proposicaoId: dados.proposicaoId,
+    parecerId: dados.parecerId,
+    tempoEstimado: dados.tempoEstimado
+  })
+
+  return createSuccessResponse(item, 'Item adicionado à pauta', undefined, 201)
+}, { permissions: 'comissao.manage' })
+
+/**
+ * PUT - Atualizar item da pauta ou reordenar
+ * SEGURANÇA: Requer permissão comissao.manage
+ */
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+  context: { params: Promise<{ id: string }> }
+) => {
+  const { id: reuniaoId } = await context.params
+  const body = await request.json()
 
-    const { id: reuniaoId } = await params
-    const body = await request.json()
-
-    // Se for reordenacao (array de itens)
-    if (body.itensOrdenados && Array.isArray(body.itensOrdenados)) {
-      await ReuniaoComissaoService.reordenarPauta(reuniaoId, body.itensOrdenados)
-      return NextResponse.json({
-        success: true,
-        message: 'Pauta reordenada com sucesso'
-      })
-    }
-
-    // Se for atualizacao de um item especifico
-    if (!body.itemId) {
-      return NextResponse.json(
-        { success: false, error: 'ID do item e obrigatorio para atualizacao' },
-        { status: 400 }
-      )
-    }
-
-    const item = await ReuniaoComissaoService.atualizarItemPauta(body.itemId, {
-      titulo: body.titulo,
-      descricao: body.descricao,
-      tipo: body.tipo,
-      status: body.status,
-      resultado: body.resultado,
-      observacoes: body.observacoes,
-      tempoReal: body.tempoReal
-    })
-
-    return NextResponse.json({
-      success: true,
-      data: item,
-      message: 'Item atualizado com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao atualizar pauta:', error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Erro ao atualizar pauta' },
-      { status: 500 }
-    )
+  const validation = AtualizarPautaSchema.safeParse(body)
+  if (!validation.success) {
+    throw new ValidationError(validation.error.errors[0].message)
   }
-}
 
-// DELETE - Remover item da pauta
-export async function DELETE(
+  const dados = validation.data
+
+  // Se for reordenação (array de itens)
+  if (dados.itensOrdenados && Array.isArray(dados.itensOrdenados)) {
+    await ReuniaoComissaoService.reordenarPauta(reuniaoId, dados.itensOrdenados)
+    return createSuccessResponse({ reordered: true }, 'Pauta reordenada com sucesso')
+  }
+
+  // Se for atualização de um item específico
+  if (!dados.itemId) {
+    throw new ValidationError('ID do item é obrigatório para atualização')
+  }
+
+  const item = await ReuniaoComissaoService.atualizarItemPauta(dados.itemId, {
+    titulo: dados.titulo,
+    descricao: dados.descricao,
+    tipo: dados.tipo,
+    status: dados.status,
+    resultado: dados.resultado,
+    observacoes: dados.observacoes,
+    tempoReal: dados.tempoReal
+  })
+
+  return createSuccessResponse(item, 'Item atualizado com sucesso')
+}, { permissions: 'comissao.manage' })
+
+/**
+ * DELETE - Remover item da pauta
+ * SEGURANÇA: Requer permissão comissao.manage
+ */
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    }
+  context: { params: Promise<{ id: string }> }
+) => {
+  const { searchParams } = new URL(request.url)
+  const itemId = searchParams.get('itemId')
 
-    const { searchParams } = new URL(request.url)
-    const itemId = searchParams.get('itemId')
-
-    if (!itemId) {
-      return NextResponse.json(
-        { success: false, error: 'ID do item e obrigatorio' },
-        { status: 400 }
-      )
-    }
-
-    await ReuniaoComissaoService.removerItemPauta(itemId)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Item removido da pauta'
-    })
-  } catch (error) {
-    console.error('Erro ao remover item da pauta:', error)
-    return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Erro ao remover item' },
-      { status: 500 }
-    )
+  if (!itemId) {
+    throw new ValidationError('ID do item é obrigatório')
   }
-}
+
+  await ReuniaoComissaoService.removerItemPauta(itemId)
+
+  return createSuccessResponse({ deleted: true }, 'Item removido da pauta')
+}, { permissions: 'comissao.manage' })

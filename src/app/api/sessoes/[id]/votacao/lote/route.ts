@@ -7,6 +7,7 @@ import {
   ValidationError,
   NotFoundError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import {
   assertSessaoPermiteVotacao,
   ensureParlamentarPresente,
@@ -48,18 +49,18 @@ const VotacaoLoteSchema = z.object({
  * RN-078: Toda alteração retroativa deve ser auditada
  * RN-079: Ao finalizar votação retroativa, atualizar status da Proposição
  * RN-080: Sessão CONCLUÍDA não pode retornar para EM_ANDAMENTO
+ *
+ * SEGURANÇA: Requer autenticação e permissão de votação
  */
-export const POST = withErrorHandler(async (
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  // Verificar autenticação
+  // Sessão já verificada pelo withAuth
   const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    throw new ValidationError('Usuário não autenticado')
-  }
 
-  const sessaoId = await resolverSessaoId(params.id)
+  const { id: rawId } = await context.params
+  const sessaoId = await resolverSessaoId(rawId)
   const body = await request.json()
 
   // Validar dados de entrada
@@ -301,4 +302,4 @@ export const POST = withErrorHandler(async (
       ? 'Votação retroativa registrada com sucesso'
       : 'Votação em lote registrada com sucesso'
   }, isRetroativo ? 'Lançamento retroativo concluído' : 'Votação em lote concluída')
-})
+}, { permissions: 'votacao.manage' })

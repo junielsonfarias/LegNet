@@ -1,16 +1,14 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
-import { authOptions } from '@/lib/auth'
 import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError,
   ConflictError,
-  NotFoundError,
-  UnauthorizedError
+  NotFoundError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 import { getFluxoByTipoProposicao, getEtapaInicial } from '@/lib/services/fluxo-tramitacao-service'
 import { iniciarTramitacaoComFluxo, iniciarTramitacaoPadrao, iniciarTramitacaoComUnidade } from '@/lib/services/tramitacao-service'
@@ -22,10 +20,12 @@ const logger = createLogger('proposicoes-api')
 export const dynamic = 'force-dynamic'
 
 // Schema de validação para proposição
+// O campo 'tipo' aceita qualquer código de tipo cadastrado em TipoProposicaoConfig
+// A validação contra tipos existentes é feita na criação/atualização
 const ProposicaoSchema = z.object({
   numero: z.string().min(1, 'Número da proposição é obrigatório'),
   ano: z.number().min(1900, 'Ano deve ser válido'), // Permite anos anteriores para dados históricos
-  tipo: z.enum(['PROJETO_LEI', 'PROJETO_RESOLUCAO', 'PROJETO_DECRETO', 'INDICACAO', 'REQUERIMENTO', 'MOCAO', 'VOTO_PESAR', 'VOTO_APLAUSO']),
+  tipo: z.string().min(1, 'Tipo da proposição é obrigatório').max(50, 'Código do tipo deve ter no máximo 50 caracteres'),
   titulo: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
   ementa: z.string().min(10, 'Ementa deve ter pelo menos 10 caracteres'),
   texto: z.string().optional(),
@@ -112,14 +112,9 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   )
 })
 
-// POST - Criar proposição (requer autenticação)
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  // Verificar autenticação
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new UnauthorizedError('Autenticação necessária para criar proposição')
-  }
-
+// POST - Criar proposição (requer autenticação e permissão)
+// SEGURANÇA: Requer autenticação e permissão 'proposicao.manage'
+export const POST = withAuth(async (request: NextRequest, _context, session) => {
   const body = await request.json()
 
   // Validar dados
@@ -297,4 +292,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     undefined,
     201
   )
-})
+}, { permissions: 'proposicao.manage' })

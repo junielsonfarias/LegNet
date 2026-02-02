@@ -3,6 +3,7 @@
  * POST /api/auth/reset-password
  *
  * Valida token e define nova senha.
+ * Implementa rate limiting para prevenir brute force de tokens.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -13,6 +14,39 @@ import { createLogger } from '@/lib/logging/logger'
 import { z } from 'zod'
 
 const logger = createLogger('reset-password')
+
+// Rate limiting para prevenir brute force de tokens
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT_MAX = 5 // 5 tentativas
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000 // 15 minutos
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const record = rateLimitMap.get(ip)
+
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
+    return true
+  }
+
+  if (record.count >= RATE_LIMIT_MAX) {
+    return false
+  }
+
+  record.count++
+  return true
+}
+
+// Limpar entradas expiradas periodicamente
+setInterval(() => {
+  const now = Date.now()
+  const entries = Array.from(rateLimitMap.entries())
+  for (const [key, record] of entries) {
+    if (now > record.resetAt) {
+      rateLimitMap.delete(key)
+    }
+  }
+}, 60000)
 
 // Schema de validação
 const resetPasswordSchema = z.object({
@@ -32,6 +66,24 @@ function hashToken(token: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Obter IP do cliente
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+               request.headers.get('x-real-ip') ||
+               'unknown'
+
+    // Verificar rate limit
+    if (!checkRateLimit(ip)) {
+      logger.warn('Rate limit excedido para reset-password', {
+        action: 'reset_password_rate_limited',
+        ip
+      })
+
+      return NextResponse.json(
+        { error: 'Muitas tentativas. Aguarde 15 minutos antes de tentar novamente.' },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
 
     // Validar input

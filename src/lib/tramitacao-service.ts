@@ -1,4 +1,5 @@
 import { mockData } from './db'
+import { generateSecureId } from './utils/secure-id'
 import {
   TipoProposicao,
   TipoOrgao,
@@ -84,7 +85,8 @@ const matchesResultado = (value: string | ResultadoTramitacao | undefined, expec
   return value === expected
 }
 
-const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+// SEGURANÇA: Usa crypto em vez de Math.random()
+const generateId = (prefix: string) => generateSecureId(prefix)
 
 const toUpperUnidadeTipo = (tipo: TipoOrgao['tipo']) => {
   if (!tipo) return tipo

@@ -1,12 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import {
-  withErrorHandler,
-  createSuccessResponse,
-  ValidationError
-} from '@/lib/error-handler'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { createSuccessResponse } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { aglutinarEmendas } from '@/lib/services/emenda-service'
 
 export const dynamic = 'force-dynamic'
@@ -21,13 +16,9 @@ const AglutinarSchema = z.object({
 
 /**
  * POST - Aglutinar emendas
+ * SEGURANÇA: Requer autenticação e permissão de gestão de proposições
  */
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = AglutinarSchema.parse(body)
 
@@ -40,4 +31,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   )
 
   return createSuccessResponse(emendaAglutinada, 'Emendas aglutinadas com sucesso')
-})
+}, { permissions: 'proposicao.manage' })

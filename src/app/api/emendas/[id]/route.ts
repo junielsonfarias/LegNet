@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import {
-  withErrorHandler,
   createSuccessResponse,
   ValidationError,
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { withAuth } from '@/lib/auth/permissions'
 import { prisma } from '@/lib/prisma'
 import {
   buscarEmendaPorId,
@@ -50,17 +48,14 @@ const VotarEmendaSchema = z.object({
 
 /**
  * GET - Buscar emenda por ID
+ * SEGURANÇA: Requer autenticação
  */
-export const GET = withErrorHandler(async (
+export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Emenda')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Emenda')
   const emenda = await buscarEmendaPorId(id)
 
   if (!emenda) {
@@ -68,42 +63,36 @@ export const GET = withErrorHandler(async (
   }
 
   return createSuccessResponse(emenda, 'Emenda encontrada')
-})
+}, { permissions: 'proposicao.view' })
 
 /**
  * PUT - Atualizar emenda
+ * SEGURANÇA: Requer autenticação e permissão de gestão
  */
-export const PUT = withErrorHandler(async (
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Emenda')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Emenda')
   const body = await request.json()
   const validatedData = AtualizarEmendaSchema.parse(body)
 
   const emenda = await atualizarEmenda(id, validatedData)
 
   return createSuccessResponse(emenda, 'Emenda atualizada')
-})
+}, { permissions: 'proposicao.manage' })
 
 /**
  * POST - Ações específicas: votar, finalizar, retirar, prejudicar, apurar
+ * SEGURANÇA: Requer autenticação e permissão de gestão
  */
-export const POST = withErrorHandler(async (
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Emenda')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Emenda')
   const { searchParams } = new URL(request.url)
   const acao = searchParams.get('acao')
   const body = await request.json().catch(() => ({}))
@@ -165,21 +154,18 @@ export const POST = withErrorHandler(async (
     default:
       throw new ValidationError('Ação inválida. Use: votar, iniciar, finalizar, retirar, prejudicar, incorporar, parecer, apurar ou votos')
   }
-})
+}, { permissions: 'proposicao.manage' })
 
 /**
  * DELETE - Excluir emenda (apenas se APRESENTADA)
+ * SEGURANÇA: Requer autenticação e permissão de gestão
  */
-export const DELETE = withErrorHandler(async (
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Emenda')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Emenda')
 
   const emenda = await buscarEmendaPorId(id)
   if (!emenda) {
@@ -195,4 +181,4 @@ export const DELETE = withErrorHandler(async (
   })
 
   return createSuccessResponse({ id }, 'Emenda excluída')
-})
+}, { permissions: 'proposicao.manage' })

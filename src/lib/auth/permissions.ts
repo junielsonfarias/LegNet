@@ -51,6 +51,9 @@ export type Permission =
   | 'automacao.manage'
   | 'participacao.view'
   | 'participacao.manage'
+  | 'protocolo.view'
+  | 'protocolo.manage'
+  | 'relatorio.manage'
 
 type RolePermissions = Record<UserRole, Set<Permission>>
 
@@ -102,7 +105,10 @@ const rolePermissions: RolePermissions = {
     'automacao.view',
     'automacao.manage',
     'participacao.view',
-    'participacao.manage'
+    'participacao.manage',
+    'protocolo.view',
+    'protocolo.manage',
+    'relatorio.manage'
   ]),
   // SECRETARIA: Gestor legislativo (secretário da Câmara)
   // Responsável por: cadastro de proposições, tramitação, pauta, gestão de sessões
@@ -160,7 +166,12 @@ const rolePermissions: RolePermissions = {
     'painel.view',
     // Participação cidadã
     'participacao.view',
-    'participacao.manage'
+    'participacao.manage',
+    // Protocolo
+    'protocolo.view',
+    'protocolo.manage',
+    // Relatórios agendados
+    'relatorio.manage'
   ]),
   EDITOR: buildPermissions([
     'dashboard.view',

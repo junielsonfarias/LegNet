@@ -7,6 +7,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -55,24 +56,21 @@ export const GET = withErrorHandler(async (
 
 /**
  * PUT - Moderar sugestão
+ * SEGURANÇA: Requer autenticação e permissão de participação
  */
-export const PUT = withErrorHandler(async (
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Sugestão')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Sugestão')
   const body = await request.json()
   const validatedData = ModerarSchema.parse(body)
 
   const sugestao = await moderarSugestao(id, validatedData)
 
   return createSuccessResponse(sugestao, 'Sugestão moderada')
-})
+}, { permissions: 'participacao.manage' })
 
 /**
  * POST - Ações: apoiar, converter

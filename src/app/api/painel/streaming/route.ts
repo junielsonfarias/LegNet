@@ -2,14 +2,15 @@
  * API do Painel - Controle de Streaming
  * POST: Configura/Inicia/Finaliza transmissao
  * GET: Busca informacoes da transmissao
+ * SEGURANÇA: POST requer permissão painel.manage
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
+import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
 import {
   iniciarTransmissao,
-  finalizarTransmissao,
   validarUrlStreaming,
   gerarPlayerConfig,
   buscarVideosGravados
@@ -18,155 +19,116 @@ import { configurarTransmissao, getEstadoPainel } from '@/lib/services/painel-te
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
+// Schema de validação
+const StreamingSchema = z.object({
+  sessaoId: z.string().min(1, 'sessaoId é obrigatório'),
+  acao: z.enum(['iniciar', 'parar', 'configurar'], {
+    errorMap: () => ({ message: 'Ação inválida. Use: iniciar, parar, configurar' })
+  }),
+  url: z.string().url().optional(),
+  titulo: z.string().optional(),
+  plataforma: z.enum(['youtube', 'vimeo', 'outro']).optional()
+})
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Nao autorizado' },
-        { status: 401 }
-      )
-    }
+/**
+ * POST - Controle de streaming
+ * SEGURANÇA: Requer permissão painel.manage
+ */
+export const POST = withAuth(async (request: NextRequest) => {
+  const body = await request.json()
 
-    const body = await request.json()
-    const { sessaoId, acao, url, titulo, plataforma } = body
-
-    if (!sessaoId || !acao) {
-      return NextResponse.json(
-        { error: 'sessaoId e acao sao obrigatorios' },
-        { status: 400 }
-      )
-    }
-
-    switch (acao) {
-      case 'iniciar':
-        if (!url) {
-          return NextResponse.json(
-            { error: 'url e obrigatoria para iniciar transmissao' },
-            { status: 400 }
-          )
-        }
-
-        // Validar URL
-        const validacao = validarUrlStreaming(url)
-        if (!validacao.valida) {
-          return NextResponse.json(
-            { error: validacao.mensagem || 'URL invalida' },
-            { status: 400 }
-          )
-        }
-
-        // Iniciar transmissao
-        const transmissao = await iniciarTransmissao(sessaoId, url, titulo)
-        if (!transmissao) {
-          return NextResponse.json(
-            { error: 'Erro ao iniciar transmissao. URL pode nao ser suportada.' },
-            { status: 400 }
-          )
-        }
-
-        // Atualizar estado do painel
-        await configurarTransmissao(
-          sessaoId,
-          url,
-          validacao.plataforma as 'youtube' | 'vimeo' | 'outro',
-          true
-        )
-
-        return NextResponse.json({
-          success: true,
-          message: 'Transmissao iniciada',
-          data: transmissao
-        })
-
-      case 'parar':
-        await configurarTransmissao(sessaoId, '', 'outro', false)
-        return NextResponse.json({
-          success: true,
-          message: 'Transmissao parada'
-        })
-
-      case 'configurar':
-        if (!url || !plataforma) {
-          return NextResponse.json(
-            { error: 'url e plataforma sao obrigatorios' },
-            { status: 400 }
-          )
-        }
-        await configurarTransmissao(sessaoId, url, plataforma, true)
-        return NextResponse.json({
-          success: true,
-          message: 'Transmissao configurada'
-        })
-
-      default:
-        return NextResponse.json(
-          { error: 'Acao invalida. Use: iniciar, parar, configurar' },
-          { status: 400 }
-        )
-    }
-  } catch (error) {
-    console.error('Erro no controle de streaming:', error)
-    return NextResponse.json(
-      { error: 'Erro no controle de streaming' },
-      { status: 500 }
-    )
+  const validation = StreamingSchema.safeParse(body)
+  if (!validation.success) {
+    throw new ValidationError(validation.error.errors[0].message)
   }
-}
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const sessaoId = searchParams.get('sessaoId')
-    const tipo = searchParams.get('tipo') || 'atual' // atual ou historico
+  const { sessaoId, acao, url, titulo, plataforma } = validation.data
 
-    if (tipo === 'historico') {
-      const ano = searchParams.get('ano') ? parseInt(searchParams.get('ano')!) : undefined
-      const limit = parseInt(searchParams.get('limit') || '20')
-      const offset = parseInt(searchParams.get('offset') || '0')
-
-      const videos = await buscarVideosGravados({ ano, limit, offset })
-
-      return NextResponse.json({
-        success: true,
-        data: videos
-      })
-    }
-
-    if (!sessaoId) {
-      return NextResponse.json(
-        { error: 'sessaoId e obrigatorio' },
-        { status: 400 }
-      )
-    }
-
-    const estado = await getEstadoPainel(sessaoId)
-
-    if (!estado) {
-      return NextResponse.json(
-        { error: 'Sessao nao encontrada' },
-        { status: 404 }
-      )
-    }
-
-    // Gerar config do player se tiver URL
-    const playerConfig = estado.transmissao.url
-      ? gerarPlayerConfig(estado.transmissao.url)
-      : null
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        transmissao: estado.transmissao,
-        playerConfig
+  switch (acao) {
+    case 'iniciar': {
+      if (!url) {
+        throw new ValidationError('URL é obrigatória para iniciar transmissão')
       }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar streaming:', error)
-    return NextResponse.json(
-      { error: 'Erro ao buscar streaming' },
-      { status: 500 }
-    )
+
+      // Validar URL
+      const validacao = validarUrlStreaming(url)
+      if (!validacao.valida) {
+        throw new ValidationError(validacao.mensagem || 'URL inválida')
+      }
+
+      // Iniciar transmissão
+      const transmissao = await iniciarTransmissao(sessaoId, url, titulo)
+      if (!transmissao) {
+        throw new ValidationError('Erro ao iniciar transmissão. URL pode não ser suportada.')
+      }
+
+      // Atualizar estado do painel
+      await configurarTransmissao(
+        sessaoId,
+        url,
+        validacao.plataforma as 'youtube' | 'vimeo' | 'outro',
+        true
+      )
+
+      return createSuccessResponse(transmissao, 'Transmissão iniciada')
+    }
+
+    case 'parar': {
+      await configurarTransmissao(sessaoId, '', 'outro', false)
+      return createSuccessResponse({ stopped: true }, 'Transmissão parada')
+    }
+
+    case 'configurar': {
+      if (!url || !plataforma) {
+        throw new ValidationError('URL e plataforma são obrigatórios')
+      }
+      await configurarTransmissao(sessaoId, url, plataforma, true)
+      return createSuccessResponse({ configured: true }, 'Transmissão configurada')
+    }
+
+    default:
+      throw new ValidationError('Ação inválida')
   }
-}
+}, { permissions: 'painel.manage' })
+
+/**
+ * GET - Buscar informações de streaming
+ * Rota pública (para exibição no painel público)
+ */
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const sessaoId = searchParams.get('sessaoId')
+  const tipo = searchParams.get('tipo') || 'atual'
+
+  // Histórico de vídeos gravados
+  if (tipo === 'historico') {
+    const ano = searchParams.get('ano') ? parseInt(searchParams.get('ano')!) : undefined
+    const limit = parseInt(searchParams.get('limit') || '20')
+    const offset = parseInt(searchParams.get('offset') || '0')
+
+    const videos = await buscarVideosGravados({ ano, limit, offset })
+
+    return createSuccessResponse(videos, 'Vídeos listados')
+  }
+
+  // Transmissão atual
+  if (!sessaoId) {
+    throw new ValidationError('sessaoId é obrigatório')
+  }
+
+  const estado = await getEstadoPainel(sessaoId)
+
+  if (!estado) {
+    throw new NotFoundError('Sessão')
+  }
+
+  // Gerar config do player se tiver URL
+  const playerConfig = estado.transmissao.url
+    ? gerarPlayerConfig(estado.transmissao.url)
+    : null
+
+  return createSuccessResponse({
+    transmissao: estado.transmissao,
+    playerConfig
+  }, 'Informações de streaming')
+})

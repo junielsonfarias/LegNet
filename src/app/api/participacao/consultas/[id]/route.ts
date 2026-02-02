@@ -7,6 +7,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -68,17 +69,14 @@ export const GET = withErrorHandler(async (
 
 /**
  * PUT - Atualizar status da consulta
+ * SEGURANÇA: Requer autenticação e permissão de participação
  */
-export const PUT = withErrorHandler(async (
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Consulta')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Consulta')
   const body = await request.json()
   const { status } = body
 
@@ -88,7 +86,7 @@ export const PUT = withErrorHandler(async (
 
   const consulta = await atualizarStatusConsulta(id, status)
   return createSuccessResponse(consulta, 'Status atualizado')
-})
+}, { permissions: 'participacao.manage' })
 
 /**
  * POST - Ações: pergunta, participar, publicar, encerrar
@@ -150,16 +148,12 @@ export const POST = withErrorHandler(async (
 
 /**
  * DELETE - Remover pergunta
+ * SEGURANÇA: Requer autenticação e permissão de participação
  */
-export const DELETE = withErrorHandler(async (
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
   const { searchParams } = new URL(request.url)
   const perguntaId = searchParams.get('perguntaId')
 
@@ -169,4 +163,4 @@ export const DELETE = withErrorHandler(async (
 
   await removerPergunta(perguntaId)
   return createSuccessResponse({ perguntaId }, 'Pergunta removida')
-})
+}, { permissions: 'participacao.manage' })

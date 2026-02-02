@@ -630,6 +630,13 @@ model TipoProposicaoConfig {
   ordem           Int             @default(0)      // Ordem de exibição
   corBadge        String?                   // Cor para exibição (hex)
   icone           String?                   // Ícone (nome do lucide icon)
+
+  // Configuração de Quorum e Turnos (vinculação dinâmica)
+  quorumAplicacao       String?   @default("VOTACAO_SIMPLES")  // Aplicação de quorum: VOTACAO_SIMPLES, VOTACAO_ABSOLUTA, VOTACAO_QUALIFICADA, VOTACAO_URGENCIA
+  quorumAplicacao2Turno String?                                 // Aplicação para 2º turno (se diferente do 1º)
+  totalTurnos           Int       @default(1)                   // Número de turnos: 1 ou 2
+  intersticioDias       Int       @default(0)                   // Dias úteis de interstício entre turnos
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -2930,4 +2937,66 @@ model DashboardPersonalizado {
   @@index([userId])
   @@index([publico])
   @@map("dashboards_personalizados")
+}
+
+// =============================================================================
+// Alertas de Segurança
+// =============================================================================
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  NEW
+  ACKNOWLEDGED
+  RESOLVED
+  FALSE_POSITIVE
+}
+
+enum AlertType {
+  BRUTE_FORCE_ATTEMPT
+  UNUSUAL_ACCESS_PATTERN
+  PRIVILEGE_ESCALATION
+  DATA_EXFILTRATION
+  SUSPICIOUS_IP
+  ACCOUNT_COMPROMISE
+  RATE_LIMIT_EXCEEDED
+  SQL_INJECTION_ATTEMPT
+  XSS_ATTEMPT
+  UNAUTHORIZED_ACCESS
+  CONFIGURATION_CHANGE
+  MASS_DELETE
+}
+
+model SecurityAlert {
+  id              String         @id @default(cuid())
+  type            AlertType
+  severity        AlertSeverity
+  status          AlertStatus    @default(NEW)
+  title           String
+  description     String         @db.Text
+  metadata        Json?          // Dados adicionais do alerta
+  sourceIp        String?
+  userId          String?
+  userName        String?
+
+  // Timestamps
+  createdAt       DateTime       @default(now())
+  acknowledgedAt  DateTime?
+  acknowledgedBy  String?
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  notes           String?        @db.Text
+
+  @@index([status])
+  @@index([severity])
+  @@index([type])
+  @@index([createdAt])
+  @@index([sourceIp])
+  @@index([userId])
+  @@map("security_alerts")
 }

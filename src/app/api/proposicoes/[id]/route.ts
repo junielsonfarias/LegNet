@@ -7,16 +7,18 @@ import {
   NotFoundError,
   ConflictError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { isSlugProposicao, gerarSlugProposicao, parseSlugProposicao } from '@/lib/utils/proposicao-slug'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
 
 // Schema de validação para atualização de proposição
+// O campo 'tipo' aceita qualquer código de tipo cadastrado em TipoProposicaoConfig
 const UpdateProposicaoSchema = z.object({
   numero: z.string().min(1).optional(),
   ano: z.number().min(1900).optional(), // Permite anos anteriores para dados históricos
-  tipo: z.enum(['PROJETO_LEI', 'PROJETO_RESOLUCAO', 'PROJETO_DECRETO', 'INDICACAO', 'REQUERIMENTO', 'MOCAO', 'VOTO_PESAR', 'VOTO_APLAUSO']).optional(),
+  tipo: z.string().min(1).max(50).optional(), // Tipos são dinâmicos - validados contra TipoProposicaoConfig
   titulo: z.string().min(5).optional(),
   ementa: z.string().min(10).optional(),
   texto: z.string().optional(),
@@ -156,11 +158,12 @@ export const GET = withErrorHandler(async (
 })
 
 // PUT - Atualizar proposição por ID ou slug
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão 'proposicao.manage'
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const idOrSlug = params.id
+  const { id: idOrSlug } = await context.params
   const body = await request.json()
 
   // Validar dados
@@ -255,14 +258,15 @@ export const PUT = withErrorHandler(async (
     updatedProposicao,
     'Proposição atualizada com sucesso'
   )
-})
+}, { permissions: 'proposicao.manage' })
 
 // DELETE - Excluir proposição por ID ou slug
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão 'proposicao.manage'
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const idOrSlug = params.id
+  const { id: idOrSlug } = await context.params
 
   // Verificar se proposição existe (busca por ID ou slug)
   const existingProposicao = await findProposicaoByIdOrSlug(idOrSlug)
@@ -279,5 +283,5 @@ export const DELETE = withErrorHandler(async (
     null,
     'Proposição excluída com sucesso'
   )
-})
+}, { permissions: 'proposicao.manage' })
 

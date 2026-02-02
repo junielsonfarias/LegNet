@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
-import { authOptions } from '@/lib/auth'
 import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError,
-  ConflictError,
-  UnauthorizedError
+  ConflictError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,12 +99,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 })
 
 // POST - Criar autor
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new UnauthorizedError('Autenticação necessária')
-  }
-
+// SEGURANÇA: Requer autenticação e permissão de gestão de proposições
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = AutorSchema.parse(body)
 
@@ -161,4 +155,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
 
   return createSuccessResponse(autor, 'Autor criado com sucesso', undefined, 201)
-})
+}, { permissions: 'proposicao.manage' })

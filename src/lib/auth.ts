@@ -2,6 +2,24 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { mockAuth } from "@/lib/auth-mock"
 import { verifyTotpToken } from '@/lib/security/totp'
+import {
+  checkRateLimitWithRedis,
+  resetRateLimitWithRedis
+} from '@/lib/rate-limit-client'
+
+// Rate limiting para login usando Redis (ou fallback memória)
+async function checkLoginRateLimit(email: string): Promise<{ allowed: boolean; remainingAttempts: number; message?: string }> {
+  return checkRateLimitWithRedis(email.toLowerCase(), 'LOGIN')
+}
+
+async function recordLoginAttempt(email: string, success: boolean): Promise<void> {
+  if (success) {
+    // Reset em caso de sucesso (libera tentativas)
+    await resetRateLimitWithRedis(email.toLowerCase(), 'LOGIN')
+    return
+  }
+  // Falha já foi contabilizada no checkRateLimitWithRedis
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,26 +34,32 @@ export const authOptions: NextAuthOptions = {
         try {
           // Validação de entrada
           if (!credentials?.email || !credentials?.password) {
-            console.warn('Tentativa de login sem credenciais completas')
+            // SEGURANÇA: Não logar detalhes de tentativas de autenticação
             return null
           }
 
           // Validação de formato de email
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
           if (!emailRegex.test(credentials.email)) {
-            console.warn('Tentativa de login com email inválido:', credentials.email)
+            // SEGURANÇA: Não logar email inválido
             return null
           }
 
-          // Validação de comprimento da senha
-          if (credentials.password.length < 6) {
-            console.warn('Tentativa de login com senha muito curta')
+          // SEGURANÇA: Validação de comprimento mínimo da senha (8 caracteres)
+          if (credentials.password.length < 8) {
             return null
+          }
+
+          // SEGURANÇA: Verificar rate limit antes de tentar autenticar (com Redis)
+          const { allowed, message } = await checkLoginRateLimit(credentials.email)
+          if (!allowed) {
+            throw new Error('TOO_MANY_ATTEMPTS')
           }
 
           // Tentar autenticar com mock primeiro
           const result = await mockAuth.signIn(credentials)
           if (result?.user) {
+            await recordLoginAttempt(credentials.email, true)
             return result.user
           }
 
@@ -47,6 +71,7 @@ export const authOptions: NextAuthOptions = {
           })
 
           if (!user || !user.password) {
+            await recordLoginAttempt(credentials.email, false)
             return null
           }
 
@@ -54,20 +79,25 @@ export const authOptions: NextAuthOptions = {
           const passwordMatch = await bcrypt.compare(credentials.password, user.password)
 
           if (!passwordMatch) {
+            await recordLoginAttempt(credentials.email, false)
             return null
           }
 
           if (user.twoFactorEnabled && user.twoFactorSecret) {
             const code = credentials.code?.toString().trim()
             if (!code) {
+              // Não conta como falha - usuário precisa fornecer código 2FA
               throw new Error('2FA_REQUIRED')
             }
             const isValidCode = verifyTotpToken(user.twoFactorSecret, code)
             if (!isValidCode) {
+              await recordLoginAttempt(credentials.email, false)
               throw new Error('INVALID_2FA')
             }
           }
 
+          // Login bem-sucedido
+          await recordLoginAttempt(credentials.email, true)
           return {
             id: user.id,
             email: user.email,
@@ -77,7 +107,11 @@ export const authOptions: NextAuthOptions = {
             twoFactorEnabled: user.twoFactorEnabled
           }
         } catch (error) {
-          if (error instanceof Error && (error.message === '2FA_REQUIRED' || error.message === 'INVALID_2FA')) {
+          if (error instanceof Error && (
+            error.message === '2FA_REQUIRED' ||
+            error.message === 'INVALID_2FA' ||
+            error.message === 'TOO_MANY_ATTEMPTS'
+          )) {
             throw error
           }
           console.error('Erro na autenticação:', error)

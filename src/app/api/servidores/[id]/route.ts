@@ -4,11 +4,15 @@ import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+/**
+ * GET - Buscar servidor por ID
+ * SEGURANÇA: Requer permissão financeiro.view (dados sensíveis como CPF e salário)
+ */
+export const GET = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const servidor = await servidoresDbService.getById(id)
 
@@ -20,14 +24,9 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, data: servidor })
-  } catch (error) {
-    console.error('Erro ao buscar servidor:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.view' }
+)
 
 export const PUT = withAuth(
   async (

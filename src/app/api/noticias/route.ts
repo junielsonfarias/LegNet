@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { 
-  withErrorHandler, 
-  createSuccessResponse, 
+import {
+  withErrorHandler,
+  createSuccessResponse,
   createErrorResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -68,12 +69,13 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   )
 })
 
-export const POST = withErrorHandler(async (request: NextRequest) => {
+// SEGURANÇA: Requer autenticação e permissão de publicação
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = NoticiaSchema.parse(body)
-  
+
   const novaNoticia = await prisma.noticia.create({
     data: {
       titulo: validatedData.titulo,
@@ -83,9 +85,9 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       tags: validatedData.tags || [],
       imagem: validatedData.imagem || null,
       publicada: validatedData.publicada || false,
-      dataPublicacao: validatedData.dataPublicacao 
+      dataPublicacao: validatedData.dataPublicacao
         ? new Date(validatedData.dataPublicacao)
-        : validatedData.publicada 
+        : validatedData.publicada
           ? new Date()
           : null
     }
@@ -97,4 +99,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     undefined,
     201
   )
-})
+}, { permissions: 'publicacao.manage' })

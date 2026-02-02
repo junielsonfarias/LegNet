@@ -1,65 +1,24 @@
 /**
  * Rate Limiting Middleware
  * Protege APIs contra abuso com limites configuráveis por tipo de rota
+ *
+ * Em produção com Redis configurado: usa Redis para escalabilidade horizontal
+ * Em desenvolvimento ou sem Redis: usa cache em memória
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { RateLimitError } from '@/lib/error-handler'
+import {
+  checkRateLimitSync,
+  resetRateLimit as simpleResetRateLimit,
+  getRateLimitStats as simpleGetRateLimitStats,
+  RATE_LIMIT_CONFIGS,
+  type RateLimitType
+} from '@/lib/rate-limit-simple'
 
-// Configurações de rate limit por tipo de rota
-export const RATE_LIMITS = {
-  // Rotas de autenticação - mais restrito
-  AUTH: {
-    requests: 10,
-    windowMs: 300000,  // 5 minutos
-    message: 'Muitas tentativas de login. Aguarde 5 minutos.'
-  },
-  // Rotas públicas
-  PUBLIC: {
-    requests: 60,
-    windowMs: 60000,   // 1 minuto
-    message: 'Muitas requisições. Aguarde um momento.'
-  },
-  // Rotas autenticadas
-  AUTHENTICATED: {
-    requests: 120,
-    windowMs: 60000,   // 1 minuto
-    message: 'Limite de requisições excedido.'
-  },
-  // APIs de integração
-  INTEGRATION: {
-    requests: 100,
-    windowMs: 60000,   // 1 minuto
-    message: 'Limite de requisições da API excedido.'
-  },
-  // Operações pesadas (relatórios, exports)
-  HEAVY: {
-    requests: 10,
-    windowMs: 60000,   // 1 minuto
-    message: 'Aguarde antes de gerar outro relatório.'
-  }
-} as const
-
-export type RateLimitType = keyof typeof RATE_LIMITS
-
-// Store em memória para rate limiting (em produção, usar Redis)
-interface RateLimitEntry {
-  count: number
-  resetAt: number
-}
-
-const rateLimitStore = new Map<string, RateLimitEntry>()
-
-// Limpa entradas expiradas periodicamente
-setInterval(() => {
-  const now = Date.now()
-  const entries = Array.from(rateLimitStore.entries())
-  for (const [key, entry] of entries) {
-    if (entry.resetAt < now) {
-      rateLimitStore.delete(key)
-    }
-  }
-}, 60000) // Limpa a cada minuto
+// Re-exporta configurações e tipos
+export { RATE_LIMIT_CONFIGS, type RateLimitType }
+export const RATE_LIMITS = RATE_LIMIT_CONFIGS
 
 /**
  * Obtém o identificador do cliente para rate limiting
@@ -79,48 +38,19 @@ function getClientIdentifier(request: NextRequest): string {
 
 /**
  * Verifica se a requisição está dentro do limite
+ * Usa cache em memória (client-safe)
  */
 export function checkRateLimit(
   request: NextRequest,
   type: RateLimitType = 'PUBLIC'
 ): { allowed: boolean; remaining: number; resetAt: number } {
-  const config = RATE_LIMITS[type]
   const clientId = getClientIdentifier(request)
-  const key = `${type}:${clientId}`
-  const now = Date.now()
-
-  let entry = rateLimitStore.get(key)
-
-  // Se não existe ou expirou, criar nova entrada
-  if (!entry || entry.resetAt < now) {
-    entry = {
-      count: 1,
-      resetAt: now + config.windowMs
-    }
-    rateLimitStore.set(key, entry)
-    return {
-      allowed: true,
-      remaining: config.requests - 1,
-      resetAt: entry.resetAt
-    }
-  }
-
-  // Incrementar contador
-  entry.count++
-
-  // Verificar se excedeu limite
-  if (entry.count > config.requests) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: entry.resetAt
-    }
-  }
+  const result = checkRateLimitSync(clientId, type)
 
   return {
-    allowed: true,
-    remaining: config.requests - entry.count,
-    resetAt: entry.resetAt
+    allowed: result.allowed,
+    remaining: result.remaining,
+    resetAt: result.resetAt
   }
 }
 
@@ -135,20 +65,20 @@ export function withRateLimit(
     const { allowed, remaining, resetAt } = checkRateLimit(request, type)
 
     if (!allowed) {
-      const retryAfter = Math.ceil((resetAt - Date.now()) / 1000)
+      const retryAfter = Math.ceil((resetAt * 1000 - Date.now()) / 1000)
       return NextResponse.json(
         {
           success: false,
           error: RATE_LIMITS[type].message,
-          retryAfter
+          retryAfter: retryAfter > 0 ? retryAfter : 1
         },
         {
           status: 429,
           headers: {
             'X-RateLimit-Limit': String(RATE_LIMITS[type].requests),
             'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': String(Math.ceil(resetAt / 1000)),
-            'Retry-After': String(retryAfter)
+            'X-RateLimit-Reset': String(resetAt),
+            'Retry-After': String(retryAfter > 0 ? retryAfter : 1)
           }
         }
       )
@@ -160,7 +90,7 @@ export function withRateLimit(
     // Adicionar headers de rate limit à resposta
     response.headers.set('X-RateLimit-Limit', String(RATE_LIMITS[type].requests))
     response.headers.set('X-RateLimit-Remaining', String(remaining))
-    response.headers.set('X-RateLimit-Reset', String(Math.ceil(resetAt / 1000)))
+    response.headers.set('X-RateLimit-Reset', String(resetAt))
 
     return response
   }
@@ -192,27 +122,12 @@ export function enforceRateLimit(request: NextRequest, type: RateLimitType = 'PU
  */
 export function resetRateLimit(request: NextRequest, type: RateLimitType): void {
   const clientId = getClientIdentifier(request)
-  const key = `${type}:${clientId}`
-  rateLimitStore.delete(key)
+  simpleResetRateLimit(clientId, type)
 }
 
 /**
  * Obtém estatísticas de rate limit (para monitoramento)
  */
-export function getRateLimitStats(): {
-  totalEntries: number
-  entriesByType: Record<string, number>
-} {
-  const entriesByType: Record<string, number> = {}
-  const keys = Array.from(rateLimitStore.keys())
-
-  for (const key of keys) {
-    const type = key.split(':')[0]
-    entriesByType[type] = (entriesByType[type] || 0) + 1
-  }
-
-  return {
-    totalEntries: rateLimitStore.size,
-    entriesByType
-  }
+export function getRateLimitStats(): { totalEntries: number } {
+  return simpleGetRateLimitStats()
 }

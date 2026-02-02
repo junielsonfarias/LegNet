@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { 
-  withErrorHandler, 
-  createSuccessResponse, 
+import {
+  withErrorHandler,
+  createSuccessResponse,
   createErrorResponse,
   ValidationError,
   ConflictError,
   validateEmail,
   validatePhone
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -161,7 +162,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 })
 
 // POST - Criar parlamentar
-export const POST = withErrorHandler(async (request: NextRequest) => {
+// SEGURANÇA: Requer autenticação e permissão de gestão de parlamentares
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   
   // Validar dados
@@ -228,4 +230,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     undefined,
     201
   )
-})
+}, { permissions: 'parlamentar.manage' })

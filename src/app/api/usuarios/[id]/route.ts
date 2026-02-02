@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
-  withErrorHandler,
   createSuccessResponse,
   ValidationError,
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import bcrypt from 'bcryptjs'
 
 export const dynamic = 'force-dynamic'
@@ -15,18 +15,21 @@ export const dynamic = 'force-dynamic'
 const UpdateUsuarioSchema = z.object({
   name: z.string().optional(),
   email: z.string().email('Email inválido').optional(),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').optional(),
-  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR']).optional(),
+  // SEGURANÇA: Senha mínima de 8 caracteres
+  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres').optional(),
+  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']).optional(),
   parlamentarId: z.string().optional().nullable(),
   ativo: z.boolean().optional()
 })
 
 // GET - Buscar usuário por ID
-export const GET = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gerenciamento de usuários
+export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Usuário')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Usuário')
 
   const usuario = await prisma.user.findUnique({
     where: { id },
@@ -48,14 +51,16 @@ export const GET = withErrorHandler(async (
   const { password, ...usuarioSemSenha } = usuario
 
   return createSuccessResponse(usuarioSemSenha, 'Usuário encontrado com sucesso')
-})
+}, { permissions: 'user.manage' })
 
 // PUT - Atualizar usuário
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gerenciamento de usuários
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Usuário')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Usuário')
   const body = await request.json()
 
   const validatedData = UpdateUsuarioSchema.parse(body)
@@ -128,14 +133,16 @@ export const PUT = withErrorHandler(async (
   const { password, ...usuarioSemSenha } = usuarioAtualizado
 
   return createSuccessResponse(usuarioSemSenha, 'Usuário atualizado com sucesso')
-})
+}, { permissions: 'user.manage' })
 
 // DELETE - Excluir usuário
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gerenciamento de usuários
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Usuário')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Usuário')
 
   const usuario = await prisma.user.findUnique({
     where: { id }
@@ -150,5 +157,5 @@ export const DELETE = withErrorHandler(async (
   })
 
   return createSuccessResponse(null, 'Usuário excluído com sucesso')
-})
+}, { permissions: 'user.manage' })
 

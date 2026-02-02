@@ -6,6 +6,7 @@ import {
   createSuccessResponse,
   NotFoundError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { assertSessaoPermitePresenca, obterSessaoParaControle, resolverSessaoId } from '@/lib/services/sessao-controle'
 
 export const dynamic = 'force-dynamic'
@@ -52,12 +53,14 @@ export const GET = withErrorHandler(async (
 })
 
 // POST - Registrar/Atualizar presença
-export const POST = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de sessões
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
+  const { id: rawId } = await context.params
   // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
-  const sessaoId = await resolverSessaoId(params.id)
+  const sessaoId = await resolverSessaoId(rawId)
   const body = await request.json()
 
   const validatedData = PresencaSchema.parse(body)
@@ -107,5 +110,5 @@ export const POST = withErrorHandler(async (
   })
 
   return createSuccessResponse(presenca, 'Presença registrada com sucesso')
-})
+}, { permissions: 'sessao.manage' })
 

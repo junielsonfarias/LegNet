@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { 
-  withErrorHandler, 
-  createSuccessResponse, 
+import {
+  withErrorHandler,
+  createSuccessResponse,
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -42,11 +43,13 @@ export const GET = withErrorHandler(async (
 })
 
 // PUT - Atualizar notícia
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de publicação
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Notícia')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Notícia')
   const body = await request.json()
   
   // Validar dados
@@ -86,14 +89,16 @@ export const PUT = withErrorHandler(async (
     updatedNoticia,
     'Notícia atualizada com sucesso'
   )
-})
+}, { permissions: 'publicacao.manage' })
 
 // DELETE - Excluir notícia
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de publicação
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Notícia')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Notícia')
   
   // Verificar se notícia existe
   const existingNoticia = await prisma.noticia.findUnique({
@@ -113,5 +118,5 @@ export const DELETE = withErrorHandler(async (
     null,
     'Notícia excluída com sucesso'
   )
-})
+}, { permissions: 'publicacao.manage' })
 

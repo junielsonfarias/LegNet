@@ -2,11 +2,13 @@
  * API do Painel - Controle de Presenca
  * POST: Registra presenca de parlamentares
  * GET: Busca lista de presenca
+ * SEGURANÇA: POST requer permissão presenca.manage
  */
 
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
+import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
 import {
   registrarPresenca,
   getEstadoPainel
@@ -14,87 +16,65 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
+// Schema de validação
+const PresencaSchema = z.object({
+  sessaoId: z.string().min(1, 'sessaoId é obrigatório'),
+  parlamentarId: z.string().min(1, 'parlamentarId é obrigatório'),
+  presente: z.boolean(),
+  justificativa: z.string().optional()
+})
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Nao autorizado' },
-        { status: 401 }
-      )
-    }
+/**
+ * POST - Registrar presença
+ * SEGURANÇA: Requer permissão presenca.manage
+ */
+export const POST = withAuth(async (request: NextRequest) => {
+  const body = await request.json()
+  const validation = PresencaSchema.safeParse(body)
 
-    const body = await request.json()
-    const { sessaoId, parlamentarId, presente, justificativa } = body
-
-    if (!sessaoId || !parlamentarId || presente === undefined) {
-      return NextResponse.json(
-        { error: 'sessaoId, parlamentarId e presente sao obrigatorios' },
-        { status: 400 }
-      )
-    }
-
-    const sucesso = await registrarPresenca(sessaoId, parlamentarId, presente, justificativa)
-
-    if (!sucesso) {
-      return NextResponse.json(
-        { error: 'Erro ao registrar presenca' },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: presente ? 'Presenca registrada' : 'Ausencia registrada'
-    })
-  } catch (error) {
-    console.error('Erro ao registrar presenca:', error)
-    return NextResponse.json(
-      { error: 'Erro ao registrar presenca' },
-      { status: 500 }
-    )
+  if (!validation.success) {
+    throw new ValidationError(validation.error.errors[0].message)
   }
-}
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const sessaoId = searchParams.get('sessaoId')
+  const { sessaoId, parlamentarId, presente, justificativa } = validation.data
 
-    if (!sessaoId) {
-      return NextResponse.json(
-        { error: 'sessaoId e obrigatorio' },
-        { status: 400 }
-      )
-    }
+  const sucesso = await registrarPresenca(sessaoId, parlamentarId, presente, justificativa)
 
-    const estado = await getEstadoPainel(sessaoId)
-
-    if (!estado) {
-      return NextResponse.json(
-        { error: 'Sessao nao encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        presencas: estado.presencas,
-        estatisticas: {
-          total: estado.estatisticas.totalParlamentares,
-          presentes: estado.estatisticas.presentes,
-          ausentes: estado.estatisticas.ausentes,
-          percentual: estado.estatisticas.percentualPresenca
-        }
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar presencas:', error)
-    return NextResponse.json(
-      { error: 'Erro ao buscar presencas' },
-      { status: 500 }
-    )
+  if (!sucesso) {
+    throw new ValidationError('Erro ao registrar presença')
   }
-}
+
+  return createSuccessResponse(
+    { registered: true },
+    presente ? 'Presença registrada' : 'Ausência registrada'
+  )
+}, { permissions: 'presenca.manage' })
+
+/**
+ * GET - Buscar presenças
+ * SEGURANÇA: Requer autenticação básica (GET é menos restritivo)
+ */
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const sessaoId = searchParams.get('sessaoId')
+
+  if (!sessaoId) {
+    throw new ValidationError('sessaoId é obrigatório')
+  }
+
+  const estado = await getEstadoPainel(sessaoId)
+
+  if (!estado) {
+    throw new NotFoundError('Sessão')
+  }
+
+  return createSuccessResponse({
+    presencas: estado.presencas,
+    estatisticas: {
+      total: estado.estatisticas.totalParlamentares,
+      presentes: estado.estatisticas.presentes,
+      ausentes: estado.estatisticas.ausentes,
+      percentual: estado.estatisticas.percentualPresenca
+    }
+  }, 'Presenças listadas')
+})

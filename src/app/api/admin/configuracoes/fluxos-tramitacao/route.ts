@@ -11,19 +11,14 @@ import {
 } from '@/lib/services/fluxo-tramitacao-service'
 import { prisma } from '@/lib/prisma'
 
-const TipoProposicaoEnum = z.enum([
-  'PROJETO_LEI',
-  'PROJETO_RESOLUCAO',
-  'PROJETO_DECRETO',
-  'INDICACAO',
-  'REQUERIMENTO',
-  'MOCAO',
-  'VOTO_PESAR',
-  'VOTO_APLAUSO'
-])
+// Schema de validacao para tipo de proposicao (aceita qualquer string valida)
+const TipoProposicaoSchema = z.string()
+  .min(3, 'Tipo deve ter no minimo 3 caracteres')
+  .max(50, 'Tipo deve ter no maximo 50 caracteres')
+  .regex(/^[A-Z0-9_]+$/, 'Tipo deve conter apenas letras maiusculas, numeros e underscore')
 
 const FluxoCreateSchema = z.object({
-  tipoProposicao: TipoProposicaoEnum,
+  tipoProposicao: TipoProposicaoSchema,
   nome: z.string().min(1, 'Nome e obrigatorio'),
   descricao: z.string().optional(),
   ativo: z.boolean().optional().default(true)
@@ -47,17 +42,14 @@ export const GET = withAuth(async (
   const tipoProposicao = searchParams.get('tipoProposicao')
 
   if (tipoProposicao) {
-    const parseResult = TipoProposicaoEnum.safeParse(tipoProposicao)
+    const parseResult = TipoProposicaoSchema.safeParse(tipoProposicao)
     if (!parseResult.success) {
       throw new ValidationError('Tipo de proposicao invalido')
     }
 
     const fluxo = await getFluxoByTipoProposicao(parseResult.data)
-    if (!fluxo) {
-      throw new NotFoundError('Fluxo nao encontrado para este tipo de proposicao')
-    }
-
-    return createSuccessResponse(fluxo, 'Fluxo carregado com sucesso')
+    // Retorna null se nao encontrar (componente trata isso para criar novo fluxo)
+    return createSuccessResponse(fluxo, fluxo ? 'Fluxo carregado com sucesso' : 'Fluxo nao encontrado')
   }
 
   const fluxos = await listarFluxos()

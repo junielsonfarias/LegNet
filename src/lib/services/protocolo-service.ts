@@ -6,6 +6,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
+import { generateSecureCode } from '@/lib/utils/secure-id'
 import type {
   TipoProtocolo,
   SituacaoProtocolo,
@@ -81,10 +82,11 @@ async function gerarNumeroProtocolo(ano: number): Promise<number> {
 
 /**
  * Gera código de etiqueta único (código de barras/QR)
+ * SEGURANÇA: Usa crypto em vez de Math.random()
  */
 function gerarCodigoEtiqueta(numero: number, ano: number): string {
   const timestamp = Date.now().toString(36).toUpperCase()
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase()
+  const random = generateSecureCode(4)
   return `PROT${ano}${numero.toString().padStart(5, '0')}${timestamp}${random}`
 }
 

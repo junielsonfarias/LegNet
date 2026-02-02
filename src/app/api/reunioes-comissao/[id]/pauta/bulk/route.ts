@@ -1,29 +1,24 @@
 import { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
   NotFoundError,
   ValidationError,
-  UnauthorizedError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
 // POST - Adicionar multiplos itens a pauta de uma vez
-export const POST = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new UnauthorizedError()
-  }
-
-  const reuniaoId = validateId(params.id, 'Reuniao')
+  const { id: rawId } = await context.params
+  const reuniaoId = validateId(rawId, 'Reuniao')
   const body = await request.json()
   const { proposicaoIds } = body
 
@@ -125,4 +120,4 @@ export const POST = withErrorHandler(async (
     },
     `${resultado.count} item(ns) adicionado(s) a pauta`
   )
-})
+}, { permissions: 'comissao.manage' })

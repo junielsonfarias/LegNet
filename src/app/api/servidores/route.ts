@@ -5,46 +5,51 @@ import type { SituacaoServidor, VinculoServidor } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const situacao = searchParams.get('situacao') as SituacaoServidor | null
-    const vinculo = searchParams.get('vinculo') as VinculoServidor | null
-    const cargo = searchParams.get('cargo')
-    const unidade = searchParams.get('unidade')
-    const nome = searchParams.get('nome')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+// SEGURANÇA: GET protegido pois retorna dados sensíveis (CPF, salário)
+export const GET = withAuth(
+  async (request: NextRequest) => {
+    try {
+      const { searchParams } = new URL(request.url)
+      const situacao = searchParams.get('situacao') as SituacaoServidor | null
+      const vinculo = searchParams.get('vinculo') as VinculoServidor | null
+      const cargo = searchParams.get('cargo')
+      const unidade = searchParams.get('unidade')
+      const nome = searchParams.get('nome')
+      const page = parseInt(searchParams.get('page') || '1')
+      const limit = parseInt(searchParams.get('limit') || '10')
 
-    const result = await servidoresDbService.paginate(
-      {
-        situacao: situacao || undefined,
-        vinculo: vinculo || undefined,
-        cargo: cargo || undefined,
-        unidade: unidade || undefined,
-        nome: nome || undefined
-      },
-      { page, limit }
-    )
+      const result = await servidoresDbService.paginate(
+        {
+          situacao: situacao || undefined,
+          vinculo: vinculo || undefined,
+          cargo: cargo || undefined,
+          unidade: unidade || undefined,
+          nome: nome || undefined
+        },
+        { page, limit }
+      )
 
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=300',
-        'X-Total-Count': result.pagination.total.toString()
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar servidores:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+      return NextResponse.json({
+        success: true,
+        data: result.data,
+        pagination: result.pagination
+      }, {
+        headers: {
+          // SEGURANÇA: Removido cache público para dados sensíveis
+          'Cache-Control': 'private, no-store',
+          'X-Total-Count': result.pagination.total.toString()
+        }
+      })
+    } catch (error) {
+      console.error('Erro ao buscar servidores:', error)
+      return NextResponse.json(
+        { success: false, error: 'Erro interno do servidor' },
+        { status: 500 }
+      )
+    }
+  },
+  { permissions: 'financeiro.manage' }
+)
 
 export const POST = withAuth(
   async (request: NextRequest) => {

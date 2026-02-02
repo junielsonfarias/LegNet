@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server'
 import type { Session } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { AuditStatus } from '@prisma/client'
+import { recordSecurityEvent } from '@/lib/security/alert-service'
 
 interface LogAuditParams {
   request: NextRequest | Request
@@ -56,6 +57,22 @@ export async function logAudit({
         status,
         errorMessage,
         metadata: toSafeJson(metadata)
+      }
+    })
+
+    // Registra evento para análise de segurança
+    recordSecurityEvent({
+      action,
+      entity,
+      userId: session?.user?.id,
+      userName: session?.user?.name || undefined,
+      ip,
+      success: status === AuditStatus.SUCCESS,
+      timestamp: new Date(),
+      metadata: {
+        ...metadata,
+        entityId,
+        errorMessage
       }
     })
   } catch (error) {

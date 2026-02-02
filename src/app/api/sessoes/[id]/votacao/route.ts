@@ -7,6 +7,7 @@ import {
   ValidationError,
   NotFoundError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import {
   assertSessaoPermiteVotacao,
   ensureParlamentarPresente,
@@ -176,11 +177,13 @@ export const GET = withErrorHandler(async (
 })
 
 // POST - Registrar voto
-export const POST = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de votação
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
+  const { id: rawId } = await context.params
+  const sessaoId = await resolverSessaoId(rawId)
   const body = await request.json()
 
   const validatedData = VotoSchema.parse(body)
@@ -299,5 +302,5 @@ export const POST = withErrorHandler(async (
   }
 
   return createSuccessResponse(voto, 'Voto registrado com sucesso')
-})
+}, { permissions: 'votacao.manage' })
 

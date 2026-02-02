@@ -1,4 +1,6 @@
 // Sistema de logging para APIs
+import { generateSecureShortId, generateRequestId } from '@/lib/utils/secure-id'
+
 export interface LogEntry {
   id: string
   timestamp: Date
@@ -318,7 +320,7 @@ class ApiLogger {
     tags?: string[]
   ) {
     const logEntry: LogEntry = {
-      id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: generateSecureShortId('log'),
       timestamp: new Date(),
       level,
       message,
@@ -359,7 +361,7 @@ export function withLogging(
     const url = new URL(request.url)
     const endpoint = url.pathname
     const method = request.method
-    const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const requestId = generateRequestId()
     
     // Log da requisição
     apiLogger.info(`Request started: ${method} ${endpoint}`, {

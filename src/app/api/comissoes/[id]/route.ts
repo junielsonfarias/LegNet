@@ -8,6 +8,7 @@ import {
   ConflictError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { syncComissaoHistorico } from '@/lib/participation-history'
 
 // Configurar para renderização dinâmica
@@ -54,11 +55,13 @@ export const GET = withErrorHandler(async (
 })
 
 // PUT - Atualizar comissão
-export const PUT = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Comissão')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Comissão')
   const body = await request.json()
   
   // Validar dados
@@ -119,19 +122,21 @@ export const PUT = withErrorHandler(async (
   })
 
   await syncComissaoHistorico(id)
-  
+
   return createSuccessResponse(
     updatedComissao,
     'Comissão atualizada com sucesso'
   )
-})
+}, { permissions: 'comissao.manage' })
 
 // DELETE - Excluir comissão
-export const DELETE = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Comissão')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Comissão')
   
   // Verificar se comissão existe
   const existingComissao = await prisma.comissao.findUnique({
@@ -158,10 +163,10 @@ export const DELETE = withErrorHandler(async (
       dataFim: new Date()
     }
   })
-  
+
   return createSuccessResponse(
     null,
     'Comissão excluída com sucesso'
   )
-})
+}, { permissions: 'comissao.manage' })
 

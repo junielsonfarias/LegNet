@@ -4,30 +4,34 @@ import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const folha = await folhaPagamentoDbService.getById(id)
+// SEGURANÇA: GET protegido pois dados financeiros sensíveis
+export const GET = withAuth(
+  async (
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
+  ) => {
+    try {
+      const { id } = await context.params
+      const folha = await folhaPagamentoDbService.getById(id)
 
-    if (!folha) {
+      if (!folha) {
+        return NextResponse.json(
+          { success: false, error: 'Folha de pagamento nao encontrada' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json({ success: true, data: folha })
+    } catch (error) {
+      console.error('Erro ao buscar folha de pagamento:', error)
       return NextResponse.json(
-        { success: false, error: 'Folha de pagamento nao encontrada' },
-        { status: 404 }
+        { success: false, error: 'Erro interno do servidor' },
+        { status: 500 }
       )
     }
-
-    return NextResponse.json({ success: true, data: folha })
-  } catch (error) {
-    console.error('Erro ao buscar folha de pagamento:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  },
+  { permissions: 'financeiro.manage' }
+)
 
 export const PUT = withAuth(
   async (

@@ -7,6 +7,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -82,17 +83,14 @@ export const GET = withErrorHandler(async (
 
 /**
  * PUT - Atualizar protocolo
+ * SEGURANÇA: Requer autenticação e permissão de protocolo
  */
-export const PUT = withErrorHandler(async (
+export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Protocolo')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Protocolo')
   const body = await request.json()
   const validatedData = AtualizarProtocoloSchema.parse(body)
 
@@ -102,21 +100,19 @@ export const PUT = withErrorHandler(async (
   })
 
   return createSuccessResponse(protocolo, 'Protocolo atualizado')
-})
+}, { permissions: 'protocolo.manage' })
 
 /**
  * POST - Ações específicas: tramitar, arquivar, anexo, converter
+ * SEGURANÇA: Requer autenticação e permissão de protocolo
  */
-export const POST = withErrorHandler(async (
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
   const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
-  const id = validateId(params.id, 'Protocolo')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Protocolo')
   const { searchParams } = new URL(request.url)
   const acao = searchParams.get('acao')
   const body = await request.json()
@@ -126,7 +122,7 @@ export const POST = withErrorHandler(async (
       const data = TramitarSchema.parse(body)
       const resultado = await tramitarProtocolo(id, {
         ...data,
-        usuarioId: (session.user as any).id
+        usuarioId: session?.user ? (session.user as any).id : undefined
       })
       return createSuccessResponse(resultado, 'Protocolo tramitado')
     }
@@ -136,7 +132,7 @@ export const POST = withErrorHandler(async (
       const protocolo = await arquivarProtocolo(
         id,
         data.motivo,
-        (session.user as any).id
+        session?.user ? (session.user as any).id : undefined
       )
       return createSuccessResponse(protocolo, 'Protocolo arquivado')
     }
@@ -166,4 +162,4 @@ export const POST = withErrorHandler(async (
     default:
       throw new ValidationError('Ação inválida. Use: tramitar, arquivar, anexo ou converter')
   }
-})
+}, { permissions: 'protocolo.manage' })

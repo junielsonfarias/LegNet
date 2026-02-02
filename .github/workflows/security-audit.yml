@@ -1,0 +1,214 @@
+# Workflow de Auditoria de Segurança
+# Executa npm audit semanalmente e em PRs
+
+name: Security Audit
+
+on:
+  # Executa semanalmente às segundas 9h (UTC)
+  schedule:
+    - cron: '0 9 * * 1'
+
+  # Executa em PRs para main
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+
+  # Permite execução manual
+  workflow_dispatch:
+    inputs:
+      fail_on_level:
+        description: 'Nível de severidade para falhar (critical, high, moderate, low)'
+        required: false
+        default: 'high'
+        type: choice
+        options:
+          - critical
+          - high
+          - moderate
+          - low
+
+jobs:
+  audit:
+    name: NPM Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Executar npm audit
+        id: audit
+        continue-on-error: true
+        run: |
+          npm audit --json > audit-report.json 2>&1 || true
+          node scripts/security-audit.js --json > audit-formatted.json 2>&1 || true
+
+      - name: Analisar resultados
+        id: analyze
+        run: |
+          if [ -f audit-formatted.json ]; then
+            CRITICAL=$(jq -r '.summary.critical // 0' audit-formatted.json)
+            HIGH=$(jq -r '.summary.high // 0' audit-formatted.json)
+            MODERATE=$(jq -r '.summary.moderate // 0' audit-formatted.json)
+            LOW=$(jq -r '.summary.low // 0' audit-formatted.json)
+            TOTAL=$(jq -r '.summary.total // 0' audit-formatted.json)
+
+            echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+            echo "high=$HIGH" >> $GITHUB_OUTPUT
+            echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
+            echo "low=$LOW" >> $GITHUB_OUTPUT
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
+            echo "## 🔒 Security Audit Report" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Severidade | Quantidade |" >> $GITHUB_STEP_SUMMARY
+            echo "|------------|------------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔴 Critical | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟠 High | $HIGH |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟡 Moderate | $MODERATE |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟢 Low | $LOW |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Total** | **$TOTAL** |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "## ✅ No vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload relatório de auditoria
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-report
+          path: |
+            audit-report.json
+            audit-formatted.json
+          retention-days: 30
+
+      - name: Criar issue se houver vulnerabilidades críticas
+        if: steps.analyze.outputs.critical > 0 || steps.analyze.outputs.high > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = ${{ steps.analyze.outputs.critical || 0 }};
+            const high = ${{ steps.analyze.outputs.high || 0 }};
+            const total = ${{ steps.analyze.outputs.total || 0 }};
+
+            // Verifica se já existe uma issue aberta
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security,dependencies'
+            });
+
+            const existingIssue = issues.data.find(i =>
+              i.title.includes('[Security] Vulnerabilidades')
+            );
+
+            const body = `## 🚨 Vulnerabilidades de Segurança Detectadas
+
+            O npm audit detectou vulnerabilidades nas dependências do projeto.
+
+            ### Resumo
+            - 🔴 **Críticas:** ${critical}
+            - 🟠 **Altas:** ${high}
+            - **Total:** ${total}
+
+            ### Ação Necessária
+            1. Execute \`npm audit\` localmente para ver detalhes
+            2. Execute \`npm audit fix\` para correções automáticas
+            3. Para vulnerabilidades sem fix automático, considere:
+               - Atualizar o pacote manualmente
+               - Substituir por alternativa segura
+               - Avaliar se o risco é aceitável (se for devDependency)
+
+            ### Comandos Úteis
+            \`\`\`bash
+            npm audit                    # Ver vulnerabilidades
+            npm audit fix                # Correção automática
+            npm audit fix --force        # Correção com breaking changes
+            npm update <pacote>          # Atualizar pacote específico
+            \`\`\`
+
+            ---
+            🤖 Esta issue foi criada automaticamente pelo workflow de segurança.
+            📅 Data: ${new Date().toISOString().split('T')[0]}
+            `;
+
+            if (existingIssue) {
+              // Atualiza issue existente
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+              console.log(`Issue #${existingIssue.number} atualizada`);
+            } else {
+              // Cria nova issue
+              const result = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[Security] Vulnerabilidades em dependências (${total} encontradas)`,
+                body: body,
+                labels: ['security', 'dependencies']
+              });
+              console.log(`Issue #${result.data.number} criada`);
+            }
+
+      - name: Verificar falha por nível
+        if: github.event.inputs.fail_on_level
+        run: |
+          FAIL_LEVEL="${{ github.event.inputs.fail_on_level }}"
+          CRITICAL=${{ steps.analyze.outputs.critical || 0 }}
+          HIGH=${{ steps.analyze.outputs.high || 0 }}
+          MODERATE=${{ steps.analyze.outputs.moderate || 0 }}
+
+          should_fail=false
+
+          case $FAIL_LEVEL in
+            critical)
+              [ "$CRITICAL" -gt 0 ] && should_fail=true
+              ;;
+            high)
+              [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ] && should_fail=true
+              ;;
+            moderate)
+              [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ] || [ "$MODERATE" -gt 0 ] && should_fail=true
+              ;;
+            low)
+              should_fail=true
+              ;;
+          esac
+
+          if [ "$should_fail" = true ]; then
+            echo "❌ Falha: Vulnerabilidades acima do nível aceitável ($FAIL_LEVEL)"
+            exit 1
+          fi
+
+      - name: Status final
+        if: always()
+        run: |
+          TOTAL=${{ steps.analyze.outputs.total || 0 }}
+          CRITICAL=${{ steps.analyze.outputs.critical || 0 }}
+          HIGH=${{ steps.analyze.outputs.high || 0 }}
+
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "⚠️ ATENÇÃO: $CRITICAL vulnerabilidades CRÍTICAS encontradas!"
+          elif [ "$HIGH" -gt 0 ]; then
+            echo "⚠️ ATENÇÃO: $HIGH vulnerabilidades ALTAS encontradas!"
+          elif [ "$TOTAL" -gt 0 ]; then
+            echo "ℹ️ $TOTAL vulnerabilidades encontradas (baixa/moderada severidade)"
+          else
+            echo "✅ Nenhuma vulnerabilidade encontrada!"
+          fi

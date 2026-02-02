@@ -8,6 +8,7 @@ import {
   NotFoundError,
   validateId
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,11 +24,13 @@ const EncerrarVotacaoSchema = z.object({
 })
 
 // POST - Registrar voto de membro da comissão sobre o parecer
-export const POST = withErrorHandler(async (
+// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
+export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const parecerId = validateId(params.id, 'Parecer')
+  const { id: rawId } = await context.params
+  const parecerId = validateId(rawId, 'Parecer')
   const body = await request.json()
 
   // Verificar se é uma ação de encerrar votação
@@ -133,7 +136,7 @@ export const POST = withErrorHandler(async (
     contagem,
     totalMembros: parecer.comissao.membros.length
   }, 'Voto registrado com sucesso')
-})
+}, { permissions: 'comissao.manage' })
 
 // Função para encerrar votação
 async function encerrarVotacao(parecerId: string, body: any) {

@@ -5,6 +5,7 @@ import {
   createSuccessResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import {
@@ -101,13 +102,9 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
 /**
  * POST - Criar nova norma
+ * SEGURANÇA: Requer autenticação e permissão de gestão legislativa
  */
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    throw new ValidationError('Não autorizado')
-  }
-
+export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CriarNormaSchema.parse(body)
 
@@ -119,4 +116,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
 
   return createSuccessResponse(norma, 'Norma criada com sucesso')
-})
+}, { permissions: 'proposicao.manage' })

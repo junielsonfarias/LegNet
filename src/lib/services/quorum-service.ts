@@ -324,7 +324,7 @@ export async function calcularResultadoVotacao(
 }
 
 /**
- * Determina a aplicação de quórum com base no tipo de proposição
+ * Determina a aplicação de quórum com base no tipo de proposição (versão estática/fallback)
  */
 export function determinarAplicacaoQuorum(
   tipoProposicao: string,
@@ -370,6 +370,142 @@ export function determinarAplicacaoQuorum(
 
   // Padrão: maioria simples
   return 'VOTACAO_SIMPLES'
+}
+
+/**
+ * Determina a aplicação de quórum com base no tipo de proposição (versão dinâmica)
+ * Busca a configuração no banco de dados e usa fallback hardcoded se não encontrar
+ *
+ * @param tipoProposicao - Código do tipo de proposição (ex: PROJETO_LEI)
+ * @param turno - Número do turno (1 ou 2)
+ * @param regimeUrgencia - Se está em regime de urgência
+ * @param isDerrubadaVeto - Se é votação de derrubada de veto
+ * @param isVotacaoComissao - Se é votação em comissão
+ */
+export async function determinarAplicacaoQuorumDinamico(
+  tipoProposicao: string,
+  turno: number = 1,
+  regimeUrgencia: boolean = false,
+  isDerrubadaVeto: boolean = false,
+  isVotacaoComissao: boolean = false
+): Promise<AplicacaoQuorum> {
+  // Casos especiais (fixos) têm prioridade
+  if (isDerrubadaVeto) {
+    return 'DERRUBADA_VETO'
+  }
+
+  if (isVotacaoComissao) {
+    return 'VOTACAO_COMISSAO'
+  }
+
+  if (regimeUrgencia) {
+    return 'VOTACAO_URGENCIA'
+  }
+
+  try {
+    // Buscar configuração do tipo no banco
+    const tipoConfig = await prisma.tipoProposicaoConfig.findUnique({
+      where: { codigo: tipoProposicao },
+      select: {
+        quorumAplicacao: true,
+        quorumAplicacao2Turno: true
+      }
+    })
+
+    if (tipoConfig?.quorumAplicacao) {
+      // 2º turno com quorum diferente
+      if (turno === 2 && tipoConfig.quorumAplicacao2Turno) {
+        logger.info('Usando quórum configurado para 2º turno', {
+          action: 'quorum_dinamico_2_turno',
+          tipoProposicao,
+          aplicacao: tipoConfig.quorumAplicacao2Turno
+        })
+        return tipoConfig.quorumAplicacao2Turno as AplicacaoQuorum
+      }
+
+      logger.info('Usando quórum configurado no banco', {
+        action: 'quorum_dinamico',
+        tipoProposicao,
+        turno,
+        aplicacao: tipoConfig.quorumAplicacao
+      })
+      return tipoConfig.quorumAplicacao as AplicacaoQuorum
+    }
+  } catch (error) {
+    logger.warn('Erro ao buscar quórum dinâmico, usando fallback', {
+      action: 'quorum_dinamico_fallback',
+      tipoProposicao,
+      error
+    })
+  }
+
+  // FALLBACK: usar mapeamento hardcoded atual
+  return determinarAplicacaoQuorum(tipoProposicao, regimeUrgencia, isDerrubadaVeto, isVotacaoComissao)
+}
+
+/**
+ * Interface para configuração completa de quórum de um tipo de proposição
+ */
+export interface QuorumConfigParaTipo {
+  aplicacao: AplicacaoQuorum
+  config: ConfiguracaoQuorum | null
+  totalTurnos: number
+  intersticioDias: number
+  quorumAplicacao2Turno?: AplicacaoQuorum | null
+}
+
+/**
+ * Obtém a configuração completa de quórum para um tipo de proposição
+ * Inclui informações de turno e interstício
+ *
+ * @param tipoProposicao - Código do tipo de proposição
+ * @param turno - Número do turno (1 ou 2)
+ */
+export async function getQuorumConfigParaTipo(
+  tipoProposicao: string,
+  turno: number = 1
+): Promise<QuorumConfigParaTipo> {
+  // Buscar configuração do tipo no banco
+  const tipoConfig = await prisma.tipoProposicaoConfig.findUnique({
+    where: { codigo: tipoProposicao },
+    select: {
+      quorumAplicacao: true,
+      quorumAplicacao2Turno: true,
+      totalTurnos: true,
+      intersticioDias: true
+    }
+  })
+
+  // Determinar a aplicação de quórum (dinâmica)
+  const aplicacao = await determinarAplicacaoQuorumDinamico(tipoProposicao, turno)
+
+  // Buscar a configuração de quórum para essa aplicação
+  const config = await getConfiguracaoQuorum(aplicacao)
+
+  return {
+    aplicacao,
+    config,
+    totalTurnos: tipoConfig?.totalTurnos ?? 1,
+    intersticioDias: tipoConfig?.intersticioDias ?? 0,
+    quorumAplicacao2Turno: tipoConfig?.quorumAplicacao2Turno as AplicacaoQuorum | null
+  }
+}
+
+/**
+ * Mapeia a aplicação de quórum para o tipo de quórum correspondente
+ */
+export function mapAplicacaoToTipoQuorum(aplicacao: string | null | undefined): TipoQuorum {
+  const mapeamento: Record<string, TipoQuorum> = {
+    'VOTACAO_SIMPLES': 'MAIORIA_SIMPLES',
+    'VOTACAO_ABSOLUTA': 'MAIORIA_ABSOLUTA',
+    'VOTACAO_QUALIFICADA': 'DOIS_TERCOS',
+    'VOTACAO_URGENCIA': 'MAIORIA_ABSOLUTA',
+    'VOTACAO_COMISSAO': 'MAIORIA_SIMPLES',
+    'DERRUBADA_VETO': 'MAIORIA_ABSOLUTA',
+    'INSTALACAO_SESSAO': 'MAIORIA_ABSOLUTA'
+  }
+
+  return mapeamento[aplicacao || ''] || 'MAIORIA_SIMPLES'
 }
 
 /**
