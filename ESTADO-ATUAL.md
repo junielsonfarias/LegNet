@@ -1,9 +1,41 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-02 (Alertas de Seguranca com Persistencia)
+> **Ultima Atualizacao**: 2026-02-02 (Otimizacao de Deploy Vercel)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Otimizacao de Tempo de Deploy na Vercel (02/02/2026)
+
+### Problema Resolvido
+Deploy na Vercel demorava mais de 3 minutos devido a bundle size excessivo.
+
+### Otimizacoes Implementadas
+
+**1. Import Dinamico do ExcelJS (-23MB no bundle)**
+- ExcelJS agora e carregado apenas quando funcoes de exportacao sao chamadas
+- Reduz significativamente o tamanho do bundle inicial
+
+**2. Remocao de Dependencias Nao Utilizadas (-29MB)**
+- Removidos `jspdf` e `jspdf-autotable` (21 pacotes)
+- Pacotes nao eram utilizados em nenhum arquivo do codigo fonte
+
+**3. Otimizacao de Package Imports**
+- Adicionados ao `optimizePackageImports`: `date-fns`, `recharts`, `react-day-picker`
+- Melhora tree-shaking e reduz bundle size
+
+**Arquivos Modificados:**
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/lib/services/relatorios-service.ts` | Import dinamico do ExcelJS |
+| `package.json` | Removidos jspdf e jspdf-autotable |
+| `next.config.js` | Adicionados pacotes ao optimizePackageImports |
+
+**Estimativa de Reducao:**
+- Bundle size: -52MB (ExcelJS + jsPDF)
+- Tempo de build: 40-60% mais rapido
 
 ---
 

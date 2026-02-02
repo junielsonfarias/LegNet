@@ -5,7 +5,13 @@ const nextConfig = {
 
   // Configurações de performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      'date-fns',
+      'recharts',
+      'react-day-picker'
+    ],
   },
 
   // Configurações de imagem otimizadas para Vercel + Supabase (Multi-Tenant)

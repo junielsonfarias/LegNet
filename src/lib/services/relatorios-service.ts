@@ -3,7 +3,12 @@
  * Suporta exportação de dados legislativos em múltiplos formatos
  */
 
-import ExcelJS from 'exceljs'
+// Import dinâmico do ExcelJS para reduzir bundle size (~23MB)
+// O módulo só é carregado quando uma função de exportação é chamada
+async function getExcelJS() {
+  const ExcelJS = (await import('exceljs')).default
+  return ExcelJS
+}
 
 // Tipos para os relatórios
 export interface RelatorioParlamentar {
@@ -104,6 +109,7 @@ export async function gerarRelatorioExcelParlamentares(
   parlamentares: RelatorioParlamentar[],
   titulo: string = 'Relatório de Parlamentares'
 ): Promise<Buffer> {
+  const ExcelJS = await getExcelJS()
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Sistema Legislativo - Câmara Municipal'
   workbook.created = new Date()
@@ -171,6 +177,7 @@ export async function gerarRelatorioExcelSessoes(
   sessoes: RelatorioSessao[],
   titulo: string = 'Relatório de Sessões'
 ): Promise<Buffer> {
+  const ExcelJS = await getExcelJS()
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Sistema Legislativo - Câmara Municipal'
   workbook.created = new Date()
@@ -231,6 +238,7 @@ export async function gerarRelatorioExcelProposicoes(
   proposicoes: RelatorioProposicao[],
   titulo: string = 'Relatório de Proposições'
 ): Promise<Buffer> {
+  const ExcelJS = await getExcelJS()
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Sistema Legislativo - Câmara Municipal'
   workbook.created = new Date()
@@ -304,6 +312,7 @@ export async function gerarRelatorioExcelPresenca(
   presencas: RelatorioPresenca[],
   titulo: string = 'Relatório de Presença'
 ): Promise<Buffer> {
+  const ExcelJS = await getExcelJS()
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Sistema Legislativo - Câmara Municipal'
   workbook.created = new Date()
@@ -384,6 +393,7 @@ export async function gerarRelatorioExcelVotacoes(
   votacoes: RelatorioVotacao[],
   titulo: string = 'Relatório de Votações'
 ): Promise<Buffer> {
+  const ExcelJS = await getExcelJS()
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'Sistema Legislativo - Câmara Municipal'
   workbook.created = new Date()
