@@ -10,7 +10,10 @@ const nextConfig = {
       '@radix-ui/react-icons',
       'date-fns',
       'recharts',
-      'react-day-picker'
+      'react-day-picker',
+      'clsx',
+      'tailwind-merge',
+      'sonner'
     ],
   },
 

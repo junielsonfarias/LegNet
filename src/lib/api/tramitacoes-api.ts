@@ -7,7 +7,7 @@ import {
   tiposOrgaosService,
   regrasTramitacaoService,
   regrasTramitacaoEtapasService
-} from '@/lib/tramitacao-service'
+} from '@/lib/tramitacao-mock-service'
 import type { Tramitacao } from '@/lib/types/tramitacao'
 
 export type TramitacaoStatus = 'RECEBIDA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'

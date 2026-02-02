@@ -27,7 +27,7 @@ import {
   FiltrosProposicao,
   ValidacaoVinculacao 
 } from '@/lib/pauta-proposicoes-service'
-import { regrasRegimentaisService, ValidacaoRegimental } from '@/lib/regras-regimentais-service'
+import { regrasRegimentaisService, ValidacaoRegimental } from '@/lib/regras-regimentais-mock-service'
 import ValidacaoRegimentalComponent from './validacao-regimental'
 import { toast } from 'sonner'
 

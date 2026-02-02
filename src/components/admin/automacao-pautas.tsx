@@ -20,12 +20,12 @@ import {
   Edit,
   Trash2
 } from 'lucide-react'
-import { 
-  automacaoPautasService, 
-  TemplatePauta, 
+import {
+  automacaoPautasService,
+  TemplatePauta,
   RegraAutomatica,
-  ExecucaoAutomatica 
-} from '@/lib/automacao-pautas-service'
+  ExecucaoAutomatica
+} from '@/lib/automacao-pautas-mock-service'
 import { toast } from 'sonner'
 
 interface AutomacaoPautasProps {

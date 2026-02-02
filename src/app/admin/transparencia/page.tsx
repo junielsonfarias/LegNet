@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { transparenciaService } from "@/lib/transparencia-service";
+import { transparenciaService } from "@/lib/transparencia-dados-service";
 import { TransparenciaItem, TransparenciaFiltros } from "@/lib/types/transparencia";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
 

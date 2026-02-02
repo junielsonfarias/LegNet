@@ -4,7 +4,7 @@ import {
   tramitacaoHistoricosService,
   tiposTramitacaoService,
   tiposOrgaosService
-} from '@/lib/tramitacao-service'
+} from '@/lib/tramitacao-mock-service'
 import { proposicoesService } from '@/lib/proposicoes-service'
 import { mockData } from '@/lib/db'
 

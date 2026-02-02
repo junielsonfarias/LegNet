@@ -1,0 +1,5 @@
+export { LegislaturasStats } from './LegislaturasStats'
+export { LegislaturasFilter } from './LegislaturasFilter'
+export { LegislaturasTable } from './LegislaturasTable'
+export { LegislaturaFormModal } from './LegislaturaFormModal'
+export { LegislaturaViewModal } from './LegislaturaViewModal'

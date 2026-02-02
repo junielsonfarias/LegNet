@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import nextDynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   ArrowLeft,
   Calendar,
@@ -34,7 +36,25 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
-import { PautaEditor } from '@/components/admin/pauta-editor'
+
+// Lazy loading do PautaEditor
+const PautaEditor = nextDynamic(
+  () => import('@/components/admin/pauta-editor').then(mod => ({ default: mod.PautaEditor })),
+  {
+    loading: () => (
+      <div className="space-y-4 p-6">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-4 w-2/3" />
+        <div className="space-y-2 mt-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </div>
+    ),
+    ssr: false
+  }
+)
 
 export const dynamic = 'force-dynamic'
 

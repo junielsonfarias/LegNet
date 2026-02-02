@@ -1,5 +1,5 @@
 import { mockData } from '@/lib/db'
-import { tramitacoesService } from '@/lib/tramitacao-service'
+import { tramitacoesService } from '@/lib/tramitacao-mock-service'
 import { publicTramitacoesApi } from '@/lib/api/public-tramitacoes-api'
 
 describe('publicTramitacoesApi fallback', () => {

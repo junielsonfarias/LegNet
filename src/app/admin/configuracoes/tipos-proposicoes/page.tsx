@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -34,8 +36,21 @@ import {
   GitBranch
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { FluxoTramitacaoEditor } from '@/components/admin/fluxo-tramitacao-editor'
 import { QuorumConfigForm } from '@/components/admin/quorum-config-form'
+
+// Lazy loading do editor pesado de fluxo de tramitação
+const FluxoTramitacaoEditor = dynamic(
+  () => import('@/components/admin/fluxo-tramitacao-editor').then(mod => ({ default: mod.FluxoTramitacaoEditor })),
+  {
+    loading: () => (
+      <div className="space-y-4 p-6">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    ),
+    ssr: false
+  }
+)
 
 // Interface para o tipo de proposicao do banco
 interface TipoProposicaoConfig {

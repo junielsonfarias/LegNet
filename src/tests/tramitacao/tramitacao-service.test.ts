@@ -5,7 +5,7 @@ import {
   tramitacaoNotificacoesService,
   regrasTramitacaoService,
   regrasTramitacaoEtapasService
-} from '@/lib/tramitacao-service'
+} from '@/lib/tramitacao-mock-service'
 
 const createBaseTramitacao = () =>
   tramitacoesService.create({

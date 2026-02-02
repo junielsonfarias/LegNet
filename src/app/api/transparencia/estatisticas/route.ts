@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createSuccessResponse } from '@/lib/error-handler'
-import { transparenciaService } from '@/lib/transparencia-service'
+import { transparenciaService } from '@/lib/transparencia-dados-service'
 
 export const dynamic = 'force-dynamic'
 

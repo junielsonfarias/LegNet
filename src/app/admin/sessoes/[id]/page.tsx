@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import nextDynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   ArrowLeft,
   Calendar,
@@ -35,13 +37,50 @@ import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
-import { MesaSessaoEditor } from '@/components/admin/mesa-sessao-editor'
-import { PautaEditor } from '@/components/admin/pauta-editor'
-import { OradoresSessaoEditor } from '@/components/admin/oradores-sessao-editor'
-import { ExpedientesSessaoEditor } from '@/components/admin/expedientes-sessao-editor'
-import { PresencaOrdemDiaEditor } from '@/components/admin/presenca-ordem-dia-editor'
-import { PresencaSessaoEditor } from '@/components/admin/presenca-sessao-editor'
 import { toast } from 'sonner'
+
+// Lazy loading de componentes pesados para melhor performance
+const EditorSkeleton = () => (
+  <div className="space-y-4 p-6">
+    <Skeleton className="h-8 w-1/3" />
+    <Skeleton className="h-4 w-2/3" />
+    <div className="space-y-2 mt-4">
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+      <Skeleton className="h-12 w-full" />
+    </div>
+  </div>
+)
+
+const MesaSessaoEditor = nextDynamic(
+  () => import('@/components/admin/mesa-sessao-editor').then(mod => ({ default: mod.MesaSessaoEditor })),
+  { loading: () => <EditorSkeleton />, ssr: false }
+)
+
+const PautaEditor = nextDynamic(
+  () => import('@/components/admin/pauta-editor').then(mod => ({ default: mod.PautaEditor })),
+  { loading: () => <EditorSkeleton />, ssr: false }
+)
+
+const OradoresSessaoEditor = nextDynamic(
+  () => import('@/components/admin/oradores-sessao-editor').then(mod => ({ default: mod.OradoresSessaoEditor })),
+  { loading: () => <EditorSkeleton />, ssr: false }
+)
+
+const ExpedientesSessaoEditor = nextDynamic(
+  () => import('@/components/admin/expedientes-sessao-editor').then(mod => ({ default: mod.ExpedientesSessaoEditor })),
+  { loading: () => <EditorSkeleton />, ssr: false }
+)
+
+const PresencaOrdemDiaEditor = nextDynamic(
+  () => import('@/components/admin/presenca-ordem-dia-editor').then(mod => ({ default: mod.PresencaOrdemDiaEditor })),
+  { loading: () => <EditorSkeleton />, ssr: false }
+)
+
+const PresencaSessaoEditor = nextDynamic(
+  () => import('@/components/admin/presenca-sessao-editor').then(mod => ({ default: mod.PresencaSessaoEditor })),
+  { loading: () => <EditorSkeleton />, ssr: false }
+)
 
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true

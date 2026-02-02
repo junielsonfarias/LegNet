@@ -14,7 +14,7 @@ import {
   FileText,
   ArrowRight
 } from 'lucide-react'
-import { ValidacaoRegimental, RegraAplicada } from '@/lib/regras-regimentais-service'
+import { ValidacaoRegimental, RegraAplicada } from '@/lib/regras-regimentais-mock-service'
 
 interface ValidacaoRegimentalProps {
   validacao: ValidacaoRegimental

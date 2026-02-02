@@ -1,312 +1,47 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Image from 'next/image'
+import { Card, CardContent } from '@/components/ui/card'
+import { Monitor } from 'lucide-react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { usePainelPublico } from './hooks/usePainelPublico'
 import {
-  Clock,
-  Users,
-  FileText,
-  CheckCircle,
-  XCircle,
-  Calendar,
-  Monitor,
-  Vote,
-  Timer,
-  User,
-  AlertCircle,
-  Minus,
-  ListOrdered,
-  ChevronLeft,
-  ChevronRight,
-  Flag,
-  History,
-  BookOpen,
-  Award
-} from 'lucide-react'
-
-interface Sessao {
-  id: string
-  numero: number
-  tipo: string
-  data: string
-  horario: string | null
-  local: string | null
-  status: string
-  descricao: string | null
-  tempoInicio: string | null
-  tempoAcumulado?: number
-  pautaSessao?: {
-    itens: PautaItem[]
-    itemAtual?: {
-      id: string
-      titulo: string
-      secao: string
-      ordem: number
-      status: string
-    } | null
-  }
-  presencas?: Presenca[]
-  quorum?: {
-    total: number
-    presentes: number
-    ausentes: number
-    percentual: number
-  }
-}
-
-interface PautaItem {
-  id: string
-  titulo: string
-  descricao: string | null
-  secao: string
-  ordem: number
-  status: string
-  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
-  iniciadoEm?: string | null
-  finalizadoEm?: string | null
-  proposicao?: {
-    id: string
-    numero: number
-    ano: number
-    titulo: string
-    tipo: string
-    status: string
-    votacoes?: VotacaoRegistro[]
-    autor?: {
-      id: string
-      nome: string
-      apelido: string | null
-    }
-  }
-}
-
-interface Presenca {
-  id: string
-  presente: boolean
-  justificativa: string | null
-  parlamentar: {
-    id: string
-    nome: string
-    apelido: string | null
-    partido: string | null
-    foto: string | null
-  }
-}
-
-interface VotacaoRegistro {
-  id: string
-  voto: 'SIM' | 'NAO' | 'ABSTENCAO' | 'AUSENTE'
-  parlamentar: {
-    id: string
-    nome: string
-    apelido: string | null
-    foto?: string | null
-    partido?: string | null
-  }
-}
+  PainelHeader,
+  SuspendedBanner,
+  CompletedBanner,
+  ItemNavigation,
+  ItemAtual,
+  VotacaoEmAndamento,
+  VotacaoResultado,
+  ItemStatus,
+  PresencaSidebar
+} from './components'
 
 function PainelPublicoContent() {
   const searchParams = useSearchParams()
   const sessaoIdParam = searchParams.get('sessaoId')
   const { configuracao } = useConfiguracaoInstitucional()
-  const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
+  const nomeCasa = configuracao.nomeCasa || 'Camara Municipal'
 
-  const [sessao, setSessao] = useState<Sessao | null>(null)
-  const [presencas, setPresencas] = useState<Presenca[]>([])
-  const [votacoes, setVotacoes] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [initialLoadDone, setInitialLoadDone] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [tempoSessao, setTempoSessao] = useState(0)
-  const [itemAtualIndex, setItemAtualIndex] = useState(0) // Índice do item sendo visualizado
-
-  // Atualizar relógio a cada segundo
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  // Calcular tempo da sessão (considera tempoAcumulado para suspensão)
-  useEffect(() => {
-    const tempoAcumulado = sessao?.tempoAcumulado || 0
-
-    if (sessao?.status === 'EM_ANDAMENTO' && sessao?.tempoInicio) {
-      const interval = setInterval(() => {
-        const inicio = new Date(sessao.tempoInicio!)
-        const agora = new Date()
-        const diff = Math.floor((agora.getTime() - inicio.getTime()) / 1000)
-        setTempoSessao(tempoAcumulado + (diff > 0 ? diff : 0))
-      }, 1000)
-      return () => clearInterval(interval)
-    } else if (sessao?.status === 'SUSPENSA') {
-      // Sessão suspensa - mostrar tempo acumulado (pausado)
-      setTempoSessao(tempoAcumulado)
-    } else if (sessao?.status === 'CONCLUIDA') {
-      // Sessão concluída - mostrar tempo total final
-      setTempoSessao(tempoAcumulado)
-    }
-  }, [sessao?.tempoInicio, sessao?.status, sessao?.tempoAcumulado])
-
-  // Carregar dados da sessão
-  const carregarDados = useCallback(async (isInitialLoad = false) => {
-    try {
-      // Só mostrar loading na carga inicial
-      if (isInitialLoad) {
-        setLoading(true)
-      }
-      setError(null)
-
-      let sessaoId = sessaoIdParam
-
-      // Se não tem sessaoId, buscar sessão em andamento ou a mais recente via API pública
-      if (!sessaoId) {
-        // Usar dados-abertos que é público
-        const response = await fetch('/api/dados-abertos/sessoes')
-        const data = await response.json()
-
-        if (data.dados && data.dados.length > 0) {
-          // Primeiro tenta encontrar sessão em andamento
-          const sessaoEmAndamento = data.dados.find((s: any) => s.status === 'EM_ANDAMENTO')
-          if (sessaoEmAndamento) {
-            sessaoId = sessaoEmAndamento.id
-          } else {
-            // Senão usa a primeira (mais recente)
-            sessaoId = data.dados[0].id
-          }
-        }
-      }
-
-      if (!sessaoId) {
-        setError('Nenhuma sessão disponível')
-        setLoading(false)
-        return
-      }
-
-      // Carregar dados da sessão usando endpoints públicos
-      const [sessaoRes, presencaRes, votacaoRes] = await Promise.all([
-        fetch(`/api/painel/sessao-completa?sessaoId=${sessaoId}`),
-        fetch(`/api/sessoes/${sessaoId}/presenca`),
-        fetch(`/api/sessoes/${sessaoId}/votacao`)
-      ])
-
-      const sessaoData = await sessaoRes.json()
-      const presencaData = await presencaRes.json()
-      const votacaoData = await votacaoRes.json()
-
-      if (sessaoData.success && sessaoData.data) {
-        setSessao(sessaoData.data)
-        // Extrair presenças da sessão completa (já vem incluído com todos os parlamentares)
-        if (sessaoData.data.presencas && sessaoData.data.presencas.length > 0) {
-          setPresencas(sessaoData.data.presencas)
-        } else if (presencaData.success && presencaData.data && presencaData.data.length > 0) {
-          // Fallback para API de presença se sessão-completa não tiver presenças
-          setPresencas(presencaData.data)
-        }
-      }
-
-      if (votacaoData.success && votacaoData.data) {
-        setVotacoes(votacaoData.data)
-      }
-
-    } catch (err) {
-      console.error('Erro ao carregar dados:', err)
-      if (!initialLoadDone) {
-        setError('Erro ao carregar dados do painel')
-      }
-    } finally {
-      if (!initialLoadDone) {
-        setLoading(false)
-        setInitialLoadDone(true)
-      }
-    }
-  }, [sessaoIdParam, initialLoadDone])
-
-  // Carregar dados inicialmente e atualizar a cada 10 segundos
-  useEffect(() => {
-    // Carga inicial com loading
-    carregarDados(true)
-    // Atualizações periódicas sem loading (silent refresh) - 5 segundos para melhor sincronização
-    const interval = setInterval(() => carregarDados(false), 5000)
-    return () => clearInterval(interval)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Sincronizar com item atual do operador quando sessao em andamento
-  useEffect(() => {
-    if (sessao?.status === 'EM_ANDAMENTO' && sessao?.pautaSessao?.itemAtual) {
-      // Ordenar itens da mesma forma que fazemos no render
-      const ordemSecoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'EXPLICACOES_PESSOAIS', 'OUTROS', 'SEM_SECAO']
-      const itensOrdenados = [...(sessao.pautaSessao?.itens || [])].sort((a, b) => {
-        const secaoA = ordemSecoes.indexOf(a.secao) !== -1 ? ordemSecoes.indexOf(a.secao) : 999
-        const secaoB = ordemSecoes.indexOf(b.secao) !== -1 ? ordemSecoes.indexOf(b.secao) : 999
-        if (secaoA !== secaoB) return secaoA - secaoB
-        return (a.ordem || 0) - (b.ordem || 0)
-      })
-
-      // Encontrar indice do item atual na lista ordenada
-      const itemAtualId = sessao.pautaSessao.itemAtual.id
-      const novoIndex = itensOrdenados.findIndex(item => item.id === itemAtualId)
-
-      if (novoIndex !== -1 && novoIndex !== itemAtualIndex) {
-        setItemAtualIndex(novoIndex)
-      }
-    }
-  }, [sessao?.pautaSessao?.itemAtual?.id, sessao?.status]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Formatar tempo
-  const formatarTempo = (segundos: number) => {
-    const h = Math.floor(segundos / 3600)
-    const m = Math.floor((segundos % 3600) / 60)
-    const s = segundos % 60
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-  }
-
-  // Obter votações de uma proposição específica
-  // Primeiro tenta do estado de votações carregado, depois dos dados embutidos na sessão
-  const getVotacoesProposicao = (proposicaoId: string, itemProposicao?: PautaItem['proposicao']) => {
-    // Tentar do estado de votações carregado separadamente
-    const prop = votacoes.find(v => v.id === proposicaoId)
-    if (prop?.votacoes && prop.votacoes.length > 0) {
-      return prop.votacoes
-    }
-    // Se não encontrou, usar votações embutidas na proposição do item
-    if (itemProposicao?.votacoes && itemProposicao.votacoes.length > 0) {
-      return itemProposicao.votacoes
-    }
-    return []
-  }
-
-  // Calcular estatísticas de votação
-  const calcularVotacao = (votos: VotacaoRegistro[] = []) => {
-    const sim = votos.filter(v => v.voto === 'SIM').length
-    const nao = votos.filter(v => v.voto === 'NAO').length
-    const abstencao = votos.filter(v => v.voto === 'ABSTENCAO').length
-    const ausente = votos.filter(v => v.voto === 'AUSENTE').length
-    const total = sim + nao + abstencao + ausente
-    const aprovado = total > 0 && sim > (nao + abstencao)
-    return { sim, nao, abstencao, ausente, total, aprovado }
-  }
-
-  // Navegação entre itens
-  const irParaAnterior = () => {
-    if (itemAtualIndex > 0) {
-      setItemAtualIndex(itemAtualIndex - 1)
-    }
-  }
-
-  const irParaProximo = () => {
-    const itens = sessao?.pautaSessao?.itens || []
-    if (itemAtualIndex < itens.length - 1) {
-      setItemAtualIndex(itemAtualIndex + 1)
-    }
-  }
+  const {
+    sessao,
+    loading,
+    error,
+    tempoSessao,
+    itemAtualIndex,
+    itensOrdenados,
+    itemAtual,
+    totalItens,
+    presentes,
+    ausentes,
+    totalParlamentares,
+    percentualPresenca,
+    votacoesItemAtual,
+    estatisticasVotacao,
+    irParaAnterior,
+    irParaProximo
+  } = usePainelPublico({ sessaoIdParam })
 
   // Loading state
   if (loading) {
@@ -314,7 +49,7 @@ function PainelPublicoContent() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-xl">Carregando painel público...</p>
+          <p className="text-white text-xl">Carregando painel publico...</p>
         </div>
       </div>
     )
@@ -328,10 +63,10 @@ function PainelPublicoContent() {
           <CardContent className="text-center">
             <Monitor className="h-16 w-16 text-blue-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-4">
-              {error || 'Nenhuma sessão disponível'}
+              {error || 'Nenhuma sessao disponivel'}
             </h2>
             <p className="text-blue-200 mb-6">
-              Não há sessões disponíveis no momento.
+              Nao ha sessoes disponiveis no momento.
             </p>
           </CardContent>
         </Card>
@@ -339,859 +74,80 @@ function PainelPublicoContent() {
     )
   }
 
-  // Ordem das secoes (mesma do painel do operador)
-  const ordemSecoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'EXPLICACOES_PESSOAIS', 'OUTROS', 'SEM_SECAO']
-
-  // Dados da sessão - ordenar itens por secao e depois por ordem
-  const itensOrdenados = [...(sessao.pautaSessao?.itens || [])].sort((a, b) => {
-    // Primeiro ordena por secao
-    const secaoA = ordemSecoes.indexOf(a.secao) !== -1 ? ordemSecoes.indexOf(a.secao) : 999
-    const secaoB = ordemSecoes.indexOf(b.secao) !== -1 ? ordemSecoes.indexOf(b.secao) : 999
-    if (secaoA !== secaoB) return secaoA - secaoB
-    // Depois ordena por ordem dentro da secao
-    return (a.ordem || 0) - (b.ordem || 0)
-  })
-  const itens = itensOrdenados
-  const itemAtual = itens[itemAtualIndex] || null
-  const totalItens = itens.length
-  const sessaoConcluida = sessao.status === 'CONCLUIDA'
   const sessaoEmAndamento = sessao.status === 'EM_ANDAMENTO'
-
-  // Calcular presenças - usar dados do quórum se disponível
-  const presentes = presencas.filter(p => p.presente)
-  const ausentes = presencas.filter(p => !p.presente)
-  const totalParlamentares = sessao.quorum?.total || presencas.length
-  const percentualPresenca = sessao.quorum?.percentual ?? (
-    totalParlamentares > 0
-      ? Math.round((presentes.length / totalParlamentares) * 100)
-      : 0
-  )
-
-  // Formatar tipo de sessão
-  const tipoSessaoLabel = {
-    'ORDINARIA': 'Ordinária',
-    'EXTRAORDINARIA': 'Extraordinária',
-    'SOLENE': 'Solene',
-    'ESPECIAL': 'Especial'
-  }[sessao.tipo] || sessao.tipo
-
-  // Status da sessão
+  const sessaoConcluida = sessao.status === 'CONCLUIDA'
   const sessaoSuspensa = sessao.status === 'SUSPENSA'
-  const statusConfig = {
-    'AGENDADA': { label: 'Agendada', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30', icon: Clock },
-    'EM_ANDAMENTO': { label: 'Em Andamento', color: 'bg-green-500/20 text-green-300 border-green-400/30', icon: Timer },
-    'SUSPENSA': { label: 'Sessão Suspensa', color: 'bg-orange-500/20 text-orange-300 border-orange-400/30', icon: Clock },
-    'CONCLUIDA': { label: 'Sessão Finalizada', color: 'bg-blue-500/20 text-blue-300 border-blue-400/30', icon: Flag },
-    'CANCELADA': { label: 'Cancelada', color: 'bg-red-500/20 text-red-300 border-red-400/30', icon: XCircle }
-  }[sessao.status] || { label: sessao.status, color: 'bg-gray-500/20 text-gray-300', icon: AlertCircle }
-
-  // Votações do item atual
-  const votacoesItemAtual = itemAtual?.proposicao
-    ? getVotacoesProposicao(itemAtual.proposicao.id, itemAtual.proposicao)
-    : []
-  const estatisticasVotacao = calcularVotacao(votacoesItemAtual)
 
   return (
     <>
       {/* Header do Painel */}
-      <div className="bg-white/10 backdrop-blur-lg border-b border-white/20 shadow-2xl">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                  <Monitor className="h-6 w-6 text-white" />
-                </div>
-                {sessaoEmAndamento && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-                )}
-                {sessaoConcluida && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full"></div>
-                )}
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  {sessao.numero}ª Sessão {tipoSessaoLabel} - {new Date(sessao.data).getFullYear()}
-                </h1>
-                <p className="text-blue-200">{nomeCasa}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className={`inline-flex items-center rounded-full font-semibold text-base px-4 py-2 border mb-2 ${statusConfig.color}`}>
-                {sessaoEmAndamento && (
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-                )}
-                {sessaoConcluida && (
-                  <Flag className="h-4 w-4 mr-2" />
-                )}
-                {statusConfig.label.toUpperCase()}
-              </div>
-              <div className="flex items-center gap-4 text-sm text-blue-300 flex-wrap justify-end">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  {new Date(sessao.data).toLocaleDateString('pt-BR')}
-                </div>
-                {sessao.horario && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {sessao.horario}
-                  </div>
-                )}
-                {sessao.local && (
-                  <div className="flex items-center gap-1">
-                    <Monitor className="h-4 w-4" />
-                    {sessao.local}
-                  </div>
-                )}
-                <div className="flex items-center gap-1">
-                  <FileText className="h-4 w-4" />
-                  {totalItens} itens na pauta
-                </div>
-                {(sessaoEmAndamento || sessaoSuspensa) && (
-                  <div className={`flex items-center gap-1 font-mono text-lg ${sessaoSuspensa ? 'text-orange-300' : 'text-green-300'}`}>
-                    <Timer className={`h-5 w-5 ${sessaoSuspensa ? 'animate-pulse' : ''}`} />
-                    {formatarTempo(tempoSessao)}
-                    {sessaoSuspensa && (
-                      <Badge className="bg-orange-500/30 text-orange-300 text-xs ml-1">
-                        PAUSADO
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PainelHeader
+        sessao={sessao}
+        tempoSessao={tempoSessao}
+        totalItens={totalItens}
+        nomeCasa={nomeCasa}
+      />
 
-      {/* Banner de Sessão Suspensa */}
-      {sessaoSuspensa && (
-        <div className="bg-gradient-to-r from-orange-600/40 to-amber-600/40 border-b border-orange-400/50 px-6 py-4">
-          <div className="flex items-center justify-center gap-3">
-            <Clock className="h-6 w-6 text-orange-300 animate-pulse" />
-            <h2 className="text-xl font-bold text-white">
-              SESSÃO SUSPENSA
-            </h2>
-            <Clock className="h-6 w-6 text-orange-300 animate-pulse" />
-          </div>
-          <p className="text-center text-orange-200 mt-2">
-            A sessão está temporariamente suspensa. Aguarde a retomada dos trabalhos.
-          </p>
-          <p className="text-center text-orange-300 font-mono mt-2">
-            Tempo decorrido: {formatarTempo(tempoSessao)}
-          </p>
-        </div>
-      )}
+      {/* Banner de Sessao Suspensa */}
+      {sessaoSuspensa && <SuspendedBanner tempoSessao={tempoSessao} />}
 
-      {/* Banner de Sessão Concluída com Resumo */}
+      {/* Banner de Sessao Concluida com Resumo */}
       {sessaoConcluida && (
-        <div className="bg-blue-600/30 border-b border-blue-400/30 px-6 py-4">
-          <div className="flex items-center justify-center gap-3 text-blue-200 mb-3">
-            <History className="h-5 w-5" />
-            <span className="font-medium">
-              Esta sessão foi finalizada. Você está visualizando o histórico de votações.
-            </span>
-          </div>
-          {/* Resumo da Sessão */}
-          {(() => {
-            const itensVotados = itens.filter(i =>
-              i.status === 'APROVADO' || i.status === 'REJEITADO' || i.status === 'CONCLUIDO'
-            )
-            const aprovados = itens.filter(i => i.status === 'APROVADO' || i.status === 'CONCLUIDO').length
-            const rejeitados = itens.filter(i => i.status === 'REJEITADO').length
-            const adiados = itens.filter(i => i.status === 'ADIADO').length
-            const retirados = itens.filter(i => i.status === 'RETIRADO').length
-            const vistas = itens.filter(i => i.status === 'VISTA').length
-
-            return (
-              <div className="flex items-center justify-center gap-6 text-sm flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="text-blue-300">Total na Pauta:</span>
-                  <span className="font-bold text-white">{totalItens}</span>
-                </div>
-                {aprovados > 0 && (
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-400" />
-                    <span className="text-green-300">{aprovados} aprovado(s)</span>
-                  </div>
-                )}
-                {rejeitados > 0 && (
-                  <div className="flex items-center gap-2">
-                    <XCircle className="h-4 w-4 text-red-400" />
-                    <span className="text-red-300">{rejeitados} rejeitado(s)</span>
-                  </div>
-                )}
-                {adiados > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-yellow-400" />
-                    <span className="text-yellow-300">{adiados} adiado(s)</span>
-                  </div>
-                )}
-                {retirados > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Minus className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-300">{retirados} retirado(s)</span>
-                  </div>
-                )}
-                {vistas > 0 && (
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-purple-400" />
-                    <span className="text-purple-300">{vistas} com vista</span>
-                  </div>
-                )}
-              </div>
-            )
-          })()}
-        </div>
+        <CompletedBanner itens={itensOrdenados} totalItens={totalItens} />
       )}
 
-      {/* Conteúdo Principal */}
+      {/* Conteudo Principal */}
       <div className="p-6">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-          {/* Coluna 1: Item Atual / Votação */}
+          {/* Coluna 1: Item Atual / Votacao */}
           <div className="xl:col-span-2 space-y-6">
-
-            {/* Navegação entre Itens da Pauta - oculta quando sessao em andamento */}
-            {totalItens > 0 && (
-              <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    {/* Botao Anterior - oculto durante sessao em andamento */}
-                    {!sessaoEmAndamento ? (
-                      <Button
-                        onClick={irParaAnterior}
-                        disabled={itemAtualIndex === 0}
-                        variant="outline"
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
-                      >
-                        <ChevronLeft className="h-5 w-5 mr-1" />
-                        Anterior
-                      </Button>
-                    ) : (
-                      <div className="w-24" />
-                    )}
-
-                    <div className="text-center">
-                      <p className="text-sm text-blue-300">
-                        {sessaoEmAndamento ? 'Item em Discussao' : 'Item da Pauta'}
-                      </p>
-                      <p className="text-2xl font-bold text-white">
-                        {itemAtualIndex + 1} <span className="text-blue-400">de</span> {totalItens}
-                      </p>
-                      {sessaoEmAndamento && itemAtual?.secao && (
-                        <p className="text-xs text-blue-300 mt-1">{itemAtual.secao.replace(/_/g, ' ')}</p>
-                      )}
-                    </div>
-
-                    {/* Botao Proximo - oculto durante sessao em andamento */}
-                    {!sessaoEmAndamento ? (
-                      <Button
-                        onClick={irParaProximo}
-                        disabled={itemAtualIndex >= totalItens - 1}
-                        variant="outline"
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
-                      >
-                        Próximo
-                        <ChevronRight className="h-5 w-5 ml-1" />
-                      </Button>
-                    ) : (
-                      <div className="w-24" />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Navegacao entre Itens da Pauta */}
+            <ItemNavigation
+              itemAtualIndex={itemAtualIndex}
+              totalItens={totalItens}
+              itemAtual={itemAtual}
+              sessaoEmAndamento={sessaoEmAndamento}
+              onAnterior={irParaAnterior}
+              onProximo={irParaProximo}
+            />
 
             {/* Item Atual da Pauta */}
-            {itemAtual ? (
-              <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FileText className="h-6 w-6 mr-2 text-blue-400" />
-                      Matéria em Pauta
-                    </div>
-                    <Badge className={
-                      itemAtual.status === 'APROVADO' || itemAtual.status === 'CONCLUIDO'
-                        ? 'bg-green-600/30 text-green-200 border-green-400/50' :
-                      itemAtual.status === 'REJEITADO'
-                        ? 'bg-red-600/30 text-red-200 border-red-400/50' :
-                      itemAtual.status === 'EM_VOTACAO'
-                        ? 'bg-orange-600/30 text-orange-200 border-orange-400/50' :
-                      itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'LEITURA'
-                        ? 'bg-sky-600/30 text-sky-200 border-sky-400/50' :
-                      itemAtual.status === 'EM_DISCUSSAO'
-                        ? 'bg-yellow-600/30 text-yellow-200 border-yellow-400/50' :
-                      itemAtual.status === 'VISTA'
-                        ? 'bg-purple-600/30 text-purple-200 border-purple-400/50' :
-                      'bg-gray-600/30 text-gray-200 border-gray-400/50'
-                    }>
-                      {itemAtual.status === 'APROVADO' || itemAtual.status === 'CONCLUIDO' ? 'Aprovado' :
-                       itemAtual.status === 'REJEITADO' ? 'Rejeitado' :
-                       itemAtual.status === 'EM_VOTACAO' ? 'Em Votação' :
-                       itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'LEITURA' ? 'Em Leitura' :
-                       itemAtual.status === 'EM_DISCUSSAO' ? 'Em Discussão' :
-                       itemAtual.status === 'PENDENTE' ? 'Pendente' :
-                       itemAtual.status === 'VISTA' ? 'Vista' :
-                       itemAtual.status}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-6 rounded-xl border border-blue-400/30">
-                    <div className="flex items-start justify-between mb-3">
-                      <Badge className="bg-blue-600/30 text-blue-200 border-blue-400/50">
-                        {itemAtual.secao}
-                      </Badge>
-                      <span className="text-sm text-blue-300">Item #{itemAtual.ordem}</span>
-                    </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      {itemAtual.proposicao
-                        ? `${itemAtual.proposicao.tipo} nº ${itemAtual.proposicao.numero}/${itemAtual.proposicao.ano}`
-                        : itemAtual.titulo
-                      }
-                    </h2>
-                    <p className="text-lg text-blue-200">
-                      {itemAtual.proposicao?.titulo || itemAtual.descricao || 'Sem descrição'}
-                    </p>
-                    {itemAtual.proposicao?.autor && (
-                      <div className="flex items-center gap-2 mt-4">
-                        <User className="h-4 w-4 text-blue-300" />
-                        <span className="text-white">
-                          Autor: <span className="font-semibold text-blue-300">
-                            {itemAtual.proposicao.autor.apelido || itemAtual.proposicao.autor.nome}
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
-                <CardContent className="py-12 text-center">
-                  <ListOrdered className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                  <p className="text-xl text-blue-200">Nenhum item na pauta</p>
-                </CardContent>
-              </Card>
-            )}
+            <ItemAtual itemAtual={itemAtual} />
 
-            {/* Votação em Andamento - Mostra apenas durante a votação */}
+            {/* Votacao em Andamento - Mostra apenas durante a votacao */}
             {itemAtual && itemAtual.status === 'EM_VOTACAO' && (
-              <Card className="bg-white/10 backdrop-blur-lg border border-purple-400/50 text-white">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold flex items-center justify-center">
-                    <Vote className="h-6 w-6 mr-2 text-purple-400 animate-pulse" />
-                    Votação em Andamento
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Totais parciais */}
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
-                      <div className="text-4xl font-extrabold text-green-300 mb-1">{estatisticasVotacao.sim}</div>
-                      <div className="text-lg text-green-200 font-semibold">SIM</div>
-                    </div>
-                    <div className="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
-                      <div className="text-4xl font-extrabold text-red-300 mb-1">{estatisticasVotacao.nao}</div>
-                      <div className="text-lg text-red-200 font-semibold">NÃO</div>
-                    </div>
-                    <div className="p-4 bg-yellow-600/30 rounded-xl border border-yellow-400/30">
-                      <div className="text-4xl font-extrabold text-yellow-300 mb-1">{estatisticasVotacao.abstencao}</div>
-                      <div className="text-lg text-yellow-200 font-semibold">ABST.</div>
-                    </div>
-                  </div>
-
-                  {/* Barra de progresso */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-blue-200">
-                      <span>Votos registrados</span>
-                      <span>{estatisticasVotacao.total} de {presentes.length}</span>
-                    </div>
-                    <div className="w-full bg-gray-700/50 rounded-full h-3">
-                      <div
-                        className="bg-purple-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${presentes.length > 0 ? (estatisticasVotacao.total / presentes.length) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-center text-purple-200 text-sm">
-                    Acompanhe os votos individuais na coluna lateral
-                  </p>
-                </CardContent>
-              </Card>
+              <VotacaoEmAndamento
+                estatisticas={estatisticasVotacao}
+                totalPresentes={presentes.length}
+              />
             )}
 
-            {/* Resultado da Votação - Mostra apenas após encerrar a votação */}
+            {/* Resultado da Votacao - Mostra apenas apos encerrar a votacao */}
             {itemAtual && votacoesItemAtual.length > 0 && itemAtual.status !== 'EM_VOTACAO' && (
-              <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold flex items-center justify-center">
-                    <Vote className="h-6 w-6 mr-2 text-green-400" />
-                    Resultado da Votação
-                    {estatisticasVotacao.total > 0 && (
-                      <Badge className={`ml-3 ${
-                        estatisticasVotacao.aprovado
-                          ? 'bg-green-600/30 text-green-200 border-green-400/50'
-                          : 'bg-red-600/30 text-red-200 border-red-400/50'
-                      }`}>
-                        {estatisticasVotacao.aprovado ? 'APROVADO' : 'REJEITADO'}
-                      </Badge>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {/* Resultados finais */}
-                  <div className="grid grid-cols-4 gap-4 text-center">
-                    <div className="p-4 bg-green-600/30 rounded-xl border border-green-400/30">
-                      <div className="text-4xl font-extrabold text-green-300 mb-1">{estatisticasVotacao.sim}</div>
-                      <div className="text-lg text-green-200 font-semibold">SIM</div>
-                      {estatisticasVotacao.total > 0 && (
-                        <div className="text-sm text-green-300 mt-1">
-                          {Math.round((estatisticasVotacao.sim / estatisticasVotacao.total) * 100)}%
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 bg-red-600/30 rounded-xl border border-red-400/30">
-                      <div className="text-4xl font-extrabold text-red-300 mb-1">{estatisticasVotacao.nao}</div>
-                      <div className="text-lg text-red-200 font-semibold">NÃO</div>
-                      {estatisticasVotacao.total > 0 && (
-                        <div className="text-sm text-red-300 mt-1">
-                          {Math.round((estatisticasVotacao.nao / estatisticasVotacao.total) * 100)}%
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 bg-yellow-600/30 rounded-xl border border-yellow-400/30">
-                      <div className="text-4xl font-extrabold text-yellow-300 mb-1">{estatisticasVotacao.abstencao}</div>
-                      <div className="text-lg text-yellow-200 font-semibold">ABST.</div>
-                      {estatisticasVotacao.total > 0 && (
-                        <div className="text-sm text-yellow-300 mt-1">
-                          {Math.round((estatisticasVotacao.abstencao / estatisticasVotacao.total) * 100)}%
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-4 bg-gray-600/30 rounded-xl border border-gray-400/30">
-                      <div className="text-4xl font-extrabold text-gray-300 mb-1">{estatisticasVotacao.ausente}</div>
-                      <div className="text-lg text-gray-200 font-semibold">AUS.</div>
-                      {estatisticasVotacao.total > 0 && (
-                        <div className="text-sm text-gray-300 mt-1">
-                          {Math.round((estatisticasVotacao.ausente / estatisticasVotacao.total) * 100)}%
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <VotacaoResultado estatisticas={estatisticasVotacao} />
             )}
 
-            {/* Informações do Item (quando não há votação registrada) */}
+            {/* Informacoes do Item (quando nao ha votacao registrada) */}
             {itemAtual && votacoesItemAtual.length === 0 && (
-              <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
-                <CardContent className="py-8 text-center">
-                  {/* Item em Leitura (tipoAcao LEITURA) */}
-                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'LEITURA' && (
-                    <>
-                      <BookOpen className="h-12 w-12 text-sky-400 mx-auto mb-4" />
-                      <p className="text-xl text-sky-200 font-bold mb-2">
-                        EM LEITURA
-                      </p>
-                      <p className="text-sm text-blue-300">
-                        Acompanhe a leitura em plenário
-                      </p>
-                    </>
-                  )}
-                  {/* Item em Leitura para Votação (tipoAcao VOTACAO mas em discussão) */}
-                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'VOTACAO' && (
-                    <>
-                      <BookOpen className="h-12 w-12 text-purple-400 mx-auto mb-4" />
-                      <p className="text-xl text-purple-200 font-bold mb-2">
-                        LEITURA DA MATÉRIA
-                      </p>
-                      <p className="text-sm text-purple-300">
-                        Após a leitura, será colocada em votação
-                      </p>
-                    </>
-                  )}
-                  {/* Item em Discussão */}
-                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'DISCUSSAO' && (
-                    <>
-                      <Users className="h-12 w-12 text-teal-400 mx-auto mb-4" />
-                      <p className="text-xl text-teal-200 font-bold mb-2">
-                        EM DISCUSSÃO
-                      </p>
-                      <p className="text-sm text-teal-300">
-                        Parlamentares discutindo a matéria
-                      </p>
-                    </>
-                  )}
-                  {/* Item em Comunicado */}
-                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'COMUNICADO' && (
-                    <>
-                      <FileText className="h-12 w-12 text-amber-400 mx-auto mb-4" />
-                      <p className="text-xl text-amber-200 font-bold mb-2">
-                        COMUNICADO
-                      </p>
-                      <p className="text-sm text-amber-300">
-                        Comunicado em andamento
-                      </p>
-                    </>
-                  )}
-                  {/* Item em Homenagem */}
-                  {itemAtual.status === 'EM_DISCUSSAO' && itemAtual.tipoAcao === 'HOMENAGEM' && (
-                    <>
-                      <Award className="h-12 w-12 text-pink-400 mx-auto mb-4" />
-                      <p className="text-xl text-pink-200 font-bold mb-2">
-                        HOMENAGEM
-                      </p>
-                      <p className="text-sm text-pink-300">
-                        Homenagem em andamento
-                      </p>
-                    </>
-                  )}
-                  {/* Item em Discussão sem tipoAcao definido */}
-                  {itemAtual.status === 'EM_DISCUSSAO' && !itemAtual.tipoAcao && (
-                    <>
-                      <FileText className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                      <p className="text-xl text-blue-200 font-bold mb-2">
-                        EM ANDAMENTO
-                      </p>
-                      <p className="text-sm text-blue-300">
-                        Acompanhe os trabalhos em plenário
-                      </p>
-                    </>
-                  )}
-                  {/* Item em Votação */}
-                  {itemAtual.status === 'EM_VOTACAO' && (
-                    <>
-                      <Vote className="h-10 w-10 text-orange-400 mx-auto mb-3 animate-pulse" />
-                      <p className="text-xl text-orange-200 font-bold mb-3">
-                        VOTAÇÃO EM ANDAMENTO
-                      </p>
-                      {/* Totais de Votos */}
-                      <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div className="text-center p-2 bg-green-900/40 rounded-lg">
-                          <div className="text-2xl font-bold text-green-400">{estatisticasVotacao.sim}</div>
-                          <div className="text-[10px] text-green-300">SIM</div>
-                        </div>
-                        <div className="text-center p-2 bg-red-900/40 rounded-lg">
-                          <div className="text-2xl font-bold text-red-400">{estatisticasVotacao.nao}</div>
-                          <div className="text-[10px] text-red-300">NÃO</div>
-                        </div>
-                        <div className="text-center p-2 bg-yellow-900/40 rounded-lg">
-                          <div className="text-2xl font-bold text-yellow-400">{estatisticasVotacao.abstencao}</div>
-                          <div className="text-[10px] text-yellow-300">ABST.</div>
-                        </div>
-                      </div>
-                      <p className="text-xs text-orange-300">
-                        {estatisticasVotacao.total}/{presentes.length} votos registrados
-                      </p>
-                    </>
-                  )}
-                  {/* Item Pendente */}
-                  {itemAtual.status === 'PENDENTE' && (
-                    <>
-                      <Clock className="h-12 w-12 text-slate-400 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg text-slate-300">
-                        Aguardando início
-                      </p>
-                      <p className="text-sm text-slate-400 mt-1">
-                        Este item ainda não foi iniciado
-                      </p>
-                    </>
-                  )}
-                  {/* Item Concluído sem votação */}
-                  {itemAtual.status === 'CONCLUIDO' && (
-                    <>
-                      <CheckCircle className="h-12 w-12 text-teal-400 mx-auto mb-4" />
-                      <p className="text-lg text-teal-200">
-                        Item Concluído
-                      </p>
-                      <p className="text-sm text-teal-300 mt-1">
-                        {itemAtual.tipoAcao === 'LEITURA' ? 'Leitura finalizada' :
-                         itemAtual.tipoAcao === 'COMUNICADO' ? 'Comunicado realizado' :
-                         itemAtual.tipoAcao === 'HOMENAGEM' ? 'Homenagem realizada' :
-                         'Finalizado com sucesso'}
-                      </p>
-                    </>
-                  )}
-                  {/* Item Aprovado */}
-                  {itemAtual.status === 'APROVADO' && (
-                    <>
-                      <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />
-                      <p className="text-lg text-green-200">
-                        Item Aprovado
-                      </p>
-                    </>
-                  )}
-                  {/* Item Rejeitado */}
-                  {itemAtual.status === 'REJEITADO' && (
-                    <>
-                      <XCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                      <p className="text-lg text-red-200">
-                        Item Rejeitado
-                      </p>
-                    </>
-                  )}
-                  {/* Item Adiado */}
-                  {itemAtual.status === 'ADIADO' && (
-                    <>
-                      <Clock className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
-                      <p className="text-lg text-yellow-200">
-                        Item Adiado
-                      </p>
-                    </>
-                  )}
-                  {/* Item Retirado */}
-                  {itemAtual.status === 'RETIRADO' && (
-                    <>
-                      <Minus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-lg text-gray-200">
-                        Item Retirado
-                      </p>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+              <ItemStatus
+                itemAtual={itemAtual}
+                estatisticas={estatisticasVotacao}
+                totalPresentes={presentes.length}
+              />
             )}
-
           </div>
 
-          {/* Coluna 2: Presença dos Parlamentares ou Andamento da Votação */}
+          {/* Coluna 2: Presenca dos Parlamentares ou Andamento da Votacao */}
           <div className="space-y-6">
-            <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-bold flex items-center">
-                  {itemAtual?.status === 'EM_VOTACAO' ? (
-                    <>
-                      <Vote className="h-5 w-5 mr-2 text-orange-400 animate-pulse" />
-                      Andamento da Votação
-                    </>
-                  ) : (
-                    <>
-                      <Users className="h-5 w-5 mr-2 text-blue-400" />
-                      Parlamentares
-                    </>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-2">
-                {/* MODO VOTAÇÃO EM ANDAMENTO */}
-                {itemAtual?.status === 'EM_VOTACAO' ? (
-                  <>
-                    {/* Estatísticas de Votos */}
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <div className="text-center p-2 bg-green-900/40 rounded-lg border border-green-500/30">
-                        <div className="text-2xl font-bold text-green-400">{estatisticasVotacao.sim}</div>
-                        <div className="text-[10px] text-green-300 font-medium">SIM</div>
-                      </div>
-                      <div className="text-center p-2 bg-red-900/40 rounded-lg border border-red-500/30">
-                        <div className="text-2xl font-bold text-red-400">{estatisticasVotacao.nao}</div>
-                        <div className="text-[10px] text-red-300 font-medium">NÃO</div>
-                      </div>
-                      <div className="text-center p-2 bg-yellow-900/40 rounded-lg border border-yellow-500/30">
-                        <div className="text-2xl font-bold text-yellow-400">{estatisticasVotacao.abstencao}</div>
-                        <div className="text-[10px] text-yellow-300 font-medium">ABSTENÇÃO</div>
-                      </div>
-                    </div>
-
-                    {/* Barra de Progresso da Votação */}
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-orange-300">Votos registrados</span>
-                        <span className="text-orange-200 font-semibold">
-                          {estatisticasVotacao.total}/{presentes.length}
-                        </span>
-                      </div>
-                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-500"
-                          style={{ width: `${presentes.length > 0 ? (estatisticasVotacao.total / presentes.length) * 100 : 0}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Lista de Votos Registrados */}
-                    <div className="grid grid-cols-2 gap-2">
-                      {votacoesItemAtual.map((voto: VotacaoRegistro) => {
-                        const nome = voto.parlamentar.apelido || voto.parlamentar.nome.split(' ')[0]
-                        const initials = nome.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-                        // Buscar foto da presença se não tiver no voto
-                        const presenca = presentes.find(p => p.parlamentar.id === voto.parlamentar.id)
-                        const foto = voto.parlamentar.foto || presenca?.parlamentar.foto
-                        const votoConfig = voto.voto === 'SIM'
-                          ? { bg: 'bg-green-500/20', border: 'border-green-500/50', text: 'text-green-300', label: 'SIM', ring: 'ring-green-500' }
-                          : voto.voto === 'NAO'
-                            ? { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-300', label: 'NÃO', ring: 'ring-red-500' }
-                            : { bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', text: 'text-yellow-300', label: 'ABST.', ring: 'ring-yellow-500' }
-
-                        return (
-                          <div
-                            key={voto.id}
-                            className={`flex items-center gap-2 p-2 rounded-lg ${votoConfig.bg} border ${votoConfig.border}`}
-                          >
-                            {foto ? (
-                              <Image
-                                src={foto}
-                                alt={nome}
-                                width={40}
-                                height={40}
-                                className={`w-10 h-10 rounded-full object-cover ring-2 ${votoConfig.ring}`}
-                                unoptimized
-                              />
-                            ) : (
-                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white ring-2 ${votoConfig.ring} ${
-                                voto.voto === 'SIM' ? 'bg-green-600' :
-                                voto.voto === 'NAO' ? 'bg-red-600' : 'bg-yellow-600'
-                              }`}>
-                                {initials}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-white truncate">{nome}</p>
-                              <p className={`text-[10px] font-bold ${votoConfig.text}`}>{votoConfig.label}</p>
-                            </div>
-                          </div>
-                        )
-                      })}
-                      {estatisticasVotacao.total === 0 && (
-                        <p className="text-sm text-orange-300/70 text-center py-6 col-span-full">
-                          Aguardando votos...
-                        </p>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* MODO NORMAL - Lista de Presentes/Ausentes */}
-                    {/* Estatísticas Compactas */}
-                    <div className="flex items-center justify-between gap-2 mb-3 p-2 bg-white/5 rounded-lg">
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle className="h-4 w-4 text-green-400" />
-                        <span className="text-green-300 font-semibold">{presentes.length}</span>
-                        <span className="text-green-300/70 text-xs">Presentes</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <XCircle className="h-4 w-4 text-red-400" />
-                        <span className="text-red-300 font-semibold">{ausentes.length}</span>
-                        <span className="text-red-300/70 text-xs">Ausentes</span>
-                      </div>
-                      <Badge className="bg-blue-500/30 text-blue-200 border-blue-400/30">
-                        {percentualPresenca}% Quorum
-                      </Badge>
-                    </div>
-
-                    {/* Barra de Progresso Compacta */}
-                    <div className="mb-4">
-                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
-                          style={{ width: `${percentualPresenca}%` }}
-                        />
-                      </div>
-                      <p className="text-[10px] text-center text-blue-300 mt-1">
-                        {presentes.length}/{totalParlamentares} parlamentares
-                      </p>
-                    </div>
-
-                    {/* Grid Único: Presentes primeiro, Ausentes depois */}
-                    <div className="grid grid-cols-2 gap-1">
-                      {/* Presentes */}
-                      {presentes
-                        .sort((a, b) => {
-                          const nomeA = a.parlamentar.apelido || a.parlamentar.nome
-                          const nomeB = b.parlamentar.apelido || b.parlamentar.nome
-                          return nomeA.localeCompare(nomeB)
-                        })
-                        .map((p) => {
-                          const nome = p.parlamentar.apelido || p.parlamentar.nome
-                          const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                          return (
-                            <div
-                              key={p.id}
-                              className="flex items-center gap-1.5 p-1 rounded-md bg-green-500/10 border border-green-400/20"
-                            >
-                              {/* Foto/Avatar */}
-                              <div className="relative flex-shrink-0">
-                                {p.parlamentar.foto ? (
-                                  <Image
-                                    src={p.parlamentar.foto}
-                                    alt={nome}
-                                    width={32}
-                                    height={32}
-                                    className="w-8 h-8 rounded-full object-cover ring-2 ring-green-400/50"
-                                    unoptimized
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-green-600">
-                                    {initials}
-                                  </div>
-                                )}
-                              </div>
-                              {/* Nome e Partido */}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
-                                <p className="text-[9px] text-green-300 leading-tight">
-                                  {p.parlamentar.partido || '-'}
-                                </p>
-                              </div>
-                            </div>
-                          )
-                        })
-                      }
-                      {/* Ausentes - aparecem logo após os presentes */}
-                      {ausentes
-                        .sort((a, b) => {
-                          const nomeA = a.parlamentar.apelido || a.parlamentar.nome
-                          const nomeB = b.parlamentar.apelido || b.parlamentar.nome
-                          return nomeA.localeCompare(nomeB)
-                        })
-                        .map((p) => {
-                          const nome = p.parlamentar.apelido || p.parlamentar.nome
-                          const initials = nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                          return (
-                            <div
-                              key={p.id}
-                              className="flex items-center gap-1.5 p-1 rounded-md bg-red-500/10 border border-red-400/20 opacity-70"
-                            >
-                              {/* Foto/Avatar */}
-                              <div className="relative flex-shrink-0">
-                                {p.parlamentar.foto ? (
-                                  <Image
-                                    src={p.parlamentar.foto}
-                                    alt={nome}
-                                    width={32}
-                                    height={32}
-                                    className="w-8 h-8 rounded-full object-cover ring-2 ring-red-400/40 grayscale"
-                                    unoptimized
-                                  />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-red-600">
-                                    {initials}
-                                  </div>
-                                )}
-                              </div>
-                              {/* Nome e Partido */}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[11px] font-medium text-white truncate leading-tight">{nome}</p>
-                                <p className="text-[9px] text-red-300 leading-tight">
-                                  {p.parlamentar.partido || '-'}
-                                </p>
-                              </div>
-                            </div>
-                          )
-                        })
-                      }
-                      {presentes.length === 0 && ausentes.length === 0 && (
-                        <p className="text-[10px] text-gray-400 text-center py-2 col-span-full">Nenhum parlamentar registrado</p>
-                      )}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
+            <PresencaSidebar
+              itemAtual={itemAtual}
+              presentes={presentes}
+              ausentes={ausentes}
+              totalParlamentares={totalParlamentares}
+              percentualPresenca={percentualPresenca}
+              votacoesItemAtual={votacoesItemAtual}
+              estatisticas={estatisticasVotacao}
+            />
           </div>
         </div>
       </div>
@@ -1205,7 +161,7 @@ function LoadingFallback() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-white text-xl">Carregando painel público...</p>
+        <p className="text-white text-xl">Carregando painel publico...</p>
       </div>
     </div>
   )

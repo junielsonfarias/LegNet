@@ -1,9 +1,276 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-02 (Otimizacao de Deploy Vercel)
+> **Ultima Atualizacao**: 2026-02-02 (Otimizacao Completa - Fases 1-5 concluidas)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Otimizacao Completa da Aplicacao - Fases 1-5 (02/02/2026)
+
+### Fase 1: Quick Wins
+
+**Dependencias Removidas:**
+- `quill` e `react-quill` - Editor de texto nao utilizado
+- `next-pwa` - PWA nao implementado
+
+**Otimizacao de Imports:**
+- Adicionados ao `optimizePackageImports`: `clsx`, `tailwind-merge`, `sonner`
+
+**Arquivos Modificados:**
+| Arquivo | Mudanca |
+|---------|---------|
+| `package.json` | Removidas dependencias nao utilizadas |
+| `next.config.js` | Adicionados pacotes ao optimizePackageImports |
+
+### Fase 2: Consolidar Servicos Duplicados
+
+**Servicos Renomeados (para clareza):**
+| Arquivo Original | Novo Nome | Proposito |
+|-----------------|-----------|-----------|
+| `src/lib/transparencia-service.ts` | `transparencia-dados-service.ts` | Dados para exibicao no portal |
+| `src/lib/tramitacao-service.ts` | `tramitacao-mock-service.ts` | CRUD com mock data |
+| `src/lib/automacao-pautas-service.ts` | `automacao-pautas-mock-service.ts` | Templates com mock data |
+| `src/lib/regras-regimentais-service.ts` | `regras-regimentais-mock-service.ts` | Regras com mock data |
+
+**Imports Atualizados:** 13 arquivos
+
+### Fase 3: Refatorar Pagina de Votacao
+
+**Antes:** 1 arquivo com 1.490 linhas, 11 useState, polling a cada 5s
+
+**Depois:** Estrutura modular com 15+ arquivos:
+
+```
+src/app/parlamentar/votacao/
+├── page.tsx                    # Wrapper (~140 linhas)
+├── VotacaoEmAndamento.tsx      # Tela de votacao
+├── ResultadoScreen.tsx         # Tela de resultado
+├── AguardandoScreen.tsx        # Tela de aguardando
+├── PautaCompletaScreen.tsx     # Tela com pauta completa
+├── components/
+│   ├── screens/
+│   │   ├── LoadingScreen.tsx
+│   │   ├── UnauthenticatedScreen.tsx
+│   │   ├── SemSessaoScreen.tsx
+│   │   └── PresencaNaoConfirmadaScreen.tsx
+│   ├── headers/
+│   │   └── VotacaoHeader.tsx
+│   └── votacao/
+│       ├── BotoesVotacao.tsx
+│       ├── VotoRegistrado.tsx
+│       ├── ProposicaoCard.tsx
+│       └── ContagemVotos.tsx
+├── hooks/
+│   ├── useVotacaoReducer.ts    # State consolidado
+│   ├── useVotacaoData.ts       # Busca de dados
+│   └── useTempoSessao.ts       # Timer da sessao
+└── types/
+    └── votacao.ts              # Tipos compartilhados
+```
+
+**Melhorias:**
+- 11 useState -> 1 useReducer centralizado
+- Componentes reutilizaveis
+- Separacao de responsabilidades
+- Codigo mais facil de manter
+
+### Fase 4: Refatorar Arquivos Grandes (em progresso)
+
+**Concluido - admin/pareceres/page.tsx:**
+- **Antes:** 1 arquivo com 1.427 linhas
+- **Depois:** Estrutura modular com 8 arquivos
+
+```
+src/app/admin/pareceres/
+├── page.tsx                     # Pagina principal (~248 linhas)
+├── types.ts                     # Tipos e constantes (~88 linhas)
+└── components/
+    ├── PareceresStats.tsx       # Estatisticas (~51 linhas)
+    ├── PareceresFilters.tsx     # Filtros (~100 linhas)
+    ├── ParecerCard.tsx          # Card de parecer (~248 linhas)
+    ├── ParecerForm.tsx          # Formulario (~486 linhas)
+    ├── VotacaoDialog.tsx        # Dialog votacao (~174 linhas)
+    └── DetalhesDialog.tsx       # Dialog detalhes (~231 linhas)
+```
+
+**Melhorias:**
+- Pagina principal reduzida 83% (1.427 -> 248 linhas)
+- Componentes reutilizaveis e testaveis isoladamente
+- Separacao clara de responsabilidades
+
+**Concluido - admin/painel-eletronico/[sessaoId]/page.tsx:**
+- **Antes:** 1 arquivo com 1.246 linhas
+- **Depois:** Estrutura modular com 10 arquivos
+
+```
+src/app/admin/painel-eletronico/[sessaoId]/
+├── page.tsx                     # Pagina principal (~170 linhas)
+├── types.ts                     # Tipos e constantes (~182 linhas)
+├── hooks/
+│   └── usePainelOperador.ts     # Hook principal (~341 linhas)
+├── components/
+│   ├── index.ts                 # Exports
+│   ├── PainelHeader.tsx         # Header e controles (~277 linhas)
+│   ├── PautaItem.tsx            # Item individual (~339 linhas)
+│   ├── PautaSection.tsx         # Secao da pauta (~97 linhas)
+│   └── PresencaSidebar.tsx      # Sidebar presenca (~155 linhas)
+└── _components/                 # Componentes existentes
+    └── retirada-pauta-modal.tsx # Modal retirada (~124 linhas)
+```
+
+**Melhorias:**
+- Pagina principal reduzida 86% (1.246 -> 170 linhas)
+- Hook customizado para toda logica e estado
+- Componentes independentes e reutilizaveis
+- Timers e controles isolados no hook
+
+**Concluido - painel-publico/page.tsx:**
+- **Antes:** 1 arquivo com 1.221 linhas
+- **Depois:** Estrutura modular com 11 arquivos
+
+```
+src/app/painel-publico/
+├── page.tsx                     # Pagina principal (~177 linhas)
+├── types.ts                     # Tipos e constantes (~156 linhas)
+├── hooks/
+│   └── usePainelPublico.ts      # Hook principal (~181 linhas)
+└── components/
+    ├── index.ts                 # Exports
+    ├── PainelHeader.tsx         # Header do painel (~101 linhas)
+    ├── SessionBanner.tsx        # Banners suspensa/concluida (~95 linhas)
+    ├── ItemNavigation.tsx       # Navegacao entre itens (~65 linhas)
+    ├── ItemAtual.tsx            # Item atual em pauta (~91 linhas)
+    ├── VotacaoCard.tsx          # Cards de votacao (~129 linhas)
+    ├── ItemStatus.tsx           # Status do item (~156 linhas)
+    └── PresencaSidebar.tsx      # Sidebar com presenca (~193 linhas)
+```
+
+**Melhorias:**
+- Pagina principal reduzida 86% (1.221 -> 177 linhas)
+- Hook customizado para toda logica, estado e polling
+- Componentes independentes para cada secao do painel
+
+**Concluido - admin/legislaturas/page.tsx:**
+- **Antes:** 1 arquivo com 1.151 linhas
+- **Depois:** Estrutura modular com 9 arquivos
+
+```
+src/app/admin/legislaturas/
+├── page.tsx                     # Pagina principal (~113 linhas)
+├── types.ts                     # Tipos e helpers (~76 linhas)
+├── hooks/
+│   └── useLegislaturasAdmin.ts  # Hook principal (~286 linhas)
+└── components/
+    ├── index.ts                 # Exports
+    ├── LegislaturasStats.tsx    # Estatisticas (~65 linhas)
+    ├── LegislaturasFilter.tsx   # Filtros de busca (~31 linhas)
+    ├── LegislaturasTable.tsx    # Tabela de legislaturas (~145 linhas)
+    ├── LegislaturaFormModal.tsx # Modal de formulario (~260 linhas)
+    └── LegislaturaViewModal.tsx # Modal de visualizacao (~173 linhas)
+```
+
+**Melhorias:**
+- Pagina principal reduzida 90% (1.151 -> 113 linhas)
+- Hook customizado com toda logica de CRUD e periodos/cargos
+- Modais separados em componentes independentes
+
+**Concluido - admin/audiencias-publicas/page.tsx:**
+- **Antes:** 1 arquivo com 1.126 linhas
+- **Depois:** Estrutura modular com 8 arquivos
+
+```
+src/app/admin/audiencias-publicas/
+├── page.tsx                     # Pagina principal (~128 linhas)
+├── types.ts                     # Tipos e helpers (~130 linhas)
+├── hooks/
+│   └── useAudienciasAdmin.ts    # Hook principal (~196 linhas)
+└── components/
+    ├── index.ts                 # Exports
+    ├── AudienciasStats.tsx      # Estatisticas (~65 linhas)
+    ├── AudienciasFilter.tsx     # Filtros (~113 linhas)
+    ├── AudienciaCard.tsx        # Card de audiencia (~135 linhas)
+    └── AudienciaForm.tsx        # Formulario completo (~350 linhas)
+```
+
+**Melhorias:**
+- Pagina principal reduzida 89% (1.126 -> 128 linhas)
+- Hook customizado com toda logica de CRUD e participantes
+- Componentes independentes para cada secao
+
+### Fase 4: COMPLETA
+
+**Resumo Final - Fase 4:**
+| Arquivo | Antes | Depois | Reducao |
+|---------|-------|--------|---------|
+| `admin/pareceres/page.tsx` | 1.427 | 248 | **83%** |
+| `admin/painel-eletronico/[sessaoId]/page.tsx` | 1.246 | 170 | **86%** |
+| `painel-publico/page.tsx` | 1.221 | 177 | **86%** |
+| `admin/legislaturas/page.tsx` | 1.151 | 113 | **90%** |
+| `admin/audiencias-publicas/page.tsx` | 1.126 | 128 | **89%** |
+| **Total** | **6.171** | **836** | **86%** |
+
+### Fase 5: Otimizacoes Avancadas (COMPLETA)
+
+**Lazy Loading de Componentes Pesados:**
+
+Implementado dynamic imports para componentes admin pesados, melhorando o tempo de carregamento inicial:
+
+| Arquivo | Componentes com Lazy Loading |
+|---------|------------------------------|
+| `admin/sessoes/[id]/page.tsx` | MesaSessaoEditor, PautaEditor, OradoresSessaoEditor, ExpedientesSessaoEditor, PresencaOrdemDiaEditor, PresencaSessaoEditor |
+| `admin/sessoes/[id]/lancamento-retroativo/page.tsx` | PautaEditor |
+| `admin/configuracoes/tipos-proposicoes/page.tsx` | FluxoTramitacaoEditor |
+
+**Beneficios:**
+- Componentes pesados (500-800 linhas) carregados sob demanda
+- Skeleton loading durante carregamento
+- Reducao do bundle inicial das paginas admin
+- Melhor experiencia do usuario em conexoes lentas
+
+**Otimizacoes pendentes para proximas iteracoes:**
+- Mover dados hardcoded para banco (parlamentares-data.ts, db.ts)
+- Adicionar ISR em paginas publicas (requer conversao para server components)
+- Substituir polling por SSE na votacao
+
+---
+
+## Seed de Requerimentos 2026 + Quorum para 13 Vereadores (02/02/2026)
+
+### O que foi criado
+
+**1. Configuracoes de Quorum (13 vereadores)**
+| Tipo | Votos Necessarios | Aplicacao |
+|------|-------------------|-----------|
+| Maioria Simples | >50% presentes | Requerimentos, Indicacoes, Mocoes |
+| Maioria Absoluta | 7 votos | PLs, PLCs, Resolucoes, Decretos |
+| Dois Tercos (2/3) | 9 votos | Emendas Lei Organica |
+| Tres Quintos (3/5) | 8 votos | Materias especiais |
+
+**2. Tipos de Proposicao com Vinculacao de Quorum**
+- REQ - Requerimento -> VOTACAO_SIMPLES
+- IND - Indicacao -> VOTACAO_SIMPLES
+- MOC - Mocao -> VOTACAO_SIMPLES
+- PL - Projeto de Lei -> VOTACAO_ABSOLUTA
+- PLC - Projeto de Lei Complementar -> VOTACAO_ABSOLUTA
+- PR - Projeto de Resolucao -> VOTACAO_ABSOLUTA
+- PDL - Projeto de Decreto Legislativo -> VOTACAO_ABSOLUTA
+- ELO - Emenda a Lei Organica -> VOTACAO_QUALIFICADA (2 turnos)
+
+**3. 20 Requerimentos criados (data: 25/01/2026)**
+- REQ 001/2026 a REQ 020/2026
+- Distribuidos entre os 13 parlamentares ativos
+
+**Arquivo criado:**
+| Arquivo | Descricao |
+|---------|-----------|
+| `prisma/seed-requerimentos-2026.ts` | Script de seed completo |
+
+**Comando para executar:**
+```bash
+npx tsx prisma/seed-requerimentos-2026.ts
+```
 
 ---
 

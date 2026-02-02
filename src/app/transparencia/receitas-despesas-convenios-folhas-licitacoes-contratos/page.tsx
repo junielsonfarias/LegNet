@@ -21,7 +21,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import Link from 'next/link'
-import { transparenciaService } from '@/lib/transparencia-service'
+import { transparenciaService } from '@/lib/transparencia-dados-service'
 
 // Mantido como Server Component - import do service é aceitável no servidor
 // A migração completa para Prisma será feita quando o modelo de dados for definido
