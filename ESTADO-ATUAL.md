@@ -1,9 +1,38 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-02 (Otimizacao Completa - Fases 1-5 concluidas)
+> **Ultima Atualizacao**: 2026-02-03 (Correcao Loop Infinito Area Parlamentar)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcao Critica - Loop Infinito Area Parlamentar (03/02/2026)
+
+### Problema
+Ao acessar a area do parlamentar, o navegador esgotava recursos com erro `ERR_INSUFFICIENT_RESOURCES` devido a um loop infinito de requisicoes HTTP para `/api/parlamentares/` e `/api/sessoes`.
+
+### Causa Raiz
+O objeto `actions` no hook `useVotacaoReducer` era recriado a cada renderizacao, causando recriacao em cascata do `useCallback` de `carregarDados` e do `useEffect` de polling, resultando em centenas de requisicoes por segundo.
+
+### Solucao
+Memorizar o objeto `actions` usando `useMemo` no `useVotacaoReducer`:
+
+```typescript
+const actions = useMemo(() => ({
+  setSessao: (sessao) => dispatch({ type: 'SET_SESSAO', payload: sessao }),
+  // ...demais actions
+}), []) // dispatch é estável
+```
+
+### Arquivos Modificados
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/parlamentar/votacao/hooks/useVotacaoReducer.ts` | Adicionado useMemo para memorizar actions |
+
+### Status
+- **ERR-037**: CORRIGIDO
+- Ver detalhes em `docs/ERROS-E-SOLUCOES.md`
 
 ---
 

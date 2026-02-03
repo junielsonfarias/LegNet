@@ -11,7 +11,6 @@ A Area do Parlamentar e o modulo dedicado aos vereadores, onde podem acessar seu
 | Arquivo | Funcao |
 |---------|--------|
 | `src/app/parlamentar/page.tsx` | Dashboard do parlamentar |
-| `src/app/parlamentar/votacao/[id]/page.tsx` | Tela de votacao |
 | `src/app/parlamentar/aguardando/page.tsx` | Aguardando presenca |
 | `src/app/parlamentar/layout.tsx` | Layout da area |
 | `src/app/parlamentares/page.tsx` | Lista publica |
@@ -19,6 +18,41 @@ A Area do Parlamentar e o modulo dedicado aos vereadores, onde podem acessar seu
 | `src/lib/hooks/use-parlamentar-dashboard.ts` | Hook do dashboard |
 | `src/app/api/parlamentar/` | APIs do parlamentar |
 | `src/app/api/parlamentares/` | APIs publicas |
+
+### Modulo de Votacao (Estrutura Modular)
+
+```
+src/app/parlamentar/votacao/
+├── page.tsx                    # Wrapper principal (~140 linhas)
+├── VotacaoEmAndamento.tsx      # Tela de votacao ativa
+├── ResultadoScreen.tsx         # Tela de resultado
+├── AguardandoScreen.tsx        # Aguardando proxima votacao
+├── PautaCompletaScreen.tsx     # Tela com pauta completa
+├── components/
+│   ├── index.ts                # Re-exports
+│   ├── screens/                # Telas de estado
+│   │   ├── LoadingScreen.tsx
+│   │   ├── UnauthenticatedScreen.tsx
+│   │   ├── SemSessaoScreen.tsx
+│   │   └── PresencaNaoConfirmadaScreen.tsx
+│   ├── headers/
+│   │   └── VotacaoHeader.tsx
+│   └── votacao/
+│       ├── BotoesVotacao.tsx
+│       ├── VotoRegistrado.tsx
+│       ├── ProposicaoCard.tsx
+│       ├── ContagemVotos.tsx
+│       └── MeuVoto.tsx
+├── hooks/
+│   ├── index.ts                # Re-exports
+│   ├── useVotacaoReducer.ts    # State consolidado (useMemo para actions)
+│   ├── useVotacaoData.ts       # Busca de dados + polling
+│   └── useTempoSessao.ts       # Timer da sessao
+└── types/
+    └── votacao.ts              # Tipos compartilhados
+```
+
+**IMPORTANTE**: O objeto `actions` no `useVotacaoReducer` DEVE ser memorizado com `useMemo` para evitar loops infinitos de requisicoes (ver ERR-037).
 
 ---
 

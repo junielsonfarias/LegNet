@@ -1,7 +1,7 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-01-31
+> **Ultima Atualizacao**: 2026-02-03
 > **Versao Analisada**: 1.0.0
 
 ---
@@ -10,10 +10,16 @@
 
 | Severidade | Quantidade | Status |
 |------------|------------|--------|
-| Critica | 14 | 14 Corrigidos |
+| Critica | 15 | 15 Corrigidos |
 | Alta | 5 | 5 Corrigidos |
 | Media | 10 | 10 Corrigidos |
 | Baixa | 6 | Pendente (melhorias opcionais) |
+
+### Correções Aplicadas em 2026-02-03 (Loop Infinito de Requisições)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-037 | Loop infinito de requisições causando ERR_INSUFFICIENT_RESOURCES | useMemo para memorizar objeto actions no reducer |
 
 ### Correções Aplicadas em 2026-01-31 (Numeração Automática)
 
@@ -395,6 +401,66 @@ const existe = proposicoes.some(p =>
 - `src/lib/repositories/proposicao-repository.ts` - Método findByTipoNumeroAno
 
 **Status**: CORRIGIDO - 2026-01-31
+
+---
+
+### ERR-037: Loop Infinito de Requisições na Área do Parlamentar (CORRIGIDO)
+
+**Localizacao**: `src/app/parlamentar/votacao/hooks/useVotacaoReducer.ts`, `src/app/parlamentar/votacao/hooks/useVotacaoData.ts`
+
+**Descricao**: Ao acessar a área do parlamentar, o navegador esgotava recursos com erro `ERR_INSUFFICIENT_RESOURCES` devido a um loop infinito de requisições HTTP. O problema era causado por dependências instáveis nos hooks React:
+
+1. O objeto `actions` no `useVotacaoReducer` era recriado a cada renderização
+2. O `useCallback` de `carregarDados` no `useVotacaoData` dependia de `actions`
+3. Isso fazia com que `carregarDados` fosse recriado a cada render
+4. O `useEffect` do polling dependia de `carregarDados`, recriando o intervalo
+5. Cada chamada de API causava novas renderizações, criando um ciclo infinito
+
+**Impacto**:
+- Navegador travava com erro `ERR_INSUFFICIENT_RESOURCES`
+- Centenas de requisições por segundo para `/api/parlamentares/` e `/api/sessoes`
+- Impossibilidade de usar a área do parlamentar
+
+**Código Problemático**:
+```typescript
+// useVotacaoReducer.ts - ANTES
+export function useVotacaoReducer() {
+  const [state, dispatch] = useReducer(votacaoReducer, initialState)
+
+  return {
+    state,
+    dispatch,
+    actions: {  // Objeto recriado a cada render!
+      setSessao: (sessao) => dispatch({ type: 'SET_SESSAO', payload: sessao }),
+      // ...
+    }
+  }
+}
+```
+
+**Solução Aplicada**:
+```typescript
+// useVotacaoReducer.ts - DEPOIS
+import { useReducer, useMemo } from 'react'
+
+export function useVotacaoReducer() {
+  const [state, dispatch] = useReducer(votacaoReducer, initialState)
+
+  // Memoriza o objeto actions para evitar recriação a cada renderização
+  // Isso previne loops infinitos em hooks que dependem de actions
+  const actions = useMemo(() => ({
+    setSessao: (sessao) => dispatch({ type: 'SET_SESSAO', payload: sessao }),
+    // ...
+  }), []) // dispatch é estável, não precisa estar nas dependências
+
+  return { state, dispatch, actions }
+}
+```
+
+**Arquivos Alterados**:
+- `src/app/parlamentar/votacao/hooks/useVotacaoReducer.ts`
+
+**Status**: CORRIGIDO - 2026-02-03
 
 ---
 

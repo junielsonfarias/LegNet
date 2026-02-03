@@ -1,4 +1,4 @@
-import { useReducer } from 'react'
+import { useReducer, useMemo } from 'react'
 import type { VotacaoState, VotacaoAction } from '../types/votacao'
 
 const initialState: VotacaoState = {
@@ -43,30 +43,34 @@ function votacaoReducer(state: VotacaoState, action: VotacaoAction): VotacaoStat
 export function useVotacaoReducer() {
   const [state, dispatch] = useReducer(votacaoReducer, initialState)
 
+  // Memoriza o objeto actions para evitar recriação a cada renderização
+  // Isso previne loops infinitos em hooks que dependem de actions
+  const actions = useMemo(() => ({
+    setSessao: (sessao: VotacaoState['sessao']) =>
+      dispatch({ type: 'SET_SESSAO', payload: sessao }),
+    setLoading: (loading: boolean) =>
+      dispatch({ type: 'SET_LOADING', payload: loading }),
+    setParlamentar: (parlamentar: VotacaoState['parlamentarInfo']) =>
+      dispatch({ type: 'SET_PARLAMENTAR', payload: parlamentar }),
+    setPresenca: (presenca: boolean) =>
+      dispatch({ type: 'SET_PRESENCA', payload: presenca }),
+    setVoto: (voto: string | null) =>
+      dispatch({ type: 'SET_VOTO', payload: voto }),
+    setVotando: (votando: boolean) =>
+      dispatch({ type: 'SET_VOTANDO', payload: votando }),
+    setItemAnterior: (item: string | null) =>
+      dispatch({ type: 'SET_ITEM_ANTERIOR', payload: item }),
+    setResultado: (resultado: VotacaoState['resultadoVotacao']) =>
+      dispatch({ type: 'SET_RESULTADO', payload: resultado }),
+    setTempo: (tempo: number) =>
+      dispatch({ type: 'SET_TEMPO', payload: tempo }),
+    limparResultado: () =>
+      dispatch({ type: 'LIMPAR_RESULTADO' })
+  }), []) // dispatch é estável, não precisa estar nas dependências
+
   return {
     state,
     dispatch,
-    actions: {
-      setSessao: (sessao: VotacaoState['sessao']) =>
-        dispatch({ type: 'SET_SESSAO', payload: sessao }),
-      setLoading: (loading: boolean) =>
-        dispatch({ type: 'SET_LOADING', payload: loading }),
-      setParlamentar: (parlamentar: VotacaoState['parlamentarInfo']) =>
-        dispatch({ type: 'SET_PARLAMENTAR', payload: parlamentar }),
-      setPresenca: (presenca: boolean) =>
-        dispatch({ type: 'SET_PRESENCA', payload: presenca }),
-      setVoto: (voto: string | null) =>
-        dispatch({ type: 'SET_VOTO', payload: voto }),
-      setVotando: (votando: boolean) =>
-        dispatch({ type: 'SET_VOTANDO', payload: votando }),
-      setItemAnterior: (item: string | null) =>
-        dispatch({ type: 'SET_ITEM_ANTERIOR', payload: item }),
-      setResultado: (resultado: VotacaoState['resultadoVotacao']) =>
-        dispatch({ type: 'SET_RESULTADO', payload: resultado }),
-      setTempo: (tempo: number) =>
-        dispatch({ type: 'SET_TEMPO', payload: tempo }),
-      limparResultado: () =>
-        dispatch({ type: 'LIMPAR_RESULTADO' })
-    }
+    actions
   }
 }
