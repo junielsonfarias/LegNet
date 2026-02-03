@@ -5,9 +5,11 @@ import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError,
-  NotFoundError
+  NotFoundError,
+  UnauthorizedError
 } from '@/lib/error-handler'
-import { withAuth } from '@/lib/auth/permissions'
+import { hasPermission } from '@/lib/auth/permissions'
+import type { UserRole } from '@prisma/client'
 import {
   assertSessaoPermiteVotacao,
   ensureParlamentarPresente,
@@ -177,16 +179,45 @@ export const GET = withErrorHandler(async (
 })
 
 // POST - Registrar voto
-// SEGURANÇA: Requer autenticação e permissão de votação
-export const POST = withAuth(async (
+// SEGURANÇA: Requer autenticação. Parlamentares podem votar por si mesmos,
+// outros roles precisam da permissão votacao.manage
+export const POST = withErrorHandler(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) => {
+  // Validação CSRF
+  const { validateCsrf } = await import('@/lib/middleware/csrf')
+  const csrfError = validateCsrf(request)
+  if (csrfError) return csrfError
+
+  // Verificar autenticação
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    throw new UnauthorizedError('Sessão expirada ou usuário não autenticado')
+  }
+
   const { id: rawId } = await context.params
   const sessaoId = await resolverSessaoId(rawId)
   const body = await request.json()
 
   const validatedData = VotoSchema.parse(body)
+
+  // Verificar permissão:
+  // 1. Se tem permissão votacao.manage (OPERADOR, ADMIN, etc.) - pode votar por qualquer um
+  // 2. Se é PARLAMENTAR e está votando por si mesmo - permitido
+  const userRole = (session.user.role as UserRole) || 'USER'
+  const userParlamentarId = (session.user as any).parlamentarId
+
+  const hasVotacaoManage = hasPermission(userRole, 'votacao.manage')
+  const isSelfVote = userRole === 'PARLAMENTAR' && userParlamentarId === validatedData.parlamentarId
+
+  if (!hasVotacaoManage && !isSelfVote) {
+    throw new UnauthorizedError(
+      userRole === 'PARLAMENTAR'
+        ? 'Você só pode registrar seu próprio voto'
+        : 'Você não possui permissão para registrar votos'
+    )
+  }
 
   // Verificar se sessão existe e está em andamento
   const sessao = await obterSessaoParaControle(sessaoId)
@@ -281,7 +312,6 @@ export const POST = withAuth(async (
 
   // RN-078: Registrar auditoria para voto retroativo
   if (isRetroativo) {
-    const session = await getServerSession(authOptions)
     if (session?.user) {
       await logAudit({
         request,
@@ -302,5 +332,5 @@ export const POST = withAuth(async (
   }
 
   return createSuccessResponse(voto, 'Voto registrado com sucesso')
-}, { permissions: 'votacao.manage' })
+})
 

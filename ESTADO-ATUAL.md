@@ -1,9 +1,50 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-03 (Correcao Loop Infinito Area Parlamentar)
+> **Ultima Atualizacao**: 2026-02-03 (Correcao Permissao Votacao Parlamentar + Env Vercel)
 > **Versao**: 1.0.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcao Critica - Permissao de Votacao para Parlamentar (03/02/2026)
+
+### Problema
+Parlamentar logado recebia erro 401 Unauthorized ao tentar votar. A API de votacao exigia permissao `votacao.manage`, que o role PARLAMENTAR nao possui.
+
+### Solucao
+Modificada a API `/api/sessoes/[id]/votacao/route.ts` para permitir que parlamentares votem por si mesmos (self-vote), sem exigir a permissao `votacao.manage`.
+
+A logica de permissao agora e:
+1. Se tem `votacao.manage` (OPERADOR, ADMIN) → pode votar por qualquer parlamentar
+2. Se e PARLAMENTAR e o `parlamentarId` do voto corresponde ao seu → permitido
+
+### Arquivos Modificados
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/api/sessoes/[id]/votacao/route.ts` | Verificacao de permissao customizada para self-vote |
+
+### Status
+- **ERR-038**: CORRIGIDO
+- Ver detalhes em `docs/ERROS-E-SOLUCOES.md`
+
+---
+
+## Correcao - Variaveis de Ambiente Vercel (03/02/2026)
+
+### Problema
+Variaveis de ambiente no Vercel estavam com caracteres `\n` no final, causando erro 500 nas APIs.
+
+### Solucao
+Removidas e recriadas as variaveis via Vercel CLI:
+- DATABASE_URL
+- DIRECT_URL
+- NEXTAUTH_URL
+- NEXTAUTH_SECRET
+- NEXT_PUBLIC_APP_URL (nova)
+
+### Status
+- **ERR-039**: CORRIGIDO
 
 ---
 

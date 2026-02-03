@@ -15,11 +15,13 @@
 | Media | 10 | 10 Corrigidos |
 | Baixa | 6 | Pendente (melhorias opcionais) |
 
-### Correções Aplicadas em 2026-02-03 (Loop Infinito de Requisições)
+### Correções Aplicadas em 2026-02-03 (Loop Infinito e Permissões de Votação)
 
 | ID | Problema | Solução |
 |----|----------|---------|
 | ERR-037 | Loop infinito de requisições causando ERR_INSUFFICIENT_RESOURCES | useMemo para memorizar objeto actions no reducer |
+| ERR-038 | Parlamentar não consegue votar (401 Unauthorized) | Permitir self-vote para role PARLAMENTAR |
+| ERR-039 | Variáveis de ambiente no Vercel com caracteres `\n` | Removidas e recriadas sem caracteres extras |
 
 ### Correções Aplicadas em 2026-01-31 (Numeração Automática)
 
