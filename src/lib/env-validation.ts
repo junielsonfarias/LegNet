@@ -160,7 +160,7 @@ export function validateSecretStrength(): { valid: boolean; message: string } {
     'your-secret',
     'dev-secret',
     'test-secret',
-    'camara-mojui-secret-key',
+    'camara-secret-key',
   ]
 
   // Verifica se contem valores inseguros

@@ -744,7 +744,7 @@ export default function TransparenciaPage() {
                   <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     <Globe className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
                     <div>
-                      <p className="text-sm"><strong className="text-gray-700">Sítio Eletrônico:</strong> <span className="text-blue-600">{config?.site || 'www.camaramojuidoscampos.pa.gov.br'}</span></p>
+                      <p className="text-sm"><strong className="text-gray-700">Sítio Eletrônico:</strong> <span className="text-blue-600">{config?.site || 'Não configurado'}</span></p>
                     </div>
                   </div>
                   <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
@@ -797,7 +797,7 @@ export default function TransparenciaPage() {
                   <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     <Mail className="h-5 w-5 text-orange-600 mr-2 flex-shrink-0" />
                     <div>
-                      <p className="text-sm"><strong className="text-gray-700">E-mail:</strong> <span className="text-orange-600">{config?.email || 'camaramojui@hotmail.com'}</span></p>
+                      <p className="text-sm"><strong className="text-gray-700">E-mail:</strong> <span className="text-orange-600">{config?.email || 'Não configurado'}</span></p>
                     </div>
                   </div>
                   <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">

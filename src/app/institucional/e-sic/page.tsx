@@ -231,7 +231,7 @@ export default function ESicPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Contato E-SIC</h3>
                   <p className="opacity-90 mb-2">
-                    <strong>E-mail:</strong> esic@camaramojui.com
+                    <strong>E-mail:</strong> esic@camara.gov.br
                   </p>
                   <p className="opacity-90 mb-2">
                     <strong>Telefone:</strong> (93) 99999-9999
@@ -243,7 +243,7 @@ export default function ESicPage() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Ouvidoria</h3>
                   <p className="opacity-90 mb-2">
-                    <strong>E-mail:</strong> ouvidoria@camaramojui.com
+                    <strong>E-mail:</strong> ouvidoria@camara.gov.br
                   </p>
                   <p className="opacity-90 mb-2">
                     <strong>Telefone:</strong> (93) 99999-8888

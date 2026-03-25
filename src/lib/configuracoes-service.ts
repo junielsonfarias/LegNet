@@ -57,19 +57,19 @@ export interface Usuario {
 // Configurações institucionais padrão
 const configuracaoInstitucionalPadrao: ConfiguracaoInstitucional = {
   id: '1',
-  nome: 'Câmara Municipal de Mojuí dos Campos',
+  nome: process.env.SITE_NAME || 'Câmara Municipal',
   endereco: {
-    logradouro: 'Av. Principal',
-    numero: '123',
-    bairro: 'Centro',
-    cidade: 'Mojuí dos Campos',
-    estado: 'PA',
-    cep: '68120-000'
+    logradouro: '',
+    numero: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
+    cep: ''
   },
   contatos: {
-    telefone: '(93) 3000-0000',
-    email: 'contato@camaramojui.pa.gov.br',
-    site: 'https://www.camaramojui.pa.gov.br',
+    telefone: '',
+    email: '',
+    site: process.env.SITE_URL || '',
     redesSociais: {
       facebook: '',
       instagram: '',

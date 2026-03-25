@@ -1,12 +1,12 @@
 /**
  * Configuracao PM2 para Producao
- * Camara Municipal de Mojui dos Campos
+ * Sistema Legislativo Municipal
  */
 
 module.exports = {
   apps: [
     {
-      name: 'camara-mojui',
+      name: 'camara-legislativo',
       script: 'npm',
       args: 'start',
       cwd: process.cwd(),

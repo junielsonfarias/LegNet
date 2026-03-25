@@ -7,8 +7,8 @@ export const openApiSpec = {
     version: '1.0.0',
     contact: {
       name: 'Suporte Técnico',
-      email: 'suporte@camaramojuic.pa.gov.br',
-      url: 'https://camaramojuic.pa.gov.br'
+      email: process.env.SITE_EMAIL || 'suporte@camara.gov.br',
+      url: process.env.SITE_URL || 'http://localhost:3000'
     },
     license: {
       name: 'MIT',
@@ -21,7 +21,7 @@ export const openApiSpec = {
       description: 'Servidor de desenvolvimento'
     },
     {
-      url: 'https://api.camaramojuic.pa.gov.br',
+      url: process.env.SITE_URL ? `${process.env.SITE_URL}/api` : 'http://localhost:3000/api',
       description: 'Servidor de produção'
     }
   ],

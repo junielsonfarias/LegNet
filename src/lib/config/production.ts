@@ -26,7 +26,7 @@ const envSchema = z.object({
   MAX_FILE_SIZE: z.coerce.number().optional().default(10485760), // 10MB
 
   // Opcional - Site
-  SITE_NAME: z.string().optional().default('Camara Municipal de Mojui dos Campos'),
+  SITE_NAME: z.string().optional().default('Camara Municipal'),
   SITE_URL: z.string().url().optional(),
 
   // Opcional - Logs
@@ -82,7 +82,7 @@ export const config = {
   isTest: process.env.NODE_ENV === 'test',
 
   // Site
-  siteName: process.env.SITE_NAME || 'Camara Municipal de Mojui dos Campos',
+  siteName: process.env.SITE_NAME || 'Camara Municipal',
   siteUrl: process.env.SITE_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000',
 
   // Upload

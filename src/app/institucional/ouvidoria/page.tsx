@@ -236,7 +236,7 @@ export default function OuvidoriaPage() {
                 <Mail className="h-10 w-10 text-camara-primary mx-auto mb-4" />
                 <h3 className="font-semibold text-gray-900 mb-2">E-mail</h3>
                 <p className="text-gray-600 text-sm break-all">
-                  ouvidoria@camaramojui.pa.gov.br
+                  ouvidoria@camara.gov.br
                 </p>
                 <p className="text-sm text-gray-500 mt-1">Resposta em 48h</p>
               </CardContent>
