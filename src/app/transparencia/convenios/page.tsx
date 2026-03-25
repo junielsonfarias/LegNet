@@ -20,6 +20,7 @@ import {
   Search
 } from 'lucide-react'
 import { useConvenios } from '@/lib/hooks/use-convenios'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   ATIVO: { color: 'bg-green-100 text-green-800', icon: <CheckCircle2 className="h-4 w-4" /> },
@@ -69,6 +70,7 @@ export default function ConveniosPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="convenios" nome="Convênios">
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -273,5 +275,6 @@ export default function ConveniosPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

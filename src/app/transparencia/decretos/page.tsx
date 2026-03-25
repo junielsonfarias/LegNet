@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 // Interface para publicação da API
 interface PublicacaoDecreto {
@@ -115,6 +116,7 @@ export default function DecretosPage() {
   }, [decretos, searchTerm, anoFilter])
 
   return (
+    <TransparenciaPageWrapper slug="decretos" nome="Decretos">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
@@ -430,5 +432,6 @@ export default function DecretosPage() {
         titulo={pdfModal.titulo}
       />
     </div>
+    </TransparenciaPageWrapper>
   )
 }

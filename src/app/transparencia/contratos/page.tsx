@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useContratos } from '@/lib/hooks/use-contratos'
 import { PDFModal } from '@/components/pdf'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   VIGENTE: { color: 'bg-green-100 text-green-800', icon: <CheckCircle2 className="h-4 w-4" /> },
@@ -91,6 +92,7 @@ export default function ContratosPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="contratos" nome="Contratos">
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -304,5 +306,6 @@ export default function ContratosPage() {
         titulo={pdfModal.titulo}
       />
     </div>
+    </TransparenciaPageWrapper>
   )
 }

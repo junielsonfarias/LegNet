@@ -17,6 +17,7 @@ import {
   MapPin
 } from 'lucide-react'
 import { useBensPatrimoniais } from '@/lib/hooks/use-bens-patrimoniais'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string }> = {
   BOM: { color: 'bg-green-100 text-green-800' },
@@ -56,6 +57,7 @@ export default function BensMoveisPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="bens-moveis" nome="Bens Móveis">
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -206,5 +208,6 @@ export default function BensMoveisPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

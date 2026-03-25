@@ -21,6 +21,7 @@ import {
   Eye
 } from 'lucide-react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 export default function GestaoFiscalPage() {
   const { configuracao } = useConfiguracaoInstitucional()
@@ -283,6 +284,7 @@ export default function GestaoFiscalPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="gestao-fiscal" nome="Gestão Fiscal">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
@@ -576,5 +578,6 @@ export default function GestaoFiscalPage() {
         </Card>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

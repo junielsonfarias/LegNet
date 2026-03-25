@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { PDFModal } from '@/components/pdf'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   EM_ANDAMENTO: { color: 'bg-blue-100 text-blue-800', icon: <Clock className="h-4 w-4" /> },
@@ -97,6 +98,7 @@ export default function LicitacoesPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="licitacoes" nome="Licitações">
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -316,5 +318,6 @@ export default function LicitacoesPage() {
         titulo={pdfModal.titulo}
       />
     </div>
+    </TransparenciaPageWrapper>
   )
 }

@@ -18,6 +18,7 @@ import {
   CheckCircle2
 } from 'lucide-react'
 import { useDespesas } from '@/lib/hooks/use-despesas'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string }> = {
   EMPENHADO: { color: 'bg-blue-100 text-blue-800' },
@@ -64,6 +65,7 @@ export default function DespesasPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="despesas" nome="Despesas">
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -248,5 +250,6 @@ export default function DespesasPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

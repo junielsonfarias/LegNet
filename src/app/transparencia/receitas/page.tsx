@@ -17,6 +17,7 @@ import {
   BarChart3
 } from 'lucide-react'
 import { useReceitas } from '@/lib/hooks/use-receitas'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string }> = {
   PREVISTA: { color: 'bg-blue-100 text-blue-800' },
@@ -81,6 +82,7 @@ export default function ReceitasPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="receitas" nome="Receitas">
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -286,5 +288,6 @@ export default function ReceitasPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }
