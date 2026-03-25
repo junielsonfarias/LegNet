@@ -151,9 +151,9 @@ export function Hero({ className }: HeroProps) {
         ])
 
         setStats({
-          vereadores: parlamentares.metadados?.total || parlamentares.dados?.length || 11,
-          sessoes: sessoes.metadados?.total || 27,
-          materias: proposicoes.metadados?.total || 294,
+          vereadores: parlamentares.metadados?.total || parlamentares.dados?.length || 0,
+          sessoes: sessoes.metadados?.total || sessoes.data?.length || sessoes.pagination?.total || 0,
+          materias: proposicoes.metadados?.total || proposicoes.dados?.length || 0,
           transparencia: 100
         })
       } catch (error) {

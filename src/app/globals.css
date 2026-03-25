@@ -47,21 +47,21 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
 
-    /* Cores do Município (padrão - sobrescritas pelo MunicipalThemeProvider) */
-    --tenant-primary: #1e40af;
-    --tenant-secondary: #3b82f6;
-    --tenant-primary-rgb: 30 64 175;
-    --tenant-secondary-rgb: 59 130 246;
+    /* Cores do Município (padrão neutro - sobrescritas pelo MunicipalThemeProvider) */
+    --tenant-primary: #374151;
+    --tenant-secondary: #6b7280;
+    --tenant-primary-rgb: 55 65 81;
+    --tenant-secondary-rgb: 107 114 128;
 
-    /* Variáveis municipais com fallbacks */
-    --municipal-primary: var(--tenant-primary, #1e40af);
-    --municipal-secondary: var(--tenant-secondary, #3b82f6);
+    /* Variáveis municipais com fallbacks neutros */
+    --municipal-primary: var(--tenant-primary, #374151);
+    --municipal-secondary: var(--tenant-secondary, #6b7280);
     --municipal-accent: #059669;
-    --municipal-primary-dark: #152e7a;
-    --municipal-primary-darker: #0f2054;
-    --municipal-primary-light: #4b6bc4;
-    --municipal-primary-lighter: #dbe4f8;
-    --municipal-secondary-dark: #2563ad;
+    --municipal-primary-dark: #1f2937;
+    --municipal-primary-darker: #111827;
+    --municipal-primary-light: #6b7280;
+    --municipal-primary-lighter: #e5e7eb;
+    --municipal-secondary-dark: #4b5563;
     --municipal-secondary-light: #7ba8f7;
     --municipal-primary-rgb: 30 64 175;
     --municipal-secondary-rgb: 59 130 246;

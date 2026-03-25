@@ -16,7 +16,8 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   // Verificar se e rota administrativa, painel ou login
   const isAdminRoute = pathname?.startsWith('/admin')
   const isPainelRoute = pathname?.startsWith('/painel')
-  const isParlamentarRoute = pathname?.startsWith('/parlamentar')
+  // /parlamentar = área restrita (sem header/footer) | /parlamentares = público (com header/footer)
+  const isParlamentarRoute = pathname?.startsWith('/parlamentar') && !pathname?.startsWith('/parlamentares')
   const isLoginRoute = pathname === '/login'
 
   // Se for rota administrativa, painel, parlamentar ou login, renderizar apenas o conteudo
