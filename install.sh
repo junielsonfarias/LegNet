@@ -836,6 +836,14 @@ server {
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
+    # Servir arquivos de upload diretamente (fotos, documentos)
+    location /uploads/ {
+        alias ${INSTALL_DIR}/public/uploads/;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
+        try_files \$uri =404;
+    }
+
     # Upload de arquivos (limite de 50MB)
     client_max_body_size 50M;
 
