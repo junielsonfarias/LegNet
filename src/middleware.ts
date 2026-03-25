@@ -126,8 +126,9 @@ export async function middleware(request: NextRequest) {
   )
 
   // Strict-Transport-Security (HSTS) - Força HTTPS
-  // Apenas em produção para não afetar desenvolvimento local
-  if (process.env.NODE_ENV === 'production') {
+  // Apenas quando o site está realmente rodando em HTTPS (com domínio e SSL)
+  const siteUrl = process.env.NEXTAUTH_URL || process.env.SITE_URL || ''
+  if (process.env.NODE_ENV === 'production' && siteUrl.startsWith('https://')) {
     response.headers.set(
       'Strict-Transport-Security',
       'max-age=31536000; includeSubDomains; preload'
@@ -158,8 +159,8 @@ export async function middleware(request: NextRequest) {
     "frame-ancestors 'self'",
     // Object sources: nenhum (previne plugins)
     "object-src 'none'",
-    // Upgrade insecure requests em produção
-    ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : [])
+    // Upgrade insecure requests apenas quando rodando em HTTPS
+    ...(process.env.NODE_ENV === 'production' && siteUrl.startsWith('https://') ? ['upgrade-insecure-requests'] : [])
   ]
 
   response.headers.set('Content-Security-Policy', cspDirectives.join('; '))

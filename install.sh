@@ -23,14 +23,79 @@ INSTALL_DIR="/opt/camara"
 REPO_URL="https://github.com/junielsonfarias/LegNet.git"
 
 # ============================================================================
+# PROGRESSO
+# ============================================================================
+TOTAL_STEPS=15
+CURRENT_STEP=0
+INSTALL_START_TIME=0
+
+STEP_NAMES=(
+  "Dependencias do sistema"
+  "Node.js 20 LTS"
+  "PostgreSQL 15"
+  "Nginx"
+  "Redis"
+  "PM2"
+  "Clonar repositorio"
+  "Configuracao (.env)"
+  "Dependencias npm"
+  "Banco de dados"
+  "Credenciais admin"
+  "Compilar aplicacao"
+  "Configurar Nginx"
+  "Firewall e SSL"
+  "Iniciar PM2"
+)
+
+progress_bar() {
+  local current=$1
+  local total=$2
+  local pct=$((current * 100 / total))
+  local filled=$((pct / 5))
+  local empty=$((20 - filled))
+  local bar=""
+
+  for ((i=0; i<filled; i++)); do bar+="█"; done
+  for ((i=0; i<empty; i++)); do bar+="░"; done
+
+  # Tempo decorrido
+  local elapsed=0
+  if [ "$INSTALL_START_TIME" -gt 0 ]; then
+    elapsed=$(( $(date +%s) - INSTALL_START_TIME ))
+  fi
+  local mins=$((elapsed / 60))
+  local secs=$((elapsed % 60))
+
+  # Limpar linha e imprimir barra
+  printf "\r\033[K"
+  printf "  ${CYAN}[${bar}]${NC} ${BOLD}%3d%%${NC}  ${BLUE}Etapa %d/%d${NC}  ${YELLOW}%02d:%02d${NC}" \
+    "$pct" "$current" "$total" "$mins" "$secs"
+}
+
+step() {
+  CURRENT_STEP=$((CURRENT_STEP + 1))
+  local step_name="${1:-${STEP_NAMES[$((CURRENT_STEP-1))]}}"
+
+  echo ""
+  progress_bar "$CURRENT_STEP" "$TOTAL_STEPS"
+  echo ""
+  echo -e "  ${CYAN}▸ ${step_name}${NC}"
+  echo ""
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] [STEP $CURRENT_STEP/$TOTAL_STEPS] $step_name" >> "$LOG_FILE"
+}
+
+# ============================================================================
 # FUNCOES UTILITARIAS
 # ============================================================================
 
-log() { echo -e "${GREEN}[OK]${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [OK] $1" >> "$LOG_FILE"; }
-warn() { echo -e "${YELLOW}[AVISO]${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [AVISO] $1" >> "$LOG_FILE"; }
-error() { echo -e "${RED}[ERRO]${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERRO] $1" >> "$LOG_FILE"; }
-info() { echo -e "${BLUE}[INFO]${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $1" >> "$LOG_FILE"; }
-header() { echo -e "\n${CYAN}${BOLD}========================================${NC}"; echo -e "${CYAN}${BOLD}  $1${NC}"; echo -e "${CYAN}${BOLD}========================================${NC}\n"; }
+log() { echo -e "    ${GREEN}✓${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [OK] $1" >> "$LOG_FILE"; }
+warn() { echo -e "    ${YELLOW}!${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [AVISO] $1" >> "$LOG_FILE"; }
+error() { echo -e "    ${RED}✗${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ERRO] $1" >> "$LOG_FILE"; }
+info() { echo -e "    ${BLUE}→${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] [INFO] $1" >> "$LOG_FILE"; }
+header() {
+  # Usado apenas nas etapas pre-instalacao (requisitos, coleta de dados)
+  echo -e "\n${CYAN}${BOLD}  ── $1 ──${NC}\n"
+}
 
 check_command() {
   if ! command -v "$1" &> /dev/null; then
@@ -872,35 +937,91 @@ main() {
   check_requirements
   collect_data
 
-  # Instalacao
+  # Iniciar cronometro
+  INSTALL_START_TIME=$(date +%s)
+
+  echo ""
+  echo -e "${CYAN}${BOLD}  ┌──────────────────────────────────────────────┐${NC}"
+  echo -e "${CYAN}${BOLD}  │       INICIANDO INSTALACAO AUTOMATICA        │${NC}"
+  echo -e "${CYAN}${BOLD}  └──────────────────────────────────────────────┘${NC}"
+
+  # Etapa 1: Dependencias do sistema
+  step "Dependencias do sistema"
   install_system_deps
+
+  # Etapa 2: Node.js
+  step "Node.js 20 LTS"
   install_nodejs
+
+  # Etapa 3: PostgreSQL
+  step "PostgreSQL 15"
   install_postgresql
+
+  # Etapa 4: Nginx
+  step "Nginx"
   install_nginx
+
+  # Etapa 5: Redis
+  step "Redis"
   install_redis
+
+  # Etapa 6: PM2
+  step "PM2 (gerenciador de processos)"
   install_pm2
 
-  # Aplicacao
+  # Etapa 7: Clonar repositorio
+  step "Clonar repositorio"
   clone_repository
+
+  # Etapa 8: Configuracao
+  step "Gerar configuracao (.env)"
   create_env
+
+  # Etapa 9: Dependencias npm
+  step "Instalar dependencias npm"
   install_dependencies
+
+  # Etapa 10: Banco de dados
+  step "Configurar banco de dados"
   setup_database
+
+  # Etapa 11: Credenciais
+  step "Configurar credenciais admin"
   update_admin_credentials
+
+  # Etapa 12: Build
+  step "Compilar aplicacao (pode levar varios minutos)"
   build_application
 
-  # Infraestrutura
+  # Etapa 13: Nginx config
+  step "Configurar Nginx"
   configure_nginx
+
+  # Etapa 14: Firewall + SSL
+  step "Firewall e SSL"
   configure_firewall
   configure_ssl
+
+  # Etapa 15: PM2
+  step "Iniciar aplicacao com PM2"
   configure_pm2
 
+  # Barra final
+  echo ""
+  progress_bar "$TOTAL_STEPS" "$TOTAL_STEPS"
+  echo ""
+
+  # Tempo total
+  local total_time=$(( $(date +%s) - INSTALL_START_TIME ))
+  local total_mins=$((total_time / 60))
+  local total_secs=$((total_time % 60))
+  echo ""
+  echo -e "  ${GREEN}${BOLD}Instalacao concluida em ${total_mins}m ${total_secs}s${NC}"
+
   # Verificacao
-  if verify_installation; then
-    show_summary
-  else
-    error "Instalacao concluida com avisos. Verifique o log: $LOG_FILE"
-    show_summary
-  fi
+  echo ""
+  verify_installation
+  show_summary
 }
 
 # Executar
