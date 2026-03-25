@@ -45,7 +45,10 @@ import {
   LucideIcon,
   UserCircle,
   Edit3,
-  Briefcase
+  Briefcase,
+  Palette,
+  ExternalLink,
+  Globe
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -392,6 +395,18 @@ const navigationCategories: NavCategory[] = [
         href: '/admin/integracoes',
         icon: Key,
         permissions: ['integration.manage']
+      },
+      {
+        name: 'Identidade Visual',
+        href: '/admin/configuracoes/identidade-visual',
+        icon: Palette,
+        permissions: ['config.manage']
+      },
+      {
+        name: 'Links Transparência',
+        href: '/admin/configuracoes/transparencia-links',
+        icon: ExternalLink,
+        permissions: ['config.manage']
       },
       {
         name: 'Monitoramento',

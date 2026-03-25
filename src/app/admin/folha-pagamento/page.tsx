@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   FileText,
   Plus,
@@ -17,7 +18,10 @@ import {
   Loader2,
   X,
   Users,
-  Calculator
+  Calculator,
+  ExternalLink,
+  Save,
+  Monitor
 } from 'lucide-react'
 import { useFolhaPagamento, FolhaPagamento } from '@/lib/hooks/use-servidores'
 import { toast } from 'sonner'
@@ -37,6 +41,86 @@ const meses = [
   { value: 11, label: 'Novembro' },
   { value: 12, label: 'Dezembro' }
 ]
+
+function RedirectConfig({ slug, label }: { slug: string; label: string }) {
+  const [enabled, setEnabled] = useState(false)
+  const [url, setUrl] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/transparencia/redirecionamentos?slug=${slug}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.data?.enabled) {
+          setEnabled(true)
+          setUrl(data.data.url || '')
+        }
+        setLoaded(true)
+      })
+      .catch(() => setLoaded(true))
+  }, [slug])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/transparencia/redirecionamentos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, enabled, url, label })
+      })
+      if (res.ok) toast.success('Configuração salva!')
+      else toast.error('Erro ao salvar')
+    } catch { toast.error('Erro') }
+    finally { setSaving(false) }
+  }
+
+  if (!loaded) return null
+
+  return (
+    <Card className={enabled ? 'border-blue-200 bg-blue-50/50 mb-6' : 'mb-6'}>
+      <CardContent className="pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            {enabled ? (
+              <ExternalLink className="h-5 w-5 text-blue-600" />
+            ) : (
+              <Monitor className="h-5 w-5 text-green-600" />
+            )}
+            <div>
+              <p className="text-sm font-medium">Modo de exibição no portal</p>
+              <p className="text-xs text-muted-foreground">
+                {enabled ? 'Redireciona para site externo' : 'Usa dados do sistema'}
+              </p>
+            </div>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+
+          {enabled && (
+            <div className="flex-1 flex gap-2">
+              <Input
+                placeholder="https://portal.gov.br/folha-pagamento"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="text-sm"
+              />
+              <Button size="sm" onClick={handleSave} disabled={saving || !url}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              </Button>
+            </div>
+          )}
+
+          {!enabled && (
+            <Button size="sm" variant="outline" onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+              Salvar
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function FolhaPagamentoAdminPage() {
   const { folhas, loading, create, update, remove } = useFolhaPagamento()
@@ -181,6 +265,9 @@ export default function FolhaPagamentoAdminPage() {
           Nova Folha
         </Button>
       </div>
+
+      {/* Configuração de redirecionamento */}
+      <RedirectConfig slug="folha-pagamento" label="Folha de Pagamento" />
 
       {/* Estatisticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
