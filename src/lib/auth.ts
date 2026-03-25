@@ -150,14 +150,16 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production'
+      // __Secure- prefix e secure:true EXIGEM HTTPS
+      // Em VPS com IP (http://), usar cookies não-secure para funcionar
+      name: (process.env.NEXTAUTH_URL || '').startsWith('https://')
         ? '__Secure-next-auth.session-token'
         : 'next-auth.session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production'
+        secure: (process.env.NEXTAUTH_URL || '').startsWith('https://')
       }
     }
   }
