@@ -69,7 +69,7 @@ Conectado ao servidor via SSH, execute:
 
 ```bash
 # Baixar o script de instalacao
-wget https://raw.githubusercontent.com/seu-usuario/camara/main/install.sh
+wget https://raw.githubusercontent.com/junielsonfarias/LegNet/main/install.sh
 
 # Dar permissao de execucao
 chmod +x install.sh

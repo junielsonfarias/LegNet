@@ -20,7 +20,7 @@ NC='\033[0m'
 
 LOG_FILE="/var/log/camara-install.log"
 INSTALL_DIR="/opt/camara"
-REPO_URL="https://github.com/seu-usuario/camara.git"
+REPO_URL="https://github.com/junielsonfarias/LegNet.git"
 
 # ============================================================================
 # FUNCOES UTILITARIAS
