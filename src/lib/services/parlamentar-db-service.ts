@@ -31,6 +31,8 @@ export interface ParlamentarPayload {
   email?: string | null
   telefone?: string | null
   biografia?: string | null
+  foto?: string | null
+  gabinete?: string | null
   ativo?: boolean
   mandatos?: MandatoPayload[]
   filiacoes?: FiliacaoPayload[]
@@ -160,6 +162,8 @@ export const parlamentarDbService = {
         email: payload.email || null,
         telefone: payload.telefone || null,
         biografia: payload.biografia || null,
+        foto: payload.foto || null,
+        gabinete: payload.gabinete || null,
         ativo: payload.ativo ?? true,
         mandatos: payload.mandatos ? {
           create: payload.mandatos.map(m => ({
@@ -198,6 +202,8 @@ export const parlamentarDbService = {
     if (payload.email !== undefined) updateData.email = payload.email || null
     if (payload.telefone !== undefined) updateData.telefone = payload.telefone || null
     if (payload.biografia !== undefined) updateData.biografia = payload.biografia || null
+    if (payload.foto !== undefined) updateData.foto = payload.foto || null
+    if (payload.gabinete !== undefined) updateData.gabinete = payload.gabinete || null
     if (payload.ativo !== undefined) updateData.ativo = payload.ativo
 
     // Substituir mandatos se fornecidos

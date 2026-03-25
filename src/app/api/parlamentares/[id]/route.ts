@@ -39,6 +39,8 @@ const UpdateParlamentarSchema = z.object({
   email: z.string().email('Email inválido').optional(),
   telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 caracteres').optional(),
   biografia: z.string().optional(),
+  foto: z.string().optional().nullable(),
+  gabinete: z.string().optional().nullable(),
   ativo: z.boolean().optional(),
   mandatos: z.array(MandatoSchema).optional(),
   filiacoes: z.array(FiliacaoSchema).optional()
