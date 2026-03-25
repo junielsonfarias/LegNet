@@ -23,9 +23,10 @@ interface Estatisticas {
 }
 
 export function TransparencySection() {
-  const { configuracao } = useConfiguracaoInstitucional()
+  const { configuracao, legislatura } = useConfiguracaoInstitucional()
   const [publicacoes, setPublicacoes] = useState<Publicacao[]>([])
   const [estatisticas, setEstatisticas] = useState<Estatisticas>({ leis: 0, decretos: 0, sessoes: 0, proposicoes: 0 })
+  const [totalVereadores, setTotalVereadores] = useState<number>(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,18 +35,20 @@ export function TransparencySection() {
         setLoading(true)
 
         // Buscar estatísticas e publicações recentes em paralelo
-        const [leisRes, decretosRes, sessoesRes, proposicoesRes] = await Promise.all([
+        const [leisRes, decretosRes, sessoesRes, proposicoesRes, parlamentaresRes] = await Promise.all([
           fetch('/api/dados-abertos/publicacoes?tipo=LEI&limit=3'),
           fetch('/api/dados-abertos/publicacoes?tipo=DECRETO&limit=3'),
           fetch('/api/dados-abertos/sessoes?limit=1'),
-          fetch('/api/dados-abertos/proposicoes?limit=1')
+          fetch('/api/dados-abertos/proposicoes?limit=1'),
+          fetch('/api/parlamentares?ativo=true&limit=1')
         ])
 
-        const [leis, decretos, sessoes, proposicoes] = await Promise.all([
+        const [leis, decretos, sessoes, proposicoes, parlamentares] = await Promise.all([
           leisRes.json(),
           decretosRes.json(),
           sessoesRes.json(),
-          proposicoesRes.json()
+          proposicoesRes.json(),
+          parlamentaresRes.ok ? parlamentaresRes.json() : { total: 0 }
         ])
 
         // Combinar publicações recentes (leis e decretos)
@@ -63,6 +66,7 @@ export function TransparencySection() {
           sessoes: sessoes.metadados?.total || 0,
           proposicoes: proposicoes.metadados?.total || 0
         })
+        setTotalVereadores(parlamentares.total || parlamentares.data?.length || parlamentares.length || 0)
       } catch (error) {
         console.error('Erro ao carregar dados de transparência:', error)
       } finally {
@@ -213,10 +217,12 @@ export function TransparencySection() {
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
                     <h4 className="font-semibold text-gray-900">Legislatura Atual</h4>
-                    <p className="text-sm text-gray-600">2025/2028</p>
+                    <p className="text-sm text-gray-600">{legislatura?.periodo || configuracao?.legislatura || 'Legislatura vigente'}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-camara-primary">11</div>
+                    <div className="text-lg font-bold text-camara-primary">
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : totalVereadores || '-'}
+                    </div>
                     <div className="text-xs text-gray-600">Vereadores</div>
                   </div>
                 </div>

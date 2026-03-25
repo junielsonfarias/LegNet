@@ -67,8 +67,8 @@ const mapResumo = (tramitacao: ReturnType<typeof tramitacoesService.getAll>[numb
   const proposicao = proposicoesService.getById(tramitacao.proposicaoId)
   const tipo = tiposTramitacaoService.getById(tramitacao.tipoTramitacaoId)
   const unidade = tiposOrgaosService.getById(tramitacao.unidadeId)
-  const autor = proposicao?.autorId
-    ? mockData.parlamentares?.find(parlamentar => parlamentar.id === proposicao.autorId) ?? null
+  const autorRaw = proposicao?.autorId
+    ? (mockData.parlamentares as any[])?.find((parlamentar: any) => parlamentar.id === proposicao.autorId) ?? null
     : null
 
   return {
@@ -76,11 +76,11 @@ const mapResumo = (tramitacao: ReturnType<typeof tramitacoesService.getAll>[numb
     proposicaoId: tramitacao.proposicaoId,
     proposicaoNumero: proposicao?.numero ?? null,
     proposicaoTitulo: proposicao?.titulo ?? null,
-    autor: autor
+    autor: autorRaw
       ? {
-          id: autor.id,
-          nome: autor.nome,
-          partido: autor.partido ?? null
+          id: autorRaw.id,
+          nome: autorRaw.nome,
+          partido: autorRaw.partido ?? null
         }
       : null,
     status: tramitacao.status ?? 'EM_ANDAMENTO',

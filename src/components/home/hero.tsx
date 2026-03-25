@@ -263,7 +263,7 @@ export function Hero({ className }: HeroProps) {
                 asChild
                 variant="outline"
                 size="lg"
-                className="border-2 border-white text-white hover:bg-white hover:text-camara-primary font-semibold transition-all min-h-touch"
+                className="border-2 border-white/80 text-white bg-white/10 backdrop-blur-sm hover:bg-white hover:text-camara-primary font-semibold transition-all min-h-touch"
               >
                 <Link href="/transparencia">
                   <Eye className="h-5 w-5 mr-2" aria-hidden="true" />
