@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { TrendingUp, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X } from 'lucide-react'
 import { useReceitas, Receita } from '@/lib/hooks/use-receitas'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 const categorias = ['CORRENTE', 'CAPITAL', 'INTRA_ORCAMENTARIA']
 const origens = ['TRIBUTARIA', 'CONTRIBUICOES', 'PATRIMONIAL', 'AGROPECUARIA', 'INDUSTRIAL', 'SERVICOS', 'TRANSFERENCIAS', 'OUTRAS']
@@ -96,6 +97,8 @@ export default function ReceitasAdminPage() {
         <div><h1 className="text-2xl font-bold">Receitas</h1><p className="text-muted-foreground">Gerencie as receitas da Camara</p></div>
         <Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4 mr-2" />Nova Receita</Button>
       </div>
+
+      <RedirectConfig slug="receitas" label="Receitas" />
 
       {showForm && (
         <Card>

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useNoticias } from '@/lib/hooks/use-noticias'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 export default function NoticiasAdminPage() {
   const { noticias, loading, create, update, remove } = useNoticias()
@@ -225,6 +226,8 @@ export default function NoticiasAdminPage() {
           Nova Noticia
         </Button>
       </div>
+
+      <RedirectConfig slug="leis" label="Notícias/Leis" />
 
       {/* Estatisticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

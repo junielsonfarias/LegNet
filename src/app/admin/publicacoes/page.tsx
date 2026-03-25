@@ -51,6 +51,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 const tipoPublicacaoOptions = [
   { value: 'LEI', label: 'Lei' },
@@ -371,6 +372,8 @@ export default function PublicacoesPage() {
           </Button>
         </div>
       </header>
+
+      <RedirectConfig slug="publicacoes" label="Publicações" />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>

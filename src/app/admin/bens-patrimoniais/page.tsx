@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Package, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, MapPin, Building2 } from 'lucide-react'
 import { useBensPatrimoniais, BemPatrimonial } from '@/lib/hooks/use-bens-patrimoniais'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 const tipos = ['MOVEL', 'IMOVEL']
 // Situacoes conforme Prisma schema (status de disponibilidade)
@@ -102,6 +103,8 @@ export default function BensPatrimoniaisAdminPage() {
         <div><h1 className="text-2xl font-bold">Bens Patrimoniais</h1><p className="text-muted-foreground">Gerencie os bens moveis e imoveis da Camara</p></div>
         <Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4 mr-2" />Novo Bem</Button>
       </div>
+
+      <RedirectConfig slug="bens-imoveis" label="Bens Patrimoniais" />
 
       {showForm && (
         <Card>

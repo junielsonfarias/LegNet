@@ -12,6 +12,7 @@ import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { useContratos } from '@/lib/hooks/use-contratos'
 import { useConvenios } from '@/lib/hooks/use-convenios'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 // Situacoes conforme Prisma schema (inclui INSCRITA_RP)
 const situacoes = ['EMPENHADO', 'LIQUIDADO', 'PAGO', 'ANULADO', 'INSCRITA_RP']
@@ -115,6 +116,8 @@ export default function DespesasAdminPage() {
         <div><h1 className="text-2xl font-bold">Despesas</h1><p className="text-muted-foreground">Gerencie as despesas da Camara</p></div>
         <Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4 mr-2" />Nova Despesa</Button>
       </div>
+
+      <RedirectConfig slug="despesas" label="Despesas" />
 
       {showForm && (
         <Card>

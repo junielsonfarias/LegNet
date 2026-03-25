@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { transparenciaService } from "@/lib/transparencia-dados-service";
 import { TransparenciaItem, TransparenciaFiltros } from "@/lib/types/transparencia";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
+import { RedirectConfig } from '@/components/admin/redirect-config';
 
 const categorias = [
   {
@@ -279,6 +280,8 @@ export default function AdminTransparenciaPage() {
             </Button>
           </div>
         </div>
+
+        <RedirectConfig slug="portal-da-transparencia" label="Portal da Transparência" />
 
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

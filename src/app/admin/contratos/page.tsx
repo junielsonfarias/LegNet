@@ -10,6 +10,7 @@ import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X,
 import { useContratos, Contrato } from '@/lib/hooks/use-contratos'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 // Modalidades conforme Prisma schema
 const modalidades = [
@@ -113,6 +114,8 @@ export default function ContratosAdminPage() {
         <div><h1 className="text-2xl font-bold">Contratos</h1><p className="text-muted-foreground">Gerencie os contratos da Camara</p></div>
         <Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4 mr-2" />Novo Contrato</Button>
       </div>
+
+      <RedirectConfig slug="contratos" label="Contratos" />
 
       {showForm && (
         <Card>

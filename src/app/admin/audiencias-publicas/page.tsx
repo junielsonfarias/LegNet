@@ -10,6 +10,7 @@ import {
   AudienciaCard,
   AudienciaForm
 } from './components'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 export default function AudienciasPublicasAdminPage() {
   const {
@@ -57,6 +58,8 @@ export default function AudienciasPublicasAdminPage() {
           Nova Audiencia
         </Button>
       </div>
+
+      <RedirectConfig slug="portal-da-transparencia" label="Audiências Públicas" />
 
       {/* Estatisticas */}
       <AudienciasStats

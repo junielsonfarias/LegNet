@@ -41,6 +41,7 @@ import {
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { participacaoCidadaService, SugestaoCidada, ConsultaPublica, Peticao } from '@/lib/participacao-cidada-service'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 export default function AdminParticipacaoCidadaPage() {
   const [sugestoes, setSugestoes] = useState<SugestaoCidada[]>([])
@@ -202,6 +203,8 @@ export default function AdminParticipacaoCidadaPage() {
         </div>
         <AdminBreadcrumbs />
       </div>
+
+      <RedirectConfig slug="pesquisas" label="Participação Cidadã" />
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

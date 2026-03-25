@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { useLicitacoes, Licitacao } from '@/lib/hooks/use-licitacoes'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 const modalidades = [
   'PREGAO_ELETRONICO',
@@ -189,6 +190,8 @@ export default function LicitacoesAdminPage() {
           Nova Licitacao
         </Button>
       </div>
+
+      <RedirectConfig slug="licitacoes" label="Licitações" />
 
       {showForm && (
         <Card>

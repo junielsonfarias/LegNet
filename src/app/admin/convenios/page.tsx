@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
 import { useConvenios, Convenio } from '@/lib/hooks/use-convenios'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 const situacoes = ['EM_EXECUCAO', 'CONCLUIDO', 'PRESTACAO_CONTAS', 'SUSPENSO', 'CANCELADO']
 
@@ -106,6 +107,8 @@ export default function ConveniosAdminPage() {
         <div><h1 className="text-2xl font-bold">Convenios</h1><p className="text-muted-foreground">Gerencie os convenios da Camara</p></div>
         <Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4 mr-2" />Novo Convenio</Button>
       </div>
+
+      <RedirectConfig slug="convenios" label="Convênios" />
 
       {showForm && (
         <Card>

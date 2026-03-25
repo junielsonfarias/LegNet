@@ -35,6 +35,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface NormaJuridica {
   id: string
@@ -178,6 +179,8 @@ export default function NormasListPage() {
           </Button>
         </div>
       </div>
+
+      <RedirectConfig slug="leis" label="Legislação" />
 
       {/* Cards de Estatisticas */}
       {estatisticas && (

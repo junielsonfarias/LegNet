@@ -18,6 +18,7 @@ import {
   FileText,
   Download
 } from 'lucide-react'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 // Dados inicializados vazios - substituir por chamadas de API
 const mockReceitas: any[] = []
@@ -148,6 +149,8 @@ export default function GestaoFiscalAdminPage() {
           Novo Item
         </Button>
       </div>
+
+      <RedirectConfig slug="gestao-fiscal" label="Gestão Fiscal" />
 
       {/* Resumo Financeiro */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

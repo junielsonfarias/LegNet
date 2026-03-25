@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Users, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Briefcase } from 'lucide-react'
 import { useServidores, Servidor } from '@/lib/hooks/use-servidores'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 const situacoes = ['ATIVO', 'INATIVO', 'AFASTADO', 'LICENCA', 'FERIAS', 'CEDIDO', 'APOSENTADO', 'EXONERADO']
 const vinculos = ['EFETIVO', 'COMISSIONADO', 'TEMPORARIO', 'ESTAGIARIO', 'TERCEIRIZADO']
@@ -97,6 +98,8 @@ export default function ServidoresAdminPage() {
         <div><h1 className="text-2xl font-bold">Servidores</h1><p className="text-muted-foreground">Gerencie os servidores da Camara</p></div>
         <Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4 mr-2" />Novo Servidor</Button>
       </div>
+
+      <RedirectConfig slug="folha-pagamento" label="Servidores" />
 
       {showForm && (
         <Card>
