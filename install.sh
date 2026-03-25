@@ -5,7 +5,7 @@
 # Compativel: Ubuntu 20.04/22.04/24.04, Debian 11/12
 # ============================================================================
 
-set -euo pipefail
+set -uo pipefail
 
 # ============================================================================
 # CORES E FORMATACAO
@@ -72,8 +72,8 @@ check_os() {
       ;;
     debian)
       case "$VERSION_ID" in
-        11|12) log "Sistema detectado: Debian $VERSION_ID" ;;
-        *) warn "Debian $VERSION_ID nao foi testado. Recomendamos 11 ou 12" ;;
+        11|12|13) log "Sistema detectado: Debian $VERSION_ID" ;;
+        *) warn "Debian $VERSION_ID nao foi testado. Recomendamos 11, 12 ou 13" ;;
       esac
       ;;
     *)
@@ -144,13 +144,32 @@ collect_data() {
   read -rp "$(echo -e ${CYAN}Nome da Camara Municipal${NC} [ex: Camara Municipal de Mojui dos Campos]: )" CAMARA_NOME
   CAMARA_NOME="${CAMARA_NOME:-Camara Municipal}"
 
-  # Dominio
+  # Dominio ou IP
   echo ""
-  read -rp "$(echo -e ${CYAN}Dominio do site${NC} [ex: camara.mojuidoscampos.pa.gov.br]: )" SITE_DOMAIN
+  echo -e "  ${YELLOW}Informe o dominio OU o IP do servidor.${NC}"
+  echo -e "  Exemplos: ${BOLD}camara.suacidade.gov.br${NC} ou ${BOLD}187.77.252.170${NC}"
+  echo -e "  ${YELLOW}NAO inclua http:// ou https:// nem barra final.${NC}"
+  echo ""
+  read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN
   while [ -z "$SITE_DOMAIN" ]; do
-    warn "Dominio e obrigatorio!"
-    read -rp "$(echo -e ${CYAN}Dominio do site${NC}: )" SITE_DOMAIN
+    warn "Dominio ou IP e obrigatorio!"
+    read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN
   done
+
+  # Sanitizar: remover protocolo, barras, espacos
+  SITE_DOMAIN=$(echo "$SITE_DOMAIN" | sed -E 's|^https?://||; s|/+$||; s|^www\.||; s|[[:space:]]||g')
+
+  # Detectar se e IP ou dominio
+  IS_IP=false
+  if echo "$SITE_DOMAIN" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+    IS_IP=true
+    info "Detectado IP: $SITE_DOMAIN (SSL nao sera configurado)"
+  elif echo "$SITE_DOMAIN" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+$'; then
+    IS_IP=true
+    info "Detectado IP com porta: $SITE_DOMAIN (SSL nao sera configurado)"
+  else
+    info "Detectado dominio: $SITE_DOMAIN"
+  fi
 
   # Email admin
   echo ""
@@ -207,11 +226,18 @@ collect_data() {
   DB_NAME="camara_legislativo"
   DB_USER="camara_app"
 
+  # Definir protocolo e URL
+  if [ "$IS_IP" = true ]; then
+    SITE_URL="http://${SITE_DOMAIN}"
+  else
+    SITE_URL="https://${SITE_DOMAIN}"
+  fi
+
   # Confirmar
   header "CONFIRME AS CONFIGURACOES"
   echo -e "  ${BOLD}Camara:${NC}       $CAMARA_NOME"
-  echo -e "  ${BOLD}Dominio:${NC}      $SITE_DOMAIN"
-  echo -e "  ${BOLD}URL:${NC}          https://$SITE_DOMAIN"
+  echo -e "  ${BOLD}Dominio/IP:${NC}   $SITE_DOMAIN"
+  echo -e "  ${BOLD}URL:${NC}          $SITE_URL"
   echo -e "  ${BOLD}Email Admin:${NC}  $ADMIN_EMAIL"
   echo -e "  ${BOLD}Banco:${NC}        PostgreSQL local ($DB_NAME)"
   echo -e "  ${BOLD}Redis:${NC}        $([ "$INSTALL_REDIS" = "s" ] && echo 'Sim' || echo 'Nao')"
@@ -234,12 +260,12 @@ install_system_deps() {
   header "INSTALANDO DEPENDENCIAS DO SISTEMA"
 
   info "Atualizando pacotes do sistema..."
-  apt-get update -qq >> "$LOG_FILE" 2>&1
-  apt-get upgrade -y -qq >> "$LOG_FILE" 2>&1
+  apt-get update >> "$LOG_FILE" 2>&1 || { error "Falha ao atualizar lista de pacotes"; }
+  DEBIAN_FRONTEND=noninteractive apt-get upgrade -y >> "$LOG_FILE" 2>&1 || warn "Alguns pacotes nao puderam ser atualizados"
   log "Sistema atualizado"
 
   info "Instalando pacotes essenciais..."
-  apt-get install -y -qq \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl \
     wget \
     git \
@@ -252,6 +278,14 @@ install_system_deps() {
     unzip \
     openssl \
     >> "$LOG_FILE" 2>&1
+
+  if [ $? -ne 0 ]; then
+    error "Falha ao instalar pacotes essenciais. Verifique o log: $LOG_FILE"
+    error "Tentando instalar pacotes individualmente..."
+    for pkg in curl wget git build-essential ca-certificates gnupg lsb-release unzip openssl; do
+      DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg" >> "$LOG_FILE" 2>&1 || warn "Pacote $pkg nao instalado"
+    done
+  fi
   log "Pacotes essenciais instalados"
 }
 
@@ -383,7 +417,7 @@ clone_repository() {
 create_env() {
   header "GERANDO ARQUIVO DE CONFIGURACAO (.env)"
 
-  SITE_URL="https://${SITE_DOMAIN}"
+  # SITE_URL ja definido em collect_data()
 
   cat > "${INSTALL_DIR}/.env" << ENVEOF
 # ============================================================================
@@ -480,7 +514,7 @@ configure_nginx() {
 server {
     listen 80;
     listen [::]:80;
-    server_name ${SITE_DOMAIN};
+    server_name ${SITE_DOMAIN} _;
 
     # Redirecionar HTTP para HTTPS (ativado apos SSL)
     # return 301 https://\$server_name\$request_uri;
@@ -568,6 +602,16 @@ configure_firewall() {
 
 configure_ssl() {
   header "CONFIGURANDO SSL/HTTPS (Let's Encrypt)"
+
+  # SSL nao funciona com IP - apenas com dominio
+  if [ "$IS_IP" = true ]; then
+    warn "SSL nao pode ser configurado com IP (${SITE_DOMAIN})"
+    warn "O sistema funcionara em HTTP. Para HTTPS, configure um dominio depois."
+    echo ""
+    echo -e "  Para configurar SSL depois com um dominio:"
+    echo -e "  ${BOLD}sudo certbot --nginx -d SEU_DOMINIO --email ${SSL_EMAIL} --agree-tos --non-interactive${NC}"
+    return
+  fi
 
   if check_command certbot; then
     log "Certbot ja esta instalado"
@@ -751,7 +795,7 @@ show_summary() {
   echo -e "${NC}"
   echo -e "  ${BOLD}=== DADOS DE ACESSO ===${NC}"
   echo ""
-  echo -e "  ${CYAN}URL do Sistema:${NC}     https://${SITE_DOMAIN}"
+  echo -e "  ${CYAN}URL do Sistema:${NC}     ${SITE_URL}"
   echo -e "  ${CYAN}Email Admin:${NC}        ${ADMIN_EMAIL}"
   echo -e "  ${CYAN}Senha Admin:${NC}        (a que voce definiu)"
   echo ""
@@ -782,7 +826,7 @@ show_summary() {
   echo ""
   echo -e "  ${BOLD}=== PROXIMOS PASSOS ===${NC}"
   echo ""
-  echo -e "  1. Acesse ${GREEN}https://${SITE_DOMAIN}${NC}"
+  echo -e "  1. Acesse ${GREEN}${SITE_URL}${NC}"
   echo -e "  2. Faca login com as credenciais acima"
   echo -e "  3. Va em ${BOLD}Administracao > Configuracoes${NC} para personalizar"
   echo -e "  4. Cadastre os parlamentares e comece a usar!"
@@ -795,7 +839,7 @@ CREDENCIAIS DO SISTEMA - ${CAMARA_NOME}
 Gerado em: $(date '+%Y-%m-%d %H:%M:%S')
 ============================================
 
-URL: https://${SITE_DOMAIN}
+URL: ${SITE_URL}
 Email Admin: ${ADMIN_EMAIL}
 
 Banco de Dados:
