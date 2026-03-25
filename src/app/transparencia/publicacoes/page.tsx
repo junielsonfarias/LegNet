@@ -12,10 +12,12 @@ import {
   Filter,
   Loader2,
   RefreshCw,
-  Search
+  Search,
+  ArrowLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import Link from 'next/link'
 import { publicacoesApi, categoriasPublicacaoApi } from '@/lib/api/publicacoes-api'
 import type { Publicacao } from '@/lib/publicacoes-service'
 import type { CategoriaPublicacao } from '@/lib/categorias-publicacao-service'
@@ -145,6 +147,12 @@ export default function PublicacoesPage() {
 
   return (
     <div className="space-y-10">
+      <div className="container mx-auto px-4 pt-6">
+        <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar ao Portal da Transparência
+        </Link>
+      </div>
       <section className="rounded-2xl bg-gradient-to-r from-camara-primary to-camara-primary/80 px-6 py-12 text-white shadow-lg">
         <div className="mx-auto max-w-5xl space-y-6">
           <Badge variant="outline" className="border-white/60 text-white">

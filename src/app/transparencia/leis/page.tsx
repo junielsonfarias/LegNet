@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, RefreshCw, X, AlertCircle } from 'lucide-react'
+import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, RefreshCw, X, AlertCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
@@ -118,6 +118,12 @@ export default function LeisPage() {
   return (
     <TransparenciaPageWrapper slug="leis" nome="Leis Municipais">
     <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 pt-6">
+        <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar ao Portal da Transparência
+        </Link>
+      </div>
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">

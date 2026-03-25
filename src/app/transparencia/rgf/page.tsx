@@ -21,8 +21,11 @@ import {
   PieChart,
   Target,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft
 } from 'lucide-react';
+
+import Link from 'next/link';
 
 interface RGF {
   id: string;
@@ -265,6 +268,12 @@ export default function RGFPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 pt-6">
+        <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar ao Portal da Transparência
+        </Link>
+      </div>
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

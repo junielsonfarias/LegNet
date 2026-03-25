@@ -18,8 +18,10 @@ import {
   X,
   RefreshCw,
   FileDown,
-  Eye
+  Eye,
+  ArrowLeft
 } from 'lucide-react'
+import Link from 'next/link'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
@@ -286,6 +288,12 @@ export default function GestaoFiscalPage() {
   return (
     <TransparenciaPageWrapper slug="gestao-fiscal" nome="Gestão Fiscal">
     <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 pt-6">
+        <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar ao Portal da Transparência
+        </Link>
+      </div>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">

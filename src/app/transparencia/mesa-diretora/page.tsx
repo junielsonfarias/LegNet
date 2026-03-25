@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, Crown, Shield, Award, User, Mail, Phone, Calendar, Filter, BarChart3, Eye } from 'lucide-react';
+import { Users, Crown, Shield, Award, User, Mail, Phone, Calendar, Filter, BarChart3, Eye, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
@@ -150,6 +151,12 @@ export default function MesaDiretoraTransparenciaPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+      <div className="container mx-auto px-4 pt-6">
+        <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar ao Portal da Transparência
+        </Link>
+      </div>
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-600 text-white overflow-hidden">
         {/* Padrão de fundo decorativo */}

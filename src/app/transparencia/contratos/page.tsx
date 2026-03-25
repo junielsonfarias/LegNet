@@ -15,8 +15,10 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Search
+  Search,
+  ArrowLeft
 } from 'lucide-react'
+import Link from 'next/link'
 import { useContratos } from '@/lib/hooks/use-contratos'
 import { PDFModal } from '@/components/pdf'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
@@ -94,6 +96,12 @@ export default function ContratosPage() {
   return (
     <TransparenciaPageWrapper slug="contratos" nome="Contratos">
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-4">
+        <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar ao Portal da Transparência
+        </Link>
+      </div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
           <FileSignature className="h-8 w-8 text-primary" />

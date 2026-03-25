@@ -16,7 +16,8 @@ import {
   RefreshCw,
   FileDown,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -165,6 +166,12 @@ export default function PesquisasPublicasPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-4">
+        <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar ao Portal da Transparência
+        </Link>
+      </div>
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-camara-primary mb-4">
