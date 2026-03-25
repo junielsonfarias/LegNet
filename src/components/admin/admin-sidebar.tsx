@@ -409,6 +409,12 @@ const navigationCategories: NavCategory[] = [
         permissions: ['config.manage']
       },
       {
+        name: 'Conteúdo Transparência',
+        href: '/admin/configuracoes/transparencia-conteudo',
+        icon: Globe,
+        permissions: ['config.manage']
+      },
+      {
         name: 'Monitoramento',
         href: '/admin/monitoramento',
         icon: Activity,
