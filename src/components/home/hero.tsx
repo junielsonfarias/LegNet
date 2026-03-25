@@ -127,9 +127,9 @@ interface HeroProps {
 export function Hero({ className }: HeroProps) {
   const { configuracao } = useConfiguracaoInstitucional()
   const [stats, setStats] = useState({
-    vereadores: 11,
-    sessoes: 27,
-    materias: 294,
+    vereadores: 0,
+    sessoes: 0,
+    materias: 0,
     transparencia: 100
   })
   const [loading, setLoading] = useState(true)

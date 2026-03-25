@@ -16,7 +16,7 @@ import {
 } from './rate-limit-simple'
 
 // Header secreto para validar chamadas internas
-const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || 'camara-internal-2024'
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || ''
 
 // Cache de resultados para evitar múltiplas chamadas
 const resultCache = new Map<string, { result: RateLimitResult; timestamp: number }>()
@@ -52,9 +52,9 @@ export async function checkRateLimitWithRedis(
     }
   }
 
-  // No servidor, tenta usar a API com Redis
+  // No servidor, tenta usar a API com Redis (via localhost para evitar loop Nginx)
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const baseUrl = 'http://localhost:3000'
     const response = await fetch(`${baseUrl}/api/auth/rate-limit`, {
       method: 'POST',
       headers: {
@@ -120,9 +120,9 @@ export async function resetRateLimitWithRedis(
     return
   }
 
-  // No servidor, tenta resetar via API (Redis)
+  // No servidor, tenta resetar via API (Redis, via localhost)
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const baseUrl = 'http://localhost:3000'
     await fetch(`${baseUrl}/api/auth/rate-limit`, {
       method: 'DELETE',
       headers: {

@@ -52,7 +52,8 @@ export async function middleware(request: NextRequest) {
   // =========================================================================
 
   // Rotas que requerem autenticação
-  const isProtectedRoute = pathname.startsWith('/admin') || pathname.startsWith('/parlamentar')
+  // IMPORTANTE: /parlamentares (público) vs /parlamentar (área restrita do parlamentar)
+  const isProtectedRoute = pathname.startsWith('/admin') || (pathname.startsWith('/parlamentar') && !pathname.startsWith('/parlamentares'))
 
   if (isProtectedRoute) {
     // Obtém token de autenticação
