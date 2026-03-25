@@ -154,9 +154,9 @@
   }
 }
 
-/* Estilos específicos da Câmara */
+/* Estilos específicos da Câmara (usa cores dinâmicas do município) */
 .camara-header {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, var(--municipal-primary) 0%, var(--municipal-secondary) 100%);
 }
 
 .camara-card {
@@ -164,11 +164,31 @@
 }
 
 .camara-button {
-  @apply bg-camara-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200;
+  background-color: var(--municipal-primary);
+  @apply text-white px-4 py-2 rounded-md transition-colors duration-200;
+}
+
+.camara-button:hover {
+  background-color: var(--municipal-primary-dark);
 }
 
 .camara-button-secondary {
-  @apply bg-camara-secondary text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors duration-200;
+  background-color: var(--municipal-secondary);
+  @apply text-white px-4 py-2 rounded-md transition-colors duration-200;
+}
+
+/* Classes utilitárias para cores municipais dinâmicas */
+.text-municipal { color: var(--municipal-primary); }
+.text-municipal-light { color: var(--municipal-secondary); }
+.bg-municipal { background-color: var(--municipal-primary); }
+.bg-municipal-light { background-color: var(--municipal-primary-lighter); }
+.bg-municipal-10 { background-color: rgba(var(--municipal-primary-rgb), 0.1); }
+.border-municipal { border-color: var(--municipal-primary); }
+.gradient-municipal {
+  background: linear-gradient(135deg, var(--municipal-primary) 0%, var(--municipal-primary-dark) 100%);
+}
+.gradient-municipal-hero {
+  background: linear-gradient(135deg, var(--municipal-primary) 0%, var(--municipal-primary-dark) 50%, var(--municipal-primary-darker) 100%);
 }
 
 /* Animações personalizadas */

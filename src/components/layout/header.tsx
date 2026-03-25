@@ -232,7 +232,7 @@ export function Header() {
                 <Newspaper className="h-4 w-4" />
                 Notícias
               </div>
-              <Link href="/participacao-cidada" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+              <Link href="/participacao-cidada" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-camara-primary transition-colors">
                 <MessageSquare className="h-4 w-4" />
                 Participação Cidadã
               </Link>
@@ -259,28 +259,28 @@ export function Header() {
           <div className="hidden md:flex items-center space-x-4">
             <Link
               href="/transparencia"
-              className="hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+              className="hover:text-white/80 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
             >
               Transparencia
             </Link>
             <span aria-hidden="true">•</span>
             <Link
               href="/institucional/e-sic"
-              className="hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+              className="hover:text-white/80 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
             >
               E-SIC
             </Link>
             <span aria-hidden="true">•</span>
             <Link
               href="/institucional/ouvidoria"
-              className="hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+              className="hover:text-white/80 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
             >
               Ouvidoria
             </Link>
             <span aria-hidden="true">•</span>
             <Link
               href="#accessibility-toolbar"
-              className="flex items-center gap-1 hover:text-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
+              className="flex items-center gap-1 hover:text-white/80 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary rounded px-1"
               aria-label="Opcoes de acessibilidade"
             >
               <Accessibility className="h-4 w-4" aria-hidden="true" />

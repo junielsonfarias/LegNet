@@ -186,7 +186,7 @@ export default function LeiOrganicaPage() {
         {/* Resultados */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
             <span className="ml-2 text-gray-600">Carregando documentos...</span>
           </div>
         ) : documentosFiltrados.length === 0 ? (
@@ -214,7 +214,7 @@ export default function LeiOrganicaPage() {
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-3">
-                        <FileText className="h-5 w-5 text-blue-600" />
+                        <FileText className="h-5 w-5 text-camara-primary" />
                         <h3 className="text-lg font-bold text-gray-900">
                           {doc.titulo}
                         </h3>

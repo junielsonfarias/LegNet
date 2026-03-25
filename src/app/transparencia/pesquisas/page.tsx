@@ -141,7 +141,7 @@ export default function PesquisasPublicasPage() {
     const tipo = titulo.split(' ')[0]?.replace('-', '').toUpperCase()
     switch (tipo) {
       case 'RGF':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-camara-primary/10 text-camara-primary'
       case 'LOA':
         return 'bg-green-100 text-green-800'
       case 'LDO':
@@ -279,7 +279,7 @@ export default function PesquisasPublicasPage() {
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
               <span className="ml-2 text-gray-600">Carregando documentos...</span>
             </div>
           ) : documentosFiltrados.length === 0 ? (

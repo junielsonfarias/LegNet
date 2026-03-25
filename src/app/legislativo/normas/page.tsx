@@ -115,8 +115,8 @@ export default function NormasPublicPage() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <Scale className="h-8 w-8 text-blue-600" />
+            <div className="p-3 bg-camara-primary/10 rounded-xl">
+              <Scale className="h-8 w-8 text-camara-primary" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -192,7 +192,7 @@ export default function NormasPublicPage() {
         {/* Lista de Normas */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-camara-primary" />
           </div>
         ) : normas.length === 0 ? (
           <Card>

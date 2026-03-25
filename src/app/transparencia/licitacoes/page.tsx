@@ -28,7 +28,7 @@ import { PDFModal } from '@/components/pdf'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
-  EM_ANDAMENTO: { color: 'bg-blue-100 text-blue-800', icon: <Clock className="h-4 w-4" /> },
+  EM_ANDAMENTO: { color: 'bg-camara-primary/10 text-camara-primary', icon: <Clock className="h-4 w-4" /> },
   HOMOLOGADA: { color: 'bg-green-100 text-green-800', icon: <CheckCircle2 className="h-4 w-4" /> },
   DESERTA: { color: 'bg-yellow-100 text-yellow-800', icon: <AlertCircle className="h-4 w-4" /> },
   FRACASSADA: { color: 'bg-orange-100 text-orange-800', icon: <AlertCircle className="h-4 w-4" /> },
@@ -136,8 +136,8 @@ export default function LicitacoesPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Clock className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-camara-primary/10 rounded-full">
+                <Clock className="h-6 w-6 text-camara-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Em Andamento</p>

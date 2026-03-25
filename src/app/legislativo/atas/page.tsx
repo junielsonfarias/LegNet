@@ -60,7 +60,7 @@ export default function AtasPage() {
     const badges = {
       publicada: 'bg-green-100 text-green-800',
       pendente: 'bg-yellow-100 text-yellow-800',
-      revisao: 'bg-blue-100 text-blue-800'
+      revisao: 'bg-camara-primary/10 text-camara-primary'
     };
     const labels = {
       publicada: 'Publicada',
@@ -180,12 +180,12 @@ export default function AtasPage() {
         <div className="space-y-4">
           {atasFiltradas.length > 0 ? (
             atasFiltradas.map((ata) => (
-              <Card key={ata.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-600">
+              <Card key={ata.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-camara-primary">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <FileText className="h-5 w-5 text-blue-600" />
+                        <FileText className="h-5 w-5 text-camara-primary" />
                         <h3 className="text-lg font-bold text-gray-900">
                           {ata.numero}
                         </h3>

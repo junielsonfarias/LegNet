@@ -11,8 +11,8 @@ export default function ESicPage() {
       title: 'Solicitação de Informação',
       description: 'Solicite informações públicas através do Sistema E-SIC',
       href: '#solicitar',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      color: 'text-camara-primary',
+      bgColor: 'bg-camara-primary/10'
     },
     {
       icon: Clock,

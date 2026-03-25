@@ -117,7 +117,7 @@ export default function NormaPublicaPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-camara-primary" />
       </div>
     )
   }
@@ -148,11 +148,11 @@ export default function NormaPublicaPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-8">
+      <div className="bg-gradient-to-r gradient-municipal text-white py-8">
         <div className="container mx-auto px-4">
           <Link
             href="/legislativo/normas"
-            className="inline-flex items-center text-blue-200 hover:text-white mb-4"
+            className="inline-flex items-center text-white/70 hover:text-white mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para busca
@@ -167,11 +167,11 @@ export default function NormaPublicaPage() {
                 </Badge>
               </div>
               <h1 className="text-2xl md:text-3xl font-bold">{titulo}</h1>
-              <p className="mt-2 text-blue-200 max-w-3xl">{norma.ementa}</p>
+              <p className="mt-2 text-white/70 max-w-3xl">{norma.ementa}</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 mt-4 text-blue-200 text-sm">
+          <div className="flex flex-wrap items-center gap-4 mt-4 text-white/70 text-sm">
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               <span>Data: {format(new Date(norma.data), 'dd/MM/yyyy', { locale: ptBR })}</span>

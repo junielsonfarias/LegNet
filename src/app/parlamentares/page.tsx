@@ -110,7 +110,7 @@ export default function ParlamentaresPage() {
       case 'VICE_PRESIDENTE':
         return 'bg-orange-100 text-orange-800'
       case 'PRIMEIRO_SECRETARIO':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-camara-primary/10 text-camara-primary'
       case 'SEGUNDO_SECRETARIO':
         return 'bg-green-100 text-green-800'
       default:
@@ -151,7 +151,7 @@ export default function ParlamentaresPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
-            <Users className="h-10 w-10 text-blue-600" />
+            <Users className="h-10 w-10 text-camara-primary" />
             Parlamentares
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
@@ -171,7 +171,7 @@ export default function ParlamentaresPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="camara-card">
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-camara-primary">
                 {todosParlamentares.length}
               </div>
               <p className="text-sm text-gray-600">Total de Parlamentares</p>
@@ -253,8 +253,8 @@ export default function ParlamentaresPage() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-blue-100 rounded-lg">
-                      <parlamentar.icon className="h-6 w-6 text-blue-600" />
+                    <div className="p-3 bg-camara-primary/10 rounded-lg">
+                      <parlamentar.icon className="h-6 w-6 text-camara-primary" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">
@@ -301,7 +301,7 @@ export default function ParlamentaresPage() {
                   <div className="border-t pt-3 mt-3">
                     <div className="grid grid-cols-3 gap-4 text-center">
                       <div>
-                        <div className="text-lg font-semibold text-blue-600">
+                        <div className="text-lg font-semibold text-camara-primary">
                           {parlamentar.sessions}
                         </div>
                         <div className="text-xs text-gray-500">Sessões</div>

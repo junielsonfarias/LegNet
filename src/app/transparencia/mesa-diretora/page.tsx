@@ -124,7 +124,7 @@ export default function MesaDiretoraTransparenciaPage() {
       case 'PRESIDENTE':
         return 'bg-red-100 text-red-800 border-red-200'
       case 'VICE_PRESIDENTE':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
+        return 'bg-camara-primary/10 text-camara-primary border-camara-primary/20'
       case 'PRIMEIRO_SECRETARIO':
         return 'bg-green-100 text-green-800 border-green-200'
       case 'SEGUNDO_SECRETARIO':
@@ -150,7 +150,7 @@ export default function MesaDiretoraTransparenciaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-camara-primary/5 to-gray-50">
       <div className="container mx-auto px-4 pt-6">
         <Link href="/transparencia" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
@@ -158,14 +158,14 @@ export default function MesaDiretoraTransparenciaPage() {
         </Link>
       </div>
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-600 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br gradient-municipal-hero text-white overflow-hidden">
         {/* Padrão de fundo decorativo */}
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         
         {/* Círculos decorativos */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-700/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-camara-primary/50/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         
         <div className="relative container mx-auto px-4 py-16">
           <div className="text-center max-w-4xl mx-auto space-y-6">
@@ -176,12 +176,12 @@ export default function MesaDiretoraTransparenciaPage() {
             <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
               Mesa Diretora
             </h1>
-            <p className="text-xl md:text-2xl font-semibold mb-6 text-blue-100 animate-fade-in">
+            <p className="text-xl md:text-2xl font-semibold mb-6 text-white/80 animate-fade-in">
               {configuracao?.nomeCasa || 'Câmara Municipal'}
             </p>
             
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-8 border border-white/20 shadow-2xl animate-fade-in">
-              <p className="text-base text-blue-50">
+              <p className="text-base text-white/90">
                 Conheça os membros da Mesa Diretora da {configuracao?.nomeCasa || 'Câmara Municipal'}, 
                 eleitos para dirigir os trabalhos legislativos e administrativos da Casa.
               </p>
@@ -193,7 +193,7 @@ export default function MesaDiretoraTransparenciaPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Filtros */}
         <Card className="mb-8 shadow-xl hover:shadow-2xl transition-all duration-300">
-          <CardHeader className="bg-gradient-to-r from-gray-100 to-blue-50 border-b">
+          <CardHeader className="bg-gradient-to-r from-gray-100 to-camara-primary/5 border-b">
             <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Filter className="h-5 w-5" />
               Filtros
@@ -228,12 +228,12 @@ export default function MesaDiretoraTransparenciaPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-camara-primary">
                     {composicoesMesa.length}
                   </div>
                   <p className="text-sm text-gray-600">Períodos de Mesa</p>
                 </div>
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <Calendar className="h-8 w-8 text-camara-primary" />
               </div>
             </CardContent>
           </Card>
@@ -351,12 +351,12 @@ export default function MesaDiretoraTransparenciaPage() {
                   {/* Vice-Presidente */}
                   <Card className="shadow-xl hover:shadow-2xl transition-all duration-300">
                     <CardHeader className="text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-blue-500">
+                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
                           {composicao.membrosCompletos.vicePresidente?.nome.charAt(0) || 'V'}
                         </div>
                       </div>
-                      <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                      <Badge className="bg-camara-primary/10 text-camara-primary border-camara-primary/30">
                         <Shield className="h-3 w-3 mr-1" />
                         Vice-Presidente
                       </Badge>

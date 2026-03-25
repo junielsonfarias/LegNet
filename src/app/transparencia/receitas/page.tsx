@@ -22,7 +22,7 @@ import { useReceitas } from '@/lib/hooks/use-receitas'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const situacaoConfig: Record<string, { color: string }> = {
-  PREVISTA: { color: 'bg-blue-100 text-blue-800' },
+  PREVISTA: { color: 'bg-camara-primary/10 text-camara-primary' },
   ARRECADADA: { color: 'bg-green-100 text-green-800' },
   CANCELADA: { color: 'bg-red-100 text-red-800' }
 }
@@ -120,8 +120,8 @@ export default function ReceitasPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <DollarSign className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-camara-primary/10 rounded-full">
+                <DollarSign className="h-6 w-6 text-camara-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Previsto</p>
@@ -261,8 +261,8 @@ export default function ReceitasPage() {
                           <span>{receita.mes}/{receita.ano}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-blue-600" />
-                          <span className="text-blue-600">Previsto: R$ {Number(receita.valorPrevisto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          <DollarSign className="h-4 w-4 text-camara-primary" />
+                          <span className="text-camara-primary">Previsto: R$ {Number(receita.valorPrevisto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-green-600" />

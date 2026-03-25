@@ -50,8 +50,8 @@ export default function PapelVereadorPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="camara-card hover:shadow-lg transition-shadow">
               <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Scale className="h-8 w-8 text-blue-600" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-camara-primary/10 flex items-center justify-center">
+                  <Scale className="h-8 w-8 text-camara-primary" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Legislar</h3>
                 <p className="text-sm text-gray-600">
@@ -99,7 +99,7 @@ export default function PapelVereadorPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-900 flex items-center">
-                      <FileText className="h-5 w-5 text-blue-600 mr-2" />
+                      <FileText className="h-5 w-5 text-camara-primary mr-2" />
                       Proposições Legislativas
                     </h4>
                     <ul className="space-y-2 text-sm text-gray-700">
@@ -142,7 +142,7 @@ export default function PapelVereadorPage() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <Shield className="h-6 w-6 text-blue-600 mt-1" />
+                  <Shield className="h-6 w-6 text-camara-primary mt-1" />
                   <div>
                     <h4 className="font-semibold text-gray-900">Fiscalização Financeira</h4>
                     <p className="text-sm text-gray-600 mt-1">
@@ -271,9 +271,9 @@ export default function PapelVereadorPage() {
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-lg text-center">
-                    <h4 className="font-semibold text-blue-900 mb-2">Presidente</h4>
-                    <p className="text-sm text-blue-700">
+                  <div className="p-4 bg-camara-primary/5 rounded-lg text-center">
+                    <h4 className="font-semibold text-camara-primary mb-2">Presidente</h4>
+                    <p className="text-sm text-camara-primary">
                       Dirige os trabalhos da Câmara e representa o Poder Legislativo
                     </p>
                   </div>

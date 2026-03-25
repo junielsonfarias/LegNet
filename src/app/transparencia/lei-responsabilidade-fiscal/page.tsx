@@ -39,7 +39,7 @@ export default function LeiResponsabilidadeFiscalPage() {
   const getItemColor = (subcategoria: string) => {
     const colors: Record<string, string> = {
       'loa': 'bg-green-100 text-green-800 border-green-200',
-      'ldo': 'bg-blue-100 text-blue-800 border-blue-200',
+      'ldo': 'bg-camara-primary/10 text-camara-primary border-camara-primary/20',
       'ppa': 'bg-purple-100 text-purple-800 border-purple-200',
       'rgf': 'bg-orange-100 text-orange-800 border-orange-200'
     }
@@ -97,7 +97,7 @@ export default function LeiResponsabilidadeFiscalPage() {
             </CardContent>
           </Card>
 
-          <Card className="camara-card border-l-4 border-l-blue-500">
+          <Card className="camara-card border-l-4 border-l-camara-primary">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -106,7 +106,7 @@ export default function LeiResponsabilidadeFiscalPage() {
                     {lrfItems.filter(item => item.status === 'publicado').length}
                   </p>
                 </div>
-                <CheckCircle className="h-12 w-12 text-blue-500" />
+                <CheckCircle className="h-12 w-12 text-camara-primary" />
               </div>
             </CardContent>
           </Card>
@@ -252,12 +252,12 @@ export default function LeiResponsabilidadeFiscalPage() {
                     </p>
                   </div>
                   
-                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <h5 className="font-semibold text-blue-800 mb-2 flex items-center">
+                  <div className="p-4 bg-camara-primary/5 rounded-lg border border-camara-primary/20">
+                    <h5 className="font-semibold text-camara-primary mb-2 flex items-center">
                       <TrendingUp className="h-4 w-4 mr-2" />
                       LDO - Lei de Diretrizes Orçamentárias
                     </h5>
-                    <p className="text-blue-700 text-sm">
+                    <p className="text-camara-primary text-sm">
                       Estabelece as metas e prioridades da administração pública para o exercício seguinte.
                     </p>
                   </div>

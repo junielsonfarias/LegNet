@@ -184,7 +184,7 @@ function MegaMenuPanel({ section, isOpen, onClose }: MegaMenuPanelProps) {
               <Link
                 href={section.featured.href}
                 className={cn(
-                  'block bg-gradient-to-br from-camara-primary to-blue-700 rounded-lg p-4 text-white',
+                  'block bg-gradient-to-br from-camara-primary to-camara-primary rounded-lg p-4 text-white',
                   'hover:shadow-lg transition-shadow duration-200',
                   'focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-camara-primary'
                 )}

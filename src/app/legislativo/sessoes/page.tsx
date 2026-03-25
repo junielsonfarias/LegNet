@@ -113,7 +113,7 @@ export default function SessoesPage() {
           Concluída
         </Badge>
       case 'AGENDADA':
-        return <Badge className="bg-blue-100 text-blue-800 flex items-center">
+        return <Badge className="bg-camara-primary/10 text-camara-primary flex items-center">
           <Clock className="h-3 w-3 mr-1" />
           Agendada
         </Badge>
@@ -139,7 +139,7 @@ export default function SessoesPage() {
 
   const getTipoBadge = (tipo: string) => {
     const tipoColors: Record<string, string> = {
-      'ORDINARIA': 'bg-blue-100 text-blue-800',
+      'ORDINARIA': 'bg-camara-primary/10 text-camara-primary',
       'EXTRAORDINARIA': 'bg-purple-100 text-purple-800',
       'ESPECIAL': 'bg-orange-100 text-orange-800',
       'SOLENE': 'bg-indigo-100 text-indigo-800'
@@ -202,8 +202,8 @@ export default function SessoesPage() {
           
           <Card className="camara-card text-center">
             <CardContent className="p-6">
-              <Clock className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-blue-600 mb-2">{estatisticas.agendadas}</div>
+              <Clock className="h-12 w-12 text-camara-primary mx-auto mb-3" />
+              <div className="text-3xl font-bold text-camara-primary mb-2">{estatisticas.agendadas}</div>
               <div className="text-sm text-gray-600">Agendadas</div>
             </CardContent>
           </Card>
@@ -337,7 +337,7 @@ export default function SessoesPage() {
         {/* Lista de Sessões */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
             <span className="ml-2 text-gray-600">Carregando sessões...</span>
           </div>
         ) : filteredSessoes.length === 0 ? (

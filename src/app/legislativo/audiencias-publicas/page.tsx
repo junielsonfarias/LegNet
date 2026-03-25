@@ -154,7 +154,7 @@ export default function AudienciasPublicasPublicPage() {
   // Função para obter cor do badge por status
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'AGENDADA': return 'bg-blue-100 text-blue-800'
+      case 'AGENDADA': return 'bg-camara-primary/10 text-camara-primary'
       case 'EM_ANDAMENTO': return 'bg-yellow-100 text-yellow-800'
       case 'CONCLUIDA': return 'bg-green-100 text-green-800'
       case 'CANCELADA': return 'bg-red-100 text-red-800'
@@ -166,7 +166,7 @@ export default function AudienciasPublicasPublicPage() {
   // Função para obter cor do badge por tipo
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
-      case 'ORDINARIA': return 'bg-blue-100 text-blue-800'
+      case 'ORDINARIA': return 'bg-camara-primary/10 text-camara-primary'
       case 'EXTRAORDINARIA': return 'bg-orange-100 text-orange-800'
       case 'ESPECIAL': return 'bg-purple-100 text-purple-800'
       default: return 'bg-gray-100 text-gray-800'
@@ -176,7 +176,7 @@ export default function AudienciasPublicasPublicPage() {
   // Função para obter cor do badge por tipo de participante
   const getParticipanteColor = (tipo: string) => {
     switch (tipo) {
-      case 'PARLAMENTAR': return 'bg-blue-100 text-blue-800'
+      case 'PARLAMENTAR': return 'bg-camara-primary/10 text-camara-primary'
       case 'CONVIDADO': return 'bg-green-100 text-green-800'
       case 'CIDADAO': return 'bg-purple-100 text-purple-800'
       case 'ORGAO_PUBLICO': return 'bg-orange-100 text-orange-800'
@@ -262,7 +262,7 @@ export default function AudienciasPublicasPublicPage() {
           <Card className="camara-card">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <Calendar className="h-8 w-8 text-camara-primary" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Agendadas</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.agendadas}</p>
@@ -523,9 +523,9 @@ export default function AudienciasPublicasPublicPage() {
                           <h4 className="text-lg font-semibold text-gray-900 mb-4">Documentos</h4>
                           <div className="space-y-2">
                             {audiencia.documentos.map((documento, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                              <div key={idx} className="flex items-center justify-between p-3 bg-camara-primary/5 rounded-lg">
                                 <div className="flex items-center">
-                                  <FileText className="h-5 w-5 text-blue-600 mr-3" />
+                                  <FileText className="h-5 w-5 text-camara-primary mr-3" />
                                   <div>
                                     <p className="font-medium text-gray-900">{documento.nome}</p>
                                     <p className="text-sm text-gray-600">

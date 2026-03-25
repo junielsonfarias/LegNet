@@ -106,11 +106,11 @@ function StatCard({ icon: Icon, value, label, suffix = '', delay = 0 }: StatCard
       style={{ animationDelay: `${delay}ms` }}
     >
       <CardContent className="p-6 text-center">
-        <Icon className="h-8 w-8 text-blue-200 mx-auto mb-2" aria-hidden="true" />
+        <Icon className="h-8 w-8 text-white/80 mx-auto mb-2" aria-hidden="true" />
         <div className="text-2xl md:text-3xl font-bold text-white">
           <AnimatedCounter end={value} suffix={suffix} />
         </div>
-        <div className="text-sm text-blue-100">{label}</div>
+        <div className="text-sm text-white/70">{label}</div>
       </CardContent>
     </Card>
   )
@@ -276,23 +276,23 @@ export function Hero({ className }: HeroProps) {
             <div className="flex flex-wrap gap-3 pt-4">
               <Link
                 href="/legislativo/sessoes"
-                className="flex items-center gap-1 text-sm text-blue-200 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors"
               >
                 <Calendar className="h-4 w-4" aria-hidden="true" />
                 Proximas Sessoes
               </Link>
-              <span className="text-blue-300/50" aria-hidden="true">|</span>
+              <span className="text-white/30" aria-hidden="true">|</span>
               <Link
                 href="/legislativo/sessoes"
-                className="flex items-center gap-1 text-sm text-blue-200 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors"
               >
                 <Play className="h-4 w-4" aria-hidden="true" />
                 Sessoes Legislativas
               </Link>
-              <span className="text-blue-300/50" aria-hidden="true">|</span>
+              <span className="text-white/30" aria-hidden="true">|</span>
               <Link
                 href="/legislativo/proposicoes"
-                className="flex items-center gap-1 text-sm text-blue-200 hover:text-white transition-colors"
+                className="flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors"
               >
                 <FileText className="h-4 w-4" aria-hidden="true" />
                 Projetos de Lei

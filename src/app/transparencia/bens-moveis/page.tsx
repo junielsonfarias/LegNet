@@ -185,8 +185,8 @@ export default function BensMoveisPage() {
                         )}
                         {bem.valorAquisicao && (
                           <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-blue-600" />
-                            <span className="text-blue-600">Aquisicao: R$ {Number(bem.valorAquisicao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <DollarSign className="h-4 w-4 text-camara-primary" />
+                            <span className="text-camara-primary">Aquisicao: R$ {Number(bem.valorAquisicao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                           </div>
                         )}
                         {bem.valorAtual && (

@@ -19,7 +19,7 @@ const cargoLabels: Record<string, string> = {
 
 const cargoBadgeColors: Record<string, string> = {
   'PRESIDENTE': 'bg-yellow-100 text-yellow-800',
-  'VICE_PRESIDENTE': 'bg-blue-100 text-blue-800',
+  'VICE_PRESIDENTE': 'bg-camara-primary/10 text-camara-primary',
   'PRIMEIRO_SECRETARIO': 'bg-green-100 text-green-800',
   'SEGUNDO_SECRETARIO': 'bg-purple-100 text-purple-800',
   'VEREADOR': 'bg-gray-100 text-gray-800'

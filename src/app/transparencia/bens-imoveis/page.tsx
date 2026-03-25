@@ -98,8 +98,8 @@ export default function BensImoveisPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Ruler className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-camara-primary/10 rounded-full">
+                <Ruler className="h-6 w-6 text-camara-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Area Total</p>
@@ -207,8 +207,8 @@ export default function BensImoveisPage() {
                         )}
                         {bem.valorAquisicao && (
                           <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-blue-600" />
-                            <span className="text-blue-600">Aquisicao: R$ {Number(bem.valorAquisicao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <DollarSign className="h-4 w-4 text-camara-primary" />
+                            <span className="text-camara-primary">Aquisicao: R$ {Number(bem.valorAquisicao).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                           </div>
                         )}
                         {bem.valorAtual && (

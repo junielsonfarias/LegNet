@@ -53,7 +53,7 @@ export function StatsSection() {
       title: 'Vereadores Ativos',
       value: String(stats.vereadores),
       description: 'Parlamentares na legislatura atual',
-      color: 'text-blue-600'
+      color: 'text-camara-primary'
     },
     {
       icon: Calendar,

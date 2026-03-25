@@ -119,7 +119,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   const variants = {
     default: 'bg-gray-50 border-b',
-    gradient: 'bg-gradient-to-r from-camara-primary to-blue-700 text-white',
+    gradient: 'bg-gradient-to-r from-camara-primary to-camara-primary text-white',
     minimal: 'bg-white'
   }
 
@@ -135,7 +135,7 @@ export function PageHeader({
         {breadcrumbs && (
           <Breadcrumbs
             items={breadcrumbs}
-            className={variant === 'gradient' ? 'text-blue-100 [&_a]:text-white [&_a:hover]:text-blue-200' : ''}
+            className={variant === 'gradient' ? 'text-white/70 [&_a]:text-white [&_a:hover]:text-white/80' : ''}
           />
         )}
 
@@ -150,7 +150,7 @@ export function PageHeader({
             {subtitle && (
               <p className={cn(
                 'mt-2 text-lg',
-                variant === 'gradient' ? 'text-blue-100' : 'text-gray-600'
+                variant === 'gradient' ? 'text-white/70' : 'text-gray-600'
               )}>
                 {subtitle}
               </p>

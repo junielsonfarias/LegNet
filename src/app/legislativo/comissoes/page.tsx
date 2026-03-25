@@ -53,7 +53,7 @@ export default function ComissoesPage() {
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
       case 'PERMANENTE':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-camara-primary/10 text-camara-primary'
       case 'TEMPORARIA':
         return 'bg-orange-100 text-orange-800'
       case 'ESPECIAL':
@@ -122,7 +122,7 @@ export default function ComissoesPage() {
             </p>
           </div>
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
             <span className="ml-2 text-gray-600">Carregando comissões...</span>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function ComissoesPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card className="text-center">
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-2xl font-bold text-camara-primary">
                 {comissoes.filter(c => c.tipo === 'PERMANENTE').length}
               </div>
               <p className="text-sm text-gray-600">Comissões Permanentes</p>
@@ -228,7 +228,7 @@ export default function ComissoesPage() {
         <div className="space-y-6">
           {comissoes.map((comissao) => (
             <Card key={comissao.id} className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <CardHeader className="bg-gradient-to-r gradient-municipal text-white">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-xl mb-2">
@@ -253,13 +253,13 @@ export default function ComissoesPage() {
                   {/* Membros */}
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-blue-600" />
+                      <UserCheck className="h-4 w-4 text-camara-primary" />
                       Membros da Comissão
                     </h3>
                     {comissao.membros.length > 0 ? (
                       <div className="space-y-2">
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <p className="font-medium text-blue-900">
+                        <div className="bg-camara-primary/5 p-3 rounded-lg">
+                          <p className="font-medium text-camara-primary">
                             Presidente: {getPresidente(comissao.membros)}
                           </p>
                         </div>
@@ -286,7 +286,7 @@ export default function ComissoesPage() {
                   {/* Descrição/Competências */}
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-blue-600" />
+                      <FileText className="h-4 w-4 text-camara-primary" />
                       Descrição
                     </h3>
                     {comissao.descricao ? (

@@ -231,7 +231,7 @@ export default function LDOPage() {
 
   const getStatusProgramaBadge = (status: string) => {
     const badges = {
-      'EM_EXECUCAO': 'bg-blue-100 text-blue-800',
+      'EM_EXECUCAO': 'bg-camara-primary/10 text-camara-primary',
       'CONCLUIDO': 'bg-green-100 text-green-800',
       'SUSPENSO': 'bg-yellow-100 text-yellow-800'
     };
@@ -394,8 +394,8 @@ export default function LDOPage() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <BarChart3 className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-camara-primary/10 rounded-lg">
+                      <BarChart3 className="h-6 w-6 text-camara-primary" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Total de Programas</p>
@@ -550,7 +550,7 @@ export default function LDOPage() {
                           <div className="text-sm font-medium text-gray-900">{meta.descricao}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {meta.valor}%
                           </div>
                         </td>
@@ -586,8 +586,8 @@ export default function LDOPage() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Target className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-camara-primary/10 rounded-lg">
+                      <Target className="h-6 w-6 text-camara-primary" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Total de Programas</p>
@@ -694,7 +694,7 @@ export default function LDOPage() {
                           <div className="text-sm text-gray-700 max-w-md">{programa.objetivo}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {formatCurrency(programa.valorPrevisto)}
                           </div>
                         </td>
@@ -731,7 +731,7 @@ export default function LDOPage() {
             <Card className="w-full max-w-4xl">
               <CardHeader className="bg-gray-100 border-b">
                 <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <FileBarChart className="h-6 w-6 text-blue-600" />
+                  <FileBarChart className="h-6 w-6 text-camara-primary" />
                   Detalhes da LDO {ldoSelecionada.exercicio}
                 </CardTitle>
               </CardHeader>

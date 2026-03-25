@@ -54,7 +54,7 @@ export default function CodigoEticaPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-center p-4 bg-camara-primary/5 rounded-lg">
                   <Scale className="h-12 w-12 text-camara-primary mx-auto mb-3" />
                   <h3 className="font-semibold text-gray-900 mb-2">Legalidade</h3>
                   <p className="text-sm text-gray-600">
@@ -282,7 +282,7 @@ export default function CodigoEticaPage() {
                   de violação ao Código de Ética, garantindo o cumprimento dos princípios 
                   estabelecidos neste documento.
                 </p>
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-camara-primary/5 p-4 rounded-lg">
                   <h3 className="font-semibold text-gray-900 mb-2">Como Denunciar</h3>
                   <p className="text-gray-700">
                     Denúncias podem ser feitas através da Ouvidoria da Câmara, 

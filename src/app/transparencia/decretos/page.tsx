@@ -237,7 +237,7 @@ export default function DecretosPage() {
         {/* Lista de Decretos */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
             <span className="ml-2 text-gray-600">Carregando decretos...</span>
           </div>
         ) : filteredDecretos.length === 0 ? (
@@ -254,7 +254,7 @@ export default function DecretosPage() {
               </p>
               <p className="text-sm text-gray-500">
                 Você pode consultar as leis municipais em{' '}
-                <Link href="/transparencia/leis" className="text-blue-600 hover:underline">
+                <Link href="/transparencia/leis" className="text-camara-primary hover:underline">
                   Leis
                 </Link>
               </p>

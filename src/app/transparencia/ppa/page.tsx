@@ -350,7 +350,7 @@ export default function PPAPage() {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      'EM_EXECUCAO': 'bg-blue-100 text-blue-800',
+      'EM_EXECUCAO': 'bg-camara-primary/10 text-camara-primary',
       'CONCLUIDO': 'bg-green-100 text-green-800',
       'SUSPENSO': 'bg-yellow-100 text-yellow-800'
     };
@@ -481,8 +481,8 @@ export default function PPAPage() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Target className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-camara-primary/10 rounded-lg">
+                      <Target className="h-6 w-6 text-camara-primary" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Total de Eixos</p>
@@ -573,7 +573,7 @@ export default function PPAPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Valor Total Previsto:
                       </label>
-                      <p className="text-lg font-bold text-blue-600">
+                      <p className="text-lg font-bold text-camara-primary">
                         {formatCurrency(ppaAtual.valorTotalPrevisto)}
                       </p>
                     </div>
@@ -691,7 +691,7 @@ export default function PPAPage() {
                           <div className="text-sm text-gray-700 max-w-md">{eixo.descricao}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {formatCurrency(eixo.valorPrevisto)}
                           </div>
                         </td>
@@ -784,7 +784,7 @@ export default function PPAPage() {
                           <div className="text-sm text-gray-700">{programa.eixoEstrategico}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {formatCurrency(programa.valorPrevisto)}
                           </div>
                         </td>
@@ -877,7 +877,7 @@ export default function PPAPage() {
                           <div className="text-sm text-gray-700">{acao.programa}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {formatCurrency(acao.valorPrevisto)}
                           </div>
                         </td>
@@ -914,7 +914,7 @@ export default function PPAPage() {
             <Card className="w-full max-w-4xl">
               <CardHeader className="bg-gray-100 border-b">
                 <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <FileBarChart className="h-6 w-6 text-blue-600" />
+                  <FileBarChart className="h-6 w-6 text-camara-primary" />
                   Detalhes do PPA {ppaSelecionado.periodo}
                 </CardTitle>
               </CardHeader>
@@ -948,7 +948,7 @@ export default function PPAPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Valor Total Previsto:
                       </label>
-                      <p className="text-lg font-bold text-blue-600">
+                      <p className="text-lg font-bold text-camara-primary">
                         {formatCurrency(ppaSelecionado.valorTotalPrevisto)}
                       </p>
                     </div>

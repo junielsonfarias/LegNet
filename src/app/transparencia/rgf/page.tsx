@@ -424,8 +424,8 @@ export default function RGFPage() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <FileBarChart className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-camara-primary/10 rounded-lg">
+                      <FileBarChart className="h-6 w-6 text-camara-primary" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Total de Relatórios</p>
@@ -618,7 +618,7 @@ export default function RGFPage() {
                           <div className="text-sm font-medium text-gray-900">{indicador.nome}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {indicador.valor}%
                           </div>
                         </td>
@@ -656,7 +656,7 @@ export default function RGFPage() {
             <Card className="w-full max-w-4xl">
               <CardHeader className="bg-gray-100 border-b">
                 <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <FileBarChart className="h-6 w-6 text-blue-600" />
+                  <FileBarChart className="h-6 w-6 text-camara-primary" />
                   Dados do RGF
                 </CardTitle>
               </CardHeader>
@@ -704,7 +704,7 @@ export default function RGFPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Receitas Previstas:
                       </label>
-                      <p className="text-lg font-bold text-blue-600">
+                      <p className="text-lg font-bold text-camara-primary">
                         {formatCurrency(rgfSelecionado.receitasPrevistas)}
                       </p>
                     </div>

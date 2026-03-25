@@ -26,7 +26,7 @@ import { TransparenciaPageWrapper } from '@/components/transparencia/transparenc
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   ATIVO: { color: 'bg-green-100 text-green-800', icon: <CheckCircle2 className="h-4 w-4" /> },
-  EM_EXECUCAO: { color: 'bg-blue-100 text-blue-800', icon: <Clock className="h-4 w-4" /> },
+  EM_EXECUCAO: { color: 'bg-camara-primary/10 text-camara-primary', icon: <Clock className="h-4 w-4" /> },
   SUSPENSO: { color: 'bg-yellow-100 text-yellow-800', icon: <AlertCircle className="h-4 w-4" /> },
   ENCERRADO: { color: 'bg-gray-100 text-gray-800', icon: <XCircle className="h-4 w-4" /> },
   CANCELADO: { color: 'bg-red-100 text-red-800', icon: <XCircle className="h-4 w-4" /> }
@@ -147,8 +147,8 @@ export default function ConveniosPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <DollarSign className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-camara-primary/10 rounded-full">
+                <DollarSign className="h-6 w-6 text-camara-primary" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Valor Repasse</p>

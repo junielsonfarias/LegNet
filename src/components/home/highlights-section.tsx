@@ -461,7 +461,7 @@ function SessaoAoVivoFallback() {
 
   // Card alternativo quando nao ha sessao ao vivo
   return (
-    <Card className="h-full bg-gradient-to-br from-camara-primary to-blue-700 text-white">
+    <Card className="h-full bg-gradient-to-br from-camara-primary to-camara-primary text-white">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-lg text-white">
           <PlayCircle className="h-5 w-5" />
@@ -469,7 +469,7 @@ function SessaoAoVivoFallback() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-blue-100 text-sm">
+        <p className="text-white/70 text-sm">
           Assista as sessoes legislativas, audiencias publicas e eventos da Camara Municipal.
         </p>
 

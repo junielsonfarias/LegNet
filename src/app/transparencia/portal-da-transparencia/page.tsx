@@ -129,7 +129,7 @@ export default function PortalTransparenciaPage() {
 
   const obterCorPorTipo = (tipo: string) => {
     switch (tipo) {
-      case 'documento': return 'bg-blue-100 text-blue-800';
+      case 'documento': return 'bg-camara-primary/10 text-camara-primary';
       case 'relatorio': return 'bg-green-100 text-green-800';
       case 'informacao': return 'bg-purple-100 text-purple-800';
       case 'servico': return 'bg-orange-100 text-orange-800';

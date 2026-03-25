@@ -28,7 +28,7 @@ const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> =
   ATIVO: { color: 'bg-green-100 text-green-800', icon: <UserCheck className="h-4 w-4" /> },
   INATIVO: { color: 'bg-gray-100 text-gray-800', icon: <UserX className="h-4 w-4" /> },
   AFASTADO: { color: 'bg-yellow-100 text-yellow-800', icon: <UserX className="h-4 w-4" /> },
-  LICENCA: { color: 'bg-blue-100 text-blue-800', icon: <UserX className="h-4 w-4" /> },
+  LICENCA: { color: 'bg-camara-primary/10 text-camara-primary', icon: <UserX className="h-4 w-4" /> },
   FERIAS: { color: 'bg-cyan-100 text-cyan-800', icon: <UserX className="h-4 w-4" /> },
   CEDIDO: { color: 'bg-purple-100 text-purple-800', icon: <UserX className="h-4 w-4" /> },
   APOSENTADO: { color: 'bg-orange-100 text-orange-800', icon: <UserX className="h-4 w-4" /> },
@@ -324,7 +324,7 @@ export default function FolhaPagamentoPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <span className="font-bold text-lg text-primary">{folha.competencia}</span>
-                          <span className="px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                          <span className="px-3 py-1 rounded-full text-sm bg-camara-primary/10 text-camara-primary">
                             {folha.situacao?.replace(/_/g, ' ') || 'PROCESSADA'}
                           </span>
                         </div>
@@ -338,8 +338,8 @@ export default function FolhaPagamentoPage() {
                             <span>{folha.totalServidores} servidores</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <DollarSign className="h-4 w-4 text-blue-600" />
-                            <span className="text-blue-600">Bruto: R$ {Number(folha.totalBruto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <DollarSign className="h-4 w-4 text-camara-primary" />
+                            <span className="text-camara-primary">Bruto: R$ {Number(folha.totalBruto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <DollarSign className="h-4 w-4 text-green-600" />

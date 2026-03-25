@@ -143,7 +143,7 @@ export default function PautasSessoesPublicPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'PUBLICADA': return 'bg-green-100 text-green-800'
-      case 'APROVADA': return 'bg-blue-100 text-blue-800'
+      case 'APROVADA': return 'bg-camara-primary/10 text-camara-primary'
       case 'EM_ANDAMENTO': return 'bg-purple-100 text-purple-800'
       case 'CONCLUIDA': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
@@ -153,7 +153,7 @@ export default function PautasSessoesPublicPage() {
   // Função para obter cor do badge por tipo
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
-      case 'ORDINARIA': return 'bg-blue-100 text-blue-800'
+      case 'ORDINARIA': return 'bg-camara-primary/10 text-camara-primary'
       case 'EXTRAORDINARIA': return 'bg-orange-100 text-orange-800'
       case 'ESPECIAL': return 'bg-purple-100 text-purple-800'
       case 'SOLENE': return 'bg-red-100 text-red-800'
@@ -164,7 +164,7 @@ export default function PautasSessoesPublicPage() {
   // Função para obter cor do badge por categoria
   const getCategoriaColor = (categoria: string) => {
     switch (categoria) {
-      case 'PROJETO_LEI': return 'bg-blue-100 text-blue-800'
+      case 'PROJETO_LEI': return 'bg-camara-primary/10 text-camara-primary'
       case 'PROJETO_RESOLUCAO': return 'bg-green-100 text-green-800'
       case 'PROJETO_DECRETO': return 'bg-purple-100 text-purple-800'
       case 'REQUERIMENTO': return 'bg-orange-100 text-orange-800'
@@ -276,7 +276,7 @@ export default function PautasSessoesPublicPage() {
           <Card className="camara-card">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <Calendar className="h-8 w-8 text-camara-primary" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Ordinárias</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.ordinarias}</p>
@@ -430,7 +430,7 @@ export default function PautasSessoesPublicPage() {
                       {pauta.expediente.length > 0 && (
                         <div className="mb-8">
                           <div className="flex items-center mb-4">
-                            <BookOpen className="h-5 w-5 text-blue-600 mr-2" />
+                            <BookOpen className="h-5 w-5 text-camara-primary mr-2" />
                             <h4 className="text-lg font-semibold text-gray-900">Expediente</h4>
                             <Badge variant="outline" className="ml-2">{pauta.expediente.length} itens</Badge>
                           </div>
@@ -488,7 +488,7 @@ export default function PautasSessoesPublicPage() {
                           </div>
                           <div className="space-y-4">
                             {pauta.ordemDoDia.map((item, index) => (
-                              <div key={item.id} className="bg-blue-50 p-4 rounded-lg">
+                              <div key={item.id} className="bg-camara-primary/5 p-4 rounded-lg">
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
@@ -527,11 +527,11 @@ export default function PautasSessoesPublicPage() {
 
                                 {/* Anexos */}
                                 {item.anexos && item.anexos.length > 0 && (
-                                  <div className="mt-3 pt-3 border-t border-blue-200">
+                                  <div className="mt-3 pt-3 border-t border-camara-primary/20">
                                     <p className="text-sm font-medium text-gray-700 mb-2">Anexos:</p>
                                     <div className="space-y-1">
                                       {item.anexos.map((anexo, idx) => (
-                                        <div key={idx} className="flex items-center text-sm text-blue-600">
+                                        <div key={idx} className="flex items-center text-sm text-camara-primary">
                                           <Download className="h-4 w-4 mr-1" />
                                           <a 
                                             href={anexo.url} 

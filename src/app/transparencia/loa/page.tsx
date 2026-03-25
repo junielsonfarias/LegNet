@@ -354,8 +354,8 @@ export default function LOAPage() {
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <BarChart3 className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-camara-primary/10 rounded-lg">
+                      <BarChart3 className="h-6 w-6 text-camara-primary" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Receitas Arrecadadas</p>
@@ -543,7 +543,7 @@ export default function LOAPage() {
                           <div className="text-sm text-gray-900">{receita.descricao}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {formatCurrency(receita.valorPrevisto)}
                           </div>
                         </td>
@@ -621,7 +621,7 @@ export default function LOAPage() {
                           <div className="text-sm text-gray-900">{despesa.descricao}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-blue-600">
+                          <div className="text-sm font-bold text-camara-primary">
                             {formatCurrency(despesa.valorPrevisto)}
                           </div>
                         </td>
@@ -660,7 +660,7 @@ export default function LOAPage() {
             <Card className="w-full max-w-4xl">
               <CardHeader className="bg-gray-100 border-b">
                 <CardTitle className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <FileText className="h-6 w-6 text-blue-600" />
+                  <FileText className="h-6 w-6 text-camara-primary" />
                   Detalhes da LOA {loaSelecionada.exercicio}
                 </CardTitle>
               </CardHeader>

@@ -53,10 +53,10 @@ export default function LegislaturaPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="camara-card hover:shadow-lg transition-shadow">
               <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-blue-600" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-camara-primary/10 flex items-center justify-center">
+                  <Users className="h-8 w-8 text-camara-primary" />
                 </div>
-                <h3 className="text-3xl font-bold text-blue-600 mb-2">11</h3>
+                <h3 className="text-3xl font-bold text-camara-primary mb-2">11</h3>
                 <p className="text-sm text-gray-600">Vereadores Eleitos</p>
               </CardContent>
             </Card>
@@ -137,10 +137,10 @@ export default function LegislaturaPage() {
                     <p className="text-sm text-red-700">vereadores</p>
                   </div>
 
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-blue-900 mb-2">Partido Social Democrático (PSD)</h4>
-                    <p className="text-2xl font-bold text-blue-600">2</p>
-                    <p className="text-sm text-blue-700">vereadores</p>
+                  <div className="p-4 bg-camara-primary/5 rounded-lg">
+                    <h4 className="font-semibold text-camara-primary mb-2">Partido Social Democrático (PSD)</h4>
+                    <p className="text-2xl font-bold text-camara-primary">2</p>
+                    <p className="text-sm text-camara-primary">vereadores</p>
                   </div>
 
                   <div className="p-4 bg-green-50 rounded-lg">
@@ -279,7 +279,7 @@ export default function LegislaturaPage() {
                     <h4 className="font-semibold text-gray-900">Período Legislativo 2021-2022</h4>
                     <div className="space-y-2 text-sm text-gray-700">
                       <div className="flex items-center">
-                        <Clock className="h-4 w-4 text-blue-600 mr-2" />
+                        <Clock className="h-4 w-4 text-camara-primary mr-2" />
                         <span>Início: Janeiro de 2021</span>
                       </div>
                       <div className="flex items-center">
@@ -297,7 +297,7 @@ export default function LegislaturaPage() {
                     <h4 className="font-semibold text-gray-900">Período Legislativo 2023-2024</h4>
                     <div className="space-y-2 text-sm text-gray-700">
                       <div className="flex items-center">
-                        <Clock className="h-4 w-4 text-blue-600 mr-2" />
+                        <Clock className="h-4 w-4 text-camara-primary mr-2" />
                         <span>Início: Janeiro de 2023</span>
                       </div>
                       <div className="flex items-center">
@@ -317,15 +317,15 @@ export default function LegislaturaPage() {
                   <div className="space-y-2 text-sm text-gray-700">
                     <div className="flex items-center justify-between">
                       <span>Reunião da Mesa Diretora</span>
-                      <span className="text-blue-600 font-medium">15/01/2024</span>
+                      <span className="text-camara-primary font-medium">15/01/2024</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Sessão Ordinária</span>
-                      <span className="text-blue-600 font-medium">20/01/2024</span>
+                      <span className="text-camara-primary font-medium">20/01/2024</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Audiência Pública - Orçamento 2024</span>
-                      <span className="text-blue-600 font-medium">25/01/2024</span>
+                      <span className="text-camara-primary font-medium">25/01/2024</span>
                     </div>
                   </div>
                 </div>

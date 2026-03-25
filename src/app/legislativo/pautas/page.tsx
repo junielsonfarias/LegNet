@@ -121,7 +121,7 @@ export default function PautasPage() {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      agendada: 'bg-blue-100 text-blue-800',
+      agendada: 'bg-camara-primary/10 text-camara-primary',
       realizada: 'bg-green-100 text-green-800',
       cancelada: 'bg-red-100 text-red-800'
     };

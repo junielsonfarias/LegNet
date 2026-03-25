@@ -98,7 +98,7 @@ export default function ProposicoesPage() {
 
   const getTipoBadge = (tipo: string) => {
     const tipoConfig: Record<string, { label: string; className: string }> = {
-      'PROJETO_LEI': { label: 'Projeto de Lei', className: 'bg-blue-600 text-white' },
+      'PROJETO_LEI': { label: 'Projeto de Lei', className: 'bg-camara-primary text-white' },
       'PROJETO_RESOLUCAO': { label: 'Projeto de Resolução', className: 'bg-purple-600 text-white' },
       'PROJETO_DECRETO': { label: 'Projeto de Decreto', className: 'bg-indigo-600 text-white' },
       'INDICACAO': { label: 'Indicação', className: 'bg-amber-600 text-white' },
@@ -116,7 +116,7 @@ export default function ProposicoesPage() {
       'APROVADA': { label: 'Aprovada', className: 'bg-green-100 text-green-800' },
       'REJEITADA': { label: 'Rejeitada', className: 'bg-red-100 text-red-800' },
       'EM_TRAMITACAO': { label: 'Em Tramitação', className: 'bg-yellow-100 text-yellow-800' },
-      'APRESENTADA': { label: 'Apresentada', className: 'bg-blue-100 text-blue-800' },
+      'APRESENTADA': { label: 'Apresentada', className: 'bg-camara-primary/10 text-camara-primary' },
       'ARQUIVADA': { label: 'Arquivada', className: 'bg-gray-100 text-gray-800' },
       'VETADA': { label: 'Vetada', className: 'bg-orange-100 text-orange-800' }
     }
@@ -288,7 +288,7 @@ export default function ProposicoesPage() {
         {/* Lista de Proposições */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
             <span className="ml-2 text-gray-600">Carregando proposições...</span>
           </div>
         ) : filteredProposicoes.length === 0 ? (

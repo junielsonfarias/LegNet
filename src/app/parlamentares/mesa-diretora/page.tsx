@@ -127,7 +127,7 @@ export default function MesaDiretoraPage() {
       case 'PRESIDENTE':
         return 'bg-red-100 text-red-800 border-red-200'
       case 'VICE_PRESIDENTE':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
+        return 'bg-camara-primary/10 text-camara-primary border-camara-primary/20'
       case 'PRIMEIRO_SECRETARIO':
         return 'bg-green-100 text-green-800 border-green-200'
       case 'SEGUNDO_SECRETARIO':
@@ -206,12 +206,12 @@ export default function MesaDiretoraPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-camara-primary">
                     {composicoesMesa.length}
                   </div>
                   <p className="text-sm text-gray-600">Períodos de Mesa</p>
                 </div>
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <Calendar className="h-8 w-8 text-camara-primary" />
               </div>
             </CardContent>
           </Card>
@@ -329,12 +329,12 @@ export default function MesaDiretoraPage() {
                   {/* Vice-Presidente */}
                   <Card className="camara-card">
                     <CardHeader className="text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-blue-500">
+                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
                           {composicao.membrosCompletos.vicePresidente?.nome.charAt(0) || 'V'}
                         </div>
                       </div>
-                      <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                      <Badge className="bg-camara-primary/10 text-camara-primary border-camara-primary/20">
                         <Shield className="h-3 w-3 mr-1" />
                         Vice-Presidente
                       </Badge>

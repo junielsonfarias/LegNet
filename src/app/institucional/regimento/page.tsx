@@ -50,8 +50,8 @@ export default function RegimentoPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="camara-card hover:shadow-lg transition-shadow">
               <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Scale className="h-8 w-8 text-blue-600" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-camara-primary/10 flex items-center justify-center">
+                  <Scale className="h-8 w-8 text-camara-primary" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Norma Interna</h3>
                 <p className="text-sm text-gray-600">
@@ -99,7 +99,7 @@ export default function RegimentoPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-900 flex items-center">
-                      <FileText className="h-5 w-5 text-blue-600 mr-2" />
+                      <FileText className="h-5 w-5 text-camara-primary mr-2" />
                       Organização da Câmara
                     </h4>
                     <ul className="space-y-2 text-sm text-gray-700">
@@ -227,7 +227,7 @@ export default function RegimentoPage() {
 
                 <div className="space-y-4">
                   <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div className="flex-shrink-0 w-8 h-8 bg-camara-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                       1
                     </div>
                     <div>
@@ -240,7 +240,7 @@ export default function RegimentoPage() {
                   </div>
 
                   <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div className="flex-shrink-0 w-8 h-8 bg-camara-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                       2
                     </div>
                     <div>
@@ -253,7 +253,7 @@ export default function RegimentoPage() {
                   </div>
 
                   <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div className="flex-shrink-0 w-8 h-8 bg-camara-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                       3
                     </div>
                     <div>
@@ -266,7 +266,7 @@ export default function RegimentoPage() {
                   </div>
 
                   <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div className="flex-shrink-0 w-8 h-8 bg-camara-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                       4
                     </div>
                     <div>
@@ -279,7 +279,7 @@ export default function RegimentoPage() {
                   </div>
 
                   <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div className="flex-shrink-0 w-8 h-8 bg-camara-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                       5
                     </div>
                     <div>

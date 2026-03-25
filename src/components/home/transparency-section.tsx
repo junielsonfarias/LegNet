@@ -84,7 +84,7 @@ export function TransparencySection() {
       description: 'Acesse todas as leis aprovadas pela Câmara Municipal',
       count: estatisticas.leis,
       href: '/transparencia/leis',
-      color: 'text-blue-600'
+      color: 'text-camara-primary'
     },
     {
       icon: Download,

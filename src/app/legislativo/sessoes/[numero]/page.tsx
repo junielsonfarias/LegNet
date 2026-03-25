@@ -200,7 +200,7 @@ export default function SessaoDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin text-camara-primary mx-auto mb-4" />
           <p className="text-gray-600">Carregando sessão...</p>
         </div>
       </div>
@@ -248,7 +248,7 @@ export default function SessaoDetailPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'CONCLUIDA': 'bg-green-100 text-green-800',
-      'AGENDADA': 'bg-blue-100 text-blue-800',
+      'AGENDADA': 'bg-camara-primary/10 text-camara-primary',
       'CANCELADA': 'bg-red-100 text-red-800',
       'EM_ANDAMENTO': 'bg-yellow-100 text-yellow-800'
     }
@@ -257,7 +257,7 @@ export default function SessaoDetailPage() {
 
   const getTipoColor = (tipo: string) => {
     const colors: Record<string, string> = {
-      'ORDINARIA': 'bg-blue-100 text-blue-800',
+      'ORDINARIA': 'bg-camara-primary/10 text-camara-primary',
       'EXTRAORDINARIA': 'bg-orange-100 text-orange-800',
       'SOLENE': 'bg-green-100 text-green-800',
       'ESPECIAL': 'bg-purple-100 text-purple-800'
@@ -285,7 +285,7 @@ export default function SessaoDetailPage() {
       'REJEITADA': 'bg-red-100 text-red-800',
       'ARQUIVADA': 'bg-gray-100 text-gray-800',
       'EM_TRAMITACAO': 'bg-yellow-100 text-yellow-800',
-      'APRESENTADA': 'bg-blue-100 text-blue-800',
+      'APRESENTADA': 'bg-camara-primary/10 text-camara-primary',
       'VETADA': 'bg-orange-100 text-orange-800'
     }
     return colors[status] || 'bg-gray-100 text-gray-800'
@@ -361,7 +361,7 @@ export default function SessaoDetailPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <PlayCircle className="h-5 w-5 text-blue-600" aria-hidden="true" />
+                    <PlayCircle className="h-5 w-5 text-camara-primary" aria-hidden="true" />
                     Transmissão ao vivo e repositório multimídia
                   </CardTitle>
                 </CardHeader>
@@ -504,7 +504,7 @@ export default function SessaoDetailPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  <Loader2 className="h-6 w-6 animate-spin text-camara-primary" />
                   <span className="ml-2 text-gray-600">Carregando matérias...</span>
                 </div>
               </CardContent>

@@ -195,7 +195,7 @@ export default function ParlamentarPerfilPage() {
     switch (status) {
       case 'APRESENTADA':
       case 'Cadastrado':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-camara-primary/10 text-camara-primary'
       case 'EM_TRAMITACAO':
       case 'Tramitando':
         return 'bg-yellow-100 text-yellow-800'
@@ -215,7 +215,7 @@ export default function ParlamentarPerfilPage() {
   const getTipoColor = (tipo: string) => {
     if (tipo.includes('REQUERIMENTO')) return 'bg-purple-100 text-purple-800'
     if (tipo.includes('MOCAO') || tipo.includes('MOÇÃO')) return 'bg-green-100 text-green-800'
-    if (tipo.includes('INDICACAO') || tipo.includes('INDICAÇÃO')) return 'bg-blue-100 text-blue-800'
+    if (tipo.includes('INDICACAO') || tipo.includes('INDICAÇÃO')) return 'bg-camara-primary/10 text-camara-primary'
     if (tipo.includes('PROJETO')) return 'bg-orange-100 text-orange-800'
     return 'bg-gray-100 text-gray-800'
   }
@@ -228,7 +228,7 @@ export default function ParlamentarPerfilPage() {
         return 'bg-orange-100 text-orange-800'
       case 'PRIMEIRO_SECRETARIO':
       case 'SEGUNDO_SECRETARIO':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-camara-primary/10 text-camara-primary'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -319,7 +319,7 @@ export default function ParlamentarPerfilPage() {
                   <Badge variant="outline">
                     {perfil.partido || 'Sem partido'}
                   </Badge>
-                  <Badge variant="outline" className="bg-blue-50">
+                  <Badge variant="outline" className="bg-camara-primary/5">
                     <Calendar className="h-3 w-3 mr-1" />
                     {perfil.legislatura}
                   </Badge>

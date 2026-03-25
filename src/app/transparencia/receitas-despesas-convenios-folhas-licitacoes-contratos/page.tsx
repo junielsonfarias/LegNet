@@ -40,8 +40,8 @@ const categorias = [
     descricao: 'Processos licitatórios da Câmara Municipal',
     href: '/transparencia/licitacoes',
     icon: FileCheck,
-    color: 'bg-blue-50 text-blue-700 border-blue-200',
-    iconColor: 'text-blue-600'
+    color: 'bg-camara-primary/5 text-camara-primary border-camara-primary/20',
+    iconColor: 'text-camara-primary'
   },
   {
     titulo: 'Contratos',

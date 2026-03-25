@@ -155,7 +155,7 @@ export default function PerfilCompletoPage({ params }: PerfilCompletoPageProps) 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'agendada': return 'bg-blue-100 text-blue-800'
+      case 'agendada': return 'bg-camara-primary/10 text-camara-primary'
       case 'realizada': return 'bg-green-100 text-green-800'
       case 'cancelada': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
@@ -165,7 +165,7 @@ export default function PerfilCompletoPage({ params }: PerfilCompletoPageProps) 
   const getTipoColor = (tipo: string) => {
     switch (tipo) {
       case 'sessao': return 'bg-purple-100 text-purple-800'
-      case 'comissao': return 'bg-blue-100 text-blue-800'
+      case 'comissao': return 'bg-camara-primary/10 text-camara-primary'
       case 'evento': return 'bg-green-100 text-green-800'
       case 'reuniao': return 'bg-yellow-100 text-yellow-800'
       case 'audiencia': return 'bg-orange-100 text-orange-800'
@@ -351,7 +351,7 @@ export default function PerfilCompletoPage({ params }: PerfilCompletoPageProps) 
                   <div className="flex items-center space-x-2">
                     <div className="w-20 bg-gray-200 rounded-full h-2">
                       <div 
-                        className="bg-blue-600 h-2 rounded-full" 
+                        className="bg-camara-primary h-2 rounded-full" 
                         style={{ width: `${parlamentar.estatisticas.participacao.participacaoDebates}%` }}
                       ></div>
                     </div>
@@ -432,7 +432,7 @@ export default function PerfilCompletoPage({ params }: PerfilCompletoPageProps) 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{parlamentar.producaoLegislativa[0].proposicoes.projetosLei}</div>
+                      <div className="text-2xl font-bold text-camara-primary">{parlamentar.producaoLegislativa[0].proposicoes.projetosLei}</div>
                       <p className="text-sm text-gray-600">Projetos de Lei</p>
                     </div>
                     <div className="text-center">

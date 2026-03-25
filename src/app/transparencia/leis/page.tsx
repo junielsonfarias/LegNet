@@ -237,7 +237,7 @@ export default function LeisPage() {
         {/* Lista de Leis */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
             <span className="ml-2 text-gray-600">Carregando leis...</span>
           </div>
         ) : filteredLeis.length === 0 ? (
@@ -254,7 +254,7 @@ export default function LeisPage() {
               </p>
               <p className="text-sm text-gray-500">
                 Você pode consultar as proposições aprovadas que se tornarão leis em{' '}
-                <Link href="/legislativo/proposicoes" className="text-blue-600 hover:underline">
+                <Link href="/legislativo/proposicoes" className="text-camara-primary hover:underline">
                   Proposições
                 </Link>
               </p>
