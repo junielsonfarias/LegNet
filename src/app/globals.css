@@ -47,11 +47,24 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
 
-    /* Cores do Tenant (padrão - serão sobrescritas pelo TenantStyles) */
+    /* Cores do Município (padrão - sobrescritas pelo MunicipalThemeProvider) */
     --tenant-primary: #1e40af;
     --tenant-secondary: #3b82f6;
     --tenant-primary-rgb: 30 64 175;
     --tenant-secondary-rgb: 59 130 246;
+
+    /* Variáveis municipais com fallbacks */
+    --municipal-primary: var(--tenant-primary, #1e40af);
+    --municipal-secondary: var(--tenant-secondary, #3b82f6);
+    --municipal-accent: #059669;
+    --municipal-primary-dark: #152e7a;
+    --municipal-primary-darker: #0f2054;
+    --municipal-primary-light: #4b6bc4;
+    --municipal-primary-lighter: #dbe4f8;
+    --municipal-secondary-dark: #2563ad;
+    --municipal-secondary-light: #7ba8f7;
+    --municipal-primary-rgb: 30 64 175;
+    --municipal-secondary-rgb: 59 130 246;
 
     /* ===== Design Tokens Portal ===== */
 

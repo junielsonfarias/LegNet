@@ -162,7 +162,13 @@ model ConfiguracaoInstitucional {
   email              String?
   site               String?
   logoUrl            String?
+  brasaoUrl          String?
+  faviconUrl         String?
+  corPrimaria        String?  @default("#1e40af")
+  corSecundaria      String?  @default("#3b82f6")
+  corAcento          String?  @default("#059669")
   tema               String?  @default("claro")
+  tipoEnte           String?  @default("CAMARA_MUNICIPAL")
   timezone           String?  @default("America/Sao_Paulo")
   descricao          String?  @db.Text
   createdAt          DateTime @default(now())

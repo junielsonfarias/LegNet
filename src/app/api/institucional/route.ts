@@ -27,6 +27,10 @@ const dadosPadrao = {
   email: null,
   site: null,
   logoUrl: null,
+  brasaoUrl: null,
+  corPrimaria: '#1e40af',
+  corSecundaria: '#3b82f6',
+  corAcento: '#059669',
   descricao: null
 }
 
@@ -144,6 +148,10 @@ export async function GET() {
       email: configuracao.email,
       site: configuracao.site,
       logoUrl: configuracao.logoUrl,
+      brasaoUrl: (configuracao as any).brasaoUrl || null,
+      corPrimaria: (configuracao as any).corPrimaria || '#1e40af',
+      corSecundaria: (configuracao as any).corSecundaria || '#3b82f6',
+      corAcento: (configuracao as any).corAcento || '#059669',
       descricao: configuracao.descricao
     } : dadosPadrao
 

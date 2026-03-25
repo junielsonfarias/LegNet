@@ -172,10 +172,12 @@ export function Hero({ className }: HeroProps) {
     <section
       className={cn(
         'relative overflow-hidden',
-        'bg-gradient-to-br from-camara-primary via-blue-700 to-blue-900',
         'text-white py-16 md:py-24',
         className
       )}
+      style={{
+        background: `linear-gradient(135deg, var(--municipal-primary) 0%, var(--municipal-primary-dark) 50%, var(--municipal-primary-darker) 100%)`
+      }}
       aria-label="Secao principal"
     >
       {/* Background Pattern */}
@@ -187,9 +189,26 @@ export function Hero({ className }: HeroProps) {
         aria-hidden="true"
       />
 
+      {/* Brasão como marca d'água */}
+      {configuracao.brasaoUrl && (
+        <div
+          className="absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.07] pointer-events-none hidden lg:block"
+          aria-hidden="true"
+        >
+          <Image
+            src={configuracao.brasaoUrl}
+            alt=""
+            width={500}
+            height={500}
+            className="w-[400px] h-[400px] object-contain"
+          />
+        </div>
+      )}
+
       {/* Gradient Overlay */}
       <div
-        className="absolute inset-0 bg-gradient-to-t from-blue-900/50 to-transparent"
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.3) 0%, transparent 100%)' }}
         aria-hidden="true"
       />
 
@@ -197,10 +216,23 @@ export function Hero({ className }: HeroProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Conteudo principal */}
           <div className="space-y-6 animate-fade-in">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <span>Legislatura 2025/2028</span>
+            {/* Brasão + Badge */}
+            <div className="flex items-center gap-4">
+              {configuracao.brasaoUrl && (
+                <div className="shrink-0">
+                  <Image
+                    src={configuracao.brasaoUrl}
+                    alt={`Brasão - ${nomeCasa}`}
+                    width={80}
+                    height={80}
+                    className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-lg"
+                  />
+                </div>
+              )}
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span>Legislatura {configuracao.legislatura || '2025/2028'}</span>
+              </div>
             </div>
 
             {/* Titulo */}
@@ -209,7 +241,7 @@ export function Hero({ className }: HeroProps) {
             </h1>
 
             {/* Subtitulo */}
-            <p className="text-xl text-blue-100 leading-relaxed max-w-xl">
+            <p className="text-xl text-white/80 leading-relaxed max-w-xl">
               Portal Institucional dedicado a transparencia, democracia e cidadania.
               Acompanhe as atividades legislativas e participe da construcao de uma cidade melhor.
             </p>

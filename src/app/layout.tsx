@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '@/components/providers'
 import { NotificationProvider } from '@/components/providers/notification-provider'
 import { ConditionalLayout } from '@/components/layout/conditional-layout'
+import { MunicipalThemeProvider } from '@/components/providers/theme-provider-municipal'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -76,10 +77,12 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={inter.className}>
         <Providers>
-          <NotificationProvider />
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <MunicipalThemeProvider>
+            <NotificationProvider />
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </MunicipalThemeProvider>
         </Providers>
       </body>
     </html>

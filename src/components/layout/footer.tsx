@@ -17,7 +17,8 @@ export function Footer() {
   return (
     <footer
       id="footer"
-      className="bg-gray-900 text-white"
+      className="text-white"
+      style={{ backgroundColor: 'var(--municipal-primary-darker, #0f172a)' }}
       role="contentinfo"
       aria-label="Rodape do site"
     >
@@ -188,7 +189,7 @@ export function Footer() {
       </div>
 
       {/* Informações da Legislatura */}
-      <div className="border-t border-gray-800">
+      <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-center md:text-left">
