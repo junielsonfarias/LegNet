@@ -196,7 +196,7 @@ export function AdminHeader({
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem asChild>
-                  <Link href="/admin/perfil" className="cursor-pointer">
+                  <Link href="/admin/configuracoes" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Meu Perfil</span>
                   </Link>

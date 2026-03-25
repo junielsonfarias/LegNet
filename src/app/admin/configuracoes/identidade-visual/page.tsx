@@ -86,9 +86,19 @@ export default function IdentidadeVisualPage() {
       })
 
       if (res.ok) {
-        toast.success('Identidade visual atualizada! Recarregue a pagina para ver as mudancas.')
+        toast.success('Identidade visual atualizada! Aplicando cores...')
+        // Aplicar cores imediatamente sem recarregar
+        const root = document.documentElement
+        root.style.setProperty('--tenant-primary', config.corPrimaria)
+        root.style.setProperty('--tenant-secondary', config.corSecundaria)
+        root.style.setProperty('--municipal-primary', config.corPrimaria)
+        root.style.setProperty('--municipal-secondary', config.corSecundaria)
+        root.style.setProperty('--municipal-accent', config.corAcento)
+        // Recarregar após 1s para aplicar em todos os componentes
+        setTimeout(() => window.location.reload(), 1500)
       } else {
-        toast.error('Erro ao salvar')
+        const errorData = await res.json().catch(() => ({}))
+        toast.error(`Erro ao salvar: ${errorData.error || res.statusText}`)
       }
     } catch {
       toast.error('Erro ao salvar configuracoes')
