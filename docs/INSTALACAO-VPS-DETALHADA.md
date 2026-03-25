@@ -86,7 +86,7 @@ apt update
 apt upgrade -y
 
 # Instala pacotes essenciais
-apt install -y curl wget git build-essential unzip htop net-tools
+  apt install -y curl wget git build-essential unzip htop net-tools
 ```
 
 ### 2.3 Configuração de Timezone

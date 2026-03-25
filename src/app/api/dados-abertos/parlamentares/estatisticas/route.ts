@@ -5,11 +5,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    enforceRateLimit(request, 'PUBLIC')
+
     // Buscar configuração institucional
     const config = await prisma.configuracaoInstitucional.findFirst({
       where: { slug: 'principal' }

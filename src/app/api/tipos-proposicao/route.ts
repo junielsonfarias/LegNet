@@ -1,16 +1,10 @@
-/**
- * API de Tipos de Proposição
- * CRUD para configurações de tipos de proposição
- */
-
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { withAuth } from '@/lib/auth/permissions'
 import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { tiposProposicaoDbService } from '@/lib/services/tipos-proposicao-db-service'
 
 export const dynamic = 'force-dynamic'
 
-// Aplicações de quórum válidas
 const APLICACOES_QUORUM = [
   'VOTACAO_SIMPLES',
   'VOTACAO_ABSOLUTA',
@@ -18,7 +12,6 @@ const APLICACOES_QUORUM = [
   'VOTACAO_URGENCIA'
 ] as const
 
-// Schema de validação para criar/atualizar tipo de proposição
 const TipoProposicaoSchema = z.object({
   codigo: z.string()
     .min(3, 'Codigo deve ter no minimo 3 caracteres')
@@ -36,28 +29,22 @@ const TipoProposicaoSchema = z.object({
   ordem: z.number().int().default(0),
   corBadge: z.string().optional().nullable(),
   icone: z.string().optional().nullable(),
-  // Configuração de Quorum e Turnos
   quorumAplicacao: z.enum(APLICACOES_QUORUM).optional().nullable(),
   quorumAplicacao2Turno: z.enum(APLICACOES_QUORUM).optional().nullable(),
   totalTurnos: z.number().int().min(1).max(2).default(1),
   intersticioDias: z.number().int().min(0).max(30).default(0)
 })
 
-// GET - Listar tipos de proposição
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const apenasAtivos = searchParams.get('ativo') === 'true'
 
-    const tipos = await prisma.tipoProposicaoConfig.findMany({
-      where: apenasAtivos ? { ativo: true } : undefined,
-      orderBy: { ordem: 'asc' }
+    const tipos = await tiposProposicaoDbService.list({
+      ativo: apenasAtivos ? true : undefined
     })
 
-    return NextResponse.json({
-      success: true,
-      data: tipos
-    })
+    return NextResponse.json({ success: true, data: tipos })
   } catch (error) {
     console.error('Erro ao buscar tipos de proposição:', error)
     return NextResponse.json(
@@ -67,17 +54,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Criar novo tipo de proposição
 export const POST = withAuth(async (request: NextRequest) => {
   try {
     const body = await request.json()
     const validatedData = TipoProposicaoSchema.parse(body)
 
-    // Verificar se já existe um tipo com o mesmo código
-    const existente = await prisma.tipoProposicaoConfig.findUnique({
-      where: { codigo: validatedData.codigo }
-    })
-
+    const existente = await tiposProposicaoDbService.getByCodigo(validatedData.codigo)
     if (existente) {
       return NextResponse.json(
         { success: false, error: 'Já existe uma configuração para este tipo de proposição' },
@@ -85,9 +67,7 @@ export const POST = withAuth(async (request: NextRequest) => {
       )
     }
 
-    const tipo = await prisma.tipoProposicaoConfig.create({
-      data: validatedData
-    })
+    const tipo = await tiposProposicaoDbService.create(validatedData)
 
     return NextResponse.json({
       success: true,

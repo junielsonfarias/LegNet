@@ -158,7 +158,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
     })
   } catch (error) {
     // AuditLog pode não existir ainda - isso é esperado em algumas configurações
-    console.debug('Tabela AuditLog não disponível:', error)
+    // AuditLog pode não existir ainda - esperado em setup inicial
     logsHoje = 0
   }
 

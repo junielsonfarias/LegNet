@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
@@ -9,6 +9,7 @@ import {
   validateId
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { comissaoDbService } from '@/lib/services/comissao-db-service'
 import { syncComissaoHistorico } from '@/lib/participation-history'
 
 // Configurar para renderização dinâmica
@@ -28,34 +29,16 @@ export const GET = withErrorHandler(async (
   { params }: { params: { id: string } }
 ) => {
   const id = validateId(params.id, 'Comissão')
-  
-  const comissao = await prisma.comissao.findUnique({
-    where: { id },
-    include: {
-      membros: {
-        include: {
-          parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true,
-              partido: true
-            }
-          }
-        }
-      }
-    }
-  })
-  
+
+  const comissao = await comissaoDbService.getById(id)
   if (!comissao) {
     throw new NotFoundError('Comissão')
   }
-  
+
   return createSuccessResponse(comissao, 'Comissão encontrada com sucesso')
 })
 
 // PUT - Atualizar comissão
-// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
 export const PUT = withAuth(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -63,95 +46,45 @@ export const PUT = withAuth(async (
   const { id: rawId } = await context.params
   const id = validateId(rawId, 'Comissão')
   const body = await request.json()
-  
-  // Validar dados
+
   const validatedData = UpdateComissaoSchema.parse(body)
-  
-  // Verificar se comissão existe
-  const existingComissao = await prisma.comissao.findUnique({
-    where: { id }
-  })
-  
-  if (!existingComissao) {
+
+  const existing = await comissaoDbService.getById(id)
+  if (!existing) {
     throw new NotFoundError('Comissão')
   }
-  
+
   // Verificar duplicatas (se nome foi alterado)
-  if (validatedData.nome && validatedData.nome !== existingComissao.nome) {
-    const duplicateCheck = await prisma.comissao.findFirst({
-      where: {
-        AND: [
-          { id: { not: id } },
-          {
-            nome: {
-              equals: validatedData.nome,
-              mode: 'insensitive'
-            }
-          }
-        ]
-      }
-    })
-    
-    if (duplicateCheck) {
+  if (validatedData.nome && validatedData.nome !== existing.nome) {
+    const duplicate = await comissaoDbService.checkDuplicateName(validatedData.nome, id)
+    if (duplicate) {
       throw new ConflictError('Já existe uma comissão com este nome')
     }
   }
-  
-  const updatedComissao = await prisma.comissao.update({
-    where: { id },
-    data: {
-      ...(validatedData.nome && { nome: validatedData.nome }),
-      ...(validatedData.descricao !== undefined && { descricao: validatedData.descricao || null }),
-      ...(validatedData.tipo && { tipo: validatedData.tipo }),
-      ...(validatedData.ativa !== undefined && { ativa: validatedData.ativa })
-    },
-    include: {
-      membros: {
-        include: {
-          parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true,
-              partido: true
-            }
-          }
-        }
-      }
-    }
-  })
+
+  const updatedComissao = await comissaoDbService.update(id, validatedData)
 
   await syncComissaoHistorico(id)
 
-  return createSuccessResponse(
-    updatedComissao,
-    'Comissão atualizada com sucesso'
-  )
+  return createSuccessResponse(updatedComissao, 'Comissão atualizada com sucesso')
 }, { permissions: 'comissao.manage' })
 
 // DELETE - Excluir comissão
-// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
 export const DELETE = withAuth(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) => {
   const { id: rawId } = await context.params
   const id = validateId(rawId, 'Comissão')
-  
-  // Verificar se comissão existe
-  const existingComissao = await prisma.comissao.findUnique({
-    where: { id }
-  })
-  
-  if (!existingComissao) {
+
+  const existing = await comissaoDbService.getById(id)
+  if (!existing) {
     throw new NotFoundError('Comissão')
   }
-  
-  // Hard delete - remover do banco
-  await prisma.comissao.delete({
-    where: { id }
-  })
 
+  await comissaoDbService.remove(id)
+
+  // Desativar histórico de participação
   await prisma.historicoParticipacao.updateMany({
     where: {
       tipo: 'COMISSAO',
@@ -164,9 +97,5 @@ export const DELETE = withAuth(async (
     }
   })
 
-  return createSuccessResponse(
-    null,
-    'Comissão excluída com sucesso'
-  )
+  return createSuccessResponse(null, 'Comissão excluída com sucesso')
 }, { permissions: 'comissao.manage' })
-

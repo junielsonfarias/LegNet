@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
@@ -8,6 +8,7 @@ import {
   ValidationError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +31,6 @@ const CreateParecerSchema = z.object({
   emendasPropostas: z.string().optional(),
   prazoEmissao: z.string().optional(),
   observacoes: z.string().optional(),
-  // Campos de anexo
   arquivoUrl: z.string().url().optional().nullable(),
   arquivoNome: z.string().optional().nullable(),
   arquivoTamanho: z.number().int().optional().nullable(),
@@ -41,110 +41,46 @@ const CreateParecerSchema = z.object({
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
 
-  const comissaoId = searchParams.get('comissaoId')
-  const proposicaoId = searchParams.get('proposicaoId')
-  const relatorId = searchParams.get('relatorId')
-  const status = searchParams.get('status')
-  const tipo = searchParams.get('tipo')
-  const ano = searchParams.get('ano')
-
-  const where: any = {}
-
-  if (comissaoId) where.comissaoId = comissaoId
-  if (proposicaoId) where.proposicaoId = proposicaoId
-  if (relatorId) where.relatorId = relatorId
-  if (status) where.status = status
-  if (tipo) where.tipo = tipo
-  if (ano) where.ano = parseInt(ano)
-
-  const pareceres = await prisma.parecer.findMany({
-    where,
-    include: {
-      proposicao: {
-        select: {
-          id: true,
-          numero: true,
-          ano: true,
-          tipo: true,
-          titulo: true,
-          ementa: true,
-          status: true
-        }
-      },
-      comissao: {
-        select: {
-          id: true,
-          nome: true,
-          sigla: true,
-          tipo: true
-        }
-      },
-      relator: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          partido: true,
-          foto: true
-        }
-      },
-      _count: {
-        select: {
-          votosComissao: true
-        }
-      }
-    },
-    orderBy: [
-      { dataDistribuicao: 'desc' }
-    ]
+  const pareceres = await pareceresDbService.list({
+    comissaoId: searchParams.get('comissaoId') || undefined,
+    proposicaoId: searchParams.get('proposicaoId') || undefined,
+    relatorId: searchParams.get('relatorId') || undefined,
+    status: searchParams.get('status') || undefined,
+    tipo: searchParams.get('tipo') || undefined,
+    ano: searchParams.get('ano') ? parseInt(searchParams.get('ano')!) : undefined
   })
 
   return createSuccessResponse(pareceres, 'Pareceres listados com sucesso')
 })
 
 // POST - Criar novo parecer
-// SEGURANÇA: Requer autenticação e permissão de gestão de comissões
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CreateParecerSchema.parse(body)
 
-  // Verificar se já existe parecer desta comissão para esta proposição
-  const parecerExistente = await prisma.parecer.findUnique({
-    where: {
-      proposicaoId_comissaoId: {
-        proposicaoId: validatedData.proposicaoId,
-        comissaoId: validatedData.comissaoId
-      }
-    }
-  })
-
+  // Verificar duplicidade
+  const parecerExistente = await pareceresDbService.checkDuplicate(
+    validatedData.proposicaoId,
+    validatedData.comissaoId
+  )
   if (parecerExistente) {
     throw new ValidationError('Já existe um parecer desta comissão para esta proposição')
   }
 
-  // Verificar se a proposição existe
+  // Verificar proposição
   const proposicao = await prisma.proposicao.findUnique({
     where: { id: validatedData.proposicaoId }
   })
+  if (!proposicao) throw new ValidationError('Proposição não encontrada')
 
-  if (!proposicao) {
-    throw new ValidationError('Proposição não encontrada')
-  }
-
-  // Verificar se a comissão existe e está ativa
+  // Verificar comissão
   const comissao = await prisma.comissao.findUnique({
     where: { id: validatedData.comissaoId }
   })
+  if (!comissao) throw new ValidationError('Comissão não encontrada')
+  if (!comissao.ativa) throw new ValidationError('Esta comissão não está ativa')
 
-  if (!comissao) {
-    throw new ValidationError('Comissão não encontrada')
-  }
-
-  if (!comissao.ativa) {
-    throw new ValidationError('Esta comissão não está ativa')
-  }
-
-  // Verificar se o relator é membro ativo da comissão
+  // Verificar relator é membro ativo
   const membroComissao = await prisma.membroComissao.findFirst({
     where: {
       comissaoId: validatedData.comissaoId,
@@ -152,13 +88,9 @@ export const POST = withAuth(async (request: NextRequest) => {
       ativo: true
     }
   })
+  if (!membroComissao) throw new ValidationError('O relator deve ser membro ativo da comissão')
 
-  if (!membroComissao) {
-    throw new ValidationError('O relator deve ser membro ativo da comissão')
-  }
-
-  // Verificar se a proposição está em tramitação para esta comissão
-  // Busca tramitação ativa (RECEBIDA ou EM_ANDAMENTO) para uma unidade que corresponde à comissão
+  // Verificar tramitação
   const unidadeFilter: Prisma.TramitacaoUnidadeWhereInput = {
     OR: [
       { nome: { contains: comissao.nome, mode: 'insensitive' as Prisma.QueryMode } },
@@ -182,79 +114,31 @@ export const POST = withAuth(async (request: NextRequest) => {
     )
   }
 
-  // Gerar número do parecer SEQUENCIAL POR COMISSÃO
-  // Formato: NNN/YYYY-SIGLA (ex: 001/2026-CLJ, 002/2026-CFO)
+  // Gerar número
   const anoAtual = new Date().getFullYear()
   const siglaComissao = comissao.sigla || comissao.nome.substring(0, 3).toUpperCase()
-
-  // Buscar último parecer DESTA comissão no ano atual
-  const ultimoParecerComissao = await prisma.parecer.findFirst({
-    where: {
-      ano: anoAtual,
-      comissaoId: validatedData.comissaoId
-    },
-    orderBy: { createdAt: 'desc' }
-  })
-
-  let proximoNumero = 1
-  if (ultimoParecerComissao?.numero) {
-    // Extrai o número do formato NNN/YYYY-SIGLA ou NNN/YYYY
-    const numMatch = ultimoParecerComissao.numero.match(/^(\d+)/)
-    if (numMatch) {
-      proximoNumero = parseInt(numMatch[1]) + 1
-    }
-  }
-
+  const proximoNumero = await pareceresDbService.getNextNumero(validatedData.comissaoId, anoAtual)
   const numero = `${String(proximoNumero).padStart(3, '0')}/${anoAtual}-${siglaComissao}`
 
-  // Criar o parecer com status AGUARDANDO_PAUTA (disponível para inclusão em pauta)
-  const parecer = await prisma.parecer.create({
-    data: {
-      proposicaoId: validatedData.proposicaoId,
-      comissaoId: validatedData.comissaoId,
-      relatorId: validatedData.relatorId,
-      numero,
-      ano: anoAtual,
-      tipo: validatedData.tipo,
-      status: 'AGUARDANDO_PAUTA',
-      fundamentacao: validatedData.fundamentacao,
-      conclusao: validatedData.conclusao,
-      ementa: validatedData.ementa,
-      emendasPropostas: validatedData.emendasPropostas,
-      dataDistribuicao: new Date(),
-      prazoEmissao: validatedData.prazoEmissao ? new Date(validatedData.prazoEmissao) : null,
-      observacoes: validatedData.observacoes,
-      // Anexos
-      arquivoUrl: validatedData.arquivoUrl,
-      arquivoNome: validatedData.arquivoNome,
-      arquivoTamanho: validatedData.arquivoTamanho,
-      driveUrl: validatedData.driveUrl
-    },
-    include: {
-      proposicao: {
-        select: {
-          id: true,
-          numero: true,
-          ano: true,
-          tipo: true,
-          titulo: true
-        }
-      },
-      comissao: {
-        select: {
-          id: true,
-          nome: true,
-          sigla: true
-        }
-      },
-      relator: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true
-        }
-      }
-    }
+  const parecer = await pareceresDbService.create({
+    proposicaoId: validatedData.proposicaoId,
+    comissaoId: validatedData.comissaoId,
+    relatorId: validatedData.relatorId,
+    numero,
+    ano: anoAtual,
+    tipo: validatedData.tipo,
+    status: 'AGUARDANDO_PAUTA',
+    fundamentacao: validatedData.fundamentacao,
+    conclusao: validatedData.conclusao,
+    ementa: validatedData.ementa,
+    emendasPropostas: validatedData.emendasPropostas,
+    dataDistribuicao: new Date(),
+    prazoEmissao: validatedData.prazoEmissao ? new Date(validatedData.prazoEmissao) : null,
+    observacoes: validatedData.observacoes,
+    arquivoUrl: validatedData.arquivoUrl,
+    arquivoNome: validatedData.arquivoNome,
+    arquivoTamanho: validatedData.arquivoTamanho,
+    driveUrl: validatedData.driveUrl
   })
 
   return createSuccessResponse(parecer, 'Parecer criado com sucesso')

@@ -1,529 +1,426 @@
-# Guia de Instalação em VPS
+# Guia de Instalacao em VPS Linux
 
-Este guia detalha como instalar o Sistema de Câmara Municipal em uma VPS (Virtual Private Server).
-
----
-
-## Índice
-
-1. [Requisitos](#requisitos)
-2. [Instalação Rápida](#instalação-rápida)
-3. [Cenários de Deploy](#cenários-de-deploy)
-4. [Instalação Manual](#instalação-manual)
-5. [Configuração Pós-Instalação](#configuração-pós-instalação)
-6. [Manutenção](#manutenção)
-7. [Troubleshooting](#troubleshooting)
+> Guia completo para instalar o Sistema Legislativo da Camara Municipal em um servidor VPS Linux.
+> **Nivel**: Iniciante - nao requer conhecimento avancado em servidores.
 
 ---
 
-## Requisitos
+## 1. Requisitos Minimos
 
-### Hardware Mínimo
+### Servidor (VPS)
 
-| Recurso | Mínimo | Recomendado |
+| Recurso | Minimo | Recomendado |
 |---------|--------|-------------|
-| CPU | 1 vCPU | 2+ vCPU |
-| RAM | 1 GB | 2+ GB |
-| Disco | 5 GB | 20+ GB |
+| CPU | 1 vCPU | 2 vCPUs |
+| RAM | 1 GB | 2 GB |
+| Disco | 20 GB SSD | 40 GB SSD |
+| Sistema | Ubuntu 22.04 LTS | Ubuntu 24.04 LTS |
+| Rede | IPv4 publico | IPv4 + IPv6 |
 
-### Sistema Operacional
+### Provedores de VPS Recomendados
 
-- **Ubuntu** 20.04 LTS ou superior (recomendado: 22.04 LTS)
-- **Debian** 11 ou superior
+| Provedor | Preco Aprox. | Observacao |
+|----------|--------------|------------|
+| Contabo | R$ 25/mes | Bom custo-beneficio |
+| DigitalOcean | US$ 6/mes | Interface simples |
+| Hetzner | EUR 4/mes | Melhor desempenho |
+| Vultr | US$ 6/mes | Servidores no Brasil |
+| Oracle Cloud | Gratis | Free tier permanente (ARM) |
 
-### Pré-requisitos
+### Dominio
 
-- Acesso root ou sudo
-- Conexão com a internet
-- Domínio apontando para o IP da VPS (opcional, mas recomendado)
-
----
-
-## Instalação Rápida
-
-### Opção 1: Script Automático (Recomendado)
-
-```bash
-# Baixa e executa o instalador
-curl -fsSL https://raw.githubusercontent.com/seu-usuario/camara/main/scripts/install.sh | sudo bash
-```
-
-O instalador irá:
-1. Verificar requisitos do sistema
-2. Perguntar o tipo de instalação desejado
-3. Coletar informações da Câmara e domínio
-4. Instalar todas as dependências
-5. Configurar banco de dados, Nginx e SSL
-6. Iniciar a aplicação
-
-### Opção 2: Clone e Execute
-
-```bash
-# Clona o repositório
-git clone https://github.com/seu-usuario/camara.git
-cd camara
-
-# Executa o instalador
-sudo ./scripts/install.sh
-```
+Voce precisa de um dominio apontando para o IP do servidor. Exemplos:
+- `camara.suacidade.pa.gov.br`
+- `legislativo.suacidade.gov.br`
+- `camara-suacidade.com.br`
 
 ---
 
-## Cenários de Deploy
+## 2. Preparando o Servidor
 
-### 1. VPS Completa (PostgreSQL Local)
+### 2.1 Acessar o servidor via SSH
 
-**Ideal para:** Servidores dedicados com recursos adequados.
+No Windows, use o **PowerShell** ou **PuTTY**:
 
-**Componentes instalados:**
-- Node.js 20 LTS
-- PostgreSQL 15
-- Nginx
-- PM2
-- Certbot (SSL)
-
-**Diagrama:**
-```
-┌─────────────────────────────────────────┐
-│                  VPS                     │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐ │
-│  │  Nginx  │──│  PM2    │──│ Postgres│ │
-│  │  :80/:443│  │  :3000  │  │  :5432  │ │
-│  └─────────┘  └─────────┘  └─────────┘ │
-└─────────────────────────────────────────┘
+```bash
+ssh root@SEU_IP_DO_SERVIDOR
 ```
 
-### 2. VPS + Supabase (Banco na Nuvem)
+No primeiro acesso, digite `yes` quando perguntar sobre a chave SSH.
 
-**Ideal para:** Multi-tenant, escalabilidade, backups automáticos.
+### 2.2 Apontar o Dominio (DNS)
 
-**Componentes na VPS:**
-- Node.js 20 LTS
-- Nginx
-- PM2
-- Certbot (SSL)
+No painel do seu provedor de dominio, crie um registro **A**:
 
-**Componentes no Supabase:**
-- PostgreSQL 15
-- Backups automáticos
-- Connection pooling
+| Tipo | Nome | Valor | TTL |
+|------|------|-------|-----|
+| A | @ | IP_DO_SERVIDOR | 3600 |
+| A | www | IP_DO_SERVIDOR | 3600 |
 
-**Diagrama:**
-```
-┌─────────────────────────┐     ┌─────────────────┐
-│         VPS             │     │    Supabase     │
-│  ┌─────────┐ ┌───────┐ │     │  ┌───────────┐  │
-│  │  Nginx  │─│  PM2  │─┼─────┼──│ PostgreSQL│  │
-│  │  :80/:443│ │ :3000 │ │     │  │   :5432   │  │
-│  └─────────┘ └───────┘ │     │  └───────────┘  │
-└─────────────────────────┘     └─────────────────┘
-```
-
-### 3. Docker Compose
-
-**Ideal para:** Ambientes containerizados, portabilidade.
-
-**Containers:**
-- `camara-app`: Aplicação Next.js
-- `camara-db`: PostgreSQL 15
-- `camara-nginx`: Nginx reverse proxy
-
-**Diagrama:**
-```
-┌─────────────────────────────────────────────────────┐
-│                    Docker Host                       │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │ camara-nginx│──│  camara-app │──│  camara-db  │ │
-│  │   :80/:443  │  │    :3000    │  │    :5432    │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘ │
-│                   camara-network                     │
-└─────────────────────────────────────────────────────┘
-```
+> **Importante**: O DNS pode levar de 5 minutos a 24 horas para propagar. Verifique em https://dnschecker.org
 
 ---
 
-## Instalação Manual
+## 3. Instalacao Automatica (Recomendado)
 
-### 1. Preparação do Sistema
+### 3.1 Baixar o instalador
 
-```bash
-# Atualiza o sistema
-sudo apt update && sudo apt upgrade -y
-
-# Instala dependências básicas
-sudo apt install -y curl wget git build-essential
-```
-
-### 2. Instalar Node.js 20
+Conectado ao servidor via SSH, execute:
 
 ```bash
-# Adiciona repositório NodeSource
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# Baixar o script de instalacao
+wget https://raw.githubusercontent.com/seu-usuario/camara/main/install.sh
 
-# Instala Node.js
-sudo apt install -y nodejs
-
-# Verifica instalação
-node --version  # Deve mostrar v20.x.x
-npm --version
+# Dar permissao de execucao
+chmod +x install.sh
 ```
 
-### 3. Instalar PostgreSQL 15 (se necessário)
+### 3.2 Executar o instalador
 
 ```bash
-# Adiciona repositório PostgreSQL
-sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-sudo apt update
-
-# Instala PostgreSQL
-sudo apt install -y postgresql-15 postgresql-contrib-15
-
-# Cria usuário e banco
-sudo -u postgres psql << EOF
-CREATE USER camara_admin WITH PASSWORD 'sua_senha_segura';
-CREATE DATABASE camara_db OWNER camara_admin;
-GRANT ALL PRIVILEGES ON DATABASE camara_db TO camara_admin;
-EOF
+sudo bash install.sh
 ```
 
-### 4. Instalar Nginx
+### 3.3 Responder as perguntas
 
-```bash
-sudo apt install -y nginx
+O instalador vai pedir as seguintes informacoes:
 
-# Remove configuração padrão
-sudo rm /etc/nginx/sites-enabled/default
-```
+1. **Nome da Camara**: Nome completo (ex: `Camara Municipal de Mojui dos Campos`)
+2. **Dominio**: Seu dominio (ex: `camara.mojuidoscampos.pa.gov.br`)
+3. **Email do administrador**: Email de acesso ao sistema
+4. **Senha do administrador**: Senha de acesso (minimo 8 caracteres)
+5. **Email para SSL**: Email para o certificado HTTPS
+6. **Redis**: Se quer instalar Redis (opcional, digite `s` ou `n`)
+7. **URL do repositorio**: URL do Git do projeto
+8. **Diretorio**: Onde instalar (padrao: `/opt/camara`)
 
-### 5. Clonar Repositório
+### 3.4 Aguardar a instalacao
 
-```bash
-# Cria diretório
-sudo mkdir -p /var/www/camara
+A instalacao leva entre **5 a 15 minutos** dependendo do servidor. O script vai:
 
-# Clona repositório
-sudo git clone https://github.com/seu-usuario/camara.git /var/www/camara
-cd /var/www/camara
-```
+- Instalar PostgreSQL 15 (banco de dados)
+- Instalar Node.js 20 (linguagem de programacao)
+- Instalar Nginx (servidor web)
+- Configurar SSL/HTTPS (certificado de seguranca)
+- Compilar a aplicacao
+- Configurar tudo automaticamente
 
-### 6. Configurar Aplicação
+### 3.5 Anotar as credenciais
 
-```bash
-# Instala dependências
-npm ci --only=production
+Ao final, o instalador mostra um resumo com:
+- URL de acesso
+- Email e senha do administrador
+- Dados do banco de dados
 
-# Cria arquivo .env
-cat > .env << EOF
-DATABASE_URL="postgresql://camara_admin:sua_senha@localhost:5432/camara_db?schema=public"
-DIRECT_URL="postgresql://camara_admin:sua_senha@localhost:5432/camara_db?schema=public"
-NEXTAUTH_URL="https://seu-dominio.com.br"
-NEXTAUTH_SECRET="$(openssl rand -base64 32)"
-SITE_NAME="Câmara Municipal de Sua Cidade"
-SITE_URL="https://seu-dominio.com.br"
-NODE_ENV="production"
-EOF
-
-# Gera cliente Prisma
-npx prisma generate
-
-# Executa migrations
-npx prisma migrate deploy
-
-# Build
-npm run build
-```
-
-### 7. Configurar PM2
-
-```bash
-# Instala PM2
-sudo npm install -g pm2
-
-# Cria diretório de logs
-sudo mkdir -p /var/log/pm2
-
-# Cria arquivo de configuração
-cat > ecosystem.config.js << EOF
-module.exports = {
-  apps: [{
-    name: 'camara',
-    script: 'npm',
-    args: 'start',
-    cwd: '/var/www/camara',
-    instances: 'max',
-    exec_mode: 'cluster',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000
-    }
-  }]
-};
-EOF
-
-# Inicia aplicação
-pm2 start ecosystem.config.js
-
-# Configura startup automático
-pm2 startup
-pm2 save
-```
-
-### 8. Configurar Nginx
-
-```bash
-# Cria configuração
-sudo cat > /etc/nginx/sites-available/camara << EOF
-upstream app {
-    server 127.0.0.1:3000;
-    keepalive 64;
-}
-
-server {
-    listen 80;
-    server_name seu-dominio.com.br;
-
-    location / {
-        proxy_pass http://app;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
-    }
-}
-EOF
-
-# Habilita site
-sudo ln -s /etc/nginx/sites-available/camara /etc/nginx/sites-enabled/
-
-# Testa e reinicia
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-### 9. Configurar SSL com Certbot
-
-```bash
-# Instala Certbot
-sudo snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-
-# Gera certificado
-sudo certbot --nginx -d seu-dominio.com.br --email seu@email.com --agree-tos --no-eff-email
-```
+> **IMPORTANTE**: Anote estas informacoes em local seguro!
 
 ---
 
-## Configuração Pós-Instalação
+## 4. Primeiro Acesso
 
-### Criar Usuário Administrador
+1. Abra o navegador e acesse: `https://seu-dominio.gov.br`
+2. Clique em **Login** (canto superior direito)
+3. Use o email e senha definidos na instalacao
+4. Voce sera redirecionado ao **Painel Administrativo**
 
-```bash
-cd /var/www/camara
+### Primeiras configuracoes:
 
-# Execute o script ou crie via código
-node -e "
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const prisma = new PrismaClient();
-
-async function main() {
-  const hash = await bcrypt.hash('sua_senha_admin', 12);
-  await prisma.user.upsert({
-    where: { email: 'admin@seudominio.com.br' },
-    update: { password: hash },
-    create: {
-      name: 'Administrador',
-      email: 'admin@seudominio.com.br',
-      password: hash,
-      role: 'ADMIN',
-      emailVerified: new Date()
-    }
-  });
-  console.log('Admin criado!');
-}
-main().finally(() => prisma.\$disconnect());
-"
-```
-
-### Configurar Firewall
-
-```bash
-# Instala e configura UFW
-sudo apt install -y ufw
-
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow ssh
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-
-sudo ufw enable
-```
+1. **Configuracoes > Sistema**: Personalize nome, cores e brasao
+2. **Parlamentares**: Cadastre os vereadores
+3. **Legislaturas**: Configure a legislatura atual
+4. **Comissoes**: Crie as comissoes permanentes
+5. **Usuarios**: Crie contas para operadores e secretaria
 
 ---
 
-## Manutenção
+## 5. Comandos Uteis
 
-### Atualizar Sistema
-
-```bash
-cd /var/www/camara
-sudo ./scripts/update.sh
-```
-
-### Backup Manual
+### Gerenciar a aplicacao
 
 ```bash
-# Backup do banco
-pg_dump -U camara_admin camara_db | gzip > backup_$(date +%Y%m%d).sql.gz
-
-# Backup de uploads
-tar -czf uploads_$(date +%Y%m%d).tar.gz /var/www/camara/public/uploads
-```
-
-### Logs
-
-```bash
-# Logs da aplicação
-pm2 logs camara
-
-# Logs do Nginx
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
-
-# Logs do PostgreSQL
-sudo tail -f /var/log/postgresql/postgresql-15-main.log
-```
-
-### Monitoramento
-
-```bash
-# Status da aplicação
-pm2 status
-
-# Uso de recursos
-pm2 monit
-
-# Status dos serviços
-sudo systemctl status nginx
-sudo systemctl status postgresql
-```
-
----
-
-## Troubleshooting
-
-### Aplicação não inicia
-
-```bash
-# Verifica logs
-pm2 logs camara --lines 50
-
-# Verifica se porta está em uso
-sudo lsof -i :3000
-
-# Reinicia aplicação
-pm2 restart camara
-```
-
-### Erro de conexão com banco
-
-```bash
-# Testa conexão
-psql -U camara_admin -h localhost -d camara_db -c "SELECT 1"
-
-# Verifica se PostgreSQL está rodando
-sudo systemctl status postgresql
-
-# Verifica configuração de acesso
-sudo cat /etc/postgresql/15/main/pg_hba.conf
-```
-
-### Nginx retorna 502
-
-```bash
-# Verifica se aplicação está rodando
-pm2 status
-
-# Verifica configuração Nginx
-sudo nginx -t
-
-# Verifica logs
-sudo tail -f /var/log/nginx/error.log
-```
-
-### SSL não funciona
-
-```bash
-# Verifica certificado
-sudo certbot certificates
-
-# Renova manualmente
-sudo certbot renew
-
-# Verifica configuração Nginx
-sudo nginx -t
-```
-
-### Memória insuficiente
-
-```bash
-# Cria swap se não existir
-sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-
-# Reduz instâncias PM2
-pm2 scale camara 1
-```
-
----
-
-## Comandos Úteis
-
-```bash
-# Reiniciar aplicação
-pm2 restart camara
-
-# Recarregar sem downtime
-pm2 reload camara
-
 # Ver status
 pm2 status
 
-# Ver logs
-pm2 logs camara
+# Ver logs em tempo real
+pm2 logs
 
-# Monitorar recursos
-pm2 monit
+# Reiniciar aplicacao
+pm2 restart all
 
+# Parar aplicacao
+pm2 stop all
+```
+
+### Gerenciar o servidor
+
+```bash
 # Reiniciar Nginx
-sudo systemctl reload nginx
+sudo systemctl restart nginx
+
+# Ver logs do Nginx
+sudo tail -f /var/log/nginx/error.log
+
+# Verificar espaco em disco
+df -h
+
+# Verificar uso de memoria
+free -h
+```
+
+### Banco de dados
+
+```bash
+# Acessar o banco
+sudo -u postgres psql -d camara_legislativo
+
+# Ver tabelas
+\dt
+
+# Sair
+\q
+```
+
+---
+
+## 6. Como Atualizar o Sistema
+
+Quando houver uma nova versao do sistema:
+
+```bash
+# Acessar o diretorio da aplicacao
+cd /opt/camara
+
+# Baixar atualizacoes
+git pull origin main
+
+# Instalar novas dependencias (se houver)
+npm ci
+
+# Atualizar banco de dados (se houver mudancas)
+npx prisma db push
+
+# Recompilar
+npm run build
+
+# Reiniciar
+pm2 restart all
+```
+
+### Script rapido de atualizacao:
+
+```bash
+cd /opt/camara && git pull && npm ci && npx prisma db push && npm run build && pm2 restart all
+```
+
+---
+
+## 7. Backup e Restauracao
+
+### 7.1 Fazer backup do banco
+
+```bash
+# Backup completo
+sudo -u postgres pg_dump camara_legislativo > /opt/backups/backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Backup compactado
+sudo -u postgres pg_dump camara_legislativo | gzip > /opt/backups/backup_$(date +%Y%m%d).sql.gz
+```
+
+### 7.2 Backup automatico (cron)
+
+```bash
+# Criar diretorio de backups
+sudo mkdir -p /opt/backups
+
+# Abrir crontab
+sudo crontab -e
+
+# Adicionar esta linha (backup diario as 3h da manha):
+0 3 * * * sudo -u postgres pg_dump camara_legislativo | gzip > /opt/backups/backup_$(date +\%Y\%m\%d).sql.gz && find /opt/backups -name "*.sql.gz" -mtime +30 -delete
+```
+
+### 7.3 Restaurar backup
+
+```bash
+# Restaurar backup SQL
+sudo -u postgres psql -d camara_legislativo < /opt/backups/backup_20260325.sql
+
+# Restaurar backup compactado
+gunzip -c /opt/backups/backup_20260325.sql.gz | sudo -u postgres psql -d camara_legislativo
+```
+
+### 7.4 Backup dos arquivos
+
+```bash
+# Backup do .env e arquivos de upload
+tar -czf /opt/backups/files_$(date +%Y%m%d).tar.gz /opt/camara/.env /opt/camara/public/uploads/ 2>/dev/null
+```
+
+---
+
+## 8. Resolucao de Problemas
+
+### Problema: Pagina nao carrega (502 Bad Gateway)
+
+```bash
+# Verificar se a aplicacao esta rodando
+pm2 status
+
+# Se estiver offline, reiniciar
+pm2 restart all
+
+# Ver logs de erro
+pm2 logs --err
+```
+
+### Problema: Erro de conexao com banco
+
+```bash
+# Verificar se PostgreSQL esta rodando
+sudo systemctl status postgresql
 
 # Reiniciar PostgreSQL
 sudo systemctl restart postgresql
 
-# Verificar espaço em disco
+# Testar conexao
+sudo -u postgres psql -c "SELECT 1;"
+```
+
+### Problema: SSL nao funciona
+
+```bash
+# Verificar certificado
+sudo certbot certificates
+
+# Renovar certificado
+sudo certbot renew
+
+# Reconfigurar SSL
+sudo certbot --nginx -d seu-dominio.gov.br
+```
+
+### Problema: Servidor lento
+
+```bash
+# Ver uso de CPU e memoria
+htop
+
+# Ver processos Node.js
+pm2 monit
+
+# Reiniciar tudo
+pm2 restart all
+sudo systemctl restart nginx
+```
+
+### Problema: Disco cheio
+
+```bash
+# Ver uso de disco
 df -h
 
-# Verificar uso de memória
-free -h
+# Limpar logs antigos
+pm2 flush
 
-# Verificar processos
-htop
+# Limpar cache do npm
+npm cache clean --force
+
+# Remover backups antigos (mais de 30 dias)
+find /opt/backups -name "*.sql.gz" -mtime +30 -delete
+```
+
+### Problema: Porta 3000 ja em uso
+
+```bash
+# Ver o que esta usando a porta
+sudo lsof -i :3000
+
+# Matar o processo
+sudo kill -9 $(sudo lsof -t -i :3000)
+
+# Reiniciar PM2
+pm2 restart all
 ```
 
 ---
 
-## Suporte
+## 9. Seguranca Adicional
 
-- **Documentação:** https://github.com/seu-usuario/camara/docs
-- **Issues:** https://github.com/seu-usuario/camara/issues
-- **Email:** suporte@exemplo.com
+### 9.1 Mudar porta SSH (recomendado)
+
+```bash
+# Editar configuracao SSH
+sudo nano /etc/ssh/sshd_config
+
+# Alterar a linha Port 22 para:
+Port 2222
+
+# Reiniciar SSH
+sudo systemctl restart sshd
+
+# Atualizar firewall
+sudo ufw allow 2222/tcp
+sudo ufw delete allow ssh
+```
+
+### 9.2 Desabilitar login root com senha
+
+```bash
+# Editar configuracao SSH
+sudo nano /etc/ssh/sshd_config
+
+# Adicionar/alterar:
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+
+# Reiniciar SSH
+sudo systemctl restart sshd
+```
+
+> **Atencao**: Antes de desabilitar senha, configure chaves SSH!
+
+### 9.3 Atualizacoes automaticas de seguranca
+
+```bash
+sudo apt install unattended-upgrades
+sudo dpkg-reconfigure unattended-upgrades
+```
+
+---
+
+## 10. Monitoramento
+
+### Ver se tudo esta funcionando
+
+```bash
+# Status completo
+echo "=== PostgreSQL ===" && sudo systemctl is-active postgresql
+echo "=== Nginx ===" && sudo systemctl is-active nginx
+echo "=== PM2 ===" && pm2 status
+echo "=== Disco ===" && df -h /
+echo "=== Memoria ===" && free -h
+```
+
+### Verificar a aplicacao
+
+```bash
+# Testar se responde
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
+
+# Deve retornar: 200 ou 302
+```
+
+---
+
+## 11. Contato e Suporte
+
+Em caso de problemas com a instalacao:
+
+1. Verifique o log de instalacao: `cat /var/log/camara-install.log`
+2. Consulte a secao de **Resolucao de Problemas** acima
+3. Abra uma issue no repositorio do projeto
+
+---
+
+> **Lembrete**: Este sistema e a base digital para o funcionamento democratico
+> da Camara Municipal. Mantenha-o sempre atualizado e com backups em dia.

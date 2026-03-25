@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { withErrorHandler, createSuccessResponse, ConflictError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { legislaturaDbService } from '@/lib/services/legislatura-db-service'
 import { logAudit } from '@/lib/audit'
 
 // Configurar para renderização dinâmica
@@ -31,90 +31,50 @@ const LegislaturaSchema = z.object({
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const ativa = searchParams.get('ativa')
-  const search = searchParams.get('search')
+  const search = searchParams.get('search') || undefined
   const page = parseInt(searchParams.get('page') || '1')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-  // Construir filtros
-  const where: any = {}
-
-  if (ativa !== null) {
-    where.ativa = ativa === 'true'
-  }
-
-  if (search) {
-    where.OR = [
-      { numero: { equals: parseInt(search) || 0 } },
-      { descricao: { contains: search, mode: 'insensitive' } }
-    ]
-  }
-
-  const [legislaturas, total] = await Promise.all([
-    prisma.legislatura.findMany({
-      where,
-      orderBy: [
-        { anoInicio: 'desc' },
-        { numero: 'desc' }
-      ],
-      skip: (page - 1) * limit,
-      take: limit
-    }),
-    prisma.legislatura.count({ where })
-  ])
+  const result = await legislaturaDbService.paginate(
+    {
+      ativa: ativa !== null ? ativa === 'true' : undefined,
+      search
+    },
+    { page, limit }
+  )
 
   return createSuccessResponse(
-    legislaturas,
+    result.data,
     'Legislaturas listadas com sucesso',
-    total,
+    result.pagination.total,
     200,
-    {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit)
-    }
+    result.pagination
   )
 })
 
 // POST - Criar legislatura
 export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = LegislaturaSchema.parse(body)
-  
+
   // Verificar se já existe legislatura ativa
   if (validatedData.ativa) {
-    const existingLegislatura = await prisma.legislatura.findFirst({
-      where: { ativa: true }
-    })
-    
-    if (existingLegislatura) {
+    const existingAtiva = await legislaturaDbService.checkAtivaExiste()
+    if (existingAtiva) {
       throw new ConflictError('Já existe uma legislatura ativa. Desative a atual antes de criar uma nova.')
     }
   }
-  
+
   // Verificar se já existe legislatura com mesmo número
-  const existingNumero = await prisma.legislatura.findFirst({
-    where: { numero: validatedData.numero }
-  })
-  
+  const existingNumero = await legislaturaDbService.checkDuplicateNumero(validatedData.numero)
   if (existingNumero) {
     throw new ConflictError('Já existe uma legislatura com este número')
   }
-  
-  const legislatura = await prisma.legislatura.create({
-    data: {
-      numero: validatedData.numero,
-      anoInicio: validatedData.anoInicio,
-      anoFim: validatedData.anoFim,
-      dataInicio: validatedData.dataInicio ? new Date(validatedData.dataInicio) : null,
-      dataFim: validatedData.dataFim ? new Date(validatedData.dataFim) : null,
-      ativa: validatedData.ativa ?? false,
-      descricao: validatedData.descricao || null
-    }
-  })
-  
+
+  const legislatura = await legislaturaDbService.create(validatedData)
+
   await logAudit({
     request,
     session,
@@ -128,7 +88,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       ativa: legislatura.ativa
     }
   })
-  
+
   return createSuccessResponse(
     legislatura,
     'Legislatura criada com sucesso',

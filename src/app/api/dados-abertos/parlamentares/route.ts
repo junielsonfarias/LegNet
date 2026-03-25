@@ -5,11 +5,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    enforceRateLimit(request, 'PUBLIC')
+
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
     const legislaturaId = searchParams.get('legislatura')
@@ -97,9 +100,15 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
+    if (error instanceof Error && error.message?.includes('Rate limit')) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 429 }
+      )
+    }
     console.error('Erro ao buscar parlamentares:', error)
     return NextResponse.json(
-      { error: 'Erro ao buscar dados de parlamentares' },
+      { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

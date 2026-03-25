@@ -5,11 +5,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   try {
+    enforceRateLimit(request, 'PUBLIC')
+
     // Buscar configuração institucional
     const config = await prisma.configuracaoInstitucional.findFirst({
       where: { slug: 'principal' }
@@ -111,9 +114,15 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
+    if (error instanceof Error && error.message?.includes('Rate limit')) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 429 }
+      )
+    }
     console.error('Erro ao buscar sessoes:', error)
     return NextResponse.json(
-      { error: 'Erro ao buscar dados de sessoes' },
+      { success: false, error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }

@@ -1,15 +1,10 @@
-/**
- * API para gerenciamento de Pautas
- * POST: Cria nova pauta vinculada a uma sessão existente
- * GET: Lista todas as pautas com dados da sessão
- */
-
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { pautasDbService } from '@/lib/services/pautas-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,7 +20,7 @@ const PautaQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(20)
 })
 
-// GET - Lista pautas com dados da sessão
+// GET - Lista pautas
 export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
 
@@ -35,52 +30,12 @@ export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
     limit: searchParams.get('limit') || 20
   })
 
-  const where: any = {}
-  if (query.status) {
-    where.status = query.status
-  }
+  const result = await pautasDbService.paginate(
+    { status: query.status },
+    { page: query.page, limit: query.limit }
+  )
 
-  const [pautas, total] = await Promise.all([
-    prisma.pautaSessao.findMany({
-      where,
-      include: {
-        sessao: {
-          select: {
-            id: true,
-            numero: true,
-            tipo: true,
-            data: true,
-            horario: true,
-            local: true,
-            status: true,
-            descricao: true,
-            legislatura: {
-              select: {
-                numero: true,
-                anoInicio: true,
-                anoFim: true
-              }
-            }
-          }
-        },
-        _count: {
-          select: {
-            itens: true
-          }
-        }
-      },
-      orderBy: {
-        sessao: {
-          data: 'desc'
-        }
-      },
-      skip: (query.page - 1) * query.limit,
-      take: query.limit
-    }),
-    prisma.pautaSessao.count({ where })
-  ])
-
-  const pautasFormatadas = pautas.map(pauta => ({
+  const pautasFormatadas = result.data.map((pauta: any) => ({
     id: pauta.id,
     sessaoId: pauta.sessaoId,
     status: pauta.status,
@@ -109,58 +64,25 @@ export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
 
   return createSuccessResponse({
     data: pautasFormatadas,
-    meta: {
-      page: query.page,
-      limit: query.limit,
-      total,
-      totalPages: Math.ceil(total / query.limit)
-    }
+    meta: result.pagination
   })
 }), { permissions: 'pauta.view' })
 
-// POST - Cria nova pauta vinculada a uma sessão
+// POST - Cria nova pauta
 export const POST = withAuth(withErrorHandler(async (request: NextRequest, _context, session) => {
   const body = await request.json()
   const payload = PautaCreateSchema.parse(body)
 
-  // Verificar se a sessão existe
+  // Verificar se sessão existe e se já tem pauta
   const sessao = await prisma.sessao.findUnique({
     where: { id: payload.sessaoId },
-    include: {
-      pautaSessao: true
-    }
+    include: { pautaSessao: true }
   })
 
-  if (!sessao) {
-    throw new ValidationError('Sessão não encontrada')
-  }
+  if (!sessao) throw new ValidationError('Sessão não encontrada')
+  if (sessao.pautaSessao) throw new ValidationError('Esta sessão já possui uma pauta vinculada')
 
-  // Verificar se já tem pauta
-  if (sessao.pautaSessao) {
-    throw new ValidationError('Esta sessão já possui uma pauta vinculada')
-  }
-
-  // Criar a pauta
-  const pauta = await prisma.pautaSessao.create({
-    data: {
-      sessaoId: payload.sessaoId,
-      status: 'RASCUNHO',
-      geradaAutomaticamente: payload.geradaAutomaticamente,
-      observacoes: payload.observacoes,
-      tempoTotalEstimado: 0
-    },
-    include: {
-      sessao: {
-        select: {
-          id: true,
-          numero: true,
-          tipo: true,
-          data: true,
-          horario: true
-        }
-      }
-    }
-  })
+  const pauta = await pautasDbService.create(payload)
 
   await logAudit({
     request,

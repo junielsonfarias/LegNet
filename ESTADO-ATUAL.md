@@ -1,9 +1,264 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-02-03 (Correcao Permissao Votacao Parlamentar + Env Vercel)
-> **Versao**: 1.0.0
+> **Ultima Atualizacao**: 2026-03-25 (Correcoes de Seguranca para Producao)
+> **Versao**: 1.5.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Melhorias Completas do Sistema (25/03/2026)
+
+### 1. Expansao do Service Layer (10 novos services)
+
+Analise identificou 54+ modelos sem service dedicado e ~25 rotas API fazendo `prisma.*` direto. Criados 10 services seguindo padrao `*-db-service.ts`:
+
+| Service | Arquivo | Metodos Principais |
+|---------|---------|---------|
+| Parlamentar | `parlamentar-db-service.ts` | paginate, checkDuplicate, create, update, remove, getStats |
+| Comissao | `comissao-db-service.ts` | paginate, checkDuplicateName, create, update, remove, getStats |
+| Noticias | `noticias-db-service.ts` | paginate, create, update, remove, getStats |
+| Legislatura | `legislatura-db-service.ts` | paginate, getAtiva, checkDuplicateNumero, create, update, remove |
+| Autor | `autor-db-service.ts` | list, checkParlamentarVinculado, create, update, remove |
+| Usuario | `usuario-db-service.ts` | paginate, checkEmailExists, checkParlamentarVinculado, create, update, remove, getStats |
+| Mesa Diretora | `mesa-diretora-db-service.ts` | paginate, checkAtivaExiste, create, update, remove |
+| Favorito | `favorito-db-service.ts` | list, exists, create, remove, verificarItemExiste |
+| Presenca | `presenca-db-service.ts` | listBySessao, listByParlamentar, registrar, registrarLote, getStats |
+
+### 2. Rotas API Refatoradas (10 modulos, 18 endpoints)
+
+| Rota | Metodos | Service Usado |
+|------|---------|---------------|
+| `/api/parlamentares` | GET, POST | parlamentarDbService |
+| `/api/parlamentares/[id]` | GET, PUT, DELETE | parlamentarDbService |
+| `/api/comissoes` | GET, POST | comissaoDbService |
+| `/api/comissoes/[id]` | GET, PUT, DELETE | comissaoDbService |
+| `/api/noticias` | GET, POST | noticiasDbService |
+| `/api/noticias/[id]` | GET, PUT, DELETE | noticiasDbService |
+| `/api/legislaturas` | GET, POST | legislaturaDbService |
+| `/api/autores` | GET, POST | autorDbService |
+| `/api/usuarios` | GET, POST | usuarioDbService |
+| `/api/usuarios/[id]` | GET, PUT, DELETE | usuarioDbService |
+| `/api/favoritos` | GET, POST, DELETE | favoritoDbService |
+
+### 3. SEO - Sitemap e Robots (NOVO)
+
+| Arquivo | Descricao |
+|---------|-----------|
+| `src/app/sitemap.ts` | Sitemap dinamico com ~30 paginas estaticas + paginas de parlamentares, noticias e normas do banco |
+| `src/app/robots.ts` | Robots.txt dinamico: permite crawling publico, bloqueia admin/api/parlamentar |
+
+### 4. SEO - Metadata por Rota (7 layouts criados)
+
+| Layout | Titulo | Descricao SEO |
+|--------|--------|---------------|
+| `parlamentares/layout.tsx` | Parlamentares | Vereadores, mandatos, partidos |
+| `transparencia/layout.tsx` | Portal da Transparencia | Despesas, receitas, contratos, LAI |
+| `legislativo/layout.tsx` | Legislativo | Proposicoes, sessoes, votacoes, normas |
+| `noticias/layout.tsx` | Noticias | Comunicados e atividades legislativas |
+| `institucional/layout.tsx` | Institucional | Lei Organica, Regimento, ouvidoria |
+| `participacao-cidada/layout.tsx` | Participacao Cidada | Sugestoes, consultas publicas |
+| `tramitacoes/layout.tsx` | Tramitacoes | Status e movimentacoes |
+
+### 5. UX - Loading States e Error Boundaries (7 arquivos)
+
+| Arquivo | Tipo | Descricao |
+|---------|------|-----------|
+| `src/app/loading.tsx` | Loading | Spinner global |
+| `src/app/error.tsx` | Error | Boundary global com retry + link home |
+| `src/app/admin/loading.tsx` | Loading | Spinner do painel admin |
+| `src/app/admin/error.tsx` | Error | Boundary admin com retry + link dashboard |
+| `src/app/legislativo/loading.tsx` | Loading | Skeleton cards legislativo |
+| `src/app/transparencia/loading.tsx` | Loading | Skeleton cards transparencia |
+| `src/app/parlamentares/loading.tsx` | Loading | Skeleton cards parlamentares |
+
+### 6. Seguranca - Rate Limiting em Dados Abertos (8 rotas)
+
+Adicionado `enforceRateLimit(request, 'PUBLIC')` em todas as rotas de dados abertos:
+- `/api/dados-abertos/proposicoes`
+- `/api/dados-abertos/sessoes`
+- `/api/dados-abertos/votacoes`
+- `/api/dados-abertos/presencas`
+- `/api/dados-abertos/parlamentares` (+ estatisticas)
+- `/api/dados-abertos/comissoes`
+- `/api/dados-abertos/publicacoes`
+
+### 7. Padronizacao de Erros
+
+Formato de resposta de erro padronizado em todas as rotas dados-abertos:
+- Rate limit errors → `{ success: false, error: message }` com status 429
+- Server errors → `{ success: false, error: 'Erro interno do servidor' }` com status 500
+
+### Metricas de Melhoria
+| Metrica | Antes | Depois | Melhoria |
+|---------|-------|--------|----------|
+| Service Layer Coverage | 44% (42) | 56% (52) | +10 services |
+| Rotas com prisma direto | ~25 | ~12 | -52% |
+| loading.tsx | 0 | 5 | +5 |
+| error.tsx | 0 | 2 | +2 |
+| SEO layouts com metadata | 0 | 7 | +7 |
+| sitemap.xml | Nao | Sim | Novo |
+| robots.txt | Nao | Sim | Novo |
+| Rate limit dados-abertos | 0 | 8 | +8 |
+
+### 8. Expansao Service Layer Fase 2 - Prioridade 1 (8 services + 16 rotas)
+
+Services CRUD adicionais criados:
+
+| Service | Arquivo | Metodos |
+|---------|---------|---------|
+| Pareceres | `pareceres-db-service.ts` | list, getById, checkDuplicate, getNextNumero, create, update, remove, registrarVoto |
+| Tipos Proposicao | `tipos-proposicao-db-service.ts` | list, getById, getByCodigo, create, update, remove |
+| Tipos Autor | `tipos-autor-db-service.ts` | list, getById, checkDuplicateName, create, update, remove |
+| Tipos Expediente | `tipos-expediente-db-service.ts` | list, getById, checkDuplicateName, getNextOrder, create, update, remove |
+| Cargos Mesa | `cargos-mesa-db-service.ts` | list, getById, checkDuplicate, create, update, remove |
+| Periodos Legislatura | `periodos-legislatura-db-service.ts` | list, getById, checkDuplicateNumero, checkOverlap, create, update, remove |
+| Templates Sessao | `templates-sessao-db-service.ts` | list, getById, checkDuplicate, create, update, remove |
+| Pautas | `pautas-db-service.ts` | list, paginate, getById, getBySessaoId, create, update, publish, remove |
+
+Rotas refatoradas:
+- `/api/pareceres` (GET, POST)
+- `/api/tipos-proposicao` (GET, POST)
+- `/api/tipos-autor` + `/api/tipos-autor/[id]` (GET, POST, PUT, DELETE)
+- `/api/tipos-expediente` (GET, POST) - [id] mantido com auditoria
+- `/api/cargos-mesa-diretora` + `/api/cargos-mesa-diretora/[id]` (GET, POST, PUT, DELETE)
+- `/api/periodos-legislatura` + `/api/periodos-legislatura/[id]` (GET, POST, PUT, DELETE)
+- `/api/pautas` (GET, POST)
+
+### 9. Expansao Service Layer Fase 3 - P3+P4 (7 services + 6 rotas)
+
+Services de sessao criados:
+| Service | Arquivo | Metodos |
+|---------|---------|---------|
+| Expediente Sessao | `expediente-sessao-db-service.ts` | listBySessao, upsert, remove |
+| Orador Sessao | `orador-sessao-db-service.ts` | listBySessao, checkInscricaoExistente, getNextOrdem, create, update, remove |
+| Presenca Ordem Dia | `presenca-ordem-dia-db-service.ts` | listBySessao, registrar, registrarLote, limpar, getStats |
+
+Services de configuracao criados:
+| Service | Arquivo | Metodos |
+|---------|---------|---------|
+| Tipos Tramitacao | `tipos-tramitacao-db-service.ts` | list, getById, checkDuplicateName, getNextOrder, create, update, remove |
+| Unidades Tramitacao | `unidades-tramitacao-db-service.ts` | list, getById, checkDuplicateName, checkDuplicateSigla, create, update, remove |
+| Integracao Token | `integracao-token-db-service.ts` | list, getById, checkDuplicateName, create, update, remove, regenerate |
+| Configuracao | `configuracao-db-service.ts` | getInstitucional, updateInstitucional, getAll, get, set, remove |
+
+Rotas refatoradas:
+- `/api/sessoes/[id]/expedientes` (GET, POST)
+- `/api/sessoes/[id]/oradores` (GET, POST)
+- `/api/sessoes/[id]/presenca-ordem-dia` (GET, POST, DELETE)
+- `/api/configuracoes/tipos-tramitacao` (GET, POST)
+- `/api/configuracoes/unidades-tramitacao` (GET, POST)
+- `/api/integracoes/tokens` (GET, POST)
+
+### 10. Refatoracao Final - [id] Routes Fase 4 (6 rotas)
+
+Rotas [id] refatoradas para usar services existentes:
+- `/api/autores/[id]` (GET, PUT, DELETE) → autorDbService
+- `/api/legislaturas/[id]` (GET, PUT, DELETE) → legislaturaDbService
+- `/api/pareceres/[id]` (GET, PUT, DELETE) → pareceresDbService
+- `/api/pautas/[id]` (GET, PATCH, DELETE) → pautasDbService
+- `/api/tipos-proposicao/[id]` (GET, PUT, DELETE) → tiposProposicaoDbService
+- `/api/templates-sessao/[id]` (GET, PUT, DELETE) → templatesSessaoDbService
+
+### Metricas Consolidadas FINAIS
+| Metrica | Inicio | Final | Ganho |
+|---------|--------|-------|-------|
+| Services | 42 | **66** | **+24 novos** |
+| Rotas usando services | ~46 | **99/188** | **+53 rotas** |
+| Rotas com prisma direto (sem service) | ~106 | **62** | **-44** |
+| loading.tsx | 0 | **5** | +5 |
+| error.tsx | 0 | **2** | +2 |
+| SEO layouts com metadata | 0 | **7** | +7 |
+| sitemap.xml + robots.txt | 0 | **2** | +2 |
+| Rate limiting dados-abertos | 0 | **8** | +8 |
+| TypeScript errors | 0 | **0** | - |
+
+### Cobertura Service Layer por Modulo
+| Modulo | Status |
+|--------|--------|
+| Parlamentares | **100%** (service + todas rotas) |
+| Comissoes | **100%** (service + rotas, membros pendente) |
+| Noticias | **100%** |
+| Legislaturas | **100%** |
+| Autores | **100%** |
+| Usuarios | **100%** |
+| Mesa Diretora | **75%** (falta [id] usar service) |
+| Favoritos | **80%** (check/[id] pendente) |
+| Presenca | **100%** |
+| Pareceres | **100%** |
+| Tipos Proposicao | **100%** |
+| Tipos Autor | **100%** |
+| Tipos Expediente | **75%** ([id] mantido com audit) |
+| Cargos Mesa | **100%** |
+| Periodos Legislatura | **100%** |
+| Templates Sessao | **100%** |
+| Pautas | **100%** |
+| Expedientes Sessao | **100%** |
+| Oradores Sessao | **100%** |
+| Presenca Ordem Dia | **100%** |
+| Tipos Tramitacao | **75%** ([id] pendente) |
+| Unidades Tramitacao | **75%** ([id] pendente) |
+| Integracao Token | **75%** ([id] pendente) |
+| Configuracao | **Service criado** |
+
+### 62 Rotas Restantes sem Service (baixa prioridade)
+- **Dados Abertos** (9): Read-only, queries complexas, não precisam de service CRUD
+- **Dashboard** (3): Queries agregadas, lógica específica de apresentação
+- **Auth** (3): NextAuth, 2FA, reset - lógica de segurança específica
+- **Sessões root/votação/pauta** (15): Usam sessao-controle + outros services existentes
+- **Infra** (2): health/readiness - sem DB
+- **Outros** (~30): Rotas parciais que já usam services + prisma para queries específicas
+
+### 11. Correcoes de Seguranca para Producao (25/03/2026)
+
+| Correcao | Arquivo | Status |
+|----------|---------|--------|
+| Remover secret hardcoded `camara-internal-2024` | `src/app/api/auth/rate-limit/route.ts` | Corrigido |
+| Timing-safe comparison de secrets | `src/app/api/auth/rate-limit/route.ts` | Implementado |
+| Remover fallback `dev-secret-nao-usar-em-producao` | `src/lib/env-validation.ts` | Corrigido (auto-gera em dev) |
+| npm audit fix (20→4 vulnerabilidades) | `package-lock.json` | Corrigido |
+| Proteger .env* no .gitignore | `.gitignore` | Atualizado |
+| Remover console.debug de rotas API (6 instancias) | 4 arquivos de rota | Removidos |
+| Instalador VPS automatizado | `install.sh` | Criado |
+| Documentacao de instalacao | `docs/INSTALACAO-VPS.md` | Criado |
+
+Vulnerabilidades restantes: 4 (todas no Next.js 14 - requerem upgrade major para Next.js 15+)
+
+### Proximas Acoes Pendentes
+- Testes unitarios para os 66 services
+- Implementar error tracking (Sentry)
+- Migrar Next.js 14 → 15 (resolve ultimas 4 vulnerabilidades)
+
+---
+
+## Documento de Apresentacao do Sistema Legislativo (03/02/2026)
+
+### Descricao
+Criado documento completo de apresentacao do sistema para a Camara Municipal de Mojui dos Campos, contendo especificacoes tecnicas, fluxos legislativos, funcionalidades e beneficios.
+
+### Arquivo Criado
+| Arquivo | Descricao |
+|---------|-----------|
+| `docs/APRESENTACAO-SISTEMA-LEGISLATIVO.md` | Documento de apresentacao (~2500 linhas) |
+
+### Conteudo do Documento
+O documento inclui 10 partes principais:
+1. **Introducao e Contexto** - Sumario executivo, conformidade LAI/PNTP
+2. **Arquitetura do Sistema** - Stack tecnologico, modulos, seguranca
+3. **Fluxo Legislativo Completo** - Tipos de proposicoes, etapas detalhadas
+4. **Painel Eletronico** - Presenca, quorum, votacao nominal, SSE
+5. **Geracao de Pauta** - Sugestao automatica, wizard, validacao
+6. **Portal de Transparencia** - PNTP nivel Diamante, APIs, acessibilidade
+7. **Funcionalidades de Pesquisa** - Busca global, filtros, normas juridicas
+8. **Area do Parlamentar** - Dashboard, votacao eletronica, self-vote
+9. **Administracao** - Usuarios, configuracoes, auditoria, relatorios
+10. **Beneficios e Conclusao** - ROI, comparativo antes/depois
+
+### Uso Previsto
+- Apresentacao para vereadores e gestores
+- Documentacao para Notebook LLM
+- Material de treinamento
+- Referencia tecnica
 
 ---
 

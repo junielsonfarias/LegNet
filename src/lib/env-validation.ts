@@ -92,8 +92,17 @@ export function getEnv(): EnvConfig {
     console.warn('\n[DEV] Continuando com configuracao parcial...\n')
 
     // Retorna valores parciais em dev para permitir desenvolvimento
+    // SEGURANCA: Nunca usar secrets padrao - gerar automaticamente se nao configurado
+    const devSecret = process.env.NEXTAUTH_SECRET || (() => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+      let result = 'dev-auto-'
+      for (let i = 0; i < 40; i++) result += chars.charAt(Math.floor(Math.random() * chars.length))
+      console.warn('[DEV] NEXTAUTH_SECRET gerado automaticamente. Configure um valor fixo no .env')
+      return result
+    })()
+
     _validatedEnv = {
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'dev-secret-nao-usar-em-producao',
+      NEXTAUTH_SECRET: devSecret,
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
       DATABASE_URL: process.env.DATABASE_URL || '',
       NODE_ENV: (process.env.NODE_ENV as 'development' | 'production' | 'test') || 'development',

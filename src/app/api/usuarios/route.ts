@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
-  withErrorHandler,
   createSuccessResponse,
-  createErrorResponse,
-  ValidationError,
-  NotFoundError,
-  validateId
+  ValidationError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
-import bcrypt from 'bcryptjs'
+import { usuarioDbService } from '@/lib/services/usuario-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,15 +16,6 @@ const CreateUsuarioSchema = z.object({
   role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA']),
   parlamentarId: z.string().optional(),
   ativo: z.boolean().default(true)
-})
-
-const UpdateUsuarioSchema = z.object({
-  name: z.string().optional(),
-  email: z.string().email('Email inválido').optional(),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').optional(),
-  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA']).optional(),
-  parlamentarId: z.string().optional().nullable(),
-  ativo: z.boolean().optional()
 })
 
 // Schema para query params de listagem
@@ -60,51 +46,16 @@ export const GET = withAuth(async (request: NextRequest) => {
   }
 
   const { page, limit, role, ativo, search } = validation.data
-  const skip = (page - 1) * limit
 
-  // Construir filtros
-  const where: Record<string, unknown> = {}
-  if (role) where.role = role
-  if (ativo !== undefined) where.ativo = ativo
-  if (search) {
-    where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { email: { contains: search, mode: 'insensitive' } }
-    ]
-  }
-
-  const [usuarios, total] = await Promise.all([
-    prisma.user.findMany({
-      where,
-      include: {
-        parlamentar: {
-          select: {
-            id: true,
-            nome: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      skip,
-      take: limit
-    }),
-    prisma.user.count({ where })
-  ])
-
-  // Remover senhas da resposta
-  const usuariosSemSenha = usuarios.map(({ password, ...user }) => user)
+  const result = await usuarioDbService.paginate(
+    { role, ativo, search },
+    { page, limit }
+  )
 
   return NextResponse.json({
     success: true,
-    data: usuariosSemSenha,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit)
-    }
+    data: result.data,
+    pagination: result.pagination
   })
 }, { permissions: 'user.view' })
 
@@ -115,52 +66,20 @@ export const POST = withAuth(async (request: NextRequest) => {
   const validatedData = CreateUsuarioSchema.parse(body)
 
   // Verificar se email já existe
-  const usuarioExistente = await prisma.user.findUnique({
-    where: { email: validatedData.email }
-  })
-
-  if (usuarioExistente) {
+  const emailExists = await usuarioDbService.checkEmailExists(validatedData.email)
+  if (emailExists) {
     throw new ValidationError('Email já está em uso')
   }
 
-  // Verificar se parlamentar já tem usuário vinculado (se for parlamentar)
+  // Verificar se parlamentar já tem usuário vinculado
   if (validatedData.role === 'PARLAMENTAR' && validatedData.parlamentarId) {
-    const parlamentarComUsuario = await prisma.user.findFirst({
-      where: {
-        parlamentarId: validatedData.parlamentarId
-      }
-    })
-
-    if (parlamentarComUsuario) {
+    const parlamentarVinculado = await usuarioDbService.checkParlamentarVinculado(validatedData.parlamentarId)
+    if (parlamentarVinculado) {
       throw new ValidationError('Este parlamentar já possui um usuário vinculado')
     }
   }
 
-  // Hash da senha
-  const hashedPassword = await bcrypt.hash(validatedData.password, 12)
+  const novoUsuario = await usuarioDbService.create(validatedData)
 
-  const novoUsuario = await prisma.user.create({
-    data: {
-      name: validatedData.name,
-      email: validatedData.email,
-      password: hashedPassword,
-      role: validatedData.role,
-      parlamentarId: validatedData.parlamentarId || null,
-      ativo: validatedData.ativo
-    },
-    include: {
-      parlamentar: {
-        select: {
-          id: true,
-          nome: true
-        }
-      }
-    }
-  })
-
-  // Remover senha da resposta
-  const { password, ...usuarioSemSenha } = novoUsuario
-
-  return createSuccessResponse(usuarioSemSenha, 'Usuário criado com sucesso')
+  return createSuccessResponse(novoUsuario, 'Usuário criado com sucesso')
 }, { permissions: 'user.manage' })
-

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
@@ -8,6 +8,7 @@ import {
   ConflictError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { autorDbService } from '@/lib/services/autor-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,65 +42,19 @@ const AutorSchema = z.object({
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const ativo = searchParams.get('ativo')
-  const tipoAutorId = searchParams.get('tipoAutorId')
-  const search = searchParams.get('search')
+  const tipoAutorId = searchParams.get('tipoAutorId') || undefined
+  const search = searchParams.get('search') || undefined
 
-  const where: any = {}
-
-  if (ativo === 'true') {
-    where.ativo = true
-  } else if (ativo === 'false') {
-    where.ativo = false
-  }
-
-  if (tipoAutorId) {
-    where.tipoAutorId = tipoAutorId
-  }
-
-  if (search) {
-    where.OR = [
-      { nome: { contains: search, mode: 'insensitive' } },
-      { cargo: { contains: search, mode: 'insensitive' } }
-    ]
-  }
-
-  const autores = await prisma.autor.findMany({
-    where,
-    orderBy: [
-      { nome: 'asc' }
-    ],
-    include: {
-      tipoAutor: true,
-      parlamentar: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          foto: true,
-          partido: true,
-          ativo: true
-        }
-      },
-      comissao: {
-        select: {
-          id: true,
-          nome: true,
-          sigla: true,
-          tipo: true,
-          ativa: true
-        }
-      },
-      _count: {
-        select: { proposicoes: true }
-      }
-    }
+  const autores = await autorDbService.list({
+    ativo: ativo === 'true' ? true : ativo === 'false' ? false : undefined,
+    tipoAutorId,
+    search
   })
 
   return createSuccessResponse(autores, 'Autores listados com sucesso')
 })
 
 // POST - Criar autor
-// SEGURANÇA: Requer autenticação e permissão de gestão de proposições
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = AutorSchema.parse(body)
@@ -108,21 +63,17 @@ export const POST = withAuth(async (request: NextRequest) => {
   const tipoAutor = await prisma.tipoAutor.findUnique({
     where: { id: validatedData.tipoAutorId }
   })
-
   if (!tipoAutor) {
     throw new ValidationError('Tipo de autor não encontrado')
   }
 
   // Se vinculado a parlamentar, verificar duplicidade
   if (validatedData.parlamentarId) {
-    const existingParlamentar = await prisma.autor.findUnique({
-      where: { parlamentarId: validatedData.parlamentarId }
-    })
-    if (existingParlamentar) {
+    const existing = await autorDbService.checkParlamentarVinculado(validatedData.parlamentarId)
+    if (existing) {
       throw new ConflictError('Este parlamentar já está vinculado a um autor')
     }
 
-    // Verificar se o parlamentar existe
     const parlamentar = await prisma.parlamentar.findUnique({
       where: { id: validatedData.parlamentarId }
     })
@@ -141,18 +92,7 @@ export const POST = withAuth(async (request: NextRequest) => {
     }
   }
 
-  const autor = await prisma.autor.create({
-    data: validatedData,
-    include: {
-      tipoAutor: true,
-      parlamentar: {
-        select: { id: true, nome: true, foto: true }
-      },
-      comissao: {
-        select: { id: true, nome: true, sigla: true }
-      }
-    }
-  })
+  const autor = await autorDbService.create(validatedData)
 
   return createSuccessResponse(autor, 'Autor criado com sucesso', undefined, 201)
 }, { permissions: 'proposicao.manage' })

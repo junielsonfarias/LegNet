@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -8,6 +7,7 @@ import {
   validateId
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { noticiasDbService } from '@/lib/services/noticias-db-service'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -30,20 +30,16 @@ export const GET = withErrorHandler(async (
   { params }: { params: { id: string } }
 ) => {
   const id = validateId(params.id, 'Notícia')
-  
-  const noticia = await prisma.noticia.findUnique({
-    where: { id }
-  })
-  
+
+  const noticia = await noticiasDbService.getById(id)
   if (!noticia) {
     throw new NotFoundError('Notícia')
   }
-  
+
   return createSuccessResponse(noticia, 'Notícia encontrada com sucesso')
 })
 
 // PUT - Atualizar notícia
-// SEGURANÇA: Requer autenticação e permissão de publicação
 export const PUT = withAuth(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -51,72 +47,33 @@ export const PUT = withAuth(async (
   const { id: rawId } = await context.params
   const id = validateId(rawId, 'Notícia')
   const body = await request.json()
-  
-  // Validar dados
+
   const validatedData = UpdateNoticiaSchema.parse(body)
-  
-  // Verificar se notícia existe
-  const existingNoticia = await prisma.noticia.findUnique({
-    where: { id }
-  })
-  
-  if (!existingNoticia) {
+
+  const existing = await noticiasDbService.getById(id)
+  if (!existing) {
     throw new NotFoundError('Notícia')
   }
-  
-  // Preparar dados para atualização
-  const updateData: any = {}
-  
-  if (validatedData.titulo !== undefined) updateData.titulo = validatedData.titulo
-  if (validatedData.resumo !== undefined) updateData.resumo = validatedData.resumo || null
-  if (validatedData.conteudo !== undefined) updateData.conteudo = validatedData.conteudo
-  if (validatedData.imagem !== undefined) updateData.imagem = validatedData.imagem || null
-  if (validatedData.categoria !== undefined) updateData.categoria = validatedData.categoria || null
-  if (validatedData.tags !== undefined) updateData.tags = validatedData.tags || []
-  if (validatedData.publicada !== undefined) updateData.publicada = validatedData.publicada
-  if (validatedData.dataPublicacao !== undefined) {
-    updateData.dataPublicacao = validatedData.dataPublicacao 
-      ? new Date(validatedData.dataPublicacao)
-      : null
-  }
-  
-  const updatedNoticia = await prisma.noticia.update({
-    where: { id },
-    data: updateData
-  })
-  
-  return createSuccessResponse(
-    updatedNoticia,
-    'Notícia atualizada com sucesso'
-  )
+
+  const updatedNoticia = await noticiasDbService.update(id, validatedData)
+
+  return createSuccessResponse(updatedNoticia, 'Notícia atualizada com sucesso')
 }, { permissions: 'publicacao.manage' })
 
 // DELETE - Excluir notícia
-// SEGURANÇA: Requer autenticação e permissão de publicação
 export const DELETE = withAuth(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) => {
   const { id: rawId } = await context.params
   const id = validateId(rawId, 'Notícia')
-  
-  // Verificar se notícia existe
-  const existingNoticia = await prisma.noticia.findUnique({
-    where: { id }
-  })
-  
-  if (!existingNoticia) {
+
+  const existing = await noticiasDbService.getById(id)
+  if (!existing) {
     throw new NotFoundError('Notícia')
   }
-  
-  // Hard delete - remover do banco
-  await prisma.noticia.delete({
-    where: { id }
-  })
-  
-  return createSuccessResponse(
-    null,
-    'Notícia excluída com sucesso'
-  )
-}, { permissions: 'publicacao.manage' })
 
+  await noticiasDbService.remove(id)
+
+  return createSuccessResponse(null, 'Notícia excluída com sucesso')
+}, { permissions: 'publicacao.manage' })

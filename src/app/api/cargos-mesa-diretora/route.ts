@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import {
@@ -8,11 +8,10 @@ import {
   ConflictError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { cargosMesaDbService } from '@/lib/services/cargos-mesa-db-service'
 
-// Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
 
-// Schema de validação
 const CargoMesaDiretoraSchema = z.object({
   periodoId: z.string().min(1, 'Período é obrigatório'),
   nome: z.string().min(2, 'Nome do cargo deve ter pelo menos 2 caracteres'),
@@ -20,80 +19,26 @@ const CargoMesaDiretoraSchema = z.object({
   obrigatorio: z.boolean().default(true)
 })
 
-// GET - Listar cargos
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
-  const periodoId = searchParams.get('periodoId')
-  
-  const where: any = {}
-  if (periodoId) {
-    where.periodoId = periodoId
-  }
-  
-  const cargos = await prisma.cargoMesaDiretora.findMany({
-    where,
-    include: {
-      periodo: {
-        include: {
-          legislatura: true
-        }
-      }
-    },
-    orderBy: {
-      ordem: 'asc'
-    }
-  })
-  
+  const periodoId = searchParams.get('periodoId') || undefined
+
+  const cargos = await cargosMesaDbService.list({ periodoId })
   return createSuccessResponse(cargos, 'Cargos listados com sucesso')
 })
 
-// POST - Criar cargo
-// SEGURANÇA: Requer autenticação e permissão de gestão da câmara
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
-
-  // Validar dados
   const validatedData = CargoMesaDiretoraSchema.parse(body)
 
-  // Verificar se período existe
   const periodo = await prisma.periodoLegislatura.findUnique({
     where: { id: validatedData.periodoId }
   })
+  if (!periodo) throw new ValidationError('Período não encontrado')
 
-  if (!periodo) {
-    throw new ValidationError('Período não encontrado')
-  }
+  const existing = await cargosMesaDbService.checkDuplicate(validatedData.periodoId, validatedData.nome)
+  if (existing) throw new ConflictError('Já existe um cargo com este nome neste período')
 
-  // Verificar se já existe cargo com mesmo nome no período
-  const cargoExistente = await prisma.cargoMesaDiretora.findUnique({
-    where: {
-      periodoId_nome: {
-        periodoId: validatedData.periodoId,
-        nome: validatedData.nome
-      }
-    }
-  })
-
-  if (cargoExistente) {
-    throw new ConflictError('Já existe um cargo com este nome neste período')
-  }
-
-  const cargo = await prisma.cargoMesaDiretora.create({
-    data: {
-      periodoId: validatedData.periodoId,
-      nome: validatedData.nome,
-      ordem: validatedData.ordem,
-      obrigatorio: validatedData.obrigatorio ?? true
-    },
-    include: {
-      periodo: {
-        include: {
-          legislatura: true
-        }
-      }
-    }
-  })
-
+  const cargo = await cargosMesaDbService.create(validatedData)
   return createSuccessResponse(cargo, 'Cargo criado com sucesso', undefined, 201)
 }, { permissions: 'mesa.manage' })
-

@@ -297,7 +297,7 @@ export async function GET(request: NextRequest) {
           controller.enqueue(encoder.encode(eventString))
         } catch (error) {
           // Conexão provavelmente foi fechada pelo cliente
-          console.debug('Erro ao enviar evento SSE (conexão fechada?):', error)
+          // Conexão SSE fechada pelo cliente - esperado
         }
       }
 
@@ -309,7 +309,7 @@ export async function GET(request: NextRequest) {
           controller.enqueue(encoder.encode(': heartbeat\n\n'))
         } catch (error) {
           // Conexão provavelmente foi fechada pelo cliente
-          console.debug('Erro ao enviar heartbeat SSE (conexão fechada?):', error)
+          // Heartbeat SSE falhou - conexão fechada pelo cliente
         }
       }
 

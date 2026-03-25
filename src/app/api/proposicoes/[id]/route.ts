@@ -48,7 +48,7 @@ async function findProposicaoByIdOrSlug(idOrSlug: string) {
       })
     } catch (error) {
       // Campo slug pode não existir no banco ainda - isso é esperado durante migração
-      console.debug('Erro ao buscar proposição por slug:', error)
+      // Campo slug pode não existir no banco - esperado durante migração
     }
 
     // Se não encontrar pelo slug, tenta buscar por número/ano/tipo
@@ -107,7 +107,7 @@ export const GET = withErrorHandler(async (
       }
     } catch (error) {
       // Campo slug pode não existir no banco ainda - tentará busca alternativa
-      console.debug('Erro ao buscar proposição por slug, tentando busca por número/ano/tipo:', error)
+      // Slug não encontrado - fallback para busca por número/ano/tipo
     }
 
     // Se não encontrou pelo slug, tenta por número/ano/tipo

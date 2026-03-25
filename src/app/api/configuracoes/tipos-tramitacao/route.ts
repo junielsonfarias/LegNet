@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
+import { tiposTramitacaoDbService } from '@/lib/services/tipos-tramitacao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,47 +16,19 @@ const CreateTipoTramitacaoSchema = z.object({
   unidadeResponsavelId: z.string().optional()
 })
 
-// GET - Listar tipos de tramitação
 export const GET = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
-
   const ativo = searchParams.get('ativo')
-  const search = searchParams.get('search')
+  const search = searchParams.get('search') || undefined
 
-  const where: any = {}
-
-  if (ativo !== null) {
-    where.ativo = ativo === 'true'
-  }
-
-  if (search) {
-    where.OR = [
-      { nome: { contains: search, mode: 'insensitive' } },
-      { descricao: { contains: search, mode: 'insensitive' } }
-    ]
-  }
-
-  const tipos = await prisma.tramitacaoTipo.findMany({
-    where,
-    include: {
-      unidadeResponsavel: {
-        select: {
-          id: true,
-          nome: true,
-          sigla: true
-        }
-      }
-    },
-    orderBy: [
-      { ordem: 'asc' },
-      { nome: 'asc' }
-    ]
+  const tipos = await tiposTramitacaoDbService.list({
+    ativo: ativo !== null ? ativo === 'true' : undefined,
+    search
   })
 
   return createSuccessResponse(tipos)
 }, { permissions: 'config.view' })
 
-// POST - Criar tipo de tramitação
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
@@ -68,43 +39,16 @@ export const POST = withAuth(async (request: NextRequest) => {
 
   const data = validation.data
 
-  // Verificar nome duplicado
-  const existente = await prisma.tramitacaoTipo.findFirst({
-    where: { nome: data.nome }
-  })
-
+  const existente = await tiposTramitacaoDbService.checkDuplicateName(data.nome)
   if (existente) {
     throw new ValidationError('Já existe um tipo de tramitação com este nome')
   }
 
-  // Calcular próxima ordem se não informada
   if (data.ordem === undefined) {
-    const ultimoTipo = await prisma.tramitacaoTipo.findFirst({
-      orderBy: { ordem: 'desc' }
-    })
-    data.ordem = (ultimoTipo?.ordem ?? 0) + 1
+    data.ordem = await tiposTramitacaoDbService.getNextOrder()
   }
 
-  const tipo = await prisma.tramitacaoTipo.create({
-    data: {
-      nome: data.nome,
-      descricao: data.descricao,
-      prazoRegimental: data.prazoRegimental,
-      prazoLegal: data.prazoLegal,
-      ativo: data.ativo,
-      ordem: data.ordem,
-      unidadeResponsavelId: data.unidadeResponsavelId
-    },
-    include: {
-      unidadeResponsavel: {
-        select: {
-          id: true,
-          nome: true,
-          sigla: true
-        }
-      }
-    }
-  })
+  const tipo = await tiposTramitacaoDbService.create(data)
 
   return createSuccessResponse(tipo, 'Tipo de tramitação criado com sucesso', undefined, 201)
 }, { permissions: 'config.manage' })

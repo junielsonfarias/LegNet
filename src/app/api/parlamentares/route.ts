@@ -1,16 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
-  createErrorResponse,
-  ValidationError,
   ConflictError,
   validateEmail,
   validatePhone
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -68,96 +66,28 @@ const ParlamentarSchema = z.object({
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const ativo = searchParams.get('ativo')
-  const cargo = searchParams.get('cargo')
-  const partido = searchParams.get('partido')
-  const search = searchParams.get('search')
+  const cargo = searchParams.get('cargo') || undefined
+  const partido = searchParams.get('partido') || undefined
+  const search = searchParams.get('search') || undefined
   const page = parseInt(searchParams.get('page') || '1')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100) // Máximo 100 por página
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-  // Construir filtros
-  const where: any = {}
-  
-  if (ativo !== null) {
-    where.ativo = ativo === 'true'
-  }
-  
-  if (cargo) {
-    where.cargo = cargo
-  }
-  
-  if (partido) {
-    where.partido = { contains: partido, mode: 'insensitive' }
-  }
-  
-  if (search) {
-    where.OR = [
-      { nome: { contains: search, mode: 'insensitive' } },
-      { apelido: { contains: search, mode: 'insensitive' } },
-      { partido: { contains: search, mode: 'insensitive' } }
-    ]
-  }
-
-  // Buscar legislatura atual para ordenação
-  const legislaturaAtual = await prisma.legislatura.findFirst({
-    where: { ativa: true },
-    orderBy: { anoInicio: 'desc' }
-  })
-
-  const [parlamentares, total] = await Promise.all([
-    prisma.parlamentar.findMany({
-      where,
-      include: {
-        mandatos: {
-          include: {
-            legislatura: true
-          },
-          orderBy: {
-            dataInicio: 'desc'
-          }
-        },
-        filiacoes: {
-          where: { ativa: true },
-          orderBy: {
-            dataInicio: 'desc'
-          },
-          take: 1
-        }
-      } as any,
-      orderBy: [
-        { cargo: 'asc' },
-        { nome: 'asc' }
-      ],
-      skip: (page - 1) * limit,
-      take: limit
-    }),
-    prisma.parlamentar.count({ where })
-  ])
-
-  // Ordenar no JavaScript: parlamentares da legislatura atual primeiro
-  if (legislaturaAtual) {
-    parlamentares.sort((a: any, b: any) => {
-      const aTemMandatoAtual = a.mandatos?.some((m: any) => m.legislaturaId === legislaturaAtual.id && m.ativo) || false
-      const bTemMandatoAtual = b.mandatos?.some((m: any) => m.legislaturaId === legislaturaAtual.id && m.ativo) || false
-      
-      if (aTemMandatoAtual && !bTemMandatoAtual) return -1
-      if (!aTemMandatoAtual && bTemMandatoAtual) return 1
-      
-      // Se ambos têm ou não têm, manter ordem original (cargo, nome)
-      return 0
-    })
-  }
+  const result = await parlamentarDbService.paginate(
+    {
+      ativo: ativo !== null ? ativo === 'true' : undefined,
+      cargo,
+      partido,
+      search
+    },
+    { page, limit }
+  )
 
   return createSuccessResponse(
-    parlamentares,
+    result.data,
     'Parlamentares listados com sucesso',
-    total,
+    result.pagination.total,
     200,
-    {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit)
-    }
+    result.pagination
   )
 })
 
@@ -165,65 +95,18 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 // SEGURANÇA: Requer autenticação e permissão de gestão de parlamentares
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = ParlamentarSchema.parse(body)
-  
+
   // Verificar se já existe parlamentar com mesmo nome/apelido
-  const existingParlamentar = await prisma.parlamentar.findFirst({
-    where: {
-      OR: [
-        { nome: validatedData.nome },
-        { apelido: validatedData.apelido }
-      ]
-    }
-  })
-  
-  if (existingParlamentar) {
+  const existing = await parlamentarDbService.checkDuplicate(validatedData.nome, validatedData.apelido)
+  if (existing) {
     throw new ConflictError('Já existe um parlamentar com este nome ou apelido')
   }
-  
-  // Criar parlamentar com mandatos e filiações
-  const parlamentar = await prisma.parlamentar.create({
-    data: {
-      nome: validatedData.nome,
-      apelido: validatedData.apelido,
-      cargo: validatedData.cargo,
-      partido: validatedData.partido || null,
-      legislatura: validatedData.legislatura,
-      email: validatedData.email || null,
-      telefone: validatedData.telefone || null,
-      biografia: validatedData.biografia || null,
-      ativo: validatedData.ativo ?? true,
-      mandatos: validatedData.mandatos ? {
-        create: validatedData.mandatos.map(m => ({
-          legislaturaId: m.legislaturaId,
-          numeroVotos: m.numeroVotos,
-          cargo: m.cargo,
-          dataInicio: new Date(m.dataInicio),
-          dataFim: m.dataFim ? new Date(m.dataFim) : null,
-          ativo: true
-        }))
-      } : undefined,
-      filiacoes: validatedData.filiacoes ? {
-        create: validatedData.filiacoes.map(f => ({
-          partido: f.partido,
-          dataInicio: new Date(f.dataInicio),
-          dataFim: f.dataFim ? new Date(f.dataFim) : null,
-          ativa: true
-        }))
-      } : undefined
-    },
-    include: {
-      mandatos: {
-        include: {
-          legislatura: true
-        }
-      },
-      filiacoes: true
-    } as any
-  })
-  
+
+  const parlamentar = await parlamentarDbService.create(validatedData)
+
   return createSuccessResponse(
     parlamentar,
     'Parlamentar criado com sucesso',

@@ -30,11 +30,36 @@ const ResetSchema = z.object({
 })
 
 // Header secreto para validar chamadas internas
-const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || 'camara-internal-2024'
+const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET
 
 function validateInternalRequest(request: NextRequest): boolean {
+  if (!INTERNAL_SECRET) {
+    console.error('[rate-limit] INTERNAL_API_SECRET não configurado')
+    return false
+  }
+
   const secret = request.headers.get('x-internal-secret')
-  return secret === INTERNAL_SECRET
+  if (!secret) return false
+
+  // Timing-safe comparison para prevenir timing attacks
+  try {
+    const encoder = new TextEncoder()
+    const a = encoder.encode(secret)
+    const b = encoder.encode(INTERNAL_SECRET)
+    if (a.byteLength !== b.byteLength) return false
+    return crypto.subtle ? timingSafeEqual(a, b) : secret === INTERNAL_SECRET
+  } catch {
+    return secret === INTERNAL_SECRET
+  }
+}
+
+function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.byteLength !== b.byteLength) return false
+  let result = 0
+  for (let i = 0; i < a.byteLength; i++) {
+    result |= a[i] ^ b[i]
+  }
+  return result === 0
 }
 
 /**

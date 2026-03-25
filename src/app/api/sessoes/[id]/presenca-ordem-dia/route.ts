@@ -1,16 +1,10 @@
-/**
- * API para gerenciar presença na ordem do dia
- * GET: Lista presenças
- * POST: Registra/atualiza presença
- * DELETE: Remove todas as presenças (limpa lista)
- */
-
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { presencaOrdemDiaDbService } from '@/lib/services/presenca-ordem-dia-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,60 +22,32 @@ const PresencaBulkSchema = z.object({
   }))
 })
 
-// GET - Lista presenças na ordem do dia
 export const GET = withAuth(withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } }
 ) => {
   const sessaoId = params.id
 
-  // Verificar se sessão existe
   const sessao = await prisma.sessao.findUnique({
     where: { id: sessaoId },
     include: {
       presencas: {
         include: {
           parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true,
-              partido: true
-            }
+            select: { id: true, nome: true, apelido: true, partido: true }
           }
         }
       }
     }
   })
+  if (!sessao) throw new NotFoundError('Sessão')
 
-  if (!sessao) {
-    throw new NotFoundError('Sessão')
-  }
+  const presencasOrdemDia = await presencaOrdemDiaDbService.listBySessao(sessaoId)
 
-  // Buscar presenças na ordem do dia
-  const presencasOrdemDia = await prisma.presencaOrdemDia.findMany({
-    where: { sessaoId },
-    include: {
-      parlamentar: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          partido: true
-        }
-      }
-    },
-    orderBy: {
-      parlamentar: { nome: 'asc' }
-    }
-  })
-
-  // Calcular totais
   const totais = {
     presentes: presencasOrdemDia.filter(p => p.presente).length,
     ausentes: presencasOrdemDia.filter(p => !p.presente).length,
     total: presencasOrdemDia.length,
-    // Comparar com presença geral da sessão
     presencaGeral: {
       presentes: sessao.presencas.filter(p => p.presente).length,
       total: sessao.presencas.length
@@ -91,14 +57,12 @@ export const GET = withAuth(withErrorHandler(async (
   return createSuccessResponse({
     presencas: presencasOrdemDia,
     totais,
-    // Parlamentares presentes na sessão mas sem registro na ordem do dia
     semRegistro: sessao.presencas
       .filter(p => p.presente && !presencasOrdemDia.find(pod => pod.parlamentarId === p.parlamentarId))
       .map(p => p.parlamentar)
   })
 }), { permissions: 'sessao.view' })
 
-// POST - Registra presença (individual ou em lote)
 export const POST = withAuth(withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } },
@@ -107,133 +71,41 @@ export const POST = withAuth(withErrorHandler(async (
   const sessaoId = params.id
   const body = await request.json()
 
-  // Verificar se sessão existe
-  const sessao = await prisma.sessao.findUnique({
-    where: { id: sessaoId }
-  })
+  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  if (!sessao) throw new NotFoundError('Sessão')
 
-  if (!sessao) {
-    throw new NotFoundError('Sessão')
-  }
-
-  // Verificar se é bulk ou individual
   if (body.presencas && Array.isArray(body.presencas)) {
-    // Bulk
     const payload = PresencaBulkSchema.parse(body)
-
-    const resultados = await Promise.all(
-      payload.presencas.map(async (p) => {
-        return prisma.presencaOrdemDia.upsert({
-          where: {
-            sessaoId_parlamentarId: {
-              sessaoId,
-              parlamentarId: p.parlamentarId
-            }
-          },
-          update: {
-            presente: p.presente,
-            observacoes: p.observacoes,
-            registradoEm: new Date()
-          },
-          create: {
-            sessaoId,
-            parlamentarId: p.parlamentarId,
-            presente: p.presente,
-            observacoes: p.observacoes
-          },
-          include: {
-            parlamentar: {
-              select: {
-                id: true,
-                nome: true,
-                apelido: true
-              }
-            }
-          }
-        })
-      })
-    )
+    const resultados = await presencaOrdemDiaDbService.registrarLote(sessaoId, payload.presencas)
 
     await logAudit({
-      request,
-      session,
+      request, session,
       action: 'PRESENCA_ORDEM_DIA_BULK',
       entity: 'PresencaOrdemDia',
       entityId: sessaoId,
-      metadata: {
-        total: resultados.length,
-        presentes: resultados.filter(r => r.presente).length
-      }
+      metadata: { total: resultados.length, presentes: resultados.filter(r => r.presente).length }
     })
 
-    return createSuccessResponse({
-      registrados: resultados.length,
-      presencas: resultados
-    }, `${resultados.length} presenças registradas`)
+    return createSuccessResponse({ registrados: resultados.length, presencas: resultados }, `${resultados.length} presenças registradas`)
   } else {
-    // Individual
     const payload = PresencaSchema.parse(body)
+    const parlamentar = await prisma.parlamentar.findUnique({ where: { id: payload.parlamentarId } })
+    if (!parlamentar) throw new NotFoundError('Parlamentar')
 
-    // Verificar se parlamentar existe
-    const parlamentar = await prisma.parlamentar.findUnique({
-      where: { id: payload.parlamentarId }
-    })
-
-    if (!parlamentar) {
-      throw new NotFoundError('Parlamentar')
-    }
-
-    const presenca = await prisma.presencaOrdemDia.upsert({
-      where: {
-        sessaoId_parlamentarId: {
-          sessaoId,
-          parlamentarId: payload.parlamentarId
-        }
-      },
-      update: {
-        presente: payload.presente,
-        observacoes: payload.observacoes,
-        registradoEm: new Date()
-      },
-      create: {
-        sessaoId,
-        parlamentarId: payload.parlamentarId,
-        presente: payload.presente,
-        observacoes: payload.observacoes
-      },
-      include: {
-        parlamentar: {
-          select: {
-            id: true,
-            nome: true,
-            apelido: true,
-            partido: true
-          }
-        }
-      }
-    })
+    const presenca = await presencaOrdemDiaDbService.registrar(sessaoId, payload)
 
     await logAudit({
-      request,
-      session,
+      request, session,
       action: 'PRESENCA_ORDEM_DIA_REGISTRADA',
       entity: 'PresencaOrdemDia',
       entityId: presenca.id,
-      metadata: {
-        sessaoId,
-        parlamentar: parlamentar.nome,
-        presente: payload.presente
-      }
+      metadata: { sessaoId, parlamentar: parlamentar.nome, presente: payload.presente }
     })
 
-    return createSuccessResponse(
-      presenca,
-      payload.presente ? 'Presença registrada' : 'Ausência registrada'
-    )
+    return createSuccessResponse(presenca, payload.presente ? 'Presença registrada' : 'Ausência registrada')
   }
 }), { permissions: 'sessao.manage' })
 
-// DELETE - Remove todas as presenças na ordem do dia (limpa lista)
 export const DELETE = withAuth(withErrorHandler(async (
   request: NextRequest,
   { params }: { params: { id: string } },
@@ -241,43 +113,22 @@ export const DELETE = withAuth(withErrorHandler(async (
 ) => {
   const sessaoId = params.id
 
-  // Verificar se sessão existe
-  const sessao = await prisma.sessao.findUnique({
-    where: { id: sessaoId }
-  })
+  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  if (!sessao) throw new NotFoundError('Sessão')
 
-  if (!sessao) {
-    throw new NotFoundError('Sessão')
-  }
+  const { removidos } = await presencaOrdemDiaDbService.limpar(sessaoId)
 
-  // Contar presenças antes de excluir
-  const countAntes = await prisma.presencaOrdemDia.count({
-    where: { sessaoId }
-  })
-
-  if (countAntes === 0) {
+  if (removidos === 0) {
     return createSuccessResponse({ removidos: 0 }, 'Nenhuma presença para remover')
   }
 
-  // Remover todas as presenças da ordem do dia desta sessão
-  await prisma.presencaOrdemDia.deleteMany({
-    where: { sessaoId }
-  })
-
   await logAudit({
-    request,
-    session,
+    request, session,
     action: 'PRESENCA_ORDEM_DIA_BULK_DELETE',
     entity: 'PresencaOrdemDia',
     entityId: sessaoId,
-    metadata: {
-      sessaoId,
-      removidos: countAntes
-    }
+    metadata: { sessaoId, removidos }
   })
 
-  return createSuccessResponse(
-    { removidos: countAntes },
-    `${countAntes} presenças removidas com sucesso`
-  )
+  return createSuccessResponse({ removidos }, `${removidos} presenças removidas com sucesso`)
 }), { permissions: 'sessao.manage' })
