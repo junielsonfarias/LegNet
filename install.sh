@@ -181,19 +181,230 @@ show_banner() {
   echo "  ║                                                      ║"
   echo "  ║    SISTEMA LEGISLATIVO - CAMARA MUNICIPAL            ║"
   echo "  ║    Instalador Automatizado para VPS Linux            ║"
-  echo "  ║    Versao 2.0                                        ║"
+  echo "  ║    Versao 3.0                                        ║"
   echo "  ║                                                      ║"
   echo "  ╚══════════════════════════════════════════════════════╝"
   echo -e "${NC}"
-  echo -e "  Este instalador ira configurar automaticamente:"
-  echo -e "  ${GREEN}✓${NC} PostgreSQL 15 (banco de dados)"
-  echo -e "  ${GREEN}✓${NC} Node.js 20 LTS"
-  echo -e "  ${GREEN}✓${NC} Nginx (servidor web)"
-  echo -e "  ${GREEN}✓${NC} PM2 (gerenciador de processos)"
-  echo -e "  ${GREEN}✓${NC} SSL/HTTPS (Let's Encrypt)"
-  echo -e "  ${GREEN}✓${NC} Firewall (UFW)"
-  echo -e "  ${GREEN}✓${NC} Sistema legislativo completo"
+}
+
+# ============================================================================
+# DETECCAO DE INSTALACAO EXISTENTE
+# ============================================================================
+
+INSTALL_MODE="fresh"  # fresh | update | reinstall
+
+detect_existing_installation() {
+  # Verificar se ja existe uma instalacao
+  if [ ! -d "$INSTALL_DIR" ] || [ ! -f "$INSTALL_DIR/package.json" ]; then
+    INSTALL_MODE="fresh"
+    echo -e "  ${GREEN}Nova instalacao detectada${NC}"
+    echo -e "  Este instalador ira configurar automaticamente:"
+    echo -e "  ${GREEN}✓${NC} PostgreSQL 15 (banco de dados)"
+    echo -e "  ${GREEN}✓${NC} Node.js 20 LTS"
+    echo -e "  ${GREEN}✓${NC} Nginx (servidor web)"
+    echo -e "  ${GREEN}✓${NC} PM2 (gerenciador de processos)"
+    echo -e "  ${GREEN}✓${NC} SSL/HTTPS (Let's Encrypt)"
+    echo -e "  ${GREEN}✓${NC} Firewall (UFW)"
+    echo -e "  ${GREEN}✓${NC} Sistema legislativo completo"
+    echo ""
+    return
+  fi
+
+  # Existe instalacao - ler dados
+  local existing_version=""
+  if [ -f "$INSTALL_DIR/package.json" ]; then
+    existing_version=$(grep -o '"version": *"[^"]*"' "$INSTALL_DIR/package.json" | head -1 | cut -d'"' -f4)
+  fi
+
+  local existing_env=""
+  if [ -f "$INSTALL_DIR/.env" ]; then
+    existing_env="Configurado"
+  else
+    existing_env="Sem .env"
+  fi
+
+  local pm2_status="Parado"
+  if check_command pm2 && pm2 list 2>/dev/null | grep -q "online"; then
+    pm2_status="Rodando"
+  fi
+
+  local db_status="Desconhecido"
+  if check_command psql && sudo -u postgres psql -lqt 2>/dev/null | grep -q "camara_legislativo"; then
+    db_status="Ativo (com dados)"
+  fi
+
+  echo -e "${YELLOW}${BOLD}"
+  echo "  ┌──────────────────────────────────────────────┐"
+  echo "  │   INSTALACAO EXISTENTE DETECTADA!             │"
+  echo "  └──────────────────────────────────────────────┘"
+  echo -e "${NC}"
+  echo -e "  ${CYAN}Diretorio:${NC}    $INSTALL_DIR"
+  echo -e "  ${CYAN}Versao:${NC}       ${existing_version:-desconhecida}"
+  echo -e "  ${CYAN}Ambiente:${NC}     ${existing_env}"
+  echo -e "  ${CYAN}Aplicacao:${NC}    ${pm2_status}"
+  echo -e "  ${CYAN}Banco:${NC}        ${db_status}"
   echo ""
+  echo -e "  Escolha uma opcao:"
+  echo ""
+  echo -e "  ${GREEN}1)${NC} ${BOLD}Atualizar${NC} - Atualiza o codigo e recompila"
+  echo -e "     Mantem banco de dados, configuracoes e dados existentes"
+  echo ""
+  echo -e "  ${YELLOW}2)${NC} ${BOLD}Reinstalar${NC} - Instalacao limpa do zero"
+  echo -e "     ${RED}APAGA TUDO: banco, configuracoes, dados, arquivos${NC}"
+  echo ""
+  echo -e "  ${BLUE}3)${NC} ${BOLD}Cancelar${NC} - Sair sem fazer nada"
+  echo ""
+
+  while true; do
+    read -rp "$(echo -e ${CYAN}Opcao [1/2/3]${NC}: )" CHOICE
+    case "$CHOICE" in
+      1)
+        INSTALL_MODE="update"
+        log "Modo selecionado: ATUALIZACAO"
+        break
+        ;;
+      2)
+        INSTALL_MODE="reinstall"
+        echo ""
+        echo -e "  ${RED}${BOLD}ATENCAO: Todos os dados serao APAGADOS permanentemente!${NC}"
+        echo -e "  ${RED}Isso inclui: parlamentares, sessoes, votacoes, noticias, etc.${NC}"
+        echo ""
+        read -rp "$(echo -e ${RED}Tem certeza que deseja apagar tudo?${NC} Digite ${BOLD}SIM${NC} para confirmar: )" CONFIRM_DELETE
+        if [ "$CONFIRM_DELETE" != "SIM" ]; then
+          warn "Reinstalacao cancelada"
+          exit 0
+        fi
+        log "Modo selecionado: REINSTALACAO LIMPA"
+        break
+        ;;
+      3)
+        info "Instalacao cancelada"
+        exit 0
+        ;;
+      *)
+        warn "Opcao invalida! Digite 1, 2 ou 3"
+        ;;
+    esac
+  done
+}
+
+# ============================================================================
+# FUNCOES DE ATUALIZACAO
+# ============================================================================
+
+do_update() {
+  header "ATUALIZANDO SISTEMA"
+
+  INSTALL_START_TIME=$(date +%s)
+  TOTAL_STEPS=6
+  CURRENT_STEP=0
+
+  # Etapa 1: Parar aplicacao
+  step "Parando aplicacao"
+  if check_command pm2; then
+    pm2 stop all >> "$LOG_FILE" 2>&1 || true
+    log "Aplicacao parada"
+  fi
+
+  # Etapa 2: Backup rapido
+  step "Backup de seguranca"
+  local BACKUP_DIR="/opt/backups/pre-update-$(date +%Y%m%d_%H%M%S)"
+  mkdir -p "$BACKUP_DIR"
+  cp "${INSTALL_DIR}/.env" "$BACKUP_DIR/.env.backup" 2>/dev/null || true
+  if check_command pg_dump; then
+    sudo -u postgres pg_dump camara_legislativo 2>/dev/null | gzip > "$BACKUP_DIR/db_backup.sql.gz" || true
+  fi
+  log "Backup salvo em $BACKUP_DIR"
+
+  # Etapa 3: Atualizar codigo
+  step "Baixando atualizacoes"
+  cd "$INSTALL_DIR"
+  git stash >> "$LOG_FILE" 2>&1 || true
+  git pull origin main >> "$LOG_FILE" 2>&1
+  log "Codigo atualizado"
+
+  # Etapa 4: Dependencias
+  step "Atualizando dependencias"
+  npm ci --production=false >> "$LOG_FILE" 2>&1
+  npx prisma generate >> "$LOG_FILE" 2>&1
+  log "Dependencias atualizadas"
+
+  # Etapa 5: Banco de dados
+  step "Atualizando banco de dados"
+  npx prisma db push >> "$LOG_FILE" 2>&1
+  log "Schema do banco atualizado (dados preservados)"
+
+  # Etapa 6: Build e restart
+  step "Recompilando e reiniciando"
+  npm run build >> "$LOG_FILE" 2>&1
+  pm2 restart all >> "$LOG_FILE" 2>&1
+  log "Aplicacao recompilada e reiniciada"
+
+  # Barra final
+  echo ""
+  progress_bar "$TOTAL_STEPS" "$TOTAL_STEPS"
+  echo ""
+
+  local total_time=$(( $(date +%s) - INSTALL_START_TIME ))
+  local total_mins=$((total_time / 60))
+  local total_secs=$((total_time % 60))
+
+  echo ""
+  echo -e "${GREEN}${BOLD}"
+  echo "  ╔══════════════════════════════════════════════════════╗"
+  echo "  ║                                                      ║"
+  echo "  ║    ATUALIZACAO CONCLUIDA COM SUCESSO!                ║"
+  echo "  ║                                                      ║"
+  echo "  ╚══════════════════════════════════════════════════════╝"
+  echo -e "${NC}"
+  echo -e "  ${GREEN}Tempo total: ${total_mins}m ${total_secs}s${NC}"
+  echo -e "  ${CYAN}Backup:${NC} $BACKUP_DIR"
+  echo ""
+  echo -e "  ${BOLD}Seus dados foram preservados:${NC}"
+  echo -e "  ${GREEN}✓${NC} Banco de dados intacto"
+  echo -e "  ${GREEN}✓${NC} Configuracoes (.env) mantidas"
+  echo -e "  ${GREEN}✓${NC} Parlamentares, sessoes, votacoes preservados"
+  echo ""
+
+  # Verificar
+  sleep 2
+  if pm2 list | grep -q "online"; then
+    log "Aplicacao online"
+    echo -e "  ${GREEN}✓${NC} Aplicacao respondendo normalmente"
+  else
+    warn "Aplicacao pode levar alguns segundos para iniciar"
+  fi
+  echo ""
+}
+
+do_clean_reinstall() {
+  info "Removendo instalacao anterior..."
+
+  # Parar PM2
+  if check_command pm2; then
+    pm2 stop all >> "$LOG_FILE" 2>&1 || true
+    pm2 delete all >> "$LOG_FILE" 2>&1 || true
+  fi
+
+  # Backup de emergencia do banco (por seguranca)
+  local EMERGENCY_BACKUP="/opt/backups/emergency-$(date +%Y%m%d_%H%M%S)"
+  mkdir -p "$EMERGENCY_BACKUP"
+  if check_command psql && sudo -u postgres psql -lqt 2>/dev/null | grep -q "camara_legislativo"; then
+    info "Salvando backup de emergencia do banco antes de apagar..."
+    sudo -u postgres pg_dump camara_legislativo 2>/dev/null | gzip > "$EMERGENCY_BACKUP/db_antes_reinstalar.sql.gz" || true
+    warn "Backup de emergencia salvo em $EMERGENCY_BACKUP"
+  fi
+
+  # Dropar banco
+  if check_command psql; then
+    sudo -u postgres psql -c "DROP DATABASE IF EXISTS camara_legislativo;" >> "$LOG_FILE" 2>&1 || true
+    info "Banco de dados removido"
+  fi
+
+  # Remover diretorio
+  rm -rf "$INSTALL_DIR"
+  log "Diretorio $INSTALL_DIR removido"
+  log "Instalacao anterior removida completamente"
 }
 
 # ============================================================================
@@ -935,6 +1146,22 @@ main() {
   check_root
   show_banner
   check_requirements
+
+  # Detectar instalacao existente
+  detect_existing_installation
+
+  # Se for atualizacao, fluxo simplificado
+  if [ "$INSTALL_MODE" = "update" ]; then
+    do_update
+    exit 0
+  fi
+
+  # Se for reinstalacao, limpar tudo primeiro
+  if [ "$INSTALL_MODE" = "reinstall" ]; then
+    do_clean_reinstall
+  fi
+
+  # Instalacao nova (fresh ou reinstall)
   collect_data
 
   # Iniciar cronometro
