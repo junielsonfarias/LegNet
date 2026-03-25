@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { createSuccessResponse, ValidationError, ConflictError } from '@/lib/error-handler'
+import { withErrorHandler, createSuccessResponse, ValidationError, ConflictError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import {
@@ -34,8 +34,8 @@ const SessaoSchema = z.object({
   tempoInicio: z.string().optional()
 })
 
-// GET - Listar sessões
-export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
+// GET - Listar sessões (PUBLICO - dados de transparencia)
+export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
   const tipo = searchParams.get('tipo')
@@ -129,7 +129,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
       totalPages: Math.ceil(total / limit)
     }
   )
-}, { permissions: 'sessao.view' })
+})
 
 // POST - Criar sessão
 export const POST = withAuth(async (request: NextRequest, _ctx, session) => {

@@ -25,7 +25,7 @@ REPO_URL="https://github.com/junielsonfarias/LegNet.git"
 # ============================================================================
 # PROGRESSO
 # ============================================================================
-TOTAL_STEPS=15
+TOTAL_STEPS=14
 CURRENT_STEP=0
 INSTALL_START_TIME=0
 
@@ -39,8 +39,7 @@ STEP_NAMES=(
   "Clonar repositorio"
   "Configuracao (.env)"
   "Dependencias npm"
-  "Banco de dados"
-  "Credenciais admin"
+  "Banco de dados (limpo)"
   "Compilar aplicacao"
   "Configurar Nginx"
   "Firewall e SSL"
@@ -758,9 +757,12 @@ setup_database() {
   npx prisma db push >> "$LOG_FILE" 2>&1
   log "Schema aplicado ao banco"
 
-  info "Populando banco com dados iniciais..."
-  npx tsx prisma/seed.ts >> "$LOG_FILE" 2>&1
-  log "Dados iniciais inseridos"
+  info "Criando dados minimos (admin + configuracao)..."
+  ADMIN_EMAIL="$ADMIN_EMAIL" \
+  ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+  CAMARA_NOME="$CAMARA_NOME" \
+  npx tsx prisma/seed-vps.ts >> "$LOG_FILE" 2>&1
+  log "Banco inicializado (limpo, pronto para cadastro)"
 }
 
 build_application() {
@@ -1212,24 +1214,20 @@ main() {
   step "Configurar banco de dados"
   setup_database
 
-  # Etapa 11: Credenciais
-  step "Configurar credenciais admin"
-  update_admin_credentials
-
-  # Etapa 12: Build
+  # Etapa 11: Build
   step "Compilar aplicacao (pode levar varios minutos)"
   build_application
 
-  # Etapa 13: Nginx config
+  # Etapa 12: Nginx config
   step "Configurar Nginx"
   configure_nginx
 
-  # Etapa 14: Firewall + SSL
+  # Etapa 13: Firewall + SSL
   step "Firewall e SSL"
   configure_firewall
   configure_ssl
 
-  # Etapa 15: PM2
+  # Etapa 14: PM2
   step "Iniciar aplicacao com PM2"
   configure_pm2
 
