@@ -73,7 +73,7 @@ export default function IdentidadeVisualPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const res = await fetch('/api/configuracoes/sistema', {
+      const res = await fetch('/api/institucional', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

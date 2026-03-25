@@ -1,12 +1,13 @@
 /**
  * API de Configuracao Institucional
- * Retorna dados da casa legislativa
- *
- * Esta API e PUBLICA e nao requer autenticacao
+ * GET: Retorna dados da casa legislativa (PUBLICA)
+ * PUT: Atualiza configuracao institucional (ADMIN)
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -200,3 +201,55 @@ export async function GET() {
     })
   }
 }
+
+// PUT - Atualizar configuracao institucional (ADMIN)
+export const PUT = withAuth(async (request: NextRequest) => {
+  const body = await request.json()
+
+  // Buscar configuracao existente
+  let config = await prisma.configuracaoInstitucional.findFirst({
+    orderBy: { createdAt: 'desc' }
+  })
+
+  const updateData: any = {}
+
+  // Campos de identidade visual
+  if (body.corPrimaria !== undefined) updateData.corPrimaria = body.corPrimaria
+  if (body.corSecundaria !== undefined) updateData.corSecundaria = body.corSecundaria
+  if (body.corAcento !== undefined) updateData.corAcento = body.corAcento
+  if (body.brasaoUrl !== undefined) updateData.brasaoUrl = body.brasaoUrl
+  if (body.logoUrl !== undefined) updateData.logoUrl = body.logoUrl
+  if (body.faviconUrl !== undefined) updateData.faviconUrl = body.faviconUrl
+
+  // Campos institucionais
+  if (body.nomeCasa !== undefined) updateData.nomeCasa = body.nomeCasa
+  if (body.sigla !== undefined) updateData.sigla = body.sigla
+  if (body.cnpj !== undefined) updateData.cnpj = body.cnpj
+  if (body.telefone !== undefined) updateData.telefone = body.telefone
+  if (body.email !== undefined) updateData.email = body.email
+  if (body.site !== undefined) updateData.site = body.site
+  if (body.descricao !== undefined) updateData.descricao = body.descricao
+  if (body.enderecoLogradouro !== undefined) updateData.enderecoLogradouro = body.enderecoLogradouro
+  if (body.enderecoNumero !== undefined) updateData.enderecoNumero = body.enderecoNumero
+  if (body.enderecoBairro !== undefined) updateData.enderecoBairro = body.enderecoBairro
+  if (body.enderecoCidade !== undefined) updateData.enderecoCidade = body.enderecoCidade
+  if (body.enderecoEstado !== undefined) updateData.enderecoEstado = body.enderecoEstado
+  if (body.enderecoCep !== undefined) updateData.enderecoCep = body.enderecoCep
+
+  if (config) {
+    const updated = await prisma.configuracaoInstitucional.update({
+      where: { id: config.id },
+      data: updateData
+    })
+    return createSuccessResponse(updated, 'Configuração atualizada com sucesso')
+  } else {
+    const created = await prisma.configuracaoInstitucional.create({
+      data: {
+        slug: 'principal',
+        nomeCasa: body.nomeCasa || 'Câmara Municipal',
+        ...updateData
+      }
+    })
+    return createSuccessResponse(created, 'Configuração criada com sucesso')
+  }
+}, { permissions: 'config.manage' })
