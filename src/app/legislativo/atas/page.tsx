@@ -19,41 +19,7 @@ interface Ata {
   arquivo?: string;
 }
 
-const atasMock: Ata[] = [
-  {
-    id: '1',
-    numero: 'Ata nº 001/2024',
-    tipo: 'Ordinária',
-    data: '05/02/2024',
-    descricao: 'Ata da 1ª Sessão Ordinária da 1ª Sessão Legislativa - Ano 2024',
-    presidente: 'Francisco Pereira Pantoja',
-    secretario: 'Mickael Christyan Alves de Aguiar',
-    status: 'publicada',
-    arquivo: '/documentos/ata-001-2024.pdf'
-  },
-  {
-    id: '2',
-    numero: 'Ata nº 002/2024',
-    tipo: 'Ordinária',
-    data: '12/02/2024',
-    descricao: 'Ata da 2ª Sessão Ordinária da 1ª Sessão Legislativa - Ano 2024',
-    presidente: 'Francisco Pereira Pantoja',
-    secretario: 'Mickael Christyan Alves de Aguiar',
-    status: 'publicada',
-    arquivo: '/documentos/ata-002-2024.pdf'
-  },
-  {
-    id: '3',
-    numero: 'Ata nº 003/2024',
-    tipo: 'Extraordinária',
-    data: '19/02/2024',
-    descricao: 'Ata da 1ª Sessão Extraordinária da 1ª Sessão Legislativa - Ano 2024',
-    presidente: 'Francisco Pereira Pantoja',
-    secretario: 'Mickael Christyan Alves de Aguiar',
-    status: 'publicada',
-    arquivo: '/documentos/ata-003-2024.pdf'
-  }
-];
+const atasMock: Ata[] = [];
 
 export default function AtasPage() {
   const [numeroFiltro, setNumeroFiltro] = useState('');

@@ -19,60 +19,10 @@ import {
   Download
 } from 'lucide-react'
 
-// Dados mock para desenvolvimento
-const mockReceitas = [
-  {
-    id: 1,
-    descricao: 'Transferências da União - FPM',
-    categoria: 'Transferências Constitucionais',
-    valor: '150000.00',
-    mes: '2025-01',
-    status: 'Recebida'
-  },
-  {
-    id: 2,
-    descricao: 'Transferências do Estado - ICMS',
-    categoria: 'Transferências Constitucionais',
-    valor: '45000.00',
-    mes: '2025-01',
-    status: 'Recebida'
-  },
-  {
-    id: 3,
-    descricao: 'IPTU - Imposto Predial e Territorial Urbano',
-    categoria: 'Impostos Próprios',
-    valor: '25000.00',
-    mes: '2025-01',
-    status: 'Recebida'
-  }
-]
+// Dados inicializados vazios - substituir por chamadas de API
+const mockReceitas: any[] = []
 
-const mockDespesas = [
-  {
-    id: 1,
-    descricao: 'Folha de Pagamento - Servidores',
-    categoria: 'Pessoal e Encargos',
-    valor: '80000.00',
-    mes: '2025-01',
-    status: 'Paga'
-  },
-  {
-    id: 2,
-    descricao: 'Manutenção de Equipamentos',
-    categoria: 'Outras Despesas Correntes',
-    valor: '15000.00',
-    mes: '2025-01',
-    status: 'Paga'
-  },
-  {
-    id: 3,
-    descricao: 'Aquisição de Material de Escritório',
-    categoria: 'Outras Despesas Correntes',
-    valor: '5000.00',
-    mes: '2025-01',
-    status: 'Empenhada'
-  }
-]
+const mockDespesas: any[] = []
 
 export default function GestaoFiscalAdminPage() {
   const [receitas, setReceitas] = useState(mockReceitas)

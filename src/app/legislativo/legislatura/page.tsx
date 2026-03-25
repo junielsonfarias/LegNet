@@ -108,43 +108,9 @@ export default function LegislaturaPage() {
                   para um mandato de dois anos, responsáveis por dirigir os trabalhos da Câmara:
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="text-center p-6 bg-blue-50 rounded-lg">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-600 flex items-center justify-center">
-                      <Award className="h-8 w-8 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-blue-900 mb-2">Presidente</h4>
-                    <p className="text-blue-700 font-medium mb-1">Pantoja do Cartório</p>
-                    <p className="text-sm text-blue-600">2023-2024</p>
-                  </div>
-
-                  <div className="text-center p-6 bg-green-50 rounded-lg">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-600 flex items-center justify-center">
-                      <Users className="h-8 w-8 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-green-900 mb-2">Vice-Presidente</h4>
-                    <p className="text-green-700 font-medium mb-1">Maria das Graças</p>
-                    <p className="text-sm text-green-600">2023-2024</p>
-                  </div>
-
-                  <div className="text-center p-6 bg-purple-50 rounded-lg">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-600 flex items-center justify-center">
-                      <FileText className="h-8 w-8 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-purple-900 mb-2">1º Secretário</h4>
-                    <p className="text-purple-700 font-medium mb-1">José da Silva</p>
-                    <p className="text-sm text-purple-600">2023-2024</p>
-                  </div>
-
-                  <div className="text-center p-6 bg-orange-50 rounded-lg">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-600 flex items-center justify-center">
-                      <Building className="h-8 w-8 text-white" />
-                    </div>
-                    <h4 className="font-semibold text-orange-900 mb-2">2º Secretário</h4>
-                    <p className="text-orange-700 font-medium mb-1">Ana Paula</p>
-                    <p className="text-sm text-orange-600">2023-2024</p>
-                  </div>
-                </div>
+                <p className="text-gray-500 text-center py-8">
+                  Nenhuma informação sobre a Mesa Diretora disponível no momento.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -290,47 +256,9 @@ export default function LegislaturaPage() {
                   pela análise prévia das proposições legislativas:
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-2">Comissão de Constituição e Justiça</h4>
-                      <p className="text-sm text-gray-600 mb-2">Presidente: Diego do Zé Neto</p>
-                      <p className="text-xs text-gray-500">Analisa a constitucionalidade e legalidade das proposições</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-2">Comissão de Finanças</h4>
-                      <p className="text-sm text-gray-600 mb-2">Presidente: Pantoja do Cartório</p>
-                      <p className="text-xs text-gray-500">Analisa matérias de natureza financeira e orçamentária</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-2">Comissão de Obras e Serviços</h4>
-                      <p className="text-sm text-gray-600 mb-2">Presidente: Maria das Graças</p>
-                      <p className="text-xs text-gray-500">Analisa questões relacionadas à infraestrutura urbana</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-2">Comissão de Educação</h4>
-                      <p className="text-sm text-gray-600 mb-2">Presidente: Ana Paula</p>
-                      <p className="text-xs text-gray-500">Analisa questões educacionais e culturais</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-2">Comissão de Saúde</h4>
-                      <p className="text-sm text-gray-600 mb-2">Presidente: José da Silva</p>
-                      <p className="text-xs text-gray-500">Analisa questões de saúde pública e assistência social</p>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-2">Comissão de Meio Ambiente</h4>
-                      <p className="text-sm text-gray-600 mb-2">Presidente: Carlos Santos</p>
-                      <p className="text-xs text-gray-500">Analisa questões ambientais e de sustentabilidade</p>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-gray-500 text-center py-8">
+                  Nenhuma informação sobre comissões disponível no momento.
+                </p>
               </div>
             </CardContent>
           </Card>

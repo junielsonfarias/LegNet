@@ -1,32 +1,72 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Users, Calendar, FileText, TrendingUp } from 'lucide-react'
-import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export function StatsSection() {
-  const { configuracao } = useConfiguracaoInstitucional()
+  const [stats, setStats] = useState({
+    vereadores: 0,
+    sessoes: 0,
+    materias: 0,
+    transparencia: 100
+  })
 
-  const stats = [
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [parlamentaresRes, sessoesRes, proposicoesRes] = await Promise.all([
+          fetch('/api/dados-abertos/parlamentares?ativo=true').catch(() => null),
+          fetch('/api/sessoes?limit=1').catch(() => null),
+          fetch('/api/dados-abertos/proposicoes?limit=1').catch(() => null)
+        ])
+
+        const newStats = { ...stats }
+
+        if (parlamentaresRes?.ok) {
+          const data = await parlamentaresRes.json()
+          newStats.vereadores = data.dados?.length || data.data?.length || 0
+        }
+
+        if (sessoesRes?.ok) {
+          const data = await sessoesRes.json()
+          newStats.sessoes = data.pagination?.total || data.meta?.total || 0
+        }
+
+        if (proposicoesRes?.ok) {
+          const data = await proposicoesRes.json()
+          newStats.materias = data.dados?.total || data.pagination?.total || 0
+        }
+
+        setStats(newStats)
+      } catch {
+        // Mantém zeros
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  const items = [
     {
       icon: Users,
       title: 'Vereadores Ativos',
-      value: '11',
-      description: 'Parlamentares eleitos para a legislatura 2025/2028',
+      value: String(stats.vereadores),
+      description: 'Parlamentares na legislatura atual',
       color: 'text-blue-600'
     },
     {
       icon: Calendar,
       title: 'Sessões Realizadas',
-      value: '27',
-      description: 'Sessões ordinárias e extraordinárias neste ano',
+      value: String(stats.sessoes),
+      description: 'Sessões ordinárias e extraordinárias',
       color: 'text-green-600'
     },
     {
       icon: FileText,
       title: 'Matérias Processadas',
-      value: '294',
-      description: 'Proposições, leis e decretos em tramitação',
+      value: String(stats.materias),
+      description: 'Proposições, leis e decretos',
       color: 'text-purple-600'
     },
     {
@@ -43,32 +83,21 @@ export function StatsSection() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Números da Câmara
+            Em Números
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Acompanhe os principais indicadores de atividade legislativa
-            e transparência da {configuracao?.nomeCasa || 'Câmara Municipal'}
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Acompanhe as atividades da Câmara Municipal
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <Card key={index} className="camara-card hover:scale-105 transition-transform duration-200">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    {stat.title}
-                  </CardTitle>
-                  <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-camara-primary mb-2">
-                  {stat.value}
-                </div>
-                <p className="text-sm text-gray-600">
-                  {stat.description}
-                </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {items.map((stat, index) => (
+            <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+              <CardContent className="pt-6">
+                <stat.icon className={`h-10 w-10 mx-auto mb-3 ${stat.color}`} />
+                <p className={`text-3xl font-bold ${stat.color} mb-1`}>{stat.value}</p>
+                <h3 className="font-semibold text-gray-900 mb-1">{stat.title}</h3>
+                <p className="text-sm text-gray-500">{stat.description}</p>
               </CardContent>
             </Card>
           ))}
