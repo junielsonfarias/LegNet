@@ -16,58 +16,8 @@ export interface Sessao {
   geradoAutomaticamente?: boolean; // Se o título foi gerado automaticamente
 }
 
-const sessoesData: Sessao[] = [
-  {
-    id: '1',
-    titulo: '15ª Sessão Ordinária do 3º Período da Legislatura da 15ª Legislatura',
-    data: '2024-01-15T09:00:00Z',
-    status: 'realizada',
-    tipo: 'ORDINARIA',
-    legislaturaId: 'leg-2025-2028',
-    legislatura: '15',
-    numeroSessao: 15,
-    periodo: 3,
-    descricao: 'Sessão ordinária do mês de janeiro',
-    local: 'Plenário da Câmara',
-    pauta: ['Projeto de Lei 001/2024', 'Indicação 001/2024'],
-    participantes: ['1', '2', '3', '4', '5'],
-    duracaoMinutos: 120,
-    geradoAutomaticamente: true,
-  },
-  {
-    id: '2',
-    titulo: '3ª Sessão Extraordinária do 3º Período da Legislatura da 15ª Legislatura',
-    data: '2024-02-10T14:00:00Z',
-    status: 'agendada',
-    tipo: 'EXTRAORDINARIA',
-    legislaturaId: 'leg-2025-2028',
-    legislatura: '15',
-    numeroSessao: 3,
-    periodo: 3,
-    descricao: 'Sessão extraordinária para votação de projeto urgente',
-    local: 'Plenário da Câmara',
-    pauta: ['Projeto de Lei 002/2024'],
-    participantes: [],
-    duracaoMinutos: 90,
-    geradoAutomaticamente: true,
-  },
-  {
-    id: '3',
-    titulo: '1ª Sessão Solene do 3º Período da Legislatura da 15ª Legislatura',
-    data: '2024-02-20T19:00:00Z',
-    status: 'agendada',
-    tipo: 'SOLENE',
-    legislaturaId: 'leg-2025-2028',
-    legislatura: '15',
-    numeroSessao: 1,
-    periodo: 3,
-    descricao: 'Sessão solene em homenagem aos servidores públicos',
-    local: 'Plenário da Câmara',
-    pauta: [],
-    participantes: [],
-    duracaoMinutos: 60,
-  },
-];
+// Array vazio - sessões são gerenciadas pelo banco de dados
+const sessoesData: Sessao[] = [];
 
 export const sessoesLegislativasService = {
   getAll: (): Sessao[] => {
