@@ -283,11 +283,11 @@ export function Hero({ className }: HeroProps) {
               </Link>
               <span className="text-blue-300/50" aria-hidden="true">|</span>
               <Link
-                href="/transmissao"
+                href="/legislativo/sessoes"
                 className="flex items-center gap-1 text-sm text-blue-200 hover:text-white transition-colors"
               >
                 <Play className="h-4 w-4" aria-hidden="true" />
-                Assistir ao Vivo
+                Sessoes Legislativas
               </Link>
               <span className="text-blue-300/50" aria-hidden="true">|</span>
               <Link

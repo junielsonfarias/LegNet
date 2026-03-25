@@ -306,10 +306,9 @@ function SessaoAoVivoCard() {
         </div>
 
         <Button asChild className="w-full bg-red-600 hover:bg-red-700">
-          <Link href="/transmissao" target="_blank">
+          <Link href="/legislativo/sessoes">
             <PlayCircle className="h-4 w-4 mr-2" />
-            Assistir Agora
-            <ExternalLink className="h-3 w-3 ml-2" />
+            Ver Sessoes
           </Link>
         </Button>
       </CardContent>
@@ -475,9 +474,9 @@ function SessaoAoVivoFallback() {
         </p>
 
         <Button asChild variant="secondary" className="w-full">
-          <Link href="/transmissao">
+          <Link href="/legislativo/sessoes">
             <PlayCircle className="h-4 w-4 mr-2" />
-            Acessar Canal
+            Ver Sessoes
           </Link>
         </Button>
       </CardContent>
