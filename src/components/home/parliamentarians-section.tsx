@@ -207,13 +207,13 @@ export function ParliamentariansSection() {
                         <CardContent className="p-4">
                           <div className="flex flex-col items-center text-center space-y-3">
                             {vereador.foto ? (
-                              <div className="w-14 h-14 rounded-full shadow-md overflow-hidden">
+                              <div className="w-16 h-16 rounded-full shadow-lg overflow-hidden border-2 border-white">
                                 <img src={vereador.foto} alt={vereador.name} className="w-full h-full object-cover" />
                               </div>
                             ) : (
-                            <div className="w-14 h-14 bg-gradient-to-br from-camara-primary to-camara-secondary rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
-                              {(vereador.apelido || vereador.name).charAt(0).toUpperCase()}
-                            </div>
+                              <div className="w-16 h-16 bg-gradient-to-br from-camara-primary to-camara-secondary rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                                {(vereador.apelido || vereador.name).charAt(0).toUpperCase()}
+                              </div>
                             )}
                             <div className="w-full">
                               <h4 className="font-semibold text-gray-900 text-sm line-clamp-2 min-h-[2.5rem]">

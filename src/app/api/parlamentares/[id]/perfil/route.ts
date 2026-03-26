@@ -141,7 +141,7 @@ export const GET = withErrorHandler(async (
         sessoes: sessoesPresente,
         totalSessoes,
         percentualPresenca,
-        dataAtualizacao: new Date().toLocaleDateString('pt-BR')
+        dataAtualizacao: new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' })
       },
       exercicioAtual: {
         materias: materiasAutor,
@@ -171,7 +171,7 @@ export const GET = withErrorHandler(async (
       numero: `${p.numero}/${p.ano}`,
       tipo: p.tipo,
       titulo: p.ementa,
-      data: p.dataApresentacao ? new Date(p.dataApresentacao).toLocaleDateString('pt-BR') : '',
+      data: p.dataApresentacao ? new Date(p.dataApresentacao).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
       status: p.status,
       autor: parlamentar.nome
     })),
@@ -181,8 +181,8 @@ export const GET = withErrorHandler(async (
       id: mc.comissao.id,
       nome: mc.comissao.nome,
       cargo: mc.cargo,
-      dataInicio: mc.dataInicio ? new Date(mc.dataInicio).toLocaleDateString('pt-BR') : '',
-      dataFim: mc.dataFim ? new Date(mc.dataFim).toLocaleDateString('pt-BR') : 'Atual'
+      dataInicio: mc.dataInicio ? new Date(mc.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
+      dataFim: mc.dataFim ? new Date(mc.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Atual'
     })),
 
     // Mandatos
@@ -194,7 +194,7 @@ export const GET = withErrorHandler(async (
         ? `${m.legislatura.numero}ª Legislatura (${m.legislatura.anoInicio} - ${m.legislatura.anoFim})`
         : parlamentar.legislatura,
       periodo: m.dataInicio
-        ? `${new Date(m.dataInicio).toLocaleDateString('pt-BR')}${m.dataFim ? ` a ${new Date(m.dataFim).toLocaleDateString('pt-BR')}` : ''}`
+        ? `${new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(m.dataInicio))}${m.dataFim ? ` a ${new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(m.dataFim))}` : ''}`
         : 'Atual',
       numeroVotos: m.numeroVotos,
       ativo: m.ativo
@@ -204,8 +204,8 @@ export const GET = withErrorHandler(async (
     filiacaoPartidaria: parlamentar.filiacoes.map(f => ({
       id: f.id,
       partido: f.partido,
-      dataInicio: f.dataInicio ? new Date(f.dataInicio).toLocaleDateString('pt-BR') : '',
-      dataFim: f.dataFim ? new Date(f.dataFim).toLocaleDateString('pt-BR') : null,
+      dataInicio: f.dataInicio ? new Date(f.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
+      dataFim: f.dataFim ? new Date(f.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : null,
       ativa: f.ativa
     })),
 
@@ -216,7 +216,7 @@ export const GET = withErrorHandler(async (
       proposicaoNumero: v.proposicao ? `${v.proposicao.numero}/${v.proposicao.ano}` : '',
       proposicaoTitulo: v.proposicao?.ementa || '',
       voto: v.voto,
-      data: v.createdAt ? new Date(v.createdAt).toLocaleDateString('pt-BR') : ''
+      data: v.createdAt ? new Date(v.createdAt).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : ''
     })),
 
     // Presenças recentes
@@ -226,7 +226,7 @@ export const GET = withErrorHandler(async (
       .map(p => ({
         sessaoId: p.sessaoId,
         sessaoNumero: p.sessao?.numero,
-        sessaoData: p.sessao?.data ? new Date(p.sessao.data).toLocaleDateString('pt-BR') : '',
+        sessaoData: p.sessao?.data ? new Date(p.sessao.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
         presente: p.presente,
         justificativa: p.justificativa
       }))

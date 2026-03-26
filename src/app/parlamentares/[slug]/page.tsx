@@ -290,13 +290,19 @@ export default function ParlamentarPerfilPage() {
             <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
               {/* Foto */}
               <div className="relative">
-                <div className={`w-32 h-32 ${perfil.cargo === 'PRESIDENTE' ? 'bg-camara-gold' : 'bg-camara-primary'} rounded-full flex items-center justify-center text-white`}>
-                  {perfil.cargo === 'PRESIDENTE' ? (
-                    <Crown className="h-16 w-16" />
-                  ) : (
-                    <Users className="h-16 w-16" />
-                  )}
-                </div>
+                {perfil.foto ? (
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                    <img src={perfil.foto} alt={perfil.nome} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className={`w-32 h-32 ${perfil.cargo === 'PRESIDENTE' ? 'bg-camara-gold' : 'bg-camara-primary'} rounded-full flex items-center justify-center text-white`}>
+                    {perfil.cargo === 'PRESIDENTE' ? (
+                      <Crown className="h-16 w-16" />
+                    ) : (
+                      <Users className="h-16 w-16" />
+                    )}
+                  </div>
+                )}
                 <Badge className={`absolute -top-2 -right-2 ${getCargoColor(perfil.cargo)} border`}>
                   {getCargoLabel(perfil.cargo)}
                 </Badge>
