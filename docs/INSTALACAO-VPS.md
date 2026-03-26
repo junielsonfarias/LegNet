@@ -288,6 +288,25 @@ sudo systemctl restart postgresql
 sudo -u postgres psql -c "SELECT 1;"
 ```
 
+### Configurar SSL/HTTPS (apos ter dominio)
+
+Se voce instalou com IP e agora tem um dominio, execute:
+
+```bash
+# Baixar e executar o configurador de SSL
+wget -O ssl-setup.sh https://raw.githubusercontent.com/junielsonfarias/LegNet/main/ssl-setup.sh
+chmod +x ssl-setup.sh
+sudo bash ssl-setup.sh
+```
+
+O script faz tudo automaticamente:
+- Instala Certbot
+- Atualiza Nginx com o dominio
+- Obtem certificado SSL gratuito (Let's Encrypt)
+- Atualiza .env para HTTPS
+- Recompila e reinicia a aplicacao
+- Configura renovacao automatica
+
 ### Problema: SSL nao funciona
 
 ```bash
