@@ -314,9 +314,13 @@ export default function VereadoresPage() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-camara-primary/10 rounded-lg">
-                      <User className="h-6 w-6 text-camara-primary" />
-                    </div>
+                    {vereador.foto ? (
+                      <img src={vereador.foto} alt={vereador.nome} className="w-12 h-12 rounded-lg object-cover" />
+                    ) : (
+                      <div className="p-3 bg-camara-primary/10 rounded-lg">
+                        <User className="h-6 w-6 text-camara-primary" />
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-semibold text-gray-900">
                         {vereador.nome}

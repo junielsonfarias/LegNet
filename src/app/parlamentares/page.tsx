@@ -253,9 +253,17 @@ export default function ParlamentaresPage() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 bg-camara-primary/10 rounded-lg">
-                      <parlamentar.icon className="h-6 w-6 text-camara-primary" />
-                    </div>
+                    {parlamentar.foto ? (
+                      <img
+                        src={parlamentar.foto}
+                        alt={parlamentar.nome}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="p-3 bg-camara-primary/10 rounded-lg">
+                        <parlamentar.icon className="h-6 w-6 text-camara-primary" />
+                      </div>
+                    )}
                     <div>
                       <h3 className="font-semibold text-gray-900">
                         {parlamentar.nome}

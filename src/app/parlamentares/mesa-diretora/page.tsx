@@ -304,7 +304,7 @@ export default function MesaDiretoraPage() {
                   <Card className="camara-card">
                     <CardHeader className="text-center">
                       <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-yellow-500">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
                           {composicao.membrosCompletos.presidente?.nome.charAt(0) || 'P'}
                         </div>
                       </div>
@@ -330,7 +330,7 @@ export default function MesaDiretoraPage() {
                   <Card className="camara-card">
                     <CardHeader className="text-center">
                       <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
                           {composicao.membrosCompletos.vicePresidente?.nome.charAt(0) || 'V'}
                         </div>
                       </div>
@@ -356,7 +356,7 @@ export default function MesaDiretoraPage() {
                   <Card className="camara-card">
                     <CardHeader className="text-center">
                       <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-green-500">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
                           {composicao.membrosCompletos.primeiroSecretario?.nome.charAt(0) || '1'}
                         </div>
                       </div>
@@ -382,7 +382,7 @@ export default function MesaDiretoraPage() {
                   <Card className="camara-card">
                     <CardHeader className="text-center">
                       <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-purple-500">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
                           {composicao.membrosCompletos.segundoSecretario?.nome.charAt(0) || '2'}
                         </div>
                       </div>

@@ -70,6 +70,7 @@ export function ParliamentariansSection() {
           id: p.id,
           name: p.nome,
           apelido: p.apelido,
+          foto: p.foto,
           slug,
           role: roleInfo.role,
           icon: roleInfo.icon,
@@ -89,6 +90,7 @@ export function ParliamentariansSection() {
           id: p.id,
           name: p.nome,
           apelido: p.apelido,
+          foto: p.foto,
           slug,
           sessions: stats.sessions,
           matters: stats.matters
@@ -154,9 +156,15 @@ export function ParliamentariansSection() {
                     >
                       <Card className="camara-card h-full hover:scale-105 transition-transform duration-200 cursor-pointer">
                         <CardHeader className="text-center pb-3">
-                          <div className={`w-20 h-20 ${membro.color} rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg`}>
-                            <membro.icon className="h-10 w-10 text-white" />
-                          </div>
+                          {membro.foto ? (
+                            <div className="w-20 h-20 rounded-full mx-auto mb-3 shadow-lg overflow-hidden">
+                              <img src={membro.foto} alt={membro.name} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className={`w-20 h-20 ${membro.color} rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg`}>
+                              <membro.icon className="h-10 w-10 text-white" />
+                            </div>
+                          )}
                           <CardTitle className="text-base font-semibold text-gray-900 line-clamp-2 min-h-[3rem]">
                             {membro.apelido || membro.name}
                           </CardTitle>
@@ -198,9 +206,15 @@ export function ParliamentariansSection() {
                       <Card className="camara-card h-full hover:shadow-lg hover:border-camara-primary/30 transition-all duration-200 cursor-pointer">
                         <CardContent className="p-4">
                           <div className="flex flex-col items-center text-center space-y-3">
+                            {vereador.foto ? (
+                              <div className="w-14 h-14 rounded-full shadow-md overflow-hidden">
+                                <img src={vereador.foto} alt={vereador.name} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
                             <div className="w-14 h-14 bg-gradient-to-br from-camara-primary to-camara-secondary rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
                               {(vereador.apelido || vereador.name).charAt(0).toUpperCase()}
                             </div>
+                            )}
                             <div className="w-full">
                               <h4 className="font-semibold text-gray-900 text-sm line-clamp-2 min-h-[2.5rem]">
                                 {vereador.apelido || vereador.name}
