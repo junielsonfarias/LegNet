@@ -333,9 +333,23 @@ do_update() {
   npx prisma db push >> "$LOG_FILE" 2>&1
   log "Schema do banco atualizado (dados preservados)"
 
-  # Etapa 6: Build e restart
+  # Etapa 6: Build, Nginx e restart
   step "Recompilando e reiniciando"
   npm run build >> "$LOG_FILE" 2>&1
+
+  # Garantir pasta de uploads existe
+  mkdir -p "${INSTALL_DIR}/public/uploads/parlamentares" 2>/dev/null
+
+  # Atualizar Nginx se configuracao mudou
+  if [ -f /etc/nginx/sites-available/camara ]; then
+    # Adicionar bloco /uploads/ se nao existe
+    if ! grep -q "location /uploads/" /etc/nginx/sites-available/camara; then
+      sed -i '/# Upload de arquivos/i\    # Servir arquivos de upload (fotos, documentos)\n    location /uploads/ {\n        alias '"${INSTALL_DIR}"'/public/uploads/;\n        expires 30d;\n        add_header Cache-Control "public, max-age=2592000";\n        try_files $uri =404;\n    }\n' /etc/nginx/sites-available/camara
+      nginx -t >> "$LOG_FILE" 2>&1 && systemctl reload nginx >> "$LOG_FILE" 2>&1
+      log "Nginx atualizado com suporte a uploads"
+    fi
+  fi
+
   pm2 restart all >> "$LOG_FILE" 2>&1
   log "Aplicacao recompilada e reiniciada"
 

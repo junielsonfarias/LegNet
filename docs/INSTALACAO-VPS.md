@@ -184,32 +184,34 @@ sudo -u postgres psql -d camara_legislativo
 
 ## 6. Como Atualizar o Sistema
 
-Quando houver uma nova versao do sistema:
+### Forma mais simples (recomendada):
 
 ```bash
-# Acessar o diretorio da aplicacao
-cd /opt/camara
-
-# Baixar atualizacoes
-git pull origin main
-
-# Instalar novas dependencias (se houver)
-npm ci
-
-# Atualizar banco de dados (se houver mudancas)
-npx prisma db push
-
-# Recompilar
-npm run build
-
-# Reiniciar
-pm2 restart all
+sudo bash install.sh
+# Escolher opcao 1 (Atualizar)
 ```
 
-### Script rapido de atualizacao:
+O instalador faz tudo automaticamente:
+- Backup do banco e .env
+- Baixa atualizacoes (git pull)
+- Instala dependencias novas
+- Atualiza banco de dados (novos campos)
+- Recompila a aplicacao
+- Atualiza Nginx se necessario
+- Reinicia PM2
+
+### Forma manual (se preferir):
 
 ```bash
-cd /opt/camara && git pull && npm ci && npx prisma db push && npm run build && pm2 restart all
+cd /opt/camara && git pull && npm ci && npx prisma generate && npx prisma db push && npm run build && pm2 restart all
+```
+
+### Baixar instalador atualizado:
+
+```bash
+wget -O install.sh https://raw.githubusercontent.com/junielsonfarias/LegNet/main/install.sh
+chmod +x install.sh
+sudo bash install.sh
 ```
 
 ---
