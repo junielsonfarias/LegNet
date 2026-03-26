@@ -33,6 +33,7 @@ const CriarNormaSchema = z.object({
   assunto: z.string().optional(),
   indexacao: z.string().optional(),
   observacao: z.string().optional(),
+  textoCompilado: z.string().optional().nullable(),
   proposicaoOrigemId: z.string().optional()
 })
 

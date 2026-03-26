@@ -9,6 +9,7 @@ export interface ComissaoFilters {
 
 export interface ComissaoPayload {
   nome: string
+  sigla?: string | null
   descricao?: string | null
   tipo: string
   ativa?: boolean
@@ -113,6 +114,7 @@ export const comissaoDbService = {
     return prisma.comissao.create({
       data: {
         nome: payload.nome,
+        sigla: payload.sigla || null,
         descricao: payload.descricao || null,
         tipo: payload.tipo as TipoComissao,
         ativa: payload.ativa ?? true
@@ -125,6 +127,7 @@ export const comissaoDbService = {
     const data: any = {}
 
     if (payload.nome !== undefined) data.nome = payload.nome
+    if (payload.sigla !== undefined) data.sigla = payload.sigla || null
     if (payload.descricao !== undefined) data.descricao = payload.descricao || null
     if (payload.tipo !== undefined) data.tipo = payload.tipo
     if (payload.ativa !== undefined) data.ativa = payload.ativa

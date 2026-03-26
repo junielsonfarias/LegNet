@@ -31,7 +31,13 @@ const SessaoSchema = z.object({
   finalizada: z.boolean().default(false),
   legislaturaId: z.string().optional(),
   periodoId: z.string().optional(),
-  tempoInicio: z.string().optional()
+  tempoInicio: z.string().optional(),
+  urlAudio: z.string().optional().nullable(),
+  urlVideo: z.string().optional().nullable(),
+  urlTransmissao: z.string().optional().nullable(),
+  arquivoPauta: z.string().optional().nullable(),
+  arquivoAta: z.string().optional().nullable(),
+  temaSolene: z.string().optional().nullable()
 })
 
 // GET - Listar sessões (PUBLICO - dados de transparencia)
