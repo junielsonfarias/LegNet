@@ -209,8 +209,8 @@ export default function EditarParlamentarPage() {
         email: formData.email || undefined,
         telefone: formData.telefone || undefined,
         biografia: formData.biografia || undefined,
-        foto: formData.foto || undefined,
-        gabinete: formData.gabinete || undefined,
+        foto: formData.foto || null,
+        gabinete: formData.gabinete || null,
         ativo: formData.ativo,
         mandatos: mandatos.length > 0 ? mandatos.map(m => ({
           legislaturaId: m.legislaturaId,

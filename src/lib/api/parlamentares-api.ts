@@ -110,8 +110,8 @@ export interface ParlamentarCreate {
   email?: string
   telefone?: string
   biografia?: string
-  foto?: string
-  gabinete?: string
+  foto?: string | null
+  gabinete?: string | null
   ativo?: boolean
   mandatos?: MandatoCreate[]
   filiacoes?: FiliacaoCreate[]
@@ -126,8 +126,8 @@ export interface ParlamentarUpdate {
   email?: string
   telefone?: string
   biografia?: string
-  foto?: string
-  gabinete?: string
+  foto?: string | null
+  gabinete?: string | null
   ativo?: boolean
   mandatos?: MandatoCreate[]
   filiacoes?: FiliacaoCreate[]

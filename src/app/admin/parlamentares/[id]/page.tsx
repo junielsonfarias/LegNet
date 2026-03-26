@@ -101,11 +101,24 @@ export default function VisualizarParlamentarPage() {
         </Button>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{parlamentar.nome}</h1>
-            {parlamentar.apelido && (
-              <p className="text-xl text-gray-600 mt-1">{parlamentar.apelido}</p>
+          <div className="flex items-center gap-4">
+            {parlamentar.foto ? (
+              <img
+                src={parlamentar.foto}
+                alt={parlamentar.nome}
+                className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+                <Users className="h-8 w-8 text-gray-400" />
+              </div>
             )}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{parlamentar.nome}</h1>
+              {parlamentar.apelido && (
+                <p className="text-xl text-gray-600 mt-1">{parlamentar.apelido}</p>
+              )}
+            </div>
           </div>
           <div className="flex gap-2">
             <Button
