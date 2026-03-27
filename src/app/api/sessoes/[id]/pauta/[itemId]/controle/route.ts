@@ -35,10 +35,9 @@ const ControleItemSchema = z.object({
 
 export const POST = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  context: { params: Promise<{ id: string; itemId: string }> }
 ) => {
-  const sessaoId = params.id
-  const itemId = params.itemId
+  const { id: sessaoId, itemId } = await context.params
 
   if (!sessaoId || !itemId) {
     throw new ValidationError('Parâmetros inválidos')

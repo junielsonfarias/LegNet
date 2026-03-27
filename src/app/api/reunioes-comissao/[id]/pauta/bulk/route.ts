@@ -1,13 +1,12 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import {
-  withErrorHandler,
   createSuccessResponse,
   NotFoundError,
   ValidationError,
   validateId
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { ReuniaoComissaoService } from '@/lib/services/reuniao-comissao-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,10 +25,8 @@ export const POST = withAuth(async (
     throw new ValidationError('proposicaoIds deve ser um array com pelo menos um ID')
   }
 
-  // Verificar se reuniao existe e esta em status valido
-  const reuniao = await prisma.reuniaoComissao.findUnique({
-    where: { id: reuniaoId }
-  })
+  // Verificar se reuniao existe via service
+  const reuniao = await ReuniaoComissaoService.buscarReuniaoPorId(reuniaoId)
 
   if (!reuniao) {
     throw new NotFoundError('Reuniao')
@@ -39,85 +36,25 @@ export const POST = withAuth(async (
     throw new ValidationError('Nao e possivel adicionar itens a reunioes concluidas ou canceladas')
   }
 
-  // Obter proxima ordem
-  const ultimoItem = await prisma.pautaReuniaoComissao.findFirst({
-    where: { reuniaoId },
-    orderBy: { ordem: 'desc' }
-  })
-  let ordem = (ultimoItem?.ordem || 0)
+  const resultado = await ReuniaoComissaoService.adicionarItensPautaBulk(reuniaoId, proposicaoIds)
 
-  // Buscar proposicoes
-  const proposicoes = await prisma.proposicao.findMany({
-    where: { id: { in: proposicaoIds } },
-    select: {
-      id: true,
-      tipo: true,
-      numero: true,
-      ano: true,
-      ementa: true
-    }
-  })
-
-  if (proposicoes.length === 0) {
-    throw new ValidationError('Nenhuma proposicao valida encontrada')
+  if (!resultado) {
+    throw new NotFoundError('Reuniao')
   }
 
-  // Verificar quais proposicoes ja estao na pauta
-  const itensExistentes = await prisma.pautaReuniaoComissao.findMany({
-    where: {
-      reuniaoId,
-      proposicaoId: { in: proposicaoIds }
-    },
-    select: { proposicaoId: true }
-  })
-  const idsExistentes = new Set(itensExistentes.map(i => i.proposicaoId))
-
-  // Criar itens para proposicoes que ainda nao estao na pauta
-  const itensParaCriar = proposicoes
-    .filter(p => !idsExistentes.has(p.id))
-    .map(p => {
-      ordem++
-      return {
-        reuniaoId,
-        ordem,
-        titulo: `Analise: ${p.tipo} ${p.numero}/${p.ano}`,
-        descricao: p.ementa || '',
-        tipo: 'ANALISE_PROPOSICAO' as const,
-        proposicaoId: p.id,
-        status: 'PENDENTE' as const
-      }
-    })
-
-  if (itensParaCriar.length === 0) {
+  if (resultado.adicionados === 0) {
     return createSuccessResponse(
-      { adicionados: 0, jaExistentes: proposicoes.length },
+      { adicionados: 0, jaExistentes: resultado.jaExistentes },
       'Todas as proposicoes ja estao na pauta'
     )
   }
 
-  // Criar itens em lote
-  const resultado = await prisma.pautaReuniaoComissao.createMany({
-    data: itensParaCriar
-  })
-
-  // Buscar itens criados para retornar
-  const itensCriados = await prisma.pautaReuniaoComissao.findMany({
-    where: {
-      reuniaoId,
-      proposicaoId: { in: itensParaCriar.map(i => i.proposicaoId) }
-    },
-    include: {
-      proposicao: true
-    },
-    orderBy: { ordem: 'asc' }
-  })
-
   return createSuccessResponse(
     {
-      itens: itensCriados,
-      adicionados: resultado.count,
-      jaExistentes: proposicoes.length - itensParaCriar.length
+      itens: resultado.itens,
+      adicionados: resultado.adicionados,
+      jaExistentes: resultado.jaExistentes
     },
-    `${resultado.count} item(ns) adicionado(s) a pauta`
+    `${resultado.adicionados} item(ns) adicionado(s) a pauta`
   )
 }, { permissions: 'comissao.manage' })

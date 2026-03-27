@@ -663,6 +663,369 @@ export function verificarDoisTurnos(tipoProposicao: string): {
   }
 }
 
+// ============================================================
+// Service-layer data access methods (extracted from API routes)
+// ============================================================
+
+const PARLAMENTAR_VOTO_SELECT = {
+  id: true,
+  nome: true,
+  apelido: true,
+  foto: true,
+  partido: true
+}
+
+/**
+ * GET consolidado de votos de uma sessão (pauta + proposições diretas)
+ */
+export async function getVotosSessaoConsolidados(sessaoId: string) {
+  const sessao = await prisma.sessao.findUnique({
+    where: { id: sessaoId },
+    include: {
+      pautaSessao: {
+        include: {
+          itens: {
+            include: {
+              proposicao: {
+                include: {
+                  votacoes: {
+                    include: {
+                      parlamentar: { select: PARLAMENTAR_VOTO_SELECT }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      proposicoes: {
+        include: {
+          votacoes: {
+            include: {
+              parlamentar: { select: PARLAMENTAR_VOTO_SELECT }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  return sessao
+}
+
+/**
+ * Busca item da pauta vinculado a uma proposição em uma sessão
+ */
+export async function findPautaItemParaVotacao(proposicaoId: string, sessaoId: string) {
+  return prisma.pautaItem.findFirst({
+    where: {
+      proposicaoId,
+      pauta: { sessaoId }
+    },
+    include: { pauta: true }
+  })
+}
+
+/**
+ * Upsert de voto individual com includes completos
+ */
+export async function upsertVotoIndividual(data: {
+  proposicaoId: string
+  parlamentarId: string
+  voto: string
+  turno: number
+  sessaoId: string
+}) {
+  return prisma.votacao.upsert({
+    where: {
+      proposicaoId_parlamentarId_turno: {
+        proposicaoId: data.proposicaoId,
+        parlamentarId: data.parlamentarId,
+        turno: data.turno
+      }
+    },
+    update: {
+      voto: data.voto as TipoVoto,
+      sessaoId: data.sessaoId
+    },
+    create: {
+      proposicaoId: data.proposicaoId,
+      parlamentarId: data.parlamentarId,
+      voto: data.voto as TipoVoto,
+      turno: data.turno,
+      sessaoId: data.sessaoId
+    },
+    include: {
+      parlamentar: {
+        select: { id: true, nome: true, apelido: true }
+      },
+      proposicao: {
+        select: { id: true, numero: true, ano: true, titulo: true }
+      }
+    }
+  })
+}
+
+/**
+ * Busca item da pauta com proposição e pauta (para turno)
+ */
+export async function getPautaItemComTurno(itemId: string) {
+  return prisma.pautaItem.findUnique({
+    where: { id: itemId },
+    include: {
+      proposicao: true,
+      pauta: true
+    }
+  })
+}
+
+/**
+ * Lista itens da pauta com tipo VOTACAO para uma sessão
+ */
+export async function listPautaItensTurno(sessaoId: string) {
+  return prisma.pautaItem.findMany({
+    where: {
+      pauta: { sessaoId },
+      tipoAcao: 'VOTACAO'
+    },
+    include: { proposicao: true },
+    orderBy: [
+      { secao: 'asc' },
+      { ordem: 'asc' }
+    ]
+  })
+}
+
+/**
+ * Inicia primeiro turno de um item da pauta
+ */
+export async function iniciarPrimeiroTurnoItem(itemId: string, totalTurnos: number) {
+  return prisma.pautaItem.update({
+    where: { id: itemId },
+    data: {
+      turnoAtual: 1,
+      turnoFinal: totalTurnos,
+      status: 'EM_VOTACAO',
+      iniciadoEm: new Date()
+    }
+  })
+}
+
+/**
+ * Obtém totais de membros e presentes para cálculo de quórum
+ */
+export async function getTotaisParaVotacao(sessaoId: string, legislaturaId?: string | null) {
+  const whereClause: any = { ativo: true }
+  if (legislaturaId) {
+    whereClause.mandatos = {
+      some: {
+        legislaturaId,
+        ativo: true
+      }
+    }
+  }
+
+  const [totalMembros, totalPresentes] = await Promise.all([
+    prisma.parlamentar.count({ where: whereClause }),
+    prisma.presencaSessao.count({
+      where: { sessaoId, presente: true }
+    })
+  ])
+
+  return { totalMembros, totalPresentes }
+}
+
+/**
+ * Atualiza proposição após votação final
+ */
+export async function atualizarProposicaoAposVotacaoFinal(
+  proposicaoId: string,
+  resultado: string,
+  sessaoId: string,
+  statusProposicao: string
+) {
+  return prisma.proposicao.update({
+    where: { id: proposicaoId },
+    data: {
+      resultado: resultado as any,
+      dataVotacao: new Date(),
+      status: statusProposicao as any,
+      sessaoVotacaoId: sessaoId
+    }
+  })
+}
+
+/**
+ * Busca proposição para votação (campos mínimos)
+ */
+export async function findProposicaoParaVotacao(proposicaoId: string) {
+  return prisma.proposicao.findUnique({
+    where: { id: proposicaoId },
+    select: {
+      id: true,
+      numero: true,
+      ano: true,
+      tipo: true,
+      titulo: true,
+      status: true
+    }
+  })
+}
+
+/**
+ * Registra votação em lote dentro de uma transação
+ */
+export async function registrarVotacaoEmLote(params: {
+  sessaoId: string
+  proposicaoId: string
+  itemPautaId: string
+  votos: Array<{ parlamentarId: string; voto: string }>
+  turno: number
+  finalizarVotacao: boolean
+  resultado?: string
+  motivo?: string
+  isRetroativo: boolean
+  tipoProposicao: string
+  tipoVotacao: string
+}) {
+  const {
+    sessaoId, proposicaoId, itemPautaId, votos, turno,
+    finalizarVotacao, resultado: resultadoFornecido, motivo,
+    isRetroativo, tipoProposicao, tipoVotacao
+  } = params
+
+  return prisma.$transaction(async (tx) => {
+    const votosRegistrados: Array<{
+      parlamentarId: string
+      voto: string
+      atualizado: boolean
+    }> = []
+
+    for (const votoData of votos) {
+      if (votoData.voto === 'AUSENTE') continue
+
+      const votoExistente = await tx.votacao.findUnique({
+        where: {
+          proposicaoId_parlamentarId_turno: {
+            proposicaoId,
+            parlamentarId: votoData.parlamentarId,
+            turno
+          }
+        }
+      })
+
+      await tx.votacao.upsert({
+        where: {
+          proposicaoId_parlamentarId_turno: {
+            proposicaoId,
+            parlamentarId: votoData.parlamentarId,
+            turno
+          }
+        },
+        update: {
+          voto: votoData.voto as TipoVoto,
+          sessaoId
+        },
+        create: {
+          proposicaoId,
+          parlamentarId: votoData.parlamentarId,
+          voto: votoData.voto as TipoVoto,
+          turno,
+          sessaoId
+        }
+      })
+
+      votosRegistrados.push({
+        parlamentarId: votoData.parlamentarId,
+        voto: votoData.voto,
+        atualizado: !!votoExistente
+      })
+    }
+
+    let resultadoFinal: {
+      resultado: string
+      contagem: { sim: number; nao: number; abstencao: number; total: number }
+      detalhesQuorum?: string
+    } | null = null
+
+    if (finalizarVotacao) {
+      // Import contabilizarVotos inline to avoid circular dep
+      const { contabilizarVotos } = await import('./sessao-controle')
+      const contagem = await contabilizarVotos(proposicaoId, {
+        tipoProposicao,
+        sessaoId
+      })
+
+      const resultadoVotacao = resultadoFornecido ||
+        (contagem.resultado === 'APROVADA' ? 'APROVADO' : 'REJEITADO')
+
+      await tx.pautaItem.update({
+        where: { id: itemPautaId },
+        data: {
+          status: resultadoVotacao as any,
+          finalizadoEm: new Date()
+        }
+      })
+
+      const statusProposicao = resultadoVotacao === 'APROVADO' ? 'APROVADA' : 'REJEITADA'
+      await tx.proposicao.update({
+        where: { id: proposicaoId },
+        data: {
+          status: statusProposicao as any,
+          resultado: contagem.resultado as any,
+          dataVotacao: new Date(),
+          sessaoVotacaoId: sessaoId
+        }
+      })
+
+      await tx.votacaoAgrupada.upsert({
+        where: {
+          proposicaoId_sessaoId_turno: {
+            proposicaoId,
+            sessaoId,
+            turno
+          }
+        },
+        update: {
+          votosSim: contagem.sim,
+          votosNao: contagem.nao,
+          votosAbstencao: contagem.abstencao,
+          resultado: contagem.resultado,
+          finalizadaEm: new Date(),
+          observacoes: isRetroativo ? `Lançamento retroativo: ${motivo}` : undefined
+        },
+        create: {
+          proposicaoId,
+          sessaoId,
+          turno,
+          votosSim: contagem.sim,
+          votosNao: contagem.nao,
+          votosAbstencao: contagem.abstencao,
+          resultado: contagem.resultado as any,
+          tipoVotacao: (tipoVotacao || 'NOMINAL') as any,
+          tipoQuorum: 'MAIORIA_SIMPLES',
+          finalizadaEm: new Date(),
+          observacoes: isRetroativo ? `Lançamento retroativo: ${motivo}` : undefined
+        }
+      })
+
+      resultadoFinal = {
+        resultado: resultadoVotacao,
+        contagem: {
+          sim: contagem.sim,
+          nao: contagem.nao,
+          abstencao: contagem.abstencao,
+          total: contagem.total
+        },
+        detalhesQuorum: contagem.detalhesQuorum
+      }
+    }
+
+    return { votosRegistrados, resultadoFinal }
+  })
+}
+
 /**
  * Resumo das regras de votação
  */

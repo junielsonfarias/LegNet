@@ -6,10 +6,10 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { tiposExpedienteDbService } from '@/lib/services/tipos-expediente-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,9 +26,8 @@ export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const apenasAtivos = searchParams.get('ativo') !== 'false'
 
-  const tipos = await prisma.tipoExpediente.findMany({
-    where: apenasAtivos ? { ativo: true } : {},
-    orderBy: { ordem: 'asc' }
+  const tipos = await tiposExpedienteDbService.list({
+    ativo: apenasAtivos ? true : undefined
   })
 
   return createSuccessResponse(tipos)
@@ -44,9 +43,7 @@ export const POST = withAuth(withErrorHandler(async (
   const payload = TipoExpedienteSchema.parse(body)
 
   // Verificar se já existe tipo com mesmo nome
-  const existente = await prisma.tipoExpediente.findFirst({
-    where: { nome: { equals: payload.nome, mode: 'insensitive' } }
-  })
+  const existente = await tiposExpedienteDbService.checkDuplicateName(payload.nome)
 
   if (existente) {
     throw new ValidationError('Já existe um tipo de expediente com este nome')
@@ -54,20 +51,15 @@ export const POST = withAuth(withErrorHandler(async (
 
   // Obter próxima ordem se não informada
   if (payload.ordem === undefined) {
-    const ultimaOrdem = await prisma.tipoExpediente.findFirst({
-      orderBy: { ordem: 'desc' }
-    })
-    payload.ordem = (ultimaOrdem?.ordem || 0) + 1
+    payload.ordem = await tiposExpedienteDbService.getNextOrder()
   }
 
-  const tipo = await prisma.tipoExpediente.create({
-    data: {
-      nome: payload.nome,
-      descricao: payload.descricao,
-      ordem: payload.ordem,
-      tempoMaximo: payload.tempoMaximo,
-      ativo: payload.ativo ?? true
-    }
+  const tipo = await tiposExpedienteDbService.create({
+    nome: payload.nome,
+    descricao: payload.descricao,
+    ordem: payload.ordem,
+    tempoMaximo: payload.tempoMaximo,
+    ativo: payload.ativo ?? true
   })
 
   await logAudit({

@@ -9,7 +9,7 @@ import {
   removerEtapa,
   reordenarEtapas
 } from '@/lib/services/fluxo-tramitacao-service'
-import { prisma } from '@/lib/prisma'
+import { fluxoTramitacaoDbService } from '@/lib/services/fluxo-tramitacao-db-service'
 
 const TipoCondicaoEnum = z.enum([
   'SEMPRE',
@@ -58,23 +58,11 @@ const ReordenarSchema = z.object({
  */
 export const GET = withAuth(async (
   _request: NextRequest,
-  { params }: { params: { fluxoId: string } }
+  context: { params: Promise<{ fluxoId: string }> }
 ) => {
-  const { fluxoId } = params
+  const { fluxoId } = await context.params
 
-  const fluxo = await prisma.fluxoTramitacao.findUnique({
-    where: { id: fluxoId },
-    include: {
-      etapas: {
-        orderBy: { ordem: 'asc' },
-        include: {
-          unidade: {
-            select: { id: true, nome: true, sigla: true }
-          }
-        }
-      }
-    }
-  })
+  const fluxo = await fluxoTramitacaoDbService.getFluxoWithEtapas(fluxoId)
 
   if (!fluxo) {
     throw new NotFoundError('Fluxo nao encontrado')
@@ -89,10 +77,10 @@ export const GET = withAuth(async (
  */
 export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { fluxoId: string } },
+  context: { params: Promise<{ fluxoId: string }> },
   session
 ) => {
-  const { fluxoId } = params
+  const { fluxoId } = await context.params
   const body = await request.json()
 
   // Verifica se e uma solicitacao de reordenacao
@@ -112,15 +100,7 @@ export const POST = withAuth(async (
       metadata: { fluxoId, novaOrdem: reordenarPayload.data.novaOrdem }
     })
 
-    const etapas = await prisma.fluxoTramitacaoEtapa.findMany({
-      where: { fluxoId },
-      orderBy: { ordem: 'asc' },
-      include: {
-        unidade: {
-          select: { id: true, nome: true, sigla: true }
-        }
-      }
-    })
+    const etapas = await fluxoTramitacaoDbService.listEtapas(fluxoId)
 
     return createSuccessResponse(etapas, 'Etapas reordenadas com sucesso')
   }
@@ -131,9 +111,7 @@ export const POST = withAuth(async (
   }
 
   // Verifica se o fluxo existe
-  const fluxo = await prisma.fluxoTramitacao.findUnique({
-    where: { id: fluxoId }
-  })
+  const fluxo = await fluxoTramitacaoDbService.findFluxoById(fluxoId)
 
   if (!fluxo) {
     throw new NotFoundError('Fluxo nao encontrado')
@@ -163,10 +141,10 @@ export const POST = withAuth(async (
  */
 export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { fluxoId: string } },
+  context: { params: Promise<{ fluxoId: string }> },
   session
 ) => {
-  const { fluxoId } = params
+  const { fluxoId } = await context.params
   const body = await request.json()
 
   const payload = EtapaUpdateSchema.safeParse(body)
@@ -177,9 +155,7 @@ export const PUT = withAuth(async (
   const { id, ...rawDados } = payload.data
 
   // Verifica se a etapa existe e pertence ao fluxo
-  const etapaExistente = await prisma.fluxoTramitacaoEtapa.findFirst({
-    where: { id, fluxoId }
-  })
+  const etapaExistente = await fluxoTramitacaoDbService.findEtapaInFluxo(id, fluxoId)
 
   if (!etapaExistente) {
     throw new NotFoundError('Etapa nao encontrada neste fluxo')
@@ -213,10 +189,10 @@ export const PUT = withAuth(async (
  */
 export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { fluxoId: string } },
+  context: { params: Promise<{ fluxoId: string }> },
   session
 ) => {
-  const { fluxoId } = params
+  const { fluxoId } = await context.params
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
 
@@ -225,18 +201,14 @@ export const DELETE = withAuth(async (
   }
 
   // Verifica se a etapa existe e pertence ao fluxo
-  const etapaExistente = await prisma.fluxoTramitacaoEtapa.findFirst({
-    where: { id, fluxoId }
-  })
+  const etapaExistente = await fluxoTramitacaoDbService.findEtapaInFluxo(id, fluxoId)
 
   if (!etapaExistente) {
     throw new NotFoundError('Etapa nao encontrada neste fluxo')
   }
 
   // Verifica se ha tramitacoes usando esta etapa
-  const tramitacoesUsando = await prisma.tramitacao.count({
-    where: { fluxoEtapaId: id }
-  })
+  const tramitacoesUsando = await fluxoTramitacaoDbService.countTramitacoesUsingEtapa(id)
 
   if (tramitacoesUsando > 0) {
     throw new ValidationError(

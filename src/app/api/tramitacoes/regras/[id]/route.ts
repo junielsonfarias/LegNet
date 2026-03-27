@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import {
   createSuccessResponse,
@@ -9,6 +8,7 @@ import {
   NotFoundError
 } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
+import { regraTramitacaoDbService } from '@/lib/services/regra-tramitacao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,39 +35,10 @@ const UpdateRegraSchema = z.object({
   etapas: z.array(RegraEtapaSchema).optional()
 })
 
-const validateEtapas = async (etapas: z.infer<typeof RegraEtapaSchema>[]) => {
-  for (const etapa of etapas) {
-    if (etapa.tipoTramitacaoId) {
-      const tipo = await prisma.tramitacaoTipo.findUnique({
-        where: { id: etapa.tipoTramitacaoId }
-      })
-      if (!tipo) {
-        throw new ValidationError(`Tipo de tramitação não encontrado para a etapa ${etapa.nome}`)
-      }
-    }
-
-    if (etapa.unidadeId) {
-      const unidade = await prisma.tramitacaoUnidade.findUnique({
-        where: { id: etapa.unidadeId }
-      })
-      if (!unidade) {
-        throw new ValidationError(`Unidade responsável não encontrada para a etapa ${etapa.nome}`)
-      }
-    }
-  }
-}
-
 export const GET = withAuth(async (_request: NextRequest, { params }) => {
   const { id } = await params
 
-  const regra = await prisma.regraTramitacao.findUnique({
-    where: { id },
-    include: {
-      etapas: {
-        orderBy: { ordem: 'asc' }
-      }
-    }
-  })
+  const regra = await regraTramitacaoDbService.getById(id)
 
   if (!regra) {
     throw new NotFoundError('Regra de tramitação')
@@ -81,9 +52,7 @@ export const PUT = withAuth(async (request: NextRequest, { params }, session) =>
   const body = await request.json()
   const payload = UpdateRegraSchema.parse(body)
 
-  const regraAtual = await prisma.regraTramitacao.findUnique({
-    where: { id }
-  })
+  const regraAtual = await regraTramitacaoDbService.getById(id)
 
   if (!regraAtual) {
     throw new NotFoundError('Regra de tramitação')
@@ -91,57 +60,21 @@ export const PUT = withAuth(async (request: NextRequest, { params }, session) =>
 
   const etapas = payload.etapas
   if (etapas) {
-    await validateEtapas(etapas)
+    const validation = await regraTramitacaoDbService.validateEtapas(etapas)
+    if (!validation.valid) {
+      throw new ValidationError(validation.message)
+    }
   }
 
-  // Preparar dados para atualização
-  const updateData: any = {}
-  if (payload.nome !== undefined) updateData.nome = payload.nome
-  if (payload.descricao !== undefined) updateData.descricao = payload.descricao
-  if (payload.condicoes !== undefined) updateData.condicoes = payload.condicoes
-  if (payload.acoes !== undefined) updateData.acoes = payload.acoes
-  if (payload.excecoes !== undefined) updateData.excecoes = payload.excecoes
-  if (payload.ativo !== undefined) updateData.ativo = payload.ativo
-  if (payload.ordem !== undefined) updateData.ordem = payload.ordem
-
-  // Usar transação para atualizar regra e etapas
-  const regraAtualizada = await prisma.$transaction(async (tx) => {
-    // Atualizar a regra
-    const regra = await tx.regraTramitacao.update({
-      where: { id },
-      data: updateData
-    })
-
-    // Se houver etapas, remover antigas e criar novas
-    if (etapas) {
-      await tx.regraTramitacaoEtapa.deleteMany({
-        where: { regraId: id }
-      })
-
-      await tx.regraTramitacaoEtapa.createMany({
-        data: etapas.sort((a, b) => a.ordem - b.ordem).map((etapa, index) => ({
-          regraId: id,
-          ordem: etapa.ordem ?? index,
-          nome: etapa.nome,
-          descricao: etapa.descricao,
-          tipoTramitacaoId: etapa.tipoTramitacaoId,
-          unidadeId: etapa.unidadeId,
-          notificacoes: etapa.notificacoes,
-          alertas: etapa.alertas,
-          prazoDias: etapa.prazoDias
-        }))
-      })
-    }
-
-    // Buscar regra completa com etapas
-    return tx.regraTramitacao.findUnique({
-      where: { id },
-      include: {
-        etapas: {
-          orderBy: { ordem: 'asc' }
-        }
-      }
-    })
+  const regraAtualizada = await regraTramitacaoDbService.update(id, {
+    nome: payload.nome,
+    descricao: payload.descricao,
+    condicoes: payload.condicoes,
+    acoes: payload.acoes,
+    excecoes: payload.excecoes,
+    ativo: payload.ativo,
+    ordem: payload.ordem,
+    etapas
   })
 
   await logAudit({
@@ -162,18 +95,13 @@ export const PUT = withAuth(async (request: NextRequest, { params }, session) =>
 export const DELETE = withAuth(async (request: NextRequest, { params }, session) => {
   const { id } = await params
 
-  const regra = await prisma.regraTramitacao.findUnique({
-    where: { id }
-  })
+  const regra = await regraTramitacaoDbService.getById(id)
 
   if (!regra) {
     throw new NotFoundError('Regra de tramitação')
   }
 
-  // A deleção em cascata já está configurada no schema Prisma
-  await prisma.regraTramitacao.delete({
-    where: { id }
-  })
+  await regraTramitacaoDbService.remove(id)
 
   await logAudit({
     request,

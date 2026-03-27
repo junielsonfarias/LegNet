@@ -5,9 +5,10 @@ import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const categoria = await categoriasPublicacaoService.getById(params.id)
+    const { id } = await params
+    const categoria = await categoriasPublicacaoService.getById(id)
     if (!categoria) {
       return NextResponse.json(
         { success: false, error: 'Categoria não encontrada.' },
@@ -25,7 +26,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 }
 
 export const PUT = withAuth(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
     const body = await request.json().catch(() => null)
     if (!body) {
       return NextResponse.json(
@@ -34,7 +36,7 @@ export const PUT = withAuth(
       )
     }
 
-    const categoria = await categoriasPublicacaoService.update(params.id, {
+    const categoria = await categoriasPublicacaoService.update(id, {
       nome: body.nome,
       descricao: body.descricao,
       cor: body.cor,
@@ -52,7 +54,8 @@ export const PUT = withAuth(
 )
 
 export const PATCH = withAuth(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
     const body = await request.json().catch(() => null)
     if (!body || typeof body.ativa !== 'boolean') {
       return NextResponse.json(
@@ -61,7 +64,7 @@ export const PATCH = withAuth(
       )
     }
 
-    const categoria = await categoriasPublicacaoService.toggleStatus(params.id, body.ativa)
+    const categoria = await categoriasPublicacaoService.toggleStatus(id, body.ativa)
     return NextResponse.json({
       success: true,
       data: categoria,
@@ -72,8 +75,9 @@ export const PATCH = withAuth(
 )
 
 export const DELETE = withAuth(
-  async (_request: NextRequest, { params }: { params: { id: string } }) => {
-    await categoriasPublicacaoService.remove(params.id)
+  async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
+    await categoriasPublicacaoService.remove(id)
     return NextResponse.json({
       success: true,
       data: { removed: true },

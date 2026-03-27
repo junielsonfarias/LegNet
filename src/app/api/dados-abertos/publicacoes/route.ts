@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -13,76 +13,23 @@ export async function GET(request: NextRequest) {
   try {
     enforceRateLimit(request, 'PUBLIC')
 
-    // Buscar configuração institucional
-    const config = await prisma.configuracaoInstitucional.findFirst({
-      where: { slug: 'principal' }
-    })
-    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+    const info = await dadosAbertosService.getInfo()
 
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
-    const tipo = searchParams.get('tipo')
+    const tipo = searchParams.get('tipo') || undefined
     const anoParam = searchParams.get('ano')
     const ano = anoParam ? parseInt(anoParam, 10) : undefined
     const page = parseInt(searchParams.get('page') || '1')
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-    // Validar tipo se fornecido
-    const tiposValidos = ['LEI', 'DECRETO', 'PORTARIA', 'RESOLUCAO', 'NOTICIA', 'INFORMATIVO', 'RELATORIO', 'PLANEJAMENTO', 'MANUAL', 'CODIGO', 'OUTRO']
-    const tipoValidado = tipo && tiposValidos.includes(tipo.toUpperCase())
-      ? tipo.toUpperCase() as 'LEI' | 'DECRETO' | 'PORTARIA' | 'RESOLUCAO' | 'NOTICIA' | 'INFORMATIVO' | 'RELATORIO' | 'PLANEJAMENTO' | 'MANUAL' | 'CODIGO' | 'OUTRO'
-      : undefined
-
-    const where = {
-      publicada: true,
-      ...(tipoValidado && { tipo: tipoValidado }),
-      ...(ano && { ano })
-    }
-
-    const [publicacoes, total] = await Promise.all([
-      prisma.publicacao.findMany({
-        where,
-        select: {
-          id: true,
-          titulo: true,
-          tipo: true,
-          numero: true,
-          ano: true,
-          descricao: true,
-          data: true,
-          arquivo: true,
-          autorNome: true,
-          autorParlamentar: {
-            select: {
-              id: true,
-              nome: true
-            }
-          }
-        },
-        orderBy: [{ ano: 'desc' }, { data: 'desc' }],
-        skip: (page - 1) * limit,
-        take: limit
-      }),
-      prisma.publicacao.count({ where })
-    ])
-
-    const dadosFormatados = publicacoes.map(p => ({
-      id: p.id,
-      titulo: p.titulo,
-      tipo: p.tipo,
-      numero: p.numero,
-      ano: p.ano,
-      descricao: p.descricao,
-      data: p.data.toISOString().split('T')[0],
-      arquivo_url: p.arquivo,
-      autor: p.autorParlamentar ? {
-        id: p.autorParlamentar.id,
-        nome: p.autorParlamentar.nome
-      } : { nome: p.autorNome }
-    }))
+    const { dados, total } = await dadosAbertosService.getPublicacoes(
+      { tipo, ano },
+      { page, limit }
+    )
 
     if (formato === 'csv') {
-      const csv = convertToCSV(dadosFormatados.map(p => ({
+      const csv = convertToCSV(dados.map(p => ({
         id: p.id,
         titulo: p.titulo,
         tipo: p.tipo,
@@ -105,14 +52,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      dados: dadosFormatados,
+      dados,
       metadados: {
         total,
         pagina: page,
         limite: limit,
         paginas: Math.ceil(total / limit),
         atualizacao: new Date().toISOString(),
-        fonte: nomeCasa
+        fonte: info.nomeCasa
       }
     })
   } catch (error) {

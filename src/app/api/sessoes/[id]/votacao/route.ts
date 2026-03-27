@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -8,6 +7,12 @@ import {
   NotFoundError,
   UnauthorizedError
 } from '@/lib/error-handler'
+import {
+  getVotosSessaoConsolidados,
+  findProposicaoParaVotacao,
+  findPautaItemParaVotacao,
+  upsertVotoIndividual
+} from '@/lib/services/votacao-service'
 import { hasPermission } from '@/lib/auth/permissions'
 import type { UserRole } from '@prisma/client'
 import {
@@ -31,59 +36,12 @@ const VotoSchema = z.object({
 // GET - Listar votos da sessão
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
+  const { id } = await context.params
+  const sessaoId = await resolverSessaoId(id)
 
-  const sessao = await prisma.sessao.findUnique({
-    where: { id: sessaoId },
-    include: {
-      // Buscar proposições via pauta da sessão (principal fonte de votações)
-      pautaSessao: {
-        include: {
-          itens: {
-            include: {
-              proposicao: {
-                include: {
-                  votacoes: {
-                    include: {
-                      parlamentar: {
-                        select: {
-                          id: true,
-                          nome: true,
-                          apelido: true,
-                          foto: true,
-                          partido: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      // Também buscar proposições diretamente vinculadas à sessão
-      proposicoes: {
-        include: {
-          votacoes: {
-            include: {
-              parlamentar: {
-                select: {
-                  id: true,
-                  nome: true,
-                  apelido: true,
-                  foto: true,
-                  partido: true
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  })
+  const sessao = await getVotosSessaoConsolidados(sessaoId)
 
   if (!sessao) {
     throw new NotFoundError('Sessão')
@@ -227,9 +185,7 @@ export const POST = withErrorHandler(async (
   await ensureParlamentarPresente(sessaoId, validatedData.parlamentarId)
 
   // Verificar se proposição existe
-  const proposicao = await prisma.proposicao.findUnique({
-    where: { id: validatedData.proposicaoId }
-  })
+  const proposicao = await findProposicaoParaVotacao(validatedData.proposicaoId)
 
   if (!proposicao) {
     throw new NotFoundError('Proposição')
@@ -237,17 +193,7 @@ export const POST = withErrorHandler(async (
 
   // Verificar se a proposição está em um item da pauta desta sessão
   // E se esse item está com status EM_VOTACAO
-  const pautaItem = await prisma.pautaItem.findFirst({
-    where: {
-      proposicaoId: validatedData.proposicaoId,
-      pauta: {
-        sessaoId: sessaoId
-      }
-    },
-    include: {
-      pauta: true
-    }
-  })
+  const pautaItem = await findPautaItemParaVotacao(validatedData.proposicaoId, sessaoId)
 
   if (!pautaItem) {
     throw new ValidationError('Esta proposição não está na pauta desta sessão')
@@ -272,42 +218,12 @@ export const POST = withErrorHandler(async (
   const isRetroativo = sessao.status === 'CONCLUIDA'
 
   // Criar ou atualizar voto
-  const voto = await prisma.votacao.upsert({
-    where: {
-      proposicaoId_parlamentarId_turno: {
-        proposicaoId: validatedData.proposicaoId,
-        parlamentarId: validatedData.parlamentarId,
-        turno: turnoAtual
-      }
-    },
-    update: {
-      voto: validatedData.voto,
-      sessaoId: sessaoId  // Garante que sessaoId é atualizado mesmo em updates
-    },
-    create: {
-      proposicaoId: validatedData.proposicaoId,
-      parlamentarId: validatedData.parlamentarId,
-      voto: validatedData.voto,
-      turno: turnoAtual,
-      sessaoId: sessaoId  // GAP #1: Registrar sessaoId nos votos individuais
-    },
-    include: {
-      parlamentar: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true
-        }
-      },
-      proposicao: {
-        select: {
-          id: true,
-          numero: true,
-          ano: true,
-          titulo: true
-        }
-      }
-    }
+  const voto = await upsertVotoIndividual({
+    proposicaoId: validatedData.proposicaoId,
+    parlamentarId: validatedData.parlamentarId,
+    voto: validatedData.voto,
+    turno: turnoAtual,
+    sessaoId
   })
 
   // RN-078: Registrar auditoria para voto retroativo

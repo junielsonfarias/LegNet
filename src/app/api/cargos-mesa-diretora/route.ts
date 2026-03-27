@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -31,9 +30,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CargoMesaDiretoraSchema.parse(body)
 
-  const periodo = await prisma.periodoLegislatura.findUnique({
-    where: { id: validatedData.periodoId }
-  })
+  const periodo = await cargosMesaDbService.periodoExists(validatedData.periodoId)
   if (!periodo) throw new ValidationError('Período não encontrado')
 
   const existing = await cargosMesaDbService.checkDuplicate(validatedData.periodoId, validatedData.nome)

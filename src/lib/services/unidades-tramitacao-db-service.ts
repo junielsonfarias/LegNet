@@ -44,6 +44,20 @@ export const unidadesTramitacaoDbService = {
     })
   },
 
+  async getByIdWithFullCount(id: string) {
+    return prisma.tramitacaoUnidade.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            tramitacoes: true,
+            tiposResponsaveis: true
+          }
+        }
+      }
+    })
+  },
+
   async checkDuplicateName(nome: string, excludeId?: string) {
     const where: any = { nome }
     if (excludeId) where.id = { not: excludeId }
@@ -81,5 +95,75 @@ export const unidadesTramitacaoDbService = {
   async remove(id: string) {
     await prisma.tramitacaoUnidade.delete({ where: { id } })
     return { success: true }
+  },
+
+  // --- Admin route helpers ---
+
+  async listAdmin(filters: { ativo?: boolean; tipo?: string } = {}) {
+    const where: any = {}
+    if (filters.ativo !== undefined) where.ativo = filters.ativo
+    if (filters.tipo) where.tipo = filters.tipo
+
+    return prisma.tramitacaoUnidade.findMany({
+      where,
+      orderBy: [
+        { tipo: 'asc' },
+        { ordem: 'asc' },
+        { nome: 'asc' }
+      ]
+    })
+  },
+
+  async createAdmin(data: {
+    nome: string
+    sigla?: string | null
+    descricao?: string | null
+    tipo: string
+    ativo?: boolean
+    ordem?: number
+  }) {
+    return prisma.tramitacaoUnidade.create({
+      data: {
+        nome: data.nome,
+        sigla: data.sigla || null,
+        descricao: data.descricao || null,
+        tipo: data.tipo as any,
+        ativo: data.ativo ?? true,
+        ordem: data.ordem ?? 0
+      }
+    })
+  },
+
+  async updateAdmin(id: string, data: {
+    nome?: string
+    sigla?: string | null
+    descricao?: string | null
+    tipo?: string
+    ativo?: boolean
+    ordem?: number
+  }) {
+    return prisma.tramitacaoUnidade.update({
+      where: { id },
+      data: {
+        ...(data.nome !== undefined && { nome: data.nome }),
+        ...(data.sigla !== undefined && { sigla: data.sigla }),
+        ...(data.descricao !== undefined && { descricao: data.descricao }),
+        ...(data.tipo !== undefined && { tipo: data.tipo as any }),
+        ...(data.ativo !== undefined && { ativo: data.ativo }),
+        ...(data.ordem !== undefined && { ordem: data.ordem })
+      }
+    })
+  },
+
+  async countTramitacoesByUnidade(unidadeId: string) {
+    return prisma.tramitacao.count({
+      where: { unidadeId }
+    })
+  },
+
+  async countFluxoEtapasByUnidade(unidadeId: string) {
+    return prisma.fluxoTramitacaoEtapa.count({
+      where: { unidadeId }
+    })
   }
 }

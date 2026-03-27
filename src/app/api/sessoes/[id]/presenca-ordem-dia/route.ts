@@ -1,10 +1,12 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { presencaOrdemDiaDbService } from '@/lib/services/presenca-ordem-dia-db-service'
+import { presencaDbService } from '@/lib/services/presenca-db-service'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
+import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,40 +26,32 @@ const PresencaBulkSchema = z.object({
 
 export const GET = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = params.id
+  const { id: sessaoId } = await context.params
 
-  const sessao = await prisma.sessao.findUnique({
-    where: { id: sessaoId },
-    include: {
-      presencas: {
-        include: {
-          parlamentar: {
-            select: { id: true, nome: true, apelido: true, partido: true }
-          }
-        }
-      }
-    }
-  })
+  const sessao = await sessaoDbService.getById(sessaoId)
   if (!sessao) throw new NotFoundError('Sessão')
 
-  const presencasOrdemDia = await presencaOrdemDiaDbService.listBySessao(sessaoId)
+  const [presencasOrdemDia, presencasSessao] = await Promise.all([
+    presencaOrdemDiaDbService.listBySessao(sessaoId),
+    presencaDbService.listBySessao(sessaoId)
+  ])
 
   const totais = {
     presentes: presencasOrdemDia.filter(p => p.presente).length,
     ausentes: presencasOrdemDia.filter(p => !p.presente).length,
     total: presencasOrdemDia.length,
     presencaGeral: {
-      presentes: sessao.presencas.filter(p => p.presente).length,
-      total: sessao.presencas.length
+      presentes: presencasSessao.filter(p => p.presente).length,
+      total: presencasSessao.length
     }
   }
 
   return createSuccessResponse({
     presencas: presencasOrdemDia,
     totais,
-    semRegistro: sessao.presencas
+    semRegistro: presencasSessao
       .filter(p => p.presente && !presencasOrdemDia.find(pod => pod.parlamentarId === p.parlamentarId))
       .map(p => p.parlamentar)
   })
@@ -65,13 +59,13 @@ export const GET = withAuth(withErrorHandler(async (
 
 export const POST = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const sessaoId = params.id
+  const { id: sessaoId } = await context.params
   const body = await request.json()
 
-  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  const sessao = await sessaoDbService.getById(sessaoId)
   if (!sessao) throw new NotFoundError('Sessão')
 
   if (body.presencas && Array.isArray(body.presencas)) {
@@ -89,7 +83,7 @@ export const POST = withAuth(withErrorHandler(async (
     return createSuccessResponse({ registrados: resultados.length, presencas: resultados }, `${resultados.length} presenças registradas`)
   } else {
     const payload = PresencaSchema.parse(body)
-    const parlamentar = await prisma.parlamentar.findUnique({ where: { id: payload.parlamentarId } })
+    const parlamentar = await parlamentarDbService.getById(payload.parlamentarId)
     if (!parlamentar) throw new NotFoundError('Parlamentar')
 
     const presenca = await presencaOrdemDiaDbService.registrar(sessaoId, payload)
@@ -108,12 +102,12 @@ export const POST = withAuth(withErrorHandler(async (
 
 export const DELETE = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const sessaoId = params.id
+  const { id: sessaoId } = await context.params
 
-  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  const sessao = await sessaoDbService.getById(sessaoId)
   if (!sessao) throw new NotFoundError('Sessão')
 
   const { removidos } = await presencaOrdemDiaDbService.limpar(sessaoId)

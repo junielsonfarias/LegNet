@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { favoritoDbService } from '@/lib/services/favorito-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,15 +30,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const favorito = await prisma.favorito.findUnique({
-      where: {
-        userId_tipoItem_itemId: {
-          userId: session.user.id,
-          tipoItem: tipoItem as any,
-          itemId,
-        },
-      },
-    })
+    const favorito = await favoritoDbService.exists(session.user.id, tipoItem, itemId)
 
     return NextResponse.json({
       favorito: !!favorito,
@@ -73,15 +65,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const favoritos = await prisma.favorito.findMany({
-      where: {
-        userId: session.user.id,
-        OR: itens.map((item: { tipoItem: string; itemId: string }) => ({
-          tipoItem: item.tipoItem as any,
-          itemId: item.itemId,
-        })),
-      },
-    })
+    const favoritos = await favoritoDbService.checkMultiple(session.user.id, itens)
 
     // Criar mapa de favoritos para resposta rápida
     const mapaFavoritos: Record<string, boolean> = {}

@@ -88,6 +88,31 @@ export const favoritoDbService = {
     return { success: true }
   },
 
+  async getById(id: string) {
+    return prisma.favorito.findUnique({ where: { id } })
+  },
+
+  async updateById(id: string, data: { notificarMudancas?: boolean; notificarVotacao?: boolean; notificarParecer?: boolean; anotacao?: string | null }) {
+    return prisma.favorito.update({ where: { id }, data })
+  },
+
+  async deleteById(id: string) {
+    await prisma.favorito.delete({ where: { id } })
+    return { success: true }
+  },
+
+  async checkMultiple(userId: string, itens: Array<{ tipoItem: string; itemId: string }>) {
+    return prisma.favorito.findMany({
+      where: {
+        userId,
+        OR: itens.map((item) => ({
+          tipoItem: item.tipoItem as any,
+          itemId: item.itemId,
+        })),
+      },
+    })
+  },
+
   async verificarItemExiste(tipo: string, itemId: string): Promise<boolean> {
     try {
       switch (tipo) {

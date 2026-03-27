@@ -9,7 +9,7 @@ import {
   atualizarFluxo,
   criarFluxosPadrao
 } from '@/lib/services/fluxo-tramitacao-service'
-import { prisma } from '@/lib/prisma'
+import { fluxoTramitacaoDbService } from '@/lib/services/fluxo-tramitacao-db-service'
 
 // Schema de validacao para tipo de proposicao (aceita qualquer string valida)
 const TipoProposicaoSchema = z.string()
@@ -89,27 +89,13 @@ export const POST = withAuth(async (
   }
 
   // Verifica se ja existe fluxo para este tipo
-  const existente = await prisma.fluxoTramitacao.findUnique({
-    where: { tipoProposicao: payload.data.tipoProposicao }
-  })
+  const existente = await fluxoTramitacaoDbService.findByTipo(payload.data.tipoProposicao)
 
   if (existente) {
     throw new ValidationError(`Ja existe um fluxo para o tipo ${payload.data.tipoProposicao}`)
   }
 
-  const fluxo = await prisma.fluxoTramitacao.create({
-    data: {
-      tipoProposicao: payload.data.tipoProposicao,
-      nome: payload.data.nome,
-      descricao: payload.data.descricao,
-      ativo: payload.data.ativo
-    },
-    include: {
-      etapas: {
-        orderBy: { ordem: 'asc' }
-      }
-    }
-  })
+  const fluxo = await fluxoTramitacaoDbService.createFluxo(payload.data)
 
   await logAudit({
     request,
@@ -144,9 +130,7 @@ export const PUT = withAuth(async (
 
   const { id, ...dados } = payload.data
 
-  const fluxoExistente = await prisma.fluxoTramitacao.findUnique({
-    where: { id }
-  })
+  const fluxoExistente = await fluxoTramitacaoDbService.findById(id)
 
   if (!fluxoExistente) {
     throw new NotFoundError('Fluxo nao encontrado')
@@ -182,19 +166,14 @@ export const DELETE = withAuth(async (
     throw new ValidationError('ID do fluxo e obrigatorio')
   }
 
-  const fluxoExistente = await prisma.fluxoTramitacao.findUnique({
-    where: { id }
-  })
+  const fluxoExistente = await fluxoTramitacaoDbService.findById(id)
 
   if (!fluxoExistente) {
     throw new NotFoundError('Fluxo nao encontrado')
   }
 
   // Soft delete - apenas desativa
-  await prisma.fluxoTramitacao.update({
-    where: { id },
-    data: { ativo: false }
-  })
+  await fluxoTramitacaoDbService.deactivateFluxo(id)
 
   await logAudit({
     request,

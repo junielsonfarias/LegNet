@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, createErrorResponse } from '@/lib/error-handler'
+import { publicGetById } from '@/lib/services/tramitacao-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,54 +9,7 @@ export const GET = async (_request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params
 
-    const tramitacao = await prisma.tramitacao.findUnique({
-      where: { id },
-      include: {
-        tipoTramitacao: {
-          select: {
-            id: true,
-            nome: true,
-            descricao: true
-          }
-        },
-        unidade: {
-          select: {
-            id: true,
-            nome: true,
-            sigla: true
-          }
-        },
-        proposicao: {
-          select: {
-            id: true,
-            numero: true,
-            titulo: true,
-            tipo: true,
-            status: true,
-            dataApresentacao: true,
-            autor: {
-              select: {
-                id: true,
-                nome: true,
-                partido: true
-              }
-            }
-          }
-        },
-        historicos: {
-          select: {
-            id: true,
-            data: true,
-            acao: true,
-            descricao: true,
-            usuarioId: true,
-            dadosAnteriores: true,
-            dadosNovos: true
-          },
-          orderBy: { data: 'desc' }
-        }
-      }
-    })
+    const tramitacao = await publicGetById(id)
 
     if (!tramitacao) {
       throw new NotFoundError('Tramitação')

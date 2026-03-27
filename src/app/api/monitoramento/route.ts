@@ -21,7 +21,7 @@ export const POST = withAuth(async (request: NextRequest) => {
 
   logInfo({
     message: 'Sincronização de métricas solicitada',
-    context: { ip: request.ip ?? 'unknown' }
+    context: { ip: (request as any).ip ?? 'unknown' }
   })
 
   const response = createSuccessResponse({ synced: true }, 'Sincronização executada')

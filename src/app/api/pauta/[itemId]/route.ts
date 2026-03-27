@@ -1,11 +1,12 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { PautaSecao } from '@prisma/client'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, validateId } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { validarInclusaoOrdemDoDia } from '@/lib/services/proposicao-validacao-service'
+import { pautasDbService } from '@/lib/services/pautas-db-service'
+import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
+import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
 const PAUTA_SECAO_ORDER = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
 const PAUTA_STATUS = ['PENDENTE', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO', 'CONCLUIDO', 'VISTA'] as const
@@ -30,112 +31,14 @@ const PautaItemUpdateSchema = z.object({
   relatorId: z.string().nullable().optional()
 })
 
-const sortItens = <T extends { secao: string; ordem: number }>(itens: T[]) => {
-  return [...itens].sort((a, b) => {
-    const secaoDiff = PAUTA_SECAO_ORDER.indexOf(a.secao as typeof PAUTA_SECAO_ORDER[number]) -
-      PAUTA_SECAO_ORDER.indexOf(b.secao as typeof PAUTA_SECAO_ORDER[number])
-    if (secaoDiff !== 0) {
-      return secaoDiff
-    }
-    return a.ordem - b.ordem
-  })
-}
-
-const recalcTempoTotal = async (pautaId: string) => {
-  const itens = await prisma.pautaItem.findMany({ where: { pautaId } })
-  const tempoTotal = itens.reduce((total, item) => total + (item.tempoEstimado || 0), 0)
-  await prisma.pautaSessao.update({
-    where: { id: pautaId },
-    data: {
-      tempoTotalEstimado: tempoTotal,
-      geradaAutomaticamente: false
-    }
-  })
-}
-
-const reorderItensInSection = async (pautaId: string, secao: PautaSecao) => {
-  const itens = await prisma.pautaItem.findMany({
-    where: {
-      pautaId,
-      secao
-    },
-    orderBy: {
-      ordem: 'asc'
-    }
-  })
-
-  await Promise.all(
-    itens.map((item, index) => {
-      const novaOrdem = index + 1
-      if (item.ordem === novaOrdem) {
-        return null
-      }
-      return prisma.pautaItem.update({
-        where: { id: item.id },
-        data: { ordem: novaOrdem }
-      })
-    }).filter(Boolean)
-  )
-}
-
-const loadPautaSessao = async (pautaId: string) => {
-  const pauta = await prisma.pautaSessao.findUnique({
-    where: { id: pautaId },
-    include: {
-      itens: {
-        include: {
-          proposicao: {
-            select: {
-              id: true,
-              numero: true,
-              ano: true,
-              titulo: true,
-              tipo: true,
-              status: true
-            }
-          },
-          parecer: {
-            select: {
-              id: true,
-              numero: true,
-              ano: true,
-              tipo: true,
-              status: true,
-              comissao: {
-                select: { id: true, nome: true, sigla: true }
-              }
-            }
-          },
-          relator: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true,
-              partido: true
-            }
-          }
-        }
-      }
-    }
-  })
-
-  if (!pauta) {
-    return null
-  }
-
-  return {
-    ...pauta,
-    itens: sortItens(pauta.itens)
-  }
-}
-
 export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { itemId: string } },
+  { params }: { params: Promise<{ itemId: string }> },
   session
 ) => {
-  const itemId = validateId(params.itemId, 'Item da pauta')
-  const existingItem = await prisma.pautaItem.findUnique({ where: { id: itemId } })
+  const { itemId } = await params
+  const validatedItemId = validateId(itemId, 'Item da pauta')
+  const existingItem = await pautasDbService.getItem(validatedItemId)
   if (!existingItem) {
     throw new NotFoundError('Item da pauta')
   }
@@ -174,7 +77,7 @@ export const PUT = withAuth(async (
 
   // Validar parecerId existe
   if (data.parecerId) {
-    const parecer = await prisma.parecer.findUnique({ where: { id: data.parecerId } })
+    const parecer = await pareceresDbService.getById(data.parecerId)
     if (!parecer) {
       throw new ValidationError('Parecer não encontrado')
     }
@@ -182,14 +85,11 @@ export const PUT = withAuth(async (
 
   // RN-065: Validar relatorId com mandato ativo
   if (data.relatorId) {
-    const relator = await prisma.parlamentar.findUnique({
-      where: { id: data.relatorId },
-      include: { mandatos: { where: { ativo: true } } }
-    })
+    const relator = await parlamentarDbService.getById(data.relatorId)
     if (!relator) {
       throw new ValidationError('Relator não encontrado')
     }
-    if (relator.mandatos.length === 0) {
+    if (!relator.mandatos || relator.mandatos.length === 0 || !relator.mandatos.some((m: any) => m.ativo)) {
       throw new ValidationError('RN-065: Relator deve ter mandato ativo')
     }
   }
@@ -231,63 +131,26 @@ export const PUT = withAuth(async (
     updateData.ordem = data.ordem
   }
 
-  const itemAtualizado = await prisma.pautaItem.update({
-    where: { id: itemId },
-    data: updateData
-  })
+  const itemAtualizado = await pautasDbService.updateItem(validatedItemId, updateData)
 
   if (data.secao && data.secao !== existingItem.secao) {
-    await reorderItensInSection(existingItem.pautaId, existingItem.secao)
+    await pautasDbService.reorderItensInSection(existingItem.pautaId, existingItem.secao)
   }
 
   if (data.ordem !== undefined || data.secao) {
-    await reorderItensInSection(itemAtualizado.pautaId, novaSecao)
+    await pautasDbService.reorderItensInSection(itemAtualizado.pautaId, novaSecao)
   }
 
-  await recalcTempoTotal(itemAtualizado.pautaId)
+  await pautasDbService.recalcTempoTotal(itemAtualizado.pautaId)
 
-  const itemCompleto = await prisma.pautaItem.findUnique({
-    where: { id: itemId },
-    include: {
-      proposicao: {
-        select: {
-          id: true,
-          numero: true,
-          ano: true,
-          titulo: true,
-          tipo: true,
-          status: true
-        }
-      },
-      parecer: {
-        select: {
-          id: true,
-          numero: true,
-          ano: true,
-          tipo: true,
-          status: true,
-          comissao: {
-            select: { id: true, nome: true, sigla: true }
-          }
-        }
-      },
-      relator: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          partido: true
-        }
-      }
-    }
-  })
+  const itemCompleto = await pautasDbService.getItem(validatedItemId)
 
   await logAudit({
     request,
     session,
     action: 'PAUTA_ITEM_UPDATE',
     entity: 'PautaItem',
-    entityId: itemId,
+    entityId: validatedItemId,
     metadata: {
       pautaId: itemAtualizado.pautaId,
       antigaSecao: existingItem.secao,
@@ -301,26 +164,27 @@ export const PUT = withAuth(async (
 
 export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { itemId: string } },
+  { params }: { params: Promise<{ itemId: string }> },
   session
 ) => {
-  const itemId = validateId(params.itemId, 'Item da pauta')
-  const existingItem = await prisma.pautaItem.findUnique({ where: { id: itemId } })
+  const { itemId } = await params
+  const validatedItemId = validateId(itemId, 'Item da pauta')
+  const existingItem = await pautasDbService.getItem(validatedItemId)
   if (!existingItem) {
     throw new NotFoundError('Item da pauta')
   }
 
-  await prisma.pautaItem.delete({ where: { id: itemId } })
+  await pautasDbService.deleteItem(validatedItemId)
 
-  await reorderItensInSection(existingItem.pautaId, existingItem.secao)
-  await recalcTempoTotal(existingItem.pautaId)
+  await pautasDbService.reorderItensInSection(existingItem.pautaId, existingItem.secao)
+  await pautasDbService.recalcTempoTotal(existingItem.pautaId)
 
   await logAudit({
     request,
     session,
     action: 'PAUTA_ITEM_DELETE',
     entity: 'PautaItem',
-    entityId: itemId,
+    entityId: validatedItemId,
     metadata: {
       pautaId: existingItem.pautaId,
       secao: existingItem.secao,
@@ -328,7 +192,7 @@ export const DELETE = withAuth(async (
     }
   })
 
-  const pautaAtualizada = await loadPautaSessao(existingItem.pautaId)
+  const pautaAtualizada = await pautasDbService.loadPautaById(existingItem.pautaId)
 
   return createSuccessResponse(
     pautaAtualizada,

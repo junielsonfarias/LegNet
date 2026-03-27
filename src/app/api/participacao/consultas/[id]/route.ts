@@ -47,9 +47,9 @@ const ParticipacaoSchema = z.object({
  */
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const id = params.id
+  const { id } = await params
   const { searchParams } = new URL(request.url)
   const acao = searchParams.get('acao')
 
@@ -93,9 +93,9 @@ export const PUT = withAuth(async (
  */
 export const POST = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const id = params.id
+  const { id } = await params
   const { searchParams } = new URL(request.url)
   const acao = searchParams.get('acao')
   const body = await request.json()

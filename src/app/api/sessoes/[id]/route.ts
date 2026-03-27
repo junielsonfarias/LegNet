@@ -10,7 +10,8 @@ export const dynamic = 'force-dynamic'
  * Busca sessão por ID ou slug
  */
 export const GET = withAuth(
-  async (request: NextRequest, { params }: { params: { id: string } }, _session) => {
+  async (request: NextRequest, context: { params: Promise<{ id: string }> }, _session) => {
+    const params = await context.params
     return getSessaoHandler(request, params)
   },
   { permissions: 'sessao.view' }
@@ -21,7 +22,8 @@ export const GET = withAuth(
  * Atualiza sessão existente
  */
 export const PUT = withAuth(
-  async (request: NextRequest, { params }: { params: { id: string } }, session) => {
+  async (request: NextRequest, context: { params: Promise<{ id: string }> }, session) => {
+    const params = await context.params
     return updateSessaoHandler(request, params, session)
   },
   { permissions: 'sessao.manage' }
@@ -32,7 +34,8 @@ export const PUT = withAuth(
  * Exclui sessão
  */
 export const DELETE = withAuth(
-  async (request: NextRequest, { params }: { params: { id: string } }, session) => {
+  async (request: NextRequest, context: { params: Promise<{ id: string }> }, session) => {
+    const params = await context.params
     return deleteSessaoHandler(request, params, session)
   },
   { permissions: 'sessao.manage' }

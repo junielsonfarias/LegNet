@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { expedienteSessaoDbService } from '@/lib/services/expediente-sessao-db-service'
 import { tiposExpedienteDbService } from '@/lib/services/tipos-expediente-db-service'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,11 +17,11 @@ const ExpedienteSchema = z.object({
 
 export const GET = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = params.id
+  const { id: sessaoId } = await context.params
 
-  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  const sessao = await sessaoDbService.getById(sessaoId)
   if (!sessao) throw new NotFoundError('Sessão')
 
   const expedientes = await expedienteSessaoDbService.listBySessao(sessaoId)
@@ -39,14 +39,14 @@ export const GET = withAuth(withErrorHandler(async (
 
 export const POST = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const sessaoId = params.id
+  const { id: sessaoId } = await context.params
   const body = await request.json()
   const payload = ExpedienteSchema.parse(body)
 
-  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  const sessao = await sessaoDbService.getById(sessaoId)
   if (!sessao) throw new NotFoundError('Sessão')
 
   const tipoExpediente = await tiposExpedienteDbService.getById(payload.tipoExpedienteId)

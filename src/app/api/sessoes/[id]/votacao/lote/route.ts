@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
-  withErrorHandler,
   createSuccessResponse,
   ValidationError,
   NotFoundError
@@ -12,10 +10,13 @@ import {
   assertSessaoPermiteVotacao,
   ensureParlamentarPresente,
   obterSessaoParaControle,
-  resolverSessaoId,
-  contabilizarVotos,
-  sincronizarStatusProposicao
+  resolverSessaoId
 } from '@/lib/services/sessao-controle'
+import {
+  findProposicaoParaVotacao,
+  findPautaItemParaVotacao,
+  registrarVotacaoEmLote
+} from '@/lib/services/votacao-service'
 import { logAudit } from '@/lib/audit'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -81,38 +82,22 @@ export const POST = withAuth(async (
   }
 
   // Verificar se proposição existe
-  const proposicao = await prisma.proposicao.findUnique({
-    where: { id: validatedData.proposicaoId },
-    select: {
-      id: true,
-      numero: true,
-      ano: true,
-      tipo: true,
-      titulo: true,
-      status: true
-    }
-  })
+  const proposicao = await findProposicaoParaVotacao(validatedData.proposicaoId)
 
   if (!proposicao) {
     throw new NotFoundError('Proposição')
   }
 
   // Verificar se item da pauta existe e pertence a esta sessão
-  const pautaItem = await prisma.pautaItem.findFirst({
-    where: {
-      id: validatedData.itemPautaId,
-      proposicaoId: validatedData.proposicaoId,
-      pauta: {
-        sessaoId: sessaoId
-      }
-    },
-    include: {
-      pauta: true
-    }
-  })
+  const pautaItem = await findPautaItemParaVotacao(validatedData.proposicaoId, sessaoId)
 
   if (!pautaItem) {
     throw new ValidationError('Item da pauta não encontrado ou não pertence a esta sessão')
+  }
+
+  // Validar que o item encontrado corresponde ao itemPautaId informado
+  if (pautaItem.id !== validatedData.itemPautaId) {
+    throw new ValidationError('Item da pauta não corresponde ao informado')
   }
 
   // RN-077: Validar que todos os parlamentares estavam/estão presentes na sessão
@@ -127,148 +112,19 @@ export const POST = withAuth(async (
   // Buscar turno atual
   const turnoAtual = pautaItem.turnoAtual || 1
 
-  // Executar em transação
-  const resultado = await prisma.$transaction(async (tx) => {
-    const votosRegistrados: Array<{
-      parlamentarId: string
-      voto: string
-      atualizado: boolean
-    }> = []
-
-    // Registrar cada voto (exceto AUSENTE que é apenas informativo)
-    for (const votoData of validatedData.votos) {
-      if (votoData.voto === 'AUSENTE') {
-        continue // Não registra voto para ausentes
-      }
-
-      const votoExistente = await tx.votacao.findUnique({
-        where: {
-          proposicaoId_parlamentarId_turno: {
-            proposicaoId: validatedData.proposicaoId,
-            parlamentarId: votoData.parlamentarId,
-            turno: turnoAtual
-          }
-        }
-      })
-
-      const voto = await tx.votacao.upsert({
-        where: {
-          proposicaoId_parlamentarId_turno: {
-            proposicaoId: validatedData.proposicaoId,
-            parlamentarId: votoData.parlamentarId,
-            turno: turnoAtual
-          }
-        },
-        update: {
-          voto: votoData.voto,
-          sessaoId: sessaoId
-        },
-        create: {
-          proposicaoId: validatedData.proposicaoId,
-          parlamentarId: votoData.parlamentarId,
-          voto: votoData.voto,
-          turno: turnoAtual,
-          sessaoId: sessaoId
-        }
-      })
-
-      votosRegistrados.push({
-        parlamentarId: votoData.parlamentarId,
-        voto: votoData.voto,
-        atualizado: !!votoExistente
-      })
-    }
-
-    // Se deve finalizar a votação
-    let resultadoFinal: {
-      resultado: string
-      contagem: { sim: number; nao: number; abstencao: number; total: number }
-      detalhesQuorum?: string
-    } | null = null
-    if (validatedData.finalizarVotacao) {
-      // Contabilizar votos
-      const contagem = await contabilizarVotos(validatedData.proposicaoId, {
-        tipoProposicao: proposicao.tipo,
-        sessaoId
-      })
-
-      // Determinar resultado (usa o fornecido ou o calculado)
-      const resultadoVotacao = validatedData.resultado ||
-        (contagem.resultado === 'APROVADA' ? 'APROVADO' : 'REJEITADO')
-
-      // Atualizar item da pauta
-      await tx.pautaItem.update({
-        where: { id: validatedData.itemPautaId },
-        data: {
-          status: resultadoVotacao,
-          finalizadoEm: new Date()
-        }
-      })
-
-      // GAP #2: Sincronizar status da proposição
-      const statusProposicao = resultadoVotacao === 'APROVADO' ? 'APROVADA' : 'REJEITADA'
-      await tx.proposicao.update({
-        where: { id: validatedData.proposicaoId },
-        data: {
-          status: statusProposicao,
-          resultado: contagem.resultado,
-          dataVotacao: new Date(),
-          sessaoVotacaoId: sessaoId
-        }
-      })
-
-      // Registrar votação agrupada
-      await tx.votacaoAgrupada.upsert({
-        where: {
-          proposicaoId_sessaoId_turno: {
-            proposicaoId: validatedData.proposicaoId,
-            sessaoId: sessaoId,
-            turno: turnoAtual
-          }
-        },
-        update: {
-          votosSim: contagem.sim,
-          votosNao: contagem.nao,
-          votosAbstencao: contagem.abstencao,
-          resultado: contagem.resultado,
-          finalizadaEm: new Date(),
-          observacoes: isRetroativo
-            ? `Lançamento retroativo: ${validatedData.motivo}`
-            : undefined
-        },
-        create: {
-          proposicaoId: validatedData.proposicaoId,
-          sessaoId: sessaoId,
-          turno: turnoAtual,
-          votosSim: contagem.sim,
-          votosNao: contagem.nao,
-          votosAbstencao: contagem.abstencao,
-          resultado: contagem.resultado,
-          tipoVotacao: pautaItem.tipoVotacao || 'NOMINAL',
-          tipoQuorum: 'MAIORIA_SIMPLES',
-          finalizadaEm: new Date(),
-          observacoes: isRetroativo
-            ? `Lançamento retroativo: ${validatedData.motivo}`
-            : undefined
-        }
-      })
-
-      resultadoFinal = {
-        resultado: resultadoVotacao,
-        contagem: {
-          sim: contagem.sim,
-          nao: contagem.nao,
-          abstencao: contagem.abstencao,
-          total: contagem.total
-        },
-        detalhesQuorum: contagem.detalhesQuorum
-      }
-    }
-
-    return {
-      votosRegistrados,
-      resultadoFinal
-    }
+  // Executar votação em lote via serviço
+  const resultado = await registrarVotacaoEmLote({
+    sessaoId,
+    proposicaoId: validatedData.proposicaoId,
+    itemPautaId: validatedData.itemPautaId,
+    votos: validatedData.votos,
+    turno: turnoAtual,
+    finalizarVotacao: validatedData.finalizarVotacao,
+    resultado: validatedData.resultado,
+    motivo: validatedData.motivo,
+    isRetroativo,
+    tipoProposicao: proposicao.tipo,
+    tipoVotacao: pautaItem.tipoVotacao || 'NOMINAL'
   })
 
   // RN-078: Registrar auditoria para lançamento retroativo

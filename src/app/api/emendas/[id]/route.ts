@@ -7,7 +7,6 @@ import {
   validateId
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
-import { prisma } from '@/lib/prisma'
 import {
   buscarEmendaPorId,
   atualizarEmenda,
@@ -19,7 +18,8 @@ import {
   iniciarVotacaoEmenda,
   incorporarEmenda,
   emitirParecerEmenda,
-  listarVotosEmenda
+  listarVotosEmenda,
+  excluirEmenda
 } from '@/lib/services/emenda-service'
 
 export const dynamic = 'force-dynamic'
@@ -167,18 +167,14 @@ export const DELETE = withAuth(async (
   const { id: rawId } = await context.params
   const id = validateId(rawId, 'Emenda')
 
-  const emenda = await buscarEmendaPorId(id)
-  if (!emenda) {
-    throw new NotFoundError('Emenda')
+  try {
+    await excluirEmenda(id)
+  } catch (e: any) {
+    if (e.message === 'Emenda não encontrada') {
+      throw new NotFoundError('Emenda')
+    }
+    throw new ValidationError(e.message)
   }
-
-  if (emenda.status !== 'APRESENTADA') {
-    throw new ValidationError('Apenas emendas com status APRESENTADA podem ser excluídas')
-  }
-
-  await prisma.emenda.delete({
-    where: { id }
-  })
 
   return createSuccessResponse({ id }, 'Emenda excluída')
 }, { permissions: 'proposicao.manage' })

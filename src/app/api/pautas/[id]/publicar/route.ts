@@ -7,10 +7,10 @@
  */
 
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { pautasDbService } from '@/lib/services/pautas-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,24 +45,7 @@ export const POST = withAuth(withErrorHandler(async (request: NextRequest, conte
   const { id: pautaId } = context.params as { id: string }
 
   // Buscar a pauta com dados da sessão
-  const pauta = await prisma.pautaSessao.findUnique({
-    where: { id: pautaId },
-    include: {
-      sessao: {
-        select: {
-          id: true,
-          numero: true,
-          tipo: true,
-          data: true,
-          horario: true,
-          status: true
-        }
-      },
-      itens: {
-        select: { id: true }
-      }
-    }
-  })
+  const pauta = await pautasDbService.getByIdWithSessaoAndItens(pautaId)
 
   if (!pauta) {
     throw new NotFoundError('Pauta')
@@ -109,41 +92,8 @@ export const POST = withAuth(withErrorHandler(async (request: NextRequest, conte
     )
   }
 
-  // Atualizar status da pauta para APROVADA (publicada)
-  const pautaAtualizada = await prisma.pautaSessao.update({
-    where: { id: pautaId },
-    data: {
-      status: 'APROVADA'
-    },
-    include: {
-      sessao: {
-        select: {
-          id: true,
-          numero: true,
-          tipo: true,
-          data: true,
-          horario: true
-        }
-      },
-      itens: {
-        include: {
-          proposicao: {
-            select: {
-              id: true,
-              numero: true,
-              ano: true,
-              titulo: true,
-              tipo: true
-            }
-          }
-        },
-        orderBy: [
-          { secao: 'asc' },
-          { ordem: 'asc' }
-        ]
-      }
-    }
-  })
+  // Atualizar status da pauta para APROVADA (publicada) via serviço
+  const pautaAtualizada = await pautasDbService.publishWithFullInclude(pautaId)
 
   // Registrar auditoria
   await logAudit({

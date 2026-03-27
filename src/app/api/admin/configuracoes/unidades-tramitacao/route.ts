@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
-import { prisma } from '@/lib/prisma'
+import { unidadesTramitacaoDbService } from '@/lib/services/unidades-tramitacao-db-service'
 
 const TramitacaoUnidadeTipoEnum = z.enum([
   'COMISSAO',
@@ -48,33 +48,22 @@ export const GET = withAuth(async (
   const ativoParam = searchParams.get('ativo')
   const tipo = searchParams.get('tipo')
 
-  const where: Record<string, unknown> = {}
+  const filters: { ativo?: boolean; tipo?: string } = {}
 
-  // Se ativo=true, filtra apenas ativos
-  // Se ativo=false, filtra apenas inativos
-  // Se não informado (null), não filtra por status (traz todos)
   if (ativoParam === 'true') {
-    where.ativo = true
+    filters.ativo = true
   } else if (ativoParam === 'false') {
-    where.ativo = false
+    filters.ativo = false
   }
-  // Se ativoParam é null, não adiciona filtro (traz todos)
 
   if (tipo) {
     const parseResult = TramitacaoUnidadeTipoEnum.safeParse(tipo)
     if (parseResult.success) {
-      where.tipo = parseResult.data
+      filters.tipo = parseResult.data
     }
   }
 
-  const unidades = await prisma.tramitacaoUnidade.findMany({
-    where,
-    orderBy: [
-      { tipo: 'asc' },
-      { ordem: 'asc' },
-      { nome: 'asc' }
-    ]
-  })
+  const unidades = await unidadesTramitacaoDbService.listAdmin(filters)
 
   return createSuccessResponse(unidades, 'Unidades carregadas com sucesso')
 }, { permissions: 'config.view' })
@@ -95,15 +84,13 @@ export const POST = withAuth(async (
     throw new ValidationError(payload.error.issues[0]?.message ?? 'Dados invalidos')
   }
 
-  const unidade = await prisma.tramitacaoUnidade.create({
-    data: {
-      nome: payload.data.nome,
-      sigla: payload.data.sigla || null,
-      descricao: payload.data.descricao || null,
-      tipo: payload.data.tipo,
-      ativo: payload.data.ativo,
-      ordem: payload.data.ordem
-    }
+  const unidade = await unidadesTramitacaoDbService.createAdmin({
+    nome: payload.data.nome,
+    sigla: payload.data.sigla || null,
+    descricao: payload.data.descricao || null,
+    tipo: payload.data.tipo,
+    ativo: payload.data.ativo,
+    ordem: payload.data.ordem
   })
 
   await logAudit({
@@ -136,24 +123,19 @@ export const PUT = withAuth(async (
 
   const { id, ...data } = payload.data
 
-  const existente = await prisma.tramitacaoUnidade.findUnique({
-    where: { id }
-  })
+  const existente = await unidadesTramitacaoDbService.getById(id)
 
   if (!existente) {
     throw new NotFoundError('Unidade nao encontrada')
   }
 
-  const unidade = await prisma.tramitacaoUnidade.update({
-    where: { id },
-    data: {
-      ...(data.nome !== undefined && { nome: data.nome }),
-      ...(data.sigla !== undefined && { sigla: data.sigla }),
-      ...(data.descricao !== undefined && { descricao: data.descricao }),
-      ...(data.tipo !== undefined && { tipo: data.tipo }),
-      ...(data.ativo !== undefined && { ativo: data.ativo }),
-      ...(data.ordem !== undefined && { ordem: data.ordem })
-    }
+  const unidade = await unidadesTramitacaoDbService.updateAdmin(id, {
+    ...(data.nome !== undefined && { nome: data.nome }),
+    ...(data.sigla !== undefined && { sigla: data.sigla }),
+    ...(data.descricao !== undefined && { descricao: data.descricao }),
+    ...(data.tipo !== undefined && { tipo: data.tipo }),
+    ...(data.ativo !== undefined && { ativo: data.ativo }),
+    ...(data.ordem !== undefined && { ordem: data.ordem })
   })
 
   await logAudit({
@@ -184,18 +166,14 @@ export const DELETE = withAuth(async (
     throw new ValidationError('ID da unidade e obrigatorio')
   }
 
-  const existente = await prisma.tramitacaoUnidade.findUnique({
-    where: { id }
-  })
+  const existente = await unidadesTramitacaoDbService.getById(id)
 
   if (!existente) {
     throw new NotFoundError('Unidade nao encontrada')
   }
 
   // Verificar se ha tramitacoes usando esta unidade
-  const tramitacoes = await prisma.tramitacao.count({
-    where: { unidadeId: id }
-  })
+  const tramitacoes = await unidadesTramitacaoDbService.countTramitacoesByUnidade(id)
 
   if (tramitacoes > 0) {
     throw new ValidationError(
@@ -204,9 +182,7 @@ export const DELETE = withAuth(async (
   }
 
   // Verificar se ha etapas de fluxo usando esta unidade
-  const etapas = await prisma.fluxoTramitacaoEtapa.count({
-    where: { unidadeId: id }
-  })
+  const etapas = await unidadesTramitacaoDbService.countFluxoEtapasByUnidade(id)
 
   if (etapas > 0) {
     throw new ValidationError(
@@ -214,9 +190,7 @@ export const DELETE = withAuth(async (
     )
   }
 
-  await prisma.tramitacaoUnidade.delete({
-    where: { id }
-  })
+  await unidadesTramitacaoDbService.remove(id)
 
   await logAudit({
     request,
@@ -224,7 +198,7 @@ export const DELETE = withAuth(async (
     action: 'UNIDADE_TRAMITACAO_EXCLUIDA',
     entity: 'TramitacaoUnidade',
     entityId: id,
-    metadata: { nome: existente.nome }
+    metadata: { nome: (existente as any).nome }
   })
 
   return createSuccessResponse(null, 'Unidade excluida com sucesso')

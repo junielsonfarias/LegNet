@@ -50,6 +50,31 @@ export const expedienteSessaoDbService = {
     }
   },
 
+  async getById(id: string) {
+    return prisma.expedienteSessao.findUnique({
+      where: { id },
+      include: {
+        tipoExpediente: true,
+        sessao: {
+          select: {
+            id: true,
+            numero: true,
+            tipo: true,
+            data: true
+          }
+        }
+      }
+    })
+  },
+
+  async update(id: string, data: { conteudo?: string; ordem?: number }) {
+    return prisma.expedienteSessao.update({
+      where: { id },
+      data,
+      include: { tipoExpediente: true }
+    })
+  },
+
   async remove(id: string) {
     await prisma.expedienteSessao.delete({ where: { id } })
     return { success: true }

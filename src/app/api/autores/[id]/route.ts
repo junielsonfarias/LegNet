@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -47,7 +46,7 @@ export const PUT = withAuth(async (
   if (!existing) throw new NotFoundError('Autor')
 
   if (validatedData.tipoAutorId) {
-    const tipoAutor = await prisma.tipoAutor.findUnique({ where: { id: validatedData.tipoAutorId } })
+    const tipoAutor = await autorDbService.tipoAutorExists(validatedData.tipoAutorId)
     if (!tipoAutor) throw new ValidationError('Tipo de autor não encontrado')
   }
 

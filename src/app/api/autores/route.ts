@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -60,9 +59,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   const validatedData = AutorSchema.parse(body)
 
   // Verificar se o tipo de autor existe
-  const tipoAutor = await prisma.tipoAutor.findUnique({
-    where: { id: validatedData.tipoAutorId }
-  })
+  const tipoAutor = await autorDbService.tipoAutorExists(validatedData.tipoAutorId)
   if (!tipoAutor) {
     throw new ValidationError('Tipo de autor não encontrado')
   }
@@ -74,9 +71,7 @@ export const POST = withAuth(async (request: NextRequest) => {
       throw new ConflictError('Este parlamentar já está vinculado a um autor')
     }
 
-    const parlamentar = await prisma.parlamentar.findUnique({
-      where: { id: validatedData.parlamentarId }
-    })
+    const parlamentar = await autorDbService.parlamentarExists(validatedData.parlamentarId)
     if (!parlamentar) {
       throw new ValidationError('Parlamentar não encontrado')
     }
@@ -84,9 +79,7 @@ export const POST = withAuth(async (request: NextRequest) => {
 
   // Se vinculado a comissão, verificar se existe
   if (validatedData.comissaoId) {
-    const comissao = await prisma.comissao.findUnique({
-      where: { id: validatedData.comissaoId }
-    })
+    const comissao = await autorDbService.comissaoExists(validatedData.comissaoId)
     if (!comissao) {
       throw new ValidationError('Comissão não encontrada')
     }

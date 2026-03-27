@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, createErrorResponse, ValidationError, ConflictError, validateId } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { parseDateOnlyToUTC } from '@/lib/utils/date'
 import { syncMesaDiretoraHistorico } from '@/lib/participation-history'
+import { mesaDiretoraDbService } from '@/lib/services/mesa-diretora-db-service'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -31,143 +31,59 @@ const MesaDiretoraSchema = z.object({
 // GET - Listar mesas diretora
 export const GET = withAuth(async (request: NextRequest, _ctx, _session) => {
   const { searchParams } = new URL(request.url)
-  const legislaturaId = searchParams.get('legislaturaId')
-  const periodoId = searchParams.get('periodoId')
+  const legislaturaId = searchParams.get('legislaturaId') || undefined
+  const periodoId = searchParams.get('periodoId') || undefined
   const ativa = searchParams.get('ativa')
-  const search = searchParams.get('search')
+  const search = searchParams.get('search') || undefined
   const page = parseInt(searchParams.get('page') || '1')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-  // Construir filtros
-  const where: any = {}
-  
-  if (periodoId) {
-    where.periodoId = periodoId
-  }
-  
-  if (legislaturaId) {
-    where.periodo = {
-      legislaturaId
-    }
-  }
-  
-  if (ativa !== null) {
-    where.ativa = ativa === 'true'
-  }
-  
-  if (search) {
-    where.OR = [
-      { descricao: { contains: search, mode: 'insensitive' } },
-      {
-        periodo: {
-          OR: [
-            { descricao: { contains: search, mode: 'insensitive' } },
-            {
-              legislatura: {
-                OR: [
-                  { descricao: { contains: search, mode: 'insensitive' } }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    ]
+  const filters = {
+    periodoId,
+    legislaturaId,
+    ativa: ativa !== null ? ativa === 'true' : undefined,
+    search
   }
 
-  const [mesas, total] = await Promise.all([
-    prisma.mesaDiretora.findMany({
-      where,
-      include: {
-        periodo: {
-          include: {
-            legislatura: true
-          }
-        },
-        membros: {
-          include: {
-            parlamentar: {
-              select: {
-                id: true,
-                nome: true,
-                apelido: true
-              }
-            },
-            cargo: true
-          },
-          orderBy: {
-            cargo: {
-              ordem: 'asc'
-            }
-          }
-        }
-      } as any,
-      orderBy: [
-        { ativa: 'desc' },
-        {
-          periodo: {
-            dataInicio: 'desc'
-          }
-        }
-      ],
-      skip: (page - 1) * limit,
-      take: limit
-    }),
-    prisma.mesaDiretora.count({ where })
-  ])
+  const result = await mesaDiretoraDbService.paginate(filters, { page, limit })
 
   return createSuccessResponse(
-    mesas,
+    result.data,
     'Mesas diretora listadas com sucesso',
-    total,
+    result.pagination.total,
     200,
-    {
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit)
-    }
+    result.pagination
   )
 }, { permissions: 'mesa.view' })
 
 // POST - Criar mesa diretora
 export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = MesaDiretoraSchema.parse(body)
-  
+
   // Verificar se período existe
-  const periodo = await prisma.periodoLegislatura.findUnique({
-    where: { id: validatedData.periodoId },
-    include: {
-      cargos: true
-    }
-  })
-  
+  const periodo = await mesaDiretoraDbService.periodoExistsWithCargos(validatedData.periodoId)
+
   if (!periodo) {
     throw new ValidationError('Período não encontrado')
   }
-  
+
   // Se marcando como ativa, garantir que não exista outra mesa ativa no período
   if (validatedData.ativa) {
-    const mesaAtiva = await prisma.mesaDiretora.findFirst({
-      where: {
-        periodoId: validatedData.periodoId,
-        ativa: true
-      }
-    })
+    const mesaAtiva = await mesaDiretoraDbService.checkAtivaExiste(validatedData.periodoId)
 
     if (mesaAtiva) {
       throw new ConflictError('Já existe uma mesa diretora ativa para este período. Desative a mesa atual antes de criar uma nova ativa.')
     }
   }
-  
+
   // Validar se todos os cargos obrigatórios estão presentes
   const cargosObrigatorios = periodo.cargos.filter(c => c.obrigatorio)
   const cargosFornecidos = validatedData.membros.map(m => m.cargoId)
   const cargosFaltantes = cargosObrigatorios.filter(c => !cargosFornecidos.includes(c.id))
-  
+
   if (cargosFaltantes.length > 0) {
     throw new ValidationError(`Cargos obrigatórios não preenchidos: ${cargosFaltantes.map(c => c.nome).join(', ')}`)
   }
@@ -197,45 +113,22 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       throw new ValidationError('A data de fim do membro não pode ser anterior à data de início')
     }
   })
-  
+
   // Criar mesa diretora com membros
-  const mesa = await prisma.mesaDiretora.create({
-    data: {
-      periodoId: validatedData.periodoId,
-      ativa: validatedData.ativa ?? false,
-      descricao: validatedData.descricao || null,
-      membros: {
-        create: validatedData.membros.map(m => ({
-          parlamentarId: m.parlamentarId,
-          cargoId: m.cargoId,
-          dataInicio: parseDateOnlyToUTC(m.dataInicio),
-          dataFim: m.dataFim ? parseDateOnlyToUTC(m.dataFim) : null,
-          ativo: m.ativo ?? true,
-          observacoes: m.observacoes || null
-        }))
-      }
-    },
-    include: {
-      periodo: {
-        include: {
-          legislatura: true
-        }
-      },
-      membros: {
-        include: {
-          parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true
-            }
-          },
-          cargo: true
-        }
-      }
-    } as any
+  const mesa = await mesaDiretoraDbService.create({
+    periodoId: validatedData.periodoId,
+    ativa: validatedData.ativa ?? false,
+    descricao: validatedData.descricao || null,
+    membros: validatedData.membros.map(m => ({
+      parlamentarId: m.parlamentarId,
+      cargoId: m.cargoId,
+      dataInicio: m.dataInicio,
+      dataFim: m.dataFim,
+      ativo: m.ativo ?? true,
+      observacoes: m.observacoes
+    }))
   })
-  
+
   await logAudit({
     request,
     session,
@@ -250,7 +143,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   })
 
   await syncMesaDiretoraHistorico(mesa.id)
-  
+
   return createSuccessResponse(
     mesa,
     'Mesa diretora criada com sucesso',
@@ -258,4 +151,3 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     201
   )
 }, { permissions: 'mesa.manage' })
-

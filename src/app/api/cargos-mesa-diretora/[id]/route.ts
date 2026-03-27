@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, validateId } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
@@ -16,10 +15,11 @@ const CargoUpdateSchema = z.object({
 
 export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   _session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await context.params
+  const id = validateId(rawId)
   const cargo = await cargosMesaDbService.getById(id)
   if (!cargo) throw new NotFoundError('Cargo não encontrado')
   return createSuccessResponse(cargo, 'Cargo encontrado com sucesso')
@@ -27,10 +27,11 @@ export const GET = withAuth(async (
 
 export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await context.params
+  const id = validateId(rawId)
   const body = await request.json()
   const validatedData = CargoUpdateSchema.parse(body)
 
@@ -52,17 +53,17 @@ export const PUT = withAuth(async (
 
 export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await context.params
+  const id = validateId(rawId)
 
   const cargo = await cargosMesaDbService.getById(id)
   if (!cargo) throw new NotFoundError('Cargo não encontrado')
 
-  // Excluir membros relacionados primeiro
-  await prisma.membroMesaDiretora.deleteMany({ where: { cargoId: id } })
-  await cargosMesaDbService.remove(id)
+  // Excluir membros relacionados primeiro, depois o cargo
+  await cargosMesaDbService.removeWithMembros(id)
 
   await logAudit({
     request, session,

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import {
+  listarConfiguracoesQuorumFiltrado,
+  checkConfiguracaoQuorumExistente,
+  criarConfiguracaoQuorum
+} from '@/lib/services/quorum-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,23 +56,17 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const ativo = searchParams.get('ativo')
   const aplicacao = searchParams.get('aplicacao')
 
-  const where: any = {}
+  const filters: { ativo?: boolean; aplicacao?: string } = {}
 
   if (ativo !== null) {
-    where.ativo = ativo === 'true'
+    filters.ativo = ativo === 'true'
   }
 
   if (aplicacao) {
-    where.aplicacao = aplicacao
+    filters.aplicacao = aplicacao
   }
 
-  const configuracoes = await prisma.configuracaoQuorum.findMany({
-    where,
-    orderBy: [
-      { ordem: 'asc' },
-      { nome: 'asc' }
-    ]
-  })
+  const configuracoes = await listarConfiguracoesQuorumFiltrado(filters)
 
   return createSuccessResponse(configuracoes, 'Configuracoes de quorum listadas com sucesso')
 })
@@ -80,9 +78,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   const validatedData = CreateQuorumSchema.parse(body)
 
   // Verificar se ja existe uma configuracao para esta aplicacao
-  const existente = await prisma.configuracaoQuorum.findUnique({
-    where: { aplicacao: validatedData.aplicacao }
-  })
+  const existente = await checkConfiguracaoQuorumExistente(validatedData.aplicacao)
 
   if (existente) {
     throw new ValidationError(
@@ -91,26 +87,24 @@ export const POST = withAuth(async (request: NextRequest) => {
   }
 
   // Criar a configuracao
-  const configuracao = await prisma.configuracaoQuorum.create({
-    data: {
-      nome: validatedData.nome,
-      descricao: validatedData.descricao,
-      aplicacao: validatedData.aplicacao,
-      tipoQuorum: validatedData.tipoQuorum,
-      percentualMinimo: validatedData.percentualMinimo,
-      numeroMinimo: validatedData.numeroMinimo,
-      baseCalculo: validatedData.baseCalculo,
-      tiposProposicao: validatedData.tiposProposicao
-        ? JSON.stringify(validatedData.tiposProposicao)
-        : null,
-      permitirAbstencao: validatedData.permitirAbstencao,
-      abstencaoContaContra: validatedData.abstencaoContaContra,
-      requererVotacaoNominal: validatedData.requererVotacaoNominal,
-      mensagemAprovacao: validatedData.mensagemAprovacao,
-      mensagemRejeicao: validatedData.mensagemRejeicao,
-      ativo: validatedData.ativo,
-      ordem: validatedData.ordem
-    }
+  const configuracao = await criarConfiguracaoQuorum({
+    nome: validatedData.nome,
+    descricao: validatedData.descricao,
+    aplicacao: validatedData.aplicacao,
+    tipoQuorum: validatedData.tipoQuorum,
+    percentualMinimo: validatedData.percentualMinimo,
+    numeroMinimo: validatedData.numeroMinimo,
+    baseCalculo: validatedData.baseCalculo,
+    tiposProposicao: validatedData.tiposProposicao
+      ? JSON.stringify(validatedData.tiposProposicao)
+      : null,
+    permitirAbstencao: validatedData.permitirAbstencao,
+    abstencaoContaContra: validatedData.abstencaoContaContra,
+    requererVotacaoNominal: validatedData.requererVotacaoNominal,
+    mensagemAprovacao: validatedData.mensagemAprovacao,
+    mensagemRejeicao: validatedData.mensagemRejeicao,
+    ativo: validatedData.ativo,
+    ordem: validatedData.ordem
   })
 
   return createSuccessResponse(configuracao, 'Configuracao de quorum criada com sucesso')

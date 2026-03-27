@@ -1,6 +1,6 @@
 /**
  * API POST /api/proposicoes/[id]/tramitar
- * Avança a tramitação de uma proposição para a próxima etapa do fluxo
+ * Avanca a tramitacao de uma proposicao para a proxima etapa do fluxo
  */
 
 import { NextRequest } from 'next/server'
@@ -8,16 +8,17 @@ import { z } from 'zod'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, NotFoundError, ValidationError, validateId } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
-import { prisma } from '@/lib/prisma'
 import {
   avancarEtapaFluxo,
   obterEtapaAtual,
-  tramitarParaAguardandoPauta
+  tramitarParaAguardandoPauta,
+  findProposicaoBasic,
+  updateProposicaoStatus
 } from '@/lib/services/tramitacao-service'
 
-// Schema de validação
+// Schema de validacao
 const TramitarSchema = z.object({
-  // Ação a ser executada (padrão: AVANCAR_ETAPA)
+  // Acao a ser executada (padrao: AVANCAR_ETAPA)
   acao: z.enum(['AVANCAR_ETAPA', 'AGUARDANDO_PAUTA']).optional().default('AVANCAR_ETAPA'),
   observacoes: z.string().optional(),
   parecer: z.enum([
@@ -36,27 +37,18 @@ const TramitarSchema = z.object({
 })
 
 /**
- * POST - Avança a tramitação da proposição
+ * POST - Avanca a tramitacao da proposicao
  */
 export const POST = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
-  const proposicaoId = validateId(params.id, 'Proposição')
+  const { id: rawId } = await params
+  const proposicaoId = validateId(rawId, 'Proposição')
 
-  // Verifica se proposição existe
-  const proposicao = await prisma.proposicao.findUnique({
-    where: { id: proposicaoId },
-    select: {
-      id: true,
-      numero: true,
-      ano: true,
-      tipo: true,
-      titulo: true,
-      status: true
-    }
-  })
+  // Verifica se proposicao existe
+  const proposicao = await findProposicaoBasic(proposicaoId)
 
   if (!proposicao) {
     throw new NotFoundError('Proposição')
@@ -72,12 +64,12 @@ export const POST = withAuth(async (
 
   const { acao, observacoes, parecer, resultado } = payload.data
 
-  // Obtém IP do cliente
+  // Obtem IP do cliente
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')
     || 'unknown'
 
-  // Executa ação conforme solicitado
+  // Executa acao conforme solicitado
   if (acao === 'AGUARDANDO_PAUTA') {
     // Tramita diretamente para Aguardando Pauta (Secretaria Legislativa)
     const resultadoTramitar = await tramitarParaAguardandoPauta(
@@ -117,7 +109,7 @@ export const POST = withAuth(async (
     )
   }
 
-  // Ação padrão: AVANCAR_ETAPA
+  // Acao padrao: AVANCAR_ETAPA
   const resultadoAvancar = await avancarEtapaFluxo(
     proposicaoId,
     observacoes,
@@ -127,15 +119,15 @@ export const POST = withAuth(async (
     ip
   )
 
-  // Se não há tramitação ativa, tenta atualizar o status diretamente baseado no resultado
+  // Se nao ha tramitacao ativa, tenta atualizar o status diretamente baseado no resultado
   if (!resultadoAvancar.success) {
-    // Verifica se o erro é por falta de tramitação
-    const erroSemTramitacao = resultadoAvancar.errors.some(e =>
+    // Verifica se o erro e por falta de tramitacao
+    const erroSemTramitacao = resultadoAvancar.errors.some((e: string) =>
       e.includes('não possui tramitação') || e.includes('tramitação em andamento')
     )
 
     if (erroSemTramitacao && resultado) {
-      // Atualiza status da proposição diretamente baseado no resultado
+      // Atualiza status da proposicao diretamente baseado no resultado
       let novoStatus: 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'EM_TRAMITACAO' = 'EM_TRAMITACAO'
       if (resultado === 'APROVADO' || resultado === 'APROVADO_COM_EMENDAS') {
         novoStatus = 'APROVADA'
@@ -145,10 +137,7 @@ export const POST = withAuth(async (
         novoStatus = 'ARQUIVADA'
       }
 
-      await prisma.proposicao.update({
-        where: { id: proposicaoId },
-        data: { status: novoStatus }
-      })
+      await updateProposicaoStatus(proposicaoId, novoStatus)
 
       // Registra auditoria
       await logAudit({
@@ -217,33 +206,24 @@ export const POST = withAuth(async (
 }, { permissions: 'tramitacao.manage' })
 
 /**
- * GET - Obtém informações da etapa atual da tramitação
+ * GET - Obtem informacoes da etapa atual da tramitacao
  */
 export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
-  const proposicaoId = validateId(params.id, 'Proposição')
+  const { id: rawId } = await params
+  const proposicaoId = validateId(rawId, 'Proposição')
 
-  // Verifica se proposição existe
-  const proposicao = await prisma.proposicao.findUnique({
-    where: { id: proposicaoId },
-    select: {
-      id: true,
-      numero: true,
-      ano: true,
-      tipo: true,
-      titulo: true,
-      status: true
-    }
-  })
+  // Verifica se proposicao existe
+  const proposicao = await findProposicaoBasic(proposicaoId)
 
   if (!proposicao) {
     throw new NotFoundError('Proposição')
   }
 
-  // Obtém etapa atual
+  // Obtem etapa atual
   const etapaAtual = await obterEtapaAtual(proposicaoId)
 
   return createSuccessResponse(

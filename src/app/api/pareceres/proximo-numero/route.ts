@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,56 +17,10 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     throw new ValidationError('comissaoId é obrigatório')
   }
 
-  // Buscar comissão
-  const comissao = await prisma.comissao.findUnique({
-    where: { id: comissaoId },
-    select: { id: true, nome: true, sigla: true }
-  })
-
-  if (!comissao) {
-    throw new ValidationError('Comissão não encontrada')
+  try {
+    const resultado = await pareceresDbService.getNextNumeroFormatado(comissaoId)
+    return createSuccessResponse(resultado, 'Próximo número obtido com sucesso')
+  } catch (error: any) {
+    throw new ValidationError(error.message)
   }
-
-  const anoAtual = new Date().getFullYear()
-  const siglaComissao = comissao.sigla || comissao.nome.substring(0, 3).toUpperCase()
-
-  // Buscar último parecer desta comissão no ano atual
-  const ultimoParecerComissao = await prisma.parecer.findFirst({
-    where: {
-      ano: anoAtual,
-      comissaoId: comissaoId
-    },
-    orderBy: { createdAt: 'desc' },
-    select: { numero: true }
-  })
-
-  let proximoNumero = 1
-  if (ultimoParecerComissao?.numero) {
-    const numMatch = ultimoParecerComissao.numero.match(/^(\d+)/)
-    if (numMatch) {
-      proximoNumero = parseInt(numMatch[1]) + 1
-    }
-  }
-
-  // Contar total de pareceres desta comissão no ano
-  const totalPareceresAno = await prisma.parecer.count({
-    where: {
-      ano: anoAtual,
-      comissaoId: comissaoId
-    }
-  })
-
-  const numeroFormatado = `${String(proximoNumero).padStart(3, '0')}/${anoAtual}-${siglaComissao}`
-
-  return createSuccessResponse({
-    proximoNumero,
-    numeroFormatado,
-    comissao: {
-      id: comissao.id,
-      nome: comissao.nome,
-      sigla: siglaComissao
-    },
-    ano: anoAtual,
-    totalPareceresAno
-  }, 'Próximo número obtido com sucesso')
 })

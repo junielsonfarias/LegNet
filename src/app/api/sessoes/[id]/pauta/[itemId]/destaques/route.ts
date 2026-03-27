@@ -1,22 +1,21 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
-  ValidationError,
-  NotFoundError
+  ValidationError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { obterSessaoParaControle, resolverSessaoId } from '@/lib/services/sessao-controle'
+import { pautasDbService } from '@/lib/services/pautas-db-service'
 
 export const dynamic = 'force-dynamic'
 
 const DestaqueSchema = z.object({
-  titulo: z.string().min(1, 'Título é obrigatório'),
+  titulo: z.string().min(1, 'Titulo e obrigatorio'),
   descricao: z.string().optional(),
   tipoVotacao: z.enum(['NOMINAL', 'SECRETA', 'SIMBOLICA', 'LEITURA']).default('NOMINAL'),
-  parlamentarId: z.string().optional() // Quem solicitou o destaque
+  parlamentarId: z.string().optional()
 })
 
 const VotarDestaqueSchema = z.object({
@@ -29,75 +28,36 @@ const VotarDestaqueSchema = z.object({
 // GET - Listar destaques de um item
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  context: { params: Promise<{ id: string; itemId: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
-  const itemId = params.itemId
-
-  const item = await prisma.pautaItem.findFirst({
-    where: {
-      id: itemId,
-      pauta: {
-        sessaoId
-      }
-    },
-    include: {
-      destaques: {
-        orderBy: { solicitadoEm: 'asc' }
-      }
-    }
-  })
-
-  if (!item) {
-    throw new NotFoundError('Item da pauta')
-  }
-
-  return createSuccessResponse(item.destaques, 'Destaques listados com sucesso')
+  const { id, itemId } = await context.params
+  const sessaoId = await resolverSessaoId(id)
+  const destaques = await pautasDbService.listDestaques(sessaoId, itemId)
+  return createSuccessResponse(destaques, 'Destaques listados com sucesso')
 })
 
 // POST - Criar destaque
 export const POST = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  context: { params: Promise<{ id: string; itemId: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
-  const itemId = params.itemId
+  const { id, itemId } = await context.params
+  const sessaoId = await resolverSessaoId(id)
+
+  // Verificar sessao em andamento
+  const sessao = await obterSessaoParaControle(sessaoId)
+  if (sessao.status !== 'EM_ANDAMENTO') {
+    throw new ValidationError('A sessao deve estar em andamento para criar destaques')
+  }
 
   const body = await request.json()
   const data = DestaqueSchema.parse(body)
 
-  // Verificar sessão
-  const sessao = await obterSessaoParaControle(sessaoId)
-  if (sessao.status !== 'EM_ANDAMENTO') {
-    throw new ValidationError('A sessão deve estar em andamento para criar destaques')
-  }
-
-  // Verificar item
-  const item = await prisma.pautaItem.findFirst({
-    where: {
-      id: itemId,
-      pauta: {
-        sessaoId
-      }
-    }
-  })
-
-  if (!item) {
-    throw new NotFoundError('Item da pauta')
-  }
-
-  if (!['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status)) {
-    throw new ValidationError('Só é possível criar destaque de item em discussão ou votação')
-  }
-
-  const destaque = await prisma.destaquePautaItem.create({
-    data: {
-      pautaItemId: itemId,
-      titulo: data.titulo,
-      descricao: data.descricao,
-      tipoVotacao: data.tipoVotacao,
-      solicitadoPor: data.parlamentarId
-    }
+  const destaque = await pautasDbService.createDestaque(sessaoId, itemId, {
+    titulo: data.titulo,
+    descricao: data.descricao,
+    tipoVotacao: data.tipoVotacao,
+    parlamentarId: data.parlamentarId
   })
 
   return createSuccessResponse(destaque, 'Destaque criado com sucesso')
@@ -106,54 +66,27 @@ export const POST = withAuth(withErrorHandler(async (
 // PATCH - Votar/atualizar destaque
 export const PATCH = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  context: { params: Promise<{ id: string; itemId: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
-  const itemId = params.itemId
+  const { id } = await context.params
+  const sessaoId = await resolverSessaoId(id)
 
   const url = new URL(request.url)
   const destaqueId = url.searchParams.get('destaqueId')
-
   if (!destaqueId) {
-    throw new ValidationError('ID do destaque é obrigatório')
+    throw new ValidationError('ID do destaque e obrigatorio')
+  }
+
+  // Verificar sessao em andamento
+  const sessao = await obterSessaoParaControle(sessaoId)
+  if (sessao.status !== 'EM_ANDAMENTO') {
+    throw new ValidationError('A sessao deve estar em andamento para votar destaques')
   }
 
   const body = await request.json()
   const data = VotarDestaqueSchema.parse(body)
 
-  // Verificar sessão
-  const sessao = await obterSessaoParaControle(sessaoId)
-  if (sessao.status !== 'EM_ANDAMENTO') {
-    throw new ValidationError('A sessão deve estar em andamento para votar destaques')
-  }
-
-  // Verificar destaque
-  const destaque = await prisma.destaquePautaItem.findFirst({
-    where: {
-      id: destaqueId,
-      pautaItemId: itemId
-    }
-  })
-
-  if (!destaque) {
-    throw new NotFoundError('Destaque')
-  }
-
-  if (destaque.status !== 'PENDENTE' && destaque.status !== 'EM_VOTACAO') {
-    throw new ValidationError('Este destaque já foi votado')
-  }
-
-  const destaqueAtualizado = await prisma.destaquePautaItem.update({
-    where: { id: destaqueId },
-    data: {
-      votosSim: data.votosSim,
-      votosNao: data.votosNao,
-      votosAbstencao: data.votosAbstencao,
-      resultado: data.resultado,
-      status: data.resultado === 'APROVADO' ? 'APROVADO' : 'REJEITADO',
-      votadoEm: new Date()
-    }
-  })
+  const destaqueAtualizado = await pautasDbService.voteDestaque(destaqueId, data)
 
   return createSuccessResponse(destaqueAtualizado, 'Destaque votado com sucesso')
 }), { permissions: 'sessao.manage' })
@@ -161,42 +94,18 @@ export const PATCH = withAuth(withErrorHandler(async (
 // DELETE - Remover destaque
 export const DELETE = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; itemId: string } }
+  context: { params: Promise<{ id: string; itemId: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
-  const itemId = params.itemId
+  const { id, itemId } = await context.params
+  const sessaoId = await resolverSessaoId(id)
 
   const url = new URL(request.url)
   const destaqueId = url.searchParams.get('destaqueId')
-
   if (!destaqueId) {
-    throw new ValidationError('ID do destaque é obrigatório')
+    throw new ValidationError('ID do destaque e obrigatorio')
   }
 
-  // Verificar destaque
-  const destaque = await prisma.destaquePautaItem.findFirst({
-    where: {
-      id: destaqueId,
-      pautaItemId: itemId,
-      pautaItem: {
-        pauta: {
-          sessaoId
-        }
-      }
-    }
-  })
+  await pautasDbService.removeDestaque(sessaoId, itemId, destaqueId)
 
-  if (!destaque) {
-    throw new NotFoundError('Destaque')
-  }
-
-  if (destaque.status !== 'PENDENTE') {
-    throw new ValidationError('Não é possível excluir destaque já votado')
-  }
-
-  await prisma.destaquePautaItem.delete({
-    where: { id: destaqueId }
-  })
-
-  return createSuccessResponse(null, 'Destaque excluído com sucesso')
+  return createSuccessResponse(null, 'Destaque excluido com sucesso')
 }), { permissions: 'sessao.manage' })

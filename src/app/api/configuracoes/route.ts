@@ -1,13 +1,11 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { configuracaoDbService } from '@/lib/services/configuracao-db-service'
 
 export const dynamic = 'force-dynamic'
-
-const CONFIG_SLUG = 'principal'
 
 const ConfiguracaoSchema = z.object({
   nomeCasa: z.string().min(3, 'Nome da casa legislativa é obrigatório'),
@@ -28,27 +26,8 @@ const ConfiguracaoSchema = z.object({
   descricao: z.string().optional()
 })
 
-const ensureConfiguracaoInstitucional = async () => {
-  const existing = await prisma.configuracaoInstitucional.findFirst({
-    where: { slug: CONFIG_SLUG }
-  })
-
-  if (existing) {
-    return existing
-  }
-
-  return prisma.configuracaoInstitucional.create({
-    data: {
-      slug: CONFIG_SLUG,
-      nomeCasa: 'Câmara Municipal',
-      tema: 'claro',
-      timezone: 'America/Sao_Paulo'
-    }
-  })
-}
-
 export const GET = withAuth(async (_request: NextRequest) => {
-  const configuracao = await ensureConfiguracaoInstitucional()
+  const configuracao = await configuracaoDbService.ensureConfiguracaoInstitucional()
   return createSuccessResponse(configuracao, 'Configurações carregadas com sucesso')
 }, { permissions: 'config.view' })
 
@@ -56,14 +35,7 @@ export const PUT = withAuth(async (request: NextRequest, _ctx, session) => {
   const body = await request.json()
   const validatedData = ConfiguracaoSchema.parse(body)
 
-  const configuracao = await prisma.configuracaoInstitucional.upsert({
-    where: { slug: CONFIG_SLUG },
-    update: validatedData,
-    create: {
-      slug: CONFIG_SLUG,
-      ...validatedData
-    }
-  })
+  const configuracao = await configuracaoDbService.upsertConfiguracaoInstitucional(validatedData)
 
   await logAudit({
     request,

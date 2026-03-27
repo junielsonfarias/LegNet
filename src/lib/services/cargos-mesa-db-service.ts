@@ -70,5 +70,15 @@ export const cargosMesaDbService = {
   async remove(id: string) {
     await prisma.cargoMesaDiretora.delete({ where: { id } })
     return { success: true }
+  },
+
+  async removeWithMembros(id: string) {
+    await prisma.membroMesaDiretora.deleteMany({ where: { cargoId: id } })
+    await prisma.cargoMesaDiretora.delete({ where: { id } })
+    return { success: true }
+  },
+
+  async periodoExists(id: string) {
+    return prisma.periodoLegislatura.findUnique({ where: { id } })
   }
 }

@@ -1,14 +1,14 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { configuracaoDbService, type RestoreSistemaConfig } from '@/lib/services/configuracao-db-service'
 import {
   ensureSystemConfigDefaults,
-  serializeSystemConfigValue,
   SystemConfigType
 } from '@/lib/configuracoes/defaults'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,41 +57,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const body = await request.json()
   const { institucional, sistema } = RestoreSchema.parse(body)
 
-  const resultados: { institucional?: any; sistema?: number } = {}
-
-  await prisma.$transaction(async (tx: any) => {
-    if (institucional) {
-      resultados.institucional = await tx.configuracaoInstitucional.upsert({
-        where: { slug: 'principal' },
-        update: institucional,
-        create: {
-          slug: 'principal',
-          ...institucional
-        }
-      })
-    }
-
-    if (sistema) {
-      await tx.configuracao.deleteMany()
-
-      let count = 0
-      for (const config of sistema) {
-        const tipo = coerceTipo(config.valor, config.tipo)
-        await tx.configuracao.create({
-          data: {
-            chave: config.chave,
-            valor: serializeSystemConfigValue(config.valor, tipo),
-            descricao: config.descricao,
-            categoria: config.categoria ?? 'Geral',
-            tipo,
-            editavel: config.editavel ?? true
-          }
-        })
-        count += 1
-      }
-      resultados.sistema = count
-    }
-  })
+  const resultados = await configuracaoDbService.restoreFromBackup(institucional, sistema as RestoreSistemaConfig[] | undefined, coerceTipo)
 
   await ensureSystemConfigDefaults(prisma)
 
@@ -108,4 +74,3 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
 
   return createSuccessResponse(resultados, 'Configurações restauradas com sucesso')
 }, { permissions: 'config.manage' })
-

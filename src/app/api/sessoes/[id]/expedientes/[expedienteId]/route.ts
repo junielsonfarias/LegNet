@@ -7,10 +7,10 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { expedienteSessaoDbService } from '@/lib/services/expediente-sessao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,22 +22,10 @@ const ExpedienteUpdateSchema = z.object({
 // GET - Obtém expediente
 export const GET = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; expedienteId: string } }
+  context: { params: Promise<{ id: string; expedienteId: string }> }
 ) => {
-  const expediente = await prisma.expedienteSessao.findUnique({
-    where: { id: params.expedienteId },
-    include: {
-      tipoExpediente: true,
-      sessao: {
-        select: {
-          id: true,
-          numero: true,
-          tipo: true,
-          data: true
-        }
-      }
-    }
-  })
+  const { expedienteId } = await context.params
+  const expediente = await expedienteSessaoDbService.getById(expedienteId)
 
   if (!expediente) {
     throw new NotFoundError('Expediente')
@@ -49,38 +37,31 @@ export const GET = withAuth(withErrorHandler(async (
 // PUT - Atualiza expediente
 export const PUT = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; expedienteId: string } },
+  context: { params: Promise<{ id: string; expedienteId: string }> },
   session
 ) => {
+  const { expedienteId } = await context.params
   const body = await request.json()
   const payload = ExpedienteUpdateSchema.parse(body)
 
-  const expediente = await prisma.expedienteSessao.findUnique({
-    where: { id: params.expedienteId },
-    include: { tipoExpediente: true }
-  })
+  const expediente = await expedienteSessaoDbService.getById(expedienteId)
 
   if (!expediente) {
     throw new NotFoundError('Expediente')
   }
 
-  const expedienteAtualizado = await prisma.expedienteSessao.update({
-    where: { id: params.expedienteId },
-    data: {
-      ...(payload.conteudo && { conteudo: payload.conteudo }),
-      ...(payload.ordem !== undefined && { ordem: payload.ordem })
-    },
-    include: {
-      tipoExpediente: true
-    }
-  })
+  const updateData: Record<string, unknown> = {}
+  if (payload.conteudo) updateData.conteudo = payload.conteudo
+  if (payload.ordem !== undefined) updateData.ordem = payload.ordem
+
+  const expedienteAtualizado = await expedienteSessaoDbService.update(expedienteId, updateData as { conteudo?: string; ordem?: number })
 
   await logAudit({
     request,
     session,
     action: 'EXPEDIENTE_ATUALIZADO',
     entity: 'ExpedienteSessao',
-    entityId: params.expedienteId,
+    entityId: expedienteId,
     metadata: {
       sessaoId: expediente.sessaoId,
       tipoExpediente: expediente.tipoExpediente.nome
@@ -93,28 +74,24 @@ export const PUT = withAuth(withErrorHandler(async (
 // DELETE - Remove expediente
 export const DELETE = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; expedienteId: string } },
+  context: { params: Promise<{ id: string; expedienteId: string }> },
   session
 ) => {
-  const expediente = await prisma.expedienteSessao.findUnique({
-    where: { id: params.expedienteId },
-    include: { tipoExpediente: true }
-  })
+  const { expedienteId } = await context.params
+  const expediente = await expedienteSessaoDbService.getById(expedienteId)
 
   if (!expediente) {
     throw new NotFoundError('Expediente')
   }
 
-  await prisma.expedienteSessao.delete({
-    where: { id: params.expedienteId }
-  })
+  await expedienteSessaoDbService.remove(expedienteId)
 
   await logAudit({
     request,
     session,
     action: 'EXPEDIENTE_EXCLUIDO',
     entity: 'ExpedienteSessao',
-    entityId: params.expedienteId,
+    entityId: expedienteId,
     metadata: {
       sessaoId: expediente.sessaoId,
       tipoExpediente: expediente.tipoExpediente.nome

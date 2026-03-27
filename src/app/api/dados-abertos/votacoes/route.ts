@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -13,96 +13,24 @@ export async function GET(request: NextRequest) {
   try {
     enforceRateLimit(request, 'PUBLIC')
 
-    // Buscar configuração institucional
-    const config = await prisma.configuracaoInstitucional.findFirst({
-      where: { slug: 'principal' }
-    })
-    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+    const info = await dadosAbertosService.getInfo()
 
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
     const anoParam = searchParams.get('ano')
     const ano = anoParam ? parseInt(anoParam, 10) : undefined
-    const proposicaoId = searchParams.get('proposicao')
-    const parlamentarId = searchParams.get('parlamentar')
+    const proposicaoId = searchParams.get('proposicao') || undefined
+    const parlamentarId = searchParams.get('parlamentar') || undefined
     const page = parseInt(searchParams.get('page') || '1')
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-    const where = {
-      ...(ano && {
-        proposicao: {
-          ano
-        }
-      }),
-      ...(proposicaoId && { proposicaoId }),
-      ...(parlamentarId && { parlamentarId })
-    }
-
-    const [votacoes, total] = await Promise.all([
-      prisma.votacao.findMany({
-        where,
-        select: {
-          id: true,
-          voto: true,
-          createdAt: true,
-          parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              partido: true
-            }
-          },
-          proposicao: {
-            select: {
-              id: true,
-              numero: true,
-              ano: true,
-              tipo: true,
-              ementa: true,
-              sessao: {
-                select: {
-                  id: true,
-                  numero: true,
-                  tipo: true,
-                  data: true
-                }
-              }
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit
-      }),
-      prisma.votacao.count({ where })
-    ])
-
-    const dadosFormatados = votacoes.map(v => ({
-      id: v.id,
-      voto: v.voto,
-      data_voto: v.createdAt.toISOString(),
-      parlamentar: {
-        id: v.parlamentar.id,
-        nome: v.parlamentar.nome,
-        partido: v.parlamentar.partido
-      },
-      proposicao: v.proposicao ? {
-        id: v.proposicao.id,
-        numero: v.proposicao.numero,
-        ano: v.proposicao.ano,
-        tipo: v.proposicao.tipo,
-        ementa: v.proposicao.ementa
-      } : null,
-      sessao: v.proposicao?.sessao ? {
-        id: v.proposicao.sessao.id,
-        numero: v.proposicao.sessao.numero,
-        tipo: v.proposicao.sessao.tipo,
-        data: v.proposicao.sessao.data.toISOString().split('T')[0]
-      } : null
-    }))
+    const { dados, total } = await dadosAbertosService.getVotacoes(
+      { ano, proposicaoId, parlamentarId },
+      { page, limit }
+    )
 
     if (formato === 'csv') {
-      const csv = convertToCSV(dadosFormatados.map(v => ({
+      const csv = convertToCSV(dados.map(v => ({
         id: v.id,
         voto: v.voto,
         data_voto: v.data_voto,
@@ -126,14 +54,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      dados: dadosFormatados,
+      dados,
       metadados: {
         total,
         pagina: page,
         limite: limit,
         paginas: Math.ceil(total / limit),
         atualizacao: new Date().toISOString(),
-        fonte: nomeCasa
+        fonte: info.nomeCasa
       }
     })
   } catch (error) {

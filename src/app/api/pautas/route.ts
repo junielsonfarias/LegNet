@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { pautasDbService } from '@/lib/services/pautas-db-service'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,13 +74,10 @@ export const POST = withAuth(withErrorHandler(async (request: NextRequest, _cont
   const payload = PautaCreateSchema.parse(body)
 
   // Verificar se sessão existe e se já tem pauta
-  const sessao = await prisma.sessao.findUnique({
-    where: { id: payload.sessaoId },
-    include: { pautaSessao: true }
-  })
+  const sessao = await sessaoDbService.getById(payload.sessaoId, { pautaSessao: true })
 
   if (!sessao) throw new ValidationError('Sessão não encontrada')
-  if (sessao.pautaSessao) throw new ValidationError('Esta sessão já possui uma pauta vinculada')
+  if ((sessao as any).pautaSessao) throw new ValidationError('Esta sessão já possui uma pauta vinculada')
 
   const pauta = await pautasDbService.create(payload)
 

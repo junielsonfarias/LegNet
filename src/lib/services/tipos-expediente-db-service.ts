@@ -27,6 +27,17 @@ export const tiposExpedienteDbService = {
     return prisma.tipoExpediente.findUnique({ where: { id } })
   },
 
+  async getByIdWithCount(id: string) {
+    return prisma.tipoExpediente.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { expedientes: true }
+        }
+      }
+    })
+  },
+
   async checkDuplicateName(nome: string, excludeId?: string) {
     const where: any = { nome: { equals: nome, mode: 'insensitive' } }
     if (excludeId) where.id = { not: excludeId }
@@ -63,5 +74,12 @@ export const tiposExpedienteDbService = {
   async remove(id: string) {
     await prisma.tipoExpediente.delete({ where: { id } })
     return { success: true }
+  },
+
+  async deactivate(id: string) {
+    return prisma.tipoExpediente.update({
+      where: { id },
+      data: { ativo: false }
+    })
   }
 }

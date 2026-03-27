@@ -1,7 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -58,88 +56,10 @@ export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
   const validatedData = CreateParecerSchema.parse(body)
 
-  // Verificar duplicidade
-  const parecerExistente = await pareceresDbService.checkDuplicate(
-    validatedData.proposicaoId,
-    validatedData.comissaoId
-  )
-  if (parecerExistente) {
-    throw new ValidationError('Já existe um parecer desta comissão para esta proposição')
+  try {
+    const parecer = await pareceresDbService.createWithValidation(validatedData)
+    return createSuccessResponse(parecer, 'Parecer criado com sucesso')
+  } catch (error: any) {
+    throw new ValidationError(error.message)
   }
-
-  // Verificar proposição
-  const proposicao = await prisma.proposicao.findUnique({
-    where: { id: validatedData.proposicaoId }
-  })
-  if (!proposicao) throw new ValidationError('Proposição não encontrada')
-
-  // Verificar comissão
-  const comissao = await prisma.comissao.findUnique({
-    where: { id: validatedData.comissaoId }
-  })
-  if (!comissao) throw new ValidationError('Comissão não encontrada')
-  if (!comissao.ativa) throw new ValidationError('Esta comissão não está ativa')
-
-  // Verificar relator é membro ativo
-  const membroComissao = await prisma.membroComissao.findFirst({
-    where: {
-      comissaoId: validatedData.comissaoId,
-      parlamentarId: validatedData.relatorId,
-      ativo: true
-    }
-  })
-  if (!membroComissao) throw new ValidationError('O relator deve ser membro ativo da comissão')
-
-  // Verificar tramitação
-  const unidadeFilter: Prisma.TramitacaoUnidadeWhereInput = {
-    OR: [
-      { nome: { contains: comissao.nome, mode: 'insensitive' as Prisma.QueryMode } },
-      ...(comissao.sigla ? [{ nome: { contains: comissao.sigla, mode: 'insensitive' as Prisma.QueryMode } }] : []),
-      ...(comissao.sigla ? [{ sigla: comissao.sigla }] : [])
-    ]
-  }
-
-  const tramitacaoParaComissao = await prisma.tramitacao.findFirst({
-    where: {
-      proposicaoId: validatedData.proposicaoId,
-      status: { in: ['RECEBIDA', 'EM_ANDAMENTO'] },
-      unidade: unidadeFilter
-    }
-  })
-
-  if (!tramitacaoParaComissao) {
-    throw new ValidationError(
-      `A proposição não está em tramitação para a ${comissao.sigla || comissao.nome}. ` +
-      'Verifique se a proposição foi tramitada para esta comissão.'
-    )
-  }
-
-  // Gerar número
-  const anoAtual = new Date().getFullYear()
-  const siglaComissao = comissao.sigla || comissao.nome.substring(0, 3).toUpperCase()
-  const proximoNumero = await pareceresDbService.getNextNumero(validatedData.comissaoId, anoAtual)
-  const numero = `${String(proximoNumero).padStart(3, '0')}/${anoAtual}-${siglaComissao}`
-
-  const parecer = await pareceresDbService.create({
-    proposicaoId: validatedData.proposicaoId,
-    comissaoId: validatedData.comissaoId,
-    relatorId: validatedData.relatorId,
-    numero,
-    ano: anoAtual,
-    tipo: validatedData.tipo,
-    status: 'AGUARDANDO_PAUTA',
-    fundamentacao: validatedData.fundamentacao,
-    conclusao: validatedData.conclusao,
-    ementa: validatedData.ementa,
-    emendasPropostas: validatedData.emendasPropostas,
-    dataDistribuicao: new Date(),
-    prazoEmissao: validatedData.prazoEmissao ? new Date(validatedData.prazoEmissao) : null,
-    observacoes: validatedData.observacoes,
-    arquivoUrl: validatedData.arquivoUrl,
-    arquivoNome: validatedData.arquivoNome,
-    arquivoTamanho: validatedData.arquivoTamanho,
-    driveUrl: validatedData.driveUrl
-  })
-
-  return createSuccessResponse(parecer, 'Parecer criado com sucesso')
 }, { permissions: 'comissao.manage' })

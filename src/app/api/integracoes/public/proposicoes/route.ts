@@ -1,7 +1,5 @@
 import { NextRequest } from 'next/server'
 
-import { prisma } from '@/lib/prisma'
-
 // Força rota dinâmica para evitar erro de renderização estática
 export const dynamic = 'force-dynamic'
 import {
@@ -14,6 +12,7 @@ import {
   verifyIntegrationToken,
   recordIntegrationUsage
 } from '@/lib/integrations/tokens'
+import { proposicaoDbService } from '@/lib/services/proposicao-db-service'
 
 const MAX_LIMIT = 100
 
@@ -47,46 +46,20 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   const limit = Math.min(Number(limitParam || 50), MAX_LIMIT)
 
-  const where: Record<string, any> = {}
-  if (status) {
-    where.status = status
-  }
-  if (tipo) {
-    where.tipo = tipo
-  }
-  if (autorId) {
-    where.autorId = autorId
-  }
-  if ( anoParam) {
-    const ano = Number(anoParam)
+  let ano: number | undefined
+  if (anoParam) {
+    ano = Number(anoParam)
     if (Number.isNaN(ano)) {
       throw new ValidationError('Parâmetro "ano" inválido')
     }
-    where.ano = ano
   }
 
-  const proposicoes = await prisma.proposicao.findMany({
-    where,
-    orderBy: { dataApresentacao: 'desc' },
-    take: limit,
-    include: {
-      autor: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          partido: true
-        }
-      },
-      votacoes: {
-        select: {
-          id: true,
-          voto: true,
-          parlamentarId: true,
-          createdAt: true
-        }
-      }
-    }
+  const proposicoes = await proposicaoDbService.listPublic({
+    status,
+    tipo,
+    autorId,
+    ano,
+    limit
   })
 
   const sanitized = proposicoes.map(proposicao => ({
@@ -111,4 +84,3 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   return createSuccessResponse(sanitized, 'Proposições recuperadas com sucesso', sanitized.length)
 })
-

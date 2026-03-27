@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { z } from 'zod'
 import { tiposProposicaoDbService } from '@/lib/services/tipos-proposicao-db-service'
@@ -78,7 +77,7 @@ export const DELETE = withAuth(async (request: NextRequest, context: RouteParams
       return NextResponse.json({ success: false, error: 'Tipo de proposição não encontrado' }, { status: 404 })
     }
 
-    const proposicoesCount = await prisma.proposicao.count({ where: { tipo: existente.codigo } })
+    const proposicoesCount = await tiposProposicaoDbService.countProposicoesByCodigo(existente.codigo)
     if (proposicoesCount > 0) {
       return NextResponse.json({
         success: false,

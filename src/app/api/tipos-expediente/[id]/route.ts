@@ -7,10 +7,10 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { tiposExpedienteDbService } from '@/lib/services/tipos-expediente-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,16 +25,10 @@ const TipoExpedienteUpdateSchema = z.object({
 // GET - Obtém tipo
 export const GET = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const tipo = await prisma.tipoExpediente.findUnique({
-    where: { id: params.id },
-    include: {
-      _count: {
-        select: { expedientes: true }
-      }
-    }
-  })
+  const { id } = await params
+  const tipo = await tiposExpedienteDbService.getByIdWithCount(id)
 
   if (!tipo) {
     throw new NotFoundError('Tipo de expediente')
@@ -46,15 +40,14 @@ export const GET = withAuth(withErrorHandler(async (
 // PUT - Atualiza tipo
 export const PUT = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
+  const { id } = await params
   const body = await request.json()
   const payload = TipoExpedienteUpdateSchema.parse(body)
 
-  const tipo = await prisma.tipoExpediente.findUnique({
-    where: { id: params.id }
-  })
+  const tipo = await tiposExpedienteDbService.getById(id)
 
   if (!tipo) {
     throw new NotFoundError('Tipo de expediente')
@@ -62,35 +55,21 @@ export const PUT = withAuth(withErrorHandler(async (
 
   // Verificar nome duplicado se estiver alterando
   if (payload.nome && payload.nome !== tipo.nome) {
-    const existente = await prisma.tipoExpediente.findFirst({
-      where: {
-        nome: { equals: payload.nome, mode: 'insensitive' },
-        id: { not: params.id }
-      }
-    })
+    const existente = await tiposExpedienteDbService.checkDuplicateName(payload.nome, id)
 
     if (existente) {
       throw new ValidationError('Já existe um tipo de expediente com este nome')
     }
   }
 
-  const tipoAtualizado = await prisma.tipoExpediente.update({
-    where: { id: params.id },
-    data: {
-      ...(payload.nome && { nome: payload.nome }),
-      ...(payload.descricao !== undefined && { descricao: payload.descricao }),
-      ...(payload.ordem !== undefined && { ordem: payload.ordem }),
-      ...(payload.tempoMaximo !== undefined && { tempoMaximo: payload.tempoMaximo }),
-      ...(payload.ativo !== undefined && { ativo: payload.ativo })
-    }
-  })
+  const tipoAtualizado = await tiposExpedienteDbService.update(id, payload)
 
   await logAudit({
     request,
     session,
     action: 'TIPO_EXPEDIENTE_ATUALIZADO',
     entity: 'TipoExpediente',
-    entityId: params.id,
+    entityId: id,
     metadata: { alteracoes: payload }
   })
 
@@ -100,17 +79,11 @@ export const PUT = withAuth(withErrorHandler(async (
 // DELETE - Remove (soft delete)
 export const DELETE = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
-  const tipo = await prisma.tipoExpediente.findUnique({
-    where: { id: params.id },
-    include: {
-      _count: {
-        select: { expedientes: true }
-      }
-    }
-  })
+  const { id } = await params
+  const tipo = await tiposExpedienteDbService.getByIdWithCount(id)
 
   if (!tipo) {
     throw new NotFoundError('Tipo de expediente')
@@ -118,17 +91,14 @@ export const DELETE = withAuth(withErrorHandler(async (
 
   // Se tem expedientes vinculados, apenas desativa
   if (tipo._count.expedientes > 0) {
-    await prisma.tipoExpediente.update({
-      where: { id: params.id },
-      data: { ativo: false }
-    })
+    await tiposExpedienteDbService.deactivate(id)
 
     await logAudit({
       request,
       session,
       action: 'TIPO_EXPEDIENTE_DESATIVADO',
       entity: 'TipoExpediente',
-      entityId: params.id,
+      entityId: id,
       metadata: { nome: tipo.nome, motivoSoftDelete: 'possui expedientes vinculados' }
     })
 
@@ -136,16 +106,14 @@ export const DELETE = withAuth(withErrorHandler(async (
   }
 
   // Sem expedientes, pode excluir
-  await prisma.tipoExpediente.delete({
-    where: { id: params.id }
-  })
+  await tiposExpedienteDbService.remove(id)
 
   await logAudit({
     request,
     session,
     action: 'TIPO_EXPEDIENTE_EXCLUIDO',
     entity: 'TipoExpediente',
-    entityId: params.id,
+    entityId: id,
     metadata: { nome: tipo.nome }
   })
 

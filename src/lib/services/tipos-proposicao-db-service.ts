@@ -72,5 +72,9 @@ export const tiposProposicaoDbService = {
   async remove(id: string) {
     await prisma.tipoProposicaoConfig.delete({ where: { id } })
     return { success: true }
+  },
+
+  async countProposicoesByCodigo(codigo: string) {
+    return prisma.proposicao.count({ where: { tipo: codigo } })
   }
 }

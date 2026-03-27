@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
+import { relatoriosDbService } from '@/lib/services/relatorios-db-service'
 import { logAudit } from '@/lib/audit'
 import {
   gerarRelatorioExcelParlamentares,
@@ -75,22 +75,8 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
   try {
     switch (tipo) {
       case 'parlamentares': {
-        const where: any = {}
-        if (ativo !== null && ativo !== undefined) {
-          where.ativo = ativo === 'true'
-        }
-
-        const parlamentares = await prisma.parlamentar.findMany({
-          where,
-          include: {
-            _count: {
-              select: {
-                proposicoes: true,
-                presencas: { where: { presente: true } }
-              }
-            }
-          },
-          orderBy: { nome: 'asc' }
+        const parlamentares = await relatoriosDbService.getParlamentaresData({
+          ativo: ativo !== null && ativo !== undefined ? ativo === 'true' : undefined
         })
 
         const dados: RelatorioParlamentar[] = parlamentares.map(p => ({
@@ -112,33 +98,12 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
       }
 
       case 'sessoes': {
-        const where: any = {}
-        if (status) where.status = status
-        if (tipoSessao) where.tipo = tipoSessao
-        if (dataInicio) where.data = { gte: new Date(dataInicio) }
-        if (dataFim) where.data = { ...where.data, lte: new Date(dataFim) }
-        if (legislaturaId) where.legislaturaId = legislaturaId
-
-        const sessoes = await prisma.sessao.findMany({
-          where,
-          include: {
-            _count: {
-              select: {
-                presencas: { where: { presente: true } }
-              }
-            },
-            presencas: {
-              select: { presente: true }
-            },
-            pautaSessao: {
-              include: {
-                _count: {
-                  select: { itens: true }
-                }
-              }
-            }
-          },
-          orderBy: [{ data: 'desc' }, { numero: 'desc' }]
+        const sessoes = await relatoriosDbService.getSessoesData({
+          status: status || undefined,
+          tipo: tipoSessao || undefined,
+          dataInicio: dataInicio || undefined,
+          dataFim: dataFim || undefined,
+          legislaturaId: legislaturaId || undefined
         })
 
         const dados: RelatorioSessao[] = sessoes.map(s => ({
@@ -159,18 +124,9 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
       }
 
       case 'proposicoes': {
-        const where: any = {}
-        if (status) where.status = status
-        if (ano) where.ano = parseInt(ano)
-
-        const proposicoes = await prisma.proposicao.findMany({
-          where,
-          include: {
-            autor: {
-              select: { nome: true, apelido: true }
-            }
-          },
-          orderBy: [{ ano: 'desc' }, { numero: 'desc' }]
+        const proposicoes = await relatoriosDbService.getProposicoesData({
+          status: status || undefined,
+          ano: ano ? parseInt(ano) : undefined
         })
 
         const dados: RelatorioProposicao[] = proposicoes.map(p => ({
@@ -191,19 +147,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
       }
 
       case 'presenca': {
-        // Buscar todas as presenças agrupadas por parlamentar
-        const parlamentares = await prisma.parlamentar.findMany({
-          where: { ativo: true },
-          include: {
-            presencas: {
-              select: {
-                presente: true,
-                justificativa: true
-              }
-            }
-          },
-          orderBy: { nome: 'asc' }
-        })
+        const parlamentares = await relatoriosDbService.getPresencaData()
 
         const dados: RelatorioPresenca[] = parlamentares.map(p => {
           const totalSessoes = p.presencas.length
@@ -229,21 +173,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
       }
 
       case 'votacoes': {
-        // Buscar votações por proposição
-        const proposicoes = await prisma.proposicao.findMany({
-          where: {
-            resultado: { not: null }
-          },
-          include: {
-            votacoes: {
-              select: { voto: true }
-            },
-            sessao: {
-              select: { numero: true, data: true }
-            }
-          },
-          orderBy: { dataVotacao: 'desc' }
-        })
+        const proposicoes = await relatoriosDbService.getVotacoesData()
 
         const dados: RelatorioVotacao[] = proposicoes
           .filter(p => p.votacoes.length > 0)

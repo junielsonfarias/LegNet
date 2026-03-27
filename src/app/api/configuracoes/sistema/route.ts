@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { configuracaoDbService } from '@/lib/services/configuracao-db-service'
 import {
   ensureSystemConfigDefaults,
   parseSystemConfigValue,
@@ -11,6 +11,7 @@ import {
   SYSTEM_CONFIG_DEFAULTS,
   SystemConfigType
 } from '@/lib/configuracoes/defaults'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,13 +46,7 @@ export const GET = withAuth(async (request: NextRequest) => {
   const categoria = request.nextUrl.searchParams.get('categoria') ?? undefined
   const prefix = request.nextUrl.searchParams.get('prefix') ?? undefined
 
-  const configuracoes = await prisma.configuracao.findMany({
-    where: {
-      ...(categoria ? { categoria } : {}),
-      ...(prefix ? { chave: { startsWith: prefix } } : {})
-    },
-    orderBy: { chave: 'asc' }
-  })
+  const configuracoes = await configuracaoDbService.getConfiguracoesDoSistema({ categoria, prefix })
 
   return createSuccessResponse(configuracoes.map(mapToResponse), 'Configurações carregadas com sucesso', configuracoes.length)
 }, { permissions: 'config.view' })
@@ -62,7 +57,7 @@ export const PUT = withAuth(async (request: NextRequest, _ctx, session) => {
 
   await ensureSystemConfigDefaults(prisma)
 
-  const existentes = await prisma.configuracao.findMany()
+  const existentes = await configuracaoDbService.getAllConfiguracoesSistema()
   const existentesMap = new Map(existentes.map(config => [config.chave, config]))
 
   const atualizadas = [] as any[]
@@ -77,23 +72,13 @@ export const PUT = withAuth(async (request: NextRequest, _ctx, session) => {
 
     const serialized = serializeSystemConfigValue(config.valor, tipo)
 
-    const upserted = await prisma.configuracao.upsert({
-      where: { chave: config.chave },
-      update: {
-        valor: serialized,
-        tipo,
-        descricao: config.descricao ?? atual?.descricao ?? SYSTEM_CONFIG_DEFAULTS.find(d => d.chave === config.chave)?.descricao,
-        categoria: config.categoria ?? atual?.categoria ?? SYSTEM_CONFIG_DEFAULTS.find(d => d.chave === config.chave)?.categoria ?? 'Geral',
-        editavel: config.editavel ?? atual?.editavel ?? true
-      },
-      create: {
-        chave: config.chave,
-        valor: serialized,
-        tipo,
-        descricao: config.descricao ?? SYSTEM_CONFIG_DEFAULTS.find(d => d.chave === config.chave)?.descricao,
-        categoria: config.categoria ?? SYSTEM_CONFIG_DEFAULTS.find(d => d.chave === config.chave)?.categoria ?? 'Geral',
-        editavel: config.editavel ?? true
-      }
+    const upserted = await configuracaoDbService.upsertConfiguracaoSistema({
+      chave: config.chave,
+      valor: serialized,
+      tipo,
+      descricao: config.descricao ?? atual?.descricao ?? SYSTEM_CONFIG_DEFAULTS.find(d => d.chave === config.chave)?.descricao,
+      categoria: config.categoria ?? atual?.categoria ?? SYSTEM_CONFIG_DEFAULTS.find(d => d.chave === config.chave)?.categoria ?? 'Geral',
+      editavel: config.editavel ?? atual?.editavel ?? true
     })
 
     atualizadas.push(mapToResponse(upserted))
@@ -114,4 +99,3 @@ export const PUT = withAuth(async (request: NextRequest, _ctx, session) => {
 
   return createSuccessResponse(atualizadas, 'Configurações atualizadas com sucesso', atualizadas.length)
 }, { permissions: 'config.manage' })
-

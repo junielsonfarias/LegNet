@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
+import { tiposTramitacaoDbService } from '@/lib/services/tipos-tramitacao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,23 +24,7 @@ export const GET = withAuth(async (
 ) => {
   const { id } = await params
 
-  const tipo = await prisma.tramitacaoTipo.findUnique({
-    where: { id },
-    include: {
-      unidadeResponsavel: {
-        select: {
-          id: true,
-          nome: true,
-          sigla: true
-        }
-      },
-      _count: {
-        select: {
-          tramitacoes: true
-        }
-      }
-    }
-  })
+  const tipo = await tiposTramitacaoDbService.getByIdWithCount(id)
 
   if (!tipo) {
     throw new NotFoundError('Tipo de tramitação não encontrado')
@@ -65,9 +49,7 @@ export const PUT = withAuth(async (
   const data = validation.data
 
   // Verificar se existe
-  const existente = await prisma.tramitacaoTipo.findUnique({
-    where: { id }
-  })
+  const existente = await tiposTramitacaoDbService.getById(id)
 
   if (!existente) {
     throw new NotFoundError('Tipo de tramitação não encontrado')
@@ -75,39 +57,14 @@ export const PUT = withAuth(async (
 
   // Verificar nome duplicado (se estiver alterando)
   if (data.nome && data.nome !== existente.nome) {
-    const duplicado = await prisma.tramitacaoTipo.findFirst({
-      where: {
-        nome: data.nome,
-        id: { not: id }
-      }
-    })
+    const duplicado = await tiposTramitacaoDbService.checkDuplicateName(data.nome, id)
 
     if (duplicado) {
       throw new ValidationError('Já existe um tipo de tramitação com este nome')
     }
   }
 
-  const tipo = await prisma.tramitacaoTipo.update({
-    where: { id },
-    data: {
-      nome: data.nome,
-      descricao: data.descricao,
-      prazoRegimental: data.prazoRegimental,
-      prazoLegal: data.prazoLegal,
-      ativo: data.ativo,
-      ordem: data.ordem,
-      unidadeResponsavelId: data.unidadeResponsavelId
-    },
-    include: {
-      unidadeResponsavel: {
-        select: {
-          id: true,
-          nome: true,
-          sigla: true
-        }
-      }
-    }
-  })
+  const tipo = await tiposTramitacaoDbService.update(id, data)
 
   return createSuccessResponse(tipo)
 }, { permissions: 'config.manage' })
@@ -120,16 +77,7 @@ export const DELETE = withAuth(async (
   const { id } = await params
 
   // Verificar se existe
-  const existente = await prisma.tramitacaoTipo.findUnique({
-    where: { id },
-    include: {
-      _count: {
-        select: {
-          tramitacoes: true
-        }
-      }
-    }
-  })
+  const existente = await tiposTramitacaoDbService.getByIdWithCount(id)
 
   if (!existente) {
     throw new NotFoundError('Tipo de tramitação não encontrado')
@@ -143,9 +91,7 @@ export const DELETE = withAuth(async (
     )
   }
 
-  await prisma.tramitacaoTipo.delete({
-    where: { id }
-  })
+  await tiposTramitacaoDbService.remove(id)
 
   return createSuccessResponse({ message: 'Tipo de tramitação excluído com sucesso' })
 }, { permissions: 'config.manage' })

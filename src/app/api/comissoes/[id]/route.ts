@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -26,9 +25,10 @@ const UpdateComissaoSchema = z.object({
 // GET - Buscar comissão por ID
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Comissão')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Comissão')
 
   const comissao = await comissaoDbService.getById(id)
   if (!comissao) {
@@ -85,17 +85,7 @@ export const DELETE = withAuth(async (
   await comissaoDbService.remove(id)
 
   // Desativar histórico de participação
-  await prisma.historicoParticipacao.updateMany({
-    where: {
-      tipo: 'COMISSAO',
-      referenciaId: id,
-      ativo: true
-    },
-    data: {
-      ativo: false,
-      dataFim: new Date()
-    }
-  })
+  await comissaoDbService.deactivateHistoricoParticipacao(id)
 
   return createSuccessResponse(null, 'Comissão excluída com sucesso')
 }, { permissions: 'comissao.manage' })

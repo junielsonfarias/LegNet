@@ -35,14 +35,14 @@ const AtualizarSchema = z.object({
  */
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   const session = await getServerSession(authOptions)
   if (!session) {
     throw new ValidationError('Não autorizado')
   }
 
-  const id = params.id
+  const { id } = await params
   const relatorio = await buscarRelatorioAgendado(id)
 
   if (!relatorio) {

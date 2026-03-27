@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 
-import { prisma } from '@/lib/prisma'
 import {
   createSuccessResponse,
   NotFoundError,
@@ -8,10 +7,7 @@ import {
   withErrorHandler
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
-import {
-  calcularPresencaResumo,
-  calcularVotacaoResumo
-} from '@/lib/parlamentares/dashboard-utils'
+import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,104 +20,25 @@ const toISO = (value?: Date | string | null) => {
 
 export const GET = withAuth(withErrorHandler(async (
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const parlamentarId = validateId(params.id, 'Parlamentar')
+  const { id: rawId } = await context.params
+  const parlamentarId = validateId(rawId, 'Parlamentar')
 
-  const parlamentarResult = await prisma.parlamentar.findUnique({
-    where: { id: parlamentarId },
-    include: {
-      mandatos: {
-        include: {
-          legislatura: true
-        },
-        orderBy: {
-          dataInicio: 'desc'
-        }
-      },
-      filiacoes: {
-        orderBy: {
-          dataInicio: 'desc'
-        }
-      }
-    }
-  })
+  const dashboardData = await parlamentarDbService.getDashboard(parlamentarId)
 
-  if (!parlamentarResult) {
+  if (!dashboardData) {
     throw new NotFoundError('Parlamentar')
   }
 
-  // Type assertion - we know mandatos and filiacoes are included from the query
-  const parlamentar = parlamentarResult as any
-
-  const [membrosComissao, membrosMesa, presencas, votacoes, sessoesAgendadas] = await Promise.all([
-    prisma.membroComissao.findMany({
-      where: { parlamentarId },
-      include: {
-        comissao: true
-      }
-    }),
-    prisma.membroMesaDiretora.findMany({
-      where: { parlamentarId },
-      include: {
-        mesaDiretora: {
-          include: {
-            periodo: {
-              include: {
-                legislatura: true
-              }
-            }
-          }
-        },
-        cargo: true
-      }
-    }),
-    prisma.presencaSessao.findMany({
-      where: { parlamentarId }
-    }),
-    prisma.votacao.findMany({
-      where: { parlamentarId }
-    }),
-    prisma.sessao.findMany({
-      where: {
-        presencas: {
-          some: {
-            parlamentarId
-          }
-        }
-      },
-      orderBy: {
-        data: 'asc'
-      },
-      include: {
-        legislatura: true,
-        periodo: true,
-        presencas: {
-          where: { parlamentarId },
-          select: {
-            presente: true,
-            justificativa: true
-          }
-        }
-      },
-      take: 6
-    })
-  ])
-
-  const presencaResumo = calcularPresencaResumo(
-    presencas.map(p => ({ presente: p.presente, justificativa: p.justificativa }))
-  )
-
-  const votacaoResumo = calcularVotacaoResumo(
-    votacoes.map(v => ({ voto: v.voto }))
-  )
+  const { parlamentar, membrosComissao, membrosMesa, presencaResumo, votacaoResumo, sessoesAgendadas } = dashboardData
 
   const comissoesAtivas = membrosComissao.filter(m => m.ativo)
   const comissoesHistorico = membrosComissao.filter(m => !m.ativo)
   const mesasAtivas = membrosMesa.filter(m => m.ativo)
   const mesasHistorico = membrosMesa.filter(m => !m.ativo)
 
-  const mandatoAtual = parlamentar.mandatos.find(m => m.ativo) || parlamentar.mandatos[0] || null
+  const mandatoAtual = parlamentar.mandatos.find((m: any) => m.ativo) || parlamentar.mandatos[0] || null
 
   const resposta = {
     parlamentar: {
@@ -154,7 +71,7 @@ export const GET = withAuth(withErrorHandler(async (
     },
     presenca: presencaResumo,
     votacoes: votacaoResumo,
-    mandatos: parlamentar.mandatos.map(m => ({
+    mandatos: parlamentar.mandatos.map((m: any) => ({
       id: m.id,
       legislatura: m.legislatura
         ? {
@@ -171,7 +88,7 @@ export const GET = withAuth(withErrorHandler(async (
       dataFim: toISO(m.dataFim),
       ativo: m.ativo
     })),
-    filiacoes: parlamentar.filiacoes.map(f => ({
+    filiacoes: parlamentar.filiacoes.map((f: any) => ({
       id: f.id,
       partido: f.partido,
       dataInicio: toISO(f.dataInicio),
@@ -179,7 +96,7 @@ export const GET = withAuth(withErrorHandler(async (
       ativa: f.ativa
     })),
     comissoes: {
-      ativas: comissoesAtivas.map(m => ({
+      ativas: comissoesAtivas.map((m: any) => ({
         id: m.id,
         cargo: m.cargo,
         comissao: m.comissao
@@ -193,7 +110,7 @@ export const GET = withAuth(withErrorHandler(async (
         dataFim: toISO(m.dataFim),
         observacoes: m.observacoes
       })),
-      historico: comissoesHistorico.map(m => ({
+      historico: comissoesHistorico.map((m: any) => ({
         id: m.id,
         cargo: m.cargo,
         comissao: m.comissao
@@ -209,7 +126,7 @@ export const GET = withAuth(withErrorHandler(async (
       }))
     },
     mesas: {
-      ativas: mesasAtivas.map(m => ({
+      ativas: mesasAtivas.map((m: any) => ({
         id: m.id,
         cargo: m.cargo?.nome || null,
         mesaId: m.mesaDiretoraId,
@@ -232,7 +149,7 @@ export const GET = withAuth(withErrorHandler(async (
         dataFim: toISO(m.dataFim),
         observacoes: m.observacoes
       })),
-      historico: mesasHistorico.map(m => ({
+      historico: mesasHistorico.map((m: any) => ({
         id: m.id,
         cargo: m.cargo?.nome || null,
         mesaId: m.mesaDiretoraId,
@@ -256,7 +173,7 @@ export const GET = withAuth(withErrorHandler(async (
         observacoes: m.observacoes
       }))
     },
-    agenda: sessoesAgendadas.map(sessao => ({
+    agenda: sessoesAgendadas.map((sessao: any) => ({
       id: sessao.id,
       numero: sessao.numero,
       tipo: sessao.tipo,
@@ -283,4 +200,3 @@ export const GET = withAuth(withErrorHandler(async (
 
   return createSuccessResponse(resposta, 'Dashboard do parlamentar carregado com sucesso')
 }), { permissions: 'parlamentar.view' })
-

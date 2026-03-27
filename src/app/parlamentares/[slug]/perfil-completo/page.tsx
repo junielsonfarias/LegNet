@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, use } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,12 +29,13 @@ import { ParlamentarCompleto } from '@/lib/types/parlamentar-avancado'
 import { toast } from 'sonner'
 
 interface PerfilCompletoPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function PerfilCompletoPage({ params }: PerfilCompletoPageProps) {
+export default function PerfilCompletoPage({ params: paramsPromise }: PerfilCompletoPageProps) {
+  const params = use(paramsPromise)
   const [parlamentar, setParlamentar] = useState<ParlamentarCompleto | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')

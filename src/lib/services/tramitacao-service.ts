@@ -1,14 +1,756 @@
 /**
  * Serviço de Tramitação de Proposições
  * Implementa regras de negócio RN-030 a RN-037
+ * Inclui CRUD, dashboard e regras de negócio
  */
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { addBusinessDays, differenceInDays } from '@/lib/utils/date'
+import { ValidationError, NotFoundError } from '@/lib/error-handler'
 import type { Prisma } from '@prisma/client'
 
 const logger = createLogger('tramitacao')
+
+// ======================================================================
+// Interfaces para CRUD
+// ======================================================================
+
+export interface TramitacaoListFilters {
+  proposicaoId?: string
+  tipoTramitacaoId?: string
+  unidadeId?: string
+  status?: string
+  resultado?: string
+  automatica?: boolean | null
+  from?: string
+  to?: string
+  search?: string
+}
+
+export interface PaginationParams {
+  page: number
+  limit: number
+}
+
+export interface TramitacaoCreateData {
+  proposicaoId: string
+  tipoTramitacaoId: string
+  unidadeId?: string
+  dataEntrada?: string
+  dataSaida?: string
+  status?: 'RECEBIDA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  observacoes?: string
+  parecer?: string
+  resultado?: 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO'
+  responsavelId?: string
+  prazoVencimento?: string
+  diasVencidos?: number
+  automatica?: boolean
+}
+
+export interface TramitacaoUpdateData {
+  tipoTramitacaoId?: string
+  unidadeId?: string
+  dataEntrada?: string
+  dataSaida?: string | null
+  status?: 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  observacoes?: string | null
+  parecer?: string | null
+  resultado?: 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO' | null
+  responsavelId?: string | null
+  prazoVencimento?: string | null
+  diasVencidos?: number | null
+  automatica?: boolean
+}
+
+export interface TramitacaoActionReopen {
+  action: 'reopen'
+  observacoes?: string | null
+}
+
+export interface TramitacaoActionFinalize {
+  action: 'finalize'
+  observacoes?: string | null
+  resultado?: 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO' | null
+}
+
+// ======================================================================
+// CRUD Methods
+// ======================================================================
+
+/**
+ * Lista tramitações com filtros e paginação
+ */
+export async function list(
+  filters: TramitacaoListFilters,
+  pagination: PaginationParams
+) {
+  const { page, limit } = pagination
+  const where: any = {}
+
+  if (filters.proposicaoId) {
+    where.proposicaoId = filters.proposicaoId
+  }
+
+  if (filters.tipoTramitacaoId) {
+    where.tipoTramitacaoId = filters.tipoTramitacaoId
+  }
+
+  if (filters.unidadeId) {
+    where.unidadeId = filters.unidadeId
+  }
+
+  const validStatuses = ['RECEBIDA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA']
+  if (filters.status && validStatuses.includes(filters.status)) {
+    where.status = filters.status
+  }
+
+  const validResultados = ['APROVADO', 'REJEITADO', 'APROVADO_COM_EMENDAS', 'ARQUIVADO']
+  if (filters.resultado && validResultados.includes(filters.resultado)) {
+    where.resultado = filters.resultado
+  }
+
+  if (filters.automatica !== null && filters.automatica !== undefined) {
+    where.automatica = filters.automatica
+  }
+
+  if (filters.from || filters.to) {
+    where.dataEntrada = {}
+    if (filters.from) {
+      const fromDate = new Date(filters.from)
+      if (!Number.isNaN(fromDate.getTime())) {
+        where.dataEntrada.gte = fromDate
+      }
+    }
+    if (filters.to) {
+      const toDate = new Date(filters.to)
+      if (!Number.isNaN(toDate.getTime())) {
+        where.dataEntrada.lte = toDate
+      }
+    }
+  }
+
+  if (filters.search) {
+    where.OR = [
+      { observacoes: { contains: filters.search, mode: 'insensitive' } },
+      { parecer: { contains: filters.search, mode: 'insensitive' } }
+    ]
+  }
+
+  const [tramitacoes, total] = await Promise.all([
+    prisma.tramitacao.findMany({
+      where,
+      include: {
+        tipoTramitacao: true,
+        unidade: true,
+        proposicao: {
+          select: {
+            id: true,
+            numero: true,
+            ano: true,
+            tipo: true,
+            titulo: true
+          }
+        },
+        responsavel: {
+          select: {
+            id: true,
+            nome: true
+          }
+        }
+      },
+      orderBy: { dataEntrada: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit
+    }),
+    prisma.tramitacao.count({ where })
+  ])
+
+  return {
+    tramitacoes,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit)
+  }
+}
+
+/**
+ * Busca tramitação por ID com todos os relacionamentos
+ */
+export async function getById(id: string) {
+  const tramitacao = await prisma.tramitacao.findUnique({
+    where: { id },
+    include: {
+      tipoTramitacao: true,
+      unidade: true,
+      proposicao: {
+        select: {
+          id: true,
+          numero: true,
+          ano: true,
+          tipo: true,
+          titulo: true
+        }
+      },
+      responsavel: {
+        select: {
+          id: true,
+          nome: true
+        }
+      },
+      historicos: {
+        orderBy: { data: 'desc' }
+      },
+      notificacoes: {
+        orderBy: { enviadoEm: 'desc' }
+      },
+      fluxoEtapa: {
+        include: {
+          fluxo: true
+        }
+      }
+    }
+  })
+
+  if (!tramitacao) {
+    throw new NotFoundError('Tramitação não encontrada')
+  }
+
+  return tramitacao
+}
+
+/**
+ * Cria uma nova tramitação
+ * Inclui validação de proposição, tipo, unidade, cálculo de prazo e histórico
+ */
+export async function create(data: TramitacaoCreateData, userId?: string) {
+  // Verificar se proposição existe
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: data.proposicaoId }
+  })
+
+  if (!proposicao) {
+    throw new ValidationError('Proposição não encontrada')
+  }
+
+  // Buscar tipo de tramitação
+  const tipo = await prisma.tramitacaoTipo.findUnique({
+    where: { id: data.tipoTramitacaoId },
+    include: { unidadeResponsavel: true }
+  })
+
+  if (!tipo) {
+    throw new ValidationError('Tipo de tramitação não encontrado')
+  }
+
+  // Resolver unidade
+  const resolvedUnidadeId = data.unidadeId ?? tipo.unidadeResponsavelId
+  if (!resolvedUnidadeId) {
+    throw new ValidationError('Unidade responsável não informada e não configurada no tipo de tramitação selecionado.')
+  }
+
+  const unidade = await prisma.tramitacaoUnidade.findUnique({
+    where: { id: resolvedUnidadeId }
+  })
+
+  if (!unidade) {
+    throw new ValidationError('Unidade responsável não encontrada')
+  }
+
+  const status = (data.status ?? 'RECEBIDA') as 'RECEBIDA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  const dataEntrada = data.dataEntrada ? new Date(data.dataEntrada) : new Date()
+  let dataSaida = data.dataSaida ? new Date(data.dataSaida) : undefined
+
+  if (status === 'CONCLUIDA' && !dataSaida) {
+    dataSaida = new Date()
+  }
+
+  // Calcular prazo de vencimento (para status ativos: RECEBIDA ou EM_ANDAMENTO)
+  let prazoVencimento: Date | undefined = data.prazoVencimento ? new Date(data.prazoVencimento) : undefined
+  if (!prazoVencimento && (status === 'RECEBIDA' || status === 'EM_ANDAMENTO') && tipo.prazoRegimental > 0) {
+    prazoVencimento = addBusinessDays(dataEntrada, tipo.prazoRegimental) ?? undefined
+  }
+
+  // Calcular dias vencidos
+  let diasVencidos = data.diasVencidos
+  if (diasVencidos === undefined && prazoVencimento) {
+    const diff = Date.now() - prazoVencimento.getTime()
+    diasVencidos = diff > 0 ? Math.floor(diff / (1000 * 60 * 60 * 24)) : 0
+  }
+
+  const tramitacao = await prisma.tramitacao.create({
+    data: {
+      proposicaoId: data.proposicaoId,
+      tipoTramitacaoId: tipo.id,
+      unidadeId: resolvedUnidadeId,
+      dataEntrada,
+      dataSaida,
+      status,
+      observacoes: data.observacoes,
+      parecer: data.parecer,
+      resultado: data.resultado as any,
+      responsavelId: data.responsavelId,
+      prazoVencimento,
+      diasVencidos,
+      automatica: data.automatica ?? false
+    },
+    include: {
+      tipoTramitacao: true,
+      unidade: true,
+      proposicao: {
+        select: {
+          id: true,
+          numero: true,
+          ano: true,
+          tipo: true,
+          titulo: true
+        }
+      }
+    }
+  })
+
+  // Criar registro no histórico
+  await prisma.tramitacaoHistorico.create({
+    data: {
+      tramitacaoId: tramitacao.id,
+      acao: 'CRIACAO',
+      descricao: data.observacoes || 'Tramitação criada',
+      usuarioId: userId,
+      dadosNovos: tramitacao as any
+    }
+  })
+
+  // Atualizar status da proposição baseado no tipo de tramitação/unidade
+  const tipoNomeLower = tipo.nome.toLowerCase()
+  const unidadeNomeLower = unidade.nome.toLowerCase()
+  const observacoesLower = (data.observacoes || '').toLowerCase()
+
+  // Detecta se é tramitação para "Aguardando Pauta"
+  const isAguardandoPauta =
+    tipoNomeLower.includes('aguardando pauta') ||
+    tipoNomeLower.includes('pauta') ||
+    observacoesLower.includes('aguardando pauta') ||
+    (unidade.tipo === 'SECRETARIA' && (
+      observacoesLower.includes('pauta') ||
+      observacoesLower.includes('aguardando')
+    ))
+
+  // Detecta se é tramitação para "Plenário" (em pauta)
+  const isEmPauta =
+    unidade.tipo === 'PLENARIO' ||
+    unidadeNomeLower.includes('plenário') ||
+    unidadeNomeLower.includes('plenario') ||
+    tipoNomeLower.includes('plenário') ||
+    tipoNomeLower.includes('plenario')
+
+  // Determinar novo status da proposição
+  let novoStatusProposicao: string | null = null
+
+  if (isEmPauta) {
+    novoStatusProposicao = 'EM_PAUTA'
+  } else if (isAguardandoPauta) {
+    novoStatusProposicao = 'AGUARDANDO_PAUTA'
+  } else if (proposicao.status === 'APRESENTADA') {
+    novoStatusProposicao = 'EM_TRAMITACAO'
+  }
+
+  if (novoStatusProposicao && novoStatusProposicao !== proposicao.status) {
+    await prisma.proposicao.update({
+      where: { id: data.proposicaoId },
+      data: { status: novoStatusProposicao as any }
+    })
+  }
+
+  logger.info('Tramitação criada via CRUD', {
+    action: 'create',
+    tramitacaoId: tramitacao.id,
+    proposicaoId: data.proposicaoId,
+    userId
+  })
+
+  return tramitacao
+}
+
+/**
+ * Atualiza uma tramitação existente (atualização normal)
+ */
+export async function update(id: string, data: TramitacaoUpdateData, userId?: string) {
+  const atual = await prisma.tramitacao.findUnique({
+    where: { id }
+  })
+
+  if (!atual) {
+    throw new NotFoundError('Tramitação não encontrada')
+  }
+
+  // Verificar tipo de tramitação
+  const tipoId = data.tipoTramitacaoId ?? atual.tipoTramitacaoId
+  const tipo = await prisma.tramitacaoTipo.findUnique({
+    where: { id: tipoId }
+  })
+
+  if (!tipo) {
+    throw new ValidationError('Tipo de tramitação não encontrado')
+  }
+
+  // Resolver unidade (unidadeId é obrigatório, usar atual como fallback)
+  const resolvedUnidadeId = data.unidadeId ??
+    (data.tipoTramitacaoId && tipo.unidadeResponsavelId ? tipo.unidadeResponsavelId : atual.unidadeId)
+
+  if (resolvedUnidadeId !== atual.unidadeId) {
+    const unidade = await prisma.tramitacaoUnidade.findUnique({
+      where: { id: resolvedUnidadeId }
+    })
+
+    if (!unidade) {
+      throw new ValidationError('Unidade responsável não encontrada')
+    }
+  }
+
+  const status = (data.status ?? atual.status) as 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
+  const dataEntrada = data.dataEntrada ? new Date(data.dataEntrada) : atual.dataEntrada
+  let dataSaida = data.dataSaida === null
+    ? null
+    : data.dataSaida
+      ? new Date(data.dataSaida)
+      : atual.dataSaida
+
+  if (status === 'CONCLUIDA' && !dataSaida) {
+    dataSaida = new Date()
+  }
+
+  // Calcular prazo
+  let prazoVencimento = data.prazoVencimento === null
+    ? null
+    : data.prazoVencimento
+      ? new Date(data.prazoVencimento)
+      : atual.prazoVencimento
+
+  if (!prazoVencimento && status === 'EM_ANDAMENTO' && tipo.prazoRegimental > 0) {
+    prazoVencimento = addBusinessDays(dataEntrada, tipo.prazoRegimental)
+  }
+
+  // Calcular dias vencidos
+  let diasVencidos = data.diasVencidos === null ? null : data.diasVencidos ?? atual.diasVencidos
+  if (diasVencidos === null && prazoVencimento) {
+    const diff = Date.now() - prazoVencimento.getTime()
+    diasVencidos = diff > 0 ? Math.floor(diff / (1000 * 60 * 60 * 24)) : 0
+  }
+
+  const tramitacao = await prisma.tramitacao.update({
+    where: { id },
+    data: {
+      tipoTramitacaoId: tipoId,
+      unidadeId: resolvedUnidadeId,
+      dataEntrada,
+      dataSaida,
+      status,
+      observacoes: data.observacoes === undefined ? undefined : data.observacoes,
+      parecer: data.parecer === undefined ? undefined : data.parecer,
+      resultado: data.resultado === undefined ? undefined : data.resultado as any,
+      responsavelId: data.responsavelId === undefined ? undefined : data.responsavelId,
+      prazoVencimento,
+      diasVencidos,
+      automatica: data.automatica ?? atual.automatica
+    },
+    include: {
+      tipoTramitacao: true,
+      unidade: true,
+      proposicao: {
+        select: {
+          id: true,
+          numero: true,
+          ano: true,
+          tipo: true,
+          titulo: true
+        }
+      }
+    }
+  })
+
+  await prisma.tramitacaoHistorico.create({
+    data: {
+      tramitacaoId: id,
+      acao: 'ATUALIZACAO',
+      descricao: 'Tramitação atualizada',
+      usuarioId: userId,
+      dadosAnteriores: atual as any,
+      dadosNovos: tramitacao as any
+    }
+  })
+
+  logger.info('Tramitação atualizada via CRUD', {
+    action: 'update',
+    tramitacaoId: id,
+    userId
+  })
+
+  return tramitacao
+}
+
+/**
+ * Reabre uma tramitação concluída/cancelada
+ */
+export async function reopen(id: string, observacoes: string | null | undefined, userId?: string) {
+  const atual = await prisma.tramitacao.findUnique({
+    where: { id },
+    include: { proposicao: true }
+  })
+
+  if (!atual) {
+    throw new NotFoundError('Tramitação não encontrada')
+  }
+
+  const tipo = await prisma.tramitacaoTipo.findUnique({
+    where: { id: atual.tipoTramitacaoId }
+  })
+
+  const prazoVencimento = tipo?.prazoRegimental
+    ? addBusinessDays(new Date(), tipo.prazoRegimental)
+    : null
+
+  const tramitacao = await prisma.tramitacao.update({
+    where: { id },
+    data: {
+      status: 'EM_ANDAMENTO',
+      dataSaida: null,
+      resultado: null,
+      observacoes: observacoes
+        ? `${atual.observacoes || ''}\n[Reaberta] ${observacoes}`.trim()
+        : atual.observacoes,
+      diasVencidos: 0,
+      prazoVencimento
+    },
+    include: {
+      tipoTramitacao: true,
+      unidade: true
+    }
+  })
+
+  await prisma.tramitacaoHistorico.create({
+    data: {
+      tramitacaoId: id,
+      acao: 'REABERTURA',
+      descricao: observacoes || 'Tramitação reaberta',
+      usuarioId: userId
+    }
+  })
+
+  logger.info('Tramitação reaberta via CRUD', {
+    action: 'reopen',
+    tramitacaoId: id,
+    userId
+  })
+
+  return tramitacao
+}
+
+/**
+ * Finaliza uma tramitação em andamento
+ */
+export async function finalize(
+  id: string,
+  observacoes: string | null | undefined,
+  resultado: string | null | undefined,
+  userId?: string
+) {
+  const atual = await prisma.tramitacao.findUnique({
+    where: { id },
+    include: { proposicao: true }
+  })
+
+  if (!atual) {
+    throw new NotFoundError('Tramitação não encontrada')
+  }
+
+  const tramitacao = await prisma.tramitacao.update({
+    where: { id },
+    data: {
+      status: 'CONCLUIDA',
+      dataSaida: new Date(),
+      resultado: resultado as any,
+      observacoes: observacoes
+        ? `${atual.observacoes || ''}\n[Finalizada] ${observacoes}`.trim()
+        : atual.observacoes
+    },
+    include: {
+      tipoTramitacao: true,
+      unidade: true
+    }
+  })
+
+  await prisma.tramitacaoHistorico.create({
+    data: {
+      tramitacaoId: id,
+      acao: 'FINALIZACAO',
+      descricao: observacoes || 'Tramitação finalizada',
+      usuarioId: userId,
+      dadosNovos: { resultado }
+    }
+  })
+
+  logger.info('Tramitação finalizada via CRUD', {
+    action: 'finalize',
+    tramitacaoId: id,
+    resultado,
+    userId
+  })
+
+  return tramitacao
+}
+
+/**
+ * Remove uma tramitação com exclusão em cascata (históricos e notificações)
+ */
+export async function remove(id: string) {
+  const tramitacao = await prisma.tramitacao.findUnique({
+    where: { id }
+  })
+
+  if (!tramitacao) {
+    throw new NotFoundError('Tramitação não encontrada')
+  }
+
+  await prisma.$transaction([
+    prisma.tramitacaoHistorico.deleteMany({ where: { tramitacaoId: id } }),
+    prisma.tramitacaoNotificacao.deleteMany({ where: { tramitacaoId: id } }),
+    prisma.tramitacao.delete({ where: { id } })
+  ])
+
+  logger.info('Tramitação removida via CRUD', {
+    action: 'remove',
+    tramitacaoId: id,
+    proposicaoId: tramitacao.proposicaoId
+  })
+
+  return { id }
+}
+
+/**
+ * Gera dados agregados para o dashboard de tramitações
+ */
+export async function getDashboard() {
+  const [
+    total,
+    emAndamentoCount,
+    concluidasCount,
+    canceladasCount,
+    vencidasCount,
+    unidades,
+    tiposTramitacao,
+    tempoMedioResult,
+    proximosVencimentos
+  ] = await Promise.all([
+    prisma.tramitacao.count(),
+    prisma.tramitacao.count({ where: { status: 'EM_ANDAMENTO' } }),
+    prisma.tramitacao.count({ where: { status: 'CONCLUIDA' } }),
+    prisma.tramitacao.count({ where: { status: 'CANCELADA' } }),
+    prisma.tramitacao.count({
+      where: {
+        status: 'EM_ANDAMENTO',
+        prazoVencimento: { lt: new Date() }
+      }
+    }),
+    prisma.tramitacaoUnidade.findMany({
+      where: { ativo: true },
+      select: { id: true, nome: true }
+    }),
+    prisma.tramitacaoTipo.findMany({
+      where: { ativo: true },
+      select: { id: true, nome: true }
+    }),
+    prisma.$queryRaw<{ avg_dias: number | null }[]>`
+      SELECT AVG(EXTRACT(DAY FROM ("dataSaida" - "dataEntrada")))::numeric as avg_dias
+      FROM "tramitacoes"
+      WHERE status = 'CONCLUIDA' AND "dataSaida" IS NOT NULL
+    `,
+    prisma.tramitacao.findMany({
+      where: {
+        status: 'EM_ANDAMENTO',
+        prazoVencimento: { not: null }
+      },
+      select: {
+        id: true,
+        proposicaoId: true,
+        prazoVencimento: true,
+        unidade: { select: { nome: true } },
+        tipoTramitacao: { select: { nome: true } }
+      },
+      orderBy: { prazoVencimento: 'asc' },
+      take: 10
+    })
+  ])
+
+  // Estatísticas por unidade
+  const porUnidadePromises = unidades.map(async unidade => {
+    const [totalUnidade, emAndamento, concluidas, canceladas] = await Promise.all([
+      prisma.tramitacao.count({ where: { unidadeId: unidade.id } }),
+      prisma.tramitacao.count({ where: { unidadeId: unidade.id, status: 'EM_ANDAMENTO' } }),
+      prisma.tramitacao.count({ where: { unidadeId: unidade.id, status: 'CONCLUIDA' } }),
+      prisma.tramitacao.count({ where: { unidadeId: unidade.id, status: 'CANCELADA' } })
+    ])
+    return {
+      unidadeId: unidade.id,
+      unidadeNome: unidade.nome,
+      total: totalUnidade,
+      emAndamento,
+      concluidas,
+      canceladas
+    }
+  })
+
+  // Estatísticas por tipo
+  const porTipoPromises = tiposTramitacao.map(async tipo => {
+    const [totalTipo, emAndamento, concluidas, canceladas] = await Promise.all([
+      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id } }),
+      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id, status: 'EM_ANDAMENTO' } }),
+      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id, status: 'CONCLUIDA' } }),
+      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id, status: 'CANCELADA' } })
+    ])
+    return {
+      tipoTramitacaoId: tipo.id,
+      tipoTramitacaoNome: tipo.nome,
+      total: totalTipo,
+      emAndamento,
+      concluidas,
+      canceladas
+    }
+  })
+
+  const [porUnidade, porTipo] = await Promise.all([
+    Promise.all(porUnidadePromises),
+    Promise.all(porTipoPromises)
+  ])
+
+  const tempoMedioConclusao = tempoMedioResult[0]?.avg_dias
+    ? Math.round(Number(tempoMedioResult[0].avg_dias))
+    : null
+
+  return {
+    resumo: {
+      total,
+      emAndamento: emAndamentoCount,
+      concluidas: concluidasCount,
+      canceladas: canceladasCount,
+      vencidas: vencidasCount,
+      tempoMedioConclusao
+    },
+    proximosVencimentos: proximosVencimentos.map(item => ({
+      id: item.id,
+      proposicaoId: item.proposicaoId,
+      prazoVencimento: item.prazoVencimento?.toISOString() ?? null,
+      diasRestantes: item.prazoVencimento
+        ? Math.max(0, Math.ceil((item.prazoVencimento.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        : null,
+      unidade: item.unidade?.nome ?? null,
+      tipoTramitacao: item.tipoTramitacao?.nome ?? null
+    })),
+    porUnidade,
+    porTipo
+  }
+}
 
 // Tipos de parecer (RN-034)
 export type TipoParecer = 'FAVORAVEL' | 'CONTRARIO' | 'FAVORAVEL_COM_EMENDAS' | 'PELA_INCONSTITUCIONALIDADE' | 'INCOMPETENCIA'
@@ -1368,6 +2110,165 @@ export async function tramitarParaAguardandoPauta(
  * Unidade destino: Plenário
  * Status da proposição: EM_PAUTA
  */
+/**
+ * Lista tramitacoes para o portal publico (sem autenticacao)
+ * Inclui autor da proposicao e busca por proposicao
+ */
+export async function publicList(
+  filters: {
+    status?: string
+    resultado?: string
+    autorId?: string
+    search?: string
+    from?: string
+    to?: string
+  },
+  pagination: PaginationParams
+) {
+  const { page, limit } = pagination
+  const where: any = {}
+
+  if (filters.status) {
+    where.status = filters.status
+  }
+
+  if (filters.resultado) {
+    where.resultado = filters.resultado
+  }
+
+  if (filters.autorId) {
+    where.proposicao = { autorId: filters.autorId }
+  }
+
+  if (filters.from || filters.to) {
+    where.dataEntrada = {}
+    if (filters.from) {
+      const fromDate = new Date(filters.from)
+      if (!Number.isNaN(fromDate.getTime())) {
+        where.dataEntrada.gte = fromDate
+      }
+    }
+    if (filters.to) {
+      const toDate = new Date(filters.to)
+      if (!Number.isNaN(toDate.getTime())) {
+        where.dataEntrada.lte = toDate
+      }
+    }
+  }
+
+  if (filters.search) {
+    where.OR = [
+      { observacoes: { contains: filters.search, mode: 'insensitive' } },
+      { parecer: { contains: filters.search, mode: 'insensitive' } },
+      { proposicao: { numero: { contains: filters.search, mode: 'insensitive' } } },
+      { proposicao: { titulo: { contains: filters.search, mode: 'insensitive' } } }
+    ]
+  }
+
+  const [tramitacoes, total] = await Promise.all([
+    prisma.tramitacao.findMany({
+      where,
+      include: {
+        tipoTramitacao: {
+          select: { id: true, nome: true }
+        },
+        unidade: {
+          select: { id: true, nome: true, sigla: true }
+        },
+        proposicao: {
+          select: {
+            id: true,
+            numero: true,
+            titulo: true,
+            autor: {
+              select: { id: true, nome: true, partido: true }
+            }
+          }
+        }
+      },
+      orderBy: { dataEntrada: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit
+    }),
+    prisma.tramitacao.count({ where })
+  ])
+
+  return { tramitacoes, total, page, limit, totalPages: Math.ceil(total / limit) }
+}
+
+/**
+ * Busca tramitacao por ID para o portal publico (sem autenticacao)
+ * Inclui historicos e dados completos da proposicao
+ */
+export async function publicGetById(id: string) {
+  return prisma.tramitacao.findUnique({
+    where: { id },
+    include: {
+      tipoTramitacao: {
+        select: { id: true, nome: true, descricao: true }
+      },
+      unidade: {
+        select: { id: true, nome: true, sigla: true }
+      },
+      proposicao: {
+        select: {
+          id: true,
+          numero: true,
+          titulo: true,
+          tipo: true,
+          status: true,
+          dataApresentacao: true,
+          autor: {
+            select: { id: true, nome: true, partido: true }
+          }
+        }
+      },
+      historicos: {
+        select: {
+          id: true,
+          data: true,
+          acao: true,
+          descricao: true,
+          usuarioId: true,
+          dadosAnteriores: true,
+          dadosNovos: true
+        },
+        orderBy: { data: 'desc' }
+      }
+    }
+  })
+}
+
+/**
+ * Busca proposicao por ID (selecao basica para validacao em tramitacao)
+ */
+export async function findProposicaoBasic(id: string) {
+  return prisma.proposicao.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      numero: true,
+      ano: true,
+      tipo: true,
+      titulo: true,
+      status: true
+    }
+  })
+}
+
+/**
+ * Atualiza status de uma proposicao diretamente
+ */
+export async function updateProposicaoStatus(
+  id: string,
+  status: 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'EM_TRAMITACAO'
+) {
+  return prisma.proposicao.update({
+    where: { id },
+    data: { status }
+  })
+}
+
 export async function tramitarParaPlenario(
   proposicaoId: string,
   sessaoId?: string,

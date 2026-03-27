@@ -65,9 +65,9 @@ const AlteracaoSchema = z.object({
  */
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = params.id
+  const { id } = await context.params
   const { searchParams } = new URL(request.url)
   const acao = searchParams.get('acao')
 

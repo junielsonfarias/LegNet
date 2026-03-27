@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -15,72 +15,16 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
-    const legislaturaId = searchParams.get('legislatura')
+    const legislaturaId = searchParams.get('legislatura') || undefined
 
-    // Buscar configuração institucional
-    const config = await prisma.configuracaoInstitucional.findFirst({
-      where: { slug: 'principal' }
-    })
-    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
-
-    // Buscar parlamentares ativos
-    const parlamentares = await prisma.parlamentar.findMany({
-      where: {
-        ativo: true,
-        ...(legislaturaId && {
-          mandatos: {
-            some: { legislaturaId }
-          }
-        })
-      },
-      select: {
-        id: true,
-        nome: true,
-        apelido: true,
-        partido: true,
-        cargo: true,
-        email: true,
-        telefone: true,
-        biografia: true,
-        foto: true,
-        mandatos: {
-          select: {
-            legislatura: {
-              select: {
-                numero: true,
-                anoInicio: true,
-                anoFim: true
-              }
-            }
-          },
-          take: 1,
-          orderBy: { legislatura: { anoInicio: 'desc' } }
-        }
-      },
-      orderBy: { nome: 'asc' }
-    })
-
-    // Formatar dados
-    const dadosFormatados = parlamentares.map(p => ({
-      id: p.id,
-      nome: p.nome,
-      apelido: p.apelido,
-      partido: p.partido,
-      cargo: p.cargo,
-      email: p.email,
-      telefone: p.telefone,
-      biografia: p.biografia,
-      foto_url: p.foto,
-      legislatura: p.mandatos[0]?.legislatura ? {
-        numero: p.mandatos[0].legislatura.numero,
-        ano_inicio: p.mandatos[0].legislatura.anoInicio,
-        ano_fim: p.mandatos[0].legislatura.anoFim
-      } : null
-    }))
+    const [info, { dados }] = await Promise.all([
+      dadosAbertosService.getInfo(),
+      dadosAbertosService.getParlamentares({ legislaturaId })
+    ])
 
     // Retornar em formato CSV se solicitado
     if (formato === 'csv') {
-      const csv = convertToCSV(dadosFormatados, [
+      const csv = convertToCSV(dados, [
         'id', 'nome', 'apelido', 'partido', 'cargo', 'email', 'telefone'
       ])
       return new NextResponse(csv, {
@@ -92,11 +36,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      dados: dadosFormatados,
+      dados,
       metadados: {
-        total: dadosFormatados.length,
+        total: dados.length,
         atualizacao: new Date().toISOString(),
-        fonte: nomeCasa
+        fonte: info.nomeCasa
       }
     })
   } catch (error) {

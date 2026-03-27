@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
+import { unidadesTramitacaoDbService } from '@/lib/services/unidades-tramitacao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,17 +35,7 @@ export const GET = withAuth(async (
 ) => {
   const { id } = await params
 
-  const unidade = await prisma.tramitacaoUnidade.findUnique({
-    where: { id },
-    include: {
-      _count: {
-        select: {
-          tramitacoes: true,
-          tiposResponsaveis: true
-        }
-      }
-    }
-  })
+  const unidade = await unidadesTramitacaoDbService.getByIdWithFullCount(id)
 
   if (!unidade) {
     throw new NotFoundError('Unidade de tramitação não encontrada')
@@ -70,22 +60,15 @@ export const PUT = withAuth(async (
   const data = validation.data
 
   // Verificar se existe
-  const existente = await prisma.tramitacaoUnidade.findUnique({
-    where: { id }
-  })
+  const existente = await unidadesTramitacaoDbService.getById(id)
 
   if (!existente) {
     throw new NotFoundError('Unidade de tramitação não encontrada')
   }
 
   // Verificar nome duplicado (se estiver alterando)
-  if (data.nome && data.nome !== existente.nome) {
-    const duplicado = await prisma.tramitacaoUnidade.findFirst({
-      where: {
-        nome: data.nome,
-        id: { not: id }
-      }
-    })
+  if (data.nome && data.nome !== (existente as any).nome) {
+    const duplicado = await unidadesTramitacaoDbService.checkDuplicateName(data.nome, id)
 
     if (duplicado) {
       throw new ValidationError('Já existe uma unidade de tramitação com este nome')
@@ -93,29 +76,15 @@ export const PUT = withAuth(async (
   }
 
   // Verificar sigla duplicada (se estiver alterando)
-  if (data.sigla && data.sigla !== existente.sigla) {
-    const siglaDuplicada = await prisma.tramitacaoUnidade.findFirst({
-      where: {
-        sigla: data.sigla,
-        id: { not: id }
-      }
-    })
+  if (data.sigla && data.sigla !== (existente as any).sigla) {
+    const siglaDuplicada = await unidadesTramitacaoDbService.checkDuplicateSigla(data.sigla, id)
 
     if (siglaDuplicada) {
       throw new ValidationError('Já existe uma unidade de tramitação com esta sigla')
     }
   }
 
-  const unidade = await prisma.tramitacaoUnidade.update({
-    where: { id },
-    data: {
-      nome: data.nome,
-      sigla: data.sigla,
-      descricao: data.descricao,
-      tipo: data.tipo,
-      ativo: data.ativo
-    }
-  })
+  const unidade = await unidadesTramitacaoDbService.update(id, data)
 
   return createSuccessResponse(unidade)
 }, { permissions: 'config.manage' })
@@ -128,17 +97,7 @@ export const DELETE = withAuth(async (
   const { id } = await params
 
   // Verificar se existe
-  const existente = await prisma.tramitacaoUnidade.findUnique({
-    where: { id },
-    include: {
-      _count: {
-        select: {
-          tramitacoes: true,
-          tiposResponsaveis: true
-        }
-      }
-    }
-  })
+  const existente = await unidadesTramitacaoDbService.getByIdWithFullCount(id)
 
   if (!existente) {
     throw new NotFoundError('Unidade de tramitação não encontrada')
@@ -152,9 +111,7 @@ export const DELETE = withAuth(async (
     )
   }
 
-  await prisma.tramitacaoUnidade.delete({
-    where: { id }
-  })
+  await unidadesTramitacaoDbService.remove(id)
 
   return createSuccessResponse({ message: 'Unidade de tramitação excluída com sucesso' })
 }, { permissions: 'config.manage' })

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -13,50 +13,17 @@ export async function GET(request: NextRequest) {
   try {
     enforceRateLimit(request, 'PUBLIC')
 
-    // Buscar configuração institucional
-    const config = await prisma.configuracaoInstitucional.findFirst({
-      where: { slug: 'principal' }
-    })
-    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
-
-    // Buscar todos os parlamentares ativos com contagens
-    const parlamentares = await prisma.parlamentar.findMany({
-      where: { ativo: true },
-      select: {
-        id: true,
-        nome: true,
-        cargo: true,
-        partido: true,
-        _count: {
-          select: {
-            presencas: {
-              where: { presente: true }
-            },
-            proposicoes: true
-          }
-        }
-      },
-      orderBy: [
-        { cargo: 'asc' },
-        { nome: 'asc' }
-      ]
-    })
-
-    const dadosFormatados = parlamentares.map(p => ({
-      id: p.id,
-      nome: p.nome,
-      cargo: p.cargo,
-      partido: p.partido,
-      sessoes: p._count.presencas,
-      materias: p._count.proposicoes
-    }))
+    const [info, { dados, total }] = await Promise.all([
+      dadosAbertosService.getInfo(),
+      dadosAbertosService.getEstatisticasParlamentares()
+    ])
 
     return NextResponse.json({
-      dados: dadosFormatados,
+      dados,
       metadados: {
-        total: parlamentares.length,
+        total,
         atualizacao: new Date().toISOString(),
-        fonte: nomeCasa
+        fonte: info.nomeCasa
       }
     })
   } catch (error) {

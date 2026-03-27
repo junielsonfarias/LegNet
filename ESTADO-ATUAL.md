@@ -1,9 +1,241 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-03-25 (Correcoes de Seguranca para Producao)
-> **Versao**: 1.5.0
+> **Ultima Atualizacao**: 2026-03-26 (Novo layout portal institucional)
+> **Versao**: 1.6.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Novo Layout Portal Institucional (26/03/2026)
+
+Redesign completo da home page com layout moderno e limpo.
+
+### Mudancas nos componentes
+
+| Componente | Antes | Depois |
+|------------|-------|--------|
+| `hero.tsx` | Gradient com 2 colunas (texto + 4 stat cards), wave divider | Hero centralizado com busca global, stats inline, barra de 8 servicos rapidos flutuante, banner ao vivo |
+| `highlights-section.tsx` | 3 cards iguais (ao vivo, proxima sessao, publicacoes) | Layout 1/3 + 2/3: card proxima sessao com countdown + lista atividade legislativa recente |
+| `parliamentarians-section.tsx` | Grid de cards grandes com fotos | Mesa Diretora em 4 cards compactos com cores por cargo + grid simples de vereadores |
+| `latest-news.tsx` | Grid de 3 cards iguais com imagem | Layout destaque + sidebar: 1 noticia grande + 3 noticias menores horizontais |
+| `transparency-section.tsx` | 3 cards + grid 2 colunas | 4 cards de acesso rapido + lista publicacoes recentes + badge PNTP |
+| `stats-section.tsx` | 4 numeros em grid | CTA participacao cidada com Ouvidoria/E-SIC + bloco de contato com glassmorphism |
+
+### Elementos de design
+
+- **Busca global** no hero com resultados em proposicoes
+- **Banner sessao ao vivo** fixo no topo (vermelho com animacao)
+- **Barra de servicos rapidos** flutuante com 8 icones coloridos
+- **Cards com borda colorida superior** (top-border accent)
+- **Circulos decorativos** geometricos no hero e CTA
+- **Transicao suave** entre hero e conteudo (gradient fade)
+- **Layout assimetrico** nas noticias (destaque + sidebar)
+- **Contagem regressiva** inline para proxima sessao
+- **Badge PNTP Diamante** na secao de transparencia
+
+---
+
+## Service Layer ~95% + Fix params Promise + Type fixes (26/03/2026)
+
+### Novos services criados (10)
+
+| Service | Arquivo | Metodos |
+|---------|---------|---------|
+| Painel | `painel-db-service.ts` | sessaoExists, getEstadoPainel, getSessaoCompleta |
+| Institucional | `institucional-db-service.ts` | getConfiguracao, getMesaDiretora, countParlamentaresAtivos, getLegislaturaAtiva, countComissoesAtivas, updateConfiguracao, createConfiguracao |
+| Relatorios DB | `relatorios-db-service.ts` | getParlamentaresData, getSessoesData, getProposicoesData, getPresencaData, getVotacoesData |
+| Configuracao | `configuracao-db-service.ts` | getConfiguracoesDoSistema, upsertConfiguracaoSistema, ensureConfiguracaoInstitucional, upsertConfiguracaoInstitucional, getAllForBackup, restoreFromBackup |
+| Fluxo Tramitacao | `fluxo-tramitacao-db-service.ts` | findByTipo, findById, createFluxo, deactivateFluxo, getFluxoWithEtapas, listEtapas, findEtapaInFluxo, countTramitacoesUsingEtapa |
+| Regra Tramitacao | `regra-tramitacao-db-service.ts` | list, getById, validateEtapas, create, update, remove |
+| Reuniao Comissao | `reuniao-comissao-service.ts` (expandido) | adicionarItensPautaBulk |
+
+### Metodos adicionados a services existentes
+
+| Service | Metodos adicionados |
+|---------|---------------------|
+| `votacao-service.ts` | getVotosSessaoConsolidados, findPautaItemParaVotacao, upsertVotoIndividual, getPautaItemComTurno, listPautaItensTurno, iniciarPrimeiroTurnoItem, getTotaisParaVotacao, atualizarProposicaoAposVotacaoFinal, findProposicaoParaVotacao, registrarVotacaoEmLote |
+| `sessao-db-service.ts` | cancelar, listPublic |
+| `pautas-db-service.ts` | applyTemplate |
+| `proposicao-db-service.ts` | revertStatusPauta, listPublic |
+| `comissao-db-service.ts` | deactivateHistoricoParticipacao |
+| `unidades-tramitacao-db-service.ts` | listAdmin, createAdmin, updateAdmin, countTramitacoesByUnidade, countFluxoEtapasByUnidade |
+
+### Rotas migradas para service layer (~21 rotas)
+
+| Rota | Service(s) usado(s) |
+|------|---------------------|
+| `sessoes/[id]/votacao` | votacao-service |
+| `sessoes/[id]/votacao/turno` | votacao-service |
+| `sessoes/[id]/votacao/lote` | votacao-service |
+| `sessoes/[id]/controle` | sessaoDbService |
+| `sessoes/[id]/pauta/apply-template` | sessaoDbService + pautasDbService |
+| `painel/stream` | painelDbService |
+| `painel/sessao-completa` | painelDbService |
+| `pautas/[id]` | pautasDbService + proposicaoDbService |
+| `pautas` | pautasDbService + sessaoDbService |
+| `integracoes/public/proposicoes` | proposicaoDbService |
+| `integracoes/public/sessoes` | sessaoDbService |
+| `institucional` | institucionalDbService |
+| `relatorios` | relatoriosDbService |
+| `configuracoes/sistema` | configuracaoDbService |
+| `configuracoes` | configuracaoDbService |
+| `configuracoes/backup` | configuracaoDbService |
+| `configuracoes/restore` | configuracaoDbService |
+| `admin/configuracoes/fluxos-tramitacao` | fluxoTramitacaoDbService |
+| `admin/configuracoes/fluxos-tramitacao/[fluxoId]/etapas` | fluxoTramitacaoDbService |
+| `admin/configuracoes/unidades-tramitacao` | unidadesTramitacaoDbService |
+| `tramitacoes/regras` | regraTramitacaoDbService |
+| `tramitacoes/regras/[id]` | regraTramitacaoDbService |
+| `reunioes-comissao/[id]/pauta/bulk` | reuniaoComissaoService |
+| `comissoes/[id]` | comissaoDbService |
+
+### Fix: params Promise em rotas e pages (13+ arquivos)
+
+Corrigido `{ params: { id: string } }` para `{ params: Promise<{ id: string }> }` em 13+ arquivos de rotas API e 1 page component (`parlamentares/[slug]/perfil-completo/page.tsx`).
+
+### Fix: request.ip TypeScript
+
+Corrigido `request.ip` para `(request as any).ip` em 3 arquivos (middleware.ts, monitoramento/route.ts, integrations/tokens.ts).
+
+### Metricas de Coverage
+
+| Metrica | Antes | Depois |
+|---------|-------|--------|
+| Total services | 66 | 76 |
+| Rotas com prisma direto | ~30 | 9 |
+| Service layer coverage | ~84% | ~95.3% |
+| Rotas restantes com prisma | 30 | 9 (auth, readiness, seed, config utils) |
+
+---
+
+## Refactor: rotas sessao sub-routes para usar services (26/03/2026)
+
+Migradas todas as rotas de sub-recursos de sessao para usar db-services em vez de chamadas Prisma diretas.
+
+### Novos metodos adicionados aos services
+
+| Service | Metodos adicionados |
+|---------|---------------------|
+| `sessao-db-service` | `getById`, `assertExists`, `delete`, `update`, `checkDuplicateNumero`, `listSessoesDisponiveis` |
+| `expediente-sessao-db-service` | `getById`, `update` |
+| `orador-sessao-db-service` | `getById` |
+| `presenca-ordem-dia-db-service` | `copiarDaSessao` |
+| `pautas-db-service` | `getByIdWithSessaoAndItens`, `publishWithFullInclude`, `getItem`, `updateItem`, `deleteItem`, `reorderItensInSection`, `recalcTempoTotal`, `loadPautaById` |
+
+### Rotas atualizadas
+
+| Rota | Antes | Depois |
+|------|-------|--------|
+| `sessoes/[id]/presenca` | prisma.parlamentar direto | parlamentarDbService.getById |
+| `sessoes/[id]/expedientes` | prisma.sessao direto | sessaoDbService.getById |
+| `sessoes/[id]/expedientes/[expedienteId]` | 100% prisma direto | expedienteSessaoDbService |
+| `sessoes/[id]/oradores` | prisma.sessao/parlamentar direto | sessaoDbService + parlamentarDbService |
+| `sessoes/[id]/oradores/[oradorId]` | 100% prisma direto | oradorSessaoDbService |
+| `sessoes/[id]/presenca-ordem-dia` | prisma.sessao/parlamentar direto | sessaoDbService + parlamentarDbService + presencaDbService |
+| `sessoes/[id]/presenca-ordem-dia/copiar` | 100% prisma direto | presencaDbService + presencaOrdemDiaDbService.copiarDaSessao |
+| `sessoes/[id]/_handlers/get-sessao` | prisma.sessao direto | sessaoDbService.getById |
+| `sessoes/[id]/_handlers/update-sessao` | prisma.sessao direto | sessaoDbService.getById/update/checkDuplicateNumero |
+| `sessoes/[id]/_handlers/delete-sessao` | prisma.sessao direto | sessaoDbService.getById/delete |
+| `pautas/[id]/publicar` | prisma.pautaSessao direto | pautasDbService |
+| `pautas/sessoes-disponiveis` | prisma.sessao direto | sessaoDbService.listSessoesDisponiveis |
+| `pauta/[itemId]` | prisma direto + helpers duplicados | pautasDbService + parlamentarDbService + pareceresDbService |
+
+---
+
+## Expand servicos sessoes: sessao-db-service, pautas-db-service, presenca route (26/03/2026)
+
+### sessao-db-service.ts - Novo service
+
+Criado service para sessoes, extraindo logica Prisma da rota `api/sessoes/route.ts`:
+
+| Metodo | Descricao |
+|--------|-----------|
+| `list(filters, pagination)` | Listar sessoes com filtros (status, tipo, legislatura, periodo, ano) e paginacao |
+| `create(payload, userId)` | Criar sessao com auto-deteccao legislatura/periodo, numero sequencial, pauta automatica |
+
+**Rota atualizada**: `api/sessoes/route.ts` - GET e POST agora delegam ao service
+
+### pautas-db-service.ts - Metodos expandidos
+
+Adicionados metodos para pauta da sessao, sugestoes e destaques:
+
+| Metodo | Descricao |
+|--------|-----------|
+| `getPautaSessao(sessaoId)` | Obter ou auto-criar pauta com itens ordenados |
+| `addItem(sessaoId, payload, opts)` | Adicionar item com validacao RN-030/057/060-065, auto tipoAcao/etapa, tramitacao |
+| `getSugestoes(sessaoId, retroativo)` | Sugerir proposicoes para a pauta com requisitos de parecer |
+| `listDestaques(sessaoId, itemId)` | Listar destaques de um item da pauta |
+| `createDestaque(sessaoId, itemId, data)` | Criar destaque em item em discussao/votacao |
+| `voteDestaque(destaqueId, votos)` | Registrar resultado de votacao de destaque |
+| `removeDestaque(sessaoId, itemId, destaqueId)` | Remover destaque pendente |
+
+**Rotas atualizadas**: `api/sessoes/[id]/pauta/route.ts`, `api/sessoes/[id]/pauta/sugestoes/route.ts`, `api/sessoes/[id]/pauta/[itemId]/destaques/route.ts`
+
+### presenca route - Atualizada para usar service
+
+Rota `api/sessoes/[id]/presenca/route.ts` agora usa `presencaDbService.listBySessao()` e `presencaDbService.registrar()` em vez de chamadas Prisma diretas.
+
+---
+
+## Expand pareceres-db-service + novo mesa-sessao-db-service (26/03/2026)
+
+### pareceres-db-service.ts - Novos metodos
+
+Extraida logica Prisma e validacoes de negocio das rotas API para o service layer:
+
+| Metodo | Descricao |
+|--------|-----------|
+| `createWithValidation(data)` | Criacao com validacao completa: duplicidade, proposicao, comissao ativa, relator membro, tramitacao, auto-numero |
+| `votar(parecerId, parlamentarId, voto, obs)` | Upsert voto + validacao status/membro + agregacao contagens |
+| `getVotingStatus(parecerId)` | Estado da votacao: votos, contagens, membros que nao votaram |
+| `closeVoting(parecerId, resultado, motivo)` | Encerrar votacao com verificacao de quorum (maioria simples) |
+| `getNextNumeroFormatado(comissaoId)` | Numero formatado + info comissao + total pareceres no ano |
+
+**Rotas atualizadas**: `api/pareceres/route.ts`, `api/pareceres/[id]/votar/route.ts`, `api/pareceres/proximo-numero/route.ts`
+
+### mesa-sessao-db-service.ts - Novo service
+
+Criado service para mesa da sessao, extraindo logica Prisma da rota `api/sessoes/[id]/mesa-sessao/route.ts`:
+
+| Metodo | Descricao |
+|--------|-----------|
+| `getMesaSessao(sessaoId)` | Obter mesa com fallback para mesa diretora do periodo |
+| `createOrUpdate(sessaoId, membros, obs, userId)` | Criar/atualizar com validacao de parlamentares ativos, transacao atomica |
+| `remove(sessaoId)` | Remover mesa especifica da sessao |
+
+**Rota atualizada**: `api/sessoes/[id]/mesa-sessao/route.ts`
+
+---
+
+## CRUD e Dashboard no tramitacao-service (26/03/2026)
+
+Expandido `tramitacao-service.ts` com 7 novos metodos CRUD/Dashboard, extraindo logica Prisma das 3 rotas API. As rotas agora delegam ao service e mantem apenas responsabilidades HTTP (auth, parsing, response).
+
+| Metodo | Descricao |
+|--------|-----------|
+| `list(filters, pagination)` | findMany + count com filtros (proposicaoId, tipo, unidade, status, resultado, automatica, dateRange, search) |
+| `getById(id)` | findUnique com includes completos (historicos, notificacoes, fluxoEtapa) |
+| `create(data, userId)` | Validacao de proposicao/tipo/unidade, calculo de prazo, historico, deteccao de status |
+| `update(id, data, userId)` | Resolucao de unidade, calculo de prazo, historico com dados anteriores |
+| `reopen(id, obs, userId)` | Reabertura com recalculo de prazo e historico |
+| `finalize(id, obs, resultado, userId)` | Finalizacao com dataSaida e historico |
+| `remove(id)` | Exclusao em cascata (historicos + notificacoes + tramitacao) |
+| `getDashboard()` | Aggregacoes: contagens, vencidas, tempo medio, proximos vencimentos, stats por unidade/tipo |
+
+**Rotas atualizadas**: `api/tramitacoes/route.ts`, `api/tramitacoes/[id]/route.ts`, `api/tramitacoes/dashboard/route.ts`
+
+---
+
+## Service Layer Dados Abertos (26/03/2026)
+
+Criado `dados-abertos-service.ts` centralizando toda logica Prisma das 9 rotas de dados abertos. As rotas agora delegam ao service e mantem apenas responsabilidades de apresentacao (CSV, rate limiting, error handling).
+
+| Service | Metodos |
+|---------|---------|
+| `dados-abertos-service.ts` | getInfo, getProposicoes, getSessoes, getParlamentares, getEstatisticasParlamentares, getPresencas, getVotacoes, getComissoes, getPublicacoes |
+
+**Rotas atualizadas**: `route.ts`, `proposicoes/route.ts`, `sessoes/route.ts`, `parlamentares/route.ts`, `parlamentares/estatisticas/route.ts`, `presencas/route.ts`, `votacoes/route.ts`, `comissoes/route.ts`, `publicacoes/route.ts`
 
 ---
 

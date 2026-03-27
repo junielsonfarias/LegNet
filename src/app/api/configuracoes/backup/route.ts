@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { configuracaoDbService } from '@/lib/services/configuracao-db-service'
 import { ensureSystemConfigDefaults, parseSystemConfigValue } from '@/lib/configuracoes/defaults'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,10 +16,7 @@ const mapSystemConfigs = (configs: any[]) => configs.map(config => ({
 export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
   await ensureSystemConfigDefaults(prisma)
 
-  const [institucional, sistema] = await Promise.all([
-    prisma.configuracaoInstitucional.findFirst({ where: { slug: 'principal' } }),
-    prisma.configuracao.findMany({ orderBy: { chave: 'asc' } })
-  ])
+  const { institucional, sistema } = await configuracaoDbService.getAllForBackup()
 
   const payload = {
     generatedAt: new Date().toISOString(),
@@ -39,4 +37,3 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
 
   return createSuccessResponse(payload, 'Backup gerado com sucesso')
 }, { permissions: 'config.view' })
-

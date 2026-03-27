@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, ValidationError, ConflictError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
@@ -34,7 +33,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   if (dataFim && Number.isNaN(dataFim.getTime())) throw new ValidationError('Data de fim inválida')
   if (dataFim && dataFim < dataInicio) throw new ValidationError('A data de fim não pode ser anterior à data de início')
 
-  const legislatura = await prisma.legislatura.findUnique({ where: { id: validatedData.legislaturaId } })
+  const legislatura = await periodosLegislaturaDbService.legislaturaExists(validatedData.legislaturaId)
   if (!legislatura) throw new ValidationError('Legislatura não encontrada')
 
   const legislaturaInicio = new Date(legislatura.anoInicio, 0, 1)

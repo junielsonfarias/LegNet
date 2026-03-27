@@ -41,9 +41,10 @@ const UpdateParecerSchema = z.object({
 
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Parecer')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Parecer')
   const parecer = await pareceresDbService.getById(id)
   if (!parecer) throw new NotFoundError('Parecer')
   return createSuccessResponse(parecer, 'Parecer obtido com sucesso')

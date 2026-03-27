@@ -1,136 +1,175 @@
+/**
+ * Latest News Section - Grid moderno de noticias
+ */
+
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Calendar, ArrowRight, Newspaper, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { useNoticias } from '@/lib/hooks/use-noticias'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Calendar, ArrowRight, Newspaper } from 'lucide-react'
+
+interface Noticia {
+  id: string
+  titulo: string
+  resumo?: string
+  conteudo?: string
+  categoria?: string
+  imagemUrl?: string
+  destaque?: boolean
+  tags?: string[]
+  createdAt: string
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
 export function LatestNews() {
-  const { noticias, loading } = useNoticias({ publicada: true })
-  
-  // Pegar as 3 notícias mais recentes
-  const latestNews = noticias
-    .sort((a, b) => {
-      const dateA = a.dataPublicacao ? new Date(a.dataPublicacao).getTime() : new Date(a.createdAt).getTime()
-      const dateB = b.dataPublicacao ? new Date(b.dataPublicacao).getTime() : new Date(b.createdAt).getTime()
-      return dateB - dateA
-    })
-    .slice(0, 3)
+  const [noticias, setNoticias] = useState<Noticia[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetch_ = async () => {
+      try {
+        const res = await fetch('/api/noticias?limit=4&destaque=true')
+        const data = await res.json()
+        const items = data.data || data.noticias || []
+        setNoticias(items.sort((a: Noticia, b: Noticia) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ).slice(0, 4))
+      } catch {} finally { setLoading(false) }
+    }
+    fetch_()
+  }, [])
+
+  if (loading) {
+    return (
+      <section className="py-14 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 w-48 bg-gray-200 rounded-lg" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-gray-200 rounded-xl" />)}
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (noticias.length === 0) return null
+
+  const [destaque, ...restante] = noticias
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-14 bg-gray-50">
       <div className="container mx-auto px-4">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Últimas Notícias
-            </h2>
-            <p className="text-lg text-gray-600">
-              Acompanhe as principais notícias e acontecimentos da Câmara Municipal
-            </p>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Noticias</h2>
+            <p className="text-gray-500 mt-1">Acompanhe as atividades legislativas</p>
           </div>
           <Button asChild variant="outline" className="hidden md:flex">
             <Link href="/noticias">
-              Ver Todas as Notícias
-              <ArrowRight className="h-4 w-4 ml-2" />
+              Todas as noticias <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </Button>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="camara-card animate-pulse">
-                <div className="w-full h-48 bg-gray-200 rounded-t-lg"></div>
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Noticia em destaque */}
+          <Link href={`/noticias/${destaque.id}`} className="group">
+            <Card className="border-0 shadow-lg overflow-hidden h-full hover:shadow-xl transition-all">
+              <div className="relative h-52 md:h-64 overflow-hidden">
+                {destaque.imagemUrl ? (
+                  <img
+                    src={destaque.imagemUrl}
+                    alt={destaque.titulo}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, var(--municipal-primary), var(--municipal-primary-dark))' }}
+                  >
+                    <Newspaper className="h-16 w-16 text-white/30" />
+                  </div>
+                )}
+                {destaque.categoria && (
+                  <Badge className="absolute top-4 left-4 bg-white/90 text-gray-800 backdrop-blur-sm shadow-sm">
+                    {destaque.categoria}
+                  </Badge>
+                )}
               </div>
-            ))}
-          </div>
-        ) : latestNews.length === 0 ? (
-          <div className="text-center py-12">
-            <Newspaper className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Nenhuma notícia disponível no momento.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestNews.map((article) => (
-              <Card key={article.id} className="camara-card hover:shadow-lg transition-shadow duration-200 group">
-                <div className="relative">
-                  <div className="relative w-full h-48 bg-gradient-to-br from-camara-primary to-camara-secondary rounded-t-lg overflow-hidden flex items-center justify-center">
-                    {article.imagem ? (
-                      <Image
-                        src={article.imagem}
-                        alt={article.titulo}
-                        fill
-                        className="object-cover"
-                        sizes="(min-width: 1024px) 360px, (min-width: 768px) 50vw, 100vw"
-                      />
-                    ) : (
-                      <Newspaper className="h-16 w-16 text-white opacity-50" />
-                    )}
-                  </div>
-                  {article.categoria && (
-                    <div className="absolute top-3 left-3">
-                      <span className="bg-camara-primary text-white px-2 py-1 rounded-full text-xs font-medium">
-                        {article.categoria}
-                      </span>
-                    </div>
-                  )}
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {formatDate(destaque.createdAt)}
                 </div>
-                
-                <CardHeader className="pb-3">
-                  <div className="flex items-center text-sm text-gray-500 mb-2">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {article.dataPublicacao 
-                      ? new Date(article.dataPublicacao).toLocaleDateString('pt-BR')
-                      : new Date(article.createdAt).toLocaleDateString('pt-BR')
-                    }
-                  </div>
-                  <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 group-hover:text-camara-primary transition-colors">
-                    {article.titulo}
-                  </CardTitle>
-                </CardHeader>
-                
-                <CardContent>
-                  {article.resumo && (
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-                      {article.resumo}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-1">
-                      {article.tags.slice(0, 2).map((tag, index) => (
-                        <span key={index} className="text-xs text-camara-primary font-medium">
-                          #{tag}
-                        </span>
-                      ))}
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-camara-primary transition-colors line-clamp-2">
+                  {destaque.titulo}
+                </h3>
+                {destaque.resumo && (
+                  <p className="text-sm text-gray-500 mt-2 line-clamp-2">{destaque.resumo}</p>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Noticias menores */}
+          <div className="space-y-4">
+            {restante.map((noticia) => (
+              <Link key={noticia.id} href={`/noticias/${noticia.id}`} className="group">
+                <Card className="border-0 shadow-md hover:shadow-lg transition-all overflow-hidden">
+                  <div className="flex">
+                    <div className="shrink-0 w-28 md:w-36 overflow-hidden">
+                      {noticia.imagemUrl ? (
+                        <img
+                          src={noticia.imagemUrl}
+                          alt={noticia.titulo}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full min-h-[88px] flex items-center justify-center"
+                          style={{ background: 'linear-gradient(135deg, var(--municipal-primary), var(--municipal-primary-dark))' }}
+                        >
+                          <Newspaper className="h-8 w-8 text-white/30" />
+                        </div>
+                      )}
                     </div>
-                    <Button asChild variant="ghost" size="sm" className="text-camara-primary hover:text-camara-primary/80">
-                      <Link href={`/noticias/${article.id}`}>
-                        Ler mais
-                        <ArrowRight className="h-3 w-3 ml-1" />
-                      </Link>
-                    </Button>
+                    <CardContent className="p-4 flex-1">
+                      <div className="flex items-center gap-2 text-[11px] text-gray-400 mb-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDate(noticia.createdAt)}
+                        {noticia.categoria && (
+                          <>
+                            <span className="text-gray-300">|</span>
+                            <span>{noticia.categoria}</span>
+                          </>
+                        )}
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-800 group-hover:text-camara-primary transition-colors line-clamp-2">
+                        {noticia.titulo}
+                      </h3>
+                    </CardContent>
                   </div>
-                </CardContent>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
-        )}
+        </div>
 
-        {/* Botão mobile */}
-        <div className="text-center mt-8 md:hidden">
-          <Button asChild size="lg" className="camara-button">
+        {/* Mobile CTA */}
+        <div className="mt-8 text-center md:hidden">
+          <Button asChild variant="outline">
             <Link href="/noticias">
-              Ver Todas as Notícias
-              <ArrowRight className="h-4 w-4 ml-2" />
+              Todas as noticias <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </Button>
         </div>
@@ -138,3 +177,5 @@ export function LatestNews() {
     </section>
   )
 }
+
+export default LatestNews

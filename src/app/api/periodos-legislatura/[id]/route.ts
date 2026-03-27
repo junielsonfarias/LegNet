@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, validateId } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
@@ -17,10 +16,11 @@ const PeriodoUpdateSchema = z.object({
 
 export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   _session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await params
+  const id = validateId(rawId)
   const periodo = await periodosLegislaturaDbService.getById(id)
   if (!periodo) throw new NotFoundError('Período não encontrado')
   return createSuccessResponse(periodo, 'Período encontrado com sucesso')
@@ -28,10 +28,11 @@ export const GET = withAuth(async (
 
 export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await params
+  const id = validateId(rawId)
   const body = await request.json()
   const validatedData = PeriodoUpdateSchema.parse(body)
 
@@ -71,15 +72,15 @@ export const PUT = withAuth(async (
 
 export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await params
+  const id = validateId(rawId)
   const periodo = await periodosLegislaturaDbService.getById(id)
   if (!periodo) throw new NotFoundError('Período não encontrado')
 
-  await prisma.cargoMesaDiretora.deleteMany({ where: { periodoId: id } })
-  await periodosLegislaturaDbService.remove(id)
+  await periodosLegislaturaDbService.removeWithCargos(id)
 
   await logAudit({
     request, session,

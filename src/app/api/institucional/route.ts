@@ -5,9 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse } from '@/lib/error-handler'
+import { institucionalDbService } from '@/lib/services/institucional-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,11 +38,9 @@ const dadosPadrao = {
 export async function GET() {
   try {
     // Buscar configuracao institucional
-    let configuracao: Awaited<ReturnType<typeof prisma.configuracaoInstitucional.findFirst>> = null
+    let configuracao: Awaited<ReturnType<typeof institucionalDbService.getConfiguracao>> = null
     try {
-      configuracao = await prisma.configuracaoInstitucional.findFirst({
-        orderBy: { createdAt: 'desc' }
-      })
+      configuracao = await institucionalDbService.getConfiguracao()
     } catch (dbError) {
       console.warn('Aviso: Nao foi possivel buscar ConfiguracaoInstitucional:', dbError)
     }
@@ -50,25 +48,7 @@ export async function GET() {
     // Buscar Mesa Diretora (parlamentares com cargos diferentes de VEREADOR)
     let mesaDiretora: any[] = []
     try {
-      mesaDiretora = await prisma.parlamentar.findMany({
-        where: {
-          ativo: true,
-          cargo: {
-            not: 'VEREADOR'
-          }
-        },
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          cargo: true,
-          partido: true,
-          foto: true
-        },
-        orderBy: {
-          cargo: 'asc'
-        }
-      })
+      mesaDiretora = await institucionalDbService.getMesaDiretora()
     } catch (dbError) {
       console.warn('Aviso: Nao foi possivel buscar Mesa Diretora:', dbError)
     }
@@ -76,9 +56,7 @@ export async function GET() {
     // Contar total de parlamentares ativos
     let totalParlamentares = 0
     try {
-      totalParlamentares = await prisma.parlamentar.count({
-        where: { ativo: true }
-      })
+      totalParlamentares = await institucionalDbService.countParlamentaresAtivos()
     } catch (dbError) {
       console.warn('Aviso: Nao foi possivel contar parlamentares:', dbError)
     }
@@ -86,14 +64,7 @@ export async function GET() {
     // Buscar legislatura ativa
     let legislaturaAtiva: { numero: number; anoInicio: number; anoFim: number } | null = null
     try {
-      legislaturaAtiva = await prisma.legislatura.findFirst({
-        where: { ativa: true },
-        select: {
-          numero: true,
-          anoInicio: true,
-          anoFim: true
-        }
-      })
+      legislaturaAtiva = await institucionalDbService.getLegislaturaAtiva()
     } catch (dbError) {
       console.warn('Aviso: Nao foi possivel buscar legislatura ativa:', dbError)
     }
@@ -101,9 +72,7 @@ export async function GET() {
     // Contar comissoes ativas
     let totalComissoes = 0
     try {
-      totalComissoes = await prisma.comissao.count({
-        where: { ativa: true }
-      })
+      totalComissoes = await institucionalDbService.countComissoesAtivas()
     } catch (dbError) {
       console.warn('Aviso: Nao foi possivel contar comissoes:', dbError)
     }
@@ -207,9 +176,7 @@ export const PUT = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
   // Buscar configuracao existente
-  let config = await prisma.configuracaoInstitucional.findFirst({
-    orderBy: { createdAt: 'desc' }
-  })
+  let config = await institucionalDbService.getConfiguracao()
 
   const updateData: any = {}
 
@@ -237,18 +204,13 @@ export const PUT = withAuth(async (request: NextRequest) => {
   if (body.enderecoCep !== undefined) updateData.enderecoCep = body.enderecoCep
 
   if (config) {
-    const updated = await prisma.configuracaoInstitucional.update({
-      where: { id: config.id },
-      data: updateData
-    })
+    const updated = await institucionalDbService.updateConfiguracao(config.id, updateData)
     return createSuccessResponse(updated, 'Configuração atualizada com sucesso')
   } else {
-    const created = await prisma.configuracaoInstitucional.create({
-      data: {
-        slug: 'principal',
-        nomeCasa: body.nomeCasa || 'Câmara Municipal',
-        ...updateData
-      }
+    const created = await institucionalDbService.createConfiguracao({
+      slug: 'principal',
+      nomeCasa: body.nomeCasa || 'Câmara Municipal',
+      ...updateData
     })
     return createSuccessResponse(created, 'Configuração criada com sucesso')
   }

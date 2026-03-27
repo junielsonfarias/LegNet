@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
 import { Session } from 'next-auth'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
 
 /**
  * Handler para excluir sessão
@@ -18,17 +18,13 @@ export async function deleteSessaoHandler(
   const id = await resolverSessaoId(params.id)
 
   // Verificar se sessão existe
-  const existingSessao = await prisma.sessao.findUnique({
-    where: { id }
-  })
+  const existingSessao = await sessaoDbService.getById(id)
 
   if (!existingSessao) {
     throw new NotFoundError('Sessão')
   }
 
-  await prisma.sessao.delete({
-    where: { id }
-  })
+  await sessaoDbService.delete(id)
 
   await logAudit({
     request,

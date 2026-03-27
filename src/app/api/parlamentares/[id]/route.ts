@@ -49,9 +49,10 @@ const UpdateParlamentarSchema = z.object({
 // GET - Buscar parlamentar por ID
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Parlamentar')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Parlamentar')
 
   const parlamentar = await parlamentarDbService.getById(id)
   if (!parlamentar) {

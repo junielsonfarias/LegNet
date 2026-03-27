@@ -46,6 +46,16 @@ export const tiposTramitacaoDbService = {
     return prisma.tramitacaoTipo.findUnique({ where: { id }, include: defaultInclude })
   },
 
+  async getByIdWithCount(id: string) {
+    return prisma.tramitacaoTipo.findUnique({
+      where: { id },
+      include: {
+        ...defaultInclude,
+        _count: { select: { tramitacoes: true } }
+      }
+    })
+  },
+
   async checkDuplicateName(nome: string, excludeId?: string) {
     const where: any = { nome }
     if (excludeId) where.id = { not: excludeId }

@@ -144,5 +144,17 @@ export const autorDbService = {
     }
     await prisma.autor.delete({ where: { id } })
     return { success: true }
+  },
+
+  async tipoAutorExists(id: string) {
+    return prisma.tipoAutor.findUnique({ where: { id } })
+  },
+
+  async parlamentarExists(id: string) {
+    return prisma.parlamentar.findUnique({ where: { id } })
+  },
+
+  async comissaoExists(id: string) {
+    return prisma.comissao.findUnique({ where: { id } })
   }
 }

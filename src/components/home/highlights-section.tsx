@@ -1,486 +1,254 @@
 /**
- * Highlights Section - Secao de Destaques
- * Cards com proxima sessao, sessao ao vivo e ultimas publicacoes
+ * Highlights Section - Layout com Proxima Sessao + Atividade Legislativa
  */
 
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Calendar,
   Clock,
-  PlayCircle,
+  MapPin,
   FileText,
-  ChevronRight,
-  Radio,
-  Bell,
-  ExternalLink
+  ArrowRight,
+  TrendingUp,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useSessoes } from '@/lib/hooks/use-sessoes'
+import { Button } from '@/components/ui/button'
 
-// =============================================================================
-// COUNTDOWN HOOK
-// =============================================================================
+interface Sessao {
+  id: string
+  numero: number
+  tipo: string
+  data: string
+  horario?: string
+  local?: string
+  status: string
+}
 
-function useCountdown(targetDate: Date | null) {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    isExpired: true
-  })
+interface Proposicao {
+  id: string
+  numero: string
+  ano: number
+  tipo: string
+  titulo: string
+  status: string
+  ementa?: string
+  dataApresentacao: string
+}
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function formatDateShort(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
+
+function Countdown({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState({ dias: 0, horas: 0, minutos: 0 })
 
   useEffect(() => {
-    if (!targetDate) return
-
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime()
-      const target = targetDate.getTime()
-      const difference = target - now
-
-      if (difference <= 0) {
-        return { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true }
-      }
-
+    const calc = () => {
+      const diff = new Date(targetDate).getTime() - Date.now()
+      if (diff <= 0) return { dias: 0, horas: 0, minutos: 0 }
       return {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        isExpired: false
+        dias: Math.floor(diff / 86400000),
+        horas: Math.floor((diff % 86400000) / 3600000),
+        minutos: Math.floor((diff % 3600000) / 60000)
       }
     }
-
-    setTimeLeft(calculateTimeLeft())
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft())
-    }, 1000)
-
-    return () => clearInterval(timer)
+    setTimeLeft(calc())
+    const id = setInterval(() => setTimeLeft(calc()), 60000)
+    return () => clearInterval(id)
   }, [targetDate])
 
-  return timeLeft
-}
-
-// =============================================================================
-// COMPONENTE: Countdown Display
-// =============================================================================
-
-interface CountdownDisplayProps {
-  days: number
-  hours: number
-  minutes: number
-  seconds: number
-  className?: string
-}
-
-function CountdownDisplay({ days, hours, minutes, seconds, className }: CountdownDisplayProps) {
-  const units = [
-    { value: days, label: 'dias' },
-    { value: hours, label: 'horas' },
-    { value: minutes, label: 'min' },
-    { value: seconds, label: 'seg' }
-  ]
-
   return (
-    <div className={cn('flex gap-2', className)} role="timer" aria-label="Tempo restante">
-      {units.map((unit, index) => (
-        <div key={unit.label} className="flex flex-col items-center">
-          <span className="text-2xl font-bold text-white bg-camara-primary rounded px-2 py-1 min-w-[48px] text-center">
-            {String(unit.value).padStart(2, '0')}
-          </span>
-          <span className="text-xs text-gray-500 mt-1">{unit.label}</span>
+    <div className="flex gap-3">
+      {[
+        { value: timeLeft.dias, label: 'dias' },
+        { value: timeLeft.horas, label: 'hrs' },
+        { value: timeLeft.minutos, label: 'min' },
+      ].map((item) => (
+        <div key={item.label} className="text-center">
+          <div className="text-2xl font-bold" style={{ color: 'var(--municipal-primary)' }}>
+            {String(item.value).padStart(2, '0')}
+          </div>
+          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">{item.label}</div>
         </div>
       ))}
     </div>
   )
 }
 
-// =============================================================================
-// COMPONENTE: Proxima Sessao Card
-// =============================================================================
-
-function ProximaSessaoCard() {
-  const { sessoes, loading } = useSessoes({ limit: 5 })
-
-  const proximaSessao = useMemo(() => {
-    if (!sessoes?.length) return null
-
-    const agora = new Date()
-    return sessoes
-      .filter((s) => {
-        // Combinar data e horario se disponivel
-        const dataStr = s.horario ? `${s.data}T${s.horario}` : s.data
-        const dataSessao = new Date(dataStr)
-        return dataSessao > agora && s.status !== 'CONCLUIDA' && s.status !== 'CANCELADA'
-      })
-      .sort((a, b) => {
-        const dataA = a.horario ? `${a.data}T${a.horario}` : a.data
-        const dataB = b.horario ? `${b.data}T${b.horario}` : b.data
-        return new Date(dataA).getTime() - new Date(dataB).getTime()
-      })
-      [0]
-  }, [sessoes])
-
-  const targetDate = proximaSessao
-    ? new Date(proximaSessao.horario ? `${proximaSessao.data}T${proximaSessao.horario}` : proximaSessao.data)
-    : null
-  const countdown = useCountdown(targetDate)
-
-  if (loading) {
-    return (
-      <Card className="h-full animate-pulse">
-        <CardHeader className="pb-2">
-          <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="h-20 bg-gray-200 rounded"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!proximaSessao) {
-    return (
-      <Card className="h-full bg-gray-50">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="h-5 w-5 text-camara-primary" />
-            Proxima Sessao
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-500 text-sm">
-            Nenhuma sessao agendada no momento.
-          </p>
-          <Button asChild variant="link" className="p-0 h-auto mt-2 text-camara-primary">
-            <Link href="/calendario">
-              Ver calendario completo
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const dataSessao = new Date(
-    proximaSessao.horario
-      ? `${proximaSessao.data}T${proximaSessao.horario}`
-      : proximaSessao.data
-  )
-
-  return (
-    <Card className="h-full border-l-4 border-l-camara-primary hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="h-5 w-5 text-camara-primary" />
-            Proxima Sessao
-          </CardTitle>
-          <Badge variant="outline" className="text-camara-primary border-camara-primary">
-            {proximaSessao.tipo?.replace(/_/g, ' ') || 'Ordinaria'}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Countdown */}
-        {!countdown.isExpired && (
-          <div className="py-2">
-            <p className="text-xs text-gray-500 mb-2">Comeca em:</p>
-            <CountdownDisplay {...countdown} />
-          </div>
-        )}
-
-        {/* Detalhes */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-gray-400" />
-            <span>
-              {dataSessao.toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long'
-              })}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-gray-400" />
-            <span>
-              {dataSessao.toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </span>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <Button asChild className="w-full bg-camara-primary hover:bg-camara-primary/90">
-          <Link href={`/legislativo/sessoes/${proximaSessao.id}`}>
-            <Bell className="h-4 w-4 mr-2" />
-            Ver Pauta da Sessao
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  )
+const statusColors: Record<string, string> = {
+  'APROVADA': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'REJEITADA': 'bg-red-50 text-red-700 border-red-200',
+  'EM_TRAMITACAO': 'bg-blue-50 text-blue-700 border-blue-200',
+  'EM_PAUTA': 'bg-amber-50 text-amber-700 border-amber-200',
+  'AGUARDANDO_PAUTA': 'bg-gray-50 text-gray-600 border-gray-200',
 }
 
-// =============================================================================
-// COMPONENTE: Sessao ao Vivo Card
-// =============================================================================
-
-function SessaoAoVivoCard() {
-  const { sessoes, loading } = useSessoes({ limit: 1 })
-
-  const sessaoEmAndamento = useMemo(() => {
-    if (!sessoes?.length) return null
-    return sessoes.find((s) => s.status === 'EM_ANDAMENTO')
-  }, [sessoes])
-
-  if (loading) {
-    return (
-      <Card className="h-full animate-pulse">
-        <CardHeader className="pb-2">
-          <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-24 bg-gray-200 rounded"></div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!sessaoEmAndamento) {
-    return (
-      <Card className="h-full bg-gradient-to-br from-gray-50 to-gray-100">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <PlayCircle className="h-5 w-5 text-gray-400" />
-            Transmissao ao Vivo
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-500 text-sm mb-4">
-            Nenhuma sessao em andamento no momento.
-          </p>
-          <p className="text-xs text-gray-400">
-            As transmissoes acontecem durante as sessoes legislativas.
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card className="h-full bg-gradient-to-br from-red-50 to-red-100 border-l-4 border-l-red-500 animate-pulse-soft">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg text-red-700">
-            <Radio className="h-5 w-5 animate-pulse" />
-            AO VIVO
-          </CardTitle>
-          <span className="flex items-center gap-1 text-xs text-red-600">
-            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-            Transmitindo
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <h3 className="font-semibold text-gray-900">
-            Sessao {sessaoEmAndamento.tipo?.replace(/_/g, ' ')}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {new Date(sessaoEmAndamento.data).toLocaleDateString('pt-BR')}
-          </p>
-        </div>
-
-        <Button asChild className="w-full bg-red-600 hover:bg-red-700">
-          <Link href="/legislativo/sessoes">
-            <PlayCircle className="h-4 w-4 mr-2" />
-            Ver Sessoes
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  )
+const tipoLabels: Record<string, string> = {
+  'PROJETO_LEI': 'PL',
+  'PROJETO_LEI_COMPLEMENTAR': 'PLC',
+  'REQUERIMENTO': 'REQ',
+  'INDICACAO': 'IND',
+  'MOCAO': 'MOC',
+  'DECRETO_LEGISLATIVO': 'DL',
 }
 
-// =============================================================================
-// COMPONENTE: Ultimas Publicacoes Card
-// =============================================================================
-
-interface Publicacao {
-  id: string
-  titulo: string
-  tipo: string
-  data: string
-}
-
-function UltimasPublicacoesCard() {
-  const [publicacoes, setPublicacoes] = useState<Publicacao[]>([])
-  const [loading, setLoading] = useState(true)
+export function HighlightsSection() {
+  const [proximaSessao, setProximaSessao] = useState<Sessao | null>(null)
+  const [proposicoesRecentes, setProposicoesRecentes] = useState<Proposicao[]>([])
 
   useEffect(() => {
-    const fetchPublicacoes = async () => {
+    const fetchSessao = async () => {
       try {
-        const res = await fetch('/api/dados-abertos/publicacoes?limit=3')
+        const res = await fetch('/api/sessoes?status=AGENDADA&limit=1')
         const data = await res.json()
-        setPublicacoes(data.dados || [])
-      } catch (error) {
-        console.error('Erro ao buscar publicacoes:', error)
-      } finally {
-        setLoading(false)
-      }
+        if (data.data?.length > 0) setProximaSessao(data.data[0])
+      } catch {}
     }
-    fetchPublicacoes()
+    const fetchProposicoes = async () => {
+      try {
+        const res = await fetch('/api/dados-abertos/proposicoes?limit=6')
+        const data = await res.json()
+        setProposicoesRecentes(data.dados || [])
+      } catch {}
+    }
+    fetchSessao()
+    fetchProposicoes()
   }, [])
 
-  if (loading) {
-    return (
-      <Card className="h-full animate-pulse">
-        <CardHeader className="pb-2">
-          <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 bg-gray-200 rounded"></div>
-          ))}
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
-    <Card className="h-full hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <FileText className="h-5 w-5 text-camara-primary" />
-          Ultimas Publicacoes
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {publicacoes.length === 0 ? (
-          <p className="text-gray-500 text-sm">
-            Nenhuma publicacao recente.
-          </p>
-        ) : (
-          publicacoes.map((pub) => (
-            <Link
-              key={pub.id}
-              href="/transparencia/publicacoes"
-              className="block p-2 rounded-md hover:bg-gray-50 transition-colors group"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-camara-primary/10 rounded flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-camara-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate group-hover:text-camara-primary transition-colors">
-                    {pub.titulo}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary" className="text-xs">
-                      {pub.tipo}
-                    </Badge>
-                    <span className="text-xs text-gray-500">
-                      {new Date(pub.data).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))
-        )}
-
-        <Button asChild variant="outline" className="w-full mt-2">
-          <Link href="/transparencia/publicacoes">
-            Ver Todas
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
-
-// =============================================================================
-// COMPONENTE PRINCIPAL: HighlightsSection
-// =============================================================================
-
-interface HighlightsSectionProps {
-  className?: string
-}
-
-export function HighlightsSection({ className }: HighlightsSectionProps) {
-  return (
-    <section
-      className={cn('py-12 bg-gray-50', className)}
-      aria-label="Destaques"
-    >
+    <section className="py-10 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Proxima Sessao ou Sessao ao Vivo */}
-          <div className="lg:col-span-1">
-            <SessaoAoVivoFallback />
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Proxima Sessao */}
-          <div className="lg:col-span-1">
-            <ProximaSessaoCard />
-          </div>
+          <Card className="lg:col-span-1 border-0 shadow-lg shadow-gray-200/50 overflow-hidden">
+            <div
+              className="h-1.5"
+              style={{ background: 'linear-gradient(90deg, var(--municipal-primary), var(--municipal-primary-light))' }}
+            />
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" style={{ color: 'var(--municipal-primary)' }} />
+                  Proxima Sessao
+                </CardTitle>
+                {proximaSessao && (
+                  <Badge variant="outline" className="text-[10px] font-semibold uppercase">
+                    {proximaSessao.tipo}
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {proximaSessao ? (
+                <>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      <span>{formatDate(proximaSessao.data)}</span>
+                      {proximaSessao.horario && (
+                        <span className="text-gray-400">as {proximaSessao.horario}</span>
+                      )}
+                    </div>
+                    {proximaSessao.local && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        <span>{proximaSessao.local}</span>
+                      </div>
+                    )}
+                  </div>
 
-          {/* Ultimas Publicacoes */}
-          <div className="lg:col-span-1">
-            <UltimasPublicacoesCard />
-          </div>
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Contagem regressiva</p>
+                    <Countdown targetDate={proximaSessao.data} />
+                  </div>
+
+                  <Button asChild variant="outline" className="w-full" size="sm">
+                    <Link href="/legislativo/sessoes">
+                      Ver detalhes <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-400">Nenhuma sessao agendada</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Atividade Legislativa Recente */}
+          <Card className="lg:col-span-2 border-0 shadow-lg shadow-gray-200/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" style={{ color: 'var(--municipal-primary)' }} />
+                  Atividade Legislativa
+                </CardTitle>
+                <Link
+                  href="/legislativo/proposicoes"
+                  className="text-sm font-medium hover:underline flex items-center gap-1"
+                  style={{ color: 'var(--municipal-primary)' }}
+                >
+                  Ver todas <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {proposicoesRecentes.length > 0 ? (
+                <div className="space-y-1">
+                  {proposicoesRecentes.map((prop) => (
+                    <Link
+                      key={prop.id}
+                      href={`/legislativo/proposicoes/${prop.id}`}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group"
+                    >
+                      <div className="shrink-0 w-11 h-11 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                        <FileText className="h-5 w-5 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-gray-500 uppercase">
+                            {tipoLabels[prop.tipo] || prop.tipo} {prop.numero}/{prop.ano}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 ${statusColors[prop.status] || 'bg-gray-50 text-gray-600'}`}
+                          >
+                            {prop.status?.replace(/_/g, ' ')}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-700 truncate mt-0.5">
+                          {prop.titulo || prop.ementa || 'Sem titulo'}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-400 shrink-0 hidden md:block">
+                        {formatDateShort(prop.dataApresentacao)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <FileText className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-400">Nenhuma proposicao recente</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
-  )
-}
-
-// Componente que decide entre mostrar sessao ao vivo ou conteudo alternativo
-function SessaoAoVivoFallback() {
-  const { sessoes } = useSessoes({ limit: 1 })
-  const temSessaoAoVivo = sessoes?.some((s) => s.status === 'EM_ANDAMENTO')
-
-  if (temSessaoAoVivo) {
-    return <SessaoAoVivoCard />
-  }
-
-  // Card alternativo quando nao ha sessao ao vivo
-  return (
-    <Card className="h-full bg-gradient-to-br from-camara-primary to-camara-primary text-white">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg text-white">
-          <PlayCircle className="h-5 w-5" />
-          Canal da Camara
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-white/70 text-sm">
-          Assista as sessoes legislativas, audiencias publicas e eventos da Camara Municipal.
-        </p>
-
-        <Button asChild variant="secondary" className="w-full">
-          <Link href="/legislativo/sessoes">
-            <PlayCircle className="h-4 w-4 mr-2" />
-            Ver Sessoes
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
   )
 }
 

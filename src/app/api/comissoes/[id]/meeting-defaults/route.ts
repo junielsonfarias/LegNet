@@ -9,27 +9,25 @@ import {
   validateId
 } from '@/lib/error-handler'
 import { getMeetingDefaults, getProposicoesPendentes } from '@/lib/services/meeting-defaults-service'
-import { prisma } from '@/lib/prisma'
+import { comissaoDbService } from '@/lib/services/comissao-db-service'
 
 export const dynamic = 'force-dynamic'
 
 // GET - Obter defaults inteligentes para nova reuniao
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
   const session = await getServerSession(authOptions)
   if (!session) {
     throw new UnauthorizedError()
   }
 
-  const comissaoId = validateId(params.id, 'Comissao')
+  const { id: rawId } = await context.params
+  const comissaoId = validateId(rawId, 'Comissao')
 
   // Verificar se comissao existe
-  const comissao = await prisma.comissao.findUnique({
-    where: { id: comissaoId },
-    select: { id: true, nome: true }
-  })
+  const comissao = await comissaoDbService.exists(comissaoId)
 
   if (!comissao) {
     throw new NotFoundError('Comissao')

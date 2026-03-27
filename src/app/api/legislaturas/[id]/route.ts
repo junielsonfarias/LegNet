@@ -19,10 +19,11 @@ const LegislaturaUpdateSchema = z.object({
 
 export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   _session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await context.params
+  const id = validateId(rawId)
   const legislatura = await legislaturaDbService.getById(id)
   if (!legislatura) throw new NotFoundError('Legislatura não encontrada')
   return createSuccessResponse(legislatura, 'Legislatura encontrada com sucesso')
@@ -30,10 +31,11 @@ export const GET = withAuth(async (
 
 export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await context.params
+  const id = validateId(rawId)
   const body = await request.json()
   const validatedData = LegislaturaUpdateSchema.parse(body)
 
@@ -65,10 +67,11 @@ export const PUT = withAuth(async (
 
 export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id)
+  const { id: rawId } = await context.params
+  const id = validateId(rawId)
   const legislatura = await legislaturaDbService.getById(id)
   if (!legislatura) throw new NotFoundError('Legislatura não encontrada')
   if (legislatura.ativa) throw new ConflictError('Não é possível excluir uma legislatura ativa. Desative-a primeiro.')

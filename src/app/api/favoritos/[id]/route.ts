@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { favoritoDbService } from '@/lib/services/favorito-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,9 +29,7 @@ export async function GET(
 
     const { id } = await params
 
-    const favorito = await prisma.favorito.findUnique({
-      where: { id },
-    })
+    const favorito = await favoritoDbService.getById(id)
 
     if (!favorito) {
       return NextResponse.json({ error: 'Favorito não encontrado' }, { status: 404 })
@@ -72,9 +70,7 @@ export async function PATCH(
       )
     }
 
-    const favorito = await prisma.favorito.findUnique({
-      where: { id },
-    })
+    const favorito = await favoritoDbService.getById(id)
 
     if (!favorito) {
       return NextResponse.json({ error: 'Favorito não encontrado' }, { status: 404 })
@@ -84,10 +80,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
     }
 
-    const atualizado = await prisma.favorito.update({
-      where: { id },
-      data: validacao.data,
-    })
+    const atualizado = await favoritoDbService.updateById(id, validacao.data)
 
     return NextResponse.json({ favorito: atualizado })
   } catch (error) {
@@ -111,9 +104,7 @@ export async function DELETE(
 
     const { id } = await params
 
-    const favorito = await prisma.favorito.findUnique({
-      where: { id },
-    })
+    const favorito = await favoritoDbService.getById(id)
 
     if (!favorito) {
       return NextResponse.json({ error: 'Favorito não encontrado' }, { status: 404 })
@@ -123,9 +114,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
     }
 
-    await prisma.favorito.delete({
-      where: { id },
-    })
+    await favoritoDbService.deleteById(id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server'
 import { Session } from 'next-auth'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ConflictError, ValidationError } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
 import { gerarAtaSessao } from '@/lib/utils/sessoes-utils'
 import { combineDateAndTimeUTC, formatDateOnly } from '@/lib/utils/date'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
 import { UpdateSessaoSchema, sessaoIncludeUpdate } from '../_validators/sessao-validators'
 
 /**
@@ -25,9 +25,7 @@ export async function updateSessaoHandler(
   const validatedData = UpdateSessaoSchema.parse(body)
 
   // Verificar se sessão existe
-  const existingSessao = await prisma.sessao.findUnique({
-    where: { id }
-  })
+  const existingSessao = await sessaoDbService.getById(id)
 
   if (!existingSessao) {
     throw new NotFoundError('Sessão')
@@ -35,12 +33,7 @@ export async function updateSessaoHandler(
 
   // Verificar duplicatas (se número foi alterado)
   if (validatedData.numero && validatedData.numero !== existingSessao.numero) {
-    const duplicateCheck = await prisma.sessao.findFirst({
-      where: {
-        numero: validatedData.numero,
-        id: { not: id }
-      }
-    })
+    const duplicateCheck = await sessaoDbService.checkDuplicateNumero(validatedData.numero, id)
 
     if (duplicateCheck) {
       throw new ConflictError('Já existe uma sessão com este número')
@@ -60,11 +53,7 @@ export async function updateSessaoHandler(
     }
   }
 
-  const updatedSessao = await prisma.sessao.update({
-    where: { id },
-    data: updateData,
-    include: sessaoIncludeUpdate as any
-  })
+  const updatedSessao = await sessaoDbService.update(id, updateData, sessaoIncludeUpdate)
 
   await logAudit({
     request,

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ConflictError, ValidationError, validateId } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { parseDateOnlyToUTC } from '@/lib/utils/date'
 import { closeMesaDiretoraHistorico, syncMesaDiretoraHistorico } from '@/lib/participation-history'
+import { mesaDiretoraDbService } from '@/lib/services/mesa-diretora-db-service'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -31,109 +31,64 @@ const UpdateMesaDiretoraSchema = z.object({
 // GET - Buscar mesa diretora por ID
 export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   _session
 ) => {
-  const id = validateId(params.id, 'Mesa Diretora')
-  
-  const mesa = await prisma.mesaDiretora.findUnique({
-    where: { id },
-    include: {
-      periodo: {
-        include: {
-          legislatura: true,
-          cargos: true
-        }
-      },
-      membros: {
-        include: {
-          parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true,
-              email: true,
-              telefone: true
-            }
-          },
-          cargo: true
-        },
-        orderBy: {
-          cargo: {
-            ordem: 'asc'
-          }
-        }
-      }
-    } as any
-  })
-  
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Mesa Diretora')
+
+  const mesa = await mesaDiretoraDbService.getByIdDetailed(id)
+
   if (!mesa) {
     throw new NotFoundError('Mesa Diretora')
   }
-  
+
   return createSuccessResponse(mesa, 'Mesa diretora encontrada com sucesso')
 }, { permissions: 'mesa.view' })
 
 // PUT - Atualizar mesa diretora
 export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id, 'Mesa Diretora')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Mesa Diretora')
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = UpdateMesaDiretoraSchema.parse(body)
-  
+
   // Verificar se mesa existe
-  const existingMesa = await prisma.mesaDiretora.findUnique({
-    where: { id },
-    include: {
-      periodo: {
-        include: {
-          cargos: true
-        }
-      }
-    }
-  })
-  
+  const existingMesa = await mesaDiretoraDbService.getByIdWithPeriodoCargos(id)
+
   if (!existingMesa) {
     throw new NotFoundError('Mesa Diretora')
   }
-  
+
   // Se mudando para ativa, desativar outras mesas do mesmo período
   const periodoIdFinal = validatedData.periodoId || existingMesa.periodoId
   const ativaFinal = validatedData.ativa ?? existingMesa.ativa
 
   if (ativaFinal) {
-    const mesaAtiva = await prisma.mesaDiretora.findFirst({
-      where: {
-        periodoId: periodoIdFinal,
-        ativa: true,
-        id: { not: id }
-      }
-    })
+    const mesaAtiva = await mesaDiretoraDbService.checkAtivaExiste(periodoIdFinal, id)
 
     if (mesaAtiva) {
       throw new ConflictError('Já existe uma mesa diretora ativa para este período. Desative a mesa atual antes de ativar esta.')
     }
   }
-  
+
   // Validar membros se fornecidos
   if (validatedData.membros) {
-    const periodo = validatedData.periodoId 
-      ? await prisma.periodoLegislatura.findUnique({
-          where: { id: validatedData.periodoId },
-          include: { cargos: true }
-        })
+    const periodo = validatedData.periodoId
+      ? await mesaDiretoraDbService.periodoExistsWithCargos(validatedData.periodoId)
       : existingMesa.periodo
-    
+
     if (periodo) {
       const cargosObrigatorios = periodo.cargos.filter(c => c.obrigatorio)
       const cargosFornecidos = validatedData.membros.map(m => m.cargoId)
       const cargosFaltantes = cargosObrigatorios.filter(c => !cargosFornecidos.includes(c.id))
-      
+
       if (cargosFaltantes.length > 0) {
         throw new ValidationError(`Cargos obrigatórios não preenchidos: ${cargosFaltantes.map(c => c.nome).join(', ')}`)
       }
@@ -163,65 +118,25 @@ export const PUT = withAuth(async (
       }
     })
   }
-  
-  // Preparar dados para atualização
-  const updateData: any = {
-    ...(validatedData.periodoId && { periodoId: validatedData.periodoId }),
-    ...(validatedData.ativa !== undefined && { ativa: validatedData.ativa }),
-    ...(validatedData.descricao !== undefined && { descricao: validatedData.descricao || null })
-  }
-  
-  // Atualizar membros se fornecidos
+
+  // Build update payload for service
+  const updatePayload: any = {}
+  if (validatedData.periodoId !== undefined) updatePayload.periodoId = validatedData.periodoId
+  if (validatedData.ativa !== undefined) updatePayload.ativa = validatedData.ativa
+  if (validatedData.descricao !== undefined) updatePayload.descricao = validatedData.descricao || null
   if (validatedData.membros) {
-    // Deletar membros existentes e criar novos
-    await prisma.membroMesaDiretora.deleteMany({
-      where: { mesaDiretoraId: id }
-    })
-    
-    updateData.membros = {
-      create: validatedData.membros.map(m => ({
-        parlamentarId: m.parlamentarId,
-        cargoId: m.cargoId,
-        dataInicio: parseDateOnlyToUTC(m.dataInicio),
-        dataFim: m.dataFim ? parseDateOnlyToUTC(m.dataFim) : null,
-        ativo: m.ativo ?? true,
-        observacoes: m.observacoes || null
-      }))
-    }
+    updatePayload.membros = validatedData.membros.map(m => ({
+      parlamentarId: m.parlamentarId,
+      cargoId: m.cargoId,
+      dataInicio: m.dataInicio,
+      dataFim: m.dataFim,
+      ativo: m.ativo ?? true,
+      observacoes: m.observacoes
+    }))
   }
-  
-  const updatedMesa = await prisma.mesaDiretora.update({
-    where: { id },
-    data: updateData,
-    include: {
-      periodo: {
-        include: {
-          legislatura: true,
-          cargos: true
-        }
-      },
-      membros: {
-        include: {
-          parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true,
-              email: true,
-              telefone: true
-            }
-          },
-          cargo: true
-        },
-        orderBy: {
-          cargo: {
-            ordem: 'asc'
-          }
-        }
-      }
-    } as any
-  })
-  
+
+  const updatedMesa = await mesaDiretoraDbService.update(id, updatePayload)
+
   await logAudit({
     request,
     session,
@@ -229,8 +144,8 @@ export const PUT = withAuth(async (
     entity: 'MesaDiretora',
     entityId: id,
     metadata: {
-      periodoId: updateData.periodoId || existingMesa.periodoId,
-      ativa: updateData.ativa ?? existingMesa.ativa,
+      periodoId: updatePayload.periodoId || existingMesa.periodoId,
+      ativa: updatePayload.ativa ?? existingMesa.ativa,
       membros: validatedData.membros
         ? validatedData.membros.map(m => ({ cargoId: m.cargoId, parlamentarId: m.parlamentarId }))
         : undefined
@@ -248,26 +163,22 @@ export const PUT = withAuth(async (
 // DELETE - Excluir mesa diretora
 export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const id = validateId(params.id, 'Mesa Diretora')
-  
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Mesa Diretora')
+
   // Verificar se mesa existe
-  const existingMesa = await prisma.mesaDiretora.findUnique({
-    where: { id }
-  })
-  
+  const existingMesa = await mesaDiretoraDbService.getById(id)
+
   if (!existingMesa) {
     throw new NotFoundError('Mesa Diretora')
   }
-  
+
   // Soft delete - marcar como inativa
-  await prisma.mesaDiretora.update({
-    where: { id },
-    data: { ativa: false }
-  })
-  
+  await mesaDiretoraDbService.remove(id)
+
   await logAudit({
     request,
     session,
@@ -277,10 +188,9 @@ export const DELETE = withAuth(async (
   })
 
   await closeMesaDiretoraHistorico(id)
-  
+
   return createSuccessResponse(
     null,
     'Mesa diretora excluída com sucesso'
   )
 }, { permissions: 'mesa.manage' })
-

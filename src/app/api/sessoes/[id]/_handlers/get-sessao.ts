@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
 import { sessaoIncludeFull } from '../_validators/sessao-validators'
 
 /**
@@ -15,10 +15,7 @@ export async function getSessaoHandler(
   // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
   const id = await resolverSessaoId(params.id)
 
-  const sessao = await prisma.sessao.findUnique({
-    where: { id },
-    include: sessaoIncludeFull as any
-  })
+  const sessao = await sessaoDbService.getById(id, sessaoIncludeFull)
 
   if (!sessao) {
     throw new NotFoundError('Sessão')

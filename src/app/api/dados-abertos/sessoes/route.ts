@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -13,85 +13,24 @@ export async function GET(request: NextRequest) {
   try {
     enforceRateLimit(request, 'PUBLIC')
 
-    // Buscar configuração institucional
-    const config = await prisma.configuracaoInstitucional.findFirst({
-      where: { slug: 'principal' }
-    })
-    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+    const info = await dadosAbertosService.getInfo()
 
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
     const anoParam = searchParams.get('ano')
     const ano = anoParam ? parseInt(anoParam, 10) : undefined
-    const tipo = searchParams.get('tipo')
-    const status = searchParams.get('status')
+    const tipo = searchParams.get('tipo') || undefined
+    const status = searchParams.get('status') || undefined
     const page = parseInt(searchParams.get('page') || '1')
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-    const where = {
-      ...(ano && {
-        data: {
-          gte: new Date(ano, 0, 1),
-          lt: new Date(ano + 1, 0, 1)
-        }
-      }),
-      ...(tipo && { tipo: tipo as 'ORDINARIA' | 'EXTRAORDINARIA' | 'SOLENE' | 'ESPECIAL' }),
-      ...(status && { status: status as 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA' })
-    }
-
-    const [sessoes, total] = await Promise.all([
-      prisma.sessao.findMany({
-        where,
-        select: {
-          id: true,
-          numero: true,
-          tipo: true,
-          data: true,
-          horario: true,
-          local: true,
-          status: true,
-          descricao: true,
-          _count: {
-            select: {
-              presencas: true,
-              proposicoes: true
-            }
-          },
-          legislatura: {
-            select: {
-              numero: true,
-              anoInicio: true,
-              anoFim: true
-            }
-          }
-        },
-        orderBy: { data: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit
-      }),
-      prisma.sessao.count({ where })
-    ])
-
-    const dadosFormatados = sessoes.map(s => ({
-      id: s.id,
-      numero: s.numero,
-      tipo: s.tipo,
-      data: s.data.toISOString().split('T')[0],
-      horario: s.horario,
-      local: s.local,
-      status: s.status,
-      descricao: s.descricao,
-      total_presencas: s._count.presencas,
-      total_proposicoes: s._count.proposicoes,
-      legislatura: s.legislatura ? {
-        numero: s.legislatura.numero,
-        ano_inicio: s.legislatura.anoInicio,
-        ano_fim: s.legislatura.anoFim
-      } : null
-    }))
+    const { dados, total } = await dadosAbertosService.getSessoes(
+      { ano, tipo, status },
+      { page, limit }
+    )
 
     if (formato === 'csv') {
-      const csv = convertToCSV(dadosFormatados, [
+      const csv = convertToCSV(dados, [
         'id', 'numero', 'tipo', 'data', 'horario', 'local', 'status', 'total_presencas', 'total_proposicoes'
       ])
       return new NextResponse(csv, {
@@ -103,14 +42,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      dados: dadosFormatados,
+      dados,
       metadados: {
         total,
         pagina: page,
         limite: limit,
         paginas: Math.ceil(total / limit),
         atualizacao: new Date().toISOString(),
-        fonte: nomeCasa
+        fonte: info.nomeCasa
       }
     })
   } catch (error) {

@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
-import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
+import { regraTramitacaoDbService } from '@/lib/services/regra-tramitacao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,47 +31,16 @@ const RegraSchema = z.object({
   etapas: z.array(RegraEtapaSchema).optional()
 })
 
-const validateEtapas = async (etapas: z.infer<typeof RegraEtapaSchema>[]) => {
-  for (const etapa of etapas) {
-    if (etapa.tipoTramitacaoId) {
-      const tipo = await prisma.tramitacaoTipo.findUnique({
-        where: { id: etapa.tipoTramitacaoId }
-      })
-      if (!tipo) {
-        throw new ValidationError(`Tipo de tramitação não encontrado para a etapa ${etapa.nome}`)
-      }
-    }
-
-    if (etapa.unidadeId) {
-      const unidade = await prisma.tramitacaoUnidade.findUnique({
-        where: { id: etapa.unidadeId }
-      })
-      if (!unidade) {
-        throw new ValidationError(`Unidade responsável não encontrada para a etapa ${etapa.nome}`)
-      }
-    }
-  }
-}
-
 export const GET = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const ativo = searchParams.get('ativo')
 
-  const where: any = {}
-
+  const filters: { ativo?: boolean } = {}
   if (ativo !== null) {
-    where.ativo = ativo === 'true'
+    filters.ativo = ativo === 'true'
   }
 
-  const regras = await prisma.regraTramitacao.findMany({
-    where,
-    include: {
-      etapas: {
-        orderBy: { ordem: 'asc' }
-      }
-    },
-    orderBy: { ordem: 'asc' }
-  })
+  const regras = await regraTramitacaoDbService.list(filters)
 
   return createSuccessResponse(regras, 'Regras de tramitação carregadas com sucesso', regras.length)
 }, { permissions: 'tramitacao.view' })
@@ -81,35 +50,22 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const payload = RegraSchema.parse(body)
 
   const etapas = payload.etapas ?? []
-  await validateEtapas(etapas)
-
-  const regra = await prisma.regraTramitacao.create({
-    data: {
-      nome: payload.nome,
-      descricao: payload.descricao,
-      condicoes: payload.condicoes,
-      acoes: payload.acoes,
-      excecoes: payload.excecoes ?? {},
-      ativo: payload.ativo,
-      ordem: payload.ordem,
-      etapas: {
-        create: etapas.sort((a, b) => a.ordem - b.ordem).map((etapa, index) => ({
-          ordem: etapa.ordem ?? index,
-          nome: etapa.nome,
-          descricao: etapa.descricao,
-          tipoTramitacaoId: etapa.tipoTramitacaoId,
-          unidadeId: etapa.unidadeId,
-          notificacoes: etapa.notificacoes,
-          alertas: etapa.alertas,
-          prazoDias: etapa.prazoDias
-        }))
-      }
-    },
-    include: {
-      etapas: {
-        orderBy: { ordem: 'asc' }
-      }
+  if (etapas.length > 0) {
+    const validation = await regraTramitacaoDbService.validateEtapas(etapas)
+    if (!validation.valid) {
+      throw new ValidationError(validation.message)
     }
+  }
+
+  const regra = await regraTramitacaoDbService.create({
+    nome: payload.nome,
+    descricao: payload.descricao,
+    condicoes: payload.condicoes,
+    acoes: payload.acoes,
+    excecoes: payload.excecoes,
+    ativo: payload.ativo,
+    ordem: payload.ordem,
+    etapas
   })
 
   await logAudit({

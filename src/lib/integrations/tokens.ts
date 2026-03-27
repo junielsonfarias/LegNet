@@ -40,7 +40,7 @@ export const recordIntegrationUsage = async (
   request: NextRequest,
   metadata: Record<string, unknown> = {}
 ) => {
-  const ip = request.ip || request.headers.get('x-forwarded-for') || null
+  const ip = (request as any).ip || request.headers.get('x-forwarded-for') || null
   const agent = request.headers.get('user-agent') || null
 
   await prisma.apiToken.update({

@@ -38,9 +38,10 @@ const sortTemplateItens = <T extends { secao: string; ordem: number }>(itens: T[
 
 export const GET = withAuth(async (
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const template = await templatesSessaoDbService.getById(params.id)
+  const { id } = await params
+  const template = await templatesSessaoDbService.getById(id)
   if (!template) throw new NotFoundError('Template de sessão')
 
   return createSuccessResponse(
@@ -51,10 +52,10 @@ export const GET = withAuth(async (
 
 export const PUT = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
-  const templateId = params.id
+  const { id: templateId } = await params
   const payload = TemplateUpdateSchema.parse(await request.json())
 
   const templateAtual = await templatesSessaoDbService.getById(templateId)
@@ -97,19 +98,20 @@ export const PUT = withAuth(async (
 
 export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
   session
 ) => {
-  const template = await templatesSessaoDbService.getById(params.id)
+  const { id } = await params
+  const template = await templatesSessaoDbService.getById(id)
   if (!template) throw new NotFoundError('Template de sessão')
 
-  await templatesSessaoDbService.remove(params.id)
+  await templatesSessaoDbService.remove(id)
 
   await logAudit({
     request, session,
     action: 'TEMPLATE_SESSAO_DELETE',
     entity: 'SessaoTemplate',
-    entityId: params.id,
+    entityId: id,
     metadata: { nome: template.nome, tipo: template.tipo }
   })
 

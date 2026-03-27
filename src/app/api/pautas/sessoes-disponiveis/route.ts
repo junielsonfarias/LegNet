@@ -4,9 +4,9 @@
  */
 
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,44 +15,7 @@ export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
   const incluirComPauta = searchParams.get('incluirComPauta') === 'true'
   const incluirFinalizadas = searchParams.get('incluirFinalizadas') === 'true'
 
-  // Buscar sessões que ainda NÃO têm pauta vinculada
-  // Se incluirFinalizadas, inclui também sessões CONCLUIDAS
-  const whereClause: any = incluirComPauta ? {} : { pautaSessao: null }
-
-  // Por padrão, não incluir sessões canceladas
-  if (!incluirFinalizadas) {
-    whereClause.status = { not: 'CANCELADA' }
-  }
-
-  const sessoes = await prisma.sessao.findMany({
-    where: whereClause,
-    include: {
-      legislatura: {
-        select: {
-          numero: true,
-          anoInicio: true,
-          anoFim: true
-        }
-      },
-      pautaSessao: {
-        select: {
-          id: true,
-          status: true,
-          tempoTotalEstimado: true,
-          _count: {
-            select: {
-              itens: true
-            }
-          }
-        }
-      }
-    },
-    orderBy: [
-      { data: 'desc' },
-      { numero: 'desc' }
-    ],
-    take: 100
-  })
+  const sessoes = await sessaoDbService.listSessoesDisponiveis({ incluirComPauta, incluirFinalizadas })
 
   // Separar em com e sem pauta
   const sessoesFormatadas = sessoes.map(sessao => ({

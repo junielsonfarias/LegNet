@@ -37,7 +37,7 @@ const allowRequest = (key: string, limit: number, windowMs: number) => {
 
 const buildRateLimitKey = (request: NextRequest) => {
   const ip =
-    request.ip ||
+    (request as any).ip ||
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     '127.0.0.1'
   const userAgent = request.headers.get('user-agent') ?? 'anonymous'

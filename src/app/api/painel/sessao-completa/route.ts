@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -7,6 +6,7 @@ import {
   ValidationError
 } from '@/lib/error-handler'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
+import { painelDbService } from '@/lib/services/painel-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,105 +25,7 @@ export const GET = withErrorHandler(async (
   // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
   const id = await resolverSessaoId(sessaoIdParam)
 
-  const sessao = await prisma.sessao.findUnique({
-    where: { id },
-    include: {
-      legislatura: {
-        select: {
-          id: true,
-          numero: true,
-          anoInicio: true,
-          anoFim: true,
-          mandatos: {
-            where: { ativo: true },
-            include: {
-              parlamentar: {
-                select: {
-                  id: true,
-                  nome: true,
-                  apelido: true,
-                  partido: true,
-                  foto: true
-                }
-              }
-            }
-          }
-        }
-      },
-      periodo: {
-        select: {
-          id: true,
-          numero: true,
-          dataInicio: true,
-          dataFim: true
-        }
-      },
-      pautaSessao: {
-        include: {
-          itemAtual: {
-            select: {
-              id: true,
-              titulo: true,
-              secao: true,
-              ordem: true,
-              tempoEstimado: true,
-              tempoReal: true,
-              tempoAcumulado: true,
-              iniciadoEm: true,
-              finalizadoEm: true,
-              status: true
-            }
-          },
-          itens: {
-            orderBy: { ordem: 'asc' },
-            include: {
-              proposicao: {
-                select: {
-                  id: true,
-                  numero: true,
-                  ano: true,
-                  titulo: true,
-                  tipo: true,
-                  status: true,
-                  autor: {
-                    select: {
-                      id: true,
-                      nome: true,
-                      apelido: true
-                    }
-                  },
-                  votacoes: {
-                    include: {
-                      parlamentar: {
-                        select: {
-                          id: true,
-                          nome: true,
-                          apelido: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      presencas: {
-        include: {
-          parlamentar: {
-            select: {
-              id: true,
-              nome: true,
-              apelido: true,
-              partido: true,
-              foto: true
-            }
-          }
-        }
-      }
-    }
-  })
+  const sessao = await painelDbService.getSessaoCompleta(id)
 
   if (!sessao) {
     throw new NotFoundError('Sessão')

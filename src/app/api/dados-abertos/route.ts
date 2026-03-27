@@ -4,25 +4,19 @@
  */
 
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
-  // Buscar configuração institucional
-  const config = await prisma.configuracaoInstitucional.findFirst({
-    where: { slug: 'principal' }
-  })
-  const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
-  const emailContato = config?.email || 'transparencia@camara.gov.br'
-  const telefoneContato = config?.telefone || ''
+  const info = await dadosAbertosService.getInfo()
 
   return NextResponse.json({
-    titulo: `API de Dados Abertos - ${nomeCasa}`,
+    titulo: `API de Dados Abertos - ${info.nomeCasa}`,
     versao: '1.0.0',
-    descricao: `API publica para acesso a dados abertos da ${nomeCasa}`,
+    descricao: `API publica para acesso a dados abertos da ${info.nomeCasa}`,
     documentacao: `${baseUrl}/api-docs`,
     endpoints: [
       {
@@ -77,8 +71,8 @@ export async function GET() {
     ],
     licenca: 'Creative Commons CC-BY 4.0',
     contato: {
-      email: emailContato,
-      telefone: telefoneContato
+      email: info.email,
+      telefone: info.telefone
     },
     atualizacao: new Date().toISOString()
   })

@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -8,17 +7,18 @@ import {
   ConflictError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
-import { isSlugProposicao, gerarSlugProposicao, parseSlugProposicao } from '@/lib/utils/proposicao-slug'
+import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
+import { proposicaoDbService } from '@/lib/services/proposicao-db-service'
 
-// Configurar para renderização dinâmica
+// Configurar para renderizacao dinamica
 export const dynamic = 'force-dynamic'
 
-// Schema de validação para atualização de proposição
-// O campo 'tipo' aceita qualquer código de tipo cadastrado em TipoProposicaoConfig
+// Schema de validacao para atualizacao de proposicao
+// O campo 'tipo' aceita qualquer codigo de tipo cadastrado em TipoProposicaoConfig
 const UpdateProposicaoSchema = z.object({
   numero: z.string().min(1).optional(),
-  ano: z.number().min(1900).optional(), // Permite anos anteriores para dados históricos
-  tipo: z.string().min(1).max(50).optional(), // Tipos são dinâmicos - validados contra TipoProposicaoConfig
+  ano: z.number().min(1900).optional(), // Permite anos anteriores para dados historicos
+  tipo: z.string().min(1).max(50).optional(), // Tipos sao dinamicos - validados contra TipoProposicaoConfig
   titulo: z.string().min(5).optional(),
   ementa: z.string().min(10).optional(),
   texto: z.string().optional(),
@@ -31,124 +31,14 @@ const UpdateProposicaoSchema = z.object({
   autorId: z.string().optional()
 })
 
-/**
- * Busca proposição por ID técnico ou slug amigável
- * Também tenta buscar por número/ano/tipo se o slug não encontrar
- * @param idOrSlug - ID técnico (CUID) ou slug (ex: pl-0022-2025)
- * @returns Proposição encontrada ou null
- */
-async function findProposicaoByIdOrSlug(idOrSlug: string) {
-  // Verifica se é um slug amigável
-  if (isSlugProposicao(idOrSlug)) {
-    // Primeiro tenta buscar pelo slug armazenado
-    let proposicao: Awaited<ReturnType<typeof prisma.proposicao.findUnique>> = null
-    try {
-      proposicao = await prisma.proposicao.findUnique({
-        where: { slug: idOrSlug }
-      })
-    } catch (error) {
-      // Campo slug pode não existir no banco ainda - isso é esperado durante migração
-      // Campo slug pode não existir no banco - esperado durante migração
-    }
-
-    // Se não encontrar pelo slug, tenta buscar por número/ano/tipo
-    if (!proposicao) {
-      const parsed = parseSlugProposicao(idOrSlug)
-      if (parsed) {
-        // Remove zeros à esquerda do número para compatibilidade
-        const numeroSemZeros = parsed.numero.replace(/^0+/, '') || '0'
-        proposicao = await prisma.proposicao.findFirst({
-          where: {
-            OR: [
-              { numero: parsed.numero, ano: parsed.ano, tipo: parsed.tipo as any },
-              { numero: numeroSemZeros, ano: parsed.ano, tipo: parsed.tipo as any }
-            ]
-          }
-        })
-      }
-    }
-
-    return proposicao
-  }
-
-  // Caso contrário, busca por ID técnico
-  return prisma.proposicao.findUnique({
-    where: { id: idOrSlug }
-  })
-}
-
-// GET - Buscar proposição por ID ou slug
+// GET - Buscar proposicao por ID ou slug
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const idOrSlug = params.id
+  const { id: idOrSlug } = await params
 
-  // Construir query baseada no tipo de identificador
-  let whereClause: any
-
-  if (isSlugProposicao(idOrSlug)) {
-    // Primeiro tenta buscar pelo slug armazenado no banco
-    try {
-      const bySlug = await prisma.proposicao.findUnique({
-        where: { slug: idOrSlug },
-        include: {
-          autor: {
-            select: { id: true, nome: true, apelido: true, partido: true }
-          },
-          sessao: {
-            select: { id: true, numero: true, data: true }
-          }
-        }
-      })
-
-      if (bySlug) {
-        return createSuccessResponse(bySlug, 'Proposição encontrada com sucesso')
-      }
-    } catch (error) {
-      // Campo slug pode não existir no banco ainda - tentará busca alternativa
-      // Slug não encontrado - fallback para busca por número/ano/tipo
-    }
-
-    // Se não encontrou pelo slug, tenta por número/ano/tipo
-    const parsed = parseSlugProposicao(idOrSlug)
-    if (parsed) {
-      // Remove zeros à esquerda do número para compatibilidade
-      const numeroSemZeros = parsed.numero.replace(/^0+/, '') || '0'
-      whereClause = {
-        OR: [
-          { numero: parsed.numero, ano: parsed.ano, tipo: parsed.tipo as any },
-          { numero: numeroSemZeros, ano: parsed.ano, tipo: parsed.tipo as any }
-        ]
-      }
-    } else {
-      throw new NotFoundError('Proposição')
-    }
-  } else {
-    // Busca por ID técnico
-    whereClause = { id: idOrSlug }
-  }
-
-  const proposicao = await prisma.proposicao.findFirst({
-    where: whereClause,
-    include: {
-      autor: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          partido: true
-        }
-      },
-      sessao: {
-        select: {
-          id: true,
-          numero: true,
-          data: true
-        }
-      }
-    }
-  })
+  const proposicao = await proposicaoDbService.getByIdOrSlug(idOrSlug)
 
   if (!proposicao) {
     throw new NotFoundError('Proposição')
@@ -157,8 +47,8 @@ export const GET = withErrorHandler(async (
   return createSuccessResponse(proposicao, 'Proposição encontrada com sucesso')
 })
 
-// PUT - Atualizar proposição por ID ou slug
-// SEGURANÇA: Requer autenticação e permissão 'proposicao.manage'
+// PUT - Atualizar proposicao por ID ou slug
+// SEGURANCA: Requer autenticacao e permissao 'proposicao.manage'
 export const PUT = withAuth(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -169,14 +59,14 @@ export const PUT = withAuth(async (
   // Validar dados
   const validatedData = UpdateProposicaoSchema.parse(body)
 
-  // Verificar se proposição existe (busca por ID ou slug)
-  const existingProposicao = await findProposicaoByIdOrSlug(idOrSlug)
+  // Verificar se proposicao existe (busca por ID ou slug)
+  const existingProposicao = await proposicaoDbService.findByIdOrSlug(idOrSlug)
 
   if (!existingProposicao) {
     throw new NotFoundError('Proposição')
   }
 
-  // Verificar duplicatas (se tipo/número/ano foram alterados)
+  // Verificar duplicatas (se tipo/numero/ano foram alterados)
   const tipoParaVerificar = validatedData.tipo || existingProposicao.tipo
   const numeroParaVerificar = validatedData.numero || existingProposicao.numero
   const anoParaVerificar = validatedData.ano || existingProposicao.ano
@@ -185,22 +75,19 @@ export const PUT = withAuth(async (
       (validatedData.numero !== existingProposicao.numero ||
        validatedData.ano !== existingProposicao.ano ||
        validatedData.tipo !== existingProposicao.tipo)) {
-    const duplicateCheck = await prisma.proposicao.findUnique({
-      where: {
-        tipo_numero_ano: {
-          tipo: tipoParaVerificar,
-          numero: numeroParaVerificar,
-          ano: anoParaVerificar
-        }
-      }
-    })
+    const duplicateCheck = await proposicaoDbService.checkDuplicate(
+      tipoParaVerificar,
+      numeroParaVerificar,
+      anoParaVerificar,
+      existingProposicao.id
+    )
 
-    if (duplicateCheck && duplicateCheck.id !== existingProposicao.id) {
+    if (duplicateCheck) {
       throw new ConflictError('Já existe uma proposição deste tipo com este número e ano')
     }
   }
 
-  // Regenerar slug se tipo, número ou ano foram alterados
+  // Regenerar slug se tipo, numero ou ano foram alterados
   let newSlug: string | undefined
   const tipoAlterado = validatedData.tipo && validatedData.tipo !== existingProposicao.tipo
   const numeroAlterado = validatedData.numero && validatedData.numero !== existingProposicao.numero
@@ -216,42 +103,28 @@ export const PUT = withAuth(async (
 
   // Verificar se autor existe (se foi alterado)
   if (validatedData.autorId && validatedData.autorId !== existingProposicao.autorId) {
-    const autor = await prisma.parlamentar.findUnique({
-      where: { id: validatedData.autorId }
-    })
+    const autor = await proposicaoDbService.checkAutorExists(validatedData.autorId)
 
     if (!autor) {
       throw new NotFoundError('Autor')
     }
   }
 
-  const updatedProposicao = await prisma.proposicao.update({
-    where: { id: existingProposicao.id },
-    data: {
-      slug: newSlug, // Atualiza slug se foi regenerado, undefined mantém o atual
-      numero: validatedData.numero,
-      ano: validatedData.ano,
-      tipo: validatedData.tipo,
-      titulo: validatedData.titulo,
-      ementa: validatedData.ementa,
-      texto: validatedData.texto,
-      urlDocumento: validatedData.urlDocumento || null,
-      status: validatedData.status,
-      dataApresentacao: validatedData.dataApresentacao ? new Date(validatedData.dataApresentacao) : undefined,
-      dataVotacao: validatedData.dataVotacao ? new Date(validatedData.dataVotacao) : validatedData.dataVotacao === null ? null : undefined,
-      resultado: validatedData.resultado,
-      sessaoId: validatedData.sessaoId,
-      autorId: validatedData.autorId
-    },
-    include: {
-      autor: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true
-        }
-      }
-    }
+  const updatedProposicao = await proposicaoDbService.update(existingProposicao.id, {
+    slug: newSlug,
+    numero: validatedData.numero,
+    ano: validatedData.ano,
+    tipo: validatedData.tipo,
+    titulo: validatedData.titulo,
+    ementa: validatedData.ementa,
+    texto: validatedData.texto,
+    urlDocumento: validatedData.urlDocumento || null,
+    status: validatedData.status,
+    dataApresentacao: validatedData.dataApresentacao ? new Date(validatedData.dataApresentacao) : undefined,
+    dataVotacao: validatedData.dataVotacao ? new Date(validatedData.dataVotacao) : validatedData.dataVotacao === null ? null : undefined,
+    resultado: validatedData.resultado,
+    sessaoId: validatedData.sessaoId,
+    autorId: validatedData.autorId
   })
 
   return createSuccessResponse(
@@ -260,28 +133,25 @@ export const PUT = withAuth(async (
   )
 }, { permissions: 'proposicao.manage' })
 
-// DELETE - Excluir proposição por ID ou slug
-// SEGURANÇA: Requer autenticação e permissão 'proposicao.manage'
+// DELETE - Excluir proposicao por ID ou slug
+// SEGURANCA: Requer autenticacao e permissao 'proposicao.manage'
 export const DELETE = withAuth(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) => {
   const { id: idOrSlug } = await context.params
 
-  // Verificar se proposição existe (busca por ID ou slug)
-  const existingProposicao = await findProposicaoByIdOrSlug(idOrSlug)
+  // Verificar se proposicao existe (busca por ID ou slug)
+  const existingProposicao = await proposicaoDbService.findByIdOrSlug(idOrSlug)
 
   if (!existingProposicao) {
     throw new NotFoundError('Proposição')
   }
 
-  await prisma.proposicao.delete({
-    where: { id: existingProposicao.id }
-  })
+  await proposicaoDbService.remove(existingProposicao.id)
 
   return createSuccessResponse(
     null,
     'Proposição excluída com sucesso'
   )
 }, { permissions: 'proposicao.manage' })
-

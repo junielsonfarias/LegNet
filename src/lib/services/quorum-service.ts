@@ -543,6 +543,56 @@ export async function verificarVotacaoNominalObrigatoria(
 }
 
 /**
+ * Lista todas as configurações de quórum com filtros opcionais
+ */
+export async function listarConfiguracoesQuorumFiltrado(filters: { ativo?: boolean; aplicacao?: string } = {}) {
+  const where: any = {}
+  if (filters.ativo !== undefined) where.ativo = filters.ativo
+  if (filters.aplicacao) where.aplicacao = filters.aplicacao
+
+  return prisma.configuracaoQuorum.findMany({
+    where,
+    orderBy: [{ ordem: 'asc' }, { nome: 'asc' }]
+  })
+}
+
+/**
+ * Busca configuração de quórum por ID
+ */
+export async function getConfiguracaoQuorumById(id: string) {
+  return prisma.configuracaoQuorum.findUnique({ where: { id } })
+}
+
+/**
+ * Verifica se já existe configuração para uma aplicação
+ */
+export async function checkConfiguracaoQuorumExistente(aplicacao: string) {
+  return prisma.configuracaoQuorum.findUnique({ where: { aplicacao: aplicacao as any } })
+}
+
+/**
+ * Cria nova configuração de quórum
+ */
+export async function criarConfiguracaoQuorum(data: any) {
+  return prisma.configuracaoQuorum.create({ data })
+}
+
+/**
+ * Atualiza configuração de quórum
+ */
+export async function atualizarConfiguracaoQuorum(id: string, data: any) {
+  return prisma.configuracaoQuorum.update({ where: { id }, data })
+}
+
+/**
+ * Exclui configuração de quórum
+ */
+export async function excluirConfiguracaoQuorum(id: string) {
+  await prisma.configuracaoQuorum.delete({ where: { id } })
+  return { success: true }
+}
+
+/**
  * Obtém todas as configurações de quórum ativas
  */
 export async function listarConfiguracoesQuorum(): Promise<ConfiguracaoQuorum[]> {

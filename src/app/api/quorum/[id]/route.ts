@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -8,6 +7,11 @@ import {
   validateId
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import {
+  getConfiguracaoQuorumById,
+  atualizarConfiguracaoQuorum,
+  excluirConfiguracaoQuorum
+} from '@/lib/services/quorum-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,13 +43,12 @@ const UpdateQuorumSchema = z.object({
 // GET - Obter configuracao por ID
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Configuracao de Quorum')
+  const { id: rawId } = await params
+  const id = validateId(rawId, 'Configuracao de Quorum')
 
-  const configuracao = await prisma.configuracaoQuorum.findUnique({
-    where: { id }
-  })
+  const configuracao = await getConfiguracaoQuorumById(id)
 
   if (!configuracao) {
     throw new NotFoundError('Configuracao de Quorum')
@@ -65,9 +68,7 @@ export const PUT = withAuth(async (
   const body = await request.json()
   const validatedData = UpdateQuorumSchema.parse(body)
 
-  const existente = await prisma.configuracaoQuorum.findUnique({
-    where: { id }
-  })
+  const existente = await getConfiguracaoQuorumById(id)
 
   if (!existente) {
     throw new NotFoundError('Configuracao de Quorum')
@@ -95,10 +96,7 @@ export const PUT = withAuth(async (
   if (validatedData.ativo !== undefined) updateData.ativo = validatedData.ativo
   if (validatedData.ordem !== undefined) updateData.ordem = validatedData.ordem
 
-  const configuracao = await prisma.configuracaoQuorum.update({
-    where: { id },
-    data: updateData
-  })
+  const configuracao = await atualizarConfiguracaoQuorum(id, updateData)
 
   return createSuccessResponse(configuracao, 'Configuracao de quorum atualizada com sucesso')
 }, { permissions: 'config.manage' })
@@ -112,17 +110,13 @@ export const DELETE = withAuth(async (
   const { id: rawId } = await context.params
   const id = validateId(rawId, 'Configuracao de Quorum')
 
-  const configuracao = await prisma.configuracaoQuorum.findUnique({
-    where: { id }
-  })
+  const configuracao = await getConfiguracaoQuorumById(id)
 
   if (!configuracao) {
     throw new NotFoundError('Configuracao de Quorum')
   }
 
-  await prisma.configuracaoQuorum.delete({
-    where: { id }
-  })
+  await excluirConfiguracaoQuorum(id)
 
   return createSuccessResponse(null, 'Configuracao de quorum excluida com sucesso')
 }, { permissions: 'config.manage' })

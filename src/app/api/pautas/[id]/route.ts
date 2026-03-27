@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { pautasDbService } from '@/lib/services/pautas-db-service'
+import { proposicaoDbService } from '@/lib/services/proposicao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -89,10 +89,7 @@ export const DELETE = withAuth(withErrorHandler(async (request: NextRequest, con
     .filter((id: any): id is string => id !== null && id !== undefined)
 
   if (proposicoesIds.length > 0) {
-    await prisma.proposicao.updateMany({
-      where: { id: { in: proposicoesIds }, status: 'EM_PAUTA' },
-      data: { status: 'AGUARDANDO_PAUTA' }
-    })
+    await proposicaoDbService.revertStatusPauta(proposicoesIds)
   }
 
   await pautasDbService.remove(pautaId)

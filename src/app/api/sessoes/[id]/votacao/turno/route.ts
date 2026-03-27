@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import {
   withErrorHandler,
   createSuccessResponse,
@@ -26,6 +25,13 @@ import {
   determinarAplicacaoQuorum,
   calcularResultadoVotacao
 } from '@/lib/services/quorum-service'
+import {
+  getPautaItemComTurno,
+  listPautaItensTurno,
+  iniciarPrimeiroTurnoItem,
+  getTotaisParaVotacao,
+  atualizarProposicaoAposVotacaoFinal
+} from '@/lib/services/votacao-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,22 +51,17 @@ const FinalizarTurnoSchema = z.object({
  */
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = await resolverSessaoId(params.id)
+  const { id } = await context.params
+  const sessaoId = await resolverSessaoId(id)
   const { searchParams } = new URL(request.url)
   const itemId = searchParams.get('itemId')
   const proposicaoId = searchParams.get('proposicaoId')
 
   if (itemId) {
     // Buscar informações do turno do item
-    const item = await prisma.pautaItem.findUnique({
-      where: { id: itemId },
-      include: {
-        proposicao: true,
-        pauta: true
-      }
-    })
+    const item = await getPautaItemComTurno(itemId)
 
     if (!item || item.pauta?.sessaoId !== sessaoId) {
       throw new NotFoundError('Item da pauta')
@@ -104,21 +105,7 @@ export const GET = withErrorHandler(async (
   }
 
   // Listar todos os itens com informações de turno
-  const itens = await prisma.pautaItem.findMany({
-    where: {
-      pauta: {
-        sessaoId
-      },
-      tipoAcao: 'VOTACAO'
-    },
-    include: {
-      proposicao: true
-    },
-    orderBy: [
-      { secao: 'asc' },
-      { ordem: 'asc' }
-    ]
-  })
+  const itens = await listPautaItensTurno(sessaoId)
 
   const itensComTurno = itens.map(item => {
     const config = item.proposicao
@@ -162,13 +149,7 @@ export const POST = withAuth(async (
   assertSessaoPermiteVotacao(sessao)
 
   // Buscar item
-  const item = await prisma.pautaItem.findUnique({
-    where: { id: itemId },
-    include: {
-      proposicao: true,
-      pauta: true
-    }
-  })
+  const item = await getPautaItemComTurno(itemId)
 
   if (!item || item.pauta?.sessaoId !== sessaoId) {
     throw new NotFoundError('Item da pauta')
@@ -196,15 +177,7 @@ export const POST = withAuth(async (
     ? getConfiguracaoTurno(item.proposicao.tipo)
     : getConfiguracaoTurno('DEFAULT')
 
-  await prisma.pautaItem.update({
-    where: { id: itemId },
-    data: {
-      turnoAtual: 1,
-      turnoFinal: config.totalTurnos,
-      status: 'EM_VOTACAO',
-      iniciadoEm: new Date()
-    }
-  })
+  await iniciarPrimeiroTurnoItem(itemId, config.totalTurnos)
 
   return createSuccessResponse({
     itemId,
@@ -235,13 +208,7 @@ export const PUT = withAuth(async (
   const sessao = await obterSessaoParaControle(sessaoId)
 
   // Buscar item
-  const item = await prisma.pautaItem.findUnique({
-    where: { id: itemId },
-    include: {
-      proposicao: true,
-      pauta: true
-    }
-  })
+  const item = await getPautaItemComTurno(itemId)
 
   if (!item || item.pauta?.sessaoId !== sessaoId) {
     throw new NotFoundError('Item da pauta')
@@ -265,23 +232,7 @@ export const PUT = withAuth(async (
   const aplicacaoQuorum = determinarAplicacaoQuorum(item.proposicao.tipo)
 
   // Buscar totais
-  const whereClause: any = { ativo: true }
-  if (sessao.legislaturaId) {
-    whereClause.mandatos = {
-      some: {
-        legislaturaId: sessao.legislaturaId,
-        ativo: true
-      }
-    }
-  }
-
-  const totalMembros = await prisma.parlamentar.count({ where: whereClause })
-  const totalPresentes = await prisma.presencaSessao.count({
-    where: {
-      sessaoId,
-      presente: true
-    }
-  })
+  const { totalMembros, totalPresentes } = await getTotaisParaVotacao(sessaoId, sessao.legislaturaId)
 
   // Calcular resultado com quórum
   const resultadoQuorum = await calcularResultadoVotacao(
@@ -333,15 +284,12 @@ export const PUT = withAuth(async (
   if (!resultadoTurno.proximoTurno && item.proposicaoId) {
     const statusProposicao = resultadoFinal === 'APROVADA' ? 'APROVADA' : 'REJEITADA'
 
-    await prisma.proposicao.update({
-      where: { id: item.proposicaoId },
-      data: {
-        resultado: contagemVotos.resultado,
-        dataVotacao: new Date(),
-        status: statusProposicao,
-        sessaoVotacaoId: sessaoId
-      }
-    })
+    await atualizarProposicaoAposVotacaoFinal(
+      item.proposicaoId,
+      contagemVotos.resultado,
+      sessaoId,
+      statusProposicao
+    )
   }
 
   return createSuccessResponse({

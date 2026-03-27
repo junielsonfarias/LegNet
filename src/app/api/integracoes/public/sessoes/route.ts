@@ -1,7 +1,5 @@
 import { NextRequest } from 'next/server'
 
-import { prisma } from '@/lib/prisma'
-
 // Força rota dinâmica para evitar erro de renderização estática
 export const dynamic = 'force-dynamic'
 import {
@@ -14,6 +12,7 @@ import {
   verifyIntegrationToken,
   recordIntegrationUsage
 } from '@/lib/integrations/tokens'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
 
 const MAX_LIMIT = 100
 
@@ -47,58 +46,28 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   const limit = Math.min(Number(limitParam || 50), MAX_LIMIT)
 
-  const where: Record<string, any> = {}
-  if (status) {
-    where.status = status
-  }
-  if (tipo) {
-    where.tipo = tipo
-  }
-  if (from || to) {
-    where.data = {}
-    if (from) {
-      const fromDate = new Date(from)
-      if (Number.isNaN(fromDate.getTime())) {
-        throw new ValidationError('Parâmetro "from" inválido')
-      }
-      where.data.gte = fromDate
+  let fromDate: Date | undefined
+  let toDate: Date | undefined
+
+  if (from) {
+    fromDate = new Date(from)
+    if (Number.isNaN(fromDate.getTime())) {
+      throw new ValidationError('Parâmetro "from" inválido')
     }
-    if (to) {
-      const toDate = new Date(to)
-      if (Number.isNaN(toDate.getTime())) {
-        throw new ValidationError('Parâmetro "to" inválido')
-      }
-      where.data.lte = toDate
+  }
+  if (to) {
+    toDate = new Date(to)
+    if (Number.isNaN(toDate.getTime())) {
+      throw new ValidationError('Parâmetro "to" inválido')
     }
   }
 
-  const sessoes = await prisma.sessao.findMany({
-    where,
-    orderBy: { data: 'desc' },
-    take: limit,
-    include: {
-      legislatura: {
-        select: {
-          id: true,
-          numero: true,
-          anoInicio: true,
-          anoFim: true
-        }
-      },
-      periodo: {
-        select: {
-          id: true,
-          numero: true,
-          dataInicio: true,
-          dataFim: true
-        }
-      },
-      pautaSessao: {
-        include: {
-          itens: true
-        }
-      }
-    }
+  const sessoes = await sessaoDbService.listPublic({
+    status,
+    tipo,
+    from: fromDate,
+    to: toDate,
+    limit
   })
 
   const sanitized = sessoes.map(sessao => ({
@@ -135,4 +104,3 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   return createSuccessResponse(sanitized, 'Sessões recuperadas com sucesso', sanitized.length)
 })
-

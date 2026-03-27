@@ -1,271 +1,171 @@
+/**
+ * Transparency Section - Cards de acesso rapido + dados de transparencia
+ */
+
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { FileText, Download, Eye, Users, Calendar, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import {
+  Eye,
+  FileText,
+  Scale,
+  DollarSign,
+  Building2,
+  ArrowRight,
+  Download,
+  ExternalLink,
+  BarChart3,
+  ShieldCheck
+} from 'lucide-react'
 
 interface Publicacao {
   id: string
   titulo: string
   tipo: string
-  data: string
-  ano: number
+  dataPublicacao: string
 }
 
-interface Estatisticas {
-  leis: number
-  decretos: number
-  sessoes: number
-  proposicoes: number
-}
+const transparencyLinks = [
+  {
+    icon: DollarSign,
+    title: 'Receitas e Despesas',
+    description: 'Acompanhe a execucao orcamentaria',
+    href: '/transparencia/receitas-despesas-convenios-folhas-licitacoes-contratos',
+    color: 'bg-emerald-50 text-emerald-600'
+  },
+  {
+    icon: Building2,
+    title: 'Licitacoes e Contratos',
+    description: 'Processos e contratos firmados',
+    href: '/transparencia/licitacoes',
+    color: 'bg-blue-50 text-blue-600'
+  },
+  {
+    icon: Scale,
+    title: 'Legislacao Municipal',
+    description: 'Leis, decretos e normas vigentes',
+    href: '/legislativo/normas',
+    color: 'bg-violet-50 text-violet-600'
+  },
+  {
+    icon: BarChart3,
+    title: 'Dados Abertos',
+    description: 'Acesse dados em formato aberto',
+    href: '/transparencia/dados-abertos',
+    color: 'bg-amber-50 text-amber-600'
+  },
+]
 
 export function TransparencySection() {
-  const { configuracao, legislatura } = useConfiguracaoInstitucional()
   const [publicacoes, setPublicacoes] = useState<Publicacao[]>([])
-  const [estatisticas, setEstatisticas] = useState<Estatisticas>({ leis: 0, decretos: 0, sessoes: 0, proposicoes: 0 })
-  const [totalVereadores, setTotalVereadores] = useState<number>(0)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetch_ = async () => {
       try {
-        setLoading(true)
-
-        // Buscar estatísticas e publicações recentes em paralelo
-        const [leisRes, decretosRes, sessoesRes, proposicoesRes, parlamentaresRes] = await Promise.all([
-          fetch('/api/dados-abertos/publicacoes?tipo=LEI&limit=3'),
-          fetch('/api/dados-abertos/publicacoes?tipo=DECRETO&limit=3'),
-          fetch('/api/dados-abertos/sessoes?limit=1'),
-          fetch('/api/dados-abertos/proposicoes?limit=1'),
-          fetch('/api/parlamentares?ativo=true&limit=1')
-        ])
-
-        const [leis, decretos, sessoes, proposicoes, parlamentares] = await Promise.all([
-          leisRes.json(),
-          decretosRes.json(),
-          sessoesRes.json(),
-          proposicoesRes.json(),
-          parlamentaresRes.ok ? parlamentaresRes.json() : { total: 0 }
-        ])
-
-        // Combinar publicações recentes (leis e decretos)
-        const todasPublicacoes = [
-          ...(leis.dados || []).map((p: any) => ({ ...p, tipo: 'Lei' })),
-          ...(decretos.dados || []).map((p: any) => ({ ...p, tipo: 'Decreto' }))
-        ]
-          .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-          .slice(0, 3)
-
-        setPublicacoes(todasPublicacoes)
-        setEstatisticas({
-          leis: leis.metadados?.total || leis.dados?.length || 0,
-          decretos: decretos.metadados?.total || decretos.dados?.length || 0,
-          sessoes: sessoes.metadados?.total || 0,
-          proposicoes: proposicoes.metadados?.total || 0
-        })
-        setTotalVereadores(parlamentares.total || parlamentares.data?.length || parlamentares.length || 0)
-      } catch (error) {
-        console.error('Erro ao carregar dados de transparência:', error)
-      } finally {
-        setLoading(false)
-      }
+        const res = await fetch('/api/dados-abertos/publicacoes?limit=5')
+        const data = await res.json()
+        setPublicacoes(data.dados || [])
+      } catch {}
     }
-
-    fetchData()
+    fetch_()
   }, [])
 
-  const transparencyItems = [
-    {
-      icon: FileText,
-      title: 'Leis Municipais',
-      description: 'Acesse todas as leis aprovadas pela Câmara Municipal',
-      count: estatisticas.leis,
-      href: '/transparencia/leis',
-      color: 'text-camara-primary'
-    },
-    {
-      icon: Download,
-      title: 'Decretos',
-      description: 'Consulte os decretos municipais em vigor',
-      count: estatisticas.decretos,
-      href: '/transparencia/decretos',
-      color: 'text-green-600'
-    },
-    {
-      icon: Eye,
-      title: 'Gestão Fiscal',
-      description: 'Acompanhe a execução orçamentária e financeira',
-      count: '100%',
-      href: '/transparencia/pesquisas',
-      color: 'text-purple-600'
-    },
-  ]
-
-  const getPublicacaoHref = (pub: Publicacao) => {
-    // Direcionar para a página de listagem com o tipo correto
-    if (pub.tipo === 'Lei') return '/transparencia/leis'
-    if (pub.tipo === 'Decreto') return '/transparencia/decretos'
-    return '/transparencia'
-  }
-
   return (
-    <section className="py-16 bg-white">
+    <section className="py-14 bg-white">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Transparência e Acesso à Informação
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            A {configuracao?.nomeCasa || 'Câmara Municipal'} garante total transparência
-            em suas ações, cumprindo a Lei de Acesso à Informação
-          </p>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Transparencia</h2>
+            <p className="text-gray-500 mt-1">Acesso a informacoes publicas do municipio</p>
+          </div>
+          <Button asChild variant="outline" className="hidden md:flex">
+            <Link href="/transparencia">
+              Portal completo <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </Button>
         </div>
 
-        {/* Cards de transparência */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {transparencyItems.map((item, index) => (
-            <Card key={index} className="camara-card hover:scale-105 transition-transform duration-200">
-              <CardHeader className="text-center pb-3">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <item.icon className={`h-6 w-6 ${item.color}`} />
-                </div>
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  {item.title}
-                </CardTitle>
-                <p className="text-sm text-gray-600">
-                  {item.description}
-                </p>
-              </CardHeader>
-              <CardContent className="text-center">
-                <div className="text-2xl font-bold text-camara-primary mb-3">
-                  {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto" /> : item.count}
-                </div>
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link href={item.href}>
-                    Acessar
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Cards de acesso */}
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {transparencyLinks.map((item) => (
+              <Link key={item.href} href={item.href} className="group">
+                <Card className="border border-gray-100 hover:border-gray-200 shadow-sm hover:shadow-md transition-all h-full">
+                  <CardContent className="p-5 flex items-start gap-4">
+                    <div className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center ${item.color}`}>
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm group-hover:text-camara-primary transition-colors">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">{item.description}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-gray-500 shrink-0 mt-1 transition-colors" />
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
 
-        {/* Publicações recentes */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="camara-card">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-camara-primary" />
-                Publicações Recentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-camara-primary" />
-                </div>
-              ) : publicacoes.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Nenhuma publicação encontrada.</p>
-              ) : (
-                <div className="space-y-4">
+          {/* Publicacoes recentes */}
+          <Card className="border border-gray-100 shadow-sm">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="h-4 w-4 text-gray-400" />
+                <h3 className="font-semibold text-gray-800 text-sm">Publicacoes Recentes</h3>
+              </div>
+              {publicacoes.length > 0 ? (
+                <div className="space-y-3">
                   {publicacoes.map((pub) => (
-                    <div key={pub.id} className="border-l-4 border-camara-primary pl-4 py-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
-                            {pub.titulo}
-                          </h4>
-                          <div className="flex items-center space-x-2 text-xs text-gray-500">
-                            <span className="bg-camara-primary text-white px-2 py-1 rounded">
-                              {pub.tipo}
-                            </span>
-                            <span>{new Date(pub.data).toLocaleDateString('pt-BR')}</span>
-                          </div>
-                        </div>
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={getPublicacaoHref(pub)}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                    <div key={pub.id} className="flex items-start gap-3">
+                      <div className="w-1 h-8 rounded-full bg-gray-200 shrink-0 mt-0.5" style={{ backgroundColor: 'var(--municipal-primary-light, #93c5fd)' }} />
+                      <div className="min-w-0">
+                        <p className="text-sm text-gray-700 line-clamp-1">{pub.titulo}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          {new Date(pub.dataPublicacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
+              ) : (
+                <p className="text-sm text-gray-400 text-center py-6">Nenhuma publicacao recente</p>
               )}
-              <div className="mt-4 pt-4 border-t">
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/transparencia">
-                    Ver Todas as Publicações
-                  </Link>
-                </Button>
-              </div>
+
+              <Button asChild variant="ghost" size="sm" className="w-full mt-4 text-xs">
+                <Link href="/transparencia/publicacoes">
+                  Ver todas as publicacoes <ExternalLink className="h-3 w-3 ml-1" />
+                </Link>
+              </Button>
             </CardContent>
           </Card>
+        </div>
 
-          <Card className="camara-card">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold flex items-center">
-                <Users className="h-5 w-5 mr-2 text-camara-primary" />
-                Informações da Legislatura
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Legislatura Atual</h4>
-                    <p className="text-sm text-gray-600">{legislatura?.periodo || configuracao?.legislatura || 'Legislatura vigente'}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-camara-primary">
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : totalVereadores || '-'}
-                    </div>
-                    <div className="text-xs text-gray-600">Vereadores</div>
-                  </div>
-                </div>
+        {/* PNTP Badge */}
+        <div className="mt-8 flex items-center justify-center gap-3 py-4 px-6 bg-emerald-50 rounded-xl border border-emerald-100">
+          <ShieldCheck className="h-6 w-6 text-emerald-600 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-800">Programa Nacional de Transparencia Publica</p>
+            <p className="text-xs text-emerald-600">Compromisso com a transparencia e o acesso a informacao - Nivel Diamante</p>
+          </div>
+        </div>
 
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Sessões Realizadas</h4>
-                    <p className="text-sm text-gray-600">Este ano</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-camara-secondary">
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : estatisticas.sessoes}
-                    </div>
-                    <div className="text-xs text-gray-600">Sessões</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Matérias Processadas</h4>
-                    <p className="text-sm text-gray-600">Total acumulado</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-camara-accent">
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : estatisticas.proposicoes}
-                    </div>
-                    <div className="text-xs text-gray-600">Matérias</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-4 border-t">
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/legislativo/sessoes">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Ver Calendário de Sessões
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Mobile CTA */}
+        <div className="mt-6 text-center md:hidden">
+          <Button asChild variant="outline">
+            <Link href="/transparencia">
+              Portal da Transparencia <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>
   )
 }
+
+export default TransparencySection

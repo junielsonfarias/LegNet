@@ -2,10 +2,10 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { TipoSessao } from '@prisma/client'
 
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, ConflictError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { templatesSessaoDbService } from '@/lib/services/templates-sessao-db-service'
 
 const PAUTA_SECOES = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
 
@@ -50,24 +50,10 @@ export const GET = withAuth(async (request: NextRequest) => {
   const ativoParam = searchParams.get('ativo')
   const includeItems = searchParams.get('includeItems') === 'true'
 
-  const where: Record<string, any> = {}
-  if (tipo) {
-    where.tipo = tipo
-  }
-  if (ativoParam !== null) {
-    where.ativo = ativoParam === 'true'
-  }
-
-  const templates = await prisma.sessaoTemplate.findMany({
-    where,
-    orderBy: { nome: 'asc' },
-    include: includeItems
-      ? {
-          itens: {
-            orderBy: { ordem: 'asc' }
-          }
-        }
-      : undefined
+  const templates = await templatesSessaoDbService.list({
+    tipo: tipo || undefined,
+    ativo: ativoParam !== null ? ativoParam === 'true' : undefined,
+    includeItems
   })
 
   const data = includeItems
@@ -81,41 +67,27 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const body = await request.json()
   const payload = TemplateCreateSchema.parse(body)
 
-  const existing = await prisma.sessaoTemplate.findFirst({
-    where: {
-      nome: payload.nome,
-      tipo: payload.tipo
-    }
-  })
+  const existing = await templatesSessaoDbService.checkDuplicate(payload.nome, payload.tipo)
 
   if (existing) {
     throw new ConflictError('Já existe um template com este nome para o tipo selecionado')
   }
 
-  const template = await prisma.sessaoTemplate.create({
-    data: {
-      nome: payload.nome,
-      descricao: payload.descricao || null,
-      tipo: payload.tipo,
-      ativo: payload.ativo ?? true,
-      duracaoEstimativa: payload.duracaoEstimativa ?? null,
-      itens: {
-        create: payload.itens.map((item, index) => ({
-          secao: item.secao,
-          ordem: item.ordem ?? index + 1,
-          titulo: item.titulo,
-          descricao: item.descricao || null,
-          tempoEstimado: item.tempoEstimado ?? null,
-          tipoProposicao: item.tipoProposicao || null,
-          obrigatorio: item.obrigatorio ?? false
-        }))
-      }
-    },
-    include: {
-      itens: {
-        orderBy: { ordem: 'asc' }
-      }
-    }
+  const template = await templatesSessaoDbService.create({
+    nome: payload.nome,
+    descricao: payload.descricao || null,
+    tipo: payload.tipo,
+    ativo: payload.ativo ?? true,
+    duracaoEstimativa: payload.duracaoEstimativa ?? null,
+    itens: payload.itens.map((item, index) => ({
+      secao: item.secao,
+      ordem: item.ordem ?? index + 1,
+      titulo: item.titulo,
+      descricao: item.descricao || null,
+      tempoEstimado: item.tempoEstimado ?? null,
+      tipoProposicao: item.tipoProposicao || null,
+      obrigatorio: item.obrigatorio ?? false
+    }))
   })
 
   await logAudit({
@@ -133,4 +105,3 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
 
   return createSuccessResponse(mapTemplateWithItens(template), 'Template criado com sucesso', undefined, 201)
 }, { permissions: 'pauta.manage' })
-

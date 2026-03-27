@@ -1,108 +1,100 @@
+/**
+ * Stats Section - Substituida por CTA de contato/participacao
+ */
+
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Users, Calendar, FileText, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import {
+  MessageSquare,
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  ArrowRight,
+  HelpCircle,
+  Send
+} from 'lucide-react'
 
 export function StatsSection() {
-  const [stats, setStats] = useState({
-    vereadores: 0,
-    sessoes: 0,
-    materias: 0,
-    transparencia: 100
-  })
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [parlamentaresRes, sessoesRes, proposicoesRes] = await Promise.all([
-          fetch('/api/dados-abertos/parlamentares?ativo=true').catch(() => null),
-          fetch('/api/sessoes?limit=1').catch(() => null),
-          fetch('/api/dados-abertos/proposicoes?limit=1').catch(() => null)
-        ])
-
-        const newStats = { ...stats }
-
-        if (parlamentaresRes?.ok) {
-          const data = await parlamentaresRes.json()
-          newStats.vereadores = data.dados?.length || data.data?.length || 0
-        }
-
-        if (sessoesRes?.ok) {
-          const data = await sessoesRes.json()
-          newStats.sessoes = data.pagination?.total || data.meta?.total || 0
-        }
-
-        if (proposicoesRes?.ok) {
-          const data = await proposicoesRes.json()
-          newStats.materias = data.dados?.total || data.pagination?.total || 0
-        }
-
-        setStats(newStats)
-      } catch {
-        // Mantém zeros
-      }
-    }
-
-    fetchStats()
-  }, [])
-
-  const items = [
-    {
-      icon: Users,
-      title: 'Vereadores Ativos',
-      value: String(stats.vereadores),
-      description: 'Parlamentares na legislatura atual',
-      color: 'text-camara-primary'
-    },
-    {
-      icon: Calendar,
-      title: 'Sessões Realizadas',
-      value: String(stats.sessoes),
-      description: 'Sessões ordinárias e extraordinárias',
-      color: 'text-green-600'
-    },
-    {
-      icon: FileText,
-      title: 'Matérias Processadas',
-      value: String(stats.materias),
-      description: 'Proposições, leis e decretos',
-      color: 'text-purple-600'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Transparência',
-      value: '100%',
-      description: 'Conformidade com a Lei de Acesso à Informação',
-      color: 'text-orange-600'
-    }
-  ]
-
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Em Números
-          </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Acompanhe as atividades da Câmara Municipal
-          </p>
-        </div>
+    <section
+      className="py-16 text-white relative overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, var(--municipal-primary-dark) 0%, var(--municipal-primary-darker) 100%)'
+      }}
+    >
+      {/* Decoracao */}
+      <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/5" />
+        <div className="absolute bottom-0 -left-12 w-64 h-64 rounded-full bg-white/5" />
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {items.map((stat, index) => (
-            <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-              <CardContent className="pt-6">
-                <stat.icon className={`h-10 w-10 mx-auto mb-3 ${stat.color}`} />
-                <p className={`text-3xl font-bold ${stat.color} mb-1`}>{stat.value}</p>
-                <h3 className="font-semibold text-gray-900 mb-1">{stat.title}</h3>
-                <p className="text-sm text-gray-500">{stat.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          {/* Texto */}
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">Participe da vida legislativa</h2>
+            <p className="text-white/70 text-lg mb-6 max-w-lg">
+              Sua participacao e fundamental para a construcao de um municipio mais justo e transparente.
+              Entre em contato ou faca uma solicitacao.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild size="lg" className="bg-white text-gray-900 hover:bg-gray-100 font-semibold">
+                <Link href="/institucional/ouvidoria">
+                  <MessageSquare className="h-5 w-5 mr-2" />
+                  Ouvidoria
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10">
+                <Link href="/institucional/e-sic">
+                  <HelpCircle className="h-5 w-5 mr-2" />
+                  E-SIC
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Informacoes de contato */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 space-y-4 border border-white/10">
+            <h3 className="font-semibold text-lg mb-4">Informacoes de Contato</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-white/70" />
+                </div>
+                <div>
+                  <p className="text-sm text-white/90">Praca Central, S/N - Centro</p>
+                  <p className="text-xs text-white/50">Mojui dos Campos - PA</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Phone className="h-4 w-4 text-white/70" />
+                </div>
+                <p className="text-sm text-white/90">(93) 3059-1000</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Mail className="h-4 w-4 text-white/70" />
+                </div>
+                <p className="text-sm text-white/90">contato@camaramojui.pa.gov.br</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-white/70" />
+                </div>
+                <div>
+                  <p className="text-sm text-white/90">Segunda a Sexta: 8h as 14h</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   )
 }
+
+export default StatsSection

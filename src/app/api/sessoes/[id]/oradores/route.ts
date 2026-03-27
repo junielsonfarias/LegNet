@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { oradorSessaoDbService } from '@/lib/services/orador-sessao-db-service'
+import { sessaoDbService } from '@/lib/services/sessao-db-service'
+import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,12 +23,12 @@ const OradorCreateSchema = z.object({
 
 export const GET = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const sessaoId = params.id
+  const { id: sessaoId } = await context.params
   const { searchParams } = new URL(request.url)
 
-  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  const sessao = await sessaoDbService.getById(sessaoId)
   if (!sessao) throw new NotFoundError('Sessão')
 
   const oradores = await oradorSessaoDbService.listBySessao(sessaoId, {
@@ -55,17 +56,17 @@ export const GET = withAuth(withErrorHandler(async (
 
 export const POST = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
   session
 ) => {
-  const sessaoId = params.id
+  const { id: sessaoId } = await context.params
   const body = await request.json()
   const payload = OradorCreateSchema.parse(body)
 
-  const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+  const sessao = await sessaoDbService.getById(sessaoId)
   if (!sessao) throw new NotFoundError('Sessão')
 
-  const parlamentar = await prisma.parlamentar.findUnique({ where: { id: payload.parlamentarId } })
+  const parlamentar = await parlamentarDbService.getById(payload.parlamentarId)
   if (!parlamentar) throw new NotFoundError('Parlamentar')
 
   const inscricaoExistente = await oradorSessaoDbService.checkInscricaoExistente(sessaoId, payload.parlamentarId, payload.tipo)

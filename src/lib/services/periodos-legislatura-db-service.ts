@@ -85,5 +85,15 @@ export const periodosLegislaturaDbService = {
   async remove(id: string) {
     await prisma.periodoLegislatura.delete({ where: { id } })
     return { success: true }
+  },
+
+  async removeWithCargos(id: string) {
+    await prisma.cargoMesaDiretora.deleteMany({ where: { periodoId: id } })
+    await prisma.periodoLegislatura.delete({ where: { id } })
+    return { success: true }
+  },
+
+  async legislaturaExists(id: string) {
+    return prisma.legislatura.findUnique({ where: { id } })
   }
 }

@@ -1,5 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import type { CargoParlamentar } from '@prisma/client'
+import type { CargoParlamentar, ParticipacaoTipo } from '@prisma/client'
+import {
+  calcularPresencaResumo,
+  calcularVotacaoResumo
+} from '@/lib/parlamentares/dashboard-utils'
 
 export interface ParlamentarFilters {
   ativo?: boolean
@@ -252,6 +256,185 @@ export const parlamentarDbService = {
     return { success: true }
   },
 
+  async getPerfil(id: string) {
+    // Buscar parlamentar com todos os relacionamentos
+    const parlamentar = await prisma.parlamentar.findUnique({
+      where: { id },
+      include: {
+        mandatos: {
+          include: { legislatura: true },
+          orderBy: { dataInicio: 'desc' as const }
+        },
+        filiacoes: {
+          orderBy: { dataInicio: 'desc' as const }
+        },
+        comissoes: {
+          include: { comissao: true },
+          orderBy: { dataInicio: 'desc' as const }
+        },
+        proposicoes: {
+          orderBy: { dataApresentacao: 'desc' as const },
+          take: 10,
+          include: { sessao: true }
+        },
+        presencas: {
+          include: { sessao: true }
+        },
+        votacoes: {
+          include: { proposicao: true },
+          orderBy: { createdAt: 'desc' as const },
+          take: 20
+        }
+      }
+    })
+
+    if (!parlamentar) return null
+
+    // Calcular estatísticas
+    const [totalSessoes, totalProposicoes, proposicoesPorTipo, proposicoesPorStatus] = await Promise.all([
+      prisma.sessao.count({ where: { status: 'CONCLUIDA' } }),
+      prisma.proposicao.count(),
+      prisma.proposicao.groupBy({
+        by: ['tipo'],
+        where: { autorId: id },
+        _count: { id: true }
+      }),
+      prisma.proposicao.groupBy({
+        by: ['status'],
+        where: { autorId: id },
+        _count: { id: true }
+      })
+    ])
+
+    const sessoesPresente = parlamentar.presencas.filter(p => p.presente).length
+    const percentualPresenca = totalSessoes > 0
+      ? Math.round((sessoesPresente / totalSessoes) * 100 * 100) / 100
+      : 0
+
+    const materiasAutor = parlamentar.proposicoes.length
+    const percentualMaterias = totalProposicoes > 0
+      ? Math.round((materiasAutor / totalProposicoes) * 100 * 100) / 100
+      : 0
+
+    const aprovadasCount = proposicoesPorStatus.find(p => p.status === 'APROVADA')?._count?.id || 0
+    const emTramitacaoCount = proposicoesPorStatus.find(p => p.status === 'EM_TRAMITACAO')?._count?.id || 0
+
+    return {
+      // Dados básicos
+      id: parlamentar.id,
+      nome: parlamentar.nome,
+      apelido: parlamentar.apelido,
+      email: parlamentar.email,
+      telefone: parlamentar.telefone,
+      partido: parlamentar.partido,
+      biografia: parlamentar.biografia,
+      foto: parlamentar.foto,
+      cargo: parlamentar.cargo,
+      legislatura: parlamentar.legislatura,
+      ativo: parlamentar.ativo,
+      createdAt: parlamentar.createdAt,
+      updatedAt: parlamentar.updatedAt,
+
+      // Estatísticas calculadas
+      estatisticas: {
+        legislaturaAtual: {
+          materias: materiasAutor,
+          percentualMaterias,
+          sessoes: sessoesPresente,
+          totalSessoes,
+          percentualPresenca,
+          dataAtualizacao: new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+        },
+        exercicioAtual: {
+          materias: materiasAutor,
+          percentualMaterias,
+          sessoes: sessoesPresente,
+          percentualPresenca
+        }
+      },
+
+      // Estatísticas de matérias
+      estatisticasMaterias: {
+        total: materiasAutor,
+        aprovadas: aprovadasCount,
+        emTramitacao: emTramitacaoCount,
+        distribuicao: proposicoesPorTipo.map(p => ({
+          tipo: p.tipo,
+          quantidade: p._count.id,
+          percentual: materiasAutor > 0
+            ? Math.round((p._count.id / materiasAutor) * 100 * 10) / 10
+            : 0
+        }))
+      },
+
+      // Últimas matérias/proposições
+      ultimasMaterias: parlamentar.proposicoes.map(p => ({
+        id: p.id,
+        numero: `${p.numero}/${p.ano}`,
+        tipo: p.tipo,
+        titulo: p.ementa,
+        data: p.dataApresentacao ? new Date(p.dataApresentacao).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
+        status: p.status,
+        autor: parlamentar.nome
+      })),
+
+      // Comissões
+      comissoes: parlamentar.comissoes.map((mc: any) => ({
+        id: mc.comissao.id,
+        nome: mc.comissao.nome,
+        cargo: mc.cargo,
+        dataInicio: mc.dataInicio ? new Date(mc.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
+        dataFim: mc.dataFim ? new Date(mc.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Atual'
+      })),
+
+      // Mandatos
+      mandatos: parlamentar.mandatos.map(m => ({
+        id: m.id,
+        cargo: m.cargo,
+        vinculo: m.cargo === 'VEREADOR' ? 'VEREADOR EM EXERCÍCIO' : 'MESA DIRETORA',
+        legislatura: m.legislatura
+          ? `${m.legislatura.numero}ª Legislatura (${m.legislatura.anoInicio} - ${m.legislatura.anoFim})`
+          : parlamentar.legislatura,
+        periodo: m.dataInicio
+          ? `${new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(m.dataInicio))}${m.dataFim ? ` a ${new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(m.dataFim))}` : ''}`
+          : 'Atual',
+        numeroVotos: m.numeroVotos,
+        ativo: m.ativo
+      })),
+
+      // Filiação partidária
+      filiacaoPartidaria: parlamentar.filiacoes.map(f => ({
+        id: f.id,
+        partido: f.partido,
+        dataInicio: f.dataInicio ? new Date(f.dataInicio).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
+        dataFim: f.dataFim ? new Date(f.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : null,
+        ativa: f.ativa
+      })),
+
+      // Votações recentes
+      votacoesRecentes: parlamentar.votacoes.map(v => ({
+        id: v.id,
+        proposicaoId: v.proposicaoId,
+        proposicaoNumero: v.proposicao ? `${v.proposicao.numero}/${v.proposicao.ano}` : '',
+        proposicaoTitulo: v.proposicao?.ementa || '',
+        voto: v.voto,
+        data: v.createdAt ? new Date(v.createdAt).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : ''
+      })),
+
+      // Presenças recentes
+      presencasRecentes: parlamentar.presencas
+        .filter(p => p.sessao)
+        .slice(0, 10)
+        .map(p => ({
+          sessaoId: p.sessaoId,
+          sessaoNumero: p.sessao?.numero,
+          sessaoData: p.sessao?.data ? new Date(p.sessao.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
+          presente: p.presente,
+          justificativa: p.justificativa
+        }))
+    }
+  },
+
   async getStats() {
     const [total, ativos, porCargo, porPartido] = await Promise.all([
       prisma.parlamentar.count(),
@@ -271,6 +454,184 @@ export const parlamentarDbService = {
         if (item.partido) acc[item.partido] = item._count._all
         return acc
       }, {} as Record<string, number>)
+    }
+  },
+
+  async getDashboard(parlamentarId: string) {
+    const parlamentarResult = await prisma.parlamentar.findUnique({
+      where: { id: parlamentarId },
+      include: {
+        mandatos: {
+          include: { legislatura: true },
+          orderBy: { dataInicio: 'desc' as const }
+        },
+        filiacoes: {
+          orderBy: { dataInicio: 'desc' as const }
+        }
+      }
+    })
+
+    if (!parlamentarResult) return null
+
+    const parlamentar = parlamentarResult as any
+
+    const [membrosComissao, membrosMesa, presencas, votacoes, sessoesAgendadas] = await Promise.all([
+      prisma.membroComissao.findMany({
+        where: { parlamentarId },
+        include: { comissao: true }
+      }),
+      prisma.membroMesaDiretora.findMany({
+        where: { parlamentarId },
+        include: {
+          mesaDiretora: {
+            include: {
+              periodo: {
+                include: { legislatura: true }
+              }
+            }
+          },
+          cargo: true
+        }
+      }),
+      prisma.presencaSessao.findMany({
+        where: { parlamentarId }
+      }),
+      prisma.votacao.findMany({
+        where: { parlamentarId }
+      }),
+      prisma.sessao.findMany({
+        where: {
+          presencas: { some: { parlamentarId } }
+        },
+        orderBy: { data: 'asc' as const },
+        include: {
+          legislatura: true,
+          periodo: true,
+          presencas: {
+            where: { parlamentarId },
+            select: { presente: true, justificativa: true }
+          }
+        },
+        take: 6
+      })
+    ])
+
+    const presencaResumo = calcularPresencaResumo(
+      presencas.map(p => ({ presente: p.presente, justificativa: p.justificativa }))
+    )
+
+    const votacaoResumo = calcularVotacaoResumo(
+      votacoes.map(v => ({ voto: v.voto }))
+    )
+
+    return {
+      parlamentar,
+      membrosComissao,
+      membrosMesa,
+      presencaResumo,
+      votacaoResumo,
+      sessoesAgendadas
+    }
+  },
+
+  async getHistorico(parlamentarId: string) {
+    const parlamentar = await prisma.parlamentar.findUnique({
+      where: { id: parlamentarId },
+      select: { id: true }
+    })
+
+    if (!parlamentar) return null
+
+    const historico = await prisma.historicoParticipacao.findMany({
+      where: { parlamentarId },
+      orderBy: [{ dataInicio: 'desc' }, { createdAt: 'desc' }]
+    })
+
+    const ParticipacaoTipoValues = { MESA_DIRETORA: 'MESA_DIRETORA', COMISSAO: 'COMISSAO' } as const
+
+    const mesaIds = Array.from(new Set(
+      historico
+        .filter(entry => entry.tipo === ParticipacaoTipoValues.MESA_DIRETORA)
+        .map(entry => entry.referenciaId)
+    ))
+
+    const comissaoIds = Array.from(new Set(
+      historico
+        .filter(entry => entry.tipo === ParticipacaoTipoValues.COMISSAO)
+        .map(entry => entry.referenciaId)
+    ))
+
+    const [mesas, comissoes] = await Promise.all([
+      mesaIds.length
+        ? prisma.mesaDiretora.findMany({
+            where: { id: { in: mesaIds } },
+            include: {
+              periodo: {
+                include: { legislatura: true }
+              }
+            }
+          })
+        : Promise.resolve([]),
+      comissaoIds.length
+        ? prisma.comissao.findMany({
+            where: { id: { in: comissaoIds } }
+          })
+        : Promise.resolve([])
+    ])
+
+    return { historico, mesas, comissoes }
+  },
+
+  async getStatus(parlamentarId: string) {
+    // Buscar sessao em andamento
+    const sessaoEmAndamento = await prisma.sessao.findFirst({
+      where: { status: 'EM_ANDAMENTO' },
+      select: {
+        id: true,
+        numero: true,
+        tipo: true,
+        data: true,
+        status: true
+      }
+    })
+
+    if (!sessaoEmAndamento) {
+      return {
+        sessaoEmAndamento: false as const,
+        presencaConfirmada: false,
+        sessaoId: null,
+        sessao: null,
+        podeAcessarVotacao: false,
+        podeAcessarDashboard: true,
+        mensagem: 'Nenhuma sessão em andamento'
+      }
+    }
+
+    // Verificar presenca do parlamentar na sessao
+    const presenca = await prisma.presencaSessao.findFirst({
+      where: {
+        sessaoId: sessaoEmAndamento.id,
+        parlamentarId,
+        presente: true
+      }
+    })
+
+    const presencaConfirmada = !!presenca
+    const podeAcessarVotacao = presencaConfirmada
+    const podeAcessarDashboard = false // Nao pode ver dashboard se ha sessao em andamento
+
+    const mensagem = presencaConfirmada
+      ? 'Sessão em andamento - acesso ao módulo de votação liberado'
+      : 'Sessão em andamento - aguardando confirmação de presença pelo operador'
+
+    return {
+      sessaoEmAndamento: true as const,
+      presencaConfirmada,
+      sessaoId: sessaoEmAndamento.id,
+      sessao: sessaoEmAndamento,
+      podeAcessarVotacao,
+      podeAcessarDashboard,
+      mensagem
     }
   }
 }

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -13,71 +13,20 @@ export async function GET(request: NextRequest) {
   try {
     enforceRateLimit(request, 'PUBLIC')
 
-    // Buscar configuração institucional
-    const config = await prisma.configuracaoInstitucional.findFirst({
-      where: { slug: 'principal' }
-    })
-    const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
+    const info = await dadosAbertosService.getInfo()
 
     const { searchParams } = new URL(request.url)
     const formato = searchParams.get('formato') || 'json'
-    const tipo = searchParams.get('tipo')
-    const ativa = searchParams.get('ativa')
+    const tipo = searchParams.get('tipo') || undefined
+    const ativaParam = searchParams.get('ativa')
+    const ativa = ativaParam !== null ? ativaParam === 'true' : null
 
-    const where = {
-      ...(tipo && { tipo: tipo as 'PERMANENTE' | 'TEMPORARIA' | 'ESPECIAL' | 'INQUERITO' }),
-      ...(ativa !== null && { ativa: ativa === 'true' })
-    }
-
-    const comissoes = await prisma.comissao.findMany({
-      where,
-      select: {
-        id: true,
-        nome: true,
-        tipo: true,
-        descricao: true,
-        ativa: true,
-        membros: {
-          select: {
-            id: true,
-            cargo: true,
-            parlamentar: {
-              select: {
-                id: true,
-                nome: true,
-                partido: true
-              }
-            }
-          },
-          where: {
-            ativo: true
-          }
-        }
-      },
-      orderBy: { nome: 'asc' }
-    })
-
-    const dadosFormatados = comissoes.map(c => ({
-      id: c.id,
-      nome: c.nome,
-      tipo: c.tipo,
-      descricao: c.descricao,
-      ativa: c.ativa,
-      membros: c.membros.map(m => ({
-        id: m.id,
-        cargo: m.cargo,
-        parlamentar: {
-          id: m.parlamentar.id,
-          nome: m.parlamentar.nome,
-          partido: m.parlamentar.partido
-        }
-      }))
-    }))
+    const { dados } = await dadosAbertosService.getComissoes({ tipo, ativa })
 
     if (formato === 'csv') {
       // Para CSV, expandir membros em linhas separadas
       const linhas: Record<string, unknown>[] = []
-      for (const c of dadosFormatados) {
+      for (const c of dados) {
         if (c.membros.length === 0) {
           linhas.push({
             comissao_id: c.id,
@@ -116,11 +65,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      dados: dadosFormatados,
+      dados,
       metadados: {
-        total: dadosFormatados.length,
+        total: dados.length,
         atualizacao: new Date().toISOString(),
-        fonte: nomeCasa
+        fonte: info.nomeCasa
       }
     })
   } catch (error) {

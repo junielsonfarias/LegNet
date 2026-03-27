@@ -157,5 +157,58 @@ export const mesaDiretoraDbService = {
       data: { ativa: false }
     })
     return { success: true }
+  },
+
+  async getByIdDetailed(id: string) {
+    return prisma.mesaDiretora.findUnique({
+      where: { id },
+      include: {
+        periodo: {
+          include: {
+            legislatura: true,
+            cargos: true
+          }
+        },
+        membros: {
+          include: {
+            parlamentar: {
+              select: {
+                id: true,
+                nome: true,
+                apelido: true,
+                email: true,
+                telefone: true
+              }
+            },
+            cargo: true
+          },
+          orderBy: { cargo: { ordem: 'asc' } }
+        }
+      } as any
+    })
+  },
+
+  async getByIdWithPeriodoCargos(id: string) {
+    return prisma.mesaDiretora.findUnique({
+      where: { id },
+      include: {
+        periodo: {
+          include: { cargos: true }
+        }
+      }
+    })
+  },
+
+  async periodoExistsWithCargos(id: string) {
+    return prisma.periodoLegislatura.findUnique({
+      where: { id },
+      include: { cargos: true }
+    })
+  },
+
+  async deleteMembros(mesaDiretoraId: string) {
+    await prisma.membroMesaDiretora.deleteMany({
+      where: { mesaDiretoraId }
+    })
   }
 }

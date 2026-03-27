@@ -58,6 +58,34 @@ export const presencaOrdemDiaDbService = {
     return { removidos: count }
   },
 
+  async copiarDaSessao(sessaoId: string, parlamentarIds: string[]) {
+    if (parlamentarIds.length === 0) return []
+
+    return Promise.all(
+      parlamentarIds.map(parlamentarId =>
+        prisma.presencaOrdemDia.upsert({
+          where: {
+            sessaoId_parlamentarId: {
+              sessaoId,
+              parlamentarId
+            }
+          },
+          update: {
+            presente: true,
+            registradoEm: new Date(),
+            observacoes: 'Copiado da presença da sessão'
+          },
+          create: {
+            sessaoId,
+            parlamentarId,
+            presente: true,
+            observacoes: 'Copiado da presença da sessão'
+          }
+        })
+      )
+    )
+  },
+
   async getStats(sessaoId: string) {
     const presencas = await prisma.presencaOrdemDia.findMany({
       where: { sessaoId },

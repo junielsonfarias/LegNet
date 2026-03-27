@@ -27,9 +27,10 @@ const UpdateNoticiaSchema = z.object({
 // GET - Buscar notícia por ID
 export const GET = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) => {
-  const id = validateId(params.id, 'Notícia')
+  const { id: rawId } = await context.params
+  const id = validateId(rawId, 'Notícia')
 
   const noticia = await noticiasDbService.getById(id)
   if (!noticia) {

@@ -7,10 +7,10 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
 import { createSuccessResponse, NotFoundError, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { oradorSessaoDbService } from '@/lib/services/orador-sessao-db-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,30 +26,10 @@ const OradorUpdateSchema = z.object({
 // GET - Obtém detalhes do orador
 export const GET = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; oradorId: string } }
+  context: { params: Promise<{ id: string; oradorId: string }> }
 ) => {
-  const orador = await prisma.oradorSessao.findUnique({
-    where: { id: params.oradorId },
-    include: {
-      parlamentar: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          partido: true,
-          foto: true
-        }
-      },
-      sessao: {
-        select: {
-          id: true,
-          numero: true,
-          tipo: true,
-          data: true
-        }
-      }
-    }
-  })
+  const { oradorId } = await context.params
+  const orador = await oradorSessaoDbService.getById(oradorId)
 
   if (!orador) {
     throw new NotFoundError('Orador')
@@ -61,15 +41,14 @@ export const GET = withAuth(withErrorHandler(async (
 // PUT - Atualiza orador
 export const PUT = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; oradorId: string } },
+  context: { params: Promise<{ id: string; oradorId: string }> },
   session
 ) => {
+  const { oradorId } = await context.params
   const body = await request.json()
   const payload = OradorUpdateSchema.parse(body)
 
-  const orador = await prisma.oradorSessao.findUnique({
-    where: { id: params.oradorId }
-  })
+  const orador = await oradorSessaoDbService.getById(oradorId)
 
   if (!orador) {
     throw new NotFoundError('Orador')
@@ -104,27 +83,14 @@ export const PUT = withAuth(withErrorHandler(async (
   if (payload.observacoes !== undefined) updateData.observacoes = payload.observacoes
   if (payload.ordem !== undefined) updateData.ordem = payload.ordem
 
-  const oradorAtualizado = await prisma.oradorSessao.update({
-    where: { id: params.oradorId },
-    data: updateData,
-    include: {
-      parlamentar: {
-        select: {
-          id: true,
-          nome: true,
-          apelido: true,
-          partido: true
-        }
-      }
-    }
-  })
+  const oradorAtualizado = await oradorSessaoDbService.update(oradorId, updateData)
 
   await logAudit({
     request,
     session,
     action: 'ORADOR_ATUALIZADO',
     entity: 'OradorSessao',
-    entityId: params.oradorId,
+    entityId: oradorId,
     metadata: {
       statusAnterior: orador.status,
       statusNovo: payload.status,
@@ -138,17 +104,11 @@ export const PUT = withAuth(withErrorHandler(async (
 // DELETE - Remove inscrição
 export const DELETE = withAuth(withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: { id: string; oradorId: string } },
+  context: { params: Promise<{ id: string; oradorId: string }> },
   session
 ) => {
-  const orador = await prisma.oradorSessao.findUnique({
-    where: { id: params.oradorId },
-    include: {
-      parlamentar: {
-        select: { nome: true }
-      }
-    }
-  })
+  const { oradorId } = await context.params
+  const orador = await oradorSessaoDbService.getById(oradorId)
 
   if (!orador) {
     throw new NotFoundError('Orador')
@@ -159,19 +119,17 @@ export const DELETE = withAuth(withErrorHandler(async (
     throw new ValidationError('Não é possível remover orador que está em uso da palavra')
   }
 
-  await prisma.oradorSessao.delete({
-    where: { id: params.oradorId }
-  })
+  await oradorSessaoDbService.remove(oradorId)
 
   await logAudit({
     request,
     session,
     action: 'ORADOR_REMOVIDO',
     entity: 'OradorSessao',
-    entityId: params.oradorId,
+    entityId: oradorId,
     metadata: {
       sessaoId: orador.sessaoId,
-      parlamentar: orador.parlamentar.nome,
+      parlamentar: (orador as any).parlamentar?.nome,
       tipo: orador.tipo
     }
   })

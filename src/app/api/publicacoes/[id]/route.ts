@@ -5,9 +5,10 @@ import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const publicacao = await publicacoesService.getById(params.id)
+    const { id } = await params
+    const publicacao = await publicacoesService.getById(id)
     if (!publicacao) {
       return NextResponse.json(
         { success: false, error: 'Publicação não encontrada.' },
@@ -25,7 +26,8 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 }
 
 export const PUT = withAuth(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
     const body = await request.json().catch(() => null)
     if (!body) {
       return NextResponse.json(
@@ -34,7 +36,7 @@ export const PUT = withAuth(
       )
     }
 
-    const publicacao = await publicacoesService.update(params.id, body)
+    const publicacao = await publicacoesService.update(id, body)
     return NextResponse.json({
       success: true,
       data: publicacao,
@@ -45,7 +47,8 @@ export const PUT = withAuth(
 )
 
 export const PATCH = withAuth(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
     const body = await request.json().catch(() => null)
     if (!body) {
       return NextResponse.json(
@@ -54,7 +57,7 @@ export const PATCH = withAuth(
       )
     }
 
-    const publicacao = await publicacoesService.update(params.id, body)
+    const publicacao = await publicacoesService.update(id, body)
     return NextResponse.json({
       success: true,
       data: publicacao,
@@ -65,8 +68,9 @@ export const PATCH = withAuth(
 )
 
 export const DELETE = withAuth(
-  async (_request: NextRequest, { params }: { params: { id: string } }) => {
-    await publicacoesService.remove(params.id)
+  async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
+    await publicacoesService.remove(id)
     return NextResponse.json({
       success: true,
       data: { removed: true },
