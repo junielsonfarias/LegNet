@@ -94,22 +94,24 @@ export function Hero() {
   const [stats, setStats] = useState({ vereadores: 0, sessoes: 0, materias: 0 })
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStat = async (url: string): Promise<number> => {
       try {
-        const [pRes, sRes, prRes] = await Promise.all([
-          fetch('/api/dados-abertos/parlamentares?ativo=true'),
-          fetch('/api/dados-abertos/sessoes?limit=1'),
-          fetch('/api/dados-abertos/proposicoes?limit=1')
-        ])
-        const [p, s, pr] = await Promise.all([pRes.json(), sRes.json(), prRes.json()])
-        setStats({
-          vereadores: p.metadados?.total || p.dados?.length || 0,
-          sessoes: s.metadados?.total || s.dados?.length || 0,
-          materias: pr.metadados?.total || pr.dados?.length || 0,
-        })
-      } catch {}
+        const res = await fetch(url)
+        if (!res.ok) return 0
+        const data = await res.json()
+        return data.metadados?.total || data.dados?.length || data.pagination?.total || 0
+      } catch {
+        return 0
+      }
     }
-    fetchData()
+
+    Promise.all([
+      fetchStat('/api/dados-abertos/parlamentares'),
+      fetchStat('/api/dados-abertos/sessoes?limit=1'),
+      fetchStat('/api/dados-abertos/proposicoes?limit=1'),
+    ]).then(([vereadores, sessoes, materias]) => {
+      setStats({ vereadores, sessoes, materias })
+    })
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
