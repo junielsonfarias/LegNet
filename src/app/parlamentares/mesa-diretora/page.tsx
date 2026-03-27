@@ -279,142 +279,71 @@ export default function MesaDiretoraPage() {
           </Card>
         </div>
 
-        {/* Composições da Mesa Diretora por Período */}
+        {/* Mesa Diretora Atual */}
         <div className="space-y-8">
-          {composicoesMesa.length > 0 ? (
-            composicoesMesa.map((composicao, index) => (
-              <div key={composicao.id} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <Crown className="h-6 w-6 text-camara-primary" />
-                    {composicao.ativa ? 'Mesa Diretora Atual' : `Mesa Diretora - ${composicao.periodo}º Período`}
-                  </h2>
-                  <div className="flex items-center gap-4">
-                    <Badge variant={composicao.ativa ? "default" : "secondary"} className="px-3 py-1">
-                      {composicao.ativa ? 'Ativa' : 'Histórica'}
-                    </Badge>
-                    <div className="text-sm text-gray-600">
-                      {new Date(composicao.dataInicio).toLocaleDateString('pt-BR')} - {composicao.dataFim ? new Date(composicao.dataFim).toLocaleDateString('pt-BR') : 'Atual'}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Presidente */}
-                  <Card className="camara-card">
-                    <CardHeader className="text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-yellow-500">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
-                          {composicao.membrosCompletos.presidente?.nome.charAt(0) || 'P'}
-                        </div>
-                      </div>
-                      <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                        <Crown className="h-3 w-3 mr-1" />
-                        Presidente
-                      </Badge>
-                    </CardHeader>
-                    <CardContent className="text-center space-y-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {composicao.membrosCompletos.presidente?.nome || 'N/A'}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        ({composicao.membrosCompletos.presidente?.apelido || 'N/A'})
-                      </p>
-                      <p className="text-sm text-camara-primary font-medium">
-                        {composicao.membrosCompletos.presidente?.partido || 'N/A'}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  {/* Vice-Presidente */}
-                  <Card className="camara-card">
-                    <CardHeader className="text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
-                          {composicao.membrosCompletos.vicePresidente?.nome.charAt(0) || 'V'}
-                        </div>
-                      </div>
-                      <Badge className="bg-camara-primary/10 text-camara-primary border-camara-primary/20">
-                        <Shield className="h-3 w-3 mr-1" />
-                        Vice-Presidente
-                      </Badge>
-                    </CardHeader>
-                    <CardContent className="text-center space-y-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {composicao.membrosCompletos.vicePresidente?.nome || 'N/A'}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        ({composicao.membrosCompletos.vicePresidente?.apelido || 'N/A'})
-                      </p>
-                      <p className="text-sm text-camara-primary font-medium">
-                        {composicao.membrosCompletos.vicePresidente?.partido || 'N/A'}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  {/* 1º Secretário */}
-                  <Card className="camara-card">
-                    <CardHeader className="text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-green-500">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
-                          {composicao.membrosCompletos.primeiroSecretario?.nome.charAt(0) || '1'}
-                        </div>
-                      </div>
-                      <Badge className="bg-green-100 text-green-800 border-green-300">
-                        <Award className="h-3 w-3 mr-1" />
-                        1º Secretário
-                      </Badge>
-                    </CardHeader>
-                    <CardContent className="text-center space-y-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {composicao.membrosCompletos.primeiroSecretario?.nome || 'N/A'}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        ({composicao.membrosCompletos.primeiroSecretario?.apelido || 'N/A'})
-                      </p>
-                      <p className="text-sm text-camara-primary font-medium">
-                        {composicao.membrosCompletos.primeiroSecretario?.partido || 'N/A'}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  {/* 2º Secretário */}
-                  <Card className="camara-card">
-                    <CardHeader className="text-center">
-                      <div className="relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 border-purple-500">
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold overflow-hidden">
-                          {composicao.membrosCompletos.segundoSecretario?.nome.charAt(0) || '2'}
-                        </div>
-                      </div>
-                      <Badge className="bg-purple-100 text-purple-800 border-purple-300">
-                        <User className="h-3 w-3 mr-1" />
-                        2º Secretário
-                      </Badge>
-                    </CardHeader>
-                    <CardContent className="text-center space-y-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {composicao.membrosCompletos.segundoSecretario?.nome || 'N/A'}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        ({composicao.membrosCompletos.segundoSecretario?.apelido || 'N/A'})
-                      </p>
-                      <p className="text-sm text-camara-primary font-medium">
-                        {composicao.membrosCompletos.segundoSecretario?.partido || 'N/A'}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
+          {mesaEnriquecida.length > 0 ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Crown className="h-6 w-6 text-camara-primary" />
+                <h2 className="text-2xl font-bold text-gray-900">Mesa Diretora Atual</h2>
+                <Badge className="ml-2">Ativa</Badge>
               </div>
-            ))
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {mesaEnriquecida.map((membro) => {
+                  const Icon = getCargoIcon(membro.cargo || '')
+                  const borderColors: Record<string, string> = {
+                    'PRESIDENTE': 'border-yellow-500',
+                    'VICE_PRESIDENTE': 'border-blue-500',
+                    'PRIMEIRO_SECRETARIO': 'border-green-500',
+                    'SEGUNDO_SECRETARIO': 'border-purple-500',
+                  }
+                  return (
+                    <Card key={membro.id} className="camara-card hover:shadow-lg transition-shadow">
+                      <CardHeader className="text-center">
+                        <div className={`relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 ${borderColors[membro.cargo || ''] || 'border-camara-primary'}`}>
+                          {membro.foto ? (
+                            <img src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
+                              {membro.nome.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <Badge className={getCargoColor(membro.cargo || '')}>
+                          <Icon className="h-3 w-3 mr-1" />
+                          {getCargoLabel(membro.cargo || '')}
+                        </Badge>
+                      </CardHeader>
+                      <CardContent className="text-center space-y-2">
+                        <h3 className="font-semibold text-gray-900">{membro.nome}</h3>
+                        {membro.apelido && (
+                          <p className="text-sm text-gray-600">({membro.apelido})</p>
+                        )}
+                        <p className="text-sm text-camara-primary font-medium">{membro.partido || 'N/A'}</p>
+                        <div className="pt-2">
+                          <Button asChild variant="outline" size="sm" className="w-full text-xs">
+                            <Link href={`/parlamentares/${membro.apelido ? slugify(membro.apelido) : membro.id}`}>
+                              <Eye className="h-3 w-3 mr-1" />
+                              Ver Perfil
+                            </Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </>
           ) : (
             <Card className="camara-card">
               <CardContent className="text-center py-12">
                 <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Nenhuma composição encontrada
+                  Nenhum membro da mesa encontrado
                 </h3>
                 <p className="text-gray-600">
-                  Não foram encontradas composições da mesa diretora para a legislatura selecionada.
+                  Cadastre os cargos dos parlamentares no painel administrativo.
                 </p>
               </CardContent>
             </Card>
@@ -439,9 +368,13 @@ export default function MesaDiretoraPage() {
                 <Card key={vereador.id} className="camara-card hover:shadow-lg transition-shadow">
                   <CardHeader className="text-center">
                     <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold">
-                        {vereador.nome.charAt(0)}
-                      </div>
+                      {vereador.foto ? (
+                        <img src={vereador.foto} alt={vereador.apelido || vereador.nome} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold">
+                          {vereador.nome.charAt(0)}
+                        </div>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent className="text-center space-y-2">

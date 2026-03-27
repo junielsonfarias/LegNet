@@ -104,7 +104,7 @@ export function Hero() {
         const [p, s, pr] = await Promise.all([pRes.json(), sRes.json(), prRes.json()])
         setStats({
           vereadores: p.metadados?.total || p.dados?.length || 0,
-          sessoes: s.metadados?.total || s.data?.length || s.pagination?.total || 0,
+          sessoes: s.metadados?.total || s.dados?.length || 0,
           materias: pr.metadados?.total || pr.dados?.length || 0,
         })
       } catch {}
