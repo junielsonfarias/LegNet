@@ -40,21 +40,20 @@ interface NavItem {
   permissions?: Permission[]
 }
 
-// Navegação simplificada para mobile
-// OPERADOR vê apenas: Sessões e Painel (Dashboard exige relatorio.view)
+// Navegacao simplificada para mobile - mesmos itens principais do sidebar desktop
 const mobileNavigation: NavItem[] = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, permissions: ['relatorio.view'] },
-  { name: 'Parlamentares', href: '/admin/parlamentares', icon: Users, permissions: ['parlamentar.view'] },
-  { name: 'Sessões', href: '/admin/sessoes-legislativas', icon: Calendar, permissions: ['periodo.view'] },
-  { name: 'Proposições', href: '/admin/proposicoes', icon: FileText, permissions: ['tramitacao.view'] },
-  { name: 'Painel', href: '/admin/painel-eletronico', icon: Monitor, permissions: ['painel.view'] },
+  { name: 'Sessoes', href: '/admin/sessoes-legislativas', icon: Calendar, permissions: ['periodo.view'] },
+  { name: 'Painel Eletronico', href: '/admin/painel-eletronico', icon: Monitor, permissions: ['painel.view'] },
+  { name: 'Proposicoes', href: '/admin/proposicoes', icon: FileText, permissions: ['tramitacao.view'] },
   { name: 'Pautas', href: '/admin/pautas-sessoes', icon: ClipboardList, permissions: ['pauta.manage'] },
-  { name: 'Comissões', href: '/admin/comissoes', icon: Users, permissions: ['comissao.view'] },
-  { name: 'Tramitações', href: '/admin/tramitacoes', icon: Workflow, permissions: ['tramitacao.view'] },
-  { name: 'Notícias', href: '/admin/noticias', icon: Newspaper, permissions: ['publicacao.view'] },
-  { name: 'Transparência', href: '/admin/transparencia', icon: Eye, permissions: ['transparencia.view'] },
-  { name: 'Relatórios', href: '/admin/relatorios', icon: BarChart3, permissions: ['relatorio.view'] },
-  { name: 'Configurações', href: '/admin/configuracoes', icon: Settings, permissions: ['config.view'] }
+  { name: 'Parlamentares', href: '/admin/parlamentares', icon: Users, permissions: ['parlamentar.view'] },
+  { name: 'Comissoes', href: '/admin/comissoes', icon: Users, permissions: ['comissao.view'] },
+  { name: 'Tramitacoes', href: '/admin/tramitacoes', icon: Workflow, permissions: ['tramitacao.view'] },
+  { name: 'Transparencia', href: '/admin/transparencia', icon: Eye, permissions: ['transparencia.view'] },
+  { name: 'Noticias', href: '/admin/noticias', icon: Newspaper, permissions: ['publicacao.view'] },
+  { name: 'Relatorios', href: '/admin/relatorios', icon: BarChart3, permissions: ['relatorio.view'] },
+  { name: 'Configuracoes', href: '/admin/configuracoes', icon: Settings, permissions: ['config.view'] },
 ]
 
 interface AdminSidebarMobileProps {

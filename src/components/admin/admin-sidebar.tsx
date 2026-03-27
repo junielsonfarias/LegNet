@@ -72,421 +72,118 @@ interface NavCategory {
   items: NavItem[]
 }
 
-// Navegação organizada por categorias
+// Navegacao organizada por categorias tematicas
 const navigationCategories: NavCategory[] = [
   {
-    name: 'Visão Geral',
+    name: 'Visao Geral',
     icon: LayoutDashboard,
     items: [
-      {
-        name: 'Dashboard',
-        href: '/admin',
-        icon: LayoutDashboard,
-        // OPERADOR não vê Dashboard (apenas Sessões e Painel Eletrônico)
-        permissions: ['relatorio.view']
-      }
+      { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, permissions: ['relatorio.view'] },
+      { name: 'Relatorios', href: '/admin/relatorios', icon: BarChart3, permissions: ['relatorio.view'] },
+      { name: 'Analytics', href: '/admin/analytics', icon: Activity, permissions: ['monitor.view'] },
     ]
   },
   {
-    name: 'Pessoas',
-    icon: Users,
-    items: [
-      {
-        name: 'Parlamentares',
-        href: '/admin/parlamentares',
-        icon: Users,
-        permissions: ['parlamentar.view']
-      },
-      {
-        name: 'Usuários',
-        href: '/admin/usuarios',
-        icon: Shield,
-        permissions: ['user.manage']
-      },
-      {
-        name: 'Mesa Diretora',
-        href: '/admin/mesa-diretora',
-        icon: Gavel,
-        permissions: ['mesa.view']
-      }
-    ]
-  },
-  {
-    name: 'Processo Legislativo',
+    name: 'Legislativo',
     icon: FileText,
     items: [
-      {
-        name: 'Sessões',
-        href: '/admin/sessoes-legislativas',
-        icon: Calendar,
-        permissions: ['periodo.view']
-      },
-      {
-        name: 'Proposições',
-        href: '/admin/proposicoes',
-        icon: FileText,
-        permissions: ['tramitacao.view']
-      },
-      {
-        name: 'Painel Eletrônico',
-        href: '/admin/painel-eletronico',
-        icon: Monitor,
-        permissions: ['painel.view']
-      },
-      {
-        name: 'Pautas',
-        href: '/admin/pautas-sessoes',
-        icon: ClipboardList,
-        permissions: ['pauta.manage']
-      },
-      {
-        name: 'Pareceres',
-        href: '/admin/pareceres',
-        icon: ClipboardList,
-        permissions: ['tramitacao.view']
-      },
-      {
-        name: 'Tramitações',
-        href: '/admin/tramitacoes',
-        icon: Workflow,
-        permissions: ['tramitacao.view'],
+      { name: 'Sessoes', href: '/admin/sessoes-legislativas', icon: Calendar, permissions: ['periodo.view'] },
+      { name: 'Painel Eletronico', href: '/admin/painel-eletronico', icon: Monitor, permissions: ['painel.view'] },
+      { name: 'Pautas', href: '/admin/pautas-sessoes', icon: ClipboardList, permissions: ['pauta.manage'] },
+      { name: 'Proposicoes', href: '/admin/proposicoes', icon: FileText, permissions: ['tramitacao.view'] },
+      { name: 'Tramitacoes', href: '/admin/tramitacoes', icon: Workflow, permissions: ['tramitacao.view'],
         submenu: [
-          {
-            name: 'Tramitações',
-            href: '/admin/tramitacoes',
-            icon: Workflow,
-            permissions: ['tramitacao.view']
-          },
-          {
-            name: 'Regras Automatizadas',
-            href: '/admin/tramitacoes/regras',
-            icon: Zap,
-            permissions: ['tramitacao.manage']
-          },
-          {
-            name: 'Dashboard',
-            href: '/admin/tramitacoes/dashboard',
-            icon: BarChart3,
-            permissions: ['tramitacao.view']
-          }
+          { name: 'Tramitacoes', href: '/admin/tramitacoes', icon: Workflow, permissions: ['tramitacao.view'] },
+          { name: 'Regras', href: '/admin/tramitacoes/regras', icon: Zap, permissions: ['tramitacao.manage'] },
+          { name: 'Dashboard', href: '/admin/tramitacoes/dashboard', icon: BarChart3, permissions: ['tramitacao.view'] },
         ]
       },
-      {
-        name: 'Protocolo',
-        href: '/admin/protocolo',
-        icon: FileInput,
-        permissions: ['tramitacao.view']
-      },
-      {
-        name: 'Normas Jurídicas',
-        href: '/admin/normas',
-        icon: Scale,
-        permissions: ['transparencia.view']
-      }
+      { name: 'Pareceres', href: '/admin/pareceres', icon: ClipboardList, permissions: ['tramitacao.view'] },
+      { name: 'Protocolo', href: '/admin/protocolo', icon: FileInput, permissions: ['tramitacao.view'] },
+      { name: 'Normas Juridicas', href: '/admin/normas', icon: Scale, permissions: ['transparencia.view'] },
     ]
   },
   {
-    name: 'Comissões',
-    icon: Briefcase,
+    name: 'Parlamentares',
+    icon: Users,
     items: [
-      {
-        name: 'Comissões',
-        href: '/admin/comissoes',
-        icon: Users,
-        permissions: ['comissao.view']
-      },
-      {
-        name: 'Reuniões',
-        href: '/admin/comissoes/reunioes',
-        icon: Calendar,
-        permissions: ['comissao.view']
-      }
+      { name: 'Parlamentares', href: '/admin/parlamentares', icon: Users, permissions: ['parlamentar.view'] },
+      { name: 'Mesa Diretora', href: '/admin/mesa-diretora', icon: Gavel, permissions: ['mesa.view'] },
+      { name: 'Legislaturas', href: '/admin/legislaturas', icon: BookOpen, permissions: ['legislatura.view'] },
+      { name: 'Comissoes', href: '/admin/comissoes', icon: Briefcase, permissions: ['comissao.view'] },
+      { name: 'Reunioes', href: '/admin/comissoes/reunioes', icon: Calendar, permissions: ['comissao.view'] },
     ]
   },
   {
-    name: 'Comunicação',
-    icon: Megaphone,
-    items: [
-      {
-        name: 'Notícias',
-        href: '/admin/noticias',
-        icon: Newspaper,
-        permissions: ['publicacao.view']
-      },
-      {
-        name: 'Publicações',
-        href: '/admin/publicacoes',
-        icon: BookOpen,
-        permissions: ['publicacao.view'],
-        submenu: [
-          {
-            name: 'Gerenciar Publicações',
-            href: '/admin/publicacoes',
-            icon: BookOpen,
-            permissions: ['publicacao.view']
-          },
-          {
-            name: 'Categorias',
-            href: '/admin/publicacoes/categorias',
-            icon: Layers,
-            permissions: ['publicacao.manage']
-          }
-        ]
-      },
-      {
-        name: 'Audiências Públicas',
-        href: '/admin/audiencias-publicas',
-        icon: Megaphone,
-        permissions: ['sessao.view']
-      },
-      {
-        name: 'Participação Cidadã',
-        href: '/admin/participacao-cidada',
-        icon: Users,
-        permissions: ['publicacao.view']
-      }
-    ]
-  },
-  {
-    name: 'Transparência',
+    name: 'Transparencia',
     icon: Eye,
     items: [
-      {
-        name: 'Portal',
-        href: '/admin/transparencia',
-        icon: Eye,
-        permissions: ['transparencia.view']
+      { name: 'Publicar Documentos', href: '/admin/transparencia', icon: Eye, permissions: ['transparencia.view'] },
+      { name: 'Gestao Fiscal', href: '/admin/gestao-fiscal', icon: DollarSign, permissions: ['transparencia.manage'] },
+      { name: 'Receitas', href: '/admin/receitas', icon: TrendingUp, permissions: ['transparencia.manage'] },
+      { name: 'Despesas', href: '/admin/despesas', icon: TrendingDown, permissions: ['transparencia.manage'] },
+      { name: 'Licitacoes', href: '/admin/licitacoes', icon: Gavel, permissions: ['transparencia.view'] },
+      { name: 'Contratos', href: '/admin/contratos', icon: FileSpreadsheet, permissions: ['transparencia.manage'] },
+      { name: 'Convenios', href: '/admin/convenios', icon: Handshake, permissions: ['transparencia.manage'] },
+      { name: 'Organograma', href: '/admin/organograma', icon: Building2, permissions: ['transparencia.manage'] },
+    ]
+  },
+  {
+    name: 'Pessoal',
+    icon: UserCircle,
+    items: [
+      { name: 'Servidores', href: '/admin/servidores', icon: Users, permissions: ['transparencia.manage'] },
+      { name: 'Folha de Pagamento', href: '/admin/folha-pagamento', icon: Wallet, permissions: ['transparencia.manage'] },
+      { name: 'Diarias', href: '/admin/diarias', icon: Plane, permissions: ['transparencia.manage'] },
+      { name: 'Verbas Indenizatorias', href: '/admin/verbas-indenizatorias', icon: CreditCard, permissions: ['transparencia.manage'] },
+      { name: 'Concursos', href: '/admin/concursos', icon: GraduationCap, permissions: ['transparencia.manage'] },
+      { name: 'Bens Patrimoniais', href: '/admin/bens-patrimoniais', icon: Package, permissions: ['transparencia.manage'] },
+    ]
+  },
+  {
+    name: 'Comunicacao',
+    icon: Megaphone,
+    items: [
+      { name: 'Noticias', href: '/admin/noticias', icon: Newspaper, permissions: ['publicacao.view'] },
+      { name: 'Publicacoes', href: '/admin/publicacoes', icon: BookOpen, permissions: ['publicacao.view'],
+        submenu: [
+          { name: 'Gerenciar', href: '/admin/publicacoes', icon: BookOpen, permissions: ['publicacao.view'] },
+          { name: 'Categorias', href: '/admin/publicacoes/categorias', icon: Layers, permissions: ['publicacao.manage'] },
+        ]
       },
-      {
-        name: 'Licitações',
-        href: '/admin/licitacoes',
-        icon: Gavel,
-        permissions: ['transparencia.view']
-      },
-      {
-        name: 'Contratos',
-        href: '/admin/contratos',
-        icon: FileSpreadsheet,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Convênios',
-        href: '/admin/convenios',
-        icon: Handshake,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Receitas',
-        href: '/admin/receitas',
-        icon: TrendingUp,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Despesas',
-        href: '/admin/despesas',
-        icon: TrendingDown,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Folha de Pagamento',
-        href: '/admin/folha-pagamento',
-        icon: Wallet,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Servidores',
-        href: '/admin/servidores',
-        icon: Users,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Bens Patrimoniais',
-        href: '/admin/bens-patrimoniais',
-        icon: Package,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Gestão Fiscal',
-        href: '/admin/gestao-fiscal',
-        icon: DollarSign,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Diárias',
-        href: '/admin/diarias',
-        icon: Plane,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Verbas Indenizatórias',
-        href: '/admin/verbas-indenizatorias',
-        icon: CreditCard,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Concursos',
-        href: '/admin/concursos',
-        icon: GraduationCap,
-        permissions: ['transparencia.manage']
-      },
-      {
-        name: 'Organograma',
-        href: '/admin/organograma',
-        icon: Building2,
-        permissions: ['transparencia.manage']
-      }
+      { name: 'Audiencias Publicas', href: '/admin/audiencias-publicas', icon: Megaphone, permissions: ['sessao.view'] },
+      { name: 'Participacao Cidada', href: '/admin/participacao-cidada', icon: Users, permissions: ['publicacao.view'] },
     ]
   },
   {
     name: 'Atendimento',
     icon: MessageCircle,
     items: [
-      {
-        name: 'e-SIC',
-        href: '/admin/e-sic',
-        icon: Info,
-        permissions: ['transparencia.view']
-      },
-      {
-        name: 'Ouvidoria',
-        href: '/admin/ouvidoria',
-        icon: MessageCircle,
-        permissions: ['transparencia.view']
-      },
-      {
-        name: 'Conteúdos Educativos',
-        href: '/admin/conteudos-educativos',
-        icon: GraduationCap,
-        permissions: ['publicacao.manage']
-      }
+      { name: 'e-SIC', href: '/admin/e-sic', icon: Info, permissions: ['transparencia.view'] },
+      { name: 'Ouvidoria', href: '/admin/ouvidoria', icon: MessageCircle, permissions: ['transparencia.view'] },
+      { name: 'Conteudos Educativos', href: '/admin/conteudos-educativos', icon: GraduationCap, permissions: ['publicacao.manage'] },
     ]
   },
   {
-    name: 'Relatórios',
-    icon: BarChart3,
-    items: [
-      {
-        name: 'Relatórios',
-        href: '/admin/relatorios',
-        icon: BarChart3,
-        permissions: ['relatorio.view']
-      },
-      {
-        name: 'Analytics',
-        href: '/admin/analytics',
-        icon: Activity,
-        permissions: ['monitor.view']
-      },
-      {
-        name: 'Auditoria',
-        href: '/admin/auditoria',
-        icon: Shield,
-        permissions: ['audit.view']
-      }
-    ]
-  },
-  {
-    name: 'Configurações',
+    name: 'Configuracoes',
     icon: Settings,
     items: [
-      {
-        name: 'Geral',
-        href: '/admin/configuracoes',
-        icon: Settings,
-        permissions: ['config.view']
-      },
-      {
-        name: 'Legislaturas',
-        href: '/admin/legislaturas',
-        icon: BookOpen,
-        permissions: ['legislatura.view']
-      },
-      {
-        name: 'Templates de Sessão',
-        href: '/admin/templates-sessao',
-        icon: Layers,
-        permissions: ['sessao.manage']
-      },
-      {
-        name: 'Quórum',
-        href: '/admin/configuracoes/quorum',
-        icon: Vote,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Tipos de Tramitação',
-        href: '/admin/configuracoes/tipos-tramitacao',
-        icon: Workflow,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Unidades de Tramitação',
-        href: '/admin/configuracoes/unidades-tramitacao',
-        icon: Building2,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Tipos de Proposição',
-        href: '/admin/configuracoes/tipos-proposicoes',
-        icon: FileText,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Autores',
-        href: '/admin/configuracoes/autores',
-        icon: UserCircle,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Tipos de Expediente',
-        href: '/admin/configuracoes/tipos-expediente',
-        icon: BookOpen,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Integrações',
-        href: '/admin/integracoes',
-        icon: Key,
-        permissions: ['integration.manage']
-      },
-      {
-        name: 'Identidade Visual',
-        href: '/admin/configuracoes/identidade-visual',
-        icon: Palette,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Links Transparência',
-        href: '/admin/configuracoes/transparencia-links',
-        icon: ExternalLink,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Conteúdo Transparência',
-        href: '/admin/configuracoes/transparencia-conteudo',
-        icon: Globe,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Monitoramento',
-        href: '/admin/monitoramento',
-        icon: Activity,
-        permissions: ['monitor.view']
-      },
-      {
-        name: 'Backups',
-        href: '/admin/configuracoes/backups',
-        icon: Database,
-        permissions: ['config.manage']
-      },
-      {
-        name: 'Testes API',
-        href: '/admin/testes-api',
-        icon: TestTube,
-        permissions: ['integration.manage']
-      }
+      { name: 'Geral', href: '/admin/configuracoes', icon: Settings, permissions: ['config.view'] },
+      { name: 'Identidade Visual', href: '/admin/configuracoes/identidade-visual', icon: Palette, permissions: ['config.manage'] },
+      { name: 'Usuarios', href: '/admin/usuarios', icon: Shield, permissions: ['user.manage'] },
+      { name: 'Templates Sessao', href: '/admin/templates-sessao', icon: Layers, permissions: ['sessao.manage'] },
+      { name: 'Quorum', href: '/admin/configuracoes/quorum', icon: Vote, permissions: ['config.manage'] },
+      { name: 'Tipos Proposicao', href: '/admin/configuracoes/tipos-proposicoes', icon: FileText, permissions: ['config.manage'] },
+      { name: 'Tipos Tramitacao', href: '/admin/configuracoes/tipos-tramitacao', icon: Workflow, permissions: ['config.manage'] },
+      { name: 'Unidades Tramitacao', href: '/admin/configuracoes/unidades-tramitacao', icon: Building2, permissions: ['config.manage'] },
+      { name: 'Autores', href: '/admin/configuracoes/autores', icon: UserCircle, permissions: ['config.manage'] },
+      { name: 'Tipos Expediente', href: '/admin/configuracoes/tipos-expediente', icon: BookOpen, permissions: ['config.manage'] },
+      { name: 'Integracoes', href: '/admin/integracoes', icon: Key, permissions: ['integration.manage'] },
+      { name: 'Auditoria', href: '/admin/auditoria', icon: Shield, permissions: ['audit.view'] },
+      { name: 'Monitoramento', href: '/admin/monitoramento', icon: Activity, permissions: ['monitor.view'] },
+      { name: 'Backups', href: '/admin/configuracoes/backups', icon: Database, permissions: ['config.manage'] },
     ]
-  }
+  },
 ]
 
 // Ícone do role
