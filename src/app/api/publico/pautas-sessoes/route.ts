@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   // Buscar pautas publicadas
   const pautas = await prisma.pautaSessao.findMany({
     where: {
-      status: { in: ['PUBLICADA', 'APROVADA'] }
+      status: { in: ['APROVADA', 'EM_ANDAMENTO', 'CONCLUIDA'] }
     },
     include: {
       sessao: true,
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   // Estatisticas
   const totalPautas = await prisma.pautaSessao.count()
-  const publicadas = await prisma.pautaSessao.count({ where: { status: { in: ['PUBLICADA', 'APROVADA'] } } })
+  const publicadas = await prisma.pautaSessao.count({ where: { status: { in: ['APROVADA', 'EM_ANDAMENTO', 'CONCLUIDA'] } } })
 
   return createSuccessResponse({
     pautas: resultado,
