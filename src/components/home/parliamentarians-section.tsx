@@ -135,7 +135,7 @@ export function ParliamentariansSection() {
                   >
                     <ParlamentarAvatar parlamentar={p} size="sm" />
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">
+                      <p className="font-semibold text-gray-900 text-sm truncate" title={p.apelido || p.nome}>
                         {p.apelido || p.nome}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -172,7 +172,7 @@ export function ParliamentariansSection() {
                     <div className="flex justify-center mb-3">
                       <ParlamentarAvatar parlamentar={p} size="lg" />
                     </div>
-                    <p className="font-semibold text-gray-800 text-sm truncate">
+                    <p className="font-semibold text-gray-800 text-sm truncate" title={p.apelido || p.nome}>
                       {p.apelido || p.nome}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">{p.partido}</p>

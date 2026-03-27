@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -159,10 +160,10 @@ export default function ParlamentaresPage() {
           </p>
           <div className="flex justify-center space-x-4">
             <Button asChild variant="outline">
-              <a href="/parlamentares/comparativo">
+              <Link href="/parlamentares/comparativo/">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Comparativo de Performance
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

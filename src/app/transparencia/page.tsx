@@ -1,32 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
-  FileText,
-  Users,
-  Building2,
-  DollarSign,
-  Shield,
-  BookOpen,
-  Scale,
-  CheckCircle2,
-  FileCheck,
-  FolderOpen,
-  MessageSquare,
-  HelpCircle,
-  Mail,
-  Phone,
-  MapPin,
-  Award,
-  TrendingUp,
-  BarChart3,
-  Activity,
-  Globe,
-  Briefcase,
-  ChevronRight,
-  Loader2
+  FileText, Users, Building2, DollarSign, Shield, BookOpen, Scale,
+  CheckCircle2, FileCheck, FolderOpen, MessageSquare, HelpCircle,
+  Mail, Phone, MapPin, Award, TrendingUp, BarChart3, Activity,
+  Globe, Briefcase, ChevronRight, Loader2, Landmark, Receipt,
+  Gavel, UserCheck, Clock, Search, Vote, Handshake, ScrollText,
+  BadgeCheck, FileSearch, CreditCard, CalendarDays,
+  GraduationCap, ClipboardList, PieChart, Wallet
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,12 +29,8 @@ interface ConfiguracaoInstitucional {
   site: string | null;
 }
 
-interface DadosInstitucionais {
-  configuracao: ConfiguracaoInstitucional | null;
-}
-
 export default function TransparenciaPage() {
-  const [dados, setDados] = useState<DadosInstitucionais | null>(null);
+  const [dados, setDados] = useState<{ configuracao: ConfiguracaoInstitucional | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -60,9 +38,7 @@ export default function TransparenciaPage() {
       try {
         const response = await fetch('/api/institucional');
         const result = await response.json();
-        if (result.dados) {
-          setDados(result.dados);
-        }
+        if (result.dados) setDados(result.dados);
       } catch (err) {
         console.error('Erro ao buscar dados institucionais:', err);
       } finally {
@@ -73,745 +49,369 @@ export default function TransparenciaPage() {
   }, []);
 
   const config = dados?.configuracao;
-  const nomeCasa = config?.nome || 'Câmara Municipal';
+  const nomeCasa = config?.nome || 'Camara Municipal';
   const endereco = config?.endereco;
   const enderecoCompleto = endereco?.logradouro
-    ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', s/nº'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`
-    : 'Rua Deputado José Macêdo, s/nº - Centro';
+    ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', s/no'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`
+    : 'Rua Deputado Jose Macedo, s/no - Centro';
+
+  // Secoes tematicas organizadas
+  const secoes = [
+    {
+      titulo: 'Portal Institucional',
+      subtitulo: '§1o. Do portal da transparencia',
+      icon: Building2,
+      cor: 'blue',
+      itens: [
+        { nome: 'Mesa Diretora e Vereadores', href: '/transparencia/mesa-diretora', icon: Users },
+        { nome: 'Organograma', href: '/transparencia/institucional/organograma', icon: Activity },
+        { nome: 'Competencias', href: '/transparencia/institucional/competencias', icon: Briefcase },
+        { nome: 'Horario de Atendimento', href: '/transparencia/institucional/horario-funcionamento', icon: Clock },
+        { nome: 'Estrutura Organizacional', href: '/institucional/sobre', icon: FileCheck },
+      ]
+    },
+    {
+      titulo: 'Gestao Fiscal',
+      subtitulo: '§2o. Planejamento e gestao fiscal',
+      icon: PieChart,
+      cor: 'green',
+      itens: [
+        { nome: 'LOA - Lei Orcamentaria Anual', href: '/transparencia/loa', icon: FileText },
+        { nome: 'LDO - Diretrizes Orcamentarias', href: '/transparencia/ldo', icon: FileText },
+        { nome: 'PPA - Plano Plurianual', href: '/transparencia/ppa', icon: FileText },
+        { nome: 'RGF - Relatorio de Gestao Fiscal', href: '/transparencia/rgf', icon: BarChart3 },
+        { nome: 'Gestao Fiscal', href: '/transparencia/gestao-fiscal', icon: TrendingUp },
+      ]
+    },
+    {
+      titulo: 'Financas Publicas',
+      subtitulo: '§3o. Receitas, despesas, contratos',
+      icon: DollarSign,
+      cor: 'purple',
+      itens: [
+        { nome: 'Receitas', href: '/transparencia/receitas', icon: TrendingUp },
+        { nome: 'Despesas', href: '/transparencia/despesas', icon: CreditCard },
+        { nome: 'Licitacoes', href: '/transparencia/licitacoes', icon: Search },
+        { nome: 'Contratos', href: '/transparencia/contratos', icon: FileCheck },
+        { nome: 'Convenios', href: '/transparencia/convenios', icon: Handshake },
+      ]
+    },
+    {
+      titulo: 'Atendimento ao Cidadao',
+      subtitulo: '§4o. Servico de atendimento',
+      icon: MessageSquare,
+      cor: 'orange',
+      itens: [
+        { nome: 'E-SIC - Acesso a Informacao', href: '/institucional/e-sic', icon: FileSearch },
+        { nome: 'Ouvidoria', href: '/institucional/ouvidoria', icon: MessageSquare },
+        { nome: 'Perguntas Frequentes', href: '/institucional/sobre', icon: HelpCircle },
+        { nome: 'Fale Conosco', href: '/institucional/ouvidoria', icon: Mail },
+      ]
+    },
+    {
+      titulo: 'Publicacoes Oficiais',
+      subtitulo: '§5o. Atos e normativos legais',
+      icon: FolderOpen,
+      cor: 'indigo',
+      itens: [
+        { nome: 'Leis Municipais', href: '/transparencia/leis', icon: ScrollText },
+        { nome: 'Decretos Legislativos', href: '/transparencia/decretos', icon: Gavel },
+        { nome: 'Portarias', href: '/transparencia/portarias', icon: FileText },
+        { nome: 'Pautas das Sessoes', href: '/legislativo/pautas-sessoes', icon: ClipboardList },
+        { nome: 'Atas das Sessoes', href: '/legislativo/atas', icon: BookOpen },
+        { nome: 'Normas Juridicas', href: '/legislativo/normas', icon: Scale },
+      ]
+    },
+    {
+      titulo: 'Pessoal e RH',
+      subtitulo: 'Gestao de pessoal e remuneracao',
+      icon: UserCheck,
+      cor: 'teal',
+      itens: [
+        { nome: 'Folha de Pagamento', href: '/transparencia/folha-pagamento', icon: Wallet },
+        { nome: 'Quadro de Pessoal', href: '/transparencia/pessoal/quadro-pessoal', icon: Users },
+        { nome: 'Diarias', href: '/transparencia/pessoal/diarias', icon: CalendarDays },
+        { nome: 'Concursos', href: '/transparencia/pessoal/concursos', icon: GraduationCap },
+        { nome: 'Servidores', href: '/transparencia/pessoal', icon: UserCheck },
+      ]
+    },
+    {
+      titulo: 'Transparencia Parlamentar',
+      subtitulo: 'Atuacao e gastos dos vereadores',
+      icon: Vote,
+      cor: 'amber',
+      itens: [
+        { nome: 'Presencas em Sessoes', href: '/transparencia/parlamentar/presencas', icon: CheckCircle2 },
+        { nome: 'Votacoes Nominais', href: '/transparencia/legislativo/votacoes-nominais', icon: Vote },
+        { nome: 'Verbas Indenizatorias', href: '/transparencia/parlamentar/indenizatoria', icon: Receipt },
+        { nome: 'Producao Legislativa', href: '/transparencia/parlamentar/producao', icon: FileText },
+        { nome: 'Relatorio por Parlamentar', href: '/transparencia/parlamentar/relatorio', icon: BarChart3 },
+      ]
+    },
+    {
+      titulo: 'Patrimonio Publico',
+      subtitulo: 'Bens moveis e imoveis',
+      icon: Landmark,
+      cor: 'rose',
+      itens: [
+        { nome: 'Bens Imoveis', href: '/transparencia/bens-imoveis', icon: Building2 },
+        { nome: 'Bens Moveis', href: '/transparencia/bens-moveis', icon: Briefcase },
+      ]
+    },
+  ];
+
+  // Mapa de cores para classes Tailwind
+  const corClasses: Record<string, { border: string; bg: string; bgLight: string; text: string; iconBg: string; hoverBorder: string }> = {
+    blue:   { border: 'border-blue-500', bg: 'bg-blue-600', bgLight: 'bg-blue-50', text: 'text-blue-700', iconBg: 'bg-blue-100', hoverBorder: 'hover:border-blue-400' },
+    green:  { border: 'border-green-500', bg: 'bg-green-600', bgLight: 'bg-green-50', text: 'text-green-700', iconBg: 'bg-green-100', hoverBorder: 'hover:border-green-400' },
+    purple: { border: 'border-purple-500', bg: 'bg-purple-600', bgLight: 'bg-purple-50', text: 'text-purple-700', iconBg: 'bg-purple-100', hoverBorder: 'hover:border-purple-400' },
+    orange: { border: 'border-orange-500', bg: 'bg-orange-600', bgLight: 'bg-orange-50', text: 'text-orange-700', iconBg: 'bg-orange-100', hoverBorder: 'hover:border-orange-400' },
+    indigo: { border: 'border-indigo-500', bg: 'bg-indigo-600', bgLight: 'bg-indigo-50', text: 'text-indigo-700', iconBg: 'bg-indigo-100', hoverBorder: 'hover:border-indigo-400' },
+    teal:   { border: 'border-teal-500', bg: 'bg-teal-600', bgLight: 'bg-teal-50', text: 'text-teal-700', iconBg: 'bg-teal-100', hoverBorder: 'hover:border-teal-400' },
+    amber:  { border: 'border-amber-500', bg: 'bg-amber-600', bgLight: 'bg-amber-50', text: 'text-amber-700', iconBg: 'bg-amber-100', hoverBorder: 'hover:border-amber-400' },
+    rose:   { border: 'border-rose-500', bg: 'bg-rose-600', bgLight: 'bg-rose-50', text: 'text-rose-700', iconBg: 'bg-rose-100', hoverBorder: 'hover:border-rose-400' },
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-camara-primary/5 to-gray-50">
-      {/* Hero Section - Visual Melhorado */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Hero Section */}
       <div className="relative bg-gradient-to-br gradient-municipal-hero text-white overflow-hidden">
-        {/* Padrão de fundo decorativo */}
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-        
-        {/* Círculos decorativos */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-camara-primary/50/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative container mx-auto px-4 py-16">
-          <div className="text-center max-w-5xl mx-auto space-y-6">
-            <div className="inline-block p-3 bg-white/10 backdrop-blur-sm rounded-full mb-4 animate-bounce">
+
+        <div className="relative container mx-auto px-4 py-12 md:py-16">
+          <div className="text-center max-w-4xl mx-auto space-y-4 md:space-y-6">
+            <div className="inline-block p-3 bg-white/10 backdrop-blur-sm rounded-full">
               <Shield className="h-8 w-8 text-white" />
             </div>
-            
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
-              Bem vindo ao Portal da Transparência
+            <h1 className="text-3xl md:text-5xl font-bold">
+              Portal da Transparencia
             </h1>
-            <h2 className="text-xl md:text-2xl font-semibold mb-6 text-white/80">
+            <h2 className="text-lg md:text-2xl font-semibold text-white/80">
               {nomeCasa}
             </h2>
-            
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-8 border border-white/20 shadow-2xl">
-              <p className="text-base mb-2 text-white/90">
-                Em atendimento a resolução administrativa nº 007/2016/TCMPA, de 18 de fevereiro de 2016
+            <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 md:p-6 border border-white/20">
+              <p className="text-sm md:text-base text-white/90">
+                Em atendimento a resolucao administrativa no 007/2016/TCMPA e instrucao normativa no11/2021/TCMPA
               </p>
-              <p className="text-base text-white/80">
-                Última atualização: Instrução normativa nº11/2021/TCMPA, de 28 de abril de 2021
-              </p>
-            </div>
-            
-            {/* Botões de Informações Melhorados */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="group bg-white text-camara-primary hover:bg-camara-primary/5 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-camara-primary/40"
-              >
-                <Building2 className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
-                Clique aqui para informações da Câmara
-                <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button 
-                size="lg" 
-                className="group bg-white text-camara-primary hover:bg-camara-primary/5 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-camara-primary/40"
-              >
-                <MessageSquare className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
-                Clique aqui para informações da ouvidoria
-                <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
-        {/* §1o. Do portal da transparência */}
-        <div className="mb-12 animate-fade-in">
-          <Card className="border-t-4 border-t-camara-primary shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-camara-primary/10/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <CardHeader className="bg-gradient-to-r from-camara-primary/5 to-camara-primary/10 relative">
-              <CardTitle className="text-2xl flex items-center text-camara-primary font-bold">
-                <div className="p-2 bg-camara-primary rounded-lg mr-3 shadow-lg">
-                  <Building2 className="h-6 w-6 text-white" />
-                </div>
-                Portal da transparência
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2 font-medium">
-                §1o. Do portal da transparência:
-              </p>
-            </CardHeader>
-            <CardContent className="p-6 relative">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="/transparencia/mesa-diretora" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <Users className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Mesa Diretora e Vereadores
-                    </h3>
-                  </div>
-                </Link>
-                
-                <Link href="#" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <FileCheck className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Estrutura Organizacional - Lei Municipal
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="#" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <MapPin className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Endereço e Horário de Atendimento
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="#" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <Activity className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Organograma
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="#" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <FileCheck className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Agenda Externa do Presidente
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="#" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <Briefcase className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Competências Organizacionais
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="#" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <BookOpen className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Carta de Serviços ao Usuário
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="#" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-camara-primary hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-camara-primary/10 rounded-lg w-fit mb-3 group-hover:bg-camara-primary transition-colors">
-                      <HelpCircle className="h-7 w-7 text-camara-primary group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary transition-colors leading-tight">
-                      Perguntas Frequentes FAQ
-                    </h3>
-                  </div>
-                </Link>
+      {/* Acesso Rapido */}
+      <div className="container mx-auto px-4 -mt-6 md:-mt-8 relative z-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {[
+            { nome: 'E-SIC', desc: 'Acesso a Informacao', href: '/institucional/e-sic', icon: FileSearch, cor: 'bg-blue-600' },
+            { nome: 'Ouvidoria', desc: 'Fale conosco', href: '/institucional/ouvidoria', icon: MessageSquare, cor: 'bg-orange-600' },
+            { nome: 'Conformidade PNTP', desc: 'Nivel de transparencia', href: '/transparencia/conformidade', icon: BadgeCheck, cor: 'bg-green-600' },
+            { nome: 'Publicacoes', desc: 'Diario e atos oficiais', href: '/transparencia/publicacoes', icon: FolderOpen, cor: 'bg-indigo-600' },
+          ].map((item) => (
+            <Link
+              key={item.nome}
+              href={item.href}
+              className="group bg-white rounded-xl shadow-lg hover:shadow-xl border border-gray-100 hover:border-gray-200 p-4 md:p-5 transition-all duration-300 hover:-translate-y-1"
+            >
+              <div className={`${item.cor} p-2.5 rounded-lg w-fit mb-3 group-hover:scale-110 transition-transform`}>
+                <item.icon className="h-5 w-5 text-white" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* §2o. Lei de Responsabilidade Fiscal */}
-        <div className="mb-12 animate-fade-in">
-          <Card className="border-t-4 border-t-green-600 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-green-100/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-100/50 relative">
-              <CardTitle className="text-2xl flex items-center text-green-900 font-bold">
-                <div className="p-2 bg-green-600 rounded-lg mr-3 shadow-lg">
-                  <DollarSign className="h-6 w-6 text-white" />
-                </div>
-                Lei de Responsabilidade Fiscal
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2 font-medium">
-                §2o. Das publicações vinculadas aos instrumentos de planejamento e gestão fiscal:
-              </p>
-            </CardHeader>
-            <CardContent className="p-6 relative">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="/transparencia/loa" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-green-100 rounded-lg w-fit mb-3 group-hover:bg-green-600 transition-colors">
-                      <FileText className="h-7 w-7 text-green-600 group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors leading-tight text-lg">
-                      LOA
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">Lei Orçamentária Anual</p>
-                  </div>
-                </Link>
-
-                <Link href="/transparencia/ldo" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-green-100 rounded-lg w-fit mb-3 group-hover:bg-green-600 transition-colors">
-                      <FileText className="h-7 w-7 text-green-600 group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors leading-tight text-lg">
-                      LDO
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">Lei de Diretrizes Orçamentárias</p>
-                  </div>
-                </Link>
-
-                <Link href="/transparencia/ppa" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-green-100 rounded-lg w-fit mb-3 group-hover:bg-green-600 transition-colors">
-                      <FileText className="h-7 w-7 text-green-600 group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors leading-tight text-lg">
-                      PPA
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">Plano Plurianual</p>
-                  </div>
-                </Link>
-
-                <Link href="/transparencia/rgf" className="group">
-                  <div className="p-5 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-white">
-                    <div className="p-2 bg-green-100 rounded-lg w-fit mb-3 group-hover:bg-green-600 transition-colors">
-                      <FileText className="h-7 w-7 text-green-600 group-hover:text-white transition-colors" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-green-600 transition-colors leading-tight text-lg">
-                      RGF
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">Relatório de Gestão Fiscal</p>
-                  </div>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* §3o. Receitas, despesas, convênios, folhas, licitações e contratos */}
-        <div className="mb-12">
-          <Card className="border-t-4 border-t-purple-600">
-            <CardHeader className="bg-purple-50">
-              <CardTitle className="text-xl flex items-center text-purple-900">
-                <TrendingUp className="mr-3 h-6 w-6" />
-                Receitas, despesas, convênios, folhas, licitações e contratos
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
-                §3o. Das publicações vinculadas ao acompanhamento de receitas e despesas:
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                {/* Receitas */}
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <DollarSign className="h-5 w-5 mr-2 text-purple-600" />
-                    Receitas
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-7">
-                    <Link href="/transparencia/receitas" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                      <ChevronRight className="h-4 w-4 mr-1" />
-                      RECEITAS ATÉ 2022
-                    </Link>
-                    <Link href="/transparencia/receitas" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                      <ChevronRight className="h-4 w-4 mr-1" />
-                      RECEITAS 2023
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Despesas */}
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                    <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
-                    Despesas
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 ml-7">
-                    <Link href="/transparencia/despesas" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                      <ChevronRight className="h-4 w-4 mr-1" />
-                      DESPESAS ATÉ 2022
-                    </Link>
-                    <Link href="/transparencia/despesas" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                      <ChevronRight className="h-4 w-4 mr-1" />
-                      DESPESAS 2023
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Outros itens */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Link href="/transparencia/licitacoes" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Licitações
-                  </Link>
-                  <Link href="/transparencia/contratos" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Contratos
-                  </Link>
-                  <Link href="/transparencia/convenios" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Convênios
-                  </Link>
-                  <Link href="/transparencia/folha-pagamento" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Pessoal - Folha
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Cargos e Funções
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Diárias
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Balancete Financeiro
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Notas Fiscais
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Estagiários
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Terceirizados
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Plano de Contratação
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Inidôneas/Suspensas
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Cronograma de Pagamentos
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Contas de Governo
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Contas de Gestão
-                  </Link>
-                  <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                    <ChevronRight className="h-4 w-4 mr-1" />
-                    Balanço Geral
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* §4o. Ouvidoria e e-Sic */}
-        <div className="mb-12">
-          <Card className="border-t-4 border-t-orange-600">
-            <CardHeader className="bg-orange-50">
-              <CardTitle className="text-xl flex items-center text-orange-900">
-                <MessageSquare className="mr-3 h-6 w-6" />
-                Ouvidoria e e-Sic
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
-                §4o. Do serviço de atendimento ao cidadão:
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="#" className="group">
-                  <div className="p-4 border rounded-lg hover:border-orange-500 hover:shadow-md transition-all">
-                    <HelpCircle className="h-8 w-8 text-orange-600 mb-2" />
-                    <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                      Perguntas e Respostas
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="/institucional/e-sic" className="group">
-                  <div className="p-4 border rounded-lg hover:border-orange-500 hover:shadow-md transition-all">
-                    <FileCheck className="h-8 w-8 text-orange-600 mb-2" />
-                    <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                      E-SIC
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="/institucional/ouvidoria" className="group">
-                  <div className="p-4 border rounded-lg hover:border-orange-500 hover:shadow-md transition-all">
-                    <MessageSquare className="h-8 w-8 text-orange-600 mb-2" />
-                    <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                      Ouvidoria
-                    </h3>
-                  </div>
-                </Link>
-
-                <Link href="#" className="group">
-                  <div className="p-4 border rounded-lg hover:border-orange-500 hover:shadow-md transition-all">
-                    <Mail className="h-8 w-8 text-orange-600 mb-2" />
-                    <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                      Fale Conosco
-                    </h3>
-                  </div>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* §5o. Publicações */}
-        <div className="mb-12">
-          <Card className="border-t-4 border-t-indigo-600">
-            <CardHeader className="bg-indigo-50">
-              <CardTitle className="text-xl flex items-center text-indigo-900">
-                <FolderOpen className="mr-3 h-6 w-6" />
-                Publicações
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
-                §5o. Atos e normativos legais:
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="/institucional/lei-organica" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Lei Orgânica
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Regulamentação da LAI
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Pautas das Sessões
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Atas das Sessões
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Decretos Legislativos
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Resoluções vigentes
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Atos de Julgamentos
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Regime Jurídico
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Plano de Cargos
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Normativo sobre Diárias
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Relatório Controle Interno
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Projetos de Lei
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Bens Móveis
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Bens Imóveis
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Programas e Ações
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Projetos e Atividades
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Comissão Patrimônio
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Dispensa e Inexigibilidade
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Concursos/Processo Seletivo
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Relatório de Gestão ou Atividades
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Objetivos Estratégicos da Instituição
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Pautas das Comissões
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Lista de Votação Nominal
-                </Link>
-                <Link href="/transparencia/leis" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Leis Municipais
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Regulamentação e Cotas Parlamentares
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* VII. Boas práticas de transparência pública */}
-        <div className="mb-12">
-          <Card className="border-t-4 border-t-emerald-600">
-            <CardHeader className="bg-emerald-50">
-              <CardTitle className="text-xl flex items-center text-emerald-900">
-                <CheckCircle2 className="mr-3 h-6 w-6" />
-                Boas práticas de transparência pública
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
-                Boas práticas de transparência:
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Mapa do Site
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Dados Abertos
-                </Link>
-                <Link href="/institucional/dicionario" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Glossário
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Contatos
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Pesquisa de Satisfação
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Informações da LGPD
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Obras
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Legislação vigente */}
-        <div className="mb-12">
-          <Card className="border-t-4 border-t-cyan-600">
-            <CardHeader className="bg-cyan-50">
-              <CardTitle className="text-xl flex items-center text-cyan-900">
-                <Scale className="mr-3 h-6 w-6" />
-                Legislação vigente
-              </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">
-                Legislação vigente:
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  TAG-Termo de Ajustamento de Gestão
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Lei de Acesso a Informações nº 12.527
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Lei Complementar nº 101
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Lei da Transparência nº 131
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Decreto de Gestão Fiscal nº 7.185
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  IN Nº11/2021/TCMPA
-                </Link>
-                <Link href="#" className="text-camara-primary hover:text-camara-primary hover:underline flex items-center">
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                  Normativa Lei Federal 14.129/2021
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Informações Adicionais do Município */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <Card className="relative overflow-hidden border-2 border-camara-primary/20 hover:border-camara-primary/50 shadow-xl hover:shadow-2xl transition-all duration-300 group">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-camara-primary/20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="bg-gradient-to-br from-camara-primary/10 to-camara-primary/5 relative">
-              <CardTitle className="flex items-center text-camara-primary text-xl font-bold">
-                <div className="p-2 bg-camara-primary rounded-lg mr-3 shadow-lg group-hover:scale-110 transition-transform">
-                  <Building2 className="h-6 w-6 text-white" />
-                </div>
-                Informações do município
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 relative">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-camara-primary" />
-                  <span className="ml-2 text-gray-500">Carregando...</span>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <MapPin className="h-5 w-5 text-camara-primary mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-bold text-gray-900">{nomeCasa}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <Activity className="h-5 w-5 text-camara-primary mr-2 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Mesorregião:</strong> <span className="text-gray-900">Baixo Amazonas</span></p>
-                    </div>
-                  </div>
-                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <Award className="h-5 w-5 text-camara-primary mr-2 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Código do IBGE:</strong> <span className="text-gray-900">1504752</span></p>
-                    </div>
-                  </div>
-                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <Globe className="h-5 w-5 text-camara-primary mr-2 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Sítio Eletrônico:</strong> <span className="text-camara-primary">{config?.site || 'Não configurado'}</span></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <MapPin className="h-5 w-5 text-camara-primary mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Endereço:</strong> <span className="text-gray-900">{enderecoCompleto}</span></p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="relative overflow-hidden border-2 border-orange-200 hover:border-orange-400 shadow-xl hover:shadow-2xl transition-all duration-300 group">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-orange-200/30 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
-            <CardHeader className="bg-gradient-to-br from-orange-100 to-orange-50 relative">
-              <CardTitle className="flex items-center text-orange-900 text-xl font-bold">
-                <div className="p-2 bg-orange-600 rounded-lg mr-3 shadow-lg group-hover:scale-110 transition-transform">
-                  <MessageSquare className="h-6 w-6 text-white" />
-                </div>
-                Informações da ouvidoria
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 relative">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-orange-600" />
-                  <span className="ml-2 text-gray-500">Carregando...</span>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <MapPin className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Presencial:</strong> <span className="text-gray-900">{enderecoCompleto}</span></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <Activity className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Horário:</strong> <span className="text-gray-900">De 08:00h às 14:00h, Segunda à Sexta</span></p>
-                    </div>
-                  </div>
-                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <Phone className="h-5 w-5 text-orange-600 mr-2 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Telefones:</strong> <span className="text-gray-900">{config?.telefone || '(93) 991388426'}</span></p>
-                    </div>
-                  </div>
-                  <div className="flex items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <Mail className="h-5 w-5 text-orange-600 mr-2 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">E-mail:</strong> <span className="text-orange-600">{config?.email || 'Não configurado'}</span></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                    <Users className="h-5 w-5 text-orange-600 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm"><strong className="text-gray-700">Ouvidor(a):</strong> <span className="text-gray-900">A definir</span></p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <h3 className="font-bold text-gray-900 text-sm md:text-base">{item.nome}</h3>
+              <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{item.desc}</p>
+            </Link>
+          ))}
         </div>
       </div>
+
+      {/* Secoes Tematicas */}
+      <div className="container mx-auto px-4 py-10 md:py-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
+          {secoes.map((secao) => {
+            const cores = corClasses[secao.cor] || corClasses.blue;
+            return (
+              <div
+                key={secao.titulo}
+                className={`bg-white rounded-xl border-2 border-gray-100 ${cores.hoverBorder} shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group`}
+              >
+                {/* Header do card */}
+                <div className={`${cores.bgLight} px-5 py-4 border-b border-gray-100`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`${cores.bg} p-2.5 rounded-lg shadow-sm group-hover:scale-110 transition-transform`}>
+                      <secao.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className={`font-bold ${cores.text} text-base`}>{secao.titulo}</h3>
+                      <p className="text-xs text-gray-500">{secao.subtitulo}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Itens do card */}
+                <div className="p-3">
+                  {secao.itens.map((item) => (
+                    <Link
+                      key={item.nome}
+                      href={item.href}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors group/item"
+                    >
+                      <div className={`${cores.iconBg} p-1.5 rounded-md flex-shrink-0`}>
+                        <item.icon className={`h-4 w-4 ${cores.text}`} />
+                      </div>
+                      <span className="text-sm text-gray-700 group-hover/item:text-gray-900 flex-1">
+                        {item.nome}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 group-hover/item:translate-x-0.5 transition-all flex-shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legislacao Vigente - Barra horizontal */}
+      <div className="bg-gray-50 border-y border-gray-200">
+        <div className="container mx-auto px-4 py-8 md:py-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-cyan-600 p-2.5 rounded-lg shadow-sm">
+              <Scale className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-cyan-700 text-lg">Legislacao Vigente</h3>
+              <p className="text-xs text-gray-500">Normas de transparencia e acesso a informacao</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { nome: 'Lei de Acesso a Informacao', desc: 'Lei no 12.527/2011', icon: BookOpen },
+              { nome: 'Lei de Responsabilidade Fiscal', desc: 'Lei Complementar no 101/2000', icon: DollarSign },
+              { nome: 'Lei da Transparencia', desc: 'Lei Complementar no 131/2009', icon: Shield },
+              { nome: 'Decreto de Gestao Fiscal', desc: 'Decreto no 7.185/2010', icon: FileText },
+              { nome: 'IN no11/2021/TCMPA', desc: 'Instrucao Normativa TCMPA', icon: Gavel },
+              { nome: 'Lei Federal 14.129/2021', desc: 'Governo Digital', icon: Globe },
+              { nome: 'Lei Organica Municipal', desc: 'Lei Organica da Camara', icon: ScrollText },
+              { nome: 'Regimento Interno', desc: 'Normas internas', icon: ClipboardList },
+            ].map((lei) => (
+              <div key={lei.nome} className="flex items-start gap-3 bg-white rounded-lg p-3 border border-gray-100">
+                <div className="bg-cyan-50 p-1.5 rounded-md flex-shrink-0 mt-0.5">
+                  <lei.icon className="h-4 w-4 text-cyan-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 leading-tight">{lei.nome}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{lei.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Boas Praticas */}
+      <div className="container mx-auto px-4 py-8 md:py-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-emerald-600 p-2.5 rounded-lg shadow-sm">
+            <CheckCircle2 className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-bold text-emerald-700 text-lg">Boas Praticas de Transparencia</h3>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { nome: 'Dados Abertos', href: '/api-docs', icon: Globe },
+            { nome: 'Glossario', href: '/institucional/dicionario', icon: BookOpen },
+            { nome: 'Pesquisa Satisfacao', href: '/transparencia/pesquisas', icon: Search },
+            { nome: 'LGPD', href: '/transparencia/conformidade', icon: Shield },
+            { nome: 'Mapa do Site', href: '/busca', icon: MapPin },
+            { nome: 'Contatos', href: '/institucional/ouvidoria', icon: Phone },
+          ].map((item) => (
+            <Link
+              key={item.nome}
+              href={item.href}
+              className="flex flex-col items-center gap-2 bg-white rounded-xl p-4 border border-gray-100 hover:border-emerald-300 hover:shadow-md transition-all text-center group"
+            >
+              <div className="bg-emerald-50 p-2 rounded-lg group-hover:bg-emerald-100 transition-colors">
+                <item.icon className="h-5 w-5 text-emerald-600" />
+              </div>
+              <span className="text-xs font-medium text-gray-700 group-hover:text-emerald-700">{item.nome}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Informacoes do Municipio e Ouvidoria */}
+      <div className="bg-gray-50 border-t border-gray-200">
+        <div className="container mx-auto px-4 py-8 md:py-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+            {/* Info Municipio */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-600 p-2 rounded-lg">
+                    <Building2 className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-blue-700">Informacoes do Municipio</h3>
+                </div>
+              </div>
+              <div className="p-5 space-y-3">
+                {loading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                  </div>
+                ) : (
+                  <>
+                    <InfoRow icon={Building2} label={nomeCasa} color="text-blue-600" bold />
+                    <InfoRow icon={Activity} label="Mesoregiao: Baixo Amazonas" color="text-blue-600" />
+                    <InfoRow icon={Award} label="Codigo IBGE: 1504752" color="text-blue-600" />
+                    <InfoRow icon={Globe} label={`Site: ${config?.site || 'Nao configurado'}`} color="text-blue-600" />
+                    <InfoRow icon={MapPin} label={`Endereco: ${enderecoCompleto}`} color="text-blue-600" />
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Info Ouvidoria */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-50 to-orange-100/50 px-5 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="bg-orange-600 p-2 rounded-lg">
+                    <MessageSquare className="h-5 w-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-orange-700">Informacoes da Ouvidoria</h3>
+                </div>
+              </div>
+              <div className="p-5 space-y-3">
+                {loading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-orange-600" />
+                  </div>
+                ) : (
+                  <>
+                    <InfoRow icon={MapPin} label={`Presencial: ${enderecoCompleto}`} color="text-orange-600" />
+                    <InfoRow icon={Clock} label="Horario: 08:00h as 14:00h, Segunda a Sexta" color="text-orange-600" />
+                    <InfoRow icon={Phone} label={`Telefone: ${config?.telefone || '(93) 991388426'}`} color="text-orange-600" />
+                    <InfoRow icon={Mail} label={`E-mail: ${config?.email || 'Nao configurado'}`} color="text-orange-600" />
+                    <InfoRow icon={Users} label="Ouvidor(a): A definir" color="text-orange-600" />
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente auxiliar para linhas de informacao
+function InfoRow({ icon: Icon, label, color, bold }: { icon: any; label: string; color: string; bold?: boolean }) {
+  return (
+    <div className="flex items-start gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+      <Icon className={`h-4 w-4 ${color} mt-0.5 flex-shrink-0`} />
+      <p className={`text-sm ${bold ? 'font-bold text-gray-900' : 'text-gray-600'}`}>{label}</p>
     </div>
   );
 }

@@ -239,7 +239,7 @@ export function Hero() {
       {/* 4 Cards de Acesso Rapido - Flutuante */}
       <section className="relative z-20 -mt-16 mb-4">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
             {quickAccessCards.map((card) => (
               <Link
                 key={card.href}
