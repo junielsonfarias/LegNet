@@ -178,6 +178,11 @@ export const dadosAbertosService = {
           local: true,
           status: true,
           descricao: true,
+          ata: true,
+          arquivoAta: true,
+          urlAudio: true,
+          urlVideo: true,
+          urlTransmissao: true,
           _count: {
             select: {
               presencas: true,
@@ -208,6 +213,11 @@ export const dadosAbertosService = {
       local: s.local,
       status: s.status,
       descricao: s.descricao,
+      ata: s.ata,
+      arquivoAta: s.arquivoAta,
+      urlAudio: s.urlAudio,
+      urlVideo: s.urlVideo,
+      urlTransmissao: s.urlTransmissao,
       total_presencas: s._count.presencas,
       total_proposicoes: s._count.proposicoes,
       legislatura: s.legislatura ? {

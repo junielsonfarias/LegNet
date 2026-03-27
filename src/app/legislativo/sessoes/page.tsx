@@ -23,6 +23,10 @@ interface SessaoPublica {
   status: string
   descricao: string | null
   ata: string | null
+  arquivoAta: string | null
+  urlAudio: string | null
+  urlVideo: string | null
+  urlTransmissao: string | null
   presentes: number
   legislatura: {
     numero: number
@@ -385,22 +389,45 @@ export default function SessoesPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {sessao.ata && (
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Baixar Ata
+                  <div className="flex flex-wrap items-center gap-2">
+                      {sessao.arquivoAta && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4 mr-2" />
+                            Ata
+                          </a>
                         </Button>
                       )}
-                      
+                      {sessao.urlVideo && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={sessao.urlVideo} target="_blank" rel="noopener noreferrer">
+                            <Play className="h-4 w-4 mr-2" />
+                            Video
+                          </a>
+                        </Button>
+                      )}
+                      {sessao.urlAudio && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={sessao.urlAudio} target="_blank" rel="noopener noreferrer">
+                            <Play className="h-4 w-4 mr-2" />
+                            Audio
+                          </a>
+                        </Button>
+                      )}
+                      {sessao.urlTransmissao && sessao.status === 'EM_ANDAMENTO' && (
+                        <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                          <a href={sessao.urlTransmissao} target="_blank" rel="noopener noreferrer">
+                            <Play className="h-4 w-4 mr-2" />
+                            Ao Vivo
+                          </a>
+                        </Button>
+                      )}
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/legislativo/sessoes/${sessao.numero}`}>
                           <FileText className="h-4 w-4 mr-2" />
-                          Ver Detalhes
+                          Detalhes
                         </Link>
                       </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -306,6 +306,12 @@ export default function ParlamentaresPage() {
                     </div>
                   )}
 
+                  {parlamentar.biografia && (
+                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                      {parlamentar.biografia}
+                    </p>
+                  )}
+
                   {/* Estatísticas */}
                   <div className="border-t pt-3 mt-3">
                     <div className="grid grid-cols-3 gap-4 text-center">

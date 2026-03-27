@@ -23,10 +23,7 @@ export default function MesaDiretoraTransparenciaPage() {
   const mesaDiretora = parlamentares.filter(p => p.cargo !== 'VEREADOR');
 
   // Obter composição das mesas por período (simplificado)
-  const composicoesMesa = useMemo((): any[] => {
-    // TODO: Implementar histórico de composições quando API estiver disponível
-    return [];
-  }, []);
+  const composicoesMesa = mesaEnriquecida;
 
   // Obter todos os vereadores
   const vereadoresLegislatura = useMemo(() => {
@@ -229,9 +226,9 @@ export default function MesaDiretoraTransparenciaPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-camara-primary">
-                    {composicoesMesa.length}
+                    {mesaEnriquecida.length}
                   </div>
-                  <p className="text-sm text-gray-600">Períodos de Mesa</p>
+                  <p className="text-sm text-gray-600">Membros da Mesa</p>
                 </div>
                 <Calendar className="h-8 w-8 text-camara-primary" />
               </div>
@@ -243,7 +240,7 @@ export default function MesaDiretoraTransparenciaPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-green-600">
-                    {composicoesMesa.find(c => c.ativa) ? 'Atual' : 'Histórica'}
+                    {mesaEnriquecida.length > 0 ? 'Atual' : '-'}
                   </div>
                   <p className="text-sm text-gray-600">Mesa Atual</p>
                 </div>
@@ -271,7 +268,7 @@ export default function MesaDiretoraTransparenciaPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-2xl font-bold text-orange-600">
-                    {composicoesMesa.length > 0 ? `${composicoesMesa[0].dataInicio.split('-')[0]}-${composicoesMesa[0].dataFim?.split('-')[0] || 'Atual'}` : 'N/A'}
+                    {legislaturas.find(l => l.ativa) ? `${legislaturas.find(l => l.ativa)?.anoInicio}/${legislaturas.find(l => l.ativa)?.anoFim}` : 'N/A'}
                   </div>
                   <p className="text-sm text-gray-600">Período Legislativo</p>
                 </div>

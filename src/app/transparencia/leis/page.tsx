@@ -61,20 +61,56 @@ export default function LeisPage() {
     setPdfModal({ isOpen: false, url: '', titulo: '' })
   }
 
-  // Carregar leis da API pública
+  // Carregar leis de ambas as fontes: NormaJuridica + Publicacoes tipo LEI
   const fetchLeis = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/dados-abertos/publicacoes?tipo=LEI&limit=100')
-      const result = await response.json()
 
-      if (result.dados) {
-        console.log('Leis carregadas:', result.dados.length)
-        setLeis(result.dados)
-      } else {
-        console.error('Formato de resposta inesperado:', result)
-        setLeis([])
+      // Buscar de ambas fontes em paralelo
+      const [normasRes, pubRes] = await Promise.all([
+        fetch('/api/normas?limit=100&situacao=VIGENTE').catch(() => null),
+        fetch('/api/dados-abertos/publicacoes?tipo=LEI&limit=100').catch(() => null),
+      ])
+
+      const items: PublicacaoLei[] = []
+
+      // Normas Juridicas (fonte primaria)
+      if (normasRes?.ok) {
+        const normasData = await normasRes.json()
+        const normas = normasData.data?.normas || normasData.data || []
+        for (const n of normas) {
+          items.push({
+            id: n.id,
+            titulo: `${n.tipo === 'LEI_COMPLEMENTAR' ? 'Lei Complementar' : 'Lei'} No ${n.numero}/${n.ano}`,
+            descricao: n.ementa,
+            tipo: 'LEI',
+            numero: String(n.numero),
+            ano: n.ano,
+            data: n.data || n.dataPublicacao,
+            conteudo: n.texto || n.ementa,
+            arquivo: null,
+            publicada: true,
+            visualizacoes: 0,
+            categoria: null,
+            autor: { tipo: 'ORGAO', nome: 'Camara Municipal' }
+          })
+        }
       }
+
+      // Publicacoes tipo LEI (fonte complementar - sem duplicar)
+      if (pubRes?.ok) {
+        const pubData = await pubRes.json()
+        const pubs = pubData.dados || []
+        const normaIds = new Set(items.map(i => `${i.numero}-${i.ano}`))
+        for (const p of pubs) {
+          const key = `${p.numero}-${p.ano}`
+          if (!normaIds.has(key)) {
+            items.push(p)
+          }
+        }
+      }
+
+      setLeis(items)
     } catch (error) {
       console.error('Erro ao carregar leis:', error)
       toast.error('Erro ao carregar leis')
