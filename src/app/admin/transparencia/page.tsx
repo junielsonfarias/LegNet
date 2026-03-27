@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Plus, Search, Edit, Trash2, Eye, Upload, Save, X,
+  Plus, Edit, Trash2, Eye, Save, X,
   FileText, ExternalLink, Download, Loader2, CheckCircle,
   AlertCircle, Gavel, ScrollText, ClipboardList, BarChart3,
   BookOpen, File
@@ -16,6 +16,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminBreadcrumbs } from "@/components/admin/admin-breadcrumbs";
+import { PageHeader } from "@/components/admin/page-header";
+import { StatsGrid } from "@/components/admin/stats-grid";
+import { ListFilters } from "@/components/admin/list-filters";
+import { EmptyState } from "@/components/admin/empty-state";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -283,114 +287,48 @@ export default function TransparenciaAdminPage() {
     <div className="space-y-6">
       <AdminBreadcrumbs />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Publicacao de Documentos</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Publique portarias, decretos, leis e outros documentos para o Portal da Transparencia
-          </p>
-        </div>
-        <Button onClick={() => { resetForm(); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Documento
-        </Button>
-      </div>
+      <PageHeader
+        title="Publicacao de Documentos"
+        subtitle="Publique portarias, decretos, leis e outros documentos para o Portal da Transparencia"
+        icon={Eye}
+        onNewClick={() => { resetForm(); setDialogOpen(true); }}
+        newLabel="Novo Documento"
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <FileText className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-100 p-2 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.publicados}</p>
-                <p className="text-xs text-muted-foreground">Publicados</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-yellow-100 p-2 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.rascunhos}</p>
-                <p className="text-xs text-muted-foreground">Rascunhos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 px-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-purple-100 p-2 rounded-lg">
-                <Download className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.comArquivo}</p>
-                <p className="text-xs text-muted-foreground">Com Arquivo</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <StatsGrid items={[
+        { label: 'Total', value: stats.total, icon: FileText, color: 'blue' },
+        { label: 'Publicados', value: stats.publicados, icon: CheckCircle, color: 'green' },
+        { label: 'Rascunhos', value: stats.rascunhos, icon: AlertCircle, color: 'yellow' },
+        { label: 'Com Arquivo', value: stats.comArquivo, icon: Download, color: 'purple' },
+      ]} />
 
-      {/* Filtros */}
-      <Card>
-        <CardContent className="pt-4 pb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por titulo, numero ou descricao..."
-                className="pl-10"
-                value={filtroBusca}
-                onChange={e => setFiltroBusca(e.target.value)}
-              />
-            </div>
-            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                {TIPOS_DOCUMENTO.map(t => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={filtroAno} onValueChange={setFiltroAno}>
-              <SelectTrigger className="w-full sm:w-[130px]">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {anos.map(a => (
-                  <SelectItem key={a} value={String(a)}>{a}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <ListFilters
+        searchTerm={filtroBusca}
+        onSearchChange={setFiltroBusca}
+        searchPlaceholder="Buscar por titulo, numero ou descricao..."
+        onClear={() => { setFiltroBusca(""); setFiltroTipo("all"); setFiltroAno("all"); }}
+        filters={[
+          {
+            label: 'Tipo',
+            value: filtroTipo,
+            onChange: setFiltroTipo,
+            options: [
+              { value: 'all', label: 'Todos os tipos' },
+              ...TIPOS_DOCUMENTO.map(t => ({ value: t.value, label: t.label }))
+            ]
+          },
+          {
+            label: 'Ano',
+            value: filtroAno,
+            onChange: setFiltroAno,
+            width: 'w-full sm:w-[130px]',
+            options: [
+              { value: 'all', label: 'Todos' },
+              ...anos.map(a => ({ value: String(a), label: String(a) }))
+            ]
+          }
+        ]}
+      />
 
       {/* Lista de documentos */}
       <Card>
@@ -403,14 +341,11 @@ export default function TransparenciaAdminPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : publicacoes.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">Nenhum documento encontrado</p>
-              <Button className="mt-4" onClick={() => { resetForm(); setDialogOpen(true); }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Publicar primeiro documento
-              </Button>
-            </div>
+            <EmptyState
+              title="Nenhum documento encontrado"
+              onCreateClick={() => { resetForm(); setDialogOpen(true); }}
+              createLabel="Publicar primeiro documento"
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

@@ -1,9 +1,6 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search } from 'lucide-react'
+import { ListFilters, FilterSelect } from '@/components/admin/list-filters'
 import { TIPOS_PARECER, STATUS_PARECER } from '../types'
 
 interface Comissao {
@@ -32,69 +29,54 @@ export function PareceresFilters({
   onFiltersChange,
   comissoes
 }: PareceresFiltersProps) {
+  const filterSelects: FilterSelect[] = [
+    {
+      label: 'Comissao',
+      value: filters.comissaoId || 'all',
+      onChange: (value) => onFiltersChange({ ...filters, comissaoId: value === 'all' ? undefined : value }),
+      options: [
+        { value: 'all', label: 'Todas as Comissoes' },
+        ...comissoes.filter(c => c.ativa).map(c => ({
+          value: c.id,
+          label: c.sigla || c.nome,
+        })),
+      ],
+      placeholder: 'Filtrar por Comissao',
+    },
+    {
+      label: 'Status',
+      value: filters.status || 'all',
+      onChange: (value) => onFiltersChange({ ...filters, status: value === 'all' ? undefined : value }),
+      options: [
+        { value: 'all', label: 'Todos os Status' },
+        ...STATUS_PARECER.map(s => ({ value: s.value, label: s.label })),
+      ],
+      placeholder: 'Filtrar por Status',
+    },
+    {
+      label: 'Tipo',
+      value: filters.tipo || 'all',
+      onChange: (value) => onFiltersChange({ ...filters, tipo: value === 'all' ? undefined : value }),
+      options: [
+        { value: 'all', label: 'Todos os Tipos' },
+        ...TIPOS_PARECER.map(t => ({ value: t.value, label: t.label })),
+      ],
+      placeholder: 'Filtrar por Tipo',
+    },
+  ]
+
+  const handleClear = () => {
+    onSearchChange('')
+    onFiltersChange({})
+  }
+
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Buscar pareceres..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select
-            value={filters.comissaoId || 'all'}
-            onValueChange={(value) => onFiltersChange({ ...filters, comissaoId: value === 'all' ? undefined : value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por Comissao" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as Comissoes</SelectItem>
-              {comissoes.filter(c => c.ativa).map(comissao => (
-                <SelectItem key={comissao.id} value={comissao.id}>
-                  {comissao.sigla || comissao.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.status || 'all'}
-            onValueChange={(value) => onFiltersChange({ ...filters, status: value === 'all' ? undefined : value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Status</SelectItem>
-              {STATUS_PARECER.map(status => (
-                <SelectItem key={status.value} value={status.value}>
-                  {status.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.tipo || 'all'}
-            onValueChange={(value) => onFiltersChange({ ...filters, tipo: value === 'all' ? undefined : value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar por Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os Tipos</SelectItem>
-              {TIPOS_PARECER.map(tipo => (
-                <SelectItem key={tipo.value} value={tipo.value}>
-                  {tipo.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
+    <ListFilters
+      searchTerm={searchTerm}
+      onSearchChange={onSearchChange}
+      searchPlaceholder="Buscar pareceres..."
+      filters={filterSelects}
+      onClear={handleClear}
+    />
   )
 }

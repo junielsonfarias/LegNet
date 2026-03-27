@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { FileText, Plus } from 'lucide-react'
+import { FileText } from 'lucide-react'
+import { PageHeader } from '@/components/admin/page-header'
+import { EmptyState } from '@/components/admin/empty-state'
 import { usePareceres, Parecer, CreateParecerInput, UpdateParecerInput } from '@/lib/hooks/use-pareceres'
 import { useComissoes } from '@/lib/hooks/use-comissoes'
 import { calcularStats } from './types'
@@ -150,21 +150,13 @@ export default function PareceresAdminPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <FileText className="h-8 w-8 text-blue-600" />
-            Pareceres das Comissoes
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Gerencie os pareceres elaborados pelas comissoes sobre proposicoes
-          </p>
-        </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Parecer
-        </Button>
-      </div>
+      <PageHeader
+        title="Pareceres das Comissoes"
+        subtitle="Gerencie os pareceres elaborados pelas comissoes sobre proposicoes"
+        icon={FileText}
+        onNewClick={() => setShowForm(true)}
+        newLabel="Novo Parecer"
+      />
 
       {/* Estatisticas */}
       <PareceresStats stats={stats} />
@@ -205,25 +197,21 @@ export default function PareceresAdminPage() {
         ))}
 
         {filteredPareceres.length === 0 && !loading && (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Nenhum parecer encontrado
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {searchTerm || Object.keys(filters).length > 0
-                  ? 'Tente ajustar os filtros de busca.'
-                  : 'Comece criando o primeiro parecer.'}
-              </p>
-              {!searchTerm && Object.keys(filters).length === 0 && (
-                <Button onClick={() => setShowForm(true)} className="flex items-center gap-2 mx-auto">
-                  <Plus className="h-4 w-4" />
-                  Novo Parecer
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={FileText}
+            title="Nenhum parecer encontrado"
+            description={
+              searchTerm || Object.keys(filters).length > 0
+                ? 'Tente ajustar os filtros de busca.'
+                : 'Comece criando o primeiro parecer.'
+            }
+            onCreateClick={
+              !searchTerm && Object.keys(filters).length === 0
+                ? () => setShowForm(true)
+                : undefined
+            }
+            createLabel="Novo Parecer"
+          />
         )}
       </div>
 

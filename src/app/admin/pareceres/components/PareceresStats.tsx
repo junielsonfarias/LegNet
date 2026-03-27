@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
+import { StatsGrid, StatItem } from '@/components/admin/stats-grid'
 import type { ParecerStats } from '../types'
 
 interface PareceresStatsProps {
@@ -8,44 +8,14 @@ interface PareceresStatsProps {
 }
 
 export function PareceresStats({ stats }: PareceresStatsProps) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-          <p className="text-sm text-gray-600">Total</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-gray-600">{stats.rascunho}</div>
-          <p className="text-sm text-gray-600">Rascunho</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-cyan-600">{stats.aguardandoPauta}</div>
-          <p className="text-sm text-gray-600">Aguard. Pauta</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-yellow-600">{stats.aguardandoVotacao}</div>
-          <p className="text-sm text-gray-600">Aguardando Votacao</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-green-600">{stats.aprovados}</div>
-          <p className="text-sm text-gray-600">Aprovados</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-blue-600">{stats.emitidos}</div>
-          <p className="text-sm text-gray-600">Emitidos</p>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  const items: StatItem[] = [
+    { label: 'Total', value: stats.total, color: 'blue' },
+    { label: 'Rascunho', value: stats.rascunho, color: 'gray' },
+    { label: 'Aguard. Pauta', value: stats.aguardandoPauta, color: 'cyan' },
+    { label: 'Aguardando Votacao', value: stats.aguardandoVotacao, color: 'yellow' },
+    { label: 'Aprovados', value: stats.aprovados, color: 'green' },
+    { label: 'Emitidos', value: stats.emitidos, color: 'blue' },
+  ]
+
+  return <StatsGrid items={items} columns={6} />
 }

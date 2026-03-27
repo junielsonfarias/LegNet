@@ -2,17 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -23,9 +16,6 @@ import {
 } from '@/components/ui/table'
 import {
   BookOpen,
-  Plus,
-  Search,
-  Filter,
   RefreshCw,
   Eye,
   FileText,
@@ -36,6 +26,11 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
+import { StatsGrid, StatItem } from '@/components/admin/stats-grid'
+import { PageHeader } from '@/components/admin/page-header'
+import { ListFilters, FilterSelect } from '@/components/admin/list-filters'
+import { EmptyState } from '@/components/admin/empty-state'
+import { NORMA_TIPO, NORMA_SITUACAO, getStatusInfo, formatDateBR } from '@/lib/utils/legislative-labels'
 
 interface NormaJuridica {
   id: string
@@ -60,40 +55,15 @@ interface Estatisticas {
   porSituacao: Array<{ situacao: string; quantidade: number }>
 }
 
-const TIPO_LABELS: Record<string, string> = {
-  'LEI_ORDINARIA': 'Lei Ordinaria',
-  'LEI_COMPLEMENTAR': 'Lei Complementar',
-  'DECRETO_LEGISLATIVO': 'Decreto Legislativo',
-  'RESOLUCAO': 'Resolucao',
-  'EMENDA_LEI_ORGANICA': 'Emenda a Lei Organica',
-  'LEI_ORGANICA': 'Lei Organica',
-  'REGIMENTO_INTERNO': 'Regimento Interno'
-}
-
-const SITUACAO_LABELS: Record<string, string> = {
-  'VIGENTE': 'Vigente',
-  'REVOGADA': 'Revogada',
-  'REVOGADA_PARCIALMENTE': 'Revogada Parcialmente',
-  'COM_ALTERACOES': 'Com Alteracoes',
-  'SUSPENSA': 'Suspensa'
-}
-
-const SITUACAO_COLORS: Record<string, string> = {
-  'VIGENTE': 'bg-green-100 text-green-700',
-  'REVOGADA': 'bg-red-100 text-red-700',
-  'REVOGADA_PARCIALMENTE': 'bg-orange-100 text-orange-700',
-  'COM_ALTERACOES': 'bg-yellow-100 text-yellow-700',
-  'SUSPENSA': 'bg-gray-100 text-gray-700'
-}
-
 export default function NormasListPage() {
+  const router = useRouter()
   const [normas, setNormas] = useState<NormaJuridica[]>([])
   const [estatisticas, setEstatisticas] = useState<Estatisticas | null>(null)
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState<string>('todos')
-  const [filtroSituacao, setFiltroSituacao] = useState<string>('todos')
-  const [filtroAno, setFiltroAno] = useState<string>('todos')
+  const [filtroTipo, setFiltroTipo] = useState<string>('all')
+  const [filtroSituacao, setFiltroSituacao] = useState<string>('all')
+  const [filtroAno, setFiltroAno] = useState<string>('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -105,9 +75,9 @@ export default function NormasListPage() {
       params.set('limit', '20')
 
       if (busca) params.set('busca', busca)
-      if (filtroTipo && filtroTipo !== 'todos') params.set('tipo', filtroTipo)
-      if (filtroSituacao && filtroSituacao !== 'todos') params.set('situacao', filtroSituacao)
-      if (filtroAno && filtroAno !== 'todos') params.set('ano', filtroAno)
+      if (filtroTipo && filtroTipo !== 'all') params.set('tipo', filtroTipo)
+      if (filtroSituacao && filtroSituacao !== 'all') params.set('situacao', filtroSituacao)
+      if (filtroAno && filtroAno !== 'all') params.set('ano', filtroAno)
 
       const response = await fetch(`/api/normas?${params.toString()}`)
       const data = await response.json()
@@ -153,177 +123,132 @@ export default function NormasListPage() {
     anos.push(i)
   }
 
+  // Build filter options from centralized labels
+  const tipoOptions = [
+    { value: 'all', label: 'Todos' },
+    ...Object.entries(NORMA_TIPO)
+      .filter(([key]) => key !== 'LEI_ORGANICA' && key !== 'REGIMENTO_INTERNO')
+      .map(([value, label]) => ({ value, label })),
+  ]
+
+  const situacaoOptions = [
+    { value: 'all', label: 'Todas' },
+    ...Object.entries(NORMA_SITUACAO).map(([value, { label }]) => ({ value, label })),
+  ]
+
+  const anoOptions = [
+    { value: 'all', label: 'Todos' },
+    ...anos.map(ano => ({ value: ano.toString(), label: ano.toString() })),
+  ]
+
+  const filters: FilterSelect[] = [
+    {
+      label: 'Tipo',
+      value: filtroTipo,
+      onChange: setFiltroTipo,
+      options: tipoOptions,
+      placeholder: 'Tipo',
+      width: 'w-full sm:w-[200px]',
+    },
+    {
+      label: 'Situacao',
+      value: filtroSituacao,
+      onChange: setFiltroSituacao,
+      options: situacaoOptions,
+      placeholder: 'Situacao',
+      width: 'w-full sm:w-[180px]',
+    },
+    {
+      label: 'Ano',
+      value: filtroAno,
+      onChange: setFiltroAno,
+      options: anoOptions,
+      placeholder: 'Ano',
+      width: 'w-full sm:w-[120px]',
+    },
+  ]
+
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-            <Scale className="h-7 w-7 text-blue-600" />
-            Normas Juridicas
-          </h1>
-          <p className="mt-1 text-gray-600">
-            Gestao de leis, decretos e resolucoes
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={carregarNormas}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Atualizar
-          </Button>
-          <Button asChild>
-            <Link href="/admin/normas/nova">
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Norma
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Normas Juridicas"
+        subtitle="Gestao de leis, decretos e resolucoes"
+        icon={Scale}
+        onNewClick={() => router.push('/admin/normas/nova')}
+        newLabel="Nova Norma"
+      >
+        <Button variant="outline" onClick={carregarNormas}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Atualizar
+        </Button>
+      </PageHeader>
 
       <RedirectConfig slug="leis" label="Legislação" />
 
       {/* Cards de Estatisticas */}
       {estatisticas && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Total {estatisticas.ano}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
-                {estatisticas.total}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-600">
-                <CheckCircle className="h-4 w-4 text-green-500" /> Vigentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
-                {estatisticas.porSituacao.find(s => s.situacao === 'VIGENTE')?.quantidade || 0}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-600">
-                <AlertTriangle className="h-4 w-4 text-yellow-500" /> Com Alteracoes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-yellow-600">
-                {estatisticas.porSituacao.find(s => s.situacao === 'COM_ALTERACOES')?.quantidade || 0}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-600">
-                <XCircle className="h-4 w-4 text-red-500" /> Revogadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-600">
-                {estatisticas.porSituacao.find(s => s.situacao === 'REVOGADA')?.quantidade || 0}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <StatsGrid
+          items={[
+            {
+              label: `Total ${estatisticas.ano}`,
+              value: estatisticas.total,
+              color: 'blue',
+            },
+            {
+              label: 'Vigentes',
+              value: estatisticas.porSituacao.find(s => s.situacao === 'VIGENTE')?.quantidade || 0,
+              icon: CheckCircle,
+              color: 'green',
+            },
+            {
+              label: 'Com Alteracoes',
+              value: estatisticas.porSituacao.find(s => s.situacao === 'COM_ALTERACOES')?.quantidade || 0,
+              icon: AlertTriangle,
+              color: 'yellow',
+            },
+            {
+              label: 'Revogadas',
+              value: estatisticas.porSituacao.find(s => s.situacao === 'REVOGADA')?.quantidade || 0,
+              icon: XCircle,
+              color: 'red',
+            },
+          ] satisfies StatItem[]}
+        />
       )}
 
       {/* Filtros */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Buscar por ementa, numero ou assunto..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="LEI_ORDINARIA">Lei Ordinaria</SelectItem>
-                <SelectItem value="LEI_COMPLEMENTAR">Lei Complementar</SelectItem>
-                <SelectItem value="DECRETO_LEGISLATIVO">Decreto Legislativo</SelectItem>
-                <SelectItem value="RESOLUCAO">Resolucao</SelectItem>
-                <SelectItem value="EMENDA_LEI_ORGANICA">Emenda a Lei Organica</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Situacao" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todas</SelectItem>
-                <SelectItem value="VIGENTE">Vigente</SelectItem>
-                <SelectItem value="COM_ALTERACOES">Com Alteracoes</SelectItem>
-                <SelectItem value="REVOGADA">Revogada</SelectItem>
-                <SelectItem value="REVOGADA_PARCIALMENTE">Revogada Parcialmente</SelectItem>
-                <SelectItem value="SUSPENSA">Suspensa</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filtroAno} onValueChange={setFiltroAno}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                {anos.map(ano => (
-                  <SelectItem key={ano} value={ano.toString()}>{ano}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              onClick={() => {
-                setBusca('')
-                setFiltroTipo('todos')
-                setFiltroSituacao('todos')
-                setFiltroAno('todos')
-                setPage(1)
-              }}
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              Limpar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ListFilters
+        searchTerm={busca}
+        onSearchChange={setBusca}
+        searchPlaceholder="Buscar por ementa, numero ou assunto..."
+        filters={filters}
+        onClear={() => {
+          setBusca('')
+          setFiltroTipo('all')
+          setFiltroSituacao('all')
+          setFiltroAno('all')
+          setPage(1)
+        }}
+      />
 
       {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
+      {loading ? (
+        <Card>
+          <CardContent className="p-0">
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
             </div>
-          ) : normas.length === 0 ? (
-            <div className="py-12 text-center text-gray-500">
-              Nenhuma norma encontrada
-            </div>
-          ) : (
+          </CardContent>
+        </Card>
+      ) : normas.length === 0 ? (
+        <EmptyState
+          icon={Scale}
+          title="Nenhuma norma encontrada"
+          description="Nenhuma norma juridica corresponde aos filtros aplicados."
+        />
+      ) : (
+        <Card>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -338,65 +263,68 @@ export default function NormasListPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {normas.map((norma) => (
-                  <TableRow key={norma.id}>
-                    <TableCell>
-                      <div className="font-medium">
-                        {norma.numero}/{norma.ano}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {TIPO_LABELS[norma.tipo] || norma.tipo}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[300px] truncate">
-                      {norma.ementa}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={SITUACAO_COLORS[norma.situacao]}>
-                        {SITUACAO_LABELS[norma.situacao] || norma.situacao}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(norma.data).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <FileText className="h-4 w-4 text-gray-400" />
-                        {norma._count.artigos}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {norma._count.alteracoesRecebidas > 0 ? (
-                        <Badge variant="secondary">
-                          {norma._count.alteracoesRecebidas}
+                {normas.map((norma) => {
+                  const situacao = getStatusInfo(norma.situacao, NORMA_SITUACAO)
+                  return (
+                    <TableRow key={norma.id}>
+                      <TableCell>
+                        <div className="font-medium">
+                          {norma.numero}/{norma.ano}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {NORMA_TIPO[norma.tipo] || norma.tipo}
                         </Badge>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button asChild variant="ghost" size="icon">
-                          <Link href={`/admin/normas/${norma.id}`}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button asChild variant="ghost" size="icon">
-                          <Link href={`/legislativo/normas/${norma.id}`}>
-                            <BookOpen className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="max-w-[300px] truncate">
+                        {norma.ementa}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={situacao.color}>
+                          {situacao.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {formatDateBR(norma.data)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4 text-gray-400" />
+                          {norma._count.artigos}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {norma._count.alteracoesRecebidas > 0 ? (
+                          <Badge variant="secondary">
+                            {norma._count.alteracoesRecebidas}
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button asChild variant="ghost" size="icon">
+                            <Link href={`/admin/normas/${norma.id}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button asChild variant="ghost" size="icon">
+                            <Link href={`/legislativo/normas/${norma.id}`}>
+                              <BookOpen className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Paginacao */}
       {totalPages > 1 && (
