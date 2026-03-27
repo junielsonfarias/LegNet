@@ -32,8 +32,15 @@ export default function DiariasPage() {
   const [diarias, setDiarias] = useState<Diaria[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState(new Date().getFullYear().toString())
+  const [ano, setAno] = useState('2026')
   const [mes, setMes] = useState('todos')
+  const [currentYear, setCurrentYear] = useState(2026)
+
+  useEffect(() => {
+    const year = new Date().getFullYear()
+    setCurrentYear(year)
+    setAno(year.toString())
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -51,8 +58,6 @@ export default function DiariasPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [ano, mes])
-
-  const currentYear = new Date().getFullYear()
   const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
 
   return (

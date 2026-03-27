@@ -1,15 +1,20 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube, ExternalLink } from 'lucide-react'
 import { useConfiguracaoInstitucional, formatarEnderecoClient } from '@/lib/hooks/use-configuracao-institucional'
 
 export function Footer() {
   const { configuracao, legislatura, mesaDiretora } = useConfiguracaoInstitucional()
+  const [anoAtual, setAnoAtual] = useState(2026)
+
+  useEffect(() => {
+    setAnoAtual(new Date().getFullYear())
+  }, [])
 
   const nomeCasa = configuracao.nomeCasa
   const enderecoCompleto = formatarEnderecoClient(configuracao.endereco)
-  const anoAtual = new Date().getFullYear()
 
   // Formatar periodo da legislatura
   const periodoLegislatura = legislatura?.periodo || `${anoAtual}/${anoAtual + 3}`

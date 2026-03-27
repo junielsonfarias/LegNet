@@ -67,7 +67,7 @@ export function QuickMeetingDialog({
   // Dados do formulario
   const [formData, setFormData] = useState<MeetingDefaults>({
     numero: 1,
-    ano: new Date().getFullYear(),
+    ano: 2026,
     data: '',
     horaInicio: '14:00',
     local: 'Sala das Comissoes',

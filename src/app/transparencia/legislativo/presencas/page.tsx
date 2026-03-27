@@ -29,7 +29,14 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 export default function PresencasLegislativoPage() {
   const [presencas, setPresencas] = useState<Presenca[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState(new Date().getFullYear().toString())
+  const [ano, setAno] = useState('2026')
+  const [currentYear, setCurrentYear] = useState(2026)
+
+  useEffect(() => {
+    const year = new Date().getFullYear()
+    setCurrentYear(year)
+    setAno(year.toString())
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -42,8 +49,6 @@ export default function PresencasLegislativoPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [ano])
-
-  const currentYear = new Date().getFullYear()
   const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
 
   // Agrupar por sessao

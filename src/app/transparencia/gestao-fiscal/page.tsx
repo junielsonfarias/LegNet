@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,14 @@ import { TransparenciaPageWrapper } from '@/components/transparencia/transparenc
 
 export default function GestaoFiscalPage() {
   const { configuracao } = useConfiguracaoInstitucional()
+  const [dataAtualizacao, setDataAtualizacao] = useState('')
+  const [horaAtualizacao, setHoraAtualizacao] = useState('')
+
+  useEffect(() => {
+    setDataAtualizacao(new Date().toLocaleDateString('pt-BR'))
+    setHoraAtualizacao(new Date().toLocaleTimeString('pt-BR'))
+  }, [])
+
   const [filtros, setFiltros] = useState({
     tipo: '',
     ano: '',
@@ -359,7 +367,7 @@ export default function GestaoFiscalPage() {
               </Badge>
             </div>
             <p className="text-sm text-gray-600">
-              Informações atualizadas em: {new Date().toLocaleDateString('pt-BR')} - {new Date().toLocaleTimeString('pt-BR')}
+              Informações atualizadas em: {dataAtualizacao} - {horaAtualizacao}
             </p>
           </CardHeader>
           <CardContent>

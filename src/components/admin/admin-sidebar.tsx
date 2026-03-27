@@ -515,7 +515,7 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
 
   const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
   const cidade = configuracao.endereco.cidade || ''
-  const periodoLegislatura = legislatura?.periodo || `${new Date().getFullYear()}/${new Date().getFullYear() + 3}`
+  const periodoLegislatura = legislatura?.periodo || '2025/2028'
 
   // Auto-expandir categoria e menu ativo ao carregar ou mudar de rota
   useEffect(() => {

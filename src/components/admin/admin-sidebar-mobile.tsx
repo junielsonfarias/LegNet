@@ -67,7 +67,7 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
   const theme = getRoleTheme(userRole)
   const { configuracao, legislatura } = useConfiguracaoInstitucional()
   const cidade = configuracao.endereco.cidade || 'Sistema Legislativo'
-  const periodoLegislatura = legislatura?.periodo || `${new Date().getFullYear()}/${new Date().getFullYear() + 3}`
+  const periodoLegislatura = legislatura?.periodo || '2025/2028'
 
   // Fecha o menu ao mudar de rota
   useEffect(() => {

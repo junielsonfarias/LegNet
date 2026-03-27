@@ -53,12 +53,14 @@ export default function ParlamentarLayout({
   const [verificando, setVerificando] = useState(true)
   const [parlamentarInfo, setParlamentarInfo] = useState<ParlamentarInfo | null>(null)
   const [dataAtual, setDataAtual] = useState<string>('')
+  const [anoAtual, setAnoAtual] = useState(2026)
 
   const parlamentarId = (session?.user as any)?.parlamentarId
   const userRole = (session?.user as any)?.role
 
   // Atualizar data/hora
   useEffect(() => {
+    setAnoAtual(new Date().getFullYear())
     const atualizarData = () => {
       const agora = new Date()
       const opcoes: Intl.DateTimeFormatOptions = {
@@ -328,7 +330,7 @@ export default function ParlamentarLayout({
       <footer className="flex-shrink-0 bg-white border-t border-gray-200 px-3 py-2 sm:px-4 sm:py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-[10px] sm:text-xs text-gray-500">
           <span>Sistema Legislativo Municipal</span>
-          <span>{configuracao.sigla || 'CM'} - {new Date().getFullYear()}</span>
+          <span>{configuracao.sigla || 'CM'} - {anoAtual}</span>
         </div>
       </footer>
     </div>

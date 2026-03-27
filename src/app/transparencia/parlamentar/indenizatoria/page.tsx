@@ -34,9 +34,16 @@ export default function IndenizatoriaPage() {
   const [total, setTotal] = useState(0)
   const [parlamentares, setParlamentares] = useState<Parlamentar[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState(new Date().getFullYear().toString())
+  const [ano, setAno] = useState('2026')
   const [mes, setMes] = useState('todos')
   const [parlamentarId, setParlamentarId] = useState('todos')
+  const [currentYear, setCurrentYear] = useState(2026)
+
+  useEffect(() => {
+    const year = new Date().getFullYear()
+    setCurrentYear(year)
+    setAno(year.toString())
+  }, [])
 
   useEffect(() => {
     fetch('/api/dados-abertos/parlamentares')
@@ -66,7 +73,6 @@ export default function IndenizatoriaPage() {
       .finally(() => setLoading(false))
   }, [ano, mes, parlamentarId])
 
-  const currentYear = new Date().getFullYear()
   const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
 
   return (

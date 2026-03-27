@@ -38,8 +38,15 @@ const votoConfig: Record<string, { label: string; className: string }> = {
 export default function VotacoesNominaisPage() {
   const [votacoes, setVotacoes] = useState<Votacao[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState(new Date().getFullYear().toString())
+  const [ano, setAno] = useState('2026')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [currentYear, setCurrentYear] = useState(2026)
+
+  useEffect(() => {
+    const year = new Date().getFullYear()
+    setCurrentYear(year)
+    setAno(year.toString())
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -52,8 +59,6 @@ export default function VotacoesNominaisPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [ano])
-
-  const currentYear = new Date().getFullYear()
   const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
 
   return (

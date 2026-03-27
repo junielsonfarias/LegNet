@@ -20,7 +20,14 @@ interface Sessao {
 export default function AtasPage() {
   const [sessoes, setSessoes] = useState<Sessao[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState(new Date().getFullYear().toString())
+  const [ano, setAno] = useState('2026')
+  const [currentYear, setCurrentYear] = useState(2026)
+
+  useEffect(() => {
+    const year = new Date().getFullYear()
+    setCurrentYear(year)
+    setAno(year.toString())
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -33,8 +40,6 @@ export default function AtasPage() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [ano])
-
-  const currentYear = new Date().getFullYear()
   const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
 
   return (
