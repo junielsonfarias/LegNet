@@ -271,6 +271,7 @@ export const dadosAbertosService = {
       email: p.email,
       telefone: p.telefone,
       biografia: p.biografia,
+      foto: p.foto,
       foto_url: p.foto,
       legislatura: p.mandatos[0]?.legislatura ? {
         numero: p.mandatos[0].legislatura.numero,

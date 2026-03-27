@@ -14,6 +14,7 @@ import { SkipLinks, NavigationRegion, useAnnounce } from '@/components/ui/skip-l
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const [activeMobileSection, setActiveMobileSection] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { configuracao } = useConfiguracaoInstitucional()
@@ -63,7 +64,7 @@ export function Header() {
     }
   }, [])
 
-  // Fechar dropdown com ESC
+  // Fechar dropdown com ESC ou clique fora
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape' && activeDropdown) {
       setActiveDropdown(null)
@@ -71,12 +72,23 @@ export function Header() {
     }
   }, [activeDropdown, announce])
 
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (!target.closest('[role="menubar"]')) {
+      setActiveDropdown(null)
+    }
+  }, [])
+
   useEffect(() => {
     if (activeDropdown) {
       document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
+      document.addEventListener('click', handleClickOutside)
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+        document.removeEventListener('click', handleClickOutside)
+      }
     }
-  }, [activeDropdown, handleKeyDown])
+  }, [activeDropdown, handleKeyDown, handleClickOutside])
 
   const menuItems: {
     title: string
@@ -380,45 +392,60 @@ export function Header() {
                   </Link>
 
                   {menuItems.map((section, sectionIndex) => (
-                    <div key={section.title} className="animate-in slide-in-from-right duration-300" style={{ animationDelay: `${sectionIndex * 100}ms` }}>
+                    <div key={section.title} className="animate-in slide-in-from-right duration-300" style={{ animationDelay: `${sectionIndex * 50}ms` }}>
                       {section.items.length === 0 && section.href ? (
                         <Link
                           href={section.href}
-                          className="flex items-center gap-2 mb-3 py-2 px-2 hover:bg-gray-50 rounded transition-all"
+                          className="flex items-center gap-2 py-3 px-2 hover:bg-gray-50 rounded-lg transition-all"
                           onClick={() => setIsOpen(false)}
                         >
-                          <section.icon className="h-4 w-4 text-camara-primary transition-transform duration-200 hover:scale-110" />
-                          <h3 className="font-semibold text-camara-primary">
+                          <section.icon className="h-4 w-4 text-camara-primary" />
+                          <span className="font-semibold text-camara-primary">
                             {section.title}
-                          </h3>
+                          </span>
                         </Link>
                       ) : (
                         <>
-                          <div className="flex items-center gap-2 mb-3">
-                            <section.icon className="h-4 w-4 text-camara-primary transition-transform duration-200 hover:scale-110" />
-                            <h3 className="font-semibold text-camara-primary">
-                              {section.title}
-                            </h3>
-                          </div>
-                          <div className="space-y-1 ml-6">
-                            {section.items.map((item, itemIndex) => (
-                              <Link
-                                key={item.name}
-                                href={item.href}
-                                className="block py-2 text-sm text-gray-600 hover:text-camara-primary hover:bg-gray-50 rounded px-2 transition-all duration-200 ease-in-out hover:pl-4 animate-in slide-in-from-right"
-                                style={{ animationDelay: `${(sectionIndex * 100) + (itemIndex * 50)}ms` }}
-                                onClick={() => setIsOpen(false)}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span>{item.name}</span>
-                                  {item.badge && (
-                                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                      {item.badge}
-                                    </span>
-                                  )}
-                                </div>
-                              </Link>
-                            ))}
+                          <button
+                            className="flex items-center justify-between w-full py-3 px-2 hover:bg-gray-50 rounded-lg transition-all"
+                            onClick={() => setActiveMobileSection(activeMobileSection === section.title ? null : section.title)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <section.icon className="h-4 w-4 text-camara-primary" />
+                              <span className="font-semibold text-camara-primary">
+                                {section.title}
+                              </span>
+                            </div>
+                            <ChevronDown
+                              className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                                activeMobileSection === section.title ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </button>
+                          <div
+                            className={`overflow-hidden transition-all duration-200 ease-in-out ${
+                              activeMobileSection === section.title ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                            }`}
+                          >
+                            <div className="space-y-0.5 ml-6 pb-2">
+                              {section.items.map((item) => (
+                                <Link
+                                  key={item.name}
+                                  href={item.href}
+                                  className="block py-2.5 text-sm text-gray-600 hover:text-camara-primary hover:bg-gray-50 rounded px-2 transition-colors"
+                                  onClick={() => setIsOpen(false)}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span>{item.name}</span>
+                                    {item.badge && (
+                                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">
+                                        {item.badge}
+                                      </span>
+                                    )}
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
                           </div>
                         </>
                       )}
@@ -486,11 +513,16 @@ export function Header() {
                       {/* Dropdown com ARIA */}
                       <div
                         id={`dropdown-${section.title.toLowerCase().replace(/\s/g, '-')}`}
-                        className={`absolute top-full left-1/2 transform -translate-x-1/2 mt-1 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 transition-all duration-200 ease-in-out ${
+                        className={`absolute top-full mt-1 w-72 lg:w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 transition-all duration-200 ease-in-out ${
                           activeDropdown === section.title
                             ? 'opacity-100 visible translate-y-0'
                             : 'opacity-0 invisible -translate-y-2'
                         }`}
+                        style={{
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          maxWidth: 'calc(100vw - 2rem)',
+                        }}
                         role="menu"
                         aria-label={`Submenu de ${section.title}`}
                         aria-hidden={activeDropdown !== section.title}
