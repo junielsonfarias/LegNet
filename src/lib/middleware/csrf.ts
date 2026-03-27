@@ -34,12 +34,18 @@ const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 function getAllowedOrigins(): string[] {
   const origins: string[] = []
 
-  // URL base da aplicação
+  // URL base da aplicação (NEXTAUTH_URL) - aceitar HTTP e HTTPS
   const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL
   if (appUrl) {
     try {
       const url = new URL(appUrl)
       origins.push(url.origin)
+      // Aceitar tanto HTTP quanto HTTPS para o mesmo host (VPS sem/com SSL)
+      if (url.protocol === 'https:') {
+        origins.push(`http://${url.host}`)
+      } else {
+        origins.push(`https://${url.host}`)
+      }
     } catch {
       // URL inválida, ignorar
     }
@@ -60,9 +66,16 @@ function getAllowedOrigins(): string[] {
     origins.push(`https://${process.env.VERCEL_URL}`)
   }
 
-  // Domínio de produção
+  // Domínio de produção (aceitar HTTP e HTTPS)
   if (process.env.NEXT_PUBLIC_DOMAIN) {
     origins.push(`https://${process.env.NEXT_PUBLIC_DOMAIN}`)
+    origins.push(`http://${process.env.NEXT_PUBLIC_DOMAIN}`)
+  }
+
+  // IP do servidor (VPS acessada por IP sem domínio)
+  if (process.env.SERVER_IP) {
+    origins.push(`http://${process.env.SERVER_IP}`)
+    origins.push(`https://${process.env.SERVER_IP}`)
   }
 
   return origins
