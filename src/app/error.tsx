@@ -10,10 +10,6 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    try {
-      const Sentry = require('@sentry/nextjs')
-      Sentry.captureException(error)
-    } catch {}
     console.error('Erro na aplicação:', error)
   }, [error])
 

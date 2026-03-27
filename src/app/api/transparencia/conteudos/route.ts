@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
     const isAdmin = !!session
 
     // Montar filtros
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {}
 
     if (!isAdmin) {

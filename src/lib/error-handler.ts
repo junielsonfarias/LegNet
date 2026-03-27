@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 import { logAuditError } from '@/lib/audit'
-
-// Sentry opcional - carrega dinamicamente
-let Sentry: any = null
-try {
-  Sentry = require('@sentry/nextjs')
-} catch {}
 import { authOptions } from '@/lib/auth'
 
 export interface ApiError {
@@ -210,10 +204,6 @@ export function createErrorResponse(
   const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
   const errorStack = error instanceof Error ? error.stack : undefined
 
-  Sentry?.captureException(error, {
-    extra: { path, errorMessage },
-  })
-
   console.error('Erro não tratado:', {
     message: errorMessage,
     stack: errorStack,
@@ -292,19 +282,6 @@ export function withErrorHandler<T extends any[]>(
             console.error('Erro ao obter sessão para auditoria de falha:', sessionError)
           }
         }
-
-        // Enviar para Sentry com contexto (se disponível)
-        Sentry?.withScope((scope: any) => {
-          scope.setExtra('path', path)
-          scope.setExtra('method', request?.method)
-          if (session?.user) {
-            scope.setUser({
-              id: session.user.id,
-              email: session.user.email,
-            })
-          }
-          Sentry.captureException(error)
-        })
 
         try {
           await logAuditError({

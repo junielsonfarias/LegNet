@@ -2,11 +2,6 @@
 
 import React, { Component, ReactNode } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
-
-let Sentry: any = null
-try {
-  Sentry = require('@sentry/nextjs')
-} catch {}
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -62,11 +57,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo })
     this.props.onError?.(error, errorInfo)
-
-    // Enviar para Sentry (se disponível)
-    Sentry?.captureException(error, {
-      contexts: { react: { componentStack: errorInfo.componentStack } },
-    })
 
     // Log para monitoramento
     console.error('ErrorBoundary caught an error:', {

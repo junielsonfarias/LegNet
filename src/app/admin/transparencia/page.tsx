@@ -145,7 +145,6 @@ export default function AdminTransparenciaPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<TransparenciaItem | null>(null);
   const [formData, setFormData] = useState<Partial<TransparenciaItem>>({});
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [estatisticas, setEstatisticas] = useState<any>(null);
 
   const carregarItems = useCallback(async () => {

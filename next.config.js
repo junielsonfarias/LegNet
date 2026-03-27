@@ -1,16 +1,5 @@
-let withSentryConfig;
-try {
-  withSentryConfig = require("@sentry/nextjs").withSentryConfig;
-} catch {
-  // Sentry não instalado - usar wrapper passthrough
-  withSentryConfig = (config) => config;
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Output standalone para Vercel e Docker
-  output: 'standalone',
-
   // Configurações de performance
   experimental: {
     optimizePackageImports: [
@@ -174,25 +163,4 @@ const nextConfig = {
   poweredByHeader: false,
 };
 
-module.exports = withSentryConfig(nextConfig, {
-  // Sentry config
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-
-  // Silenciar logs do Sentry no build (exceto em CI)
-  silent: !process.env.CI,
-
-  // Upload source maps mas não servir publicamente
-  widenClientFileUpload: true,
-  hideSourceMaps: true,
-
-  // Tunnel para evitar ad blockers
-  tunnelRoute: "/monitoring",
-
-  // Treeshake para remover debug logging (substitui disableLogger depreciado)
-  webpack: {
-    treeshake: {
-      removeDebugLogging: true,
-    },
-  },
-});
+module.exports = nextConfig;
