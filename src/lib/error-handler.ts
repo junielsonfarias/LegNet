@@ -200,7 +200,7 @@ export function createErrorResponse(
     )
   }
 
-  // Erro genérico (5xx) - enviar para Sentry
+  // Erro genérico (5xx)
   const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
   const errorStack = error instanceof Error ? error.stack : undefined
 

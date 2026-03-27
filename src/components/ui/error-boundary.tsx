@@ -145,12 +145,6 @@ export class SSEErrorBoundary extends Component<
     this.setState({ errorInfo })
     this.props.onError?.(error, errorInfo)
 
-    // Enviar para Sentry (se disponível)
-    Sentry?.captureException(error, {
-      contexts: { react: { componentStack: errorInfo.componentStack } },
-      tags: { boundary: 'sse' },
-    })
-
     console.error('SSEErrorBoundary caught an error:', {
       error: error.message,
       stack: error.stack,
