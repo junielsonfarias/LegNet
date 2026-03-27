@@ -22,9 +22,6 @@ export default function MesaDiretoraTransparenciaPage() {
   // Mesa Diretora - filtrar parlamentares que não são vereadores
   const mesaDiretora = parlamentares.filter(p => p.cargo !== 'VEREADOR');
 
-  // Obter composição das mesas por período (simplificado)
-  const composicoesMesa = mesaEnriquecida;
-
   // Obter todos os vereadores
   const vereadoresLegislatura = useMemo(() => {
     return parlamentares.filter(p => p.cargo === 'VEREADOR');
