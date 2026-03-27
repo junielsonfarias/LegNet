@@ -277,7 +277,7 @@ export default function TransparenciaAdminPage() {
     comArquivo: publicacoes.filter(p => p.arquivo || (p as any).url).length,
   };
 
-  const anos = [...new Set(publicacoes.map(p => p.ano))].sort((a, b) => b - a);
+  const anos = Array.from(new Set(publicacoes.map(p => p.ano))).sort((a, b) => b - a);
 
   return (
     <div className="space-y-6">
