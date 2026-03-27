@@ -1,13 +1,18 @@
-import * as Sentry from "@sentry/nextjs"
+let Sentry: any = null
+try {
+  Sentry = require("@sentry/nextjs")
+} catch {}
 
 export async function register() {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    await import("../sentry.server.config")
-  }
+  if (Sentry) {
+    if (process.env.NEXT_RUNTIME === "nodejs") {
+      await import("../sentry.server.config").catch(() => {})
+    }
 
-  if (process.env.NEXT_RUNTIME === "edge") {
-    await import("../sentry.edge.config")
+    if (process.env.NEXT_RUNTIME === "edge") {
+      await import("../sentry.edge.config").catch(() => {})
+    }
   }
 }
 
-export const onRequestError = Sentry.captureRequestError
+export const onRequestError = Sentry?.captureRequestError ?? (() => {})

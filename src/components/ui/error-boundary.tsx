@@ -1,8 +1,12 @@
 'use client'
 
 import React, { Component, ReactNode } from 'react'
-import * as Sentry from '@sentry/nextjs'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+
+let Sentry: any = null
+try {
+  Sentry = require('@sentry/nextjs')
+} catch {}
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -59,8 +63,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.setState({ errorInfo })
     this.props.onError?.(error, errorInfo)
 
-    // Enviar para Sentry
-    Sentry.captureException(error, {
+    // Enviar para Sentry (se disponível)
+    Sentry?.captureException(error, {
       contexts: { react: { componentStack: errorInfo.componentStack } },
     })
 
@@ -151,8 +155,8 @@ export class SSEErrorBoundary extends Component<
     this.setState({ errorInfo })
     this.props.onError?.(error, errorInfo)
 
-    // Enviar para Sentry
-    Sentry.captureException(error, {
+    // Enviar para Sentry (se disponível)
+    Sentry?.captureException(error, {
       contexts: { react: { componentStack: errorInfo.componentStack } },
       tags: { boundary: 'sse' },
     })

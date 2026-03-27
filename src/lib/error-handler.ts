@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ZodError } from 'zod'
-import * as Sentry from '@sentry/nextjs'
 import { logAuditError } from '@/lib/audit'
+
+// Sentry opcional - carrega dinamicamente
+let Sentry: any = null
+try {
+  Sentry = require('@sentry/nextjs')
+} catch {}
 import { authOptions } from '@/lib/auth'
 
 export interface ApiError {
@@ -205,7 +210,7 @@ export function createErrorResponse(
   const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
   const errorStack = error instanceof Error ? error.stack : undefined
 
-  Sentry.captureException(error, {
+  Sentry?.captureException(error, {
     extra: { path, errorMessage },
   })
 
@@ -288,8 +293,8 @@ export function withErrorHandler<T extends any[]>(
           }
         }
 
-        // Enviar para Sentry com contexto
-        Sentry.withScope((scope) => {
+        // Enviar para Sentry com contexto (se disponível)
+        Sentry?.withScope((scope: any) => {
           scope.setExtra('path', path)
           scope.setExtra('method', request?.method)
           if (session?.user) {
