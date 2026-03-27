@@ -24,23 +24,31 @@ import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-insti
 function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
   const [count, setCount] = useState(0)
   const ref = useRef<HTMLSpanElement>(null)
-  const animated = useRef(false)
+  const prevValue = useRef(0)
 
   useEffect(() => {
-    if (!ref.current || animated.current) return
+    // Se o valor não mudou ou é 0, não animar
+    if (value === prevValue.current || !ref.current) return
+    prevValue.current = value
+
+    // Se já está visível, animar imediatamente
+    const doAnimate = () => {
+      const duration = 1800
+      const startTime = performance.now()
+      const animate = (now: number) => {
+        const progress = Math.min((now - startTime) / duration, 1)
+        const eased = 1 - Math.pow(1 - progress, 3)
+        setCount(Math.floor(eased * value))
+        if (progress < 1) requestAnimationFrame(animate)
+      }
+      requestAnimationFrame(animate)
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !animated.current) {
-          animated.current = true
-          const duration = 1800
-          const startTime = performance.now()
-          const animate = (now: number) => {
-            const progress = Math.min((now - startTime) / duration, 1)
-            const eased = 1 - Math.pow(1 - progress, 3)
-            setCount(Math.floor(eased * value))
-            if (progress < 1) requestAnimationFrame(animate)
-          }
-          requestAnimationFrame(animate)
+        if (entry.isIntersecting) {
+          doAnimate()
+          observer.disconnect()
         }
       },
       { threshold: 0.3 }
