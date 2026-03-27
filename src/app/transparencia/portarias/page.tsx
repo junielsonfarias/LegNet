@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, User, Loader2, RefreshCw, X, AlertCircle, ArrowLeft } from 'lucide-react'
+import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, User, Loader2, RefreshCw, X, AlertCircle, ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { toast } from 'sonner'
@@ -305,14 +305,21 @@ export default function PortariasPage() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-2">Ações</h3>
                         <div className="space-y-2">
-                          {portaria.arquivo && (
+                          {portaria.arquivo ? (
                             <Button asChild variant="outline" size="sm" className="w-full">
                               <a href={portaria.arquivo} target="_blank" rel="noopener noreferrer">
                                 <Download className="h-4 w-4 mr-2" />
                                 Download PDF
                               </a>
                             </Button>
-                          )}
+                          ) : (portaria as any).url ? (
+                            <Button asChild variant="outline" size="sm" className="w-full">
+                              <a href={(portaria as any).url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Abrir Documento
+                              </a>
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     </div>

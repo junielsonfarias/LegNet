@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, RefreshCw, X, AlertCircle, ArrowLeft } from 'lucide-react'
+import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, RefreshCw, X, AlertCircle, ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
@@ -336,14 +336,14 @@ export default function DecretosPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             {expandedId === decreto.id ? 'Ocultar Conteúdo' : 'Visualizar Conteúdo'}
                           </Button>
-                          {decreto.arquivo && (
+                          {decreto.arquivo ? (
                             <>
                               {isPdf(decreto.arquivo) && (
                                 <Button
                                   variant="default"
                                   size="sm"
                                   className="w-full"
-                                  onClick={() => abrirPdf(decreto.arquivo!, `Decreto nº ${decreto.numero}/${decreto.ano}`)}
+                                  onClick={() => abrirPdf(decreto.arquivo!, `Decreto no ${decreto.numero}/${decreto.ano}`)}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
                                   Visualizar PDF
@@ -356,7 +356,14 @@ export default function DecretosPage() {
                                 </a>
                               </Button>
                             </>
-                          )}
+                          ) : (decreto as any).url ? (
+                            <Button asChild variant="outline" size="sm" className="w-full">
+                              <a href={(decreto as any).url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Abrir Documento
+                              </a>
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     </div>

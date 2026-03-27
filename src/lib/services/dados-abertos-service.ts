@@ -590,6 +590,7 @@ export const dadosAbertosService = {
       descricao: p.descricao,
       data: p.data.toISOString().split('T')[0],
       arquivo_url: p.arquivo,
+      url: (p as any).url || null,
       autor: p.autorParlamentar ? {
         id: p.autorParlamentar.id,
         nome: p.autorParlamentar.nome

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, RefreshCw, X, AlertCircle, ArrowLeft } from 'lucide-react'
+import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, Loader2, RefreshCw, X, AlertCircle, ArrowLeft, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
@@ -336,14 +336,14 @@ export default function LeisPage() {
                             <Eye className="h-4 w-4 mr-2" />
                             {expandedId === lei.id ? 'Ocultar Conteúdo' : 'Visualizar Conteúdo'}
                           </Button>
-                          {lei.arquivo && (
+                          {lei.arquivo ? (
                             <>
                               {isPdf(lei.arquivo) && (
                                 <Button
                                   variant="default"
                                   size="sm"
                                   className="w-full"
-                                  onClick={() => abrirPdf(lei.arquivo!, `Lei nº ${lei.numero}/${lei.ano}`)}
+                                  onClick={() => abrirPdf(lei.arquivo!, `Lei no ${lei.numero}/${lei.ano}`)}
                                 >
                                   <Eye className="h-4 w-4 mr-2" />
                                   Visualizar PDF
@@ -356,7 +356,14 @@ export default function LeisPage() {
                                 </a>
                               </Button>
                             </>
-                          )}
+                          ) : (lei as any).url ? (
+                            <Button asChild variant="outline" size="sm" className="w-full">
+                              <a href={(lei as any).url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Abrir Documento
+                              </a>
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     </div>

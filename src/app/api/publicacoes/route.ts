@@ -80,6 +80,7 @@ export const POST = withAuth(async (request: NextRequest) => {
       data: body.data ?? body.dataPublicacao ?? undefined,
       conteudo,
       arquivo: body.arquivo ?? body.arquivoUrl ?? null,
+      url: body.url ?? null,
       tamanho: body.tamanho ?? null,
       publicada: typeof publicada === 'boolean' ? publicada : body.status === 'publicado',
       categoriaId: categoriaId ?? null,

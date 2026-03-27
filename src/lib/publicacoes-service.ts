@@ -12,6 +12,7 @@ export interface Publicacao {
   data: string
   conteudo: string
   arquivo: string | null
+  url: string | null
   tamanho: string | null
   publicada: boolean
   visualizacoes: number
@@ -39,6 +40,7 @@ export interface PublicacaoPayload {
   data?: string | Date
   conteudo: string
   arquivo?: string | null
+  url?: string | null
   tamanho?: string | null
   publicada?: boolean
   categoriaId?: string | null
@@ -80,6 +82,7 @@ const mapPublicacao = (publicacao: any): Publicacao => ({
   data: new Date(publicacao.data).toISOString(),
   conteudo: publicacao.conteudo,
   arquivo: publicacao.arquivo ?? null,
+  url: publicacao.url ?? null,
   tamanho: publicacao.tamanho ?? null,
   publicada: Boolean(publicacao.publicada),
   visualizacoes: publicacao.visualizacoes ?? 0,
@@ -210,6 +213,7 @@ export const publicacoesService = {
         data,
         conteudo: payload.conteudo,
         arquivo: payload.arquivo?.trim() || null,
+        url: payload.url?.trim() || null,
         tamanho: payload.tamanho?.trim() || null,
         publicada: payload.publicada ?? false,
         categoriaId: payload.categoriaId || null,
@@ -237,6 +241,7 @@ export const publicacoesService = {
     if (payload.data !== undefined) data.data = new Date(payload.data)
     if (payload.conteudo !== undefined) data.conteudo = payload.conteudo
     if (payload.arquivo !== undefined) data.arquivo = payload.arquivo?.trim() || null
+    if (payload.url !== undefined) data.url = payload.url?.trim() || null
     if (payload.tamanho !== undefined) data.tamanho = payload.tamanho?.trim() || null
     if (payload.publicada !== undefined) data.publicada = payload.publicada
     if (payload.categoriaId !== undefined) data.categoriaId = payload.categoriaId || null

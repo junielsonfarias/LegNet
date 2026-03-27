@@ -1204,6 +1204,7 @@ model Publicacao {
   data          DateTime
   conteudo      String              @db.Text
   arquivo       String?
+  url           String?             // Link externo (Google Drive, etc.)
   tamanho       String?
   publicada     Boolean             @default(false)
   visualizacoes Int                 @default(0)
