@@ -115,6 +115,7 @@ export default function PainelEletronicoOperadorPage() {
               <VotacaoAcompanhamento
                 sessaoId={sessao.id}
                 itemEmVotacao={currentItem}
+                onEncerrarVotacao={(resultado) => executarAcaoItem(currentItem.id, 'finalizar', resultado)}
               />
             )}
 

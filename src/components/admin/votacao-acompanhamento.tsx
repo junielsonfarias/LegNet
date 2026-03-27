@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
 import {
   Vote,
   CheckCircle,
@@ -12,7 +13,8 @@ import {
   Clock,
   Loader2,
   Users,
-  AlertCircle
+  AlertCircle,
+  Square
 } from 'lucide-react'
 import { VereadorVotoCard } from '@/components/painel/vereador-voto-card'
 
@@ -59,9 +61,10 @@ interface Presenca {
 interface VotacaoAcompanhamentoProps {
   sessaoId: string
   itemEmVotacao?: PautaItem | null
+  onEncerrarVotacao?: (resultado: 'APROVADO' | 'REJEITADO') => void
 }
 
-export function VotacaoAcompanhamento({ sessaoId, itemEmVotacao }: VotacaoAcompanhamentoProps) {
+export function VotacaoAcompanhamento({ sessaoId, itemEmVotacao, onEncerrarVotacao }: VotacaoAcompanhamentoProps) {
   const [votos, setVotos] = useState<Voto[]>([])
   const [presentes, setPresentes] = useState<Presenca[]>([])
   const [loading, setLoading] = useState(true)
@@ -257,39 +260,63 @@ export function VotacaoAcompanhamento({ sessaoId, itemEmVotacao }: VotacaoAcompa
           </div>
         )}
 
-        {/* Indicador de resultado parcial */}
+        {/* Resultado parcial + Botões de encerramento */}
         {totalVotos > 0 && (
-          <div className={`p-4 rounded-lg border ${
-            votosSim > votosNao
-              ? 'bg-green-50 border-green-200'
-              : votosSim < votosNao
-                ? 'bg-red-50 border-red-200'
-                : 'bg-yellow-50 border-yellow-200'
-          }`}>
-            <div className="flex items-center justify-center gap-2">
-              {votosSim > votosNao ? (
-                <>
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="font-semibold text-green-700">
-                    Tendência: APROVAÇÃO ({votosSim} x {votosNao})
-                  </span>
-                </>
-              ) : votosSim < votosNao ? (
-                <>
-                  <XCircle className="h-5 w-5 text-red-600" />
-                  <span className="font-semibold text-red-700">
-                    Tendência: REJEIÇÃO ({votosNao} x {votosSim})
-                  </span>
-                </>
-              ) : (
-                <>
-                  <MinusCircle className="h-5 w-5 text-yellow-600" />
-                  <span className="font-semibold text-yellow-700">
-                    Empate ({votosSim} x {votosNao})
-                  </span>
-                </>
-              )}
+          <div className="space-y-4">
+            <div className={`p-4 rounded-lg border ${
+              votosSim > votosNao
+                ? 'bg-green-50 border-green-200'
+                : votosSim < votosNao
+                  ? 'bg-red-50 border-red-200'
+                  : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <div className="flex items-center justify-center gap-2">
+                {votosSim > votosNao ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="font-semibold text-green-700">
+                      Tendencia: APROVACAO ({votosSim} x {votosNao})
+                    </span>
+                  </>
+                ) : votosSim < votosNao ? (
+                  <>
+                    <XCircle className="h-5 w-5 text-red-600" />
+                    <span className="font-semibold text-red-700">
+                      Tendencia: REJEICAO ({votosNao} x {votosSim})
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <MinusCircle className="h-5 w-5 text-yellow-600" />
+                    <span className="font-semibold text-yellow-700">
+                      Empate ({votosSim} x {votosNao})
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
+
+            {/* Botões de Encerrar Votação */}
+            {onEncerrarVotacao && (
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button
+                  onClick={() => onEncerrarVotacao('APROVADO')}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
+                  size="lg"
+                >
+                  <CheckCircle className="mr-2 h-5 w-5" />
+                  Encerrar - APROVADO
+                </Button>
+                <Button
+                  onClick={() => onEncerrarVotacao('REJEITADO')}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3"
+                  size="lg"
+                >
+                  <XCircle className="mr-2 h-5 w-5" />
+                  Encerrar - REJEITADO
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
