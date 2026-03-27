@@ -122,7 +122,7 @@ export default function ReunioesComissaoPage() {
       const resReunioes = await fetch(`/api/reunioes-comissao?${params}`)
       const dataReunioes = await resReunioes.json()
       if (dataReunioes.success) {
-        setReunioes(dataReunioes.data || [])
+        setReunioes(dataReunioes.data?.reunioes || dataReunioes.data || [])
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
