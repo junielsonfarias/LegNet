@@ -997,14 +997,70 @@ export async function finalizarItemPauta(
     }
   })
 
-  // Se teve votação com proposição, atualizar a proposição com o resultado
+  // Se teve votação com proposição, atualizar a proposição e criar registro consolidado
   if (eraVotacao && temProposicao && contagemVotos && (resultado === 'APROVADO' || resultado === 'REJEITADO')) {
     await atualizarResultadoProposicao(
       item.proposicaoId!,
       contagemVotos.resultado,
       resultado,
-      sessaoId  // Registra a sessão onde a proposição foi votada
+      sessaoId
     )
+
+    // Criar/atualizar VotacaoAgrupada (registro consolidado para auditoria)
+    try {
+      const totalPresentes = await prisma.presencaSessao.count({
+        where: { sessaoId, presente: true }
+      })
+      const totalMembros = await prisma.parlamentar.count({ where: { ativo: true } })
+      const turno = item.turnoAtual || 1
+
+      await prisma.votacaoAgrupada.upsert({
+        where: {
+          proposicaoId_sessaoId_turno: {
+            proposicaoId: item.proposicaoId!,
+            sessaoId,
+            turno
+          }
+        },
+        create: {
+          proposicaoId: item.proposicaoId!,
+          sessaoId,
+          turno,
+          votosSim: contagemVotos.sim,
+          votosNao: contagemVotos.nao,
+          votosAbstencao: contagemVotos.abstencao,
+          totalMembros,
+          totalPresentes,
+          quorumNecessario: Math.floor(totalPresentes / 2) + 1,
+          resultado: contagemVotos.resultado as any,
+          finalizadaEm: new Date()
+        },
+        update: {
+          votosSim: contagemVotos.sim,
+          votosNao: contagemVotos.nao,
+          votosAbstencao: contagemVotos.abstencao,
+          totalMembros,
+          totalPresentes,
+          resultado: contagemVotos.resultado as any,
+          finalizadaEm: new Date()
+        }
+      })
+
+      // Atualizar resultado do turno no PautaItem
+      if (turno === 1) {
+        await prisma.pautaItem.update({
+          where: { id: itemId },
+          data: { resultadoTurno1: contagemVotos.resultado as any, dataVotacaoTurno1: new Date() }
+        })
+      } else if (turno === 2) {
+        await prisma.pautaItem.update({
+          where: { id: itemId },
+          data: { resultadoTurno2: contagemVotos.resultado as any, dataVotacaoTurno2: new Date() }
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao criar VotacaoAgrupada:', error)
+    }
   }
 
   // GAP #2: Sincronizar status da proposição para casos sem votação efetiva

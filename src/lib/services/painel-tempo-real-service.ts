@@ -547,7 +547,7 @@ export async function finalizarVotacao(sessaoId: string): Promise<VotacaoAtiva |
   // Apurar resultado
   estado.votacaoAtiva.status = 'FECHADA'
 
-  const { sim, nao } = estado.votacaoAtiva.votos
+  const { sim, nao, abstencao, ausente } = estado.votacaoAtiva.votos
   if (sim > nao) {
     estado.votacaoAtiva.resultado = 'APROVADA'
   } else if (nao > sim) {
@@ -556,20 +556,111 @@ export async function finalizarVotacao(sessaoId: string): Promise<VotacaoAtiva |
     estado.votacaoAtiva.resultado = 'EMPATE'
   }
 
+  const proposicaoId = estado.votacaoAtiva.proposicaoId
+  const turno = estado.votacaoAtiva.turno
+  const resultadoFinal = estado.votacaoAtiva.resultado
+
   // Atualizar proposicao no banco
-  const novoStatus = estado.votacaoAtiva.resultado === 'APROVADA' ? 'APROVADA' :
-                     estado.votacaoAtiva.resultado === 'REJEITADA' ? 'REJEITADA' : 'EM_TRAMITACAO'
+  const novoStatus = resultadoFinal === 'APROVADA' ? 'APROVADA' :
+                     resultadoFinal === 'REJEITADA' ? 'REJEITADA' : 'EM_TRAMITACAO'
 
   await prisma.proposicao.update({
-    where: { id: estado.votacaoAtiva.proposicaoId },
-    data: { status: novoStatus }
+    where: { id: proposicaoId },
+    data: {
+      status: novoStatus,
+      resultado: resultadoFinal,
+      dataVotacao: new Date(),
+      sessaoVotacaoId: sessaoId
+    }
   })
+
+  // Criar registro consolidado de votacao (VotacaoAgrupada)
+  try {
+    const totalPresentes = estado.presencas.filter(p => p.presente).length
+    const totalMembros = estado.presencas.length
+
+    await prisma.votacaoAgrupada.upsert({
+      where: {
+        proposicaoId_sessaoId_turno: {
+          proposicaoId,
+          sessaoId,
+          turno
+        }
+      },
+      create: {
+        proposicaoId,
+        sessaoId,
+        turno,
+        tipoQuorum: estado.votacaoAtiva.tipoQuorum === 'ABSOLUTA' ? 'MAIORIA_ABSOLUTA' :
+                    estado.votacaoAtiva.tipoQuorum === 'QUALIFICADA' ? 'DOIS_TERCOS' : 'MAIORIA_SIMPLES',
+        tipoVotacao: 'NOMINAL',
+        votosSim: sim,
+        votosNao: nao,
+        votosAbstencao: abstencao,
+        votosAusente: ausente,
+        totalMembros,
+        totalPresentes,
+        quorumNecessario: estado.votacaoAtiva.quorumNecessario,
+        resultado: resultadoFinal as any,
+        finalizadaEm: new Date()
+      },
+      update: {
+        votosSim: sim,
+        votosNao: nao,
+        votosAbstencao: abstencao,
+        votosAusente: ausente,
+        totalMembros,
+        totalPresentes,
+        resultado: resultadoFinal as any,
+        finalizadaEm: new Date()
+      }
+    })
+  } catch (error) {
+    logger.error('Erro ao criar VotacaoAgrupada', {
+      action: 'criar_votacao_agrupada',
+      sessaoId,
+      proposicaoId,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    })
+  }
+
+  // Atualizar PautaItem status se existir
+  try {
+    const pautaItem = await prisma.pautaItem.findFirst({
+      where: {
+        proposicaoId,
+        pauta: { sessaoId },
+        status: 'EM_VOTACAO'
+      }
+    })
+
+    if (pautaItem) {
+      const statusItem = resultadoFinal === 'APROVADA' ? 'APROVADO' :
+                         resultadoFinal === 'REJEITADA' ? 'REJEITADO' : 'ADIADO'
+      await prisma.pautaItem.update({
+        where: { id: pautaItem.id },
+        data: {
+          status: statusItem,
+          finalizadoEm: new Date(),
+          iniciadoEm: null,
+          ...(turno === 1 ? { resultadoTurno1: resultadoFinal as any } : { resultadoTurno2: resultadoFinal as any })
+        }
+      })
+    }
+  } catch (error) {
+    logger.error('Erro ao atualizar PautaItem', {
+      action: 'atualizar_pauta_item',
+      sessaoId,
+      proposicaoId,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    })
+  }
 
   logger.info('Votacao finalizada', {
     action: 'finalizar_votacao',
     sessaoId,
-    proposicaoId: estado.votacaoAtiva.proposicaoId,
-    resultado: estado.votacaoAtiva.resultado,
+    proposicaoId,
+    resultado: resultadoFinal,
     votos: estado.votacaoAtiva.votos
   })
 
