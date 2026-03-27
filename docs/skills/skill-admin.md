@@ -10,7 +10,14 @@ O Painel Administrativo e o modulo central de configuracao e gestao do sistema. 
 
 | Arquivo | Funcao |
 |---------|--------|
-| `src/app/admin/` | Raiz do painel administrativo (43 modulos) |
+| `src/app/admin/` | Raiz do painel administrativo (52+ modulos) |
+| `src/app/admin/e-sic/` | Gestao pedidos LAI (dashboard + detalhe) |
+| `src/app/admin/ouvidoria/` | Gestao manifestacoes Ouvidoria (dashboard + detalhe) |
+| `src/app/admin/diarias/` | CRUD diarias e passagens |
+| `src/app/admin/verbas-indenizatorias/` | CRUD verbas indenizatorias parlamentares |
+| `src/app/admin/concursos/` | CRUD concursos publicos |
+| `src/app/admin/organograma/` | CRUD organograma hierarquico |
+| `src/app/admin/conteudos-educativos/` | CRUD conteudos educativos (Camara Explica) |
 | `src/app/admin/configuracoes/` | Configuracoes do sistema (9 submodulos) |
 | `src/lib/auth/permissions.ts` | Sistema de permissoes |
 | `src/app/api/configuracoes/` | APIs de configuracao |

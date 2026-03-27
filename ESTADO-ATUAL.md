@@ -1,9 +1,113 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-03-26 (Novo layout portal institucional)
-> **Versao**: 1.6.0
+> **Ultima Atualizacao**: 2026-03-27 (Redesign portal + transparencia + e-SIC + ouvidoria)
+> **Versao**: 1.7.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Redesign Portal + Transparencia + e-SIC + Ouvidoria (27/03/2026)
+
+### Novos modelos Prisma (13 modelos + 3 enums)
+
+| Modelo | Finalidade |
+|--------|-----------|
+| `SolicitacaoESIC` | Pedidos LAI com protocolo, prazos, historico |
+| `AnexoESIC` | Anexos dos pedidos e-SIC |
+| `RecursoESIC` | Recursos contra negativa e-SIC (ate 3 instancias) |
+| `HistoricoESIC` | Trilha de auditoria e-SIC |
+| `ManifestacaoOuvidoria` | Manifestacoes Ouvidoria (5 tipos) |
+| `AnexoOuvidoria` | Anexos das manifestacoes |
+| `HistoricoOuvidoria` | Trilha de auditoria Ouvidoria |
+| `UnidadeOrganizacional` | Organograma hierarquico (self-relation) |
+| `Diaria` | Diarias e passagens (servidores e parlamentares) |
+| `VerbaIndenizatoria` | Verbas indenizatorias parlamentares |
+| `Concurso` | Concursos publicos |
+| `TransparenciaConteudo` | Conteudo generico de transparencia (substituiu array vazio) |
+| `ConteudoEducativo` | Secao "Camara Explica" |
+
+### Novos services (9)
+
+| Service | Arquivo |
+|---------|---------|
+| e-SIC | `esic-service.ts` - protocolo, prazos 20 dias uteis, recursos, historico |
+| Ouvidoria | `ouvidoria-service.ts` - protocolo, tipos, anonimato, satisfacao |
+| Organograma | `organograma-service.ts` - CRUD hierarquico com arvore |
+| Diarias | `diarias-service.ts` - CRUD com calculo automatico de valor total |
+| Verbas | `verbas-indenizatorias-service.ts` - CRUD com stats por parlamentar |
+| Concursos | `concursos-service.ts` - CRUD com filtro status |
+| Conteudo Educativo | `conteudo-educativo-service.ts` - CRUD com slug automatico |
+| Relatorio Parlamentar | `relatorio-parlamentar-service.ts` - agregacao de dados existentes |
+| Transparencia Dados | `transparencia-dados-service.ts` - REESCRITO com Prisma (era array vazio) |
+
+### Novas API routes (24+)
+
+- e-SIC: 5 rotas (CRUD + acompanhar + recurso + estatisticas)
+- Ouvidoria: 4 rotas (CRUD + acompanhar + estatisticas)
+- Organograma: 2 rotas (CRUD)
+- Diarias: 2 rotas (CRUD)
+- Verbas Indenizatorias: 2 rotas (CRUD)
+- Concursos: 2 rotas (CRUD)
+- Conteudos Educativos: 2 rotas (CRUD)
+- Publico: conformidade PNTP, sessao ao vivo, relatorio parlamentar, servidores
+- Transparencia: conteudos CRUD
+
+### Novas paginas publicas (26)
+
+**Transparencia:**
+- `/transparencia/conformidade` - Dashboard PNTP com indicadores
+- `/transparencia/pessoal/*` - Quadro, remuneracao, diarias, concursos (5 paginas)
+- `/transparencia/parlamentar/*` - Relatorio, presencas, producao, indenizatoria (5 paginas)
+- `/transparencia/institucional/organograma` - Organograma interativo
+- `/transparencia/institucional/competencias` - Competencias da Camara
+- `/transparencia/institucional/horario-funcionamento` - Horario e contato
+- `/transparencia/legislativo/votacoes-nominais` - Votacoes nominais
+- `/transparencia/legislativo/presencas` - Presenca em sessoes
+- `/transparencia/legislativo/atas` - Atas de sessoes
+
+**Institucional:**
+- `/institucional/e-sic` - REESCRITO com formulario funcional
+- `/institucional/e-sic/acompanhar` - Consulta por protocolo
+- `/institucional/e-sic/recurso/[protocolo]` - Interpor recurso
+- `/institucional/ouvidoria` - REESCRITO com formulario funcional
+- `/institucional/ouvidoria/acompanhar` - Consulta por protocolo
+- `/institucional/camara-explica` - Conteudo educativo
+- `/institucional/camara-explica/[slug]` - Artigo individual
+
+**Legislativo:**
+- `/legislativo/ao-vivo` - Transmissao ao vivo de sessoes
+
+### Novas paginas admin (9)
+
+- `/admin/e-sic` + `/admin/e-sic/[id]` - Gestao de pedidos LAI
+- `/admin/ouvidoria` + `/admin/ouvidoria/[id]` - Gestao de manifestacoes
+- `/admin/diarias` - CRUD diarias
+- `/admin/verbas-indenizatorias` - CRUD verbas parlamentares
+- `/admin/concursos` - CRUD concursos publicos
+- `/admin/organograma` - CRUD organograma hierarquico
+- `/admin/conteudos-educativos` - CRUD conteudo educativo
+
+### Redesign da Homepage (8 secoes)
+
+| Secao | Status |
+|-------|--------|
+| Hero com 4 caixas de acesso rapido | Redesenhado |
+| Banner sessao ao vivo | NOVO |
+| Atividade Legislativa (tabs) | NOVO |
+| Parlamentares (scrollavel horizontal) | Redesenhado |
+| Transparencia (5 categorias PNTP) | Redesenhado |
+| Noticias | Mantido |
+| Participacao Cidada (Ouvidoria/e-SIC/Consultas) | NOVO |
+| CTA/Contato | Simplificado |
+
+### Acessibilidade e conformidade
+
+- VLibras integrado no layout raiz
+- Componente DataExportButton (CSV/JSON) reutilizavel
+- Menu Transparencia expandido no header com subpaginas
+- Sidebar admin com novas categorias (Atendimento: e-SIC, Ouvidoria, Conteudos)
+- Novas regras de negocio: RN-140 (e-SIC), RN-141 (Ouvidoria), RN-142 (Pessoal), RN-143 (Relatorio Parlamentar)
 
 ---
 

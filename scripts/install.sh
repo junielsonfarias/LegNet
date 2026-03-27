@@ -55,7 +55,7 @@ source "${LIB_DIR}/setup-app.sh"
 # Constantes
 # =============================================================================
 
-VERSION="1.0.0"
+VERSION="1.7.0"
 APP_DIR="/var/www/camara"
 REPO_URL="https://github.com/seu-usuario/camara.git"
 BRANCH="main"
@@ -208,8 +208,10 @@ show_completion() {
     echo -e "${BOLD}Próximos passos:${NC}"
     echo "  1. Acesse o painel administrativo em /admin"
     echo "  2. Configure os dados institucionais"
-    echo "  3. Cadastre os parlamentares"
-    echo "  4. Importe documentos e publicações"
+    echo "  3. Cadastre os parlamentares e legislaturas"
+    echo "  4. Configure o Organograma em Admin > Transparencia"
+    echo "  5. O portal de Transparencia, e-SIC e Ouvidoria ja estao ativos"
+    echo "  6. Cadastre conteudos educativos em Admin > Atendimento"
     echo ""
 
     echo -e "${BOLD}Comandos úteis:${NC}"

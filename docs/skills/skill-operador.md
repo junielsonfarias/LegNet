@@ -17,6 +17,10 @@ O Painel do Operador e a interface central para controle de sessoes legislativas
 | `src/app/admin/painel-eletronico/_components/painel-controles.tsx` | Controles de sessao (iniciar/finalizar) |
 | `src/app/admin/painel-eletronico/_hooks/use-painel-state.ts` | Hook de estado do painel admin |
 | `src/lib/services/sessao-controle.ts` | Controle de estado da sessao |
+| `src/lib/services/sessao-db-service.ts` | CRUD de sessoes (list com filtros/paginacao, create com auto legislatura/periodo/numero/pauta) |
+| `src/lib/services/sessao-validacao-service.ts` | Validacao de quorum, convocacao, ordem dos trabalhos |
+| `src/lib/services/presenca-db-service.ts` | CRUD de presenca (listBySessao, registrar upsert, stats, lote) |
+| `src/lib/services/pautas-db-service.ts` | CRUD de pautas (getPautaSessao, addItem, getSugestoes, destaques CRUD) |
 | `src/lib/services/votacao-service.ts` | Gerenciamento de votacoes |
 | `src/lib/services/painel-tempo-real-service.ts` | Estado em tempo real |
 | `src/lib/services/quorum-service.ts` | Calculo de quorum configuravel |

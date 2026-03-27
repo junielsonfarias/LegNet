@@ -1,12 +1,11 @@
 /**
- * Parliamentarians Section - Layout moderno com cards compactos
+ * Parliamentarians Section - Mesa Diretora compacta + Vereadores em scroll horizontal
  */
 
 'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Users, ArrowRight, Crown, Star, Award } from 'lucide-react'
@@ -36,10 +35,10 @@ const cargoLabel: Record<string, string> = {
 }
 
 const cargoColor: Record<string, string> = {
-  'PRESIDENTE': 'from-amber-500 to-amber-600',
-  'VICE_PRESIDENTE': 'from-blue-500 to-blue-600',
-  'PRIMEIRO_SECRETARIO': 'from-emerald-500 to-emerald-600',
-  'SEGUNDO_SECRETARIO': 'from-violet-500 to-violet-600',
+  'PRESIDENTE': 'bg-amber-100 text-amber-700',
+  'VICE_PRESIDENTE': 'bg-blue-100 text-blue-700',
+  'PRIMEIRO_SECRETARIO': 'bg-emerald-100 text-emerald-700',
+  'SEGUNDO_SECRETARIO': 'bg-violet-100 text-violet-700',
 }
 
 function ParlamentarAvatar({ parlamentar, size = 'md' }: { parlamentar: Parlamentar; size?: 'sm' | 'md' | 'lg' }) {
@@ -89,12 +88,15 @@ export function ParliamentariansSection() {
 
   if (loading) {
     return (
-      <section className="py-14 bg-white">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="animate-pulse space-y-6">
             <div className="h-8 w-64 bg-gray-200 rounded-lg" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-100 rounded-xl" />)}
+            <div className="flex gap-4">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-16 w-48 bg-gray-100 rounded-xl shrink-0" />)}
+            </div>
+            <div className="flex gap-4 overflow-hidden">
+              {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-40 w-36 bg-gray-100 rounded-xl shrink-0" />)}
             </div>
           </div>
         </div>
@@ -103,7 +105,7 @@ export function ParliamentariansSection() {
   }
 
   return (
-    <section className="py-14 bg-white">
+    <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -118,37 +120,37 @@ export function ParliamentariansSection() {
           </Button>
         </div>
 
-        {/* Mesa Diretora */}
+        {/* Mesa Diretora - Compacta em linha horizontal */}
         {mesa.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Mesa Diretora</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Mesa Diretora</h3>
+            <div className="flex flex-wrap gap-3">
               {mesa.map((p) => {
                 const Icon = cargoIcon[p.cargo || ''] || Users
                 return (
                   <Link
                     key={p.id}
-                    href={`/parlamentares`}
-                    className="group"
+                    href="/parlamentares"
+                    className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all group"
                   >
-                    <Card className="border-0 shadow-md hover:shadow-lg transition-all overflow-hidden group-hover:-translate-y-0.5">
-                      <div className={`h-1 bg-gradient-to-r ${cargoColor[p.cargo || ''] || 'from-gray-400 to-gray-500'}`} />
-                      <CardContent className="p-4 flex items-center gap-3">
-                        <ParlamentarAvatar parlamentar={p} size="md" />
-                        <div className="min-w-0">
-                          <p className="font-semibold text-gray-900 text-sm truncate">
-                            {p.apelido || p.nome}
-                          </p>
-                          <p className="text-xs text-gray-500">{p.partido}</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Icon className="h-3 w-3 text-gray-400" />
-                            <span className="text-[10px] font-medium text-gray-400 uppercase">
-                              {cargoLabel[p.cargo || ''] || p.cargo}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <ParlamentarAvatar parlamentar={p} size="sm" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">
+                        {p.apelido || p.nome}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] px-1.5 py-0 ${cargoColor[p.cargo || ''] || 'bg-gray-100 text-gray-600'}`}
+                        >
+                          <Icon className="h-2.5 w-2.5 mr-0.5" />
+                          {cargoLabel[p.cargo || ''] || p.cargo}
+                        </Badge>
+                        {p.partido && (
+                          <span className="text-[10px] text-gray-400">{p.partido}</span>
+                        )}
+                      </div>
+                    </div>
                   </Link>
                 )
               })}
@@ -156,19 +158,34 @@ export function ParliamentariansSection() {
           </div>
         )}
 
-        {/* Vereadores */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {vereadores.map((p) => (
-            <Link key={p.id} href={`/parlamentares`} className="group">
-              <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                <ParlamentarAvatar parlamentar={p} size="sm" />
-                <div className="min-w-0">
-                  <p className="font-medium text-gray-800 text-sm truncate">{p.apelido || p.nome}</p>
-                  <p className="text-xs text-gray-400">{p.partido}</p>
-                </div>
-              </div>
-            </Link>
-          ))}
+        {/* Vereadores - Scroll horizontal */}
+        <div className="relative">
+          <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+            <div className="flex gap-4" style={{ minWidth: 'max-content' }}>
+              {vereadores.map((p) => (
+                <Link
+                  key={p.id}
+                  href="/parlamentares"
+                  className="group shrink-0 w-36 md:w-40"
+                >
+                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-300 hover:-translate-y-1 text-center">
+                    <div className="flex justify-center mb-3">
+                      <ParlamentarAvatar parlamentar={p} size="lg" />
+                    </div>
+                    <p className="font-semibold text-gray-800 text-sm truncate">
+                      {p.apelido || p.nome}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">{p.partido}</p>
+                    <div className="mt-2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--municipal-primary)' }}>
+                      Ver perfil
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+          {/* Gradient fade on right edge */}
+          <div className="absolute top-0 right-0 bottom-4 w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
         </div>
 
         {/* Mobile CTA */}

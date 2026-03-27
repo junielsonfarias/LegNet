@@ -145,38 +145,48 @@ export default function AdminTransparenciaPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<TransparenciaItem | null>(null);
   const [formData, setFormData] = useState<Partial<TransparenciaItem>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [estatisticas, setEstatisticas] = useState<any>(null);
 
-  const carregarItems = useCallback(() => {
+  const carregarItems = useCallback(async () => {
     setLoading(true);
-    let dados = transparenciaService.getAll().data;
+    try {
+      let dados: TransparenciaItem[];
 
-    if (categoriaAtiva) {
-      dados = transparenciaService.getByCategoria(categoriaAtiva);
+      if (filtros.busca) {
+        dados = await transparenciaService.search(filtros.busca) as unknown as TransparenciaItem[];
+      } else if (categoriaAtiva) {
+        dados = await transparenciaService.getByCategoria(categoriaAtiva) as unknown as TransparenciaItem[];
+      } else {
+        const result = await transparenciaService.getAll();
+        dados = result.data as unknown as TransparenciaItem[];
+      }
+
+      if (filtros.subcategoria) {
+        dados = dados.filter(item => item.subcategoria === filtros.subcategoria);
+      }
+
+      if (filtros.tipo) {
+        dados = dados.filter(item => item.tipo === filtros.tipo);
+      }
+
+      if (filtros.ano) {
+        dados = dados.filter(item => item.ano === filtros.ano);
+      }
+
+      setItems(dados);
+    } finally {
+      setLoading(false);
     }
-
-    if (filtros.subcategoria) {
-      dados = dados.filter(item => item.subcategoria === filtros.subcategoria);
-    }
-
-    if (filtros.tipo) {
-      dados = dados.filter(item => item.tipo === filtros.tipo);
-    }
-
-    if (filtros.ano) {
-      dados = dados.filter(item => item.ano === filtros.ano);
-    }
-
-    if (filtros.busca) {
-      dados = transparenciaService.search(filtros.busca);
-    }
-
-    setItems(dados);
-    setLoading(false);
   }, [categoriaAtiva, filtros]);
 
   useEffect(() => {
     carregarItems();
   }, [carregarItems]);
+
+  useEffect(() => {
+    transparenciaService.getEstatisticas().then(setEstatisticas);
+  }, []);
 
   const handleFiltroChange = (campo: keyof TransparenciaFiltros, valor: string | number | undefined) => {
     setFiltros(prev => ({
@@ -256,7 +266,7 @@ export default function AdminTransparenciaPage() {
     return new Date(data).toLocaleDateString('pt-BR');
   };
 
-  const estatisticas = transparenciaService.getEstatisticas();
+  // estatisticas is loaded via useEffect above
 
   return (
     <div className="min-h-screen bg-gray-50">

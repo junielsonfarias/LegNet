@@ -5,11 +5,11 @@ import { transparenciaService } from '@/lib/transparencia-dados-service'
 export const dynamic = 'force-dynamic'
 
 export async function GET(_request: NextRequest) {
-  const estatisticas = transparenciaService.getEstatisticas()
-  const anos = transparenciaService.getAnos()
-  const tipos = transparenciaService.getTipos()
-  const categorias = transparenciaService.getCategorias()
-  const estatisticasPorCategoria = transparenciaService.getEstatisticasPorCategoria()
+  const estatisticas = await transparenciaService.getEstatisticas()
+  const anos = await transparenciaService.getAnos()
+  const tipos = await transparenciaService.getTipos()
+  const categorias = await transparenciaService.getCategorias()
+  const estatisticasPorCategoria = await transparenciaService.getEstatisticasPorCategoria()
 
   return createSuccessResponse({
     ...estatisticas,

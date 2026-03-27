@@ -1,6 +1,6 @@
 /**
- * Hero Section - Novo Layout Moderno
- * Design limpo com barra de busca, servicos rapidos e sessao ao vivo
+ * Hero Section - Layout com 4 cards de acesso rapido
+ * Inspirado no layout de Curitiba com 4 boxes proeminentes
  */
 
 'use client'
@@ -13,15 +13,9 @@ import {
   Search,
   Users,
   FileText,
-  Gavel,
   Eye,
-  Radio,
-  Calendar,
+  Video,
   ArrowRight,
-  Scale,
-  BookOpen,
-  MessageSquare,
-  Shield
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -38,7 +32,6 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
       ([entry]) => {
         if (entry.isIntersecting && !animated.current) {
           animated.current = true
-          let start = 0
           const duration = 1800
           const startTime = performance.now()
           const animate = (now: number) => {
@@ -59,23 +52,46 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
   return <span ref={ref}>{count}{suffix}</span>
 }
 
-// Servico rapido
-const quickServices = [
-  { icon: Eye, label: 'Transparencia', href: '/transparencia', color: 'from-emerald-500 to-emerald-600' },
-  { icon: Users, label: 'Vereadores', href: '/parlamentares', color: 'from-blue-500 to-blue-600' },
-  { icon: FileText, label: 'Proposicoes', href: '/legislativo/proposicoes', color: 'from-violet-500 to-violet-600' },
-  { icon: Calendar, label: 'Sessoes', href: '/legislativo/sessoes', color: 'from-amber-500 to-amber-600' },
-  { icon: Scale, label: 'Normas', href: '/legislativo/normas', color: 'from-rose-500 to-rose-600' },
-  { icon: MessageSquare, label: 'Ouvidoria', href: '/institucional/ouvidoria', color: 'from-cyan-500 to-cyan-600' },
-  { icon: BookOpen, label: 'Lei Organica', href: '/institucional/lei-organica', color: 'from-orange-500 to-orange-600' },
-  { icon: Shield, label: 'E-SIC', href: '/institucional/e-sic', color: 'from-teal-500 to-teal-600' },
+// 4 cards de acesso rapido proeminentes
+const quickAccessCards = [
+  {
+    icon: FileText,
+    title: 'Proposicoes',
+    subtitle: 'Acompanhe projetos de lei',
+    href: '/legislativo/proposicoes',
+    gradient: 'from-blue-500 to-blue-700',
+    shadowColor: 'shadow-blue-500/25',
+  },
+  {
+    icon: Video,
+    title: 'Sessoes',
+    subtitle: 'Assista sessoes ao vivo',
+    href: '/legislativo/sessoes',
+    gradient: 'from-emerald-500 to-emerald-700',
+    shadowColor: 'shadow-emerald-500/25',
+  },
+  {
+    icon: Users,
+    title: 'Vereadores',
+    subtitle: 'Conheca os parlamentares',
+    href: '/parlamentares',
+    gradient: 'from-violet-500 to-violet-700',
+    shadowColor: 'shadow-violet-500/25',
+  },
+  {
+    icon: Eye,
+    title: 'Transparencia',
+    subtitle: 'Acesse dados publicos',
+    href: '/transparencia',
+    gradient: 'from-amber-500 to-amber-700',
+    shadowColor: 'shadow-amber-500/25',
+  },
 ]
 
 export function Hero() {
   const { configuracao } = useConfiguracaoInstitucional()
   const [searchQuery, setSearchQuery] = useState('')
   const [stats, setStats] = useState({ vereadores: 0, sessoes: 0, materias: 0 })
-  const [sessaoAoVivo, setSessaoAoVivo] = useState<any>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,17 +109,7 @@ export function Hero() {
         })
       } catch {}
     }
-
-    const fetchSessao = async () => {
-      try {
-        const res = await fetch('/api/sessoes?status=EM_ANDAMENTO&limit=1')
-        const data = await res.json()
-        if (data.data?.length > 0) setSessaoAoVivo(data.data[0])
-      } catch {}
-    }
-
     fetchData()
-    fetchSessao()
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -117,29 +123,6 @@ export function Hero() {
 
   return (
     <>
-      {/* Sessao ao vivo - Banner fixo */}
-      {sessaoAoVivo && (
-        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white">
-          <div className="container mx-auto px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-2 font-semibold text-sm">
-                <Radio className="h-4 w-4 animate-pulse" />
-                AO VIVO
-              </span>
-              <span className="text-sm text-white/90 hidden sm:inline">
-                {sessaoAoVivo.tipo} {sessaoAoVivo.numero}/{new Date(sessaoAoVivo.data).getFullYear()} em andamento
-              </span>
-            </div>
-            <Link
-              href={`/legislativo/sessoes/${sessaoAoVivo.id}`}
-              className="text-sm font-medium hover:underline flex items-center gap-1"
-            >
-              Acompanhar <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
-      )}
-
       {/* Hero Principal */}
       <section className="relative overflow-hidden bg-gray-50">
         {/* Background */}
@@ -157,7 +140,7 @@ export function Hero() {
           <div className="absolute bottom-10 right-1/4 w-48 h-48 rounded-full bg-white/5" />
         </div>
 
-        <div className="relative z-10 container mx-auto px-4 pt-12 pb-20 md:pt-16 md:pb-28">
+        <div className="relative z-10 container mx-auto px-4 pt-12 pb-24 md:pt-16 md:pb-32">
           {/* Top: Brasao + Nome */}
           <div className="text-center mb-10">
             <div className="flex items-center justify-center gap-4 mb-4">
@@ -220,7 +203,7 @@ export function Hero() {
           </div>
 
           {/* Numeros/Estatisticas */}
-          <div className="flex items-center justify-center gap-8 md:gap-16 mb-0">
+          <div className="flex items-center justify-center gap-8 md:gap-16">
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-white">
                 <AnimatedNumber value={stats.vereadores} />
@@ -253,30 +236,46 @@ export function Hero() {
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-gray-50 to-transparent" />
       </section>
 
-      {/* Servicos Rapidos - Barra flutuante */}
-      <section className="relative z-20 -mt-8 mb-8">
+      {/* 4 Cards de Acesso Rapido - Flutuante */}
+      <section className="relative z-20 -mt-16 mb-4">
         <div className="container mx-auto px-4">
-          <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 p-4 md:p-6">
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-4">
-              {quickServices.map((service) => (
-                <Link
-                  key={service.href}
-                  href={service.href}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-all group"
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {quickAccessCards.map((card) => (
+              <Link
+                key={card.href}
+                href={card.href}
+                className="group"
+              >
+                <div
+                  className={cn(
+                    'relative overflow-hidden rounded-2xl bg-gradient-to-br p-6 md:p-8',
+                    'shadow-xl hover:shadow-2xl transition-all duration-300',
+                    'hover:scale-[1.03] hover:-translate-y-1',
+                    card.gradient,
+                    card.shadowColor
+                  )}
                 >
-                  <div className={cn(
-                    'w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br flex items-center justify-center',
-                    'shadow-sm group-hover:shadow-md group-hover:scale-110 transition-all',
-                    service.color
-                  )}>
-                    <service.icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                  {/* Decoracao */}
+                  <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/10 -mr-8 -mt-8" aria-hidden="true" />
+                  <div className="absolute bottom-0 left-0 w-16 h-16 rounded-full bg-white/5 -ml-4 -mb-4" aria-hidden="true" />
+
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4 group-hover:bg-white/30 transition-colors">
+                      <card.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="text-lg md:text-xl font-bold text-white mb-1">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm text-white/70">
+                      {card.subtitle}
+                    </p>
+                    <div className="mt-4 flex items-center gap-1 text-white/60 group-hover:text-white/90 transition-colors text-sm font-medium">
+                      Acessar <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                  <span className="text-[11px] md:text-xs font-medium text-gray-600 text-center leading-tight">
-                    {service.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

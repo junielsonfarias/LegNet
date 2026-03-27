@@ -3006,3 +3006,359 @@ model SecurityAlert {
   @@index([userId])
   @@map("security_alerts")
 }
+
+// ==========================================
+// e-SIC (Sistema Eletronico do Servico de Informacao ao Cidadao)
+// ==========================================
+
+enum StatusESIC {
+  ABERTO
+  EM_ANALISE
+  RESPONDIDO
+  PRORROGADO
+  RECURSO
+  ARQUIVADO
+  NEGADO
+}
+
+model SolicitacaoESIC {
+  id                String     @id @default(cuid())
+  protocolo         String     @unique
+  ano               Int
+  numero            Int
+
+  // Solicitante
+  nome              String
+  email             String
+  cpf               String?
+  telefone          String?
+  tipoSolicitante   String?    // pessoa_fisica, pessoa_juridica
+
+  // Solicitacao
+  assunto           String
+  descricao         String     @db.Text
+  orgao             String?
+  formaResposta     String?    // email, correspondencia, presencial
+
+  // Controle
+  status            StatusESIC @default(ABERTO)
+  prazoResposta     DateTime
+  dataProrrogacao   DateTime?
+  motivoProrrogacao String?    @db.Text
+
+  // Resposta
+  resposta          String?    @db.Text
+  respondidoPor     String?
+  dataResposta      DateTime?
+
+  // Recurso
+  temRecurso        Boolean    @default(false)
+
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  anexos            AnexoESIC[]
+  recursos          RecursoESIC[]
+  historico         HistoricoESIC[]
+
+  @@unique([ano, numero])
+  @@index([status])
+  @@index([prazoResposta])
+  @@index([email])
+  @@map("solicitacoes_esic")
+}
+
+model AnexoESIC {
+  id             String   @id @default(cuid())
+  solicitacaoId  String
+  arquivo        String
+  nome           String
+  tamanho        Int?
+  tipo           String?  // solicitacao, resposta
+  createdAt      DateTime @default(now())
+
+  solicitacao    SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([solicitacaoId])
+  @@map("anexos_esic")
+}
+
+model RecursoESIC {
+  id             String   @id @default(cuid())
+  solicitacaoId  String
+  instancia      Int      @default(1)
+  motivo         String   @db.Text
+  status         String   @default("ABERTO")
+  resposta       String?  @db.Text
+  dataRecurso    DateTime @default(now())
+  dataResposta   DateTime?
+  prazoResposta  DateTime
+
+  solicitacao    SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([solicitacaoId])
+  @@map("recursos_esic")
+}
+
+model HistoricoESIC {
+  id             String   @id @default(cuid())
+  solicitacaoId  String
+  acao           String
+  descricao      String?  @db.Text
+  usuarioId      String?
+  usuarioNome    String?
+  data           DateTime @default(now())
+
+  solicitacao    SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([solicitacaoId])
+  @@map("historico_esic")
+}
+
+// ==========================================
+// Ouvidoria
+// ==========================================
+
+enum TipoManifestacao {
+  RECLAMACAO
+  SUGESTAO
+  ELOGIO
+  DENUNCIA
+  SOLICITACAO
+}
+
+enum StatusManifestacao {
+  REGISTRADA
+  EM_ANALISE
+  ENCAMINHADA
+  RESPONDIDA
+  CONCLUIDA
+  ARQUIVADA
+}
+
+model ManifestacaoOuvidoria {
+  id              String              @id @default(cuid())
+  protocolo       String              @unique
+  ano             Int
+  numero          Int
+
+  // Manifestante (pode ser anonimo)
+  anonimo         Boolean             @default(false)
+  nome            String?
+  email           String?
+  telefone        String?
+  cpf             String?
+
+  // Manifestacao
+  tipo            TipoManifestacao
+  assunto         String
+  descricao       String              @db.Text
+  setor           String?
+
+  // Controle
+  status          StatusManifestacao   @default(REGISTRADA)
+  prioridade      String              @default("NORMAL")
+  prazoResposta   DateTime
+
+  // Resposta
+  resposta        String?             @db.Text
+  respondidoPor   String?
+  dataResposta    DateTime?
+  satisfacao      Int?
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  anexos          AnexoOuvidoria[]
+  historico       HistoricoOuvidoria[]
+
+  @@unique([ano, numero])
+  @@index([tipo, status])
+  @@index([prazoResposta])
+  @@index([email])
+  @@map("manifestacoes_ouvidoria")
+}
+
+model AnexoOuvidoria {
+  id               String   @id @default(cuid())
+  manifestacaoId   String
+  arquivo          String
+  nome             String
+  tamanho          Int?
+  tipo             String?
+  createdAt        DateTime @default(now())
+
+  manifestacao     ManifestacaoOuvidoria @relation(fields: [manifestacaoId], references: [id], onDelete: Cascade)
+
+  @@index([manifestacaoId])
+  @@map("anexos_ouvidoria")
+}
+
+model HistoricoOuvidoria {
+  id               String   @id @default(cuid())
+  manifestacaoId   String
+  acao             String
+  descricao        String?  @db.Text
+  usuarioId        String?
+  usuarioNome      String?
+  data             DateTime @default(now())
+
+  manifestacao     ManifestacaoOuvidoria @relation(fields: [manifestacaoId], references: [id], onDelete: Cascade)
+
+  @@index([manifestacaoId])
+  @@map("historico_ouvidoria")
+}
+
+// ==========================================
+// Organograma
+// ==========================================
+
+model UnidadeOrganizacional {
+  id              String   @id @default(cuid())
+  nome            String
+  sigla           String?
+  descricao       String?  @db.Text
+  responsavel     String?
+  cargo           String?
+  parentId        String?
+  ordem           Int      @default(0)
+  ativo           Boolean  @default(true)
+  telefone        String?
+  email           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  parent          UnidadeOrganizacional?  @relation("UnidadeHierarquia", fields: [parentId], references: [id])
+  children        UnidadeOrganizacional[] @relation("UnidadeHierarquia")
+
+  @@index([parentId])
+  @@index([ativo])
+  @@map("unidades_organizacionais")
+}
+
+// ==========================================
+// Pessoal - Diarias e Verbas Indenizatorias
+// ==========================================
+
+model Diaria {
+  id              String   @id @default(cuid())
+  servidorId      String?
+  parlamentarId   String?
+  nome            String
+  cargo           String
+  destino         String
+  motivo          String   @db.Text
+  dataInicio      DateTime
+  dataFim         DateTime
+  quantidade      Int
+  valorUnitario   Decimal  @db.Decimal(15, 2)
+  valorTotal      Decimal  @db.Decimal(15, 2)
+  comprovante     String?
+  ano             Int
+  mes             Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ano, mes])
+  @@index([parlamentarId])
+  @@index([servidorId])
+  @@map("diarias")
+}
+
+model VerbaIndenizatoria {
+  id              String   @id @default(cuid())
+  parlamentarId   String
+  nomeParlamentar String?
+  descricao       String
+  tipo            String   // combustivel, telefone, escritorio, etc.
+  valor           Decimal  @db.Decimal(15, 2)
+  mes             Int
+  ano             Int
+  comprovante     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([parlamentarId, ano, mes])
+  @@index([ano, mes])
+  @@map("verbas_indenizatorias")
+}
+
+// ==========================================
+// Concursos Publicos
+// ==========================================
+
+model Concurso {
+  id                  String    @id @default(cuid())
+  titulo              String
+  edital              String?
+  descricao           String?   @db.Text
+  dataPublicacao      DateTime
+  dataInscricaoInicio DateTime?
+  dataInscricaoFim    DateTime?
+  dataProva           DateTime?
+  status              String    @default("ABERTO")
+  vagas               Int?
+  observacoes         String?   @db.Text
+  arquivo             String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([status])
+  @@index([dataPublicacao])
+  @@map("concursos")
+}
+
+// ==========================================
+// Transparencia - Conteudo Generico
+// ==========================================
+
+model TransparenciaConteudo {
+  id                String    @id @default(cuid())
+  categoriaSlug     String
+  subcategoria      String
+  titulo            String
+  descricao         String    @db.Text
+  tipo              String    // documento, relatorio, informacao, servico
+  dataPublicacao    DateTime
+  ano               Int
+  url               String?
+  arquivo           String?
+  status            String    @default("publicado")
+  anexos            Json?
+  tags              String[]
+  responsavel       String?
+  prazoAtualizacao  DateTime?
+  ultimaAtualizacao DateTime?
+  obrigatorio       Boolean   @default(false)
+  pntpCategoria     String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([categoriaSlug, status])
+  @@index([ano, categoriaSlug])
+  @@index([prazoAtualizacao])
+  @@index([status])
+  @@map("transparencia_conteudos")
+}
+
+// ==========================================
+// Conteudo Educativo ("Camara Explica")
+// ==========================================
+
+model ConteudoEducativo {
+  id              String   @id @default(cuid())
+  titulo          String
+  slug            String   @unique
+  conteudo        String   @db.Text
+  resumo          String?
+  imagem          String?
+  categoria       String   // como-funciona, glossario, guias
+  ordem           Int      @default(0)
+  publicado       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([categoria, publicado])
+  @@index([slug])
+  @@map("conteudos_educativos")
+}

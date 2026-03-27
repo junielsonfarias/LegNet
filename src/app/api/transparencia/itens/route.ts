@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   // Buscar por ID específico
   if (id) {
-    const item = transparenciaService.getById(id)
+    const item = await transparenciaService.getById(id)
     if (!item) {
       return createSuccessResponse(null, 'Item não encontrado')
     }
@@ -28,26 +28,26 @@ export async function GET(request: NextRequest) {
 
   // Buscar itens recentes
   if (recentes === 'true') {
-    const resultado = transparenciaService.getRecentes(limit ? parseInt(limit) : 10)
+    const resultado = await transparenciaService.getRecentes(limit ? parseInt(limit) : 10)
     return createSuccessResponse(resultado.data)
   }
 
   // Buscar mais acessados
   if (maisAcessados === 'true') {
-    const resultado = transparenciaService.getMaisAcessados(limit ? parseInt(limit) : 10)
+    const resultado = await transparenciaService.getMaisAcessados(limit ? parseInt(limit) : 10)
     return createSuccessResponse(resultado.data)
   }
 
   // Buscar por categoria e subcategoria
   if (categoria && subcategoria) {
-    const itens = transparenciaService.getBySubcategoria(categoria, subcategoria)
+    const itens = await transparenciaService.getBySubcategoria(categoria, subcategoria)
     return createSuccessResponse(itens)
   }
 
   // Buscar por categoria
   if (categoria) {
-    const itens = transparenciaService.getByCategoria(categoria)
-    const subcategorias = transparenciaService.getSubcategorias(categoria)
+    const itens = await transparenciaService.getByCategoria(categoria)
+    const subcategorias = await transparenciaService.getSubcategorias(categoria)
     return createSuccessResponse({
       itens,
       subcategorias
@@ -56,24 +56,24 @@ export async function GET(request: NextRequest) {
 
   // Buscar por ano
   if (ano) {
-    const itens = transparenciaService.getByAno(parseInt(ano))
+    const itens = await transparenciaService.getByAno(parseInt(ano))
     return createSuccessResponse(itens)
   }
 
   // Buscar por tipo
   if (tipo) {
-    const itens = transparenciaService.getByTipo(tipo)
+    const itens = await transparenciaService.getByTipo(tipo)
     return createSuccessResponse(itens)
   }
 
   // Busca textual
   if (search) {
-    const itens = transparenciaService.search(search)
+    const itens = await transparenciaService.search(search)
     return createSuccessResponse(itens)
   }
 
   // Retornar todos os dados com metadados
-  const resultado = transparenciaService.getAll()
+  const resultado = await transparenciaService.getAll()
   return createSuccessResponse({
     itens: resultado.data,
     categorias: resultado.categorias,

@@ -10,12 +10,36 @@ O modulo de Transparencia implementa os requisitos do Programa Nacional de Trans
 
 | Arquivo | Funcao |
 |---------|--------|
-| `src/app/transparencia/page.tsx` | Portal principal (45.2KB) |
+| `src/app/transparencia/page.tsx` | Portal principal |
+| `src/app/transparencia/conformidade/page.tsx` | Dashboard PNTP publico |
+| `src/app/transparencia/pessoal/` | Secao pessoal (quadro, remuneracao, diarias, concursos) |
+| `src/app/transparencia/parlamentar/` | Secao parlamentar (relatorios, presencas, producao, verbas) |
+| `src/app/transparencia/institucional/organograma/` | Organograma interativo |
+| `src/app/transparencia/legislativo/` | Votacoes nominais, presencas, atas |
 | `src/app/transparencia/[categoria]/` | Paginas por categoria |
 | `src/lib/services/transparencia-service.ts` | Verificacao PNTP |
+| `src/lib/transparencia-dados-service.ts` | Service de dados (Prisma - reescrito 27/03) |
+| `src/lib/services/esic-service.ts` | Service e-SIC (LAI) |
+| `src/lib/services/ouvidoria-service.ts` | Service Ouvidoria |
+| `src/lib/services/diarias-service.ts` | Service diarias |
+| `src/lib/services/verbas-indenizatorias-service.ts` | Service verbas indenizatorias |
+| `src/lib/services/concursos-service.ts` | Service concursos publicos |
+| `src/lib/services/organograma-service.ts` | Service organograma |
+| `src/lib/services/conteudo-educativo-service.ts` | Service conteudo educativo |
+| `src/lib/services/relatorio-parlamentar-service.ts` | Service relatorio parlamentar |
+| `src/app/api/e-sic/` | APIs e-SIC (5 rotas) |
+| `src/app/api/ouvidoria/` | APIs Ouvidoria (4 rotas) |
+| `src/app/api/diarias/` | APIs diarias (2 rotas) |
+| `src/app/api/verbas-indenizatorias/` | APIs verbas (2 rotas) |
+| `src/app/api/concursos/` | APIs concursos (2 rotas) |
+| `src/app/api/organograma/` | APIs organograma (2 rotas) |
+| `src/app/api/conteudos-educativos/` | APIs conteudo educativo (2 rotas) |
+| `src/app/api/publico/conformidade/` | API conformidade PNTP |
+| `src/app/api/publico/relatorio-parlamentar/` | API relatorio parlamentar |
 | `src/app/api/dados-abertos/` | APIs de dados abertos |
 | `src/app/api/publico/` | APIs publicas |
 | `src/components/transparencia/` | Componentes do portal |
+| `src/components/transparencia/data-export-button.tsx` | Exportacao CSV/JSON |
 
 ---
 

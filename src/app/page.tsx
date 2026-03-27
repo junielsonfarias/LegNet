@@ -1,29 +1,37 @@
 import { Hero } from '@/components/home/hero'
-import { HighlightsSection } from '@/components/home/highlights-section'
+import { LiveSessionBanner } from '@/components/home/live-session-banner'
+import { LegislativeActivitySection } from '@/components/home/legislative-activity-section'
 import { ParliamentariansSection } from '@/components/home/parliamentarians-section'
-import { LatestNews } from '@/components/home/latest-news'
 import { TransparencySection } from '@/components/home/transparency-section'
+import { LatestNews } from '@/components/home/latest-news'
+import { CitizenParticipationSection } from '@/components/home/citizen-participation-section'
 import { StatsSection } from '@/components/home/stats-section'
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      {/* Hero com estatisticas dinamicas */}
+      {/* Hero com busca, 4 cards de acesso rapido e estatisticas */}
       <Hero />
 
-      {/* Destaques: Sessao ao vivo, Proxima sessao, Publicacoes */}
-      <HighlightsSection />
+      {/* Banner de sessao ao vivo ou proxima sessao */}
+      <LiveSessionBanner />
+
+      {/* Atividade legislativa com abas */}
+      <LegislativeActivitySection />
 
       {/* Parlamentares */}
       <ParliamentariansSection />
 
-      {/* Noticias */}
-      <LatestNews />
-
       {/* Transparencia */}
       <TransparencySection />
 
-      {/* Estatisticas detalhadas */}
+      {/* Noticias */}
+      <LatestNews />
+
+      {/* Participacao cidada */}
+      <CitizenParticipationSection />
+
+      {/* Contato e redes sociais */}
       <StatsSection />
     </div>
   )

@@ -10,8 +10,7 @@ export async function GET(request: NextRequest) {
 
   // Se categoria foi especificada, retorna subcategorias
   if (categoria) {
-    const subcategorias = transparenciaService.getSubcategorias(categoria)
-    const resultado = transparenciaService.getPorSubcategoria(categoria)
+    const resultado = await transparenciaService.getPorSubcategoria(categoria)
     return createSuccessResponse({
       categoria,
       subcategorias: resultado.subcategorias,
@@ -20,8 +19,8 @@ export async function GET(request: NextRequest) {
   }
 
   // Retornar todas as categorias com estatísticas
-  const categorias = transparenciaService.getCategorias()
-  const estatisticas = transparenciaService.getEstatisticasPorCategoria()
+  const categorias = await transparenciaService.getCategorias()
+  const estatisticas = await transparenciaService.getEstatisticasPorCategoria()
 
   return createSuccessResponse({
     categorias,

@@ -78,7 +78,12 @@ export function Header() {
     }
   }, [activeDropdown, handleKeyDown])
 
-  const menuItems = [
+  const menuItems: {
+    title: string
+    icon: React.ComponentType<{ className?: string }>
+    href?: string
+    items: { name: string; href: string; status?: string; badge?: string }[]
+  }[] = [
     {
       title: 'Institucional',
       icon: Home,
@@ -92,6 +97,7 @@ export function Header() {
         { name: 'Papel do Vereador', href: '/institucional/papel-vereador', status: 'active' },
         { name: 'Papel da Câmara', href: '/institucional/papel-camara', status: 'active' },
         { name: 'Regimento Interno', href: '/institucional/regimento', status: 'active' },
+        { name: 'Câmara Explica', href: '/institucional/camara-explica', status: 'active', badge: 'Novo' },
       ]
     },
     {
@@ -108,6 +114,7 @@ export function Header() {
       icon: FileText,
       items: [
         { name: 'Calendario Legislativo', href: '/calendario', status: 'active', badge: 'Novo' },
+        { name: 'Sessão ao Vivo', href: '/legislativo/ao-vivo', status: 'active', badge: 'Novo' },
         { name: 'Sessões', href: '/legislativo/sessoes', status: 'active' },
         { name: 'Pautas das Sessões', href: '/legislativo/pautas-sessoes', status: 'active' },
         { name: 'Audiências Públicas', href: '/legislativo/audiencias-publicas', status: 'active' },
@@ -121,8 +128,15 @@ export function Header() {
     {
       title: 'Transparência',
       icon: Eye,
-      href: '/transparencia',
-      items: []
+      items: [
+        { name: 'Portal da Transparência', href: '/transparencia', status: 'active' },
+        { name: 'Conformidade PNTP', href: '/transparencia/conformidade', status: 'active', badge: 'Novo' },
+        { name: 'Informações Financeiras', href: '/transparencia/receitas', status: 'active' },
+        { name: 'Pessoal', href: '/transparencia/pessoal', status: 'active', badge: 'Novo' },
+        { name: 'Parlamentar', href: '/transparencia/parlamentar', status: 'active', badge: 'Novo' },
+        { name: 'Organograma', href: '/transparencia/institucional/organograma', status: 'active', badge: 'Novo' },
+        { name: 'Dados Abertos', href: '/transparencia/dados-abertos', status: 'active' },
+      ]
     },
     {
       title: 'Participação Cidadã',

@@ -1,338 +1,381 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageSquare, Phone, Mail, MapPin, Clock, Shield, FileText, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  MessageSquare, Phone, Mail, MapPin, Clock, Shield, FileText, AlertCircle,
+  Loader2, CheckCircle, Copy, Search
+} from 'lucide-react'
+import Link from 'next/link'
 
 export default function OuvidoriaPage() {
-  const { configuracao } = useConfiguracaoInstitucional()
+  const [anonimo, setAnonimo] = useState(false)
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    cpf: '',
+    tipo: '',
+    assunto: '',
+    descricao: '',
+    setor: '',
+  })
+  const [submitting, setSubmitting] = useState(false)
+  const [resultado, setResultado] = useState<{ protocolo: string } | null>(null)
+  const [error, setError] = useState('')
+  const [protocoloConsulta, setProtocoloConsulta] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError('')
+    setResultado(null)
+
+    try {
+      const res = await fetch('/api/ouvidoria', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          anonimo,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setResultado({ protocolo: json.protocolo })
+        setFormData({ nome: '', email: '', telefone: '', cpf: '', tipo: '', assunto: '', descricao: '', setor: '' })
+        setAnonimo(false)
+      } else {
+        setError(json.error || 'Erro ao enviar manifestacao.')
+      }
+    } catch {
+      setError('Erro de conexao. Tente novamente.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const tiposManifestacao = [
+    { icon: FileText, title: 'Reclamacao', description: 'Relate problemas ou irregularidades nos servicos', color: 'text-camara-primary', bgColor: 'bg-camara-primary/10' },
+    { icon: MessageSquare, title: 'Sugestao', description: 'Proponha melhorias para os servicos e processos', color: 'text-green-600', bgColor: 'bg-green-100' },
+    { icon: Shield, title: 'Denuncia', description: 'Informe irregularidades ou atos ilicitos (pode ser anonima)', color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
+    { icon: AlertCircle, title: 'Elogio', description: 'Reconheca bons servicos e atendimentos recebidos', color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
-        {/* Hero Section */}
+        {/* Hero */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Ouvidoria
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Ouvidoria</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Canal de comunicação direta entre você e a Câmara Municipal. 
-            Registre suas sugestões, reclamações, elogios ou denúncias.
+            Canal de comunicacao direta entre voce e a Camara Municipal.
+            Registre suas sugestoes, reclamacoes, elogios ou denuncias.
           </p>
         </div>
 
-        {/* O que é a Ouvidoria */}
-        <div className="mb-12">
-          <Card className="camara-card">
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-camara-primary flex items-center">
-                <MessageSquare className="h-6 w-6 mr-2" />
-                O que é a Ouvidoria?
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="prose max-w-none">
-              <p className="text-gray-700 leading-relaxed mb-4">
-                A Ouvidoria da Câmara Municipal é um canal de comunicação direto entre 
-                os cidadãos e a administração legislativa. Sua função principal é receber, 
-                registrar e encaminhar manifestações, garantindo uma resposta adequada e 
-                dentro dos prazos estabelecidos.
-              </p>
-              <p className="text-gray-700 leading-relaxed">
-                Através da Ouvidoria, você pode apresentar reclamações, sugestões, elogios, 
-                denúncias e solicitar informações sobre os serviços prestados pela Câmara 
-                Municipal.
-              </p>
-            </CardContent>
-          </Card>
+        {/* O que e */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold text-camara-primary flex items-center">
+              <MessageSquare className="h-6 w-6 mr-2" />
+              O que e a Ouvidoria?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              A Ouvidoria da Camara Municipal e um canal de comunicacao direto entre
+              os cidadaos e a administracao legislativa. Sua funcao principal e receber,
+              registrar e encaminhar manifestacoes, garantindo uma resposta adequada.
+            </p>
+            <p className="text-gray-700 leading-relaxed">
+              Atraves da Ouvidoria, voce pode apresentar reclamacoes, sugestoes, elogios,
+              denuncias e solicitar informacoes sobre os servicos prestados.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Tipos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {tiposManifestacao.map((tipo) => {
+            const Icon = tipo.icon
+            return (
+              <Card key={tipo.title} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6 text-center">
+                  <div className={`w-16 h-16 mx-auto mb-4 rounded-full ${tipo.bgColor} flex items-center justify-center`}>
+                    <Icon className={`h-8 w-8 ${tipo.color}`} />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{tipo.title}</h3>
+                  <p className="text-sm text-gray-600">{tipo.description}</p>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
-        {/* Tipos de Manifestação */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Tipos de Manifestação
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-camara-primary/10 flex items-center justify-center">
-                  <FileText className="h-8 w-8 text-camara-primary" />
+        {/* Formulario */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="text-2xl font-semibold text-camara-primary">
+              Registre sua Manifestacao
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {resultado ? (
+              <div className="text-center py-8">
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Manifestacao Registrada!</h3>
+                <p className="text-gray-600 mb-4">Guarde o numero do protocolo para acompanhamento:</p>
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <Badge className="text-2xl py-2 px-4 bg-camara-primary">{resultado.protocolo}</Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigator.clipboard.writeText(resultado.protocolo)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Reclamação</h3>
-                <p className="text-sm text-gray-600">
-                  Relate problemas ou irregularidades nos serviços prestados
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-                  <MessageSquare className="h-8 w-8 text-green-600" />
+                <div className="flex gap-4 justify-center">
+                  <Button onClick={() => setResultado(null)}>Nova Manifestacao</Button>
+                  <Link href={`/institucional/ouvidoria/acompanhar?protocolo=${resultado.protocolo}`}>
+                    <Button variant="outline">Acompanhar</Button>
+                  </Link>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Sugestão</h3>
-                <p className="text-sm text-gray-600">
-                  Proponha melhorias para os serviços e processos
-                </p>
-              </CardContent>
-            </Card>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
 
-            <Card className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <Shield className="h-8 w-8 text-yellow-600" />
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="anonimo"
+                    checked={anonimo}
+                    onCheckedChange={(checked) => setAnonimo(checked === true)}
+                  />
+                  <Label htmlFor="anonimo" className="text-sm text-gray-600">
+                    Manifestacao anonima
+                  </Label>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Denúncia</h3>
-                <p className="text-sm text-gray-600">
-                  Informe irregularidades ou atos ilícitos (pode ser anônima)
-                </p>
-              </CardContent>
-            </Card>
 
-            <Card className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
-                  <AlertCircle className="h-8 w-8 text-purple-600" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Elogio</h3>
-                <p className="text-sm text-gray-600">
-                  Reconheça bons serviços e atendimentos recebidos
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                {!anonimo && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="nome">Nome Completo *</Label>
+                      <Input
+                        id="nome"
+                        value={formData.nome}
+                        onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                        className="mt-1"
+                        required={!anonimo}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">E-mail *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="mt-1"
+                        required={!anonimo}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="telefone">Telefone</Label>
+                      <Input
+                        id="telefone"
+                        value={formData.telefone}
+                        onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                        className="mt-1"
+                        placeholder="(00) 00000-0000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input
+                        id="cpf"
+                        value={formData.cpf}
+                        onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                        className="mt-1"
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+                  </div>
+                )}
 
-        {/* Formulário de Contato */}
-        <div className="mb-12">
-          <Card className="camara-card">
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-camara-primary">
-                Registre sua Manifestação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="nome">Nome Completo *</Label>
-                    <Input 
-                      id="nome" 
-                      placeholder="Digite seu nome completo"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email">E-mail *</Label>
-                    <Input 
-                      id="email" 
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <Input 
-                      id="telefone" 
-                      placeholder="(00) 00000-0000"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tipo">Tipo de Manifestação *</Label>
-                    <Select>
+                    <Label>Tipo de Manifestacao *</Label>
+                    <Select
+                      value={formData.tipo}
+                      onValueChange={(v) => setFormData({ ...formData, tipo: v })}
+                    >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="reclamacao">Reclamação</SelectItem>
-                        <SelectItem value="sugestao">Sugestão</SelectItem>
-                        <SelectItem value="denuncia">Denúncia</SelectItem>
-                        <SelectItem value="elogio">Elogio</SelectItem>
-                        <SelectItem value="informacao">Solicitação de Informação</SelectItem>
+                        <SelectItem value="RECLAMACAO">Reclamacao</SelectItem>
+                        <SelectItem value="SUGESTAO">Sugestao</SelectItem>
+                        <SelectItem value="ELOGIO">Elogio</SelectItem>
+                        <SelectItem value="DENUNCIA">Denuncia</SelectItem>
+                        <SelectItem value="SOLICITACAO">Solicitacao</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div>
+                    <Label>Setor</Label>
+                    <Input
+                      value={formData.setor}
+                      onChange={(e) => setFormData({ ...formData, setor: e.target.value })}
+                      className="mt-1"
+                      placeholder="Setor relacionado (opcional)"
+                    />
                   </div>
                 </div>
 
                 <div>
                   <Label htmlFor="assunto">Assunto *</Label>
-                  <Input 
-                    id="assunto" 
-                    placeholder="Resumo do assunto"
+                  <Input
+                    id="assunto"
+                    value={formData.assunto}
+                    onChange={(e) => setFormData({ ...formData, assunto: e.target.value })}
                     className="mt-1"
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="mensagem">Mensagem *</Label>
-                  <Textarea 
-                    id="mensagem" 
-                    placeholder="Descreva detalhadamente sua manifestação..."
+                  <Label htmlFor="descricao">Descricao *</Label>
+                  <Textarea
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                     rows={6}
                     className="mt-1"
+                    placeholder="Descreva detalhadamente sua manifestacao..."
+                    required
                   />
                 </div>
 
-                <div className="flex items-start space-x-2">
-                  <input 
-                    type="checkbox" 
-                    id="anonimo" 
-                    className="mt-1"
-                  />
-                  <Label htmlFor="anonimo" className="text-sm text-gray-600">
-                    Desejo manter minha identidade anônima
-                  </Label>
-                </div>
-
-                <div className="flex items-start space-x-2">
-                  <input 
-                    type="checkbox" 
-                    id="termos" 
-                    className="mt-1"
-                  />
-                  <Label htmlFor="termos" className="text-sm text-gray-600">
-                    Li e concordo com os termos de uso da Ouvidoria *
-                  </Label>
-                </div>
-
-                <Button size="lg" className="w-full md:w-auto">
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  Enviar Manifestação
+                <Button type="submit" size="lg" className="w-full md:w-auto" disabled={submitting}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare className="h-5 w-5 mr-2" />
+                      Enviar Manifestacao
+                    </>
+                  )}
                 </Button>
-
-                <p className="text-sm text-gray-500 mt-4">
-                  * Campos obrigatórios
-                </p>
               </form>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Acompanhar */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Acompanhar Manifestacao
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Input
+                placeholder="Digite o numero do protocolo"
+                value={protocoloConsulta}
+                onChange={(e) => setProtocoloConsulta(e.target.value)}
+                className="flex-1"
+              />
+              <Link href={protocoloConsulta ? `/institucional/ouvidoria/acompanhar?protocolo=${protocoloConsulta}` : '#'}>
+                <Button disabled={!protocoloConsulta}>
+                  <Search className="h-4 w-4 mr-2" />
+                  Consultar
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contato */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Phone className="h-10 w-10 text-camara-primary mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">Telefone</h3>
+              <p className="text-gray-600">(93) 3000-0000</p>
+              <p className="text-sm text-gray-500 mt-1">Seg-Sex, 8h-14h</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Mail className="h-10 w-10 text-camara-primary mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">E-mail</h3>
+              <p className="text-gray-600 text-sm break-all">ouvidoria@camara.gov.br</p>
+              <p className="text-sm text-gray-500 mt-1">Resposta em 48h</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <MapPin className="h-10 w-10 text-camara-primary mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">Presencial</h3>
+              <p className="text-gray-600 text-sm">Centro, Mojui dos Campos - PA</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <Clock className="h-10 w-10 text-camara-primary mx-auto mb-4" />
+              <h3 className="font-semibold text-gray-900 mb-2">Horario</h3>
+              <p className="text-gray-600">Segunda a Sexta</p>
+              <p className="text-gray-600">8:00 as 14:00</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Informações de Contato */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Outros Canais de Atendimento
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="camara-card">
-              <CardContent className="p-6 text-center">
-                <Phone className="h-10 w-10 text-camara-primary mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">Telefone</h3>
-                <p className="text-gray-600">(93) 3000-0000</p>
-                <p className="text-sm text-gray-500 mt-1">Seg-Sex, 8h-14h</p>
-              </CardContent>
-            </Card>
-
-            <Card className="camara-card">
-              <CardContent className="p-6 text-center">
-                <Mail className="h-10 w-10 text-camara-primary mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">E-mail</h3>
-                <p className="text-gray-600 text-sm break-all">
-                  ouvidoria@camara.gov.br
-                </p>
-                <p className="text-sm text-gray-500 mt-1">Resposta em 48h</p>
-              </CardContent>
-            </Card>
-
-            <Card className="camara-card">
-              <CardContent className="p-6 text-center">
-                <MapPin className="h-10 w-10 text-camara-primary mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">Presencial</h3>
-                <p className="text-gray-600 text-sm">
-                  Av. Principal, 123<br />
-                  Centro - {configuracao?.endereco?.cidade || 'Cidade'}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="camara-card">
-              <CardContent className="p-6 text-center">
-                <Clock className="h-10 w-10 text-camara-primary mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-900 mb-2">Horário</h3>
-                <p className="text-gray-600">
-                  Segunda a Sexta<br />
-                  8:00 às 14:00
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Prazos de Resposta */}
-        <div>
-          <Card className="camara-card border-l-4 border-l-camara-primary">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-camara-primary">
-                Prazos de Resposta
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+        {/* Prazos */}
+        <Card className="border-l-4 border-l-camara-primary">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-camara-primary">Prazos de Resposta</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { tipo: 'Reclamacao', desc: 'Analise e posicionamento oficial', dias: 15 },
+                { tipo: 'Denuncia', desc: 'Investigacao e providencias', dias: 30 },
+                { tipo: 'Sugestao/Elogio', desc: 'Confirmacao de recebimento', dias: 5 },
+                { tipo: 'Informacao', desc: 'Resposta completa', dias: 10 },
+              ].map((item) => (
+                <div key={item.tipo} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h4 className="font-semibold text-gray-900">Reclamação</h4>
-                    <p className="text-sm text-gray-600">
-                      Análise e posicionamento oficial
-                    </p>
+                    <h4 className="font-semibold text-gray-900">{item.tipo}</h4>
+                    <p className="text-sm text-gray-600">{item.desc}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-camara-primary">15</p>
-                    <p className="text-sm text-gray-600">dias úteis</p>
+                    <p className="text-2xl font-bold text-camara-primary">{item.dias}</p>
+                    <p className="text-sm text-gray-600">dias uteis</p>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Denúncia</h4>
-                    <p className="text-sm text-gray-600">
-                      Investigação e providências
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-camara-primary">30</p>
-                    <p className="text-sm text-gray-600">dias úteis</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Sugestão/Elogio</h4>
-                    <p className="text-sm text-gray-600">
-                      Confirmação de recebimento
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-camara-primary">5</p>
-                    <p className="text-sm text-gray-600">dias úteis</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Informação</h4>
-                    <p className="text-sm text-gray-600">
-                      Resposta completa
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-camara-primary">10</p>
-                    <p className="text-sm text-gray-600">dias úteis</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
 }
-

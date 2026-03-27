@@ -25,7 +25,7 @@ REPO_URL="https://github.com/junielsonfarias/LegNet.git"
 # ============================================================================
 # PROGRESSO
 # ============================================================================
-TOTAL_STEPS=14
+TOTAL_STEPS=15
 CURRENT_STEP=0
 INSTALL_START_TIME=0
 
@@ -39,11 +39,12 @@ STEP_NAMES=(
   "Clonar repositorio"
   "Configuracao (.env)"
   "Dependencias npm"
-  "Banco de dados (limpo)"
+  "Banco de dados (schema + tabelas)"
   "Compilar aplicacao"
   "Configurar Nginx"
   "Firewall e SSL"
   "Iniciar PM2"
+  "Verificacao final"
 )
 
 progress_bar() {
@@ -180,7 +181,7 @@ show_banner() {
   echo "  ║                                                      ║"
   echo "  ║    SISTEMA LEGISLATIVO - CAMARA MUNICIPAL            ║"
   echo "  ║    Instalador Automatizado para VPS Linux            ║"
-  echo "  ║    Versao 3.0                                        ║"
+  echo "  ║    Versao 3.1                                        ║"
   echo "  ║                                                      ║"
   echo "  ╚══════════════════════════════════════════════════════╝"
   echo -e "${NC}"
@@ -331,14 +332,17 @@ do_update() {
   # Etapa 5: Banco de dados
   step "Atualizando banco de dados"
   npx prisma db push >> "$LOG_FILE" 2>&1
-  log "Schema do banco atualizado (dados preservados)"
+  log "Schema do banco atualizado (novas tabelas criadas, dados preservados)"
+  info "Novos modelos adicionados (se houver): e-SIC, Ouvidoria, Organograma, Diarias, Verbas, Concursos, Conteudos Educativos, Transparencia"
 
   # Etapa 6: Build, Nginx e restart
   step "Recompilando e reiniciando"
   npm run build >> "$LOG_FILE" 2>&1
 
-  # Garantir pasta de uploads existe
+  # Garantir pastas necessarias existem
   mkdir -p "${INSTALL_DIR}/public/uploads/parlamentares" 2>/dev/null
+  mkdir -p "${INSTALL_DIR}/public/uploads/documentos" 2>/dev/null
+  mkdir -p "${INSTALL_DIR}/public/uploads/anexos" 2>/dev/null
 
   # Atualizar Nginx se configuracao mudou
   if [ -f /etc/nginx/sites-available/camara ]; then
@@ -374,9 +378,11 @@ do_update() {
   echo -e "  ${CYAN}Backup:${NC} $BACKUP_DIR"
   echo ""
   echo -e "  ${BOLD}Seus dados foram preservados:${NC}"
-  echo -e "  ${GREEN}✓${NC} Banco de dados intacto"
+  echo -e "  ${GREEN}✓${NC} Banco de dados intacto (novas tabelas criadas automaticamente)"
   echo -e "  ${GREEN}✓${NC} Configuracoes (.env) mantidas"
   echo -e "  ${GREEN}✓${NC} Parlamentares, sessoes, votacoes preservados"
+  echo -e "  ${GREEN}✓${NC} Novos modulos disponiveis: e-SIC, Ouvidoria, Organograma"
+  echo -e "  ${GREEN}✓${NC} Novos modulos disponiveis: Diarias, Verbas, Concursos"
   echo ""
 
   # Verificar
@@ -1077,6 +1083,20 @@ verify_installation() {
     warn "Aplicacao: pode levar alguns segundos para iniciar completamente"
   fi
 
+  # Verificar APIs de transparencia
+  if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/publico/conformidade | grep -q "200"; then
+    log "API Transparencia PNTP: ativa"
+  else
+    warn "API Transparencia PNTP: pode levar alguns segundos"
+  fi
+
+  # Verificar API e-SIC
+  if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/e-sic/estatisticas | grep -q "200"; then
+    log "API e-SIC: ativa"
+  else
+    warn "API e-SIC: pode levar alguns segundos"
+  fi
+
   return $ERRORS
 }
 
@@ -1129,7 +1149,10 @@ show_summary() {
   echo -e "  1. Acesse ${GREEN}${SITE_URL}${NC}"
   echo -e "  2. Faca login com as credenciais acima"
   echo -e "  3. Va em ${BOLD}Administracao > Configuracoes${NC} para personalizar"
-  echo -e "  4. Cadastre os parlamentares e comece a usar!"
+  echo -e "  4. Cadastre parlamentares, legislaturas e comissoes"
+  echo -e "  5. Configure o ${BOLD}Organograma${NC} em Admin > Transparencia > Organograma"
+  echo -e "  6. Cadastre ${BOLD}Conteudos Educativos${NC} em Admin > Atendimento > Conteudos"
+  echo -e "  7. O portal de ${BOLD}Transparencia${NC} e ${BOLD}e-SIC${NC} ja estao ativos!"
   echo ""
 
   # Salvar credenciais em arquivo seguro

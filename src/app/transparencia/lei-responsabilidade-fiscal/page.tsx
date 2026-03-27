@@ -20,11 +20,11 @@ import { transparenciaService } from '@/lib/transparencia-dados-service'
 // Mantido como Server Component - import do service é aceitável no servidor
 // A migração completa para Prisma será feita quando o modelo de dados for definido
 
-export default function LeiResponsabilidadeFiscalPage() {
-  const { data } = transparenciaService.getAll()
+export default async function LeiResponsabilidadeFiscalPage() {
+  const { data } = await transparenciaService.getAll()
   
   // Filtrar apenas itens da Lei de Responsabilidade Fiscal
-  const lrfItems = data.filter(item => item.categoria === 'lei-de-responsabilidade-fiscal')
+  const lrfItems = data.filter(item => item.categoriaSlug === 'lei-de-responsabilidade-fiscal')
 
   const getItemIcon = (subcategoria: string) => {
     const icons: Record<string, any> = {

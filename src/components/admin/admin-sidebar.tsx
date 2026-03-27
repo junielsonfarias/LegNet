@@ -23,6 +23,11 @@ import {
   Layers,
   ClipboardList,
   Megaphone,
+  MessageCircle,
+  Info,
+  Plane,
+  CreditCard,
+  GraduationCap,
   ChevronDown,
   ChevronRight,
   Workflow,
@@ -305,6 +310,54 @@ const navigationCategories: NavCategory[] = [
         href: '/admin/gestao-fiscal',
         icon: DollarSign,
         permissions: ['transparencia.manage']
+      },
+      {
+        name: 'Diárias',
+        href: '/admin/diarias',
+        icon: Plane,
+        permissions: ['transparencia.manage']
+      },
+      {
+        name: 'Verbas Indenizatórias',
+        href: '/admin/verbas-indenizatorias',
+        icon: CreditCard,
+        permissions: ['transparencia.manage']
+      },
+      {
+        name: 'Concursos',
+        href: '/admin/concursos',
+        icon: GraduationCap,
+        permissions: ['transparencia.manage']
+      },
+      {
+        name: 'Organograma',
+        href: '/admin/organograma',
+        icon: Building2,
+        permissions: ['transparencia.manage']
+      }
+    ]
+  },
+  {
+    name: 'Atendimento',
+    icon: MessageCircle,
+    items: [
+      {
+        name: 'e-SIC',
+        href: '/admin/e-sic',
+        icon: Info,
+        permissions: ['transparencia.view']
+      },
+      {
+        name: 'Ouvidoria',
+        href: '/admin/ouvidoria',
+        icon: MessageCircle,
+        permissions: ['transparencia.view']
+      },
+      {
+        name: 'Conteúdos Educativos',
+        href: '/admin/conteudos-educativos',
+        icon: GraduationCap,
+        permissions: ['publicacao.manage']
       }
     ]
   },

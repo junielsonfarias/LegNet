@@ -341,6 +341,37 @@ async function validarInclusaoOrdemDoDia(
 ### tramitacao-service.ts
 
 ```typescript
+// === CRUD Methods (extraidos das rotas API) ===
+
+// Lista tramitacoes com filtros e paginacao
+async function list(
+  filters: TramitacaoListFilters,
+  pagination: PaginationParams
+): Promise<{ tramitacoes, total, page, limit, totalPages }>
+
+// Busca tramitacao por ID com includes completos
+async function getById(id: string): Promise<Tramitacao>
+
+// Cria tramitacao com validacao, calculo de prazo e historico
+async function create(data: TramitacaoCreateData, userId?: string): Promise<Tramitacao>
+
+// Atualiza tramitacao com resolucao de unidade e historico
+async function update(id: string, data: TramitacaoUpdateData, userId?: string): Promise<Tramitacao>
+
+// Reabre tramitacao com recalculo de prazo
+async function reopen(id: string, observacoes?: string, userId?: string): Promise<Tramitacao>
+
+// Finaliza tramitacao com dataSaida e historico
+async function finalize(id: string, observacoes?: string, resultado?: string, userId?: string): Promise<Tramitacao>
+
+// Remove tramitacao com cascata (historicos + notificacoes)
+async function remove(id: string): Promise<{ id: string }>
+
+// Dashboard com aggregacoes (contagens, vencidas, tempo medio, stats por unidade/tipo)
+async function getDashboard(): Promise<DashboardPayload>
+
+// === Regras de Negocio ===
+
 // Avanca proposicao para proxima etapa do fluxo de tramitacao
 // RN-035: Toda movimentacao registrada com usuario, IP, dados anteriores/novos
 async function avancarEtapaFluxo(

@@ -1116,6 +1116,40 @@ Objetivo: Garantir transparencia e permitir que cidadaos acompanhem
 a ordem do dia com tempo habil para preparacao.
 ```
 
+### 12.10 e-SIC (Servico de Informacao ao Cidadao)
+
+```
+RN-140: e-SIC - PEDIDO DE INFORMACAO
+- Cidadao PODE solicitar informacao sem necessidade de login
+- Sistema DEVE gerar protocolo unico (ESIC-{ano}-{numero})
+- Prazo de resposta: 20 dias uteis (prorrogavel por mais 10)
+- Prorrogacao DEVE ser justificada
+- Cidadao PODE interpor recurso em caso de negativa (ate 3 instancias)
+- Todo historico de acoes DEVE ser registrado (auditoria)
+- CPF do cidadao NAO DEVE ser exibido em consultas publicas
+- Estatisticas de atendimento DEVEM ser publicas
+
+RN-141: OUVIDORIA
+- Cidadao PODE registrar manifestacao anonima
+- Tipos: reclamacao, sugestao, elogio, denuncia, solicitacao
+- Protocolo unico: OUV-{ano}-{numero}
+- Prazo padrao: 30 dias (15 dias para elogios)
+- Manifestante PODE avaliar satisfacao apos resposta (1-5)
+- Dados do manifestante anonimo NUNCA devem ser exibidos
+
+RN-142: PESSOAL E TRANSPARENCIA
+- Quadro de pessoal DEVE ser publicado (nome, cargo, lotacao)
+- Remuneracao DEVE ser publicada por cargo (LGPD)
+- Diarias DEVEM ser publicadas com destino, motivo, valor
+- Verbas indenizatorias DEVEM ser publicadas por parlamentar
+- Concursos DEVEM ter edital e documentos publicos
+
+RN-143: RELATORIO PARLAMENTAR
+- Relatorio de desempenho DEVE agregar: presenca, votacoes, proposicoes, comissoes
+- Diarias e verbas do parlamentar DEVEM constar no relatorio
+- Dados atualizados conforme prazos PNTP
+```
+
 ---
 
 ## 13. PORTAL INSTITUCIONAL
