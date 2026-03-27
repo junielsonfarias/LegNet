@@ -1,250 +1,184 @@
-'use client';
+'use client'
 
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Download, Calendar, Eye } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  FileText, Search, Calendar, Download,
+  Loader2, BookOpen, ArrowLeft
+} from 'lucide-react'
+import Link from 'next/link'
+import { formatDateBR, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
 
-interface Ata {
-  id: string;
-  numero: string;
-  tipo: string;
-  data: string;
-  descricao: string;
-  presidente: string;
-  secretario: string;
-  status: 'publicada' | 'pendente' | 'revisao';
-  arquivo?: string;
+interface SessaoAta {
+  id: string
+  numero: number
+  tipo: string
+  data: string
+  status: string
+  ata: string | null
+  arquivoAta: string | null
+  local: string | null
 }
 
-const atasMock: Ata[] = [];
-
 export default function AtasPage() {
-  const [numeroFiltro, setNumeroFiltro] = useState('');
-  const [descricao, setDescricao] = useState('');
-  const [dataInicio, setDataInicio] = useState('');
-  const [dataFim, setDataFim] = useState('');
-  const [tipoSelecionado, setTipoSelecionado] = useState('all');
-  const [statusSelecionado, setStatusSelecionado] = useState('all');
+  const [sessoes, setSessoes] = useState<SessaoAta[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busca, setBusca] = useState('')
+  const [filtroTipo, setFiltroTipo] = useState('all')
+  const [filtroAno, setFiltroAno] = useState('all')
 
-  const tipos = ['Ordinária', 'Extraordinária', 'Solene', 'Especial'];
-  const statusOptions = [
-    { value: 'publicada', label: 'Publicada' },
-    { value: 'pendente', label: 'Pendente' },
-    { value: 'revisao', label: 'Em Revisão' }
-  ];
+  const fetchAtas = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({ limit: '100', status: 'CONCLUIDA' })
+      if (filtroTipo !== 'all') params.set('tipo', filtroTipo)
 
-  const atasFiltradas = useMemo(() => {
-    return atasMock.filter(ata => {
-      const matchesNumero = numeroFiltro === '' || ata.numero.toLowerCase().includes(numeroFiltro.toLowerCase());
-      const matchesDescricao = descricao === '' || ata.descricao.toLowerCase().includes(descricao.toLowerCase());
-      const matchesTipo = tipoSelecionado === 'all' || ata.tipo === tipoSelecionado;
-      const matchesStatus = statusSelecionado === 'all' || ata.status === statusSelecionado;
-      
-      return matchesNumero && matchesDescricao && matchesTipo && matchesStatus;
-    });
-  }, [numeroFiltro, descricao, tipoSelecionado, statusSelecionado]);
+      const res = await fetch(`/api/dados-abertos/sessoes?${params}`)
+      const data = await res.json()
 
-  const handleLimpar = () => {
-    setNumeroFiltro('');
-    setDescricao('');
-    setDataInicio('');
-    setDataFim('');
-    setTipoSelecionado('all');
-    setStatusSelecionado('all');
-  };
+      if (data.dados) {
+        let items = data.dados as SessaoAta[]
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      publicada: 'bg-green-100 text-green-800',
-      pendente: 'bg-yellow-100 text-yellow-800',
-      revisao: 'bg-camara-primary/10 text-camara-primary'
-    };
-    const labels = {
-      publicada: 'Publicada',
-      pendente: 'Pendente',
-      revisao: 'Em Revisão'
-    };
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${badges[status as keyof typeof badges]}`}>
-        {labels[status as keyof typeof labels]}
-      </span>
-    );
-  };
+        if (filtroAno !== 'all') {
+          items = items.filter(s => new Date(s.data).getFullYear() === parseInt(filtroAno))
+        }
+
+        if (busca) {
+          const term = busca.toLowerCase()
+          items = items.filter(s =>
+            String(s.numero).includes(term) ||
+            (s.ata && s.ata.toLowerCase().includes(term)) ||
+            (SESSAO_TIPO[s.tipo] || s.tipo).toLowerCase().includes(term)
+          )
+        }
+
+        setSessoes(items)
+      }
+    } catch (err) {
+      console.error('Erro ao buscar atas:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [filtroTipo, filtroAno, busca])
+
+  useEffect(() => {
+    fetchAtas()
+  }, [fetchAtas])
+
+  const anos = Array.from(new Set(sessoes.map(s => new Date(s.data).getFullYear()))).sort((a, b) => b - a)
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Atas das Sessões Legislativas
+          <Button asChild variant="ghost" size="sm" className="mb-4">
+            <Link href="/legislativo/sessoes">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <BookOpen className="h-8 w-8 text-camara-primary" />
+            Atas das Sessoes
           </h1>
-          <p className="text-gray-600">
-            Consulta de atas das sessões realizadas pela Câmara Municipal
-          </p>
+          <p className="text-gray-600 mt-2">Atas das sessoes legislativas concluidas</p>
         </div>
 
+        {/* Filtros */}
         <Card className="mb-6">
-          <CardHeader className="bg-gray-100 border-b">
-            <CardTitle className="text-lg font-semibold text-gray-900">
-              Campos para pesquisa
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de Sessão
-                </label>
-                <Select value={tipoSelecionado} onValueChange={setTipoSelecionado}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os tipos</SelectItem>
-                    {tipos.map(tipo => (
-                      <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <CardContent className="pt-4 pb-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Buscar por numero ou conteudo..." className="pl-10" value={busca} onChange={e => setBusca(e.target.value)} />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <Select value={statusSelecionado} onValueChange={setStatusSelecionado}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    {statusOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Número da Ata
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Ex: 001/2024"
-                  value={numeroFiltro}
-                  onChange={(e) => setNumeroFiltro(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-
-              <div className="md:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descrição
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Digite palavras-chave para buscar na descrição"
-                  value={descricao}
-                  onChange={(e) => setDescricao(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            <p className="text-sm text-gray-600 italic mb-4">
-              Para usar as opções de filtro, escolha o campo para a pesquisa e clique no botão pesquisar
-            </p>
-
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={handleLimpar} variant="outline">
-                LIMPAR
-              </Button>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                EXPORTAÇÃO
-              </Button>
+              <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  {Object.entries(SESSAO_TIPO).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filtroAno} onValueChange={setFiltroAno}>
+                <SelectTrigger className="w-full sm:w-[130px]"><SelectValue placeholder="Ano" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {anos.map(a => (<SelectItem key={a} value={String(a)}>{a}</SelectItem>))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
-        <div className="mb-4">
-          <p className="text-lg font-semibold text-gray-900">
-            Foram encontradas {atasFiltradas.length} atas
-          </p>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-blue-600">{sessoes.length}</p><p className="text-xs text-muted-foreground">Total</p></CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-green-600">{sessoes.filter(s => s.ata || s.arquivoAta).length}</p><p className="text-xs text-muted-foreground">Com Ata</p></CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-yellow-600">{sessoes.filter(s => !s.ata && !s.arquivoAta).length}</p><p className="text-xs text-muted-foreground">Pendentes</p></CardContent></Card>
         </div>
 
-        <div className="space-y-4">
-          {atasFiltradas.length > 0 ? (
-            atasFiltradas.map((ata) => (
-              <Card key={ata.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-camara-primary">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
+        {/* Lista */}
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
+          </div>
+        ) : sessoes.length === 0 ? (
+          <Card><CardContent className="text-center py-12">
+            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">Nenhuma sessao concluida encontrada</p>
+          </CardContent></Card>
+        ) : (
+          <div className="space-y-3">
+            {sessoes.map(sessao => (
+              <Card key={sessao.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="py-4 px-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-camara-primary/10 p-2.5 rounded-lg shrink-0">
                         <FileText className="h-5 w-5 text-camara-primary" />
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {ata.numero}
-                        </h3>
-                        {getStatusBadge(ata.status)}
-                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
-                          {ata.tipo}
-                        </span>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <p className="text-gray-700 leading-relaxed">
-                          {ata.descricao}
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span className="font-semibold">Data:</span>
-                            <span>{ata.data}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">Presidente:</span>
-                            <span>{ata.presidente}</span>
-                          </div>
-                          <div className="flex items-center gap-2 md:col-span-2">
-                            <span className="font-semibold">Secretário:</span>
-                            <span>{ata.secretario}</span>
-                          </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">
+                          Sessao {SESSAO_TIPO[sessao.tipo] || sessao.tipo} No {sessao.numero}
+                        </h3>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {formatDateBR(sessao.data)}
+                          </span>
+                          {sessao.local && <span>{sessao.local}</span>}
                         </div>
                       </div>
                     </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver Ata
-                      </Button>
-                      {ata.arquivo && (
-                        <Button variant="outline" size="sm">
-                          <Download className="mr-2 h-4 w-4" />
-                          Baixar PDF
-                        </Button>
+                    <div className="flex items-center gap-2">
+                      {sessao.ata || sessao.arquivoAta ? (
+                        <>
+                          <Badge className="bg-green-100 text-green-800">Publicada</Badge>
+                          {sessao.arquivoAta && (
+                            <Button asChild variant="outline" size="sm">
+                              <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer">
+                                <Download className="h-4 w-4 mr-1" /> PDF
+                              </a>
+                            </Button>
+                          )}
+                        </>
+                      ) : (
+                        <Badge variant="secondary">Pendente</Badge>
                       )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">
-                  Nenhuma ata encontrada com os filtros aplicados.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }

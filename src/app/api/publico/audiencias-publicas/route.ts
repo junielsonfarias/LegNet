@@ -1,67 +1,27 @@
 /**
- * API Pública de Audiências Públicas
- * GET: Lista audiências públicas com filtros
+ * API Publica de Audiencias Publicas
+ * GET: Lista audiencias publicas
  *
- * Nota: Usa mock service até que o modelo Prisma seja criado
+ * TODO: Criar modelo AudienciaPublica no Prisma e migrar dados.
+ * Atualmente retorna dados vazios ate que o modelo seja implementado.
+ * O admin (/admin/audiencias-publicas) tambem usa mock e precisa ser migrado.
  */
 
 import { NextRequest } from 'next/server'
 import { createSuccessResponse } from '@/lib/error-handler'
-import { audienciasPublicasService } from '@/lib/parlamentares-data'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-
-  const status = searchParams.get('status')
-  const tipo = searchParams.get('tipo')
-  const search = searchParams.get('search')
-  const id = searchParams.get('id')
-  const limit = searchParams.get('limit')
-
-  // Buscar por ID específico
-  if (id) {
-    const audiencia = audienciasPublicasService.getById(id)
-    if (!audiencia) {
-      return createSuccessResponse(null, 'Audiência não encontrada')
-    }
-    return createSuccessResponse(audiencia)
-  }
-
-  // Buscar todas as audiências
-  let audiencias = audienciasPublicasService.getAll()
-
-  // Aplicar filtros
-  if (status && status !== 'all') {
-    audiencias = audiencias.filter(a => a.status === status)
-  }
-
-  if (tipo && tipo !== 'all') {
-    audiencias = audiencias.filter(a => a.tipo === tipo)
-  }
-
-  if (search) {
-    const termo = search.toLowerCase()
-    audiencias = audiencias.filter(a =>
-      a.titulo.toLowerCase().includes(termo) ||
-      a.descricao.toLowerCase().includes(termo) ||
-      a.objetivo.toLowerCase().includes(termo) ||
-      a.responsavel.toLowerCase().includes(termo)
-    )
-  }
-
-  // Aplicar limite
-  if (limit) {
-    audiencias = audiencias.slice(0, parseInt(limit))
-  }
-
-  // Estatísticas
-  const stats = audienciasPublicasService.getStats()
-
+  // Retornar estrutura vazia ate que o modelo Prisma seja criado
   return createSuccessResponse({
-    audiencias,
-    total: audiencias.length,
-    stats
+    audiencias: [],
+    total: 0,
+    stats: {
+      total: 0,
+      agendadas: 0,
+      realizadas: 0,
+      canceladas: 0
+    }
   })
 }

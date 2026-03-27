@@ -1,63 +1,105 @@
 /**
- * API Pública de Pautas de Sessões
- * GET: Lista pautas publicadas
- *
- * Nota: Usa mock service até que os modelos Prisma sejam migrados
- * A estrutura do mock difere da estrutura Prisma atual
+ * API Publica de Pautas de Sessoes
+ * GET: Lista pautas publicadas do banco de dados real (Prisma)
  */
 
 import { NextRequest } from 'next/server'
 import { createSuccessResponse } from '@/lib/error-handler'
-import { pautasSessoesService } from '@/lib/parlamentares-data'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-
-  const status = searchParams.get('status')
-  const tipo = searchParams.get('tipo')
   const search = searchParams.get('search')
   const id = searchParams.get('id')
-  const publicadas = searchParams.get('publicadas')
 
-  // Buscar por ID específico
+  // Buscar por ID especifico
   if (id) {
-    const pauta = pautasSessoesService.getById(id)
+    const pauta = await prisma.pautaSessao.findUnique({
+      where: { id },
+      include: {
+        sessao: true,
+        itens: {
+          include: { proposicao: { select: { id: true, tipo: true, numero: true, ano: true, ementa: true, status: true } } },
+          orderBy: [{ secao: 'asc' }, { ordem: 'asc' }]
+        }
+      }
+    })
     if (!pauta) {
-      return createSuccessResponse(null, 'Pauta não encontrada')
+      return createSuccessResponse(null, 'Pauta nao encontrada')
     }
-    return createSuccessResponse(pauta)
+    return createSuccessResponse(mapPauta(pauta))
   }
 
-  // Buscar pautas publicadas por padrão
-  let pautas = publicadas === 'false'
-    ? pautasSessoesService.getAll()
-    : pautasSessoesService.getPublicadas()
+  // Buscar pautas publicadas
+  const pautas = await prisma.pautaSessao.findMany({
+    where: {
+      status: { in: ['PUBLICADA', 'APROVADA'] }
+    },
+    include: {
+      sessao: true,
+      itens: {
+        include: { proposicao: { select: { id: true, tipo: true, numero: true, ano: true, ementa: true, status: true } } },
+        orderBy: [{ secao: 'asc' }, { ordem: 'asc' }]
+      }
+    },
+    orderBy: { sessao: { data: 'desc' } },
+    take: 50
+  })
 
-  // Aplicar filtros
-  if (status && status !== 'all') {
-    pautas = pautas.filter(p => p.status === status)
-  }
+  let resultado = pautas.map(mapPauta)
 
-  if (tipo && tipo !== 'all') {
-    pautas = pautas.filter(p => p.tipo === tipo)
-  }
-
+  // Filtro de busca
   if (search) {
     const termo = search.toLowerCase()
-    pautas = pautas.filter(p =>
+    resultado = resultado.filter(p =>
       p.titulo.toLowerCase().includes(termo) ||
-      p.descricao?.toLowerCase().includes(termo)
+      (p.descricao && p.descricao.toLowerCase().includes(termo))
     )
   }
 
-  // Estatísticas
-  const stats = pautasSessoesService.getStats()
+  // Estatisticas
+  const totalPautas = await prisma.pautaSessao.count()
+  const publicadas = await prisma.pautaSessao.count({ where: { status: { in: ['PUBLICADA', 'APROVADA'] } } })
 
   return createSuccessResponse({
-    pautas,
-    total: pautas.length,
-    stats
+    pautas: resultado,
+    total: resultado.length,
+    stats: {
+      total: totalPautas,
+      publicadas,
+      pendentes: totalPautas - publicadas
+    }
   })
+}
+
+function mapPauta(pauta: any) {
+  const sessao = pauta.sessao
+  return {
+    id: pauta.id,
+    sessaoId: pauta.sessaoId,
+    titulo: sessao ? `Sessao ${sessao.tipo === 'ORDINARIA' ? 'Ordinaria' : sessao.tipo === 'EXTRAORDINARIA' ? 'Extraordinaria' : sessao.tipo} No ${sessao.numero}` : 'Pauta',
+    descricao: pauta.observacoes,
+    data: sessao?.data?.toISOString() || null,
+    tipo: sessao?.tipo || 'ORDINARIA',
+    status: pauta.status,
+    local: sessao?.local || null,
+    itens: (pauta.itens || []).map((item: any) => ({
+      id: item.id,
+      ordem: item.ordem,
+      secao: item.secao,
+      titulo: item.titulo,
+      status: item.status,
+      tipoAcao: item.tipoAcao,
+      proposicao: item.proposicao ? {
+        id: item.proposicao.id,
+        tipo: item.proposicao.tipo,
+        numero: item.proposicao.numero,
+        ano: item.proposicao.ano,
+        ementa: item.proposicao.ementa
+      } : null
+    })),
+    totalItens: pauta.itens?.length || 0
+  }
 }
