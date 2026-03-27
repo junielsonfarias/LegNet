@@ -325,7 +325,11 @@ do_update() {
 
   # Etapa 4: Dependencias
   step "Atualizando dependencias"
-  npm ci --production=false >> "$LOG_FILE" 2>&1
+  npm ci --production=false >> "$LOG_FILE" 2>&1 || {
+    warn "npm ci falhou, tentando npm install..."
+    rm -rf node_modules >> "$LOG_FILE" 2>&1
+    npm install --production=false >> "$LOG_FILE" 2>&1
+  }
   npx prisma generate >> "$LOG_FILE" 2>&1
   log "Dependencias atualizadas"
 
@@ -354,7 +358,24 @@ do_update() {
     fi
   fi
 
+  # Verificar se o build gerou a pasta .next corretamente
+  if [ ! -d "${INSTALL_DIR}/.next" ]; then
+    error "Build falhou - pasta .next nao encontrada"
+    warn "Verifique o log: tail -100 $LOG_FILE"
+    exit 1
+  fi
+
   pm2 restart all >> "$LOG_FILE" 2>&1
+
+  # Aguardar app iniciar e verificar
+  sleep 5
+  if pm2 list 2>/dev/null | grep -q "errored\|stopped"; then
+    warn "PM2 reportou erro - verificando logs..."
+    pm2 logs --nostream --lines 20 >> "$LOG_FILE" 2>&1
+    # Tentar mais uma vez
+    pm2 restart all >> "$LOG_FILE" 2>&1
+    sleep 5
+  fi
   log "Aplicacao recompilada e reiniciada"
 
   # Barra final
@@ -760,7 +781,11 @@ install_dependencies() {
   cd "$INSTALL_DIR"
 
   info "Instalando pacotes npm (isso pode levar alguns minutos)..."
-  npm ci --production=false >> "$LOG_FILE" 2>&1
+  npm ci --production=false >> "$LOG_FILE" 2>&1 || {
+    warn "npm ci falhou, tentando npm install..."
+    rm -rf node_modules >> "$LOG_FILE" 2>&1
+    npm install --production=false >> "$LOG_FILE" 2>&1
+  }
   log "Dependencias npm instaladas"
 }
 
