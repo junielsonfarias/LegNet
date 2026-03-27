@@ -39,8 +39,11 @@ const API_BASE_URL = '/api/usuarios'
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Erro desconhecido' }))
-    throw new Error(error.message || `Erro ${response.status}`)
+    const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }))
+    const message = errorData.error || errorData.message || `Erro ${response.status}`
+    const details = errorData.details
+    const detailMsg = details?.length ? `: ${details.map((d: any) => d.message).join(', ')}` : ''
+    throw new Error(message + detailMsg)
   }
   const data = await response.json()
   return data.data || data

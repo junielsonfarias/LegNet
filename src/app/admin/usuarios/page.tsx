@@ -125,9 +125,9 @@ export default function UsuariosPage() {
           handleClose()
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar usuário:', error)
-      toast.error('Erro ao salvar usuário')
+      toast.error(error?.message || 'Erro ao salvar usuário')
     }
   }
 

@@ -13,7 +13,7 @@ const CreateUsuarioSchema = z.object({
   name: z.string().optional(),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA']),
+  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']),
   parlamentarId: z.string().optional(),
   ativo: z.boolean().default(true)
 })
@@ -22,7 +22,7 @@ const CreateUsuarioSchema = z.object({
 const ListUsuariosQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA']).optional(),
+  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']).optional(),
   ativo: z.coerce.boolean().optional(),
   search: z.string().optional()
 })
