@@ -69,6 +69,18 @@ function getAllowedOrigins(): string[] {
 }
 
 /**
+ * Verifica se a origem é de um deploy Vercel válido
+ */
+function isVercelOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin)
+    return url.hostname.endsWith('.vercel.app')
+  } catch {
+    return false
+  }
+}
+
+/**
  * Extrai a origem de uma requisição
  * Prioriza Origin, usa Referer como fallback
  */
@@ -139,8 +151,8 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
     )
   }
 
-  // Verificar se a origem está na lista de permitidos
-  if (!allowedOrigins.includes(origin)) {
+  // Verificar se a origem está na lista de permitidos ou é Vercel
+  if (!allowedOrigins.includes(origin) && !isVercelOrigin(origin)) {
     console.warn('[CSRF] Requisição rejeitada: origem não permitida', {
       origin,
       allowedOrigins,
