@@ -1,14 +1,15 @@
 /**
- * Parliamentarians Section - Mesa Diretora compacta + Vereadores em scroll horizontal
+ * Parliamentarians Section - Mesa Diretora compacta + Vereadores em carrossel animado
  */
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Users, ArrowRight, Crown, Star, Award } from 'lucide-react'
+import { slugify } from '@/lib/utils'
 
 interface Parlamentar {
   id: string
@@ -41,6 +42,11 @@ const cargoColor: Record<string, string> = {
   'SEGUNDO_SECRETARIO': 'bg-violet-100 text-violet-700',
 }
 
+function getPerfilUrl(p: Parlamentar) {
+  const slug = slugify(p.apelido || p.nome)
+  return `/parlamentares/${slug || p.id}`
+}
+
 function ParlamentarAvatar({ parlamentar, size = 'md' }: { parlamentar: Parlamentar; size?: 'sm' | 'md' | 'lg' }) {
   const sizes = { sm: 'w-10 h-10 text-sm', md: 'w-14 h-14 text-base', lg: 'w-20 h-20 text-xl' }
   const initials = (parlamentar.apelido || parlamentar.nome).split(' ').map(n => n[0]).slice(0, 2).join('')
@@ -65,6 +71,79 @@ function ParlamentarAvatar({ parlamentar, size = 'md' }: { parlamentar: Parlamen
   )
 }
 
+function VereadorCard({ p }: { p: Parlamentar }) {
+  return (
+    <Link
+      href={getPerfilUrl(p)}
+      className="group shrink-0 w-36 md:w-40"
+    >
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-1 text-center">
+        <div className="flex justify-center mb-3">
+          <div className="transition-transform duration-300 group-hover:scale-125">
+            <ParlamentarAvatar parlamentar={p} size="lg" />
+          </div>
+        </div>
+        <p className="font-semibold text-gray-800 text-sm truncate" title={p.apelido || p.nome}>
+          {p.apelido || p.nome}
+        </p>
+        <p className="text-xs text-gray-400 mt-0.5">{p.partido}</p>
+        <div className="mt-2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--municipal-primary)' }}>
+          Ver perfil
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function MarqueeCarousel({ vereadores }: { vereadores: Parlamentar[] }) {
+  const [paused, setPaused] = useState(false)
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  // Duplicar a lista para criar loop infinito
+  const items = [...vereadores, ...vereadores]
+
+  // Calcular duração baseado na quantidade (mais itens = mais tempo)
+  const duration = Math.max(vereadores.length * 4, 20)
+
+  return (
+    <div
+      className="relative overflow-hidden"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Gradientes nas bordas */}
+      <div className="absolute top-0 left-0 bottom-0 w-16 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
+
+      <div
+        ref={trackRef}
+        className="flex gap-4 py-2"
+        style={{
+          animation: `marquee-scroll ${duration}s linear infinite`,
+          animationPlayState: paused ? 'paused' : 'running',
+          width: 'max-content',
+        }}
+      >
+        {items.map((p, i) => (
+          <VereadorCard key={`${p.id}-${i}`} p={p} />
+        ))}
+      </div>
+
+      {/* CSS da animação */}
+      <style jsx>{`
+        @keyframes marquee-scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 export function ParliamentariansSection() {
   const [parlamentares, setParlamentares] = useState<Parlamentar[]>([])
   const [loading, setLoading] = useState(true)
@@ -82,6 +161,8 @@ export function ParliamentariansSection() {
 
   const mesa = parlamentares.filter(p => p.cargo && p.cargo !== 'VEREADOR')
   const vereadores = parlamentares.filter(p => !p.cargo || p.cargo === 'VEREADOR')
+  // Juntar todos para o carrossel (mesa + vereadores)
+  const todosParaCarrossel = [...mesa, ...vereadores]
 
   const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO']
   mesa.sort((a, b) => ordemCargos.indexOf(a.cargo || '') - ordemCargos.indexOf(b.cargo || ''))
@@ -130,10 +211,12 @@ export function ParliamentariansSection() {
                 return (
                   <Link
                     key={p.id}
-                    href="/parlamentares"
-                    className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all group"
+                    href={getPerfilUrl(p)}
+                    className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-300 transition-all group"
                   >
-                    <ParlamentarAvatar parlamentar={p} size="sm" />
+                    <div className="transition-transform duration-300 group-hover:scale-110">
+                      <ParlamentarAvatar parlamentar={p} size="sm" />
+                    </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900 text-sm truncate" title={p.apelido || p.nome}>
                         {p.apelido || p.nome}
@@ -158,35 +241,10 @@ export function ParliamentariansSection() {
           </div>
         )}
 
-        {/* Vereadores - Scroll horizontal */}
-        <div className="relative">
-          <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-            <div className="flex gap-4" style={{ minWidth: 'max-content' }}>
-              {vereadores.map((p) => (
-                <Link
-                  key={p.id}
-                  href="/parlamentares"
-                  className="group shrink-0 w-36 md:w-40"
-                >
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-300 hover:-translate-y-1 text-center">
-                    <div className="flex justify-center mb-3">
-                      <ParlamentarAvatar parlamentar={p} size="lg" />
-                    </div>
-                    <p className="font-semibold text-gray-800 text-sm truncate" title={p.apelido || p.nome}>
-                      {p.apelido || p.nome}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{p.partido}</p>
-                    <div className="mt-2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--municipal-primary)' }}>
-                      Ver perfil
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-          {/* Gradient fade on right edge */}
-          <div className="absolute top-0 right-0 bottom-4 w-12 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
-        </div>
+        {/* Vereadores - Carrossel animado */}
+        {todosParaCarrossel.length > 0 && (
+          <MarqueeCarousel vereadores={todosParaCarrossel} />
+        )}
 
         {/* Mobile CTA */}
         <div className="mt-6 text-center md:hidden">

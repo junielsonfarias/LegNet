@@ -134,7 +134,14 @@ export const proposicaoDbService = {
   async getByIdOrSlug(idOrSlug: string) {
     const includeConfig = {
       autor: { select: defaultAutorSelect },
-      sessao: { select: defaultSessaoSelect }
+      sessao: { select: defaultSessaoSelect },
+      tramitacoes: {
+        orderBy: { dataEntrada: 'desc' as const },
+        include: {
+          tipoTramitacao: { select: { nome: true } },
+          unidade: { select: { nome: true, sigla: true } }
+        }
+      }
     }
 
     if (isSlugProposicao(idOrSlug)) {

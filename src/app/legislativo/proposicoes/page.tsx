@@ -28,7 +28,7 @@ interface ProposicaoPublica {
     nome: string
     apelido: string | null
     partido: string | null
-  }
+  } | null
 }
 
 export default function ProposicoesPage() {
@@ -87,7 +87,7 @@ export default function ProposicoesPage() {
         p.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.ementa.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.numero.includes(searchTerm) ||
-        p.autor.nome.toLowerCase().includes(searchTerm.toLowerCase())
+        (p.autor?.nome || '').toLowerCase().includes(searchTerm.toLowerCase())
 
       const matchesTipo = !tipoFilter || p.tipo === tipoFilter
       const matchesStatus = !statusFilter || p.status === statusFilter
@@ -341,7 +341,7 @@ export default function ProposicoesPage() {
                           <div className="flex items-center space-x-2">
                             <User className="h-4 w-4 text-gray-500" />
                             <span className="text-gray-600">Autor:</span>
-                            <span className="font-medium">{proposicao.autor.apelido || proposicao.autor.nome}</span>
+                            <span className="font-medium">{proposicao.autor?.apelido || proposicao.autor?.nome || 'Autor nao informado'}</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4 text-gray-500" />
