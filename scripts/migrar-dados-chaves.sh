@@ -17,7 +17,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 INSTALL_DIR="/opt/camara"
-JSON_FILE="$INSTALL_DIR/docs/cm-chaves-MAXIMO (2).json"
+JSON_FILE="$INSTALL_DIR/docs/cm-chaves-limpo.json"
 LOG_FILE="/var/log/camara-migracao.log"
 
 log() { echo -e "  ${GREEN}✓${NC} $1"; echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"; }
