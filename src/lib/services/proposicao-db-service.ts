@@ -133,14 +133,45 @@ export const proposicaoDbService = {
    */
   async getByIdOrSlug(idOrSlug: string) {
     const includeConfig = {
-      autor: { select: defaultAutorSelect },
+      autor: { select: { ...defaultAutorSelect, foto: true } },
       sessao: { select: defaultSessaoSelect },
+      sessaoVotacao: { select: defaultSessaoSelect },
       tramitacoes: {
         orderBy: { dataEntrada: 'desc' as const },
         include: {
           tipoTramitacao: { select: { nome: true } },
           unidade: { select: { nome: true, sigla: true } }
         }
+      },
+      votacoes: {
+        include: {
+          parlamentar: { select: { id: true, nome: true, apelido: true, partido: true } }
+        },
+        orderBy: { createdAt: 'asc' as const }
+      },
+      emendas: {
+        include: {
+          autor: { select: { id: true, nome: true, apelido: true, partido: true } }
+        },
+        orderBy: { numero: 'asc' as const }
+      },
+      pareceres: {
+        include: {
+          comissao: { select: { id: true, nome: true, sigla: true } },
+          relator: { select: { id: true, nome: true, apelido: true } }
+        },
+        orderBy: { dataDistribuicao: 'desc' as const }
+      },
+      pautaItens: {
+        include: {
+          pauta: {
+            select: {
+              sessao: { select: { id: true, numero: true, data: true } }
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' as const },
+        take: 5
       }
     }
 
