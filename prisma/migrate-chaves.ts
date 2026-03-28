@@ -34,7 +34,7 @@ async function downloadFile(url: string, destDir: string, filename: string): Pro
   const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 100)
   const destPath = path.join(destDir, safe)
   if (fs.existsSync(destPath)) {
-    return `/uploads/${path.relative(path.join(process.cwd(), 'public'), destPath).replace(/\\/g, '/')}`
+    return `/${path.relative(path.join(process.cwd(), 'public'), destPath).replace(/\\/g, '/')}`
   }
   fs.mkdirSync(destDir, { recursive: true })
 
@@ -50,7 +50,7 @@ async function downloadFile(url: string, destDir: string, filename: string): Pro
       res.pipe(file)
       file.on('finish', () => {
         file.close()
-        resolve(`/uploads/${path.relative(path.join(process.cwd(), 'public'), destPath).replace(/\\/g, '/')}`)
+        resolve(`/${path.relative(path.join(process.cwd(), 'public'), destPath).replace(/\\/g, '/')}`)
       })
     })
     req.on('error', () => resolve(fullUrl))
@@ -149,7 +149,7 @@ async function importarMaterias(materias: any[], docsGerais: any[]) {
     const ano = extractAno(m.numero || '') || (m.mesEano ? new Date(m.mesEano).getFullYear() : 2025)
     const tipo = tiposMap[m.tipoMateria] || 'REQUERIMENTO'
 
-    const existente = await prisma.proposicao.findFirst({ where: { numero, ano, tipo } })
+    const existente = await prisma.proposicao.findFirst({ where: { numero: String(numero), ano, tipo } })
     if (existente) { idMap[m._id] = existente.id; continue }
 
     // Resolver autor
@@ -169,7 +169,7 @@ async function importarMaterias(materias: any[], docsGerais: any[]) {
     try {
       const proposicao = await prisma.proposicao.create({
         data: {
-          numero, ano, tipo,
+          numero: String(numero), ano, tipo,
           titulo: `${m.tipoMateria} ${m.numero || ''}`.trim(),
           ementa: m.ementa || `${m.tipoMateria} ${m.numero}`,
           status: statusMap[m.situacaoMateria] || 'APRESENTADA',
