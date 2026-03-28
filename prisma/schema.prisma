@@ -1820,6 +1820,7 @@ enum ModalidadeLicitacao {
   LEILAO
   DISPENSA
   INEXIGIBILIDADE
+  ADESAO_ATA
 }
 
 enum TipoLicitacao {
@@ -1933,6 +1934,7 @@ model Licitacao {
   tipo                  TipoLicitacao      @default(MENOR_PRECO)
   objeto                String             @db.Text
   valorEstimado         Decimal?           @db.Decimal(15, 2)
+  valorHomologado       Decimal?           @db.Decimal(15, 2)
   dataPublicacao        DateTime?
   dataAbertura          DateTime
   horaAbertura          String?
@@ -3255,6 +3257,9 @@ model Diaria {
   valorUnitario   Decimal  @db.Decimal(15, 2)
   valorTotal      Decimal  @db.Decimal(15, 2)
   comprovante     String?
+  numeroPortaria  String?
+  dataPortaria    DateTime?
+  status          String?  @default("PUBLICADA")
   ano             Int
   mes             Int
   createdAt       DateTime @default(now())

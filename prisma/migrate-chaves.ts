@@ -371,20 +371,22 @@ async function importarContratos(contratos: any[]) {
     }
 
     try {
+      const ano = parseInt(c.ano) || new Date().getFullYear()
       const contrato = await prisma.contrato.create({
         data: {
           numero: c.numero || `${c.ordemSequencial}/${c.ano}`,
+          ano,
           objeto: c.objeto,
-          valor: c.valor || 0,
-          fornecedor: c.nomeRazaoSocial || '',
+          contratado: c.nomeRazaoSocial || '',
           cnpjCpf: c.cpfCnpj || '',
-          tipo: c.tipoContrato || 'Contrato',
-          dataInicio: c.dataVigenciaIN ? new Date(c.dataVigenciaIN) : new Date(),
-          dataFim: c.dataVigenciaFIM ? new Date(c.dataVigenciaFIM) : null,
-          fiscal: c.fiscalContrato || '',
+          valorTotal: c.valor || 0,
+          dataAssinatura: c.dataVigenciaIN ? new Date(c.dataVigenciaIN) : new Date(),
+          vigenciaInicio: c.dataVigenciaIN ? new Date(c.dataVigenciaIN) : new Date(),
+          vigenciaFim: c.dataVigenciaFIM ? new Date(c.dataVigenciaFIM) : new Date(ano + 1, 0, 1),
+          fiscalContrato: c.fiscalContrato || null,
           arquivo: arquivoUrl,
-          ano: parseInt(c.ano) || new Date().getFullYear(),
           situacao: 'VIGENTE',
+          ...(c.licitacaoOrigem && idMap[c.licitacaoOrigem] && { licitacaoId: idMap[c.licitacaoOrigem] }),
         }
       })
       idMap[c._id] = contrato.id
@@ -405,17 +407,35 @@ async function importarLicitacoes(licitacoes: any[]) {
     if (l.deletado) continue
 
     try {
+      const modalidadeMap: Record<string, string> = {
+        'Inexigibilidade de Licitação': 'INEXIGIBILIDADE',
+        'Dispensa de Licitação': 'DISPENSA',
+        'Adesão a Ata de Registro de Preço': 'ADESAO_ATA',
+        'Convite': 'CONVITE',
+        'Pregão Eletrônico': 'PREGAO_ELETRONICO',
+        'Pregão Presencial': 'PREGAO_PRESENCIAL',
+        'Concorrência': 'CONCORRENCIA',
+        'Tomada de Preços': 'TOMADA_DE_PRECOS',
+      }
+      const situacaoMap: Record<string, string> = {
+        'Finalizado': 'HOMOLOGADA',
+        'Anulado': 'ANULADA',
+        'Em Andamento': 'EM_ANDAMENTO',
+        'Deserto': 'DESERTA',
+        'Suspenso': 'SUSPENSA',
+      }
+
       const licitacao = await prisma.licitacao.create({
         data: {
           numero: l.numero || `${l.ordemSequencial}/${l.ano}`,
+          ano: parseInt(l.ano) || new Date().getFullYear(),
           objeto: l.objeto || '',
-          modalidade: l.modalidade || 'Outros',
-          situacao: l.situacao === 'Finalizado' ? 'HOMOLOGADA' : l.situacao === 'Anulado' ? 'ANULADA' : 'EM_ANDAMENTO',
+          modalidade: (modalidadeMap[l.modalidade] || 'DISPENSA') as any,
+          situacao: (situacaoMap[l.situacao] || 'EM_ANDAMENTO') as any,
           valorEstimado: l.valorEstimado || 0,
           valorHomologado: l.valorHomologado || null,
           dataAbertura: l.dataAbertura ? new Date(l.dataAbertura) : new Date(),
           dataPublicacao: l.dataPubli ? new Date(l.dataPubli) : null,
-          ano: parseInt(l.ano) || new Date().getFullYear(),
         }
       })
       idMap[l._id] = licitacao.id
@@ -436,20 +456,29 @@ async function importarDiarias(diarias: any[]) {
     if (di.deletado) continue
 
     try {
+      const dataRef = di.inicioViagem || di['Created Date']
+      const anoRef = new Date(dataRef).getFullYear()
+      const mesRef = new Date(dataRef).getMonth() + 1
+      const qtd = di.quantidadeDiarias || 1
+      const valorTotal = di.valorTotal || 0
+      const valorUnit = qtd > 0 ? valorTotal / qtd : valorTotal
+
       await prisma.diaria.create({
         data: {
-          beneficiario: di.nome || '',
+          nome: di.nome || '',
           cargo: di.cargo || '',
           destino: di.destino || '',
           motivo: di.motivo || '',
-          valor: di.valorTotal || 0,
-          quantidade: di.quantidadeDiarias || 1,
+          valorUnitario: valorUnit,
+          valorTotal: valorTotal,
+          quantidade: qtd,
           dataInicio: di.inicioViagem ? new Date(di.inicioViagem) : new Date(),
-          dataFim: di.fimViagem ? new Date(di.fimViagem) : null,
-          numeroPortaria: di.numeroPortaria || '',
+          dataFim: di.fimViagem ? new Date(di.fimViagem) : new Date(dataRef),
+          numeroPortaria: di.numeroPortaria || null,
           dataPortaria: di.dataPortaria ? new Date(di.dataPortaria) : null,
-          ano: new Date(di.inicioViagem || di['Created Date']).getFullYear(),
           status: 'PUBLICADA',
+          ano: anoRef,
+          mes: mesRef,
         }
       })
       importados++
