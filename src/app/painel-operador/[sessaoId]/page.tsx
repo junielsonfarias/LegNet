@@ -499,7 +499,7 @@ export default function PainelOperadorPage() {
     : '--/--/----'
 
   // Total de parlamentares = maior entre presencas registradas e mandatos da legislatura
-  const totalMandatos = sessao.legislatura?.mandatos?.filter((m: any) => m.ativo)?.length || 0
+  const totalMandatos = (sessao.legislatura as any)?.mandatos?.filter((m: any) => m.ativo)?.length || 0
   const totalPresencasRegistradas = sessao.presencas?.length || 0
   const totalParlamentares = Math.max(totalMandatos, totalPresencasRegistradas) || totalPresencasRegistradas
   const presentes = sessao.presencas?.filter((p: any) => p.presente).length || 0
