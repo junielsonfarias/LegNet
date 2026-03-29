@@ -272,74 +272,93 @@ export function Header() {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[85vw] max-w-[400px] overflow-y-auto">
+              <SheetContent side="right" className="w-[85vw] max-w-[400px] overflow-y-auto p-0">
                 <SheetTitle className="sr-only">Menu de navegacao</SheetTitle>
                 <SheetDescription className="sr-only">Navegue pelas secoes do portal</SheetDescription>
-                <div className="flex flex-col space-y-6 mt-4 animate-in slide-in-from-right duration-300">
-                  <SearchButton className="w-full" />
 
-                  {/* Link Área Restrita no mobile */}
+                {/* Header do menu */}
+                <div className="sticky top-0 z-10 bg-white border-b px-4 pt-4 pb-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-bold text-gray-900">Menu</span>
+                  </div>
+                  <SearchButton className="w-full" />
+                </div>
+
+                <div className="px-3 py-3 space-y-1">
+                  {/* Link Área Restrita */}
                   <Link
                     href="/login"
-                    className="flex items-center gap-2 px-4 py-3 bg-camara-primary text-white rounded-lg hover:bg-camara-primary/90 transition-colors"
+                    className="flex items-center gap-3 px-3 py-2.5 bg-gradient-to-r from-camara-primary to-blue-700 text-white rounded-xl hover:opacity-90 transition-opacity shadow-sm"
                     onClick={() => setIsOpen(false)}
                   >
-                    <User className="h-5 w-5" />
-                    <span className="font-medium">Área Restrita</span>
+                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <span className="font-semibold text-sm">Area Restrita</span>
                   </Link>
 
+                  {/* Separador */}
+                  <div className="py-1.5">
+                    <div className="h-px bg-gray-100" />
+                  </div>
+
+                  {/* Menu sections */}
                   {menuItems.map((section, sectionIndex) => (
-                    <div key={section.title} className="animate-in slide-in-from-right duration-300" style={{ animationDelay: `${sectionIndex * 50}ms` }}>
+                    <div key={section.title}>
                       {section.items.length === 0 && section.href ? (
                         <Link
                           href={section.href}
-                          className="flex items-center gap-2 py-3 px-2 hover:bg-gray-50 rounded-lg transition-all"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
                           onClick={() => setIsOpen(false)}
                         >
-                          <section.icon className="h-4 w-4 text-camara-primary" />
-                          <span className="font-semibold text-camara-primary">
-                            {section.title}
-                          </span>
+                          <div className="w-8 h-8 rounded-lg bg-camara-primary/10 flex items-center justify-center">
+                            <section.icon className="h-4 w-4 text-camara-primary" />
+                          </div>
+                          <span className="font-semibold text-sm text-gray-900">{section.title}</span>
                         </Link>
                       ) : (
                         <>
                           <button
-                            className="flex items-center justify-between w-full py-3 px-2 hover:bg-gray-50 rounded-lg transition-all"
+                            className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
                             onClick={() => setActiveMobileSection(activeMobileSection === section.title ? null : section.title)}
                           >
-                            <div className="flex items-center gap-2">
-                              <section.icon className="h-4 w-4 text-camara-primary" />
-                              <span className="font-semibold text-camara-primary">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                                activeMobileSection === section.title ? 'bg-camara-primary text-white' : 'bg-camara-primary/10 text-camara-primary'
+                              }`}>
+                                <section.icon className="h-4 w-4" />
+                              </div>
+                              <span className={`font-semibold text-sm transition-colors ${
+                                activeMobileSection === section.title ? 'text-camara-primary' : 'text-gray-900'
+                              }`}>
                                 {section.title}
                               </span>
                             </div>
                             <ChevronDown
                               className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                                activeMobileSection === section.title ? 'rotate-180' : ''
+                                activeMobileSection === section.title ? 'rotate-180 text-camara-primary' : ''
                               }`}
                             />
                           </button>
                           <div
                             className={`overflow-hidden transition-all duration-200 ease-in-out ${
-                              activeMobileSection === section.title ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                              activeMobileSection === section.title ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
                             }`}
                           >
-                            <div className="space-y-0.5 ml-6 pb-2">
+                            <div className="ml-[44px] mr-2 py-1 space-y-0.5 border-l-2 border-camara-primary/20 pl-3">
                               {section.items.map((item) => (
                                 <Link
                                   key={item.name}
                                   href={item.href}
-                                  className="block py-2.5 text-sm text-gray-600 hover:text-camara-primary hover:bg-gray-50 rounded px-2 transition-colors"
+                                  className="flex items-center justify-between py-2 px-2 text-sm text-gray-600 hover:text-camara-primary hover:bg-camara-primary/5 rounded-lg transition-colors"
                                   onClick={() => setIsOpen(false)}
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <span>{item.name}</span>
-                                    {item.badge && (
-                                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">
-                                        {item.badge}
-                                      </span>
-                                    )}
-                                  </div>
+                                  <span>{item.name}</span>
+                                  {item.badge && (
+                                    <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full">
+                                      {item.badge}
+                                    </span>
+                                  )}
                                 </Link>
                               ))}
                             </div>
@@ -348,6 +367,30 @@ export function Header() {
                       )}
                     </div>
                   ))}
+
+                  {/* Footer do menu */}
+                  <div className="pt-2 mt-2 border-t border-gray-100">
+                    <Link
+                      href="/meus-favoritos"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Heart className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <span className="text-sm text-gray-600">Meus Favoritos</span>
+                    </Link>
+                    <Link
+                      href="#accessibility-toolbar"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Accessibility className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <span className="text-sm text-gray-600">Acessibilidade</span>
+                    </Link>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
