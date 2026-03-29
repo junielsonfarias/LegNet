@@ -68,10 +68,10 @@ export function SessaoCard({
                 <Calendar className="h-3.5 w-3.5" />
                 {formatDateTime(sessao.data)}
               </span>
-              {sessao.horarioInicio && (
+              {sessao.horario && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  {sessao.horarioInicio}
+                  {sessao.horario}
                 </span>
               )}
               <span className="flex items-center gap-1">
@@ -114,7 +114,7 @@ export function SessaoCard({
         <div className="flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5 text-gray-600">
             <Users className="h-4 w-4 text-gray-400" />
-            <span>{sessao.presidente?.apelido || sessao.presidente?.nome || 'Presidente nao definido'}</span>
+            <span>{(sessao.presidente as any)?.apelido || sessao.presidente?.nome || 'Presidente nao definido'}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <ClipboardList className="h-4 w-4 text-gray-400" />
