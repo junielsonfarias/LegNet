@@ -28,13 +28,19 @@ function getItemStatusBadge(item: PautaItem) {
   if (status === 'EM_DISCUSSAO') {
     return { className: 'bg-yellow-600/30 text-yellow-200 border-yellow-400/50', label: 'Em Discussao' }
   }
+  if (status === 'ADIADO') {
+    return { className: 'bg-amber-600/30 text-amber-200 border-amber-400/50', label: 'Adiado' }
+  }
+  if (status === 'RETIRADO') {
+    return { className: 'bg-rose-600/30 text-rose-200 border-rose-400/50', label: 'Retirado' }
+  }
   if (status === 'VISTA') {
     return { className: 'bg-purple-600/30 text-purple-200 border-purple-400/50', label: 'Vista' }
   }
   if (status === 'PENDENTE') {
     return { className: 'bg-gray-600/30 text-gray-200 border-gray-400/50', label: 'Pendente' }
   }
-  return { className: 'bg-gray-600/30 text-gray-200 border-gray-400/50', label: status }
+  return { className: 'bg-gray-600/30 text-gray-200 border-gray-400/50', label: status?.replace(/_/g, ' ') || 'Indefinido' }
 }
 
 export function ItemAtual({ itemAtual }: ItemAtualProps) {

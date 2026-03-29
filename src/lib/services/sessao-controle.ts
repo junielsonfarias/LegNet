@@ -338,6 +338,14 @@ export async function finalizarSessaoControle(sessaoId: string) {
     })
   ])
 
+  // Limpar estado em memória e cronômetros para evitar memory leaks
+  try {
+    const { limparEstadoSessao } = await import('./painel-tempo-real-service')
+    limparEstadoSessao(sessaoId)
+  } catch {
+    // Não bloqueia finalização se cleanup falhar
+  }
+
   return prisma.sessao.findUnique({ where: { id: sessaoId } })
 }
 
@@ -363,6 +371,12 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
     throw new ValidationError('A sessão deve estar em andamento para iniciar um item')
   }
 
+  // Verificar quorum como warning antecipado (não bloqueia discussão, mas alerta operador)
+  const quorumCheck = await verificarQuorumInstalacao(sessaoId)
+  if (!quorumCheck.temQuorum) {
+    console.warn(`[iniciarItemPauta] Quorum insuficiente ao iniciar item: ${quorumCheck.detalhes}`)
+  }
+
   const item = await prisma.pautaItem.findUnique({
     where: { id: itemId },
     include: {
@@ -377,6 +391,21 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
 
   if (!['PENDENTE', 'ADIADO', 'EM_DISCUSSAO'].includes(item.status)) {
     throw new ValidationError('Item não pode ser iniciado no estado atual')
+  }
+
+  // Garantir que não há outro item ativo (EM_DISCUSSAO ou EM_VOTACAO) na mesma sessão
+  const itemAtivo = await prisma.pautaItem.findFirst({
+    where: {
+      pauta: { sessaoId },
+      status: { in: ['EM_DISCUSSAO', 'EM_VOTACAO'] },
+      id: { not: itemId }
+    },
+    select: { id: true, titulo: true, status: true }
+  })
+  if (itemAtivo) {
+    throw new ValidationError(
+      `Já existe um item em ${itemAtivo.status === 'EM_VOTACAO' ? 'votação' : 'discussão'}: "${itemAtivo.titulo}". Finalize-o antes de iniciar outro.`
+    )
   }
 
   const agora = new Date()
@@ -871,8 +900,8 @@ export async function reordenarItemPauta(
     throw new ValidationError('Item inválido para a sessão informada')
   }
 
-  if (item.status !== 'PENDENTE') {
-    throw new ValidationError('Só é possível reordenar itens pendentes')
+  if (!['PENDENTE', 'ADIADO'].includes(item.status)) {
+    throw new ValidationError('Só é possível reordenar itens pendentes ou adiados')
   }
 
   // Buscar todos os itens da mesma seção
@@ -1010,7 +1039,22 @@ export async function finalizarItemPauta(
   let contagemVotos: Awaited<ReturnType<typeof contabilizarVotos>> | null = null
 
   if (eraVotacao && temProposicao && (resultado === 'APROVADO' || resultado === 'REJEITADO')) {
-    // Usar quórum configurável passando o tipo de proposição
+    // Verificar votos pendentes antes de finalizar
+    const totalPresentes = await prisma.presencaSessao.count({
+      where: { sessaoId, presente: true }
+    })
+    const totalVotosRegistrados = await prisma.votacao.count({
+      where: {
+        proposicaoId: item.proposicaoId!,
+        turno: item.turnoAtual || 1,
+        voto: { not: 'AUSENTE' }
+      }
+    })
+    if (totalVotosRegistrados < totalPresentes) {
+      console.warn(`[finalizarItemPauta] Votacao finalizada com ${totalPresentes - totalVotosRegistrados} voto(s) pendente(s) de ${totalPresentes} presentes`)
+    }
+
+    // Contabilizar votos do turno atual
     contagemVotos = await contabilizarVotos(item.proposicaoId!, {
       tipoProposicao: item.proposicao!.tipo,
       sessaoId,

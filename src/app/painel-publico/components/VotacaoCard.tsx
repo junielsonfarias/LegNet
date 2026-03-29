@@ -1,9 +1,30 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Vote } from 'lucide-react'
+import { Vote, Clock } from 'lucide-react'
 import type { EstatisticasVotacao } from '../types'
+
+function VotacaoTimer() {
+  const [segundos, setSegundos] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSegundos(s => s + 1)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const min = Math.floor(segundos / 60)
+  const sec = segundos % 60
+  return (
+    <div className="flex items-center gap-1.5 text-purple-300/80 text-sm">
+      <Clock className="h-4 w-4" />
+      <span className="font-mono">{String(min).padStart(2, '0')}:{String(sec).padStart(2, '0')}</span>
+    </div>
+  )
+}
 
 interface VotacaoEmAndamentoProps {
   estatisticas: EstatisticasVotacao
@@ -14,9 +35,10 @@ export function VotacaoEmAndamento({ estatisticas, totalPresentes }: VotacaoEmAn
   return (
     <Card className="bg-white/10 backdrop-blur-lg border border-purple-400/50 text-white">
       <CardHeader>
-        <CardTitle className="text-xl font-bold flex items-center justify-center">
-          <Vote className="h-6 w-6 mr-2 text-purple-400 animate-pulse" />
+        <CardTitle className="text-xl font-bold flex items-center justify-center gap-3">
+          <Vote className="h-6 w-6 text-purple-400 animate-pulse" />
           Votacao em Andamento
+          <VotacaoTimer />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

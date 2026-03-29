@@ -159,6 +159,22 @@ export default function NoticiasAdminPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validar tipo de arquivo
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!tiposPermitidos.includes(file.type)) {
+      toast.error('Tipo de arquivo nao permitido. Use: JPG, PNG, WebP ou GIF')
+      e.target.value = ''
+      return
+    }
+
+    // Validar tamanho (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error('Arquivo muito grande. Tamanho maximo: 5MB')
+      e.target.value = ''
+      return
+    }
+
     const formDataUpload = new FormData()
     formDataUpload.append('file', file)
     formDataUpload.append('folder', 'noticias')

@@ -53,8 +53,13 @@ export default function ConveniosAdminPage() {
       valorRepasse: formData.valorRepasse ? parseFloat(formData.valorRepasse) : null,
       valorContrapartida: formData.valorContrapartida ? parseFloat(formData.valorContrapartida) : null
     }
-    if (editingId) { await update(editingId, data) } else { await create(data) }
-    resetForm()
+    try {
+      if (editingId) { await update(editingId, data) } else { await create(data) }
+      resetForm()
+      toast.success(editingId ? 'Convenio atualizado com sucesso' : 'Convenio criado com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar convenio')
+    }
   }
 
   const handleEdit = (convenio: Convenio) => {
@@ -77,7 +82,14 @@ export default function ConveniosAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este convenio?')) { await remove(id) }
+    if (confirm('Tem certeza que deseja excluir este convenio?')) {
+      try {
+        await remove(id)
+        toast.success('Convenio excluido com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir convenio')
+      }
+    }
   }
 
   const getSituacaoColor = (situacao: string) => {

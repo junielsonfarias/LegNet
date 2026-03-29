@@ -63,8 +63,13 @@ export default function ContratosAdminPage() {
       licitacaoId: formData.licitacaoId || null,
       contratoOrigemId: formData.contratoOrigemId || null
     }
-    if (editingId) { await update(editingId, data) } else { await create(data) }
-    resetForm()
+    try {
+      if (editingId) { await update(editingId, data) } else { await create(data) }
+      resetForm()
+      toast.success(editingId ? 'Contrato atualizado com sucesso' : 'Contrato criado com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar contrato')
+    }
   }
 
   const handleEdit = (contrato: Contrato) => {
@@ -85,7 +90,14 @@ export default function ContratosAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este contrato?')) { await remove(id) }
+    if (confirm('Tem certeza que deseja excluir este contrato?')) {
+      try {
+        await remove(id)
+        toast.success('Contrato excluido com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir contrato')
+      }
+    }
   }
 
   const getSituacaoColor = (situacao: string) => {

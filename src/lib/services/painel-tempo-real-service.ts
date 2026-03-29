@@ -137,37 +137,33 @@ const estadoAtivo: Map<string, EstadoPainel> = new Map()
 const cronometros: Map<string, NodeJS.Timeout> = new Map()
 
 /**
- * Locks para evitar race conditions em operações de votação
- * Chave: `${sessaoId}-${parlamentarId}`
+ * Locks para evitar chamadas duplicadas em operações de votação.
+ * NOTA: Em serverless (Vercel), este lock é local ao container e não é distribuído.
+ * A proteção real contra duplicatas é o unique constraint do Prisma:
+ * @@unique([proposicaoId, parlamentarId, turno]) no model Votacao.
+ * O upsert com $transaction garante atomicidade no banco.
+ * Este lock apenas evita queries desnecessárias no mesmo container.
  */
 const votacaoLocks: Map<string, boolean> = new Map()
 
-/**
- * Adquire lock para votação de um parlamentar em uma sessão
- * Retorna true se conseguiu adquirir, false se já está locked
- */
 function acquireVoteLock(sessaoId: string, parlamentarId: string): boolean {
   const key = `${sessaoId}-${parlamentarId}`
-  if (votacaoLocks.get(key)) {
-    return false
-  }
+  if (votacaoLocks.get(key)) return false
   votacaoLocks.set(key, true)
+  // Auto-release após 5s para evitar deadlocks em caso de erro não tratado
+  setTimeout(() => votacaoLocks.delete(key), 5000)
   return true
 }
 
-/**
- * Libera lock de votação
- */
 function releaseVoteLock(sessaoId: string, parlamentarId: string): void {
-  const key = `${sessaoId}-${parlamentarId}`
-  votacaoLocks.delete(key)
+  votacaoLocks.delete(`${sessaoId}-${parlamentarId}`)
 }
 
 /**
  * Limpa todos os cronômetros de uma sessão específica
  * Previne memory leaks ao finalizar ou limpar uma sessão
  */
-function limparCronometrosSessao(sessaoId: string): void {
+export function limparCronometrosSessao(sessaoId: string): void {
   const prefixos = ['sessao-', 'votacao-', 'item-', 'discurso-']
   for (const prefixo of prefixos) {
     const cronometroId = `${prefixo}${sessaoId}`

@@ -113,13 +113,17 @@ export default function LicitacoesAdminPage() {
       valorEstimado: formData.valorEstimado ? parseFloat(formData.valorEstimado) : null
     }
 
-    if (editingId) {
-      await update(editingId, data)
-    } else {
-      await create(data)
+    try {
+      if (editingId) {
+        await update(editingId, data)
+      } else {
+        await create(data)
+      }
+      resetForm()
+      toast.success(editingId ? 'Licitacao atualizada com sucesso' : 'Licitacao criada com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar licitacao')
     }
-
-    resetForm()
   }
 
   const handleEdit = (licitacao: Licitacao) => {
@@ -148,7 +152,12 @@ export default function LicitacoesAdminPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta licitacao?')) {
-      await remove(id)
+      try {
+        await remove(id)
+        toast.success('Licitacao excluida com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir licitacao')
+      }
     }
   }
 

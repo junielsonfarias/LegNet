@@ -20,6 +20,7 @@ import {
   Key
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 import { usuariosApi } from '@/lib/api/usuarios-api'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 
@@ -38,6 +39,7 @@ interface Usuario {
 }
 
 export default function UsuariosPage() {
+  const { data: session } = useSession()
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -145,17 +147,31 @@ export default function UsuariosPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este usuário?')) {
+    // Impedir auto-exclusão
+    if (session?.user?.id === id) {
+      toast.error('Voce nao pode excluir seu proprio usuario')
+      return
+    }
+
+    // Impedir exclusão do último admin
+    const admins = usuarios.filter(u => u.role === 'ADMIN' && u.ativo)
+    const userToDelete = usuarios.find(u => u.id === id)
+    if (userToDelete?.role === 'ADMIN' && admins.length <= 1) {
+      toast.error('Nao e possivel excluir o unico administrador do sistema')
+      return
+    }
+
+    if (!confirm('Tem certeza que deseja excluir este usuario?')) {
       return
     }
 
     try {
       await usuariosApi.delete(id)
-      toast.success('Usuário excluído com sucesso!')
+      toast.success('Usuario excluido com sucesso!')
       carregarUsuarios()
     } catch (error) {
-      console.error('Erro ao excluir usuário:', error)
-      toast.error('Erro ao excluir usuário')
+      console.error('Erro ao excluir usuario:', error)
+      toast.error('Erro ao excluir usuario')
     }
   }
 

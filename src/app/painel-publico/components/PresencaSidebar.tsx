@@ -107,7 +107,8 @@ function VotacaoMode({ votacoes, presentes, estatisticas }: VotacaoModeProps) {
       </div>
 
       {/* Lista de Votos Registrados */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent pr-1">
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
         {votacoes.map((voto) => {
           const nome = voto.parlamentar.apelido || voto.parlamentar.nome.split(' ')[0]
           const initials = getInitials(nome)
@@ -147,6 +148,7 @@ function VotacaoMode({ votacoes, presentes, estatisticas }: VotacaoModeProps) {
           </p>
         )}
       </div>
+      </div>
     </>
   )
 }
@@ -184,32 +186,58 @@ function PresencaMode({ presentes, ausentes, totalParlamentares, percentualPrese
         </Badge>
       </div>
 
-      {/* Barra de Progresso Compacta */}
+      {/* Barra de Quorum com indicador de suficiência */}
       <div className="mb-4">
-        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
-            style={{ width: `${percentualPresenca}%` }}
-          />
-        </div>
-        <p className="text-[10px] text-center text-blue-300 mt-1">
-          {presentes.length}/{totalParlamentares} parlamentares
-        </p>
+        {(() => {
+          const quorumMinimo = Math.floor(totalParlamentares / 2) + 1
+          const temQuorum = presentes.length >= quorumMinimo
+          const corBarra = temQuorum
+            ? 'from-green-500 to-green-400'
+            : presentes.length >= quorumMinimo - 1
+              ? 'from-yellow-500 to-yellow-400'
+              : 'from-red-500 to-red-400'
+          const corTexto = temQuorum ? 'text-green-300' : presentes.length >= quorumMinimo - 1 ? 'text-yellow-300' : 'text-red-300'
+          return (
+            <>
+              <div className="h-2.5 bg-gray-700 rounded-full overflow-hidden relative">
+                <div
+                  className={`h-full bg-gradient-to-r ${corBarra} transition-all duration-500`}
+                  style={{ width: `${percentualPresenca}%` }}
+                />
+                {/* Marcador de quorum mínimo */}
+                <div
+                  className="absolute top-0 bottom-0 w-0.5 bg-white/40"
+                  style={{ left: `${totalParlamentares > 0 ? (quorumMinimo / totalParlamentares) * 100 : 50}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-[10px] text-blue-300">
+                  {presentes.length}/{totalParlamentares} parlamentares
+                </p>
+                <p className={`text-[10px] font-semibold ${corTexto}`}>
+                  {temQuorum ? '✓ Quorum atingido' : `Faltam ${quorumMinimo - presentes.length}`}
+                </p>
+              </div>
+            </>
+          )
+        })()}
       </div>
 
       {/* Grid Unico: Presentes primeiro, Ausentes depois */}
-      <div className="grid grid-cols-2 gap-1">
-        {presentes.sort(sortByName).map((p) => (
-          <ParlamentarCard key={p.id} presenca={p} presente={true} />
-        ))}
-        {ausentes.sort(sortByName).map((p) => (
-          <ParlamentarCard key={p.id} presenca={p} presente={false} />
-        ))}
-        {presentes.length === 0 && ausentes.length === 0 && (
-          <p className="text-[10px] text-gray-400 text-center py-2 col-span-full">
-            Nenhum parlamentar registrado
-          </p>
-        )}
+      <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent pr-1">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-1">
+          {presentes.sort(sortByName).map((p) => (
+            <ParlamentarCard key={p.id} presenca={p} presente={true} />
+          ))}
+          {ausentes.sort(sortByName).map((p) => (
+            <ParlamentarCard key={p.id} presenca={p} presente={false} />
+          ))}
+          {presentes.length === 0 && ausentes.length === 0 && (
+            <p className="text-[10px] text-gray-400 text-center py-2 col-span-full">
+              Nenhum parlamentar registrado
+            </p>
+          )}
+        </div>
       </div>
     </>
   )

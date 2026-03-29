@@ -27,22 +27,40 @@ export function usePainelPublico({ sessaoIdParam }: UsePainelPublicoProps) {
     return () => clearInterval(interval)
   }, [])
 
-  // Calcular tempo da sessao (considera tempoAcumulado para suspensao)
+  // Calcular tempo da sessao sincronizado com servidor
+  // Busca offset do servidor na montagem para compensar drift de clock
+  const [offsetServidor, setOffsetServidor] = useState(0)
+  useEffect(() => {
+    async function syncTime() {
+      try {
+        const inicio = Date.now()
+        const res = await fetch('/api/painel/hora-servidor')
+        const fim = Date.now()
+        if (res.ok) {
+          const data = await res.json()
+          const latencia = (fim - inicio) / 2
+          setOffsetServidor(new Date(data.timestamp).getTime() + latencia - Date.now())
+        }
+      } catch {}
+    }
+    syncTime()
+  }, [])
+
   useEffect(() => {
     const tempoAcumulado = sessao?.tempoAcumulado || 0
 
     if (sessao?.status === 'EM_ANDAMENTO' && sessao?.tempoInicio) {
       const interval = setInterval(() => {
         const inicio = new Date(sessao.tempoInicio!)
-        const agora = new Date()
-        const diff = Math.floor((agora.getTime() - inicio.getTime()) / 1000)
+        const agoraSincronizado = Date.now() + offsetServidor
+        const diff = Math.floor((agoraSincronizado - inicio.getTime()) / 1000)
         setTempoSessao(tempoAcumulado + (diff > 0 ? diff : 0))
       }, 1000)
       return () => clearInterval(interval)
     } else if (sessao?.status === 'SUSPENSA' || sessao?.status === 'CONCLUIDA') {
       setTempoSessao(tempoAcumulado)
     }
-  }, [sessao?.tempoInicio, sessao?.status, sessao?.tempoAcumulado])
+  }, [sessao?.tempoInicio, sessao?.status, sessao?.tempoAcumulado, offsetServidor])
 
   // Carregar dados da sessao
   const carregarDados = useCallback(async (isInitialLoad = false) => {

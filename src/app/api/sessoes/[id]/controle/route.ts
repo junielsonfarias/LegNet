@@ -38,6 +38,11 @@ export const POST = withAuth(withErrorHandler(async (
       break
     case 'cancelar':
       sessao = await sessaoDbService.cancelar(sessaoId)
+      // Limpar estado em memória ao cancelar
+      try {
+        const { limparEstadoSessao } = await import('@/lib/services/painel-tempo-real-service')
+        limparEstadoSessao(sessaoId)
+      } catch {}
       break
   }
 

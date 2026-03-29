@@ -97,13 +97,17 @@ export default function FolhaPagamentoAdminPage() {
       totalLiquido: formData.totalLiquido ? parseFloat(formData.totalLiquido) : null
     }
 
-    if (editingId) {
-      await update(editingId, data)
-    } else {
-      await create(data)
+    try {
+      if (editingId) {
+        await update(editingId, data)
+      } else {
+        await create(data)
+      }
+      resetForm()
+      toast.success(editingId ? 'Folha atualizada com sucesso' : 'Folha criada com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar folha de pagamento')
     }
-
-    resetForm()
   }
 
   const handleEdit = (folha: FolhaPagamento) => {
@@ -126,7 +130,12 @@ export default function FolhaPagamentoAdminPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta folha de pagamento?')) {
-      await remove(id)
+      try {
+        await remove(id)
+        toast.success('Folha excluida com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir folha de pagamento')
+      }
     }
   }
 

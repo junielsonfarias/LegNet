@@ -63,8 +63,13 @@ export default function DespesasAdminPage() {
       contratoId: formData.contratoId || null,
       convenioId: formData.convenioId || null
     }
-    if (editingId) { await update(editingId, data) } else { await create(data) }
-    resetForm()
+    try {
+      if (editingId) { await update(editingId, data) } else { await create(data) }
+      resetForm()
+      toast.success(editingId ? 'Despesa atualizada com sucesso' : 'Despesa criada com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar despesa')
+    }
   }
 
   const handleEdit = (despesa: Despesa) => {
@@ -88,7 +93,14 @@ export default function DespesasAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta despesa?')) { await remove(id) }
+    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
+      try {
+        await remove(id)
+        toast.success('Despesa excluida com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir despesa')
+      }
+    }
   }
 
   const getSituacaoColor = (situacao: string) => {

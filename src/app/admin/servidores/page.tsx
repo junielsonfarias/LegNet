@@ -49,8 +49,13 @@ export default function ServidoresAdminPage() {
       salarioBruto: formData.salarioBruto ? parseFloat(formData.salarioBruto) : null,
       cargaHoraria: formData.cargaHoraria ? parseInt(formData.cargaHoraria) : null
     }
-    if (editingId) { await update(editingId, data) } else { await create(data) }
-    resetForm()
+    try {
+      if (editingId) { await update(editingId, data) } else { await create(data) }
+      resetForm()
+      toast.success(editingId ? 'Servidor atualizado com sucesso' : 'Servidor criado com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar servidor')
+    }
   }
 
   const handleEdit = (servidor: Servidor) => {
@@ -69,7 +74,14 @@ export default function ServidoresAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este servidor?')) { await remove(id) }
+    if (confirm('Tem certeza que deseja excluir este servidor?')) {
+      try {
+        await remove(id)
+        toast.success('Servidor excluido com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir servidor')
+      }
+    }
   }
 
   const getSituacaoColor = (situacao: string) => {

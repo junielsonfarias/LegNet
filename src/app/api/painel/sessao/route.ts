@@ -53,7 +53,11 @@ export const POST = withAuth(async (request: NextRequest) => {
       return createSuccessResponse({ finalized: true }, 'Sessão finalizada com sucesso')
 
     case 'suspender':
-      // Implementar suspensão se necessário
+      // Suspender sessão: limpar timers mas manter estado para retomar
+      try {
+        const { limparCronometrosSessao } = await import('@/lib/services/painel-tempo-real-service')
+        limparCronometrosSessao(sessaoId)
+      } catch {}
       return createSuccessResponse({ suspended: true }, 'Sessão suspensa')
 
     case 'retomar':

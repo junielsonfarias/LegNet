@@ -52,8 +52,13 @@ export default function BensPatrimoniaisAdminPage() {
       valorAtual: formData.valorAtual ? parseFloat(formData.valorAtual) : null,
       areaImovel: formData.areaImovel ? parseFloat(formData.areaImovel) : null
     }
-    if (editingId) { await update(editingId, data) } else { await create(data) }
-    resetForm()
+    try {
+      if (editingId) { await update(editingId, data) } else { await create(data) }
+      resetForm()
+      toast.success(editingId ? 'Bem atualizado com sucesso' : 'Bem criado com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar bem patrimonial')
+    }
   }
 
   const handleEdit = (bem: BemPatrimonial) => {
@@ -72,7 +77,14 @@ export default function BensPatrimoniaisAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este bem?')) { await remove(id) }
+    if (confirm('Tem certeza que deseja excluir este bem?')) {
+      try {
+        await remove(id)
+        toast.success('Bem excluido com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir bem patrimonial')
+      }
+    }
   }
 
   const getSituacaoColor = (situacao: string) => {

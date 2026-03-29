@@ -54,8 +54,13 @@ export default function ReceitasAdminPage() {
       valorPrevisto: formData.valorPrevisto ? parseFloat(formData.valorPrevisto) : null,
       valorArrecadado: parseFloat(formData.valorArrecadado)
     }
-    if (editingId) { await update(editingId, data) } else { await create(data) }
-    resetForm()
+    try {
+      if (editingId) { await update(editingId, data) } else { await create(data) }
+      resetForm()
+      toast.success(editingId ? 'Receita atualizada com sucesso' : 'Receita criada com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao salvar receita')
+    }
   }
 
   const handleEdit = (receita: Receita) => {
@@ -78,7 +83,14 @@ export default function ReceitasAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta receita?')) { await remove(id) }
+    if (confirm('Tem certeza que deseja excluir esta receita?')) {
+      try {
+        await remove(id)
+        toast.success('Receita excluida com sucesso')
+      } catch (error: any) {
+        toast.error(error?.message || 'Erro ao excluir receita')
+      }
+    }
   }
 
   const filteredReceitas = receitas.filter(r =>
