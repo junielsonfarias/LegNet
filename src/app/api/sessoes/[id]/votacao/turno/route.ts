@@ -222,10 +222,11 @@ export const PUT = withAuth(async (
     throw new ValidationError('Item não possui proposição vinculada para votação')
   }
 
-  // Contabilizar votos
+  // Contabilizar votos do turno atual
   const contagemVotos = await contabilizarVotos(item.proposicaoId, {
     tipoProposicao: item.proposicao.tipo,
-    sessaoId
+    sessaoId,
+    turno
   })
 
   // Determinar tipo de quórum baseado no tipo de proposição

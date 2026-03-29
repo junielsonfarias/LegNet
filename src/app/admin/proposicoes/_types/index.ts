@@ -130,7 +130,7 @@ export interface ProposicoesState {
   // Estado de ações
   comentarioAcao: string
   resultadoFinalizacao: '__sem__' | TramitacaoResultado
-  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | null
+  acaoEmProcesso: 'advance' | 'reopen' | 'finalize' | 'sendToAgenda' | null
   ultimoAvanco: TramitacaoAdvanceResponse | null
 
   // Leis referenciadas

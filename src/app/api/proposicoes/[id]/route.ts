@@ -23,7 +23,7 @@ const UpdateProposicaoSchema = z.object({
   ementa: z.string().min(10).optional(),
   texto: z.string().optional(),
   urlDocumento: z.string().url('URL deve ser válida').optional().or(z.literal('')), // URL externa do documento
-  status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA']).optional(),
+  status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA', 'SANCIONADA', 'PROMULGADA']).optional(),
   dataApresentacao: z.string().optional(),
   dataVotacao: z.string().optional(),
   resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).optional(),

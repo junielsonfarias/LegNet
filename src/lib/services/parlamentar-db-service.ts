@@ -261,6 +261,45 @@ export const parlamentarDbService = {
     return { success: true }
   },
 
+  async hardDelete(id: string) {
+    // Verificar se tem dados vinculados que impedem exclusao
+    const [proposicoes, votacoes, presencas, emendas] = await Promise.all([
+      prisma.proposicao.count({ where: { autorId: id } }),
+      prisma.votacao.count({ where: { parlamentarId: id } }),
+      prisma.presencaSessao.count({ where: { parlamentarId: id } }),
+      prisma.emenda.count({ where: { autorId: id } }),
+    ])
+
+    const totalVinculos = proposicoes + votacoes + presencas + emendas
+
+    if (totalVinculos > 0) {
+      return {
+        success: false,
+        error: `Parlamentar possui ${totalVinculos} registro(s) vinculado(s) (${proposicoes} proposicoes, ${votacoes} votacoes, ${presencas} presencas, ${emendas} emendas). Use a opcao de desativar em vez de excluir.`
+      }
+    }
+
+    // Excluir registros dependentes em cascata manual (que tem onDelete: Cascade)
+    await prisma.$transaction([
+      prisma.membroComissao.deleteMany({ where: { parlamentarId: id } }),
+      prisma.membroMesaSessao.deleteMany({ where: { parlamentarId: id } }),
+      prisma.oradorSessao.deleteMany({ where: { parlamentarId: id } }),
+      prisma.presencaOrdemDia.deleteMany({ where: { parlamentarId: id } }),
+      prisma.votoEmenda.deleteMany({ where: { parlamentarId: id } }),
+      prisma.historicoParticipacao.deleteMany({ where: { parlamentarId: id } }),
+      prisma.filiacao.deleteMany({ where: { parlamentarId: id } }),
+      prisma.mandato.deleteMany({ where: { parlamentarId: id } }),
+      // Desvincular User se existir
+      prisma.user.updateMany({ where: { parlamentarId: id }, data: { parlamentarId: null } }),
+      // Desvincular como relator de pautas
+      prisma.pautaItem.updateMany({ where: { relatorId: id }, data: { relatorId: null } }),
+      // Excluir o parlamentar
+      prisma.parlamentar.delete({ where: { id } }),
+    ])
+
+    return { success: true }
+  },
+
   async getPerfil(id: string) {
     // Buscar parlamentar com todos os relacionamentos
     const parlamentar = await prisma.parlamentar.findUnique({

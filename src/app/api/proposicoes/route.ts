@@ -29,7 +29,7 @@ const ProposicaoSchema = z.object({
   ementa: z.string().min(10, 'Ementa deve ter pelo menos 10 caracteres'),
   texto: z.string().optional(),
   urlDocumento: z.string().url('URL deve ser válida').optional().or(z.literal('')), // URL externa do documento
-  status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA']).default('APRESENTADA'),
+  status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA', 'SANCIONADA', 'PROMULGADA']).default('APRESENTADA'),
   dataApresentacao: z.string().min(1, 'Data de apresentação é obrigatória'),
   dataVotacao: z.string().optional(),
   resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).optional(),
@@ -216,12 +216,16 @@ export const POST = withAuth(async (request: NextRequest, _context, session) => 
       }
     }
   } catch (error) {
-    // Nao bloqueia a criacao se a tramitacao falhar
+    // Não bloqueia a criação, mas registra warning e mantém status APRESENTADA
     logger.error('Erro ao auto-iniciar tramitação', {
       action: 'auto_iniciar_tramitacao_erro',
       proposicaoId: proposicao.id,
       error
     })
+    tramitacaoInfo = {
+      message: 'Proposição criada, mas a tramitação automática falhou. Inicie a tramitação manualmente.',
+      warnings: ['Falha ao iniciar tramitação automática: ' + (error instanceof Error ? error.message : 'Erro desconhecido')]
+    }
   }
 
   return createSuccessResponse(

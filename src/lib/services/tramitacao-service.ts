@@ -235,6 +235,21 @@ export async function create(data: TramitacaoCreateData, userId?: string) {
     throw new ValidationError('Proposição não encontrada')
   }
 
+  // Verificar se já existe tramitação ativa para esta proposição
+  const tramitacaoAtiva = await prisma.tramitacao.findFirst({
+    where: {
+      proposicaoId: data.proposicaoId,
+      status: { in: ['RECEBIDA', 'EM_ANDAMENTO'] }
+    },
+    select: { id: true, status: true }
+  })
+
+  if (tramitacaoAtiva) {
+    throw new ValidationError(
+      `Já existe uma tramitação ${tramitacaoAtiva.status === 'RECEBIDA' ? 'pendente' : 'em andamento'} para esta proposição. Finalize ou cancele a tramitação atual antes de criar uma nova.`
+    )
+  }
+
   // Buscar tipo de tramitação
   const tipo = await prisma.tramitacaoTipo.findUnique({
     where: { id: data.tipoTramitacaoId },
@@ -357,10 +372,21 @@ export async function create(data: TramitacaoCreateData, userId?: string) {
   }
 
   if (novoStatusProposicao && novoStatusProposicao !== proposicao.status) {
-    await prisma.proposicao.update({
-      where: { id: data.proposicaoId },
-      data: { status: novoStatusProposicao as any }
-    })
+    // Validar transição de status antes de atualizar
+    const { validarTransicaoStatus } = await import('./status-transitions')
+    const validacao = validarTransicaoStatus(proposicao.status, novoStatusProposicao)
+    if (validacao.valid) {
+      await prisma.proposicao.update({
+        where: { id: data.proposicaoId },
+        data: { status: novoStatusProposicao as any }
+      })
+    } else {
+      logger.warn('Transição de status inválida na criação de tramitação', {
+        statusAtual: proposicao.status,
+        novoStatus: novoStatusProposicao,
+        motivo: validacao.error
+      })
+    }
   }
 
   logger.info('Tramitação criada via CRUD', {
@@ -503,6 +529,11 @@ export async function reopen(id: string, observacoes: string | null | undefined,
     throw new NotFoundError('Tramitação não encontrada')
   }
 
+  // Validar que só tramitações CONCLUIDA ou CANCELADA podem ser reabertas
+  if (!['CONCLUIDA', 'CANCELADA'].includes(atual.status)) {
+    throw new ValidationError(`Tramitação com status '${atual.status}' não pode ser reaberta. Apenas tramitações CONCLUIDA ou CANCELADA podem ser reabertas.`)
+  }
+
   const tipo = await prisma.tramitacaoTipo.findUnique({
     where: { id: atual.tipoTramitacaoId }
   })
@@ -558,11 +589,30 @@ export async function finalize(
 ) {
   const atual = await prisma.tramitacao.findUnique({
     where: { id },
-    include: { proposicao: true }
+    include: {
+      proposicao: true,
+      tipoTramitacao: true,
+      fluxoEtapa: true
+    }
   })
 
   if (!atual) {
     throw new NotFoundError('Tramitação não encontrada')
+  }
+
+  // Validar que tramitação está em estado finalizável
+  if (!['EM_ANDAMENTO', 'RECEBIDA'].includes(atual.status)) {
+    throw new ValidationError(`Tramitação com status '${atual.status}' não pode ser finalizada. Apenas tramitações EM_ANDAMENTO ou RECEBIDA podem ser finalizadas.`)
+  }
+
+  // Validar parecer obrigatório
+  if (atual.fluxoEtapa && (atual.fluxoEtapa as any).requerParecer && !atual.parecer) {
+    throw new ValidationError('Esta etapa requer um parecer antes de ser finalizada.')
+  }
+
+  // Validar resultado obrigatório para finalização
+  if (!resultado) {
+    throw new ValidationError('Resultado é obrigatório para finalizar a tramitação (APROVADO, REJEITADO, ARQUIVADO, etc).')
   }
 
   const tramitacao = await prisma.tramitacao.update({
@@ -1528,57 +1578,77 @@ export async function avancarEtapaFluxo(
     let tramitacaoNova: TramitacaoType | null = null
     let novoStatusProposicao = proposicao.status as 'APRESENTADA' | 'EM_TRAMITACAO' | 'AGUARDANDO_PAUTA' | 'EM_PAUTA' | 'EM_DISCUSSAO' | 'EM_VOTACAO' | 'APROVADA' | 'REJEITADA' | 'ARQUIVADA' | 'VETADA' | 'SANCIONADA' | 'PROMULGADA'
 
-    // 7. Se não é etapa final, cria nova tramitação na próxima etapa
+    // 7. Se não é etapa final, cria nova tramitação na próxima etapa (em transação)
     if (!ehEtapaFinal && proximaEtapa) {
-      // Busca tipo de tramitação adequado ou usa o mesmo
       const tipoTramitacao = await prisma.tramitacaoTipo.findFirst({
         where: { ativo: true },
         orderBy: { ordem: 'asc' }
       })
 
-      // Calcula prazo da nova etapa
       const prazoDias = proximaEtapa.prazoDiasNormal || 15
       const prazoVencimento = addBusinessDays(new Date(), prazoDias)
 
-      // Cria nova tramitação
-      tramitacaoNova = await prisma.tramitacao.create({
-        data: {
-          proposicaoId,
-          tipoTramitacaoId: tipoTramitacao?.id || tramitacaoAtual.tipoTramitacaoId,
-          unidadeId: proximaEtapa.unidadeId || tramitacaoAtual.unidadeId,
-          fluxoEtapaId: proximaEtapa.id,
-          dataEntrada: new Date(),
-          status: 'EM_ANDAMENTO',
-          prazoVencimento,
-          observacoes: `Tramitação avançada automaticamente para etapa "${proximaEtapa.nome}".`
-        }
-      })
+      try {
+        // Transação: criar nova tramitação + histórico + atualizar proposição
+        const resultado = await prisma.$transaction(async (tx) => {
+          const nova = await tx.tramitacao.create({
+            data: {
+              proposicaoId,
+              tipoTramitacaoId: tipoTramitacao?.id || tramitacaoAtual.tipoTramitacaoId,
+              unidadeId: proximaEtapa.unidadeId || tramitacaoAtual.unidadeId,
+              fluxoEtapaId: proximaEtapa.id,
+              dataEntrada: new Date(),
+              status: 'EM_ANDAMENTO',
+              prazoVencimento,
+              observacoes: `Tramitação avançada automaticamente para etapa "${proximaEtapa.nome}".`
+            }
+          })
 
-      // Registra histórico da nova tramitação
-      await prisma.tramitacaoHistorico.create({
-        data: {
-          tramitacaoId: tramitacaoNova.id,
-          acao: 'INICIO_ETAPA',
-          descricao: `Iniciada etapa "${proximaEtapa.nome}"`,
-          data: new Date(),
-          usuarioId,
-          ip,
-          dadosAnteriores: dadosAnteriores as Prisma.InputJsonValue,
-          dadosNovos: {
-            etapa: proximaEtapa.nome,
-            unidade: proximaEtapa.unidade?.nome,
-            prazoVencimento: prazoVencimento?.toISOString()
-          } as Prisma.InputJsonValue
-        }
-      })
+          await tx.tramitacaoHistorico.create({
+            data: {
+              tramitacaoId: nova.id,
+              acao: 'INICIO_ETAPA',
+              descricao: `Iniciada etapa "${proximaEtapa.nome}"`,
+              data: new Date(),
+              usuarioId,
+              ip,
+              dadosAnteriores: dadosAnteriores as Prisma.InputJsonValue,
+              dadosNovos: {
+                etapa: proximaEtapa.nome,
+                unidade: proximaEtapa.unidade?.nome,
+                prazoVencimento: prazoVencimento?.toISOString()
+              } as Prisma.InputJsonValue
+            }
+          })
 
-      // 8. Atualiza status da proposição se etapa habilita pauta
-      if (proximaEtapa.habilitaPauta) {
-        novoStatusProposicao = 'AGUARDANDO_PAUTA'
-        await prisma.proposicao.update({
-          where: { id: proposicaoId },
-          data: { status: 'AGUARDANDO_PAUTA' }
+          // Atualiza status da proposição se etapa habilita pauta
+          if (proximaEtapa.habilitaPauta) {
+            await tx.proposicao.update({
+              where: { id: proposicaoId },
+              data: { status: 'AGUARDANDO_PAUTA' }
+            })
+          }
+
+          return nova
         })
+
+        tramitacaoNova = resultado
+        if (proximaEtapa.habilitaPauta) {
+          novoStatusProposicao = 'AGUARDANDO_PAUTA'
+        }
+      } catch (txError) {
+        // Se a transação falhar, reverter a conclusão da tramitação anterior
+        await prisma.tramitacao.update({
+          where: { id: tramitacaoAtual.id },
+          data: {
+            status: tramitacaoAtual.status,
+            dataSaida: tramitacaoAtual.dataSaida,
+            parecer: tramitacaoAtual.parecer,
+            resultado: tramitacaoAtual.resultado,
+            observacoes: tramitacaoAtual.observacoes
+          }
+        })
+        throw new ValidationError(`Falha ao avançar tramitação: ${txError instanceof Error ? txError.message : 'Erro desconhecido'}. A tramitação anterior foi restaurada.`)
       }
 
       logger.info('Tramitação avançada para próxima etapa', {
@@ -1589,7 +1659,7 @@ export async function avancarEtapaFluxo(
         tramitacaoNovaId: tramitacaoNova.id
       })
     } else {
-      // Etapa final - atualiza status da proposição
+      // Etapa final - atualiza status da proposição baseado no resultado
       if (resultado === 'APROVADO' || resultado === 'APROVADO_COM_EMENDAS') {
         novoStatusProposicao = 'APROVADA'
       } else if (resultado === 'REJEITADO') {
@@ -1597,13 +1667,24 @@ export async function avancarEtapaFluxo(
       } else if (resultado === 'ARQUIVADO') {
         novoStatusProposicao = 'ARQUIVADA'
       } else {
+        // Etapa final sem resultado definido - manter em AGUARDANDO_PAUTA
+        // mas logar warning pois etapa final deveria ter resultado
         novoStatusProposicao = 'AGUARDANDO_PAUTA'
+        warnings.push('Etapa final concluida sem resultado definido. Proposicao mantida como AGUARDANDO_PAUTA. Defina o resultado (APROVADO/REJEITADO/ARQUIVADO) para atualizar o status.')
       }
 
-      await prisma.proposicao.update({
-        where: { id: proposicaoId },
-        data: { status: novoStatusProposicao }
-      })
+      // Validar transição antes de aplicar
+      const { validarTransicaoStatus } = await import('./status-transitions')
+      const validacao = validarTransicaoStatus(proposicao.status, novoStatusProposicao)
+      if (validacao.valid) {
+        await prisma.proposicao.update({
+          where: { id: proposicaoId },
+          data: { status: novoStatusProposicao }
+        })
+      } else {
+        // Se a transição não é válida, logar mas não bloquear o avanço da tramitação
+        warnings.push(`Transicao de status '${proposicao.status}' para '${novoStatusProposicao}' nao permitida: ${validacao.error}`)
+      }
 
       logger.info('Tramitação finalizada', {
         action: 'finalizar_tramitacao',

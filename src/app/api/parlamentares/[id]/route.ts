@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import {
   withErrorHandler,
@@ -96,20 +96,32 @@ export const PUT = withAuth(async (
   return createSuccessResponse(updatedParlamentar, 'Parlamentar atualizado com sucesso')
 }, { permissions: 'parlamentar.manage' })
 
-// DELETE - Excluir parlamentar (soft delete)
+// DELETE - Excluir parlamentar (soft delete ou hard delete)
 export const DELETE = withAuth(async (
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) => {
   const { id: rawId } = await context.params
   const id = validateId(rawId, 'Parlamentar')
+  const { searchParams } = new URL(request.url)
+  const permanent = searchParams.get('permanent') === 'true'
 
   const existing = await parlamentarDbService.getById(id)
   if (!existing) {
     throw new NotFoundError('Parlamentar')
   }
 
-  await parlamentarDbService.remove(id)
+  if (permanent) {
+    const result = await parlamentarDbService.hardDelete(id)
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error },
+        { status: 409 }
+      )
+    }
+    return createSuccessResponse(null, 'Parlamentar excluido permanentemente')
+  }
 
-  return createSuccessResponse(null, 'Parlamentar excluído com sucesso')
+  await parlamentarDbService.remove(id)
+  return createSuccessResponse(null, 'Parlamentar desativado com sucesso')
 }, { permissions: 'parlamentar.manage' })

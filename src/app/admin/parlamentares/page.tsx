@@ -66,13 +66,32 @@ export default function ParlamentaresPage() {
     return Array.from(new Set(parlamentares.map(p => p?.cargo).filter(Boolean)))
   }, [parlamentares])
 
-  // Handler para excluir parlamentar
+  // Handler para desativar parlamentar (soft delete)
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este parlamentar?')) {
+    if (confirm('Deseja desativar este parlamentar? Ele ficara como inativo mas seus dados serao mantidos.')) {
       const sucesso = await remove(id)
       if (sucesso) {
-        toast.success('Parlamentar excluído com sucesso')
-        // Refetch é chamado automaticamente pelo hook
+        toast.success('Parlamentar desativado com sucesso')
+      } else {
+        toast.error('Erro ao desativar parlamentar')
+      }
+    }
+  }
+
+  // Handler para excluir permanentemente
+  const handleHardDelete = async (id: string, nome: string) => {
+    if (confirm(`ATENCAO: Deseja EXCLUIR PERMANENTEMENTE o parlamentar "${nome}"? Esta acao nao pode ser desfeita.`)) {
+      try {
+        const res = await fetch(`/api/parlamentares/${id}?permanent=true`, { method: 'DELETE' })
+        const data = await res.json()
+        if (res.ok && data.success !== false) {
+          toast.success('Parlamentar excluido permanentemente')
+          refetch()
+        } else {
+          toast.error(data.error || 'Erro ao excluir parlamentar')
+        }
+      } catch {
+        toast.error('Erro ao excluir parlamentar')
       }
     }
   }
@@ -336,24 +355,35 @@ export default function ParlamentaresPage() {
                         Editar
                       </Button>
                       {isInativo ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() => handleReativar(parlamentar.id)}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Reativar
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleReativar(parlamentar.id)}
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            Reativar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleHardDelete(parlamentar.id, parlamentar.apelido || parlamentar.nome)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir Permanente
+                          </Button>
+                        </>
                       ) : (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                           onClick={() => handleDelete(parlamentar.id)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
+                          Desativar
                         </Button>
                       )}
                     </div>

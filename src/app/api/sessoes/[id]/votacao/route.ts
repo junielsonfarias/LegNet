@@ -199,7 +199,19 @@ export const POST = withErrorHandler(async (
     throw new ValidationError('Esta proposição não está na pauta desta sessão')
   }
 
-  // Para sessões CONCLUIDAS, permitir edição de votos independente do status do item (dados pretéritos)
+  // Bloquear votos em itens de LEITURA (não tem votação)
+  if (pautaItem.tipoAcao === 'LEITURA' || (pautaItem as any).tipoVotacao === 'LEITURA') {
+    throw new ValidationError('Este item é apenas de leitura e não aceita votação.')
+  }
+
+  // Bloquear votos em itens com status final (APROVADO, REJEITADO, RETIRADO)
+  const statusFinaisItem = ['APROVADO', 'REJEITADO', 'RETIRADO', 'CONCLUIDO']
+  if (statusFinaisItem.includes(pautaItem.status)) {
+    throw new ValidationError(
+      `Este item já foi ${pautaItem.status.toLowerCase().replace('_', ' ')} e não aceita mais votos.`
+    )
+  }
+
   // Para sessões EM_ANDAMENTO, exigir que o item esteja em votação
   if (sessao.status === 'EM_ANDAMENTO' && pautaItem.status !== 'EM_VOTACAO') {
     throw new ValidationError(
@@ -207,7 +219,7 @@ export const POST = withErrorHandler(async (
         ? 'A votação ainda não foi iniciada para esta proposição. Aguarde o operador iniciar a votação.'
         : pautaItem.status === 'PENDENTE'
           ? 'Esta proposição ainda não foi colocada em discussão.'
-          : `Esta proposição já foi ${pautaItem.status.toLowerCase().replace('_', ' ')}.`
+          : `Esta proposição está com status ${pautaItem.status.toLowerCase().replace('_', ' ')}.`
     )
   }
 

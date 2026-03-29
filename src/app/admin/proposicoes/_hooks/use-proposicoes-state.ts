@@ -116,7 +116,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
   const searchParams = useSearchParams()
 
   // Hooks externos
-  const { proposicoes, loading: loadingProposicoes, create, update, remove } = useProposicoes()
+  const { proposicoes, loading: loadingProposicoes, create, update, remove, refetch } = useProposicoes()
   const { parlamentares, loading: loadingParlamentares } = useParlamentares()
 
   // Estados de tipos e dados
@@ -287,7 +287,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
           ementa: formData.ementa,
           texto: formData.textoCompleto || undefined,
           urlDocumento: formData.urlDocumento || undefined,
-          status: 'EM_TRAMITACAO',
+          // Preservar o status atual - não reverter para EM_TRAMITACAO
           dataApresentacao: new Date(formData.dataApresentacao).toISOString(),
           autorId: formData.autorId
         })
@@ -499,16 +499,16 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       await tramitacoesApi.sendToAgenda(selectedProposicao.id, comentarioAcao || undefined)
       toast.success('Proposição enviada para Aguardando Pauta!')
       handleCloseTramitacao()
-      void loadTramitacoes()
-      // Recarrega proposições para atualizar status
-      window.location.reload()
+      await loadTramitacoes()
+      // Recarregar proposições para atualizar status
+      await refetch()
     } catch (error) {
       console.error('Erro ao enviar para pauta:', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao enviar para pauta.')
     } finally {
       setAcaoEmProcesso(null)
     }
-  }, [selectedProposicao, comentarioAcao, handleCloseTramitacao, loadTramitacoes])
+  }, [selectedProposicao, comentarioAcao, handleCloseTramitacao, loadTramitacoes, refetch])
 
   // Handlers de tipo e ano
   const handleTipoChange = useCallback(async (novoTipo: string) => {

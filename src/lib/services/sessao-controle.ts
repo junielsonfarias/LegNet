@@ -57,6 +57,21 @@ export async function sincronizarStatusProposicao(
     return
   }
 
+  // Validar transição antes de aplicar
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: proposicaoId },
+    select: { status: true }
+  })
+
+  if (proposicao) {
+    const { validarTransicaoStatus } = await import('./status-transitions')
+    const validacao = validarTransicaoStatus(proposicao.status, novoStatus)
+    if (!validacao.valid) {
+      // Log warning mas não bloqueia - operações de sessão são críticas
+      console.warn(`[sincronizarStatus] Transição ${proposicao.status} → ${novoStatus} não é padrão: ${validacao.error}`)
+    }
+  }
+
   const data: { status: StatusProposicao; sessaoVotacaoId?: string } = {
     status: novoStatus
   }
@@ -384,11 +399,11 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
     })
   ]
 
-  // GAP CRÍTICO #5: Sincronizar status da proposição para EM_DISCUSSAO
+  // Sincronizar status da proposição para EM_DISCUSSAO com validação
   if (item.proposicaoId && item.proposicao) {
-    // Apenas atualiza se a proposição está em status anterior
-    const statusAtualizaveis = ['EM_PAUTA', 'AGUARDANDO_PAUTA', 'EM_TRAMITACAO']
-    if (statusAtualizaveis.includes(item.proposicao.status)) {
+    const { validarTransicaoStatus } = await import('./status-transitions')
+    const validacao = validarTransicaoStatus(item.proposicao.status, 'EM_DISCUSSAO')
+    if (validacao.valid) {
       updates.push(
         prisma.proposicao.update({
           where: { id: item.proposicaoId },
@@ -503,12 +518,21 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
     }
   })
 
-  // GAP CRÍTICO #5: Sincronizar status da proposição
+  // Sincronizar status da proposição com validação
   if (item.proposicaoId) {
-    await prisma.proposicao.update({
-      where: { id: item.proposicaoId },
-      data: { status: 'EM_VOTACAO' }
-    })
+    const proposicaoAtual = await prisma.proposicao.findUnique({ where: { id: item.proposicaoId }, select: { status: true } })
+    if (proposicaoAtual) {
+      const { validarTransicaoStatus } = await import('./status-transitions')
+      const validacao = validarTransicaoStatus(proposicaoAtual.status, 'EM_VOTACAO')
+      if (validacao.valid) {
+        await prisma.proposicao.update({
+          where: { id: item.proposicaoId },
+          data: { status: 'EM_VOTACAO' }
+        })
+      } else {
+        console.warn(`[iniciarVotacaoItem] ${validacao.error}`)
+      }
+    }
   }
 
   return prisma.pautaItem.findUnique({
@@ -541,9 +565,14 @@ export async function contabilizarVotos(
   resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
   detalhesQuorum?: string
 }> {
+  const whereVotos: any = { proposicaoId }
+  if (options?.turno) {
+    whereVotos.turno = options.turno
+  }
+
   const votos = await prisma.votacao.groupBy({
     by: ['voto'],
-    where: { proposicaoId },
+    where: whereVotos,
     _count: true
   })
 
@@ -647,8 +676,20 @@ async function atualizarResultadoProposicao(
   statusItem: 'APROVADO' | 'REJEITADO',
   sessaoVotacaoId?: string
 ) {
-  // Mapear status do item para status da proposição
   const statusProposicao = statusItem === 'APROVADO' ? 'APROVADA' : 'REJEITADA'
+
+  // Validar transição de status
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: proposicaoId },
+    select: { status: true }
+  })
+  if (proposicao) {
+    const { validarTransicaoStatus } = await import('./status-transitions')
+    const validacao = validarTransicaoStatus(proposicao.status, statusProposicao)
+    if (!validacao.valid) {
+      console.warn(`[atualizarResultado] Transição ${proposicao.status} → ${statusProposicao}: ${validacao.error}`)
+    }
+  }
 
   await prisma.proposicao.update({
     where: { id: proposicaoId },
@@ -656,7 +697,6 @@ async function atualizarResultadoProposicao(
       resultado: resultadoVotacao,
       dataVotacao: new Date(),
       status: statusProposicao,
-      // Registra a sessão onde a proposição foi votada
       ...(sessaoVotacaoId && { sessaoVotacaoId })
     }
   })
@@ -973,7 +1013,8 @@ export async function finalizarItemPauta(
     // Usar quórum configurável passando o tipo de proposição
     contagemVotos = await contabilizarVotos(item.proposicaoId!, {
       tipoProposicao: item.proposicao!.tipo,
-      sessaoId
+      sessaoId,
+      turno: item.turnoAtual || 1
     })
 
     // Se o operador escolheu APROVADO/REJEITADO, usar a escolha dele
@@ -1033,6 +1074,9 @@ export async function finalizarItemPauta(
           totalPresentes,
           quorumNecessario: Math.floor(totalPresentes / 2) + 1,
           resultado: contagemVotos.resultado as any,
+          tipoQuorum: contagemVotos.detalhesQuorum?.includes('absolut') ? 'MAIORIA_ABSOLUTA'
+            : contagemVotos.detalhesQuorum?.includes('2/3') ? 'DOIS_TERCOS'
+            : 'MAIORIA_SIMPLES',
           finalizadaEm: new Date()
         },
         update: {
@@ -1063,8 +1107,10 @@ export async function finalizarItemPauta(
     }
   }
 
-  // GAP #2: Sincronizar status da proposição para casos sem votação efetiva
-  if (temProposicao && !eraVotacao) {
+  // Sincronizar status da proposição para casos sem votação efetiva
+  // OU para votações que terminaram em ADIADO (proposição deve voltar para EM_PAUTA)
+  const votacaoComResultadoFinal = eraVotacao && (resultado === 'APROVADO' || resultado === 'REJEITADO')
+  if (temProposicao && !votacaoComResultadoFinal) {
     await sincronizarStatusProposicao(
       item.proposicaoId!,
       resultado,
@@ -1229,10 +1275,11 @@ export async function finalizarTurnoItem(
   const turnoAtual = item.turnoAtual || 1
   const tipoProposicao = item.proposicao.tipo
 
-  // Contabilizar votos
+  // Contabilizar votos do turno atual
   const contagem = await contabilizarVotos(item.proposicaoId, {
     tipoProposicao,
-    sessaoId
+    sessaoId,
+    turno: turnoAtual
   })
 
   // Mapear resultado para o enum

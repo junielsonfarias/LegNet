@@ -464,6 +464,13 @@ export async function arquivarPorVetoMantido(
       return { valid: false, errors, warnings }
     }
 
+    // Validar transição VETADA → ARQUIVADA
+    const { validarTransicaoStatus } = await import('./status-transitions')
+    const validacao = validarTransicaoStatus(proposicao.status, 'ARQUIVADA')
+    if (!validacao.valid) {
+      warnings.push(`Transição de status: ${validacao.error}`)
+    }
+
     await prisma.proposicao.update({
       where: { id: proposicaoId },
       data: {

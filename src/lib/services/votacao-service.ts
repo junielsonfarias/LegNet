@@ -304,24 +304,30 @@ export async function registrarVoto(
   warnings.push(...impedimento.warnings)
 
   try {
-    // Registra ou atualiza voto (upsert)
-    await prisma.votacao.upsert({
-      where: {
-        proposicaoId_parlamentarId_turno: {
+    // Registra ou atualiza voto em transação para garantir consistência
+    await prisma.$transaction(async (tx) => {
+      // Re-verificar proposição dentro da transação para evitar race condition
+      const prop = await tx.proposicao.findUnique({ where: { id: proposicaoId }, select: { id: true } })
+      if (!prop) throw new Error('Proposição não encontrada na transação')
+
+      await tx.votacao.upsert({
+        where: {
+          proposicaoId_parlamentarId_turno: {
+            proposicaoId,
+            parlamentarId,
+            turno
+          }
+        },
+        update: {
+          voto: voto as TipoVoto
+        },
+        create: {
           proposicaoId,
           parlamentarId,
+          voto: voto as TipoVoto,
           turno
         }
-      },
-      update: {
-        voto: voto as TipoVoto
-      },
-      create: {
-        proposicaoId,
-        parlamentarId,
-        voto: voto as TipoVoto,
-        turno
-      }
+      })
     })
 
     logger.info('Voto registrado', {
@@ -845,6 +851,19 @@ export async function atualizarProposicaoAposVotacaoFinal(
   sessaoId: string,
   statusProposicao: string
 ) {
+  // Validar transição de status
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: proposicaoId },
+    select: { status: true }
+  })
+  if (proposicao) {
+    const { validarTransicaoStatus } = await import('./status-transitions')
+    const validacao = validarTransicaoStatus(proposicao.status, statusProposicao)
+    if (!validacao.valid) {
+      console.warn(`[atualizarProposicaoAposVotacaoFinal] ${validacao.error}`)
+    }
+  }
+
   return prisma.proposicao.update({
     where: { id: proposicaoId },
     data: {
@@ -954,7 +973,8 @@ export async function registrarVotacaoEmLote(params: {
       const { contabilizarVotos } = await import('./sessao-controle')
       const contagem = await contabilizarVotos(proposicaoId, {
         tipoProposicao,
-        sessaoId
+        sessaoId,
+        turno
       })
 
       const resultadoVotacao = resultadoFornecido ||
@@ -1004,7 +1024,11 @@ export async function registrarVotacaoEmLote(params: {
           votosAbstencao: contagem.abstencao,
           resultado: contagem.resultado as any,
           tipoVotacao: (tipoVotacao || 'NOMINAL') as any,
-          tipoQuorum: 'MAIORIA_SIMPLES',
+          tipoQuorum: tipoProposicao === 'PROJETO_LEI_COMPLEMENTAR' || tipoProposicao === 'EMENDA_LEI_ORGANICA'
+            ? 'MAIORIA_ABSOLUTA'
+            : tipoProposicao === 'PROJETO_RESOLUCAO' || tipoProposicao === 'DECRETO_LEGISLATIVO'
+              ? 'DOIS_TERCOS'
+              : 'MAIORIA_SIMPLES',
           finalizadaEm: new Date(),
           observacoes: isRetroativo ? `Lançamento retroativo: ${motivo}` : undefined
         }
