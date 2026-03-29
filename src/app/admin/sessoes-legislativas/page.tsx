@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, FileText, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 import { useSessoesState } from './_hooks/use-sessoes-state'
 import {
   SessoesFilters,
@@ -15,6 +16,8 @@ import {
 } from './_components'
 
 export default function SessoesLegislativasPage() {
+  const { data: session } = useSession()
+  const userRole = (session?.user as any)?.role || 'USER'
   const state = useSessoesState()
 
   const {
@@ -166,6 +169,7 @@ export default function SessoesLegislativasPage() {
               onDelete={handleDelete}
               onManagePauta={handleManagePauta}
               onOpenTemplateModal={handleOpenTemplateModal}
+              userRole={userRole}
             />
           ))}
         </div>

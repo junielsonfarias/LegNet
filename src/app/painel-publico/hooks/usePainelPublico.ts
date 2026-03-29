@@ -72,17 +72,39 @@ export function usePainelPublico({ sessaoIdParam }: UsePainelPublicoProps) {
 
       let sessaoId = sessaoIdParam
 
-      // Se nao tem sessaoId, buscar sessao em andamento ou a mais recente
+      // Se nao tem sessaoId, buscar sessao ativa ou próxima (30 min antes)
       if (!sessaoId) {
         const response = await fetch('/api/dados-abertos/sessoes')
         const data = await response.json()
 
         if (data.dados && data.dados.length > 0) {
-          const sessaoEmAndamento = data.dados.find((s: any) => s.status === 'EM_ANDAMENTO')
-          if (sessaoEmAndamento) {
-            sessaoId = sessaoEmAndamento.id
+          // Prioridade 1: sessão EM_ANDAMENTO ou SUSPENSA
+          const sessaoAtiva = data.dados.find((s: any) => s.status === 'EM_ANDAMENTO' || s.status === 'SUSPENSA')
+          if (sessaoAtiva) {
+            sessaoId = sessaoAtiva.id
           } else {
-            sessaoId = data.dados[0].id
+            // Prioridade 2: sessão AGENDADA que começa em até 30 minutos
+            const agora = new Date()
+            const limite30min = new Date(agora.getTime() + 30 * 60 * 1000)
+            const proximaSessao = data.dados.find((s: any) => {
+              if (s.status !== 'AGENDADA') return false
+              const dataSessao = new Date(s.data)
+              // Combinar data da sessão com horário se disponível
+              if (s.horarioInicio) {
+                const [h, m] = s.horarioInicio.split(':')
+                dataSessao.setHours(parseInt(h), parseInt(m), 0, 0)
+              }
+              return dataSessao <= limite30min && dataSessao >= new Date(agora.getTime() - 60 * 60 * 1000)
+            })
+            if (proximaSessao) {
+              sessaoId = proximaSessao.id
+            } else {
+              // Prioridade 3: sessão CONCLUIDA mais recente (para exibir resultado)
+              const sessaoConcluida = data.dados.find((s: any) => s.status === 'CONCLUIDA')
+              if (sessaoConcluida) {
+                sessaoId = sessaoConcluida.id
+              }
+            }
           }
         }
       }
@@ -122,19 +144,29 @@ export function usePainelPublico({ sessaoIdParam }: UsePainelPublicoProps) {
         setError('Erro ao carregar dados do painel')
       }
     } finally {
+      // Sempre desligar loading após carregar (não apenas no primeiro load)
+      setLoading(false)
       if (!initialLoadDone) {
-        setLoading(false)
         setInitialLoadDone(true)
       }
     }
   }, [sessaoIdParam, initialLoadDone])
 
-  // Carregar dados inicialmente e atualizar a cada 5 segundos
+  // Carregar dados inicialmente
   useEffect(() => {
     carregarDados(true)
-    const interval = setInterval(() => carregarDados(false), 5000)
-    return () => clearInterval(interval)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Atualizar periodicamente com intervalo adaptativo
+  useEffect(() => {
+    const refreshInterval = sessao?.status === 'EM_ANDAMENTO' || sessao?.status === 'SUSPENSA'
+      ? 5000   // 5s durante sessão ativa
+      : sessao?.status === 'AGENDADA'
+        ? 10000  // 10s durante espera pré-sessão
+        : 30000  // 30s sem sessão ou sessão concluída
+    const interval = setInterval(() => carregarDados(false), refreshInterval)
+    return () => clearInterval(interval)
+  }, [sessao?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sincronizar com item atual do operador quando sessao em andamento
   useEffect(() => {

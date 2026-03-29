@@ -346,7 +346,57 @@ export async function finalizarSessaoControle(sessaoId: string) {
     // Não bloqueia finalização se cleanup falhar
   }
 
-  return prisma.sessao.findUnique({ where: { id: sessaoId } })
+  // Gerar relatório resumo da sessão
+  const presencas = await prisma.presencaSessao.findMany({
+    where: { sessaoId }
+  })
+  const totalPresentes = presencas.filter(p => p.presente).length
+  const totalAusentes = presencas.filter(p => !p.presente).length
+  const totalJustificadas = presencas.filter(p => !p.presente && p.justificativa).length
+
+  // Recarregar itens atualizados
+  const itensFinais = await prisma.pautaItem.findMany({
+    where: { pautaId: pauta.id }
+  })
+  const totalMaterias = itensFinais.length
+  const totalAprovadas = itensFinais.filter(i => i.status === 'APROVADO').length
+  const totalRejeitadas = itensFinais.filter(i => i.status === 'REJEITADO').length
+  const totalConcluidos = itensFinais.filter(i => i.status === 'CONCLUIDO').length
+  const totalAdiados = itensFinais.filter(i => i.status === 'ADIADO').length
+  const totalRetirados = itensFinais.filter(i => i.status === 'RETIRADO').length
+  const totalPendentes = itensFinais.filter(i => i.status === 'PENDENTE').length
+  const totalVotados = totalAprovadas + totalRejeitadas
+
+  // Formatar tempo
+  const horas = Math.floor(tempoTotal / 3600)
+  const minutos = Math.floor((tempoTotal % 3600) / 60)
+  const tempoFormatado = horas > 0 ? `${horas}h ${minutos}min` : `${minutos}min`
+
+  const sessaoFinal = await prisma.sessao.findUnique({ where: { id: sessaoId } })
+
+  return {
+    ...sessaoFinal,
+    resumo: {
+      presenca: {
+        total: presencas.length,
+        presentes: totalPresentes,
+        ausentes: totalAusentes,
+        justificadas: totalJustificadas
+      },
+      pauta: {
+        totalMaterias,
+        votadas: totalVotados,
+        aprovadas: totalAprovadas,
+        rejeitadas: totalRejeitadas,
+        concluidas: totalConcluidos,
+        adiadas: totalAdiados,
+        retiradas: totalRetirados,
+        pendentes: totalPendentes
+      },
+      tempoTotal: tempoFormatado,
+      mensagem: `Sessao realizada e finalizada com sucesso. ${totalPresentes} parlamentar(es) presente(s), ${totalAusentes} ausente(s). ${totalMaterias} materia(s) na pauta: ${totalVotados} votada(s) (${totalAprovadas} aprovada(s), ${totalRejeitadas} rejeitada(s)), ${totalConcluidos} concluida(s), ${totalAdiados} adiada(s), ${totalRetirados} retirada(s). Duracao: ${tempoFormatado}.`
+    }
+  }
 }
 
 const obterItemPauta = async (sessaoId: string, itemId: string) => {
@@ -372,9 +422,14 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
   }
 
   // Verificar quorum como warning antecipado (não bloqueia discussão, mas alerta operador)
-  const quorumCheck = await verificarQuorumInstalacao(sessaoId)
-  if (!quorumCheck.temQuorum) {
-    console.warn(`[iniciarItemPauta] Quorum insuficiente ao iniciar item: ${quorumCheck.detalhes}`)
+  try {
+    const { verificarQuorumInstalacao } = await import('@/lib/services/quorum-service')
+    const quorumCheck = await verificarQuorumInstalacao(sessaoId)
+    if (!quorumCheck.temQuorum) {
+      console.warn(`[iniciarItemPauta] Quorum insuficiente ao iniciar item: ${quorumCheck.detalhes}`)
+    }
+  } catch {
+    // Não bloqueia se verificação de quorum falhar
   }
 
   const item = await prisma.pautaItem.findUnique({
@@ -1185,16 +1240,41 @@ export async function finalizarItemPauta(
     })
   }
 
+  // Auto-avanço: encontrar próximo item PENDENTE ou ADIADO na ordem da pauta
+  const proximoItem = await prisma.pautaItem.findFirst({
+    where: {
+      pautaId: item.pautaId,
+      status: { in: ['PENDENTE', 'ADIADO'] },
+      ordem: { gt: item.ordem }
+    },
+    orderBy: { ordem: 'asc' },
+    select: { id: true }
+  })
+
+  // Se não encontrou na frente, buscar qualquer pendente (pode ter sido adiado antes)
+  const itemSeguinte = proximoItem || await prisma.pautaItem.findFirst({
+    where: {
+      pautaId: item.pautaId,
+      status: { in: ['PENDENTE', 'ADIADO'] },
+      id: { not: itemId }
+    },
+    orderBy: { ordem: 'asc' },
+    select: { id: true }
+  })
+
   await prisma.pautaSessao.update({
     where: { id: item.pautaId },
     data: {
-      itemAtualId: null
+      itemAtualId: itemSeguinte?.id || null
     }
   })
 
   await atualizarTempoTotalReal(item.pautaId)
 
-  return atualizado
+  return {
+    ...atualizado,
+    proximoItemId: itemSeguinte?.id || null
+  }
 }
 
 // ==================== FUNÇÕES DE CONTROLE DE TURNOS ====================

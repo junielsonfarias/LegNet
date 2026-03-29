@@ -34,9 +34,9 @@ export function ControlePresencaModal({
 }: ControlePresencaModalProps) {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="bg-white border-slate-200 text-slate-900 max-w-3xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-3xl w-[95vw] max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-lg flex items-center gap-2 text-slate-900">
+          <DialogTitle className="text-lg flex items-center gap-2 text-gray-900">
             <Users className="h-5 w-5 text-blue-600" />
             Controle de Presenca
           </DialogTitle>

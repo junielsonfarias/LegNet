@@ -201,22 +201,29 @@ const rolePermissions: RolePermissions = {
     'publicacao.view',
     'publicacao.manage'
   ]),
-  // OPERADOR: Operador de Sessão/Painel (baseado no operador_sessao + operador_painel do SAPL)
-  // RESTRITO: Apenas operação de sessões e painel eletrônico
-  // Menu exibe APENAS: Sessões e Painel Eletrônico
+  // OPERADOR: Operador de Sessão/Painel - GERÊNCIA TOTAL DA SESSÃO PLENÁRIA
+  // Pode: criar sessão, montar pauta, operar sessão, registrar presença, conduzir votação
+  // Menu: Sessões, Painel Eletrônico, Parlamentares (consulta)
   OPERADOR: buildPermissions([
-    // Dashboard (para estatísticas no painel)
+    // Dashboard
     'dashboard.view',
-    // Menu: Sessões (periodo.view mostra o item no menu)
+    // Sessões - gerência total
     'periodo.view',
     'sessao.view',
     'sessao.manage',
-    // Menu: Painel Eletrônico
+    // Pauta - montar e gerenciar
+    'pauta.view',
+    'pauta.manage',
+    // Painel Eletrônico
     'painel.view',
     'painel.manage',
-    // Operacionais (não adicionam itens ao menu, mas são necessários para operar)
+    // Operacionais
     'presenca.manage',
-    'votacao.manage'
+    'votacao.manage',
+    // Consulta de parlamentares (necessário para presença e votação)
+    'parlamentar.view',
+    // Proposições (consulta para montar pauta)
+    'proposicao.view'
   ]),
   // AUXILIAR_LEGISLATIVO: Auxiliar do Secretario
   // Responsavel por: proposicoes, tramitacao, comissoes, pareceres

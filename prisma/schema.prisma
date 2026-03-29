@@ -267,6 +267,7 @@ model Sessao {
   legislatura         Legislatura?        @relation(fields: [legislaturaId], references: [id])
   periodo             PeriodoLegislatura? @relation(fields: [periodoId], references: [id])
   presencas           PresencaSessao[]
+  votacoesAgrupadas   VotacaoAgrupada[]
   proposicoes         Proposicao[]        @relation("ProposicaoApresentacao") // Proposições APRESENTADAS nesta sessão
   proposicoesVotadas  Proposicao[]        @relation("ProposicaoVotacao")      // Proposições VOTADAS nesta sessão
   pautaSessao         PautaSessao?
@@ -595,6 +596,7 @@ model Proposicao {
   autor         Parlamentar? @relation(fields: [autorId], references: [id]) // LEGADO
   autorEntidade Autor?       @relation("ProposicaoAutorEntidade", fields: [autorEntidadeId], references: [id]) // NOVO
   votacoes      Votacao[]
+  votacoesAgrupadas VotacaoAgrupada[]
   pautaItens    PautaItem[]
   tramitacoes   Tramitacao[]
   pareceres     Parecer[]    // Pareceres das comissões sobre esta proposição
@@ -806,6 +808,10 @@ model VotacaoAgrupada {
 
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
+
+  // Relacionamentos
+  proposicao      Proposicao          @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  sessao          Sessao              @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
 
   @@unique([proposicaoId, sessaoId, turno])
   @@index([sessaoId, turno])

@@ -331,19 +331,51 @@ export default function PainelOperadorPage() {
 
   const alterarStatusSessao = async (novoStatus: 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA') => {
     if (!sessao) return
+
+    // Confirmação para ações destrutivas
+    if (novoStatus === 'CONCLUIDA' && !confirm('Deseja ENCERRAR esta sessão? Itens em andamento serão marcados como adiados.')) return
+    if (novoStatus === 'CANCELADA' && !confirm('Deseja CANCELAR esta sessão? Esta ação não pode ser desfeita.')) return
+    if (novoStatus === 'SUSPENSA' && !confirm('Deseja SUSPENDER esta sessão? Os cronômetros serão pausados.')) return
+
     try {
       setExecutando(true)
-      const response = await fetch(`/api/sessoes/${sessao.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: novoStatus })
-      })
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Erro ao alterar status')
+
+      // Para finalizar/iniciar/cancelar: usar rota de controle (faz cleanup e gera relatório)
+      if (['EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'].includes(novoStatus) && sessao.status !== 'SUSPENSA') {
+        const acaoControle = novoStatus === 'EM_ANDAMENTO' ? 'iniciar' : novoStatus === 'CONCLUIDA' ? 'finalizar' : 'cancelar'
+        const response = await fetch(`/api/sessoes/${sessao.id}/controle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ acao: acaoControle })
+        })
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Erro ao alterar status')
+        }
+        const result = await response.json()
+
+        // Mostrar relatório resumo se sessão foi finalizada
+        if (novoStatus === 'CONCLUIDA' && result.data?.resumo) {
+          const r = result.data.resumo
+          toast.success(r.mensagem, { duration: 15000 })
+        } else {
+          toast.success(`Status alterado para ${getSessaoStatusLabel(novoStatus)}`)
+        }
+      } else {
+        // Para suspender/retomar: usar PUT simples
+        const response = await fetch(`/api/sessoes/${sessao.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: novoStatus })
+        })
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || 'Erro ao alterar status')
+        }
+        toast.success(`Status alterado para ${getSessaoStatusLabel(novoStatus)}`)
       }
+
       await carregarSessao(false)
-      toast.success(`Status alterado para ${getSessaoStatusLabel(novoStatus)}`)
     } catch (error: any) {
       toast.error(error?.message || 'Erro ao alterar status da sessão')
     } finally {
@@ -357,6 +389,10 @@ export default function PainelOperadorPage() {
     resultado?: 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
   ) => {
     if (!sessao) return
+
+    // Confirmação para encerrar votação
+    if (acao === 'finalizar' && resultado === 'REJEITADO' && !confirm('Confirma REJEIÇÃO desta proposição?')) return
+
     try {
       setExecutando(true)
       await sessoesApi.controlItem(sessao.id, itemId, acao, resultado)
@@ -462,8 +498,11 @@ export default function PainelOperadorPage() {
     ? dataSessao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : '--/--/----'
 
-  const totalParlamentares = sessao.presencas?.length || 0
-  const presentes = sessao.presencas?.filter(p => p.presente).length || 0
+  // Total de parlamentares = maior entre presencas registradas e mandatos da legislatura
+  const totalMandatos = sessao.legislatura?.mandatos?.filter((m: any) => m.ativo)?.length || 0
+  const totalPresencasRegistradas = sessao.presencas?.length || 0
+  const totalParlamentares = Math.max(totalMandatos, totalPresencasRegistradas) || totalPresencasRegistradas
+  const presentes = sessao.presencas?.filter((p: any) => p.presente).length || 0
   const ausentes = totalParlamentares - presentes
   const percentualPresenca = totalParlamentares > 0 ? Math.round((presentes / totalParlamentares) * 100) : 0
 
@@ -571,8 +610,8 @@ export default function PainelOperadorPage() {
                 onClick={() => alterarStatusSessao('EM_ANDAMENTO')}
                 disabled={executando}
               >
-                <Play className="h-4 w-4 mr-2" />
-                Iniciar Sessão
+                {executando ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
+                {executando ? 'Iniciando...' : 'Iniciar Sessão'}
               </Button>
             )}
             {sessao.status === 'EM_ANDAMENTO' && (

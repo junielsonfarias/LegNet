@@ -38,7 +38,7 @@ interface PresencaControlProps {
 }
 
 export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHorario }: PresencaControlProps) {
-  // Busca apenas parlamentares ativos
+  // Busca todos os parlamentares ativos da casa para registro de presença
   const { parlamentares } = useParlamentares({ ativo: true })
   const [presencas, setPresencas] = useState<Presenca[]>([])
   const [loading, setLoading] = useState(true)
@@ -287,13 +287,24 @@ export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHora
               className={`flex items-center justify-between p-3 rounded-lg border ${style.bg}`}
             >
               <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${style.icon}`}
-                >
-                  <IconComponent className="h-5 w-5 text-white" />
-                </div>
+                {parlamentar.foto ? (
+                  <img
+                    src={parlamentar.foto}
+                    alt={parlamentar.apelido || parlamentar.nome}
+                    className={`w-10 h-10 rounded-full object-cover ring-2 ${
+                      parlamentar.status === 'PRESENTE' ? 'ring-green-400' :
+                      parlamentar.status === 'FALTA_JUSTIFICADA' ? 'ring-yellow-400' : 'ring-gray-300'
+                    }`}
+                  />
+                ) : (
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold ${style.icon}`}
+                  >
+                    {(parlamentar.apelido || parlamentar.nome).split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()}
+                  </div>
+                )}
                 <div>
-                  <p className="font-semibold">{parlamentar.nome}</p>
+                  <p className="font-semibold text-gray-900">{parlamentar.apelido || parlamentar.nome}</p>
                   <div className="flex items-center gap-2">
                     {parlamentar.partido && (
                       <span className="text-sm text-gray-600">{parlamentar.partido}</span>

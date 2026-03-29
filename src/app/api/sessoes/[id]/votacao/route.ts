@@ -15,6 +15,7 @@ import {
 } from '@/lib/services/votacao-service'
 import { hasPermission } from '@/lib/auth/permissions'
 import type { UserRole } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import {
   assertSessaoPermiteVotacao,
   ensureParlamentarPresente,
@@ -183,6 +184,20 @@ export const POST = withErrorHandler(async (
 
   // Verificar se parlamentar está presente na sessão
   await ensureParlamentarPresente(sessaoId, validatedData.parlamentarId)
+
+  // Verificar se parlamentar pertence à legislatura da sessão
+  if (sessao.legislaturaId) {
+    const mandatoAtivo = await prisma.mandato.findFirst({
+      where: {
+        parlamentarId: validatedData.parlamentarId,
+        legislaturaId: sessao.legislaturaId,
+        ativo: true
+      }
+    })
+    if (!mandatoAtivo) {
+      throw new ValidationError('Parlamentar nao possui mandato ativo na legislatura desta sessao')
+    }
+  }
 
   // Verificar se proposição existe
   const proposicao = await findProposicaoParaVotacao(validatedData.proposicaoId)

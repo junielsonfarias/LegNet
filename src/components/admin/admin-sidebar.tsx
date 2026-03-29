@@ -53,7 +53,8 @@ import {
   Briefcase,
   Palette,
   ExternalLink,
-  Globe
+  Globe,
+  Tv
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -395,6 +396,32 @@ export function AdminSidebar({ userRole = 'ADMIN' }: AdminSidebarProps) {
           </div>
         </div>
       </div>
+
+      {/* Atalhos rápidos para OPERADOR */}
+      {userRole === 'OPERADOR' && (
+        <div className="px-3 pt-3 pb-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-2 mb-2">Acesso Rapido</p>
+          <div className="space-y-1">
+            <Link
+              href="/admin/painel-eletronico"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 transition-colors"
+            >
+              <Monitor className="h-4 w-4" />
+              Painel do Operador
+            </Link>
+            <Link
+              href="/painel-publico"
+              target="_blank"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Tv className="h-4 w-4" />
+              Painel Publico
+              <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
+            </Link>
+          </div>
+          <div className="border-b border-gray-200 dark:border-gray-700 mt-3" />
+        </div>
+      )}
 
       {/* Navegação por Categorias */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">

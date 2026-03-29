@@ -26,11 +26,25 @@ export type UpdateSessaoInput = z.infer<typeof UpdateSessaoSchema>
  */
 export const sessaoIncludeBasic = {
   legislatura: {
-    select: {
-      id: true,
-      numero: true,
-      anoInicio: true,
-      anoFim: true
+    include: {
+      mandatos: {
+        where: { ativo: true },
+        select: {
+          id: true,
+          parlamentarId: true,
+          ativo: true,
+          parlamentar: {
+            select: {
+              id: true,
+              nome: true,
+              apelido: true,
+              partido: true,
+              foto: true,
+              ativo: true
+            }
+          }
+        }
+      }
     }
   },
   periodo: {
