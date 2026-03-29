@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Sessao, Presenca, PautaItem, VotacaoRegistro } from '../types'
 import { ordenarItensPauta, calcularVotacao } from '../types'
 
@@ -115,27 +115,29 @@ export function usePainelPublico({ sessaoIdParam }: UsePainelPublicoProps) {
         return
       }
 
-      const [sessaoRes, presencaRes, votacaoRes] = await Promise.all([
-        fetch(`/api/painel/sessao-completa?sessaoId=${sessaoId}`),
-        fetch(`/api/sessoes/${sessaoId}/presenca`),
-        fetch(`/api/sessoes/${sessaoId}/votacao`)
-      ])
-
+      // Request único: sessao-completa já inclui presencas e votacoes
+      const sessaoRes = await fetch(`/api/painel/sessao-completa?sessaoId=${sessaoId}`)
       const sessaoData = await sessaoRes.json()
-      const presencaData = await presencaRes.json()
-      const votacaoData = await votacaoRes.json()
 
       if (sessaoData.success && sessaoData.data) {
         setSessao(sessaoData.data)
         if (sessaoData.data.presencas && sessaoData.data.presencas.length > 0) {
           setPresencas(sessaoData.data.presencas)
-        } else if (presencaData.success && presencaData.data && presencaData.data.length > 0) {
-          setPresencas(presencaData.data)
         }
       }
 
-      if (votacaoData.success && votacaoData.data) {
-        setVotacoes(votacaoData.data)
+      // Buscar votacoes apenas se sessão tem itens em votação (evita query pesada)
+      const temVotacao = sessaoData.data?.pautaSessao?.itens?.some(
+        (i: any) => ['EM_VOTACAO', 'APROVADO', 'REJEITADO'].includes(i.status)
+      )
+      if (temVotacao) {
+        try {
+          const votacaoRes = await fetch(`/api/sessoes/${sessaoId}/votacao`)
+          const votacaoData = await votacaoRes.json()
+          if (votacaoData.success && votacaoData.data) {
+            setVotacoes(votacaoData.data)
+          }
+        } catch {}
       }
 
     } catch (err) {
@@ -157,16 +159,65 @@ export function usePainelPublico({ sessaoIdParam }: UsePainelPublicoProps) {
     carregarDados(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Detectar se há votação ativa para polling mais rápido
+  const temVotacaoAtiva = sessao?.pautaSessao?.itens?.some(
+    (i: any) => i.status === 'EM_VOTACAO'
+  )
+
   // Atualizar periodicamente com intervalo adaptativo
   useEffect(() => {
-    const refreshInterval = sessao?.status === 'EM_ANDAMENTO' || sessao?.status === 'SUSPENSA'
-      ? 5000   // 5s durante sessão ativa
-      : sessao?.status === 'AGENDADA'
-        ? 10000  // 10s durante espera pré-sessão
-        : 30000  // 30s sem sessão ou sessão concluída
+    const refreshInterval = temVotacaoAtiva
+      ? 2000   // 2s durante votação ativa (máxima responsividade)
+      : sessao?.status === 'EM_ANDAMENTO' || sessao?.status === 'SUSPENSA'
+        ? 4000   // 4s durante sessão ativa
+        : sessao?.status === 'AGENDADA'
+          ? 10000  // 10s durante espera pré-sessão
+          : 30000  // 30s sem sessão ou sessão concluída
     const interval = setInterval(() => carregarDados(false), refreshInterval)
     return () => clearInterval(interval)
-  }, [sessao?.status]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessao?.status, temVotacaoAtiva]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // SSE: Conectar ao stream para receber atualizações em tempo real
+  useEffect(() => {
+    if (!sessao?.id || sessao.status === 'CONCLUIDA' || sessao.status === 'CANCELADA') return
+
+    let eventSource: EventSource | null = null
+    try {
+      eventSource = new EventSource(`/api/painel/stream?sessaoId=${sessao.id}`)
+
+      eventSource.addEventListener('estado', () => {
+        // Quando o estado muda no servidor, recarregar dados
+        carregarDados(false)
+      })
+
+      eventSource.addEventListener('voto', () => {
+        carregarDados(false)
+      })
+
+      eventSource.addEventListener('votacao-iniciada', () => {
+        carregarDados(false)
+      })
+
+      eventSource.addEventListener('votacao-finalizada', () => {
+        carregarDados(false)
+      })
+
+      eventSource.addEventListener('presenca', () => {
+        carregarDados(false)
+      })
+
+      eventSource.onerror = () => {
+        // SSE falhou, polling continua como fallback
+        eventSource?.close()
+      }
+    } catch {
+      // SSE não disponível, polling continua
+    }
+
+    return () => {
+      eventSource?.close()
+    }
+  }, [sessao?.id, sessao?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sincronizar com item atual do operador quando sessao em andamento
   useEffect(() => {
@@ -207,25 +258,34 @@ export function usePainelPublico({ sessaoIdParam }: UsePainelPublicoProps) {
     }
   }, [itemAtualIndex, sessao?.pautaSessao?.itens])
 
-  // Calcular dados derivados
-  const itensOrdenados = sessao?.pautaSessao?.itens ? ordenarItensPauta(sessao.pautaSessao.itens) : []
+  // Calcular dados derivados (memoizados para evitar recálculo a cada render)
+  const itensOrdenados = useMemo(
+    () => sessao?.pautaSessao?.itens ? ordenarItensPauta(sessao.pautaSessao.itens) : [],
+    [sessao?.pautaSessao?.itens]
+  )
   const itemAtual = itensOrdenados[itemAtualIndex] || null
   const totalItens = itensOrdenados.length
 
-  const presentes = presencas.filter(p => p.presente)
-  const ausentes = presencas.filter(p => !p.presente)
-  const totalParlamentares = sessao?.quorum?.total || presencas.length
-  const percentualPresenca = sessao?.quorum?.percentual ?? (
-    totalParlamentares > 0
-      ? Math.round((presentes.length / totalParlamentares) * 100)
-      : 0
-  )
+  const { presentes, ausentes } = useMemo(() => ({
+    presentes: presencas.filter(p => p.presente),
+    ausentes: presencas.filter(p => !p.presente)
+  }), [presencas])
 
-  // Votacoes do item atual
-  const votacoesItemAtual = itemAtual?.proposicao
-    ? getVotacoesProposicao(itemAtual.proposicao.id, itemAtual.proposicao)
-    : []
-  const estatisticasVotacao = calcularVotacao(votacoesItemAtual)
+  const totalParlamentares = sessao?.quorum?.total || presencas.length
+  const percentualPresenca = totalParlamentares > 0
+    ? Math.round((presentes.length / totalParlamentares) * 100) : 0
+
+  // Votacoes do item atual (memoizado)
+  const votacoesItemAtual = useMemo(
+    () => itemAtual?.proposicao
+      ? getVotacoesProposicao(itemAtual.proposicao.id, itemAtual.proposicao)
+      : [],
+    [itemAtual?.proposicao?.id, votacoes] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  const estatisticasVotacao = useMemo(
+    () => calcularVotacao(votacoesItemAtual),
+    [votacoesItemAtual]
+  )
 
   return {
     sessao,

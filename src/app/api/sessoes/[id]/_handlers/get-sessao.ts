@@ -2,20 +2,24 @@ import { NextRequest } from 'next/server'
 import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
 import { sessaoDbService } from '@/lib/services/sessao-db-service'
-import { sessaoIncludeFull } from '../_validators/sessao-validators'
+import { sessaoIncludeFull, sessaoIncludeOperator } from '../_validators/sessao-validators'
 
 /**
  * Handler para buscar sessão por ID
- * GET /api/sessoes/[id]
+ * GET /api/sessoes/[id]?light=true (operador) ou GET /api/sessoes/[id] (completo)
  */
 export async function getSessaoHandler(
   request: NextRequest,
   params: { id: string }
 ) {
-  // Resolver ID (aceita CUID ou slug no formato sessao-{numero}-{ano})
   const id = await resolverSessaoId(params.id)
 
-  const sessao = await sessaoDbService.getById(id, sessaoIncludeFull)
+  // ?light=true usa include leve (sem votacoes individuais) para o painel do operador
+  const { searchParams } = new URL(request.url)
+  const isLight = searchParams.get('light') === 'true'
+  const include = isLight ? sessaoIncludeOperator : sessaoIncludeFull
+
+  const sessao = await sessaoDbService.getById(id, include)
 
   if (!sessao) {
     throw new NotFoundError('Sessão')

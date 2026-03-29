@@ -136,15 +136,16 @@ class SessoesApiService {
     }
   }
 
-  async getById(id: string): Promise<SessaoApi> {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
+  async getById(id: string, options?: { light?: boolean }): Promise<SessaoApi> {
+    const params = options?.light ? '?light=true' : ''
+    const response = await fetch(`${this.baseUrl}/${id}${params}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
     })
-    
+
     return this.handleResponse<SessaoApi>(response)
   }
 

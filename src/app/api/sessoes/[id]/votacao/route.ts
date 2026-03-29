@@ -182,33 +182,29 @@ export const POST = withErrorHandler(async (
   const sessao = await obterSessaoParaControle(sessaoId)
   assertSessaoPermiteVotacao(sessao)
 
-  // Verificar se parlamentar está presente na sessão
-  await ensureParlamentarPresente(sessaoId, validatedData.parlamentarId)
+  // Executar validações em paralelo para reduzir latência
+  const [, mandatoAtivo, proposicao, pautaItem] = await Promise.all([
+    ensureParlamentarPresente(sessaoId, validatedData.parlamentarId),
+    sessao.legislaturaId
+      ? prisma.mandato.findFirst({
+          where: {
+            parlamentarId: validatedData.parlamentarId,
+            legislaturaId: sessao.legislaturaId,
+            ativo: true
+          }
+        })
+      : Promise.resolve(true),
+    findProposicaoParaVotacao(validatedData.proposicaoId),
+    findPautaItemParaVotacao(validatedData.proposicaoId, sessaoId)
+  ])
 
-  // Verificar se parlamentar pertence à legislatura da sessão
-  if (sessao.legislaturaId) {
-    const mandatoAtivo = await prisma.mandato.findFirst({
-      where: {
-        parlamentarId: validatedData.parlamentarId,
-        legislaturaId: sessao.legislaturaId,
-        ativo: true
-      }
-    })
-    if (!mandatoAtivo) {
-      throw new ValidationError('Parlamentar nao possui mandato ativo na legislatura desta sessao')
-    }
+  if (sessao.legislaturaId && !mandatoAtivo) {
+    throw new ValidationError('Parlamentar nao possui mandato ativo na legislatura desta sessao')
   }
-
-  // Verificar se proposição existe
-  const proposicao = await findProposicaoParaVotacao(validatedData.proposicaoId)
 
   if (!proposicao) {
     throw new NotFoundError('Proposição')
   }
-
-  // Verificar se a proposição está em um item da pauta desta sessão
-  // E se esse item está com status EM_VOTACAO
-  const pautaItem = await findPautaItemParaVotacao(validatedData.proposicaoId, sessaoId)
 
   if (!pautaItem) {
     throw new ValidationError('Esta proposição não está na pauta desta sessão')

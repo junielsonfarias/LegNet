@@ -17,6 +17,9 @@ import {
   listarItensEmIntersticio
 } from '@/lib/services/turno-service'
 import type { ResultadoVotacaoAgrupada, TipoQuorum, TipoVotacao, StatusProposicao } from '@prisma/client'
+import { validarTransicaoStatus } from './status-transitions'
+import { verificarQuorumInstalacao } from '@/lib/services/quorum-service'
+import { limparEstadoSessao } from './painel-tempo-real-service'
 
 type SessaoBasica = Awaited<ReturnType<typeof prisma.sessao.findUnique>>
 
@@ -64,7 +67,6 @@ export async function sincronizarStatusProposicao(
   })
 
   if (proposicao) {
-    const { validarTransicaoStatus } = await import('./status-transitions')
     const validacao = validarTransicaoStatus(proposicao.status, novoStatus)
     if (!validacao.valid) {
       // Log warning mas não bloqueia - operações de sessão são críticas
@@ -340,7 +342,6 @@ export async function finalizarSessaoControle(sessaoId: string) {
 
   // Limpar estado em memória e cronômetros para evitar memory leaks
   try {
-    const { limparEstadoSessao } = await import('./painel-tempo-real-service')
     limparEstadoSessao(sessaoId)
   } catch {
     // Não bloqueia finalização se cleanup falhar
@@ -423,7 +424,6 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
 
   // Verificar quorum como warning antecipado (não bloqueia discussão, mas alerta operador)
   try {
-    const { verificarQuorumInstalacao } = await import('@/lib/services/quorum-service')
     const quorumCheck = await verificarQuorumInstalacao(sessaoId)
     if (!quorumCheck.temQuorum) {
       console.warn(`[iniciarItemPauta] Quorum insuficiente ao iniciar item: ${quorumCheck.detalhes}`)
@@ -485,7 +485,6 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
 
   // Sincronizar status da proposição para EM_DISCUSSAO com validação
   if (item.proposicaoId && item.proposicao) {
-    const { validarTransicaoStatus } = await import('./status-transitions')
     const validacao = validarTransicaoStatus(item.proposicao.status, 'EM_DISCUSSAO')
     if (validacao.valid) {
       updates.push(
@@ -584,7 +583,6 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
   }
 
   // GAP CRÍTICO #3: Validar quorum antes de abrir votação (RN-060)
-  const { verificarQuorumInstalacao } = await import('@/lib/services/quorum-service')
   const quorumResult = await verificarQuorumInstalacao(sessaoId)
 
   if (!quorumResult.temQuorum) {
@@ -602,27 +600,19 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
     }
   })
 
-  // Sincronizar status da proposição com validação
-  if (item.proposicaoId) {
-    const proposicaoAtual = await prisma.proposicao.findUnique({ where: { id: item.proposicaoId }, select: { status: true } })
-    if (proposicaoAtual) {
-      const { validarTransicaoStatus } = await import('./status-transitions')
-      const validacao = validarTransicaoStatus(proposicaoAtual.status, 'EM_VOTACAO')
-      if (validacao.valid) {
-        await prisma.proposicao.update({
-          where: { id: item.proposicaoId },
-          data: { status: 'EM_VOTACAO' }
-        })
-      } else {
-        console.warn(`[iniciarVotacaoItem] ${validacao.error}`)
-      }
+  // Sincronizar status da proposição (usa proposicao já carregada, sem query extra)
+  if (item.proposicaoId && item.proposicao) {
+    const validacao = validarTransicaoStatus(item.proposicao.status, 'EM_VOTACAO')
+    if (validacao.valid) {
+      await prisma.proposicao.update({
+        where: { id: item.proposicaoId },
+        data: { status: 'EM_VOTACAO' }
+      })
     }
   }
 
-  return prisma.pautaItem.findUnique({
-    where: { id: itemId },
-    include: { proposicao: true }
-  })
+  // Retornar item atualizado (sem query extra - atualizar em memória)
+  return { ...item, status: 'EM_VOTACAO' }
 }
 
 /**
@@ -768,7 +758,6 @@ async function atualizarResultadoProposicao(
     select: { status: true }
   })
   if (proposicao) {
-    const { validarTransicaoStatus } = await import('./status-transitions')
     const validacao = validarTransicaoStatus(proposicao.status, statusProposicao)
     if (!validacao.valid) {
       console.warn(`[atualizarResultado] Transição ${proposicao.status} → ${statusProposicao}: ${validacao.error}`)

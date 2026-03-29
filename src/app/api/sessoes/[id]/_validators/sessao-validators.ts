@@ -144,6 +144,70 @@ export const sessaoIncludeFull = {
 }
 
 /**
+ * Include leve para painel do operador (sem votacoes individuais)
+ * Reduz payload em ~70% comparado ao sessaoIncludeFull
+ */
+export const sessaoIncludeOperator = {
+  ...sessaoIncludeBasic,
+  pautaSessao: {
+    include: {
+      itemAtual: {
+        include: {
+          proposicao: {
+            select: {
+              id: true,
+              numero: true,
+              ano: true,
+              titulo: true,
+              tipo: true,
+              status: true
+            }
+          }
+        }
+      },
+      itens: {
+        orderBy: { ordem: 'asc' as const },
+        include: {
+          proposicao: {
+            select: {
+              id: true,
+              numero: true,
+              ano: true,
+              titulo: true,
+              ementa: true,
+              tipo: true,
+              status: true,
+              autor: {
+                select: {
+                  id: true,
+                  nome: true,
+                  apelido: true,
+                  partido: true
+                }
+              }
+              // SEM votacoes individuais - usa contagem no frontend
+            }
+          }
+        }
+      }
+    }
+  },
+  // SEM proposicoes duplicadas (já estão em pautaSessao.itens)
+  presencas: {
+    include: {
+      parlamentar: {
+        select: {
+          id: true,
+          nome: true,
+          apelido: true,
+          foto: true
+        }
+      }
+    }
+  }
+}
+
+/**
  * Include para resposta de UPDATE
  */
 export const sessaoIncludeUpdate = {

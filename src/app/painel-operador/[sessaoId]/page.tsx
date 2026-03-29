@@ -303,7 +303,7 @@ export default function PainelOperadorPage() {
     if (!sessaoId) return
     try {
       if (mostrarLoader) setLoading(true)
-      const dados = await sessoesApi.getById(sessaoId)
+      const dados = await sessoesApi.getById(sessaoId, { light: true })
       setSessao(dados)
       iniciarSessaoTimer(dados)
       iniciarItemTimer(

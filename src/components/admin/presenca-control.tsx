@@ -111,6 +111,27 @@ export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHora
   ) => {
     try {
       setUpdating(parlamentarId)
+
+      // Atualização otimista: atualizar UI imediatamente
+      setPresencas(prev => {
+        const existente = prev.find(p => p.parlamentarId === parlamentarId)
+        if (existente) {
+          return prev.map(p => p.parlamentarId === parlamentarId
+            ? { ...p, presente, justificativa: justificativa || null }
+            : p
+          )
+        }
+        // Criar registro virtual se não existia
+        const parl = parlamentares.find(p => p.id === parlamentarId)
+        return [...prev, {
+          id: `temp-${parlamentarId}`,
+          parlamentarId,
+          presente,
+          justificativa: justificativa || null,
+          parlamentar: { id: parlamentarId, nome: parl?.nome || '', apelido: parl?.apelido || null, partido: parl?.partido || null }
+        }]
+      })
+
       const response = await fetch(`/api/sessoes/${sessaoId}/presenca`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,24 +142,93 @@ export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHora
         })
       })
 
-      if (response.ok) {
-        if (justificativa) {
-          toast.success('Falta justificada registrada com sucesso!')
-        } else if (presente) {
-          toast.success('Presença registrada com sucesso!')
-        } else {
-          toast.success('Ausência registrada com sucesso!')
-        }
-        carregarPresencas()
-      } else {
+      if (!response.ok) {
+        // Reverter otimismo se falhou
+        await carregarPresencas()
         const error = await response.json()
         toast.error(error.message || 'Erro ao atualizar presença')
       }
     } catch (error) {
-      console.error('Erro ao atualizar presença:', error)
+      await carregarPresencas()
       toast.error('Erro ao atualizar presença')
     } finally {
       setUpdating(null)
+    }
+  }
+
+  // Marcar todos como presentes de uma vez
+  const marcarTodosPresentes = async () => {
+    const ausentes = parlamentares.filter(p => {
+      const presenca = presencas.find(pr => pr.parlamentarId === p.id)
+      return !presenca?.presente
+    })
+    if (ausentes.length === 0) {
+      toast.info('Todos ja estao marcados como presentes')
+      return
+    }
+
+    // Atualização otimista: marcar todos na UI
+    setPresencas(prev => {
+      const map = new Map(prev.map(p => [p.parlamentarId, p]))
+      parlamentares.forEach(p => {
+        const existente = map.get(p.id)
+        if (existente) {
+          map.set(p.id, { ...existente, presente: true })
+        } else {
+          map.set(p.id, {
+            id: `temp-${p.id}`,
+            parlamentarId: p.id,
+            presente: true,
+            justificativa: null,
+            parlamentar: { id: p.id, nome: p.nome, apelido: p.apelido || null, partido: p.partido || null }
+          })
+        }
+      })
+      return Array.from(map.values())
+    })
+
+    // Enviar todos em paralelo (batch)
+    try {
+      await Promise.all(
+        ausentes.map(p =>
+          fetch(`/api/sessoes/${sessaoId}/presenca`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parlamentarId: p.id, presente: true })
+          })
+        )
+      )
+      toast.success(`${ausentes.length} presenca(s) registrada(s)`)
+    } catch {
+      await carregarPresencas()
+      toast.error('Erro ao registrar presenças em lote')
+    }
+  }
+
+  // Marcar todos como ausentes
+  const marcarTodosAusentes = async () => {
+    const presentesList = parlamentares.filter(p => {
+      const presenca = presencas.find(pr => pr.parlamentarId === p.id)
+      return presenca?.presente
+    })
+    if (presentesList.length === 0) return
+
+    setPresencas(prev => prev.map(p => ({ ...p, presente: false })))
+
+    try {
+      await Promise.all(
+        presentesList.map(p =>
+          fetch(`/api/sessoes/${sessaoId}/presenca`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parlamentarId: p.id, presente: false })
+          })
+        )
+      )
+      toast.success('Todas as presencas removidas')
+    } catch {
+      await carregarPresencas()
+      toast.error('Erro ao atualizar presenças')
     }
   }
 
@@ -273,6 +363,31 @@ export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHora
           <div className="text-2xl font-bold text-red-600">{ausentes}</div>
           <div className="text-sm text-red-700">Ausentes</div>
         </div>
+      </div>
+
+      {/* Ações rápidas */}
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={marcarTodosPresentes}
+          className="bg-green-600 hover:bg-green-700 text-white"
+          disabled={updating !== null}
+        >
+          <UserCheck className="h-4 w-4 mr-1.5" />
+          Todos Presentes
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={marcarTodosAusentes}
+          disabled={updating !== null}
+        >
+          <UserX className="h-4 w-4 mr-1.5" />
+          Limpar Todos
+        </Button>
+        <span className="text-xs text-gray-400 ml-auto">
+          Clique no vereador para alterar individualmente
+        </span>
       </div>
 
       {/* Lista de Parlamentares */}
