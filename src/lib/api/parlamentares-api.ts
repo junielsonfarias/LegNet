@@ -83,6 +83,7 @@ export interface ParlamentarFilters {
   cargo?: string
   partido?: string
   search?: string
+  legislaturaId?: string
   page?: number
   limit?: number
 }
@@ -154,6 +155,7 @@ class ParlamentaresApiService {
     if (filters?.cargo) params.append('cargo', filters.cargo)
     if (filters?.partido) params.append('partido', filters.partido)
     if (filters?.search) params.append('search', filters.search)
+    if (filters?.legislaturaId) params.append('legislaturaId', filters.legislaturaId)
     if (filters?.page) params.append('page', String(filters.page))
     if (filters?.limit) params.append('limit', String(filters.limit))
     

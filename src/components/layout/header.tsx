@@ -422,7 +422,7 @@ export function Header() {
                         }}
                         role="menu"
                         aria-label={`Submenu de ${section.title}`}
-                        aria-hidden={activeDropdown !== section.title}
+                        aria-hidden={activeDropdown !== section.title ? 'true' : undefined}
                         onMouseEnter={handleDropdownMouseEnter}
                         onMouseLeave={handleMouseLeave}
                       >

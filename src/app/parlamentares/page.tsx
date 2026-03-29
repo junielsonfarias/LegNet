@@ -1,145 +1,210 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { 
-  Users, 
-  Search, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar,
-  Award,
+import {
+  Users,
+  Search,
+  User,
   Crown,
   Shield,
   FileText,
   Building,
   BarChart3,
-  Eye,
-  ExternalLink
+  ArrowRight,
+  Calendar,
+  ChevronDown,
 } from 'lucide-react'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { ParlamentaresListSkeleton } from '@/components/skeletons/parlamentar-skeleton'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { slugify, cn } from '@/lib/utils'
+
+interface Legislatura {
+  id: string
+  numero: number
+  anoInicio: number
+  anoFim: number
+  ativa: boolean
+}
+
+const cargoConfig: Record<string, { label: string; gradient: string; bg: string; text: string; icon: any }> = {
+  'PRESIDENTE': { label: 'Presidente', gradient: 'from-amber-500 to-yellow-600', bg: 'bg-amber-50', text: 'text-amber-700', icon: Crown },
+  'VICE_PRESIDENTE': { label: 'Vice-presidente', gradient: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50', text: 'text-blue-700', icon: Shield },
+  'PRIMEIRO_SECRETARIO': { label: '1o Secretario', gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: FileText },
+  'SEGUNDO_SECRETARIO': { label: '2o Secretario', gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-700', icon: FileText },
+  'VEREADOR': { label: 'Vereador(a)', gradient: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', text: 'text-gray-600', icon: User },
+}
+
+const defaultCargo = { label: 'Vereador(a)', gradient: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', text: 'text-gray-600', icon: User }
+
+function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
+  const config = cargoConfig[parlamentar.cargo] || defaultCargo
+  const Icon = config.icon
+  const slug = slugify(parlamentar.apelido || parlamentar.nome) || parlamentar.id
+  const initials = (parlamentar.apelido || parlamentar.nome).split(' ').map((n: string) => n[0]).slice(0, 2).join('')
+
+  return (
+    <Link href={`/parlamentares/${slug}`} className="group block h-full">
+      <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-300 hover:-translate-y-1 h-full overflow-hidden">
+        {/* Barra de cor no topo */}
+        <div className={cn('h-1.5 w-full bg-gradient-to-r', config.gradient)} />
+
+        {/* Background decorativo */}
+        <div className={cn('absolute top-0 left-0 right-0 h-24 bg-gradient-to-br opacity-[0.07]', config.gradient)} />
+
+        <div className="relative p-4 sm:p-5 flex flex-col items-center text-center h-[calc(100%-6px)]">
+          {/* Avatar */}
+          <div className="relative mb-3 group-hover:scale-105 transition-transform duration-300">
+            {parlamentar.foto ? (
+              <Image
+                src={parlamentar.foto}
+                alt={parlamentar.apelido || parlamentar.nome}
+                width={88}
+                height={88}
+                className="w-18 h-18 sm:w-22 sm:h-22 rounded-full object-cover ring-[3px] ring-offset-2 ring-gray-200 group-hover:ring-blue-300 transition-all shadow-md"
+                style={{ width: '80px', height: '80px' }}
+              />
+            ) : (
+              <div
+                className="w-[80px] h-[80px] rounded-full flex items-center justify-center font-bold text-white text-xl ring-[3px] ring-offset-2 ring-gray-200 shadow-md"
+                style={{ backgroundColor: 'var(--municipal-primary)' }}
+              >
+                {initials}
+              </div>
+            )}
+            {/* Badge icone do cargo */}
+            {parlamentar.cargo !== 'VEREADOR' && (
+              <div className={cn(
+                'absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center shadow-md bg-gradient-to-br',
+                config.gradient
+              )}>
+                <Icon className="h-3.5 w-3.5 text-white" />
+              </div>
+            )}
+          </div>
+
+          {/* Nome */}
+          <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight truncate max-w-full" title={parlamentar.nome}>
+            {parlamentar.apelido || parlamentar.nome}
+          </h3>
+
+          {/* Nome completo se tem apelido */}
+          {parlamentar.apelido && parlamentar.nome !== parlamentar.apelido && (
+            <p className="text-[11px] text-gray-400 truncate max-w-full mt-0.5" title={parlamentar.nome}>
+              {parlamentar.nome}
+            </p>
+          )}
+
+          {/* Cargo badge */}
+          <div className={cn('inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-xs font-semibold', config.bg, config.text)}>
+            <Icon className="h-3 w-3" />
+            {config.label}
+          </div>
+
+          {/* Partido */}
+          {parlamentar.partido && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+              <Building className="h-3 w-3" />
+              {parlamentar.partido}
+            </div>
+          )}
+
+          {/* Spacer + CTA */}
+          <div className="mt-auto pt-3 w-full">
+            <div className="flex items-center justify-center gap-1 text-xs font-medium text-gray-400 group-hover:text-camara-primary transition-colors">
+              Ver perfil <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}
 
 export default function ParlamentaresPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'todos' | 'mesa' | 'vereadores'>('todos')
+  const [legislaturas, setLegislaturas] = useState<Legislatura[]>([])
+  const [selectedLegislaturaId, setSelectedLegislaturaId] = useState<string>('')
 
-  // Dados dos parlamentares usando hook
-  const { parlamentares, loading } = useParlamentares({ ativo: true })
+  // Buscar legislaturas disponíveis
+  useEffect(() => {
+    const fetchLegislaturas = async () => {
+      try {
+        const res = await fetch('/api/legislaturas?limit=20')
+        const data = await res.json()
+        const items: Legislatura[] = data.data || data.dados || []
+        // Ordenar: ativa primeiro, depois por ano decrescente
+        items.sort((a, b) => {
+          if (a.ativa && !b.ativa) return -1
+          if (!a.ativa && b.ativa) return 1
+          return b.anoInicio - a.anoInicio
+        })
+        setLegislaturas(items)
+        // Selecionar a legislatura ativa por padrão
+        const ativa = items.find(l => l.ativa)
+        if (ativa) setSelectedLegislaturaId(ativa.id)
+      } catch {}
+    }
+    fetchLegislaturas()
+  }, [])
+
+  // Filtrar parlamentares pela legislatura selecionada
+  // Para legislatura atual ou sem seleção: busca ativos (garante resultado mesmo sem mandatos)
+  // Para legislaturas anteriores: filtra por mandato vinculado
+  const isCurrentLeg = !selectedLegislaturaId || selectedLegislaturaId === legislaturas.find(l => l.ativa)?.id
+  const filters = useMemo(() => {
+    if (!selectedLegislaturaId || isCurrentLeg) {
+      return { ativo: true }
+    }
+    return { legislaturaId: selectedLegislaturaId }
+  }, [selectedLegislaturaId, isCurrentLeg])
+
+  const { parlamentares, loading } = useParlamentares(filters)
   const { configuracao } = useConfiguracaoInstitucional()
   const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
 
-  // Mesa Diretora - filtrar por cargo
+  const legislaturaAtual = legislaturas.find(l => l.ativa)
+  const isLegislaturaAtual = selectedLegislaturaId === legislaturaAtual?.id
+
   const mesaDiretora = useMemo(() => {
+    const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO']
     return parlamentares
       .filter(p => p.cargo !== 'VEREADOR')
-      .map(p => ({
-        ...p,
-        name: p.nome,
-        role: p.cargo === 'PRESIDENTE' ? 'Presidente' : 
-              p.cargo === 'VICE_PRESIDENTE' ? 'Vice-presidente' :
-              p.cargo === 'PRIMEIRO_SECRETARIO' ? '1º Secretário' :
-              p.cargo === 'SEGUNDO_SECRETARIO' ? '2º Secretário' : 'Vereador',
-        icon: p.cargo === 'PRESIDENTE' ? Crown :
-              p.cargo === 'VICE_PRESIDENTE' ? Shield :
-              p.cargo === 'PRIMEIRO_SECRETARIO' ? FileText :
-              p.cargo === 'SEGUNDO_SECRETARIO' ? FileText : User,
-        sessions: 0, // TODO: Calcular estatísticas quando API estiver disponível
-        matters: 0,
-        presenca: 0,
-        color: 'bg-gray-100',
-        phone: p.telefone,
-        email: p.email
-      }))
+      .sort((a, b) => ordemCargos.indexOf(a.cargo || '') - ordemCargos.indexOf(b.cargo || ''))
   }, [parlamentares])
 
-  // Vereadores
   const vereadores = useMemo(() => {
-    return parlamentares
-      .filter(p => p.cargo === 'VEREADOR')
-      .map(p => ({
-        ...p,
-        name: p.nome,
-        role: 'Vereador',
-        icon: User,
-        sessions: 0, // TODO: Calcular estatísticas quando API estiver disponível
-        matters: 0,
-        presenca: 0,
-        color: 'bg-gray-100',
-        phone: p.telefone,
-        email: p.email
-      }))
+    return parlamentares.filter(p => p.cargo === 'VEREADOR')
   }, [parlamentares])
 
-  // Todos os parlamentares
-  const todosParlamentares = useMemo((): any[] => {
+  const todosParlamentares = useMemo(() => {
     return [...mesaDiretora, ...vereadores]
   }, [mesaDiretora, vereadores])
 
-  // Filtrar dados baseado na aba ativa
-  const getActiveData = (): any[] => {
+  const getActiveData = () => {
     switch (activeTab) {
-      case 'mesa':
-        return mesaDiretora as any[]
-      case 'vereadores':
-        return vereadores as any[]
-      default:
-        return todosParlamentares
+      case 'mesa': return mesaDiretora
+      case 'vereadores': return vereadores
+      default: return todosParlamentares
     }
   }
 
-  const activeData = getActiveData()
-
-  // Filtrar por termo de busca
-  const filteredData = activeData.filter(parlamentar =>
-    parlamentar.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (parlamentar.apelido && parlamentar.apelido.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (parlamentar.partido && parlamentar.partido.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredData = getActiveData().filter(p =>
+    p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.apelido && p.apelido.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (p.partido && p.partido.toLowerCase().includes(searchTerm.toLowerCase()))
   )
-
-  const getCargoColor = (cargo: string) => {
-    switch (cargo) {
-      case 'PRESIDENTE':
-        return 'bg-red-100 text-red-800'
-      case 'VICE_PRESIDENTE':
-        return 'bg-orange-100 text-orange-800'
-      case 'PRIMEIRO_SECRETARIO':
-        return 'bg-camara-primary/10 text-camara-primary'
-      case 'SEGUNDO_SECRETARIO':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getCargoLabel = (cargo: string) => {
-    switch (cargo) {
-      case 'PRESIDENTE':
-        return 'Presidente'
-      case 'VICE_PRESIDENTE':
-        return 'Vice-Presidente'
-      case 'PRIMEIRO_SECRETARIO':
-        return '1º Secretário'
-      case 'SEGUNDO_SECRETARIO':
-        return '2º Secretário'
-      case 'VEREADOR':
-        return 'Vereador'
-      default:
-        return cargo
-    }
-  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 py-8 md:py-12">
           <ParlamentaresListSkeleton />
         </div>
       </div>
@@ -148,249 +213,159 @@ export default function ParlamentaresPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8 md:py-12">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
-            <Users className="h-10 w-10 text-camara-primary" />
+        <div className="text-center mb-8 md:mb-10">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2 sm:gap-3">
+            <Users className="h-7 w-7 sm:h-9 sm:w-9 text-camara-primary" />
             Parlamentares
           </h1>
-          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mb-6">
-            Conheça os vereadores e a Mesa Diretora da {nomeCasa}
+          <p className="text-sm md:text-base lg:text-lg text-gray-600 max-w-2xl mx-auto">
+            Conheca os vereadores e a Mesa Diretora da {nomeCasa}
           </p>
-          <div className="flex justify-center space-x-4">
-            <Button asChild variant="outline">
-              <Link href="/parlamentares/comparativo/">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Comparativo de Performance
-              </Link>
-            </Button>
-          </div>
         </div>
 
-        {/* Estatísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="camara-card">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-camara-primary">
-                {todosParlamentares.length}
-              </div>
-              <p className="text-sm text-gray-600">Total de Parlamentares</p>
-            </CardContent>
-          </Card>
-          <Card className="camara-card">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-purple-600">
-                {mesaDiretora.length}
-              </div>
-              <p className="text-sm text-gray-600">Mesa Diretora</p>
-            </CardContent>
-          </Card>
-          <Card className="camara-card">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">
-                {vereadores.length}
-              </div>
-              <p className="text-sm text-gray-600">Vereadores</p>
-            </CardContent>
-          </Card>
-          <Card className="camara-card">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-orange-600">
-                {todosParlamentares.filter(p => p.partido).length}
-              </div>
-              <p className="text-sm text-gray-600">Partidos Representados</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Navegação por Abas */}
-        <div className="flex flex-wrap gap-2 mb-8 justify-center">
-          <Button
-            variant={activeTab === 'todos' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('todos')}
-            className="flex items-center gap-2"
-          >
-            <Users className="h-4 w-4" />
-            Todos ({todosParlamentares.length})
-          </Button>
-          <Button
-            variant={activeTab === 'mesa' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('mesa')}
-            className="flex items-center gap-2"
-          >
-            <Crown className="h-4 w-4" />
-            Mesa Diretora ({mesaDiretora.length})
-          </Button>
-          <Button
-            variant={activeTab === 'vereadores' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('vereadores')}
-            className="flex items-center gap-2"
-          >
-            <User className="h-4 w-4" />
-            Vereadores ({vereadores.length})
-          </Button>
-        </div>
-
-        {/* Busca */}
-        <Card className="camara-card mb-8">
-          <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar parlamentares por nome, apelido ou partido..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        {/* Stats compactos */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+          {[
+            { value: todosParlamentares.length, label: 'Total', color: 'text-camara-primary' },
+            { value: mesaDiretora.length, label: 'Mesa Diretora', color: 'text-purple-600' },
+            { value: vereadores.length, label: 'Vereadores', color: 'text-green-600' },
+            { value: new Set(todosParlamentares.map(p => p.partido).filter(Boolean)).size, label: 'Partidos', color: 'text-orange-600' },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 text-center shadow-sm">
+              <div className={cn('text-xl sm:text-2xl font-bold', stat.color)}>{stat.value}</div>
+              <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Lista de Parlamentares */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredData.map((parlamentar) => (
-            <Card key={parlamentar.id} className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    {parlamentar.foto ? (
-                      <img
-                        src={parlamentar.foto}
-                        alt={parlamentar.nome}
-                        className="w-12 h-12 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="p-3 bg-camara-primary/10 rounded-lg">
-                        <parlamentar.icon className="h-6 w-6 text-camara-primary" />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-gray-900">
-                        {parlamentar.nome}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {parlamentar.apelido}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className={getCargoColor(parlamentar.cargo)}>
-                    {getCargoLabel(parlamentar.cargo)}
-                  </Badge>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Building className="h-4 w-4" />
-                    {parlamentar.partido}
-                  </div>
-                  
-                  {parlamentar.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600 min-w-0">
-                      <Mail className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">{parlamentar.email}</span>
-                    </div>
-                  )}
-                  
-                  {parlamentar.telefone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone className="h-4 w-4" />
-                      {parlamentar.telefone}
-                    </div>
-                  )}
-                  
-                  {parlamentar.gabinete && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      {parlamentar.gabinete}
-                    </div>
-                  )}
-
-                  {parlamentar.biografia && (
-                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">
-                      {parlamentar.biografia}
-                    </p>
-                  )}
-
-                  {/* Estatísticas */}
-                  <div className="border-t pt-3 mt-3">
-                    <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
-                      <div>
-                        <div className="text-lg font-semibold text-camara-primary">
-                          {parlamentar.sessions}
-                        </div>
-                        <div className="text-xs text-gray-500">Sessões</div>
-                      </div>
-                      <div>
-                        <div className="text-lg font-semibold text-green-600">
-                          {parlamentar.matters}
-                        </div>
-                        <div className="text-xs text-gray-500">Matérias</div>
-                      </div>
-                      <div>
-                        <div className="text-lg font-semibold text-orange-600">
-                          {parlamentar.presenca}%
-                        </div>
-                        <div className="text-xs text-gray-500">Presença</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Legislatura */}
-                  {parlamentar.legislatura && (
-                    <div className="border-t pt-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="h-4 w-4" />
-                        <span className="font-medium text-sm">Legislatura:</span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {parlamentar.legislatura}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Botões de Ação */}
-                  <div className="flex gap-2 mt-4">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      asChild
-                    >
-                      <a href={`/parlamentares/${parlamentar.apelido?.toLowerCase().replace(/\s+/g, '-') || parlamentar.id}`}>
-                        <User className="h-4 w-4 mr-1" />
-                        Perfil
-                      </a>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      asChild
-                    >
-                      <a href={`/parlamentares/${parlamentar.apelido?.toLowerCase().replace(/\s+/g, '-') || parlamentar.id}/perfil-completo`}>
-                        <Eye className="h-4 w-4 mr-1" />
-                        Completo
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           ))}
         </div>
 
-        {filteredData.length === 0 && (
-          <Card className="camara-card">
-            <CardContent className="p-12 text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum parlamentar encontrado</h3>
-              <p className="text-gray-600">
-                {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Não há parlamentares cadastrados.'}
-              </p>
-            </CardContent>
-          </Card>
+        {/* Filtro de Legislatura */}
+        {legislaturas.length > 1 && (
+          <div className="mb-4 md:mb-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 shrink-0">
+                <Calendar className="h-4 w-4" />
+                <span className="font-medium">Legislatura:</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {legislaturas.map((leg) => (
+                  <button
+                    key={leg.id}
+                    onClick={() => setSelectedLegislaturaId(leg.id)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all border',
+                      selectedLegislaturaId === leg.id
+                        ? 'bg-camara-primary text-white border-camara-primary shadow-sm'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    )}
+                  >
+                    {leg.anoInicio}/{leg.anoFim}
+                    {leg.ativa && (
+                      <span className={cn(
+                        'ml-1.5 text-[10px] font-bold',
+                        selectedLegislaturaId === leg.id ? 'text-white/80' : 'text-emerald-600'
+                      )}>
+                        ATUAL
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
+
+        {/* Filtros: Abas + Busca */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6 md:mb-8">
+          {/* Abas */}
+          <div className="flex gap-1.5 bg-gray-100 rounded-xl p-1 flex-shrink-0">
+            {[
+              { key: 'todos' as const, label: 'Todos', icon: Users, count: todosParlamentares.length },
+              { key: 'mesa' as const, label: 'Mesa', icon: Crown, count: mesaDiretora.length },
+              { key: 'vereadores' as const, label: 'Vereadores', icon: User, count: vereadores.length },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all',
+                  activeTab === tab.key
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                <tab.icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="text-[10px] sm:text-xs opacity-60">({tab.count})</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Busca */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar por nome ou partido..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-white border-gray-200 rounded-xl"
+            />
+          </div>
+
+          {/* Link comparativo */}
+          <Button asChild variant="outline" size="sm" className="hidden lg:flex rounded-xl shrink-0">
+            <Link href="/parlamentares/comparativo">
+              <BarChart3 className="h-4 w-4 mr-1.5" />
+              Comparativo
+            </Link>
+          </Button>
+        </div>
+
+        {/* Indicador de legislatura anterior */}
+        {!isLegislaturaAtual && selectedLegislaturaId && (
+          <div className="mb-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-sm text-amber-800">
+            <Calendar className="h-4 w-4 shrink-0" />
+            <span>
+              Exibindo parlamentares da legislatura{' '}
+              <strong>{legislaturas.find(l => l.id === selectedLegislaturaId)?.anoInicio}/{legislaturas.find(l => l.id === selectedLegislaturaId)?.anoFim}</strong>
+            </span>
+            <button
+              onClick={() => legislaturaAtual && setSelectedLegislaturaId(legislaturaAtual.id)}
+              className="ml-auto text-xs font-semibold text-amber-700 hover:text-amber-900 underline shrink-0"
+            >
+              Voltar para atual
+            </button>
+          </div>
+        )}
+
+        {/* Grid de Parlamentares */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+          {filteredData.map((parlamentar) => (
+            <ParlamentarCard key={parlamentar.id} parlamentar={parlamentar} />
+          ))}
+        </div>
+
+        {/* Empty state */}
+        {filteredData.length === 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 sm:p-12 text-center">
+            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhum parlamentar encontrado</h3>
+            <p className="text-sm text-gray-500">
+              {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Nao ha parlamentares cadastrados.'}
+            </p>
+          </div>
+        )}
+
+        {/* Mobile CTA comparativo */}
+        <div className="mt-6 text-center lg:hidden">
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href="/parlamentares/comparativo">
+              <BarChart3 className="h-4 w-4 mr-1.5" />
+              Comparativo de Performance
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   )

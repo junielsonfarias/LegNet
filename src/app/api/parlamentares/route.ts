@@ -71,6 +71,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const cargo = searchParams.get('cargo') || undefined
   const partido = searchParams.get('partido') || undefined
   const search = searchParams.get('search') || undefined
+  const legislaturaId = searchParams.get('legislaturaId') || undefined
   const page = parseInt(searchParams.get('page') || '1')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
@@ -79,7 +80,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       ativo: ativo !== null ? ativo === 'true' : undefined,
       cargo,
       partido,
-      search
+      search,
+      legislaturaId
     },
     { page, limit }
   )

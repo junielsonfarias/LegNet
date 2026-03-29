@@ -10,6 +10,7 @@ export interface ParlamentarFilters {
   cargo?: string
   partido?: string
   search?: string
+  legislaturaId?: string
 }
 
 export interface MandatoPayload {
@@ -55,6 +56,10 @@ const buildWhereClause = (filters: ParlamentarFilters = {}) => {
       { apelido: { contains: filters.search, mode: 'insensitive' } },
       { partido: { contains: filters.search, mode: 'insensitive' } }
     ]
+  }
+
+  if (filters.legislaturaId) {
+    where.mandatos = { some: { legislaturaId: filters.legislaturaId } }
   }
 
   return where
