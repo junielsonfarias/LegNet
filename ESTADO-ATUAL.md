@@ -1,9 +1,76 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-03-27 (Redesign portal + transparencia + e-SIC + ouvidoria)
-> **Versao**: 1.7.0
+> **Ultima Atualizacao**: 2026-03-29 (Correcoes responsividade completa do portal)
+> **Versao**: 1.7.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Correcoes de Responsividade Completa (29/03/2026)
+
+### Componentes UI Base
+- **Button**: touch targets aumentados (h-10→h-11 default, h-9→h-10 sm, h-11→h-12 lg, icon h-11)
+- **Input**: altura aumentada h-10→h-11 para touch mobile
+- **Tabs**: min-height 44px no TabsList, 40px no TabsTrigger
+- **Sheet**: largura responsiva w-[85vw] max-w-sm (antes w-3/4), botao fechar 44x44px
+- **Dialog**: padding responsivo p-4 sm:p-6, largura calc(100%-2rem), botao fechar 44x44px
+
+### Header e Menu Mobile
+- Hamburger: size icon com min 44x44px + aria-label
+- Menu mobile: w-[85vw] max-w-[400px] com overflow-y-auto
+- Busca global: visivel a partir de md (tablets) em vez de apenas lg
+- Menu desktop: visivel a partir de md, espacamento adaptativo
+- Nome da casa: text-base sm:text-lg md:text-xl responsivo
+- Dropdown: w-64 lg:w-80 (antes w-72 fixo)
+
+### Titulos Responsivos (~20 paginas)
+- Padrao `text-4xl` fixo corrigido para `text-2xl md:text-3xl lg:text-4xl`
+- Padrao `text-3xl` fixo corrigido para `text-xl md:text-2xl lg:text-3xl`
+- Subtitulos `text-xl` corrigidos para `text-base md:text-lg lg:text-xl`
+- Paginas: sobre, papel-camara, papel-vereador, lei-organica, codigo-etica, regimento, dicionario, e-sic, ouvidoria, camara-explica, sessoes, proposicoes, parlamentares, vereadores, mesa-diretora, galeria, comparativo, despesas, ao-vivo
+
+### Grids Responsivos (~20 paginas)
+- Stats `md:grid-cols-4` corrigido para `sm:grid-cols-2 lg:grid-cols-4`
+- Stats `md:grid-cols-5` corrigido para `sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5`
+- Paginas: parlamentares, vereadores, mesa-diretora, comparativo, sessoes, proposicoes, comissoes, despesas, receitas, convenios, contratos, folha-pagamento, licitacoes, lei-responsabilidade-fiscal, mesa-diretora-transparencia, participacao-cidada, participacao
+
+### Componentes Home
+- Latest News: datas text-xs→text-xs sm:text-sm, thumbnails w-24 sm:w-28 md:w-36
+- Highlights: badges text-[10px]→text-[11px] px-2 py-0.5
+- Stats Section: icones sociais 44px min touch, icones contato w-10 h-10
+- Live Banner: botao h-11 (antes size-sm h-9)
+- Citizen Participation: grid sm:grid-cols-2 lg:grid-cols-3 (antes sm:grid-cols-3)
+- Legislative Activity: badges text-[11px] com padding adequado
+- Parliamentarians: badges text-[11px]
+
+### Overflow e Padding
+- Cards stats: padding p-4 sm:p-6 (antes p-6 fixo)
+- Emails: truncate + min-w-0 nos containers
+- Barras de busca: flex-col sm:flex-row para empilhar no mobile
+- Stats grids internos: gap-2 sm:gap-4
+- Footer: gap-4 na secao legislatura
+
+### Segunda Rodada - Correcoes Complementares
+- **Tabelas transparencia**: overflow-x-auto em votacoes-nominais e presencas
+- **Font sizes**: text-[11px] substituido por text-xs (12px) em 6 componentes home
+- **Avatares responsivos**: w-20 h-20 → w-16 sm:w-20, w-16 h-16 → w-12 sm:w-16 em mesa-diretora, e-sic, ouvidoria, proposicao detalhe
+- **Formularios**: flex-wrap em botoes e-sic/ouvidoria, flex-col sm:flex-row em buscas
+- **Padding responsivo**: p-6→p-4 sm:p-6 em cards de sobre, lei-organica, codigo-etica, regimento, dicionario, camara-explica, e-sic, ouvidoria
+- **Header SSR skeleton**: alinhado breakpoints md: com versao dinamica
+- **Galeria**: email/telefone visiveis a partir de md (antes lg)
+- **Ao-vivo**: titulo responsivo, padding p-6 sm:p-8 md:p-12, icone responsivo
+- **Perfil completo**: header flex-col sm:flex-row, avatar e titulo responsivos
+- **Audiencias publicas**: flex-wrap + gap responsivo em metadados
+- **Noticias detalhe**: breadcrumb titulo max-w-[150px] sm:max-w-xs
+
+### Terceira Rodada - Erros Console e Sobreposicao
+- **Acessibilidade toolbar**: reposicionado para bottom-4 right-4 no mobile (antes top-20 sobrepunha menu)
+- **Painel acessibilidade**: abre para cima no mobile, para baixo no desktop
+- **SheetTitle/Description**: adicionados no menu mobile (elimina warning Radix Dialog)
+- **Next/Image**: substituido `<img>` por `Image` em latest-news e parliamentarians-section (elimina warning LCP)
+- **Header**: eliminado skeleton SSR duplicado que causava hydration mismatch (unica arvore JSX agora)
+- **Next/Image**: convertido `<img>` para `Image` em parliamentarians-section (elimina warning LCP)
 
 ---
 

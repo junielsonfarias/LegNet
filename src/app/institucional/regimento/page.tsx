@@ -8,10 +8,10 @@ export default function RegimentoPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Regimento Interno
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             O Regimento Interno é o conjunto de normas que disciplina o funcionamento 
             interno da Câmara Municipal, estabelecendo procedimentos e regras de conduta.
           </p>
@@ -49,7 +49,7 @@ export default function RegimentoPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 sm:p-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-camara-primary/10 flex items-center justify-center">
                   <Scale className="h-8 w-8 text-camara-primary" />
                 </div>
@@ -61,7 +61,7 @@ export default function RegimentoPage() {
             </Card>
 
             <Card className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 sm:p-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
                   <Users className="h-8 w-8 text-green-600" />
                 </div>
@@ -73,7 +73,7 @@ export default function RegimentoPage() {
             </Card>
 
             <Card className="camara-card hover:shadow-lg transition-shadow">
-              <CardContent className="p-6 text-center">
+              <CardContent className="p-4 sm:p-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
                   <Calendar className="h-8 w-8 text-purple-600" />
                 </div>
@@ -434,7 +434,7 @@ export default function RegimentoPage() {
         {/* Download do Regimento */}
         <div className="text-center">
           <Card className="camara-card max-w-2xl mx-auto">
-            <CardContent className="p-8">
+            <CardContent className="p-4 sm:p-8">
               <FileText className="h-16 w-16 text-camara-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Regimento Interno da Câmara Municipal

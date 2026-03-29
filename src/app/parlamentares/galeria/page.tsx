@@ -145,7 +145,7 @@ export default function GaleriaParlamentaresPage() {
               <Users className="h-4 w-4" />
               <span>Legislatura {new Date().getFullYear()}</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
               Nossos Vereadores
             </h1>
             <p className="text-lg text-white/80 max-w-2xl mx-auto">
@@ -392,13 +392,13 @@ export default function GaleriaParlamentaresPage() {
                             {p.email && (
                               <div className="flex items-center gap-1">
                                 <Mail className="h-4 w-4" />
-                                <span className="hidden lg:inline truncate max-w-[200px]">{p.email}</span>
+                                <span className="hidden md:inline truncate max-w-[200px]">{p.email}</span>
                               </div>
                             )}
                             {p.telefone && (
                               <div className="flex items-center gap-1">
                                 <Phone className="h-4 w-4" />
-                                <span className="hidden lg:inline">{p.telefone}</span>
+                                <span className="hidden md:inline">{p.telefone}</span>
                               </div>
                             )}
                           </div>

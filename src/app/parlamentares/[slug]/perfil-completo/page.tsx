@@ -194,13 +194,13 @@ export default function PerfilCompletoPage({ params: paramsPromise }: PerfilComp
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-camara-primary rounded-full flex items-center justify-center text-white text-xl font-bold">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-camara-primary rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold shrink-0">
             {parlamentar.nome.charAt(0)}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{parlamentar.nome}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{parlamentar.nome}</h1>
             <p className="text-gray-600">{parlamentar.cargo} • {parlamentar.partido}</p>
             <p className="text-sm text-gray-500">Legislatura {parlamentar.legislatura}</p>
           </div>

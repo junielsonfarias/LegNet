@@ -217,7 +217,7 @@ export default function MesaDiretoraTransparenciaPage() {
         </Card>
 
         {/* Estatísticas da Mesa Diretora */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="shadow-xl hover:shadow-2xl transition-all duration-300">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -317,7 +317,7 @@ export default function MesaDiretoraTransparenciaPage() {
                   return (
                     <Card key={membro.id} className="shadow-xl hover:shadow-2xl transition-all duration-300">
                       <CardHeader className="text-center">
-                        <div className={`relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 ${borderColors[membro.cargo || ''] || 'border-camara-primary'}`}>
+                        <div className={`relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 ${borderColors[membro.cargo || ''] || 'border-camara-primary'}`}>
                           {membro.foto ? (
                             <img src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" />
                           ) : (
@@ -375,7 +375,7 @@ export default function MesaDiretoraTransparenciaPage() {
               {vereadoresLegislatura.map((vereador) => (
                 <Card key={vereador.id} className="shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                   <CardHeader className="text-center">
-                    <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
                       {vereador.foto ? (
                         <img src={vereador.foto} alt={vereador.apelido || vereador.nome} className="w-full h-full object-cover" />
                       ) : (

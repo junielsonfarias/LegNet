@@ -19,6 +19,9 @@ export interface ConfiguracaoInstitucionalApi {
   tema?: 'claro' | 'escuro' | 'auto' | null
   timezone?: string | null
   descricao?: string | null
+  facebookUrl?: string | null
+  instagramUrl?: string | null
+  youtubeUrl?: string | null
   createdAt: string
   updatedAt: string
 }

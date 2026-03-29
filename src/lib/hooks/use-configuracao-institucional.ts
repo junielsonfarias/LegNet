@@ -23,6 +23,9 @@ export interface ConfiguracaoInstitucionalClient {
   corSecundaria: string
   corAcento: string
   legislatura?: string | null
+  facebookUrl: string | null
+  instagramUrl: string | null
+  youtubeUrl: string | null
 }
 
 export interface LegislaturaInfoClient {
@@ -62,7 +65,10 @@ const fallbackConfig: ConfiguracaoInstitucionalClient = {
   brasaoUrl: null,
   corPrimaria: '#1e40af',
   corSecundaria: '#3b82f6',
-  corAcento: '#059669'
+  corAcento: '#059669',
+  facebookUrl: null,
+  instagramUrl: null,
+  youtubeUrl: null
 }
 
 /**
@@ -114,7 +120,10 @@ export function useConfiguracaoInstitucional(): ConfiguracaoCompleta {
               corPrimaria: dados.configuracao.corPrimaria || '#1e40af',
               corSecundaria: dados.configuracao.corSecundaria || '#3b82f6',
               corAcento: dados.configuracao.corAcento || '#059669',
-              legislatura: dados.legislatura?.periodo || null
+              legislatura: dados.legislatura?.periodo || null,
+              facebookUrl: dados.configuracao.facebookUrl || null,
+              instagramUrl: dados.configuracao.instagramUrl || null,
+              youtubeUrl: dados.configuracao.youtubeUrl || null
             } : fallbackConfig,
             legislatura: dados.legislatura ? {
               numero: dados.legislatura.numero,

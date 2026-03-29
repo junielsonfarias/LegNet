@@ -151,11 +151,11 @@ export default function ParlamentaresPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
             <Users className="h-10 w-10 text-camara-primary" />
             Parlamentares
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-6">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mb-6">
             Conheça os vereadores e a Mesa Diretora da {nomeCasa}
           </p>
           <div className="flex justify-center space-x-4">
@@ -169,7 +169,7 @@ export default function ParlamentaresPage() {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="camara-card">
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-camara-primary">
@@ -286,9 +286,9 @@ export default function ParlamentaresPage() {
                   </div>
                   
                   {parlamentar.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Mail className="h-4 w-4" />
-                      {parlamentar.email}
+                    <div className="flex items-center gap-2 text-sm text-gray-600 min-w-0">
+                      <Mail className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{parlamentar.email}</span>
                     </div>
                   )}
                   
@@ -314,7 +314,7 @@ export default function ParlamentaresPage() {
 
                   {/* Estatísticas */}
                   <div className="border-t pt-3 mt-3">
-                    <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                       <div>
                         <div className="text-lg font-semibold text-camara-primary">
                           {parlamentar.sessions}

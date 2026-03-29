@@ -23,7 +23,10 @@ const ConfiguracaoSchema = z.object({
   logoUrl: z.string().optional(),
   tema: z.enum(['claro', 'escuro', 'auto']).optional(),
   timezone: z.string().optional(),
-  descricao: z.string().optional()
+  descricao: z.string().optional(),
+  facebookUrl: z.string().url().nullable().optional(),
+  instagramUrl: z.string().url().nullable().optional(),
+  youtubeUrl: z.string().url().nullable().optional()
 })
 
 export const GET = withAuth(async (_request: NextRequest) => {

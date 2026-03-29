@@ -171,6 +171,9 @@ model ConfiguracaoInstitucional {
   tipoEnte           String?  @default("CAMARA_MUNICIPAL")
   timezone           String?  @default("America/Sao_Paulo")
   descricao          String?  @db.Text
+  facebookUrl        String?
+  instagramUrl       String?
+  youtubeUrl         String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

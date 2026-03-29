@@ -84,7 +84,7 @@ export default async function LeiResponsabilidadeFiscalPage() {
 
       <div className="container mx-auto px-4 py-12">
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card className="camara-card border-l-4 border-l-green-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

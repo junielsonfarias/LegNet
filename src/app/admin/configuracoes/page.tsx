@@ -59,6 +59,9 @@ const initialInstitutional: ConfiguracaoInstitucionalApi = {
   tema: 'claro',
   timezone: 'America/Sao_Paulo',
   descricao: '',
+  facebookUrl: '',
+  instagramUrl: '',
+  youtubeUrl: '',
   createdAt: '',
   updatedAt: ''
 }
@@ -219,7 +222,10 @@ export default function ConfiguracoesPage() {
         logoUrl: institutional.logoUrl,
         tema: institutional.tema ?? 'claro',
         timezone: institutional.timezone ?? 'America/Sao_Paulo',
-        descricao: institutional.descricao
+        descricao: institutional.descricao,
+        facebookUrl: institutional.facebookUrl || null,
+        instagramUrl: institutional.instagramUrl || null,
+        youtubeUrl: institutional.youtubeUrl || null
       }
 
       const updated = await configuracoesApi.update(payload)
@@ -577,6 +583,45 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
 
+            {/* Redes Sociais */}
+            <Separator />
+            <div>
+              <h4 className="text-sm font-semibold mb-4">Redes Sociais</h4>
+              <div className="grid gap-6 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="facebookUrl">Facebook</Label>
+                  <Input
+                    id="facebookUrl"
+                    type="url"
+                    value={institutional.facebookUrl ?? ''}
+                    onChange={handleInstitutionalChange('facebookUrl')}
+                    placeholder="https://facebook.com/camaramunicipal"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instagramUrl">Instagram</Label>
+                  <Input
+                    id="instagramUrl"
+                    type="url"
+                    value={institutional.instagramUrl ?? ''}
+                    onChange={handleInstitutionalChange('instagramUrl')}
+                    placeholder="https://instagram.com/camaramunicipal"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtubeUrl">YouTube</Label>
+                  <Input
+                    id="youtubeUrl"
+                    type="url"
+                    value={institutional.youtubeUrl ?? ''}
+                    onChange={handleInstitutionalChange('youtubeUrl')}
+                    placeholder="https://youtube.com/@camaramunicipal"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="enderecoLogradouro">Logradouro</Label>

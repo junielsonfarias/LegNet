@@ -189,7 +189,7 @@ export default function ComissoesPage() {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="text-center">
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-camara-primary">

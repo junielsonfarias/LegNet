@@ -109,7 +109,7 @@ export default function SobrePage() {
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
               Sobre a Câmara Municipal
             </h1>
           </div>
@@ -127,7 +127,7 @@ export default function SobrePage() {
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-12">
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
               Sobre a Câmara Municipal
             </h1>
           </div>
@@ -150,10 +150,10 @@ export default function SobrePage() {
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Sobre a Câmara Municipal
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Conheça a história, missão e valores da {nomeCasa},
             instituição dedicada ao exercício do Poder Legislativo e à representação do povo.
           </p>
@@ -387,7 +387,7 @@ export default function SobrePage() {
         {/* CNPJ e Dados Legais */}
         <div className="text-center">
           <Card className="camara-card max-w-2xl mx-auto">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Dados Legais</h3>
               <div className="space-y-2 text-gray-700">
                 {config?.cnpj && (

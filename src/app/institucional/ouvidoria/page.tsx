@@ -74,8 +74,8 @@ export default function OuvidoriaPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Hero */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Ouvidoria</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Ouvidoria</h1>
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Canal de comunicacao direta entre voce e a Camara Municipal.
             Registre suas sugestoes, reclamacoes, elogios ou denuncias.
           </p>
@@ -108,8 +108,8 @@ export default function OuvidoriaPage() {
             const Icon = tipo.icon
             return (
               <Card key={tipo.title} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6 text-center">
-                  <div className={`w-16 h-16 mx-auto mb-4 rounded-full ${tipo.bgColor} flex items-center justify-center`}>
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full ${tipo.bgColor} flex items-center justify-center`}>
                     <Icon className={`h-8 w-8 ${tipo.color}`} />
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">{tipo.title}</h3>
@@ -143,7 +143,7 @@ export default function OuvidoriaPage() {
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex gap-4 justify-center">
+                <div className="flex flex-wrap gap-4 justify-center">
                   <Button onClick={() => setResultado(null)}>Nova Manifestacao</Button>
                   <Link href={`/institucional/ouvidoria/acompanhar?protocolo=${resultado.protocolo}`}>
                     <Button variant="outline">Acompanhar</Button>
@@ -296,7 +296,7 @@ export default function OuvidoriaPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Input
                 placeholder="Digite o numero do protocolo"
                 value={protocoloConsulta}
@@ -316,7 +316,7 @@ export default function OuvidoriaPage() {
         {/* Contato */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <Phone className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">Telefone</h3>
               <p className="text-gray-600">(93) 3000-0000</p>
@@ -324,7 +324,7 @@ export default function OuvidoriaPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <Mail className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">E-mail</h3>
               <p className="text-gray-600 text-sm break-all">ouvidoria@camara.gov.br</p>
@@ -332,14 +332,14 @@ export default function OuvidoriaPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <MapPin className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">Presencial</h3>
               <p className="text-gray-600 text-sm">Centro, Mojui dos Campos - PA</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <Clock className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">Horario</h3>
               <p className="text-gray-600">Segunda a Sexta</p>

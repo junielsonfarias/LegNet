@@ -89,7 +89,7 @@ export default function LeiOrganicaPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
             Lei Orgânica Municipal
           </h1>
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -119,7 +119,7 @@ export default function LeiOrganicaPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -210,7 +210,7 @@ export default function LeiOrganicaPage() {
           <div className="space-y-4">
             {documentosFiltrados.map((doc) => (
               <Card key={doc.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-3">

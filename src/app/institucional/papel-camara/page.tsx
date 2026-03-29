@@ -8,10 +8,10 @@ export default function PapelCamaraPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Papel da Câmara Municipal
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             A Câmara Municipal é o Poder Legislativo do município, responsável por 
             legislar e fiscalizar os atos do Poder Executivo, representando os interesses da população.
           </p>

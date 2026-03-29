@@ -115,8 +115,7 @@ export function LiveSessionBanner() {
               </div>
               <Button
                 asChild
-                size="sm"
-                className="bg-white text-red-600 hover:bg-white/90 font-semibold shadow-lg"
+                className="bg-white text-red-600 hover:bg-white/90 font-semibold shadow-lg h-11 px-4"
               >
                 <Link href="/legislativo/ao-vivo">
                   Assistir agora <ArrowRight className="h-4 w-4 ml-1" />

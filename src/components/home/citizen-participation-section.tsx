@@ -57,13 +57,13 @@ export function CitizenParticipationSection() {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
             Participacao Cidada
           </h2>
-          <p className="text-gray-500 mt-2 text-lg">
+          <p className="text-gray-500 mt-2 text-base md:text-lg">
             Sua voz e importante para a democracia
           </p>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
           {participationCards.map((card) => (
             <Card
               key={card.href}

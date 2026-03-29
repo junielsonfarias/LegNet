@@ -153,8 +153,8 @@ export function AccessibilityToolbar({
   const { announce } = useAnnounce()
 
   const positionClasses: Record<string, string> = {
-    'top-right': 'top-20 right-4',
-    'top-left': 'top-20 left-4',
+    'top-right': 'bottom-4 right-4 md:bottom-auto md:top-20',
+    'top-left': 'bottom-4 left-4 md:bottom-auto md:top-20',
     'bottom-right': 'bottom-4 right-4',
     'bottom-left': 'bottom-4 left-4',
   }
@@ -241,12 +241,14 @@ export function AccessibilityToolbar({
         aria-label="Opcoes de acessibilidade"
         aria-hidden={!isOpen}
         className={cn(
-          'absolute mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200',
+          'absolute w-72 bg-white rounded-lg shadow-xl border border-gray-200',
           'transition-all duration-200 ease-in-out',
           position.includes('right') ? 'right-0' : 'left-0',
+          // No mobile (bottom), abrir para cima; no desktop (top), abrir para baixo
+          'bottom-full mb-2 md:bottom-auto md:top-full md:mt-2',
           isOpen
             ? 'opacity-100 visible translate-y-0'
-            : 'opacity-0 invisible -translate-y-2 pointer-events-none'
+            : 'opacity-0 invisible translate-y-2 md:-translate-y-2 pointer-events-none'
         )}
       >
         {/* Header */}

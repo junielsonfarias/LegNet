@@ -114,6 +114,7 @@ export default function PresencasLegislativoPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -137,6 +138,7 @@ export default function PresencasLegislativoPage() {
                       })}
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             ))}

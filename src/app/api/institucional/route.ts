@@ -122,7 +122,10 @@ export async function GET() {
       corPrimaria: (configuracao as any).corPrimaria || '#1e40af',
       corSecundaria: (configuracao as any).corSecundaria || '#3b82f6',
       corAcento: (configuracao as any).corAcento || '#059669',
-      descricao: configuracao.descricao
+      descricao: configuracao.descricao,
+      facebookUrl: (configuracao as any).facebookUrl || null,
+      instagramUrl: (configuracao as any).instagramUrl || null,
+      youtubeUrl: (configuracao as any).youtubeUrl || null
     } : dadosPadrao
 
     const dados = {
@@ -202,6 +205,11 @@ export const PUT = withAuth(async (request: NextRequest) => {
   if (body.enderecoCidade !== undefined) updateData.enderecoCidade = body.enderecoCidade
   if (body.enderecoEstado !== undefined) updateData.enderecoEstado = body.enderecoEstado
   if (body.enderecoCep !== undefined) updateData.enderecoCep = body.enderecoCep
+
+  // Redes sociais
+  if (body.facebookUrl !== undefined) updateData.facebookUrl = body.facebookUrl
+  if (body.instagramUrl !== undefined) updateData.instagramUrl = body.instagramUrl
+  if (body.youtubeUrl !== undefined) updateData.youtubeUrl = body.youtubeUrl
 
   if (config) {
     const updated = await institucionalDbService.updateConfiguracao(config.id, updateData)

@@ -177,51 +177,51 @@ export default function SessoesPage() {
         
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Sessões Legislativas
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Acompanhe todas as sessões da {configuracao?.nomeCasa || 'Câmara Municipal'}. 
             Consulte atas, proposições votadas e presença dos vereadores.
           </p>
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <Calendar className="h-12 w-12 text-camara-primary mx-auto mb-3" />
               <div className="text-3xl font-bold text-camara-primary mb-2">{estatisticas.total}</div>
               <div className="text-sm text-gray-600">Total de Sessões</div>
             </CardContent>
           </Card>
-          
+
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
               <div className="text-3xl font-bold text-green-600 mb-2">{estatisticas.realizadas}</div>
               <div className="text-sm text-gray-600">Realizadas</div>
             </CardContent>
           </Card>
-          
+
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <Clock className="h-12 w-12 text-camara-primary mx-auto mb-3" />
               <div className="text-3xl font-bold text-camara-primary mb-2">{estatisticas.agendadas}</div>
               <div className="text-sm text-gray-600">Agendadas</div>
             </CardContent>
           </Card>
-          
+
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <FileText className="h-12 w-12 text-purple-600 mx-auto mb-3" />
               <div className="text-3xl font-bold text-purple-600 mb-2">{estatisticas.totalProposicoes}</div>
               <div className="text-sm text-gray-600">Proposições</div>
             </CardContent>
           </Card>
-          
+
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <Users className="h-12 w-12 text-orange-600 mx-auto mb-3" />
               <div className="text-3xl font-bold text-orange-600 mb-2">{estatisticas.mediaPresenca}%</div>
               <div className="text-sm text-gray-600">Presença Média</div>
@@ -235,7 +235,7 @@ export default function SessoesPage() {
             <CardContent className="p-6">
               <div className="flex flex-col gap-4">
                 <div className="flex-1">
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
@@ -245,8 +245,8 @@ export default function SessoesPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={fetchSessoes}
                       disabled={loading}
                       title="Recarregar sessões"

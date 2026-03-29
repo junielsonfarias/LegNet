@@ -135,6 +135,7 @@ export default function VotacoesNominaisPage() {
 
                     {expandedId === v.id && v.votos && v.votos.length > 0 && (
                       <div className="border-t p-4 bg-gray-50">
+                        <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -156,6 +157,7 @@ export default function VotacoesNominaisPage() {
                             })}
                           </TableBody>
                         </Table>
+                        </div>
                       </div>
                     )}
                   </div>

@@ -143,19 +143,19 @@ export default function ProposicoesPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Proposições e Matérias
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Acompanhe todas as proposições legislativas apresentadas pelos vereadores
             da {configuracao?.nomeCasa || 'Câmara Municipal'}.
           </p>
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <FileText className="h-12 w-12 text-camara-primary mx-auto mb-3" />
               <div className="text-3xl font-bold text-camara-primary mb-2">{estatisticas.total}</div>
               <div className="text-sm text-gray-600">Total de Proposições</div>
@@ -163,7 +163,7 @@ export default function ProposicoesPage() {
           </Card>
 
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-2xl">✓</span>
               </div>
@@ -173,7 +173,7 @@ export default function ProposicoesPage() {
           </Card>
 
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-2xl">⏳</span>
               </div>
@@ -183,7 +183,7 @@ export default function ProposicoesPage() {
           </Card>
 
           <Card className="camara-card text-center">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <span className="text-2xl">✗</span>
               </div>
@@ -198,7 +198,7 @@ export default function ProposicoesPage() {
           <Card className="camara-card">
             <CardContent className="p-6">
               <div className="flex flex-col gap-4">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input

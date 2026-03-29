@@ -6,6 +6,7 @@ import { TransparencySection } from '@/components/home/transparency-section'
 import { LatestNews } from '@/components/home/latest-news'
 import { CitizenParticipationSection } from '@/components/home/citizen-participation-section'
 import { StatsSection } from '@/components/home/stats-section'
+import { SocialMediaBanner } from '@/components/home/social-media-banner'
 
 export default function HomePage() {
   return (
@@ -24,6 +25,9 @@ export default function HomePage() {
 
       {/* Transparencia */}
       <TransparencySection />
+
+      {/* Redes sociais */}
+      <SocialMediaBanner />
 
       {/* Noticias */}
       <LatestNews />

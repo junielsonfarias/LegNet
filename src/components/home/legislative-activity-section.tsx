@@ -85,7 +85,7 @@ function ProposicaoItem({ prop }: { prop: Proposicao }) {
           </span>
           <Badge
             variant="outline"
-            className={`text-[10px] px-1.5 py-0 ${statusColors[prop.status] || 'bg-gray-50 text-gray-600'}`}
+            className={`text-xs px-2 py-0.5 ${statusColors[prop.status] || 'bg-gray-50 text-gray-600'}`}
           >
             {prop.status?.replace(/_/g, ' ')}
           </Badge>
@@ -141,7 +141,7 @@ function VotacaoItem({ votacao }: { votacao: Votacao }) {
       <div className="shrink-0 flex flex-col items-end gap-1">
         <Badge
           variant="outline"
-          className={`text-[10px] px-1.5 py-0 ${
+          className={`text-xs px-2 py-0.5 ${
             isAprovada
               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
               : isRejeitada

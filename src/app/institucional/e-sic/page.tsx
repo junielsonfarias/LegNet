@@ -87,10 +87,10 @@ export default function ESicPage() {
           <div className="flex items-center justify-center mb-4">
             <Shield className="h-16 w-16 text-camara-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             E-SIC - Sistema Eletronico de Informacao ao Cidadao
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Exercite seu direito de acesso a informacao publica de forma rapida,
             transparente e eficiente.
           </p>
@@ -115,8 +115,8 @@ export default function ESicPage() {
         {/* Servicos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-camara-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-camara-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText className="h-8 w-8 text-camara-primary" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Solicitar Informacao</h3>
@@ -127,8 +127,8 @@ export default function ESicPage() {
             </CardContent>
           </Card>
           <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Clock className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Acompanhar Pedido</h3>
@@ -139,8 +139,8 @@ export default function ESicPage() {
             </CardContent>
           </Card>
           <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6 text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CardContent className="p-4 sm:p-6 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-orange-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Recursos</h3>
@@ -180,7 +180,7 @@ export default function ESicPage() {
                   <p className="text-sm text-gray-500 mb-6">
                     Prazo para resposta: {new Date(resultado.prazoResposta).toLocaleDateString('pt-BR')}
                   </p>
-                  <div className="flex gap-4 justify-center">
+                  <div className="flex flex-wrap gap-4 justify-center">
                     <Button onClick={() => setResultado(null)}>Nova Solicitacao</Button>
                     <Link href={`/institucional/e-sic/acompanhar?protocolo=${resultado.protocolo}`}>
                       <Button variant="outline">Acompanhar</Button>
@@ -336,7 +336,7 @@ export default function ESicPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <Input
                   placeholder="Digite o numero do protocolo"
                   value={protocoloConsulta}
@@ -356,11 +356,11 @@ export default function ESicPage() {
 
         {/* FAQ */}
         <div className="mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Perguntas Frequentes</h2>
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-8 text-center">Perguntas Frequentes</h2>
           <div className="space-y-4">
             {perguntasFrequentes.map((item, index) => (
               <Card key={index}>
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-camara-primary" />
                     {item.pergunta}

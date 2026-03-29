@@ -102,7 +102,7 @@ export default function ParticipacaoPublicaPage() {
       </section>
 
       <section className="container mx-auto px-4 -mt-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="shadow-lg border-0 bg-white">
             <CardHeader className="flex flex-col gap-1">
               <CardTitle className="text-sm font-semibold text-gray-500 uppercase tracking-wide">

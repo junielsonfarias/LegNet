@@ -85,10 +85,10 @@ export default function AoVivoPage() {
           <div className="flex items-center justify-center mb-4">
             <Video className="h-12 w-12 text-camara-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Sessao ao Vivo
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600">
             Acompanhe as sessoes da Camara Municipal em tempo real
           </p>
         </div>
@@ -174,8 +174,8 @@ export default function AoVivoPage() {
         ) : (
           <div className="max-w-2xl mx-auto">
             <Card>
-              <CardContent className="p-12 text-center">
-                <Video className="h-20 w-20 text-gray-300 mx-auto mb-6" />
+              <CardContent className="p-6 sm:p-8 md:p-12 text-center">
+                <Video className="h-16 w-16 sm:h-20 sm:w-20 text-gray-300 mx-auto mb-6" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">
                   Nenhuma sessao ao vivo no momento
                 </h2>

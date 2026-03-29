@@ -19,14 +19,14 @@ import {
 } from 'lucide-react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
-const socialLinks = [
-  { icon: Facebook, label: 'Facebook', href: '#', color: 'hover:bg-blue-500' },
-  { icon: Instagram, label: 'Instagram', href: '#', color: 'hover:bg-pink-500' },
-  { icon: Youtube, label: 'YouTube', href: '#', color: 'hover:bg-red-500' },
-]
-
 export function StatsSection() {
   const { configuracao } = useConfiguracaoInstitucional()
+
+  const socialLinks = [
+    { icon: Facebook, label: 'Facebook', href: configuracao.facebookUrl || '#', color: 'hover:bg-blue-500' },
+    { icon: Instagram, label: 'Instagram', href: configuracao.instagramUrl || '#', color: 'hover:bg-pink-500' },
+    { icon: Youtube, label: 'YouTube', href: configuracao.youtubeUrl || '#', color: 'hover:bg-red-500' },
+  ].filter(s => s.href !== '#')
 
   const endereco = configuracao.endereco
   const enderecoLinha1 = endereco.logradouro
@@ -68,7 +68,7 @@ export function StatsSection() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${social.label}`}
-                  className={`w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center ${social.color} transition-colors`}
+                  className={`w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center ${social.color} transition-colors min-w-[44px] min-h-[44px]`}
                 >
                   <social.icon className="h-5 w-5 text-white" />
                 </a>
@@ -87,7 +87,7 @@ export function StatsSection() {
             <h3 className="font-semibold text-lg mb-4">Informacoes de Contato</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                   <MapPin className="h-4 w-4 text-white/70" />
                 </div>
                 <div>
@@ -96,19 +96,19 @@ export function StatsSection() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                   <Phone className="h-4 w-4 text-white/70" />
                 </div>
                 <p className="text-sm text-white/90">{telefone}</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                   <Mail className="h-4 w-4 text-white/70" />
                 </div>
                 <p className="text-sm text-white/90">{email}</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                   <Clock className="h-4 w-4 text-white/70" />
                 </div>
                 <p className="text-sm text-white/90">Segunda a Sexta: 8h as 14h</p>

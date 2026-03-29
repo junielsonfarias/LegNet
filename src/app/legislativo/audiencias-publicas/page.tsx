@@ -392,7 +392,7 @@ export default function AudienciasPublicasPublicPage() {
 
                       <p className="text-gray-600 mb-3">{audiencia.descricao}</p>
 
-                      <div className="flex items-center space-x-6 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-3 md:gap-6 text-sm text-gray-500">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
                           {new Date(audiencia.dataHora).toLocaleDateString('pt-BR')} às{' '}

@@ -106,10 +106,10 @@ export default function DicionarioLegislativoPage() {
           <div className="flex items-center justify-center mb-4">
             <BookOpen className="h-16 w-16 text-camara-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Dicionário Legislativo
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Conheça os principais termos utilizados no âmbito legislativo municipal 
             para melhor compreender o funcionamento da Câmara.
           </p>
@@ -118,7 +118,7 @@ export default function DicionarioLegislativoPage() {
         {/* Filtros por Categoria */}
         <div className="mb-8">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Search className="h-5 w-5 text-gray-500" />
                 <h2 className="text-lg font-semibold text-gray-900">

@@ -55,17 +55,17 @@ export default function CamaraExplicaPage() {
           <div className="flex items-center justify-center mb-4">
             <BookOpen className="h-12 w-12 text-camara-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Camara Explica
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Conteudos educativos sobre o funcionamento do Poder Legislativo Municipal.
           </p>
         </div>
 
         {conteudos.length === 0 ? (
           <Card>
-            <CardContent className="p-8 text-center">
+            <CardContent className="p-4 sm:p-8 text-center">
               <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">Nenhum conteudo disponivel no momento.</p>
             </CardContent>

@@ -141,7 +141,7 @@ export default function NoticiaDetalhePage() {
           <span>›</span>
           <Link href="/noticias" className="hover:text-camara-primary">Notícias</Link>
           <span>›</span>
-          <span className="font-semibold truncate max-w-xs">{noticia.titulo}</span>
+          <span className="font-semibold truncate max-w-[150px] sm:max-w-xs">{noticia.titulo}</span>
         </div>
 
         {/* Botão voltar */}

@@ -150,7 +150,7 @@ export default function ComparativoPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Comparativo de Parlamentares</h1>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Comparativo de Parlamentares</h1>
           <p className="text-gray-600">
             Ranking e comparação de performance legislativa
             <span className="ml-2 text-sm text-gray-500">
@@ -171,7 +171,7 @@ export default function ComparativoPage() {
       </div>
 
       {/* Métricas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">

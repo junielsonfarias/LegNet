@@ -153,10 +153,10 @@ export default function MesaDiretoraPage() {
           <div className="flex items-center justify-center mb-4">
             <Users className="h-16 w-16 text-camara-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Mesa Diretora
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
             Conheça os membros da Mesa Diretora da {configuracao?.nomeCasa || 'Câmara Municipal'},
             eleitos para a legislatura 2025/2028.
           </p>
@@ -194,7 +194,7 @@ export default function MesaDiretoraPage() {
         </Card>
 
         {/* Estatísticas da Mesa Diretora */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="camara-card">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -294,7 +294,7 @@ export default function MesaDiretoraPage() {
                   return (
                     <Card key={membro.id} className="camara-card hover:shadow-lg transition-shadow">
                       <CardHeader className="text-center">
-                        <div className={`relative w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 ${borderColors[membro.cargo || ''] || 'border-camara-primary'}`}>
+                        <div className={`relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 ${borderColors[membro.cargo || ''] || 'border-camara-primary'}`}>
                           {membro.foto ? (
                             <img src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" />
                           ) : (
@@ -360,7 +360,7 @@ export default function MesaDiretoraPage() {
               {vereadoresLegislatura.map((vereador) => (
                 <Card key={vereador.id} className="camara-card hover:shadow-lg transition-shadow">
                   <CardHeader className="text-center">
-                    <div className="relative w-16 h-16 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
                       {vereador.foto ? (
                         <img src={vereador.foto} alt={vereador.apelido || vereador.nome} className="w-full h-full object-cover" />
                       ) : (

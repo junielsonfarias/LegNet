@@ -76,7 +76,7 @@ export default function DespesasPage() {
         </Link>
       </div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 flex items-center gap-3">
           <TrendingDown className="h-8 w-8 text-primary" />
           Despesas
         </h1>
@@ -86,7 +86,7 @@ export default function DespesasPage() {
       </div>
 
       {/* Estatisticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">

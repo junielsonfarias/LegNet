@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare, Heart, Accessibility } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { SearchButton, CommandPalette } from '@/components/busca/command-palette'
 import { SkipLinks, NavigationRegion, useAnnounce } from '@/components/ui/skip-link'
@@ -15,7 +15,6 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [activeMobileSection, setActiveMobileSection] = useState<string | null>(null)
-  const [isMounted, setIsMounted] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { configuracao } = useConfiguracaoInstitucional()
   const { announce } = useAnnounce()
@@ -23,10 +22,6 @@ export function Header() {
   const nomeCasa = configuracao.nomeCasa
   const sigla = configuracao.sigla || 'CM'
   const logoUrl = configuracao.logoUrl
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   // Função para mostrar dropdown com delay
   const handleMouseEnter = (sectionTitle: string) => {
@@ -169,106 +164,6 @@ export function Header() {
     }
   ]
 
-  // Evitar erro de hidratação - renderizar versão estática inicialmente
-  if (!isMounted) {
-    return (
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
-        <div className="bg-camara-primary text-white py-2">
-          <div className="container mx-auto px-4 flex justify-between items-center text-sm">
-            <div className="hidden md:flex items-center space-x-4">
-              <span>Transparência</span>
-              <span>•</span>
-              <span>Fale conosco</span>
-              <span>•</span>
-              <span>Ouvidoria/e-Sic</span>
-              <span>•</span>
-              <span>Pesquisa</span>
-              <span>•</span>
-              <span>Acessibilidade</span>
-            </div>
-            <div className="flex items-center space-x-2 ml-auto">
-              <Link
-                href="/meus-favoritos"
-                className="flex items-center gap-1 px-3 py-1.5 hover:bg-white/10 rounded-md transition-colors font-medium"
-                title="Meus Favoritos"
-              >
-                <Heart className="h-4 w-4" />
-                <span className="hidden sm:inline">Favoritos</span>
-              </Link>
-              <Link
-                href="/login"
-                className="flex items-center gap-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors font-medium"
-              >
-                <User className="h-4 w-4" />
-                <span>Área Restrita</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-3">
-              {logoUrl ? (
-                <Image
-                  src={logoUrl}
-                  alt={nomeCasa}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-12 h-12 bg-camara-primary rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">{sigla.substring(0, 2)}</span>
-                </div>
-              )}
-              <div>
-                <h1 className="text-xl font-bold text-camara-primary">
-                  {nomeCasa}
-                </h1>
-                <p className="text-sm text-gray-600">Portal Institucional</p>
-              </div>
-            </Link>
-            <div className="lg:hidden">
-              <Button variant="ghost" size="sm">
-                <Menu className="h-6 w-6" />
-              </Button>
-            </div>
-          </div>
-        </div>
-        <div className="hidden lg:block border-t bg-white">
-          <div className="container mx-auto px-4">
-            <nav className="flex items-center justify-center space-x-8 py-3">
-              <div className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700">
-                <Home className="h-4 w-4" />
-                Institucional
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700">
-                <Users className="h-4 w-4" />
-                Parlamentares
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700">
-                <FileText className="h-4 w-4" />
-                Legislativo
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700">
-                <Eye className="h-4 w-4" />
-                Transparência
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700">
-                <Newspaper className="h-4 w-4" />
-                Notícias
-              </div>
-              <Link href="/participacao-cidada" className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-camara-primary transition-colors">
-                <MessageSquare className="h-4 w-4" />
-                Participação Cidadã
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
   return (
     <>
       {/* Skip Links para acessibilidade */}
@@ -354,15 +249,15 @@ export function Header() {
               </div>
             )}
             <div>
-              <h1 className="text-xl font-bold text-camara-primary">
+              <h1 className="text-base sm:text-lg md:text-xl font-bold text-camara-primary leading-tight">
                 {nomeCasa}
               </h1>
-              <p className="text-sm text-gray-600">Portal Institucional</p>
+              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Portal Institucional</p>
             </div>
           </Link>
 
-          {/* Busca Global */}
-          <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
+          {/* Busca Global - visível a partir de tablets */}
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-8">
             <SearchButton className="w-full justify-start" />
           </div>
 
@@ -370,14 +265,16 @@ export function Header() {
           <CommandPalette />
 
           {/* Menu mobile */}
-          <div className="lg:hidden">
+          <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="icon" className="min-w-[44px] min-h-[44px]" aria-label="Abrir menu">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <SheetContent side="right" className="w-[85vw] max-w-[400px] overflow-y-auto">
+                <SheetTitle className="sr-only">Menu de navegacao</SheetTitle>
+                <SheetDescription className="sr-only">Navegue pelas secoes do portal</SheetDescription>
                 <div className="flex flex-col space-y-6 mt-4 animate-in slide-in-from-right duration-300">
                   <SearchButton className="w-full" />
 
@@ -459,10 +356,10 @@ export function Header() {
       </div>
 
       {/* Menu desktop centralizado */}
-      <div className="hidden lg:block border-t bg-white">
+      <div className="hidden md:block border-t bg-white">
         <div className="container mx-auto px-4">
           <NavigationRegion label="Menu principal" id="main-nav">
-            <ul className="flex items-center justify-center space-x-8 py-3" role="menubar">
+            <ul className="flex items-center justify-center space-x-2 lg:space-x-8 py-3 flex-wrap" role="menubar">
               {menuItems.map((section) => (
                 <li
                   key={section.title}
@@ -513,7 +410,7 @@ export function Header() {
                       {/* Dropdown com ARIA */}
                       <div
                         id={`dropdown-${section.title.toLowerCase().replace(/\s/g, '-')}`}
-                        className={`absolute top-full mt-1 w-72 lg:w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 transition-all duration-200 ease-in-out ${
+                        className={`absolute top-full mt-1 w-64 lg:w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 transition-all duration-200 ease-in-out ${
                           activeDropdown === section.title
                             ? 'opacity-100 visible translate-y-0'
                             : 'opacity-0 invisible -translate-y-2'
