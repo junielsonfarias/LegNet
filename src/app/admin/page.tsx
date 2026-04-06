@@ -65,17 +65,9 @@ export default function AdminDashboard() {
     return 'Boa noite'
   }
 
-  const getHeaderGradientClass = () => {
-    const gradients: Record<UserRole, string> = {
-      ADMIN: 'from-violet-600 to-purple-700',
-      SECRETARIA: 'from-cyan-600 to-teal-600',
-      AUXILIAR_LEGISLATIVO: 'from-teal-600 to-cyan-600',
-      EDITOR: 'from-blue-600 to-blue-700',
-      OPERADOR: 'from-emerald-600 to-green-600',
-      PARLAMENTAR: 'from-amber-500 to-orange-500',
-      USER: 'from-gray-500 to-gray-600'
-    }
-    return gradients[userRole]
+  // Header usa cores municipais (da configuracao/instalacao)
+  const headerGradientStyle = {
+    background: `linear-gradient(to right, var(--municipal-primary), var(--municipal-primary-dark))`
   }
 
   // Estatísticas específicas por role
@@ -182,10 +174,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div>
-        <div className={cn(
-          'rounded-xl p-6 mb-6 bg-gradient-to-r',
-          getHeaderGradientClass()
-        )}>
+        <div className="rounded-xl p-6 mb-6" style={headerGradientStyle}>
           <div className="animate-pulse">
             <div className="h-8 bg-white/20 rounded w-64 mb-2" />
             <div className="h-4 bg-white/20 rounded w-48" />
@@ -199,10 +188,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header com boas-vindas */}
-      <div className={cn(
-        'rounded-xl p-6 bg-gradient-to-r text-white relative overflow-hidden',
-        getHeaderGradientClass()
-      )}>
+      <div className="rounded-xl p-6 text-white relative overflow-hidden" style={headerGradientStyle}>
         {/* Padrão decorativo */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full translate-x-1/2 -translate-y-1/2" />

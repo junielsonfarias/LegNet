@@ -61,39 +61,39 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
   return <span ref={ref}>{count}{suffix}</span>
 }
 
-// 4 cards de acesso rapido proeminentes
+// 4 cards de acesso rapido - usam cores municipais com variacao de opacidade
 const quickAccessCards = [
   {
     icon: FileText,
     title: 'Proposicoes',
     subtitle: 'Acompanhe projetos de lei',
     href: '/legislativo/proposicoes',
-    gradient: 'from-indigo-500 to-indigo-700',
-    shadowColor: 'shadow-indigo-500/25',
+    colorVar: '--municipal-primary',
+    darkVar: '--municipal-primary-dark',
   },
   {
     icon: Video,
     title: 'Sessoes',
     subtitle: 'Assista sessoes ao vivo',
     href: '/legislativo/sessoes',
-    gradient: 'from-emerald-500 to-emerald-700',
-    shadowColor: 'shadow-emerald-500/25',
+    colorVar: '--municipal-secondary',
+    darkVar: '--municipal-secondary-dark',
   },
   {
     icon: Users,
     title: 'Vereadores',
     subtitle: 'Conheca os parlamentares',
     href: '/parlamentares',
-    gradient: 'from-violet-500 to-violet-700',
-    shadowColor: 'shadow-violet-500/25',
+    colorVar: '--municipal-primary-dark',
+    darkVar: '--municipal-primary-darker',
   },
   {
     icon: Eye,
     title: 'Transparencia',
     subtitle: 'Acesse dados publicos',
     href: '/transparencia',
-    gradient: 'from-amber-500 to-amber-700',
-    shadowColor: 'shadow-amber-500/25',
+    colorVar: '--municipal-accent',
+    darkVar: '--municipal-primary',
   },
 ]
 
@@ -119,12 +119,11 @@ function QuickAccessCards() {
             >
               <div
                 className={cn(
-                  'relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 sm:p-6 md:p-8 h-full',
+                  'relative overflow-hidden rounded-2xl p-4 sm:p-6 md:p-8 h-full',
                   'shadow-xl transition-all duration-300',
                   'hover:shadow-2xl hover:scale-[1.03] hover:-translate-y-1',
-                  card.gradient,
-                  card.shadowColor
                 )}
+                style={{ background: `linear-gradient(to bottom right, var(${card.colorVar}), var(${card.darkVar}))` }}
               >
                 {/* Decoracao com glass effect */}
                 <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/10 -mr-8 -mt-8 group-hover:scale-125 transition-transform duration-500" aria-hidden="true" />
@@ -315,7 +314,7 @@ export function Hero() {
             </div>
             <div className="w-px h-10 bg-white/20 hidden sm:block" />
             <div className="text-center hidden sm:block">
-              <div className="text-3xl md:text-4xl font-bold text-emerald-300">100%</div>
+              <div className="text-3xl md:text-4xl font-bold" style={{ color: 'var(--municipal-primary-light)' }}>100%</div>
               <div className="text-xs md:text-sm text-white/60 mt-1">Transparencia</div>
             </div>
           </div>

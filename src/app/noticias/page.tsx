@@ -54,17 +54,14 @@ export default function NoticiasPage() {
 
   const getCategoriaBadge = (categoria: string | null) => {
     if (!categoria) return null
-    const categoriaColors: Record<string, string> = {
-      'Legislativo': 'bg-blue-100 text-blue-800',
-      'Cultura': 'bg-purple-100 text-purple-800',
-      'Meio Ambiente': 'bg-green-100 text-green-800',
-      'Agricultura': 'bg-yellow-100 text-yellow-800',
-      'Educação': 'bg-indigo-100 text-indigo-800',
-      'Transporte': 'bg-orange-100 text-orange-800',
-      'Saúde': 'bg-red-100 text-red-800',
-      'Habitação': 'bg-pink-100 text-pink-800'
-    }
-    return <Badge className={categoriaColors[categoria] || 'bg-gray-100 text-gray-800'}>{categoria}</Badge>
+    return (
+      <Badge
+        className="text-white"
+        style={{ backgroundColor: 'var(--municipal-primary)' }}
+      >
+        {categoria}
+      </Badge>
+    )
   }
 
   return (
@@ -105,10 +102,10 @@ export default function NoticiasPage() {
             
             <Card className="camara-card text-center">
               <CardContent className="p-6">
-                <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'var(--municipal-primary-lighter)' }}>
                   <span className="text-2xl">📊</span>
                 </div>
-                <div className="text-3xl font-bold text-blue-600 mb-2">{estatisticas.categorias}</div>
+                <div className="text-3xl font-bold mb-2" style={{ color: 'var(--municipal-primary)' }}>{estatisticas.categorias}</div>
                 <div className="text-sm text-gray-600">Categorias</div>
               </CardContent>
             </Card>

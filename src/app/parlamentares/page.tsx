@@ -32,15 +32,16 @@ interface Legislatura {
   ativa: boolean
 }
 
-const cargoConfig: Record<string, { label: string; gradient: string; bg: string; text: string; icon: any }> = {
-  'PRESIDENTE': { label: 'Presidente', gradient: 'from-amber-500 to-yellow-600', bg: 'bg-amber-50', text: 'text-amber-700', icon: Crown },
-  'VICE_PRESIDENTE': { label: 'Vice-presidente', gradient: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50', text: 'text-blue-700', icon: Shield },
-  'PRIMEIRO_SECRETARIO': { label: '1o Secretario', gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: FileText },
-  'SEGUNDO_SECRETARIO': { label: '2o Secretario', gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50', text: 'text-violet-700', icon: FileText },
-  'VEREADOR': { label: 'Vereador(a)', gradient: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', text: 'text-gray-600', icon: User },
+// Configuracao de cargos usando cores municipais com variacao de opacidade
+const cargoConfig: Record<string, { label: string; opacity: number; icon: any }> = {
+  'PRESIDENTE': { label: 'Presidente', opacity: 1.0, icon: Crown },
+  'VICE_PRESIDENTE': { label: 'Vice-presidente', opacity: 0.85, icon: Shield },
+  'PRIMEIRO_SECRETARIO': { label: '1o Secretario', opacity: 0.7, icon: FileText },
+  'SEGUNDO_SECRETARIO': { label: '2o Secretario', opacity: 0.6, icon: FileText },
+  'VEREADOR': { label: 'Vereador(a)', opacity: 0.4, icon: User },
 }
 
-const defaultCargo = { label: 'Vereador(a)', gradient: 'from-gray-400 to-gray-500', bg: 'bg-gray-50', text: 'text-gray-600', icon: User }
+const defaultCargo = { label: 'Vereador(a)', opacity: 0.4, icon: User }
 
 function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
   const config = cargoConfig[parlamentar.cargo] || defaultCargo
@@ -52,10 +53,10 @@ function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
     <Link href={`/parlamentares/${slug}`} className="group block h-full">
       <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-300 hover:-translate-y-1 h-full overflow-hidden">
         {/* Barra de cor no topo */}
-        <div className={cn('h-1.5 w-full bg-gradient-to-r', config.gradient)} />
+        <div className="h-1.5 w-full" style={{ background: `linear-gradient(to right, var(--municipal-primary), var(--municipal-primary-dark))`, opacity: config.opacity }} />
 
         {/* Background decorativo */}
-        <div className={cn('absolute top-0 left-0 right-0 h-24 bg-gradient-to-br opacity-[0.07]', config.gradient)} />
+        <div className="absolute top-0 left-0 right-0 h-24" style={{ background: `linear-gradient(to bottom right, var(--municipal-primary), var(--municipal-primary-dark))`, opacity: 0.07 * config.opacity }} />
 
         <div className="relative p-4 sm:p-5 flex flex-col items-center text-center h-[calc(100%-6px)]">
           {/* Avatar */}
@@ -66,7 +67,7 @@ function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
                 alt={parlamentar.apelido || parlamentar.nome}
                 width={88}
                 height={88}
-                className="w-18 h-18 sm:w-22 sm:h-22 rounded-full object-cover ring-[3px] ring-offset-2 ring-gray-200 group-hover:ring-blue-300 transition-all shadow-md"
+                className="w-18 h-18 sm:w-22 sm:h-22 rounded-full object-cover ring-[3px] ring-offset-2 ring-gray-200 group-hover:ring-[var(--municipal-primary-light)] transition-all shadow-md"
                 style={{ width: '80px', height: '80px' }}
               />
             ) : (
@@ -79,10 +80,10 @@ function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
             )}
             {/* Badge icone do cargo */}
             {parlamentar.cargo !== 'VEREADOR' && (
-              <div className={cn(
-                'absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center shadow-md bg-gradient-to-br',
-                config.gradient
-              )}>
+              <div
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center shadow-md"
+                style={{ background: `linear-gradient(to bottom right, var(--municipal-primary), var(--municipal-primary-dark))` }}
+              >
                 <Icon className="h-3.5 w-3.5 text-white" />
               </div>
             )}
@@ -101,7 +102,10 @@ function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
           )}
 
           {/* Cargo badge */}
-          <div className={cn('inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-xs font-semibold', config.bg, config.text)}>
+          <div
+            className="inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-xs font-semibold"
+            style={{ backgroundColor: 'var(--municipal-primary-lighter)', color: 'var(--municipal-primary-dark)' }}
+          >
             <Icon className="h-3 w-3" />
             {config.label}
           </div>
@@ -228,13 +232,13 @@ export default function ParlamentaresPage() {
         {/* Stats compactos */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
           {[
-            { value: todosParlamentares.length, label: 'Total', color: 'text-camara-primary' },
-            { value: mesaDiretora.length, label: 'Mesa Diretora', color: 'text-purple-600' },
-            { value: vereadores.length, label: 'Vereadores', color: 'text-green-600' },
-            { value: new Set(todosParlamentares.map(p => p.partido).filter(Boolean)).size, label: 'Partidos', color: 'text-orange-600' },
+            { value: todosParlamentares.length, label: 'Total' },
+            { value: mesaDiretora.length, label: 'Mesa Diretora' },
+            { value: vereadores.length, label: 'Vereadores' },
+            { value: new Set(todosParlamentares.map(p => p.partido).filter(Boolean)).size, label: 'Partidos' },
           ].map((stat) => (
             <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 text-center shadow-sm">
-              <div className={cn('text-xl sm:text-2xl font-bold', stat.color)}>{stat.value}</div>
+              <div className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--municipal-primary)' }}>{stat.value}</div>
               <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
             </div>
           ))}

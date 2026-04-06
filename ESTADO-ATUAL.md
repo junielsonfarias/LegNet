@@ -1,10 +1,31 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-06 (Conformidade PNTP movida para admin)
-> **Versao**: 1.8.3
+> **Ultima Atualizacao**: 2026-04-06 (Identidade visual unificada em todas as paginas)
+> **Versao**: 1.8.4
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Identidade Visual Unificada (06/04/2026)
+
+### Problema
+Varias paginas usavam cores Tailwind hardcoded (blue-600, emerald-500, violet-500, etc.) em vez das cores municipais dinamicas configuradas na instalacao/atualizacao via install.sh.
+
+### Correcoes
+- **Transparencia**: Todos os cards, icones, badges e secoes agora usam `--municipal-primary/secondary` via CSS variables inline. Removido mapa `corClasses` hardcoded.
+- **Admin Dashboard**: Header de boas-vindas usa gradiente municipal (`--municipal-primary` → `--municipal-primary-dark`) em vez de gradientes por role (violet, cyan, teal, amber).
+- **Noticias**: Badges de categoria usam `--municipal-primary`. Card de estatisticas "Categorias" usa cores municipais.
+- **Parlamentares**: Cards de cargo usam gradiente municipal com variacao de opacidade por hierarquia. Stats unificados com `--municipal-primary`.
+- **Hero (Home)**: 4 cards de acesso rapido usam combinacoes de `--municipal-primary`, `--municipal-secondary`, `--municipal-accent`. Contador "100%" usa `--municipal-primary-light`.
+
+### Arquivos Afetados
+- `src/app/transparencia/page.tsx` - Removido corClasses, tudo via CSS variables
+- `src/app/admin/page.tsx` - headerGradientStyle com CSS variables
+- `src/app/noticias/page.tsx` - Badges e stats com CSS variables
+- `src/app/parlamentares/page.tsx` - cargoConfig simplificado, estilos dinamicos
+- `src/components/home/hero.tsx` - quickAccessCards com colorVar/darkVar
 
 ---
 
