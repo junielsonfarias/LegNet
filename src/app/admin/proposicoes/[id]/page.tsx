@@ -28,8 +28,14 @@ import {
   History,
   Gavel,
   Plus,
-  Send
+  Send,
+  Ban,
+  Archive,
+  BookOpen,
+  Megaphone
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
 import { useProposicao } from '@/lib/hooks/use-proposicoes'
 import { usePareceres } from '@/lib/hooks/use-pareceres'
 import { useTramitacoes } from '@/lib/hooks/use-tramitacoes'
@@ -71,7 +77,9 @@ const STATUS_PROPOSICAO: Record<string, { label: string; color: string; icon: an
   'APROVADA': { label: 'Aprovada', color: 'text-green-700', icon: CheckCircle2, bgColor: 'bg-green-50 border-green-200' },
   'REJEITADA': { label: 'Rejeitada', color: 'text-red-700', icon: XCircle, bgColor: 'bg-red-50 border-red-200' },
   'ARQUIVADA': { label: 'Arquivada', color: 'text-gray-700', icon: FileText, bgColor: 'bg-gray-50 border-gray-200' },
-  'VETADA': { label: 'Vetada', color: 'text-purple-700', icon: AlertCircle, bgColor: 'bg-purple-50 border-purple-200' }
+  'VETADA': { label: 'Vetada', color: 'text-purple-700', icon: AlertCircle, bgColor: 'bg-purple-50 border-purple-200' },
+  'SANCIONADA': { label: 'Sancionada', color: 'text-emerald-700', icon: Gavel, bgColor: 'bg-emerald-50 border-emerald-200' },
+  'PROMULGADA': { label: 'Promulgada', color: 'text-teal-700', icon: Megaphone, bgColor: 'bg-teal-50 border-teal-200' }
 }
 
 const TIPO_PROPOSICAO: Record<string, { label: string; fullLabel: string; color: string }> = {
@@ -99,6 +107,9 @@ export default function ProposicaoDetailPage() {
   const [criandoTramitacao, setCriandoTramitacao] = useState(false)
   const [unidades, setUnidades] = useState<Array<{ id: string; nome: string; sigla: string }>>([])
   const [tiposTramitacao, setTiposTramitacao] = useState<Array<{ id: string; nome: string }>>([])
+  const [acaoLoading, setAcaoLoading] = useState<string | null>(null)
+  const [showConverterNorma, setShowConverterNorma] = useState(false)
+  const [normaForm, setNormaForm] = useState({ tipoNorma: '', numero: '', dataPublicacao: '' })
 
   // Busca tramitações apenas quando temos o ID da proposição
   const tramitacaoFilters = proposicao?.id ? { proposicaoId: proposicao.id } : { proposicaoId: '__none__' }
@@ -167,6 +178,63 @@ export default function ProposicaoDetailPage() {
       alert('Erro ao criar tramitação')
     } finally {
       setCriandoTramitacao(false)
+    }
+  }
+
+  // Handler para ações pós-aprovação
+  const handleFluxoPosAprovacao = async (acao: string, confirmMsg?: string) => {
+    if (confirmMsg && !window.confirm(confirmMsg)) return
+    if (!proposicao?.id) return
+    setAcaoLoading(acao)
+    try {
+      const res = await fetch(`/api/proposicoes/${proposicao.id}/fluxo-pos-aprovacao`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'Acao realizada com sucesso')
+        router.refresh()
+        window.location.reload()
+      } else {
+        toast.error(data.error || 'Erro ao executar acao')
+      }
+    } catch {
+      toast.error('Erro de conexao')
+    } finally {
+      setAcaoLoading(null)
+    }
+  }
+
+  // Handler para converter em norma
+  const handleConverterNorma = async () => {
+    if (!proposicao?.id) return
+    if (!normaForm.tipoNorma || !normaForm.numero || !normaForm.dataPublicacao) {
+      toast.error('Preencha todos os campos')
+      return
+    }
+    setAcaoLoading('converter-norma')
+    try {
+      const res = await fetch(`/api/proposicoes/${proposicao.id}/converter-norma`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(normaForm)
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message || 'Proposicao convertida em norma com sucesso')
+        setShowConverterNorma(false)
+        setNormaForm({ tipoNorma: '', numero: '', dataPublicacao: '' })
+        router.refresh()
+        window.location.reload()
+      } else {
+        toast.error(data.error || 'Erro ao converter em norma')
+      }
+    } catch {
+      toast.error('Erro de conexao')
+    } finally {
+      setAcaoLoading(null)
     }
   }
 
@@ -287,6 +355,94 @@ export default function ProposicaoDetailPage() {
                 Tramitar
               </Button>
             </div>
+
+            {/* Acoes pos-aprovacao */}
+            {proposicao.status === 'APROVADA' && (
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" className="border-green-300 text-green-700 hover:bg-green-50" disabled={acaoLoading !== null} onClick={() => handleFluxoPosAprovacao('sancionar')}>
+                  {acaoLoading === 'sancionar' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Gavel className="h-4 w-4 mr-2" />}
+                  Sancionar
+                </Button>
+                <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" disabled={acaoLoading !== null} onClick={() => handleFluxoPosAprovacao('vetar', 'Tem certeza que deseja VETAR esta proposicao?')}>
+                  {acaoLoading === 'vetar' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+                  Vetar
+                </Button>
+                <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50" disabled={acaoLoading !== null} onClick={() => setShowConverterNorma(!showConverterNorma)}>
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Converter em Norma
+                </Button>
+              </div>
+            )}
+            {proposicao.status === 'SANCIONADA' && (
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" className="border-teal-300 text-teal-700 hover:bg-teal-50" disabled={acaoLoading !== null} onClick={() => handleFluxoPosAprovacao('promulgar')}>
+                  {acaoLoading === 'promulgar' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Megaphone className="h-4 w-4 mr-2" />}
+                  Promulgar
+                </Button>
+                <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-50" disabled={acaoLoading !== null} onClick={() => setShowConverterNorma(!showConverterNorma)}>
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Converter em Norma
+                </Button>
+              </div>
+            )}
+            {proposicao.status === 'VETADA' && (
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-50" disabled={acaoLoading !== null} onClick={() => handleFluxoPosAprovacao('derrubar-veto')}>
+                  {acaoLoading === 'derrubar-veto' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Gavel className="h-4 w-4 mr-2" />}
+                  Derrubar Veto
+                </Button>
+                <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50" disabled={acaoLoading !== null} onClick={() => handleFluxoPosAprovacao('arquivar', 'Tem certeza que deseja ARQUIVAR esta proposicao?')}>
+                  {acaoLoading === 'arquivar' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Archive className="h-4 w-4 mr-2" />}
+                  Arquivar
+                </Button>
+              </div>
+            )}
+            {proposicao.status === 'REJEITADA' && (
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50" disabled={acaoLoading !== null} onClick={() => handleFluxoPosAprovacao('arquivar', 'Tem certeza que deseja ARQUIVAR esta proposicao?')}>
+                  {acaoLoading === 'arquivar' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Archive className="h-4 w-4 mr-2" />}
+                  Arquivar
+                </Button>
+              </div>
+            )}
+
+            {/* Formulario inline para converter em norma */}
+            {showConverterNorma && ['APROVADA', 'SANCIONADA'].includes(proposicao.status) && (
+              <div className="w-full lg:w-80 p-4 bg-white rounded-lg border shadow-sm space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700">Converter em Norma Juridica</h4>
+                <div>
+                  <Label className="text-sm">Tipo de Norma *</Label>
+                  <Select value={normaForm.tipoNorma} onValueChange={(v) => setNormaForm(prev => ({ ...prev, tipoNorma: v }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" sideOffset={4}>
+                      <SelectItem value="LEI_ORDINARIA">Lei Ordinaria</SelectItem>
+                      <SelectItem value="LEI_COMPLEMENTAR">Lei Complementar</SelectItem>
+                      <SelectItem value="DECRETO_LEGISLATIVO">Decreto Legislativo</SelectItem>
+                      <SelectItem value="RESOLUCAO">Resolucao</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-sm">Numero *</Label>
+                  <Input className="mt-1" placeholder="Ex: 1234" value={normaForm.numero} onChange={(e) => setNormaForm(prev => ({ ...prev, numero: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-sm">Data de Publicacao *</Label>
+                  <Input type="date" className="mt-1" value={normaForm.dataPublicacao} onChange={(e) => setNormaForm(prev => ({ ...prev, dataPublicacao: e.target.value }))} />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1" disabled={acaoLoading !== null} onClick={handleConverterNorma}>
+                    {acaoLoading === 'converter-norma' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BookOpen className="h-4 w-4 mr-2" />}
+                    Converter
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setShowConverterNorma(false); setNormaForm({ tipoNorma: '', numero: '', dataPublicacao: '' }) }}>
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

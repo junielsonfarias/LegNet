@@ -1,10 +1,46 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-06 (Identidade visual unificada em todas as paginas)
-> **Versao**: 1.8.4
+> **Ultima Atualizacao**: 2026-04-06 (Fluxo legislativo completo ponta-a-ponta)
+> **Versao**: 1.9.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Fluxo Legislativo Completo (06/04/2026)
+
+### Novos Endpoints
+- `POST /api/proposicoes/[id]/converter-norma` — Converte proposicao aprovada em NormaJuridica
+- `POST /api/proposicoes/[id]/fluxo-pos-aprovacao` — Acoes: sancionar, vetar, derrubar-veto, arquivar, promulgar
+- `GET /api/proposicoes/[id]/timeline` — Historico unificado com todos os eventos do ciclo de vida
+
+### Validacoes Adicionadas
+- Transicoes de status da proposicao validadas (mapa VALID_STATUS_TRANSITIONS)
+- Elegibilidade para pauta verificada antes de adicionar item (verificarElegibilidadePauta)
+- Fix: converterProposicaoEmNorma usava status inexistente TRANSFORMADA_EM_NORMA, corrigido para PROMULGADA
+
+### UI - Pagina de Detalhe da Proposicao
+- Botoes contextuais por status: Sancionar, Vetar, Derrubar Veto, Arquivar, Promulgar
+- Formulario inline para converter em norma (tipo, numero, data publicacao)
+- Status SANCIONADA e PROMULGADA adicionados ao mapa de cores
+
+### Fluxo Completo Agora Suportado
+```
+APRESENTADA → EM_TRAMITACAO → AGUARDANDO_PAUTA → EM_PAUTA → EM_DISCUSSAO
+→ EM_VOTACAO → APROVADA → SANCIONADA → PROMULGADA → NormaJuridica
+                        → VETADA → Derrubar Veto ou ARQUIVADA
+              REJEITADA → ARQUIVADA
+```
+
+### Arquivos Criados/Modificados
+- `src/app/api/proposicoes/[id]/converter-norma/route.ts` — NOVO
+- `src/app/api/proposicoes/[id]/fluxo-pos-aprovacao/route.ts` — NOVO
+- `src/app/api/proposicoes/[id]/timeline/route.ts` — NOVO
+- `src/app/admin/proposicoes/[id]/page.tsx` — Botoes pos-aprovacao
+- `src/lib/services/proposicao-db-service.ts` — Validacao de transicoes
+- `src/lib/services/norma-juridica-service.ts` — Fix status PROMULGADA
+- `src/app/api/sessoes/[id]/pauta/route.ts` — Validacao elegibilidade
 
 ---
 

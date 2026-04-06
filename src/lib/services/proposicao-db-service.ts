@@ -6,6 +6,27 @@
 import { prisma } from '@/lib/prisma'
 import type { StatusProposicao, ResultadoVotacao } from '@prisma/client'
 import { isSlugProposicao, parseSlugProposicao, gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
+import { ValidationError } from '@/lib/error-handler'
+
+/**
+ * Transicoes de status permitidas para proposicoes
+ * Mapa: status atual -> lista de status destino validos
+ */
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  'APRESENTADA': ['EM_TRAMITACAO', 'RETIRADA', 'ARQUIVADA'],
+  'EM_TRAMITACAO': ['AGUARDANDO_PAUTA', 'RETIRADA', 'ARQUIVADA'],
+  'AGUARDANDO_PAUTA': ['EM_PAUTA', 'EM_TRAMITACAO', 'RETIRADA', 'ARQUIVADA'],
+  'EM_PAUTA': ['EM_DISCUSSAO', 'AGUARDANDO_PAUTA', 'RETIRADA', 'ADIADA'],
+  'EM_DISCUSSAO': ['EM_VOTACAO', 'EM_PAUTA', 'RETIRADA', 'ADIADA'],
+  'EM_VOTACAO': ['APROVADA', 'REJEITADA', 'EM_DISCUSSAO', 'ADIADA'],
+  'APROVADA': ['SANCIONADA', 'VETADA', 'PROMULGADA', 'ARQUIVADA'],
+  'REJEITADA': ['ARQUIVADA'],
+  'SANCIONADA': ['PROMULGADA'],
+  'VETADA': ['SANCIONADA', 'ARQUIVADA'],
+  'PROMULGADA': [],
+  'ARQUIVADA': [],
+  'RETIRADA': ['ARQUIVADA'],
+}
 
 export interface ProposicaoListFilters {
   status?: string
@@ -254,6 +275,25 @@ export const proposicaoDbService = {
   },
 
   async update(id: string, data: ProposicaoUpdateData) {
+    // Validar transicao de status se status esta sendo alterado
+    if (data.status !== undefined) {
+      const current = await prisma.proposicao.findUnique({
+        where: { id },
+        select: { status: true }
+      })
+
+      if (current && data.status !== current.status) {
+        const currentStatus = current.status as string
+        const allowed = VALID_STATUS_TRANSITIONS[currentStatus]
+
+        if (!allowed || !allowed.includes(data.status)) {
+          throw new ValidationError(
+            `Transição de status inválida: ${currentStatus} → ${data.status}`
+          )
+        }
+      }
+    }
+
     // Filtrar campos undefined para evitar sobrescrever com null
     const updateFields: Record<string, any> = {}
     if (data.slug !== undefined) updateFields.slug = data.slug

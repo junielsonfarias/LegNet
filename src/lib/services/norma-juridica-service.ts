@@ -449,7 +449,7 @@ export async function converterProposicaoEmNorma(
   // Atualizar status da proposição
   await prisma.proposicao.update({
     where: { id: proposicaoId },
-    data: { status: 'TRANSFORMADA_EM_NORMA' as any }
+    data: { status: 'PROMULGADA' }
   })
 
   logger.info('Proposição convertida em norma', {

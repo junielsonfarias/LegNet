@@ -57,6 +57,15 @@ export const POST = withAuth(async (
     throw new ValidationError(payload.error.issues[0]?.message ?? 'Dados invalidos')
   }
 
+  // Valida elegibilidade da proposicao para pauta (apenas quando vinculada a uma proposicao)
+  if (payload.data.proposicaoId) {
+    const { verificarElegibilidadePauta } = await import('@/lib/services/fluxo-tramitacao-service')
+    const elegibilidade = await verificarElegibilidadePauta(payload.data.proposicaoId)
+    if (!elegibilidade.elegivel) {
+      throw new ValidationError(`Proposição não elegível para pauta: ${elegibilidade.motivo}`)
+    }
+  }
+
   const pautaAtualizada = await pautasDbService.addItem(
     sessaoId,
     payload.data,
