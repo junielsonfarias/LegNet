@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createSuccessResponse, NotFoundError, ValidationError } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
+import { prisma } from '@/lib/prisma'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
 import { pautasDbService } from '@/lib/services/pautas-db-service'
 
@@ -64,6 +65,22 @@ export const POST = withAuth(async (
     if (!elegibilidade.elegivel) {
       throw new ValidationError(`Proposição não elegível para pauta: ${elegibilidade.motivo}`)
     }
+  }
+
+  // Verificar se pauta esta trancada por veto pendente 30+ dias
+  const vetosPendentes = await prisma.proposicao.findMany({
+    where: { status: 'VETADA' },
+    select: { id: true, updatedAt: true }
+  })
+
+  const agora = new Date()
+  const vetoTrancante = vetosPendentes.find(v => {
+    const dias = Math.floor((agora.getTime() - v.updatedAt.getTime()) / (1000 * 60 * 60 * 24))
+    return dias >= 30
+  })
+
+  if (vetoTrancante && payload.data.proposicaoId !== vetoTrancante.id) {
+    throw new ValidationError('Pauta trancada: existe veto pendente há mais de 30 dias. Apenas o veto pode ser incluído na pauta até sua apreciação.')
   }
 
   const pautaAtualizada = await pautasDbService.addItem(

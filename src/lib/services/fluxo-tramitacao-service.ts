@@ -132,6 +132,56 @@ export async function verificarElegibilidadePauta(
     }
   }
 
+  // Tipos que EXIGEM parecer da CLJ (Comissao de Legislacao e Justica)
+  const tiposExigemCLJ = ['PROJETO_LEI', 'PROJETO_LEI_COMPLEMENTAR', 'PROJETO_RESOLUCAO', 'PROJETO_DECRETO', 'EMENDA_LEI_ORGANICA']
+  if (tiposExigemCLJ.includes(proposicao.tipo)) {
+    // Buscar pareceres da proposicao
+    const pareceres = await prisma.parecer.findMany({
+      where: { proposicaoId },
+      include: {
+        comissao: { select: { id: true, nome: true, sigla: true, tipo: true } }
+      }
+    })
+
+    // Verificar se existe parecer da CLJ (por sigla ou nome)
+    const parecerCLJ = pareceres.find(p => {
+      const sigla = p.comissao?.sigla?.toUpperCase() || ''
+      const nome = p.comissao?.nome?.toUpperCase() || ''
+      return sigla === 'CLJ' || sigla === 'CCJ' || nome.includes('LEGISLA') && nome.includes('JUSTI')
+    })
+
+    if (!parecerCLJ) {
+      return {
+        elegivel: false,
+        motivo: 'SEM_PARECER_CLJ',
+        mensagem: 'Proposição requer parecer da Comissão de Legislação e Justiça (CLJ) antes de ser incluída na pauta'
+      }
+    }
+
+    if (parecerCLJ.status !== 'EMITIDO' && parecerCLJ.status !== 'APROVADO_COMISSAO') {
+      return {
+        elegivel: false,
+        motivo: 'PARECER_CLJ_PENDENTE',
+        mensagem: `Parecer da CLJ está com status "${parecerCLJ.status}". Deve estar EMITIDO para inclusão na pauta`
+      }
+    }
+
+    // Se CLJ emitiu parecer PELA_INCONSTITUCIONALIDADE, arquivar automaticamente
+    if (parecerCLJ.tipo === 'PELA_INCONSTITUCIONALIDADE' || parecerCLJ.tipo === 'PELA_ILEGALIDADE') {
+      // Arquivar a proposicao automaticamente
+      await prisma.proposicao.update({
+        where: { id: proposicaoId },
+        data: { status: 'ARQUIVADA' }
+      })
+
+      return {
+        elegivel: false,
+        motivo: 'INCONSTITUCIONAL',
+        mensagem: `Proposição arquivada automaticamente: parecer da CLJ é "${parecerCLJ.tipo}"`
+      }
+    }
+  }
+
   // Verifica se ha tramitacao em andamento
   const tramitacaoAtual = proposicao.tramitacoes[0]
   if (!tramitacaoAtual) {
