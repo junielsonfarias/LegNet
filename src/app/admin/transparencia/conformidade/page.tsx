@@ -126,17 +126,12 @@ export default function AdminConformidadePage() {
 
   return (
     <div className="space-y-6">
-      <AdminBreadcrumbs
-        items={[
-          { label: "Transparencia", href: "/admin/transparencia" },
-          { label: "Conformidade PNTP" },
-        ]}
-      />
+      <AdminBreadcrumbs />
 
       <div className="flex items-center justify-between">
         <PageHeader
           title="Conformidade PNTP"
-          description="Painel de conformidade com o Programa Nacional de Transparencia Publica"
+          subtitle="Painel de conformidade com o Programa Nacional de Transparencia Publica"
         />
         <Button
           variant="outline"
