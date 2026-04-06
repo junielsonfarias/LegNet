@@ -1,10 +1,87 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-06 (Fluxo legislativo completo ponta-a-ponta)
+> **Ultima Atualizacao**: 2026-04-06 (Notificacoes de prazo automaticas)
 > **Versao**: 1.9.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Notificacoes de Prazo Automaticas (06/04/2026)
+
+### P5: Endpoint de Notificacoes de Prazo
+- `POST /api/admin/notificacoes-prazo` — Gera notificacoes in-app para prazos proximos/vencidos
+- Usa modelo NotificacaoMulticanal existente com canal SISTEMA
+- Pareceres: notifica relator quando prazo de emissao vence em 3 dias ou esta vencido
+- Vetos: notifica ADMIN/SECRETARIA quando prazo de 30 dias vence em 7 dias ou esta expirado
+- Deduplicacao: nao cria notificacao duplicada nas ultimas 24h para mesma entidade
+- Metadata JSON inclui tipo, entidadeId, entidadeTipo, prioridade, diasRestantes
+- Requer permissao `config.manage`
+- Destinado a execucao via cron diario
+
+### Arquivos Criados
+- `src/app/api/admin/notificacoes-prazo/route.ts` — NOVO (API notificacoes de prazo)
+
+---
+
+## Calendario Legislativo Automatico + Bancadas (06/04/2026)
+
+### P5: Calendario Legislativo Automatico
+- `POST /api/admin/calendario-legislativo/gerar` — Gera calendario anual de sessoes ordinarias
+- Configuravel: dias da semana, horario, meses inicio/fim, meses de recesso
+- Valida se ja existem sessoes ordinarias no ano antes de gerar
+- Cria sessoes em batch via $transaction
+- Requer permissao `sessao.manage`
+
+### P5: Modelo Bancada
+- Novo modelo `Bancada` no Prisma schema (tabela `bancadas`)
+- Campos: nome, sigla, partido, tipo (PARTIDARIA/BLOCO/GOVERNO/OPOSICAO), lider, vice-lider
+- Enum `TipoBancada` com 4 tipos
+- Relacoes com Parlamentar (lider e vice-lider)
+- Campos `bancadaLider` e `bancadaViceLider` adicionados ao modelo Parlamentar
+
+### Arquivos Criados/Modificados
+- `src/app/api/admin/calendario-legislativo/gerar/route.ts` — NOVO (API calendario)
+- `prisma/schema.prisma` — Modelo Bancada + enum TipoBancada + relacoes em Parlamentar
+
+---
+
+## API de Conformidade PNTP (06/04/2026)
+
+### P4: Verificacao de Conformidade PNTP Nivel Diamante
+- `GET /api/admin/conformidade-pntp` — Verifica conformidade com requisitos PNTP
+- Checa 8 itens: votacoes nominais (30d), presencas (30d), atas (15d), pautas (48h), proposicoes (48h), APIs abertas, e-SIC, ouvidoria
+- Calcula score percentual e classifica nivel: DIAMANTE (>=90%), OURO (>=75%), PRATA (>=50%), BRONZE (<50%)
+- Requer permissao `dashboard.view`
+
+### Arquivos Criados
+- `src/app/api/admin/conformidade-pntp/route.ts` — NOVO (API conformidade PNTP)
+
+---
+
+## Alertas de Prazo + Voto de Minerva (06/04/2026)
+
+### P3.6: API de Alertas de Prazo
+- `GET /api/admin/alertas-prazo` — Retorna prazos proximos/vencidos (pareceres, vetos, sancoes, tramitacoes)
+- Classificacao por urgencia: VENCIDO, CRITICO, ATENCAO, NORMAL
+- Resumo com totais por categoria
+- Requer permissao `dashboard.view`
+
+### P3.7: Voto de Minerva do Presidente
+- Campo `votoMinerva` (Boolean) adicionado ao modelo VotacaoAgrupada
+- Em caso de empate, sistema verifica automaticamente se presidente da sessao votou SIM
+- Se presidente votou SIM, resultado muda de EMPATE para APROVADA (voto de desempate)
+- Flag `votoMinerva=true` registrado na VotacaoAgrupada para auditoria
+- Funciona em ambos os caminhos: quorum configuravel e regra padrao
+- Observacoes automaticas registradas quando minerva e aplicado
+
+### Arquivos Criados/Modificados
+- `src/app/api/admin/alertas-prazo/route.ts` — NOVO (API alertas de prazo)
+- `prisma/schema.prisma` — Campo votoMinerva em VotacaoAgrupada
+- `src/lib/services/sessao-controle.ts` — Funcao verificarVotoMinerva + logica em contabilizarVotos e finalizarItemPauta
+- `src/lib/services/votacao-service.ts` — votoMinerva em registrarVotacaoEmLote
+- `src/lib/services/turno-service.ts` — Parametro votoMinerva em registrarVotacaoAgrupada
 
 ---
 

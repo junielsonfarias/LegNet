@@ -34,7 +34,8 @@ O modulo de Transparencia implementa os requisitos do Programa Nacional de Trans
 | `src/app/api/concursos/` | APIs concursos (2 rotas) |
 | `src/app/api/organograma/` | APIs organograma (2 rotas) |
 | `src/app/api/conteudos-educativos/` | APIs conteudo educativo (2 rotas) |
-| `src/app/api/publico/conformidade/` | API conformidade PNTP |
+| `src/app/api/admin/conformidade-pntp/route.ts` | API admin verificacao conformidade PNTP (8 itens, score, nivel) |
+| `src/app/api/publico/conformidade/` | API conformidade PNTP publica |
 | `src/app/api/publico/relatorio-parlamentar/` | API relatorio parlamentar |
 | `src/app/api/dados-abertos/` | APIs de dados abertos |
 | `src/app/api/publico/` | APIs publicas |

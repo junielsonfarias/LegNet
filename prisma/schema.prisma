@@ -221,6 +221,8 @@ model Parlamentar {
   oradoresSessao         OradorSessao[]         // Inscrições como orador em sessões
   presencasOrdemDia      PresencaOrdemDia[]     // Presenças na ordem do dia
   questoesOrdem          QuestaoOrdem[]
+  bancadaLider           Bancada[]          @relation("BancadaLider")
+  bancadaViceLider       Bancada[]          @relation("BancadaViceLider")
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -1198,6 +1200,38 @@ model PresencaReuniaoComissao {
   @@unique([reuniaoId, membroComissaoId])
   @@index([reuniaoId])
   @@map("presenca_reuniao_comissao")
+}
+
+// ==========================================
+// BANCADAS PARLAMENTARES
+// ==========================================
+
+// Bancada parlamentar (agrupamento por partido/bloco)
+model Bancada {
+  id              String      @id @default(cuid())
+  nome            String
+  sigla           String?
+  partido         String?            // Sigla do partido (PT, MDB, etc)
+  tipo            TipoBancada @default(PARTIDARIA)
+  liderId         String?            // Parlamentar líder
+  viceLiderId     String?            // Vice-líder
+  ativa           Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  lider           Parlamentar?  @relation("BancadaLider", fields: [liderId], references: [id], onDelete: SetNull)
+  viceLider       Parlamentar?  @relation("BancadaViceLider", fields: [viceLiderId], references: [id], onDelete: SetNull)
+
+  @@index([partido])
+  @@index([ativa])
+  @@map("bancadas")
+}
+
+enum TipoBancada {
+  PARTIDARIA        // Bancada de partido único
+  BLOCO             // Bloco parlamentar (coalizão)
+  GOVERNO           // Base do governo
+  OPOSICAO          // Oposição
 }
 
 enum ParticipacaoTipo {
