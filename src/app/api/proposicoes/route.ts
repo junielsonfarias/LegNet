@@ -35,6 +35,7 @@ const ProposicaoSchema = z.object({
   resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).optional(),
   sessaoId: z.string().optional(),
   autorId: z.string().min(1, 'ID do autor é obrigatório'),
+  regime: z.enum(['NORMAL', 'PRIORIDADE', 'URGENCIA', 'URGENCIA_URGENTISSIMA']).optional(),
   unidadeInicialId: z.string().optional() // RN-038: Unidade inicial para tramitacao (prioridade sobre fluxo)
 })
 
@@ -115,7 +116,8 @@ export const POST = withAuth(async (request: NextRequest, _context, session) => 
     dataVotacao: validatedData.dataVotacao ? new Date(validatedData.dataVotacao) : null,
     resultado: validatedData.resultado || null,
     sessaoId: validatedData.sessaoId || null,
-    autorId: validatedData.autorId
+    autorId: validatedData.autorId,
+    regime: validatedData.regime || 'NORMAL'
   })
 
   // Auto-iniciar tramitacao ao criar proposicao

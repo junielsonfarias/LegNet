@@ -576,6 +576,7 @@ model Proposicao {
   texto            String?           @db.Text
   urlDocumento     String?           // URL externa do documento (Google Drive, etc)
   status           StatusProposicao  @default(APRESENTADA)
+  regime           String    @default("NORMAL")  // NORMAL, PRIORIDADE, URGENCIA, URGENCIA_URGENTISSIMA
   dataApresentacao DateTime
   dataVotacao      DateTime?
   resultado        ResultadoVotacao?
@@ -606,6 +607,7 @@ model Proposicao {
   @@unique([tipo, numero, ano], name: "tipo_numero_ano")
   @@index([status, dataApresentacao])
   @@index([tipo, status])
+  @@index([regime])
   @@index([autorId, ano])
   @@index([autorEntidadeId])
   @@index([ano, tipo])

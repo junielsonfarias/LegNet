@@ -50,6 +50,7 @@ export interface ProposicaoCreateData {
   resultado?: string | null
   sessaoId?: string | null
   autorId: string
+  regime?: string
 }
 
 export interface ProposicaoUpdateData {
@@ -67,6 +68,7 @@ export interface ProposicaoUpdateData {
   resultado?: string
   sessaoId?: string
   autorId?: string
+  regime?: string
 }
 
 const defaultAutorSelect = {
@@ -264,7 +266,8 @@ export const proposicaoDbService = {
         dataVotacao: data.dataVotacao || null,
         resultado: (data.resultado || null) as ResultadoVotacao | null,
         sessaoId: data.sessaoId || null,
-        autorId: data.autorId
+        autorId: data.autorId,
+        regime: data.regime || 'NORMAL'
       },
       include: {
         autor: {
@@ -310,6 +313,7 @@ export const proposicaoDbService = {
     if (data.resultado !== undefined) updateFields.resultado = data.resultado as ResultadoVotacao
     if (data.sessaoId !== undefined) updateFields.sessaoId = data.sessaoId
     if (data.autorId !== undefined) updateFields.autorId = data.autorId
+    if (data.regime !== undefined) updateFields.regime = data.regime
 
     return prisma.proposicao.update({
       where: { id },

@@ -25,7 +25,7 @@ const CriarNormaSchema = z.object({
   numero: z.number().int().positive('Número é obrigatório'),
   ano: z.number().int().min(1900).max(2100),
   data: z.string().datetime(),
-  dataPublicacao: z.string().datetime().optional(),
+  dataPublicacao: z.string().datetime({ message: 'Data de publicação é obrigatória' }),
   dataVigencia: z.string().datetime().optional(),
   ementa: z.string().min(10, 'Ementa é obrigatória'),
   preambulo: z.string().optional(),
@@ -112,7 +112,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   const norma = await criarNorma({
     ...validatedData,
     data: new Date(validatedData.data),
-    dataPublicacao: validatedData.dataPublicacao ? new Date(validatedData.dataPublicacao) : undefined,
+    dataPublicacao: new Date(validatedData.dataPublicacao),
     dataVigencia: validatedData.dataVigencia ? new Date(validatedData.dataVigencia) : undefined
   })
 
