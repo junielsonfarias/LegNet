@@ -220,6 +220,7 @@ model Parlamentar {
   autorEntidade          Autor?                 @relation("AutorParlamentar") // Vínculo com sistema de autores
   oradoresSessao         OradorSessao[]         // Inscrições como orador em sessões
   presencasOrdemDia      PresencaOrdemDia[]     // Presenças na ordem do dia
+  questoesOrdem          QuestaoOrdem[]
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -276,6 +277,7 @@ model Sessao {
   oradores            OradorSessao[]      // Oradores inscritos na sessão
   expedientes         ExpedienteSessao[]  // Conteúdo dos expedientes
   presencasOrdemDia   PresencaOrdemDia[]  // Presença específica para ordem do dia
+  questoesOrdem       QuestaoOrdem[]
 
   @@index([status, data])
   @@index([tipo, status])
@@ -346,6 +348,28 @@ model OradorSessao {
   @@index([sessaoId, tipo, ordem])
   @@index([parlamentarId])
   @@map("oradores_sessao")
+}
+
+// Questao de Ordem - Intervenção regimental durante sessão
+model QuestaoOrdem {
+  id              String   @id @default(cuid())
+  sessaoId        String
+  parlamentarId   String
+  momento         DateTime @default(now())
+  descricao       String   @db.Text
+  fundamentacao   String?  @db.Text     // Artigo do regimento invocado
+  decisao         String?  @db.Text     // Decisão do presidente
+  deferida        Boolean?              // null = pendente, true = deferida, false = indeferida
+  observacoes     String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sessao       Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  parlamentar  Parlamentar @relation(fields: [parlamentarId], references: [id])
+
+  @@index([sessaoId])
+  @@index([parlamentarId])
+  @@map("questoes_ordem")
 }
 
 enum TipoOrador {
@@ -804,6 +828,9 @@ model VotacaoAgrupada {
   // Controle de tempo
   iniciadaEm      DateTime?
   finalizadaEm    DateTime?
+
+  // Voto de minerva
+  votoMinerva      Boolean   @default(false) // Presidente exerceu voto de desempate
 
   // Observações
   observacoes     String?             @db.Text

@@ -234,6 +234,11 @@ export const POST = withErrorHandler(async (
     )
   }
 
+  // Verificar impedimento de voto (autor não pode votar na própria proposição - RN-063)
+  if (proposicao?.autorId === validatedData.parlamentarId) {
+    throw new ValidationError('Parlamentar impedido de votar: autor da proposição (RN-063)')
+  }
+
   // Usar turno atual do item da pauta (default 1)
   const turnoAtual = pautaItem.turnoAtual || 1
 

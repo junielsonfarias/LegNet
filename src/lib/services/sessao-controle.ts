@@ -216,6 +216,15 @@ export async function iniciarSessaoControle(sessaoId: string) {
     return sessao
   }
 
+  // RN-040: Verificar quorum de instalação (maioria absoluta: 50%+1 dos membros)
+  const quorumResult = await verificarQuorumInstalacao(sessaoId)
+  if (!quorumResult.temQuorum) {
+    throw new ValidationError(
+      `Quorum insuficiente para iniciar a sessão. ${quorumResult.detalhes}. ` +
+      'Registre presenças suficientes antes de iniciar.'
+    )
+  }
+
   const agora = new Date()
 
   const pauta = await prisma.pautaSessao.findUnique({
@@ -616,6 +625,47 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
 }
 
 /**
+ * Verifica se o presidente da sessão votou SIM para aplicar voto de minerva (desempate)
+ * RN-064: Em caso de empate, o presidente pode exercer o voto de desempate
+ */
+async function verificarVotoMinerva(
+  proposicaoId: string,
+  sessaoId: string,
+  turno?: number
+): Promise<boolean> {
+  try {
+    // Buscar o presidente da sessão via mesa da sessão
+    const mesaSessao = await prisma.mesaSessao.findFirst({
+      where: { sessaoId },
+      include: {
+        membros: {
+          where: { cargo: 'PRESIDENTE' }
+        }
+      }
+    })
+
+    const presidenteId = mesaSessao?.membros?.[0]?.parlamentarId
+    if (!presidenteId) return false
+
+    // Verificar se o presidente votou SIM
+    const whereVoto: any = {
+      proposicaoId,
+      parlamentarId: presidenteId,
+      voto: 'SIM'
+    }
+    if (turno) {
+      whereVoto.turno = turno
+    }
+
+    const votoPresidente = await prisma.votacao.findFirst({ where: whereVoto })
+    return !!votoPresidente
+  } catch (error) {
+    console.error('Erro ao verificar voto de minerva:', error)
+    return false
+  }
+}
+
+/**
  * Contabiliza os votos de uma proposição e retorna o resultado
  * Exportado para uso em APIs e outros serviços
  *
@@ -638,6 +688,7 @@ export async function contabilizarVotos(
   total: number
   resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
   detalhesQuorum?: string
+  votoMinerva?: boolean
 }> {
   const whereVotos: any = { proposicaoId }
   if (options?.turno) {
@@ -713,11 +764,25 @@ export async function contabilizarVotos(
         totalPresentes
       )
 
+      let resultadoFinal: 'APROVADA' | 'REJEITADA' | 'EMPATE' = resultadoQuorum.aprovado ? 'APROVADA' : 'REJEITADA'
+      let minervaAplicado = false
+
+      // Voto de minerva: em caso de empate (SIM === NAO) e resultado REJEITADA pelo quórum,
+      // verificar se o presidente votou SIM para desempatar
+      if (!resultadoQuorum.aprovado && contagem.sim === contagem.nao && contagem.sim > 0 && options?.sessaoId) {
+        const minerva = await verificarVotoMinerva(proposicaoId, options.sessaoId, options.turno)
+        if (minerva) {
+          resultadoFinal = 'APROVADA'
+          minervaAplicado = true
+        }
+      }
+
       return {
         ...contagem,
         total,
-        resultado: resultadoQuorum.aprovado ? 'APROVADA' : 'REJEITADA',
-        detalhesQuorum: resultadoQuorum.detalhes
+        resultado: resultadoFinal,
+        detalhesQuorum: resultadoQuorum.detalhes + (minervaAplicado ? ' | Voto de minerva do presidente aplicado' : ''),
+        votoMinerva: minervaAplicado
       }
     } catch (error) {
       console.error('Erro ao calcular quórum configurável, usando regra padrão:', error)
@@ -726,6 +791,7 @@ export async function contabilizarVotos(
 
   // Regra padrão: SIM > NAO para aprovação (abstenções não contam contra)
   let resultado: 'APROVADA' | 'REJEITADA' | 'EMPATE'
+  let votoMinerva = false
   if (contagem.sim > contagem.nao) {
     resultado = 'APROVADA'
   } else if (contagem.nao > contagem.sim) {
@@ -734,10 +800,20 @@ export async function contabilizarVotos(
     resultado = 'EMPATE'
   }
 
+  // Voto de minerva: em caso de empate, verificar se o presidente votou SIM
+  if (resultado === 'EMPATE' && options?.sessaoId) {
+    const minerva = await verificarVotoMinerva(proposicaoId, options.sessaoId, options.turno)
+    if (minerva) {
+      resultado = 'APROVADA'
+      votoMinerva = true
+    }
+  }
+
   return {
     ...contagem,
     total,
-    resultado
+    resultado,
+    votoMinerva
   }
 }
 
@@ -1162,10 +1238,12 @@ export async function finalizarItemPauta(
           totalPresentes,
           quorumNecessario: Math.floor(totalPresentes / 2) + 1,
           resultado: contagemVotos.resultado as any,
+          votoMinerva: contagemVotos.votoMinerva || false,
           tipoQuorum: contagemVotos.detalhesQuorum?.includes('absolut') ? 'MAIORIA_ABSOLUTA'
             : contagemVotos.detalhesQuorum?.includes('2/3') ? 'DOIS_TERCOS'
             : 'MAIORIA_SIMPLES',
-          finalizadaEm: new Date()
+          finalizadaEm: new Date(),
+          observacoes: contagemVotos.votoMinerva ? 'Voto de minerva do presidente aplicado (desempate)' : undefined
         },
         update: {
           votosSim: contagemVotos.sim,
@@ -1174,7 +1252,9 @@ export async function finalizarItemPauta(
           totalMembros,
           totalPresentes,
           resultado: contagemVotos.resultado as any,
-          finalizadaEm: new Date()
+          votoMinerva: contagemVotos.votoMinerva || false,
+          finalizadaEm: new Date(),
+          observacoes: contagemVotos.votoMinerva ? 'Voto de minerva do presidente aplicado (desempate)' : undefined
         }
       })
 
@@ -1429,7 +1509,8 @@ export async function finalizarTurnoItem(
     totalPresentes,
     config.tipoQuorum as TipoQuorum,
     item.tipoVotacao as TipoVotacao,
-    resultadoAgrupado
+    resultadoAgrupado,
+    contagem.votoMinerva || false
   )
 
   // Se não há próximo turno, atualizar a proposição

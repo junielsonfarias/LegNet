@@ -458,7 +458,8 @@ export async function registrarVotacaoAgrupada(
   totalPresentes: number,
   tipoQuorum: TipoQuorum,
   tipoVotacao: TipoVotacao,
-  resultado: ResultadoVotacaoAgrupada
+  resultado: ResultadoVotacaoAgrupada,
+  votoMinerva: boolean = false
 ): Promise<void> {
   const quorumNecessario = calcularQuorumNecessario(tipoQuorum, totalMembros, totalPresentes)
 
@@ -479,7 +480,9 @@ export async function registrarVotacaoAgrupada(
       totalPresentes,
       quorumNecessario,
       resultado,
-      finalizadaEm: new Date()
+      votoMinerva,
+      finalizadaEm: new Date(),
+      observacoes: votoMinerva ? 'Voto de minerva do presidente aplicado (desempate)' : undefined
     },
     create: {
       proposicaoId,
@@ -495,8 +498,10 @@ export async function registrarVotacaoAgrupada(
       totalPresentes,
       quorumNecessario,
       resultado,
+      votoMinerva,
       iniciadaEm: new Date(),
-      finalizadaEm: new Date()
+      finalizadaEm: new Date(),
+      observacoes: votoMinerva ? 'Voto de minerva do presidente aplicado (desempate)' : undefined
     }
   })
 

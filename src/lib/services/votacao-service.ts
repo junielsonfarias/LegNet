@@ -887,7 +887,8 @@ export async function findProposicaoParaVotacao(proposicaoId: string) {
       ano: true,
       tipo: true,
       titulo: true,
-      status: true
+      status: true,
+      autorId: true
     }
   })
 }
@@ -999,6 +1000,11 @@ export async function registrarVotacaoEmLote(params: {
         }
       })
 
+      const observacoesVotacao = [
+        isRetroativo ? `Lançamento retroativo: ${motivo}` : undefined,
+        contagem.votoMinerva ? 'Voto de minerva do presidente aplicado (desempate)' : undefined
+      ].filter(Boolean).join(' | ') || undefined
+
       await tx.votacaoAgrupada.upsert({
         where: {
           proposicaoId_sessaoId_turno: {
@@ -1012,8 +1018,9 @@ export async function registrarVotacaoEmLote(params: {
           votosNao: contagem.nao,
           votosAbstencao: contagem.abstencao,
           resultado: contagem.resultado,
+          votoMinerva: contagem.votoMinerva || false,
           finalizadaEm: new Date(),
-          observacoes: isRetroativo ? `Lançamento retroativo: ${motivo}` : undefined
+          observacoes: observacoesVotacao
         },
         create: {
           proposicaoId,
@@ -1023,6 +1030,7 @@ export async function registrarVotacaoEmLote(params: {
           votosNao: contagem.nao,
           votosAbstencao: contagem.abstencao,
           resultado: contagem.resultado as any,
+          votoMinerva: contagem.votoMinerva || false,
           tipoVotacao: (tipoVotacao || 'NOMINAL') as any,
           tipoQuorum: tipoProposicao === 'PROJETO_LEI_COMPLEMENTAR' || tipoProposicao === 'EMENDA_LEI_ORGANICA'
             ? 'MAIORIA_ABSOLUTA'
@@ -1030,7 +1038,7 @@ export async function registrarVotacaoEmLote(params: {
               ? 'DOIS_TERCOS'
               : 'MAIORIA_SIMPLES',
           finalizadaEm: new Date(),
-          observacoes: isRetroativo ? `Lançamento retroativo: ${motivo}` : undefined
+          observacoes: observacoesVotacao
         }
       })
 
