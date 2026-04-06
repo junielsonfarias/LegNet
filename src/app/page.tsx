@@ -7,6 +7,7 @@ import { LatestNews } from '@/components/home/latest-news'
 import { CitizenParticipationSection } from '@/components/home/citizen-participation-section'
 import { StatsSection } from '@/components/home/stats-section'
 import { SocialMediaBanner } from '@/components/home/social-media-banner'
+import { RevealSection } from '@/components/ui/reveal-section'
 
 export default function HomePage() {
   return (
@@ -15,28 +16,44 @@ export default function HomePage() {
       <Hero />
 
       {/* Banner de sessao ao vivo ou proxima sessao */}
-      <LiveSessionBanner />
+      <RevealSection direction="up" distance={20}>
+        <LiveSessionBanner />
+      </RevealSection>
 
       {/* Atividade legislativa com abas */}
-      <LegislativeActivitySection />
+      <RevealSection direction="up" delay={50}>
+        <LegislativeActivitySection />
+      </RevealSection>
 
       {/* Parlamentares */}
-      <ParliamentariansSection />
+      <RevealSection direction="up" delay={50}>
+        <ParliamentariansSection />
+      </RevealSection>
 
       {/* Transparencia */}
-      <TransparencySection />
+      <RevealSection direction="up" delay={50}>
+        <TransparencySection />
+      </RevealSection>
 
       {/* Redes sociais */}
-      <SocialMediaBanner />
+      <RevealSection direction="up" distance={20}>
+        <SocialMediaBanner />
+      </RevealSection>
 
       {/* Noticias */}
-      <LatestNews />
+      <RevealSection direction="up" delay={50}>
+        <LatestNews />
+      </RevealSection>
 
       {/* Participacao cidada */}
-      <CitizenParticipationSection />
+      <RevealSection direction="up" delay={50}>
+        <CitizenParticipationSection />
+      </RevealSection>
 
       {/* Contato e redes sociais */}
-      <StatsSection />
+      <RevealSection direction="up" distance={20}>
+        <StatsSection />
+      </RevealSection>
     </div>
   )
 }

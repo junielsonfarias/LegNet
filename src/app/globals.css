@@ -600,6 +600,86 @@ html[data-reduced-motion="true"] *::after {
   touch-action: manipulation;
 }
 
+/* ===== EFEITOS VISUAIS AVANCADOS ===== */
+
+/* Glass morphism card */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-light {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--municipal-primary), var(--municipal-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow effect sutil para cards em destaque */
+.glow-primary {
+  box-shadow: 0 0 20px -5px rgba(var(--municipal-primary-rgb), 0.3);
+}
+
+.glow-primary:hover {
+  box-shadow: 0 0 30px -5px rgba(var(--municipal-primary-rgb), 0.5);
+}
+
+/* Card com borda gradiente */
+.border-gradient {
+  position: relative;
+  background: white;
+  border-radius: 1rem;
+}
+
+.border-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--municipal-primary), var(--municipal-secondary));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.dark .border-gradient {
+  background: hsl(var(--card));
+}
+
+/* Shimmer loading effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.05) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
 /* ===== DARK MODE AUTOMATICO ===== */
 @media (prefers-color-scheme: dark) {
   html:not(.light):not([data-theme="light"]) {
