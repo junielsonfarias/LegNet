@@ -7,6 +7,12 @@
 
 set -uo pipefail
 
+# Garantir que read funciona quando executado via pipe (curl | bash)
+# Redireciona stdin para /dev/tty para inputs interativos
+if [ ! -t 0 ]; then
+  exec 0</dev/tty || { echo "Erro: Este script precisa de um terminal interativo."; exit 1; }
+fi
+
 # ============================================================================
 # CORES E FORMATACAO
 # ============================================================================
