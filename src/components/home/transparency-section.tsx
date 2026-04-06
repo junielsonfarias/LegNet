@@ -14,7 +14,6 @@ import {
   Database,
   ArrowRight,
   ShieldCheck,
-  Award,
   ExternalLink,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -145,30 +144,6 @@ export function TransparencySection() {
               </div>
             </Link>
           ))}
-        </div>
-
-        {/* PNTP Badge */}
-        <div className="mt-6 md:mt-10 relative overflow-hidden rounded-2xl border border-emerald-200/60 bg-gradient-to-r from-emerald-50 via-emerald-50/80 to-teal-50">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSIjMDU5NjY5IiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')] opacity-60" />
-          <div className="relative flex items-center justify-between gap-3 py-3 md:py-4 px-4 md:px-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm shrink-0">
-                <Award className="h-5 w-5 md:h-6 md:w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-bold text-emerald-900">
-                  Programa Nacional de Transparencia Publica
-                </p>
-                <p className="text-[11px] sm:text-xs text-emerald-600 mt-0.5">
-                  Compromisso com a transparencia e o acesso a informacao
-                </p>
-              </div>
-            </div>
-            <div className="hidden sm:flex items-center gap-2 bg-emerald-600 rounded-full px-4 py-2 shadow-sm">
-              <ShieldCheck className="h-4 w-4 text-emerald-100" />
-              <span className="text-sm font-bold text-white whitespace-nowrap">Nivel Diamante</span>
-            </div>
-          </div>
         </div>
 
         {/* Mobile CTA */}

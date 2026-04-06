@@ -137,7 +137,6 @@ export function Header() {
       icon: Eye,
       items: [
         { name: 'Portal da Transparência', href: '/transparencia', status: 'active' },
-        { name: 'Conformidade PNTP', href: '/transparencia/conformidade', status: 'active', badge: 'Novo' },
         { name: 'Informações Financeiras', href: '/transparencia/receitas', status: 'active' },
         { name: 'Pessoal', href: '/transparencia/pessoal', status: 'active', badge: 'Novo' },
         { name: 'Parlamentar', href: '/transparencia/parlamentar', status: 'active', badge: 'Novo' },

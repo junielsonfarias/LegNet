@@ -1,10 +1,34 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-06 (Instalador: identidade visual + Supabase: producao corrigido)
-> **Versao**: 1.8.2
+> **Ultima Atualizacao**: 2026-04-06 (Conformidade PNTP movida para admin)
+> **Versao**: 1.8.3
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Conformidade PNTP - Movida para Admin (06/04/2026)
+
+### Alteracoes
+- Pagina publica `/transparencia/conformidade` substituida por redirect para `/transparencia`
+- Link "Conformidade PNTP" removido do header (menu Transparencia)
+- Card "Conformidade PNTP" removido do acesso rapido do portal de transparencia (substituido por "Dados Abertos")
+- Badge "Nivel Diamante" removido da secao de transparencia da home page
+- Link LGPD em "Boas Praticas" redirecionado para `/transparencia` (antes apontava para conformidade)
+- Nova pagina admin criada: `/admin/transparencia/conformidade`
+  - Dashboard com nivel, percentual geral, resumo de categorias, data de geracao
+  - Grid de categorias com itens individuais e status (CONFORME/ALERTA/NAO_CONFORME)
+  - Secao de recomendacoes de melhoria
+  - Botao de atualizar dados
+  - Usa componentes admin (AdminBreadcrumbs, PageHeader)
+
+### Arquivos Afetados
+- `src/app/transparencia/conformidade/page.tsx` - Substituido por redirect
+- `src/components/layout/header.tsx` - Removido link Conformidade PNTP
+- `src/app/transparencia/page.tsx` - Removido card conformidade, adicionado Dados Abertos, corrigido link LGPD
+- `src/components/home/transparency-section.tsx` - Removido badge PNTP/Nivel Diamante
+- `src/app/admin/transparencia/conformidade/page.tsx` - NOVO: dashboard admin de conformidade
 
 ---
 

@@ -7,7 +7,7 @@ import {
   Mail, Phone, MapPin, Award, TrendingUp, BarChart3, Activity,
   Globe, Briefcase, ChevronRight, Loader2, Landmark, Receipt,
   Gavel, UserCheck, Clock, Search, Vote, Handshake, ScrollText,
-  BadgeCheck, FileSearch, CreditCard, CalendarDays,
+  FileSearch, CreditCard, CalendarDays,
   GraduationCap, ClipboardList, PieChart, Wallet
 } from 'lucide-react';
 import Link from 'next/link';
@@ -207,7 +207,7 @@ export default function TransparenciaPage() {
           {[
             { nome: 'E-SIC', desc: 'Acesso a Informacao', href: '/institucional/e-sic', icon: FileSearch, cor: 'bg-blue-600' },
             { nome: 'Ouvidoria', desc: 'Fale conosco', href: '/institucional/ouvidoria', icon: MessageSquare, cor: 'bg-orange-600' },
-            { nome: 'Conformidade PNTP', desc: 'Nivel de transparencia', href: '/transparencia/conformidade', icon: BadgeCheck, cor: 'bg-green-600' },
+            { nome: 'Dados Abertos', desc: 'APIs e downloads', href: '/transparencia/dados-abertos', icon: Globe, cor: 'bg-green-600' },
             { nome: 'Publicacoes', desc: 'Diario e atos oficiais', href: '/transparencia/publicacoes', icon: FolderOpen, cor: 'bg-indigo-600' },
           ].map((item) => (
             <Link
@@ -324,7 +324,7 @@ export default function TransparenciaPage() {
             { nome: 'Dados Abertos', href: '/api-docs', icon: Globe },
             { nome: 'Glossario', href: '/institucional/dicionario', icon: BookOpen },
             { nome: 'Pesquisa Satisfacao', href: '/transparencia/pesquisas', icon: Search },
-            { nome: 'LGPD', href: '/transparencia/conformidade', icon: Shield },
+            { nome: 'LGPD', href: '/transparencia', icon: Shield },
             { nome: 'Mapa do Site', href: '/busca', icon: MapPin },
             { nome: 'Contatos', href: '/institucional/ouvidoria', icon: Phone },
           ].map((item) => (
