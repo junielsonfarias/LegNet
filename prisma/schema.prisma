@@ -93,7 +93,7 @@ enum UserRole {
 
 model Tenant {
   id          String       @id @default(cuid())
-  slug        String       @unique // Identificador único (ex: "santarem", "mojui-dos-campos")
+  slug        String       @unique // Identificador único (ex: "santarem", "ruropolis")
   nome        String // Nome da Câmara Municipal
   sigla       String? // Sigla (ex: "CMS", "CMM")
   cnpj        String?

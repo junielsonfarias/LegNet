@@ -335,7 +335,7 @@ export default function OuvidoriaPage() {
             <CardContent className="p-4 sm:p-6 text-center">
               <MapPin className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">Presencial</h3>
-              <p className="text-gray-600 text-sm">Centro, Mojui dos Campos - PA</p>
+              <p className="text-gray-600 text-sm">Centro, Sua Cidade</p>
             </CardContent>
           </Card>
           <Card>

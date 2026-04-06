@@ -586,7 +586,7 @@ export const openApiSpec = {
           partido: { type: 'string', example: 'MDB' },
           legislatura: { type: 'string', example: 'leg-2025-2028' },
           foto: { type: 'string', format: 'uri', example: 'https://example.com/foto.jpg' },
-          email: { type: 'string', format: 'email', example: 'pantoja@camaramojuic.pa.gov.br' },
+          email: { type: 'string', format: 'email', example: 'parlamentar@camara.gov.br' },
           telefone: { type: 'string', example: '(93) 99123-4567' },
           gabinete: { type: 'string', example: 'Gabinete 01' },
           telefoneGabinete: { type: 'string', example: '(93) 3530-1234' },

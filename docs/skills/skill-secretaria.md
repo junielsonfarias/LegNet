@@ -1095,7 +1095,7 @@ ATA DA ${sessao.numero}a SESSAO ${sessao.tipo.toUpperCase()}
 DA ${sessao.legislatura?.numero}a LEGISLATURA
 
 Aos ${formatarData(sessao.dataHora)}, as ${formatarHora(sessao.dataHora)},
-no Plenario da Camara Municipal de Mojui dos Campos, reuniram-se os
+no Plenario da Camara Municipal, reuniram-se os
 Vereadores abaixo relacionados para a realizacao da ${sessao.numero}a
 Sessao ${sessao.tipo} da ${sessao.legislatura?.numero}a Legislatura.
 
@@ -1136,7 +1136,7 @@ ORDEM DOS TRABALHOS:
   texto += `\nNada mais havendo a tratar, o Presidente encerrou a sessao
 as ${formatarHora(sessao.dataEncerramento)}.
 
-Mojui dos Campos, ${formatarData(sessao.dataHora)}.
+[Sua Cidade], ${formatarData(sessao.dataHora)}.
 
 _______________________________
 Presidente

@@ -4,8 +4,8 @@ const prisma = new PrismaClient()
 
 /**
  * Seed de Dados de Transparência
- * Dados reais extraídos do site oficial da Câmara Municipal de Mojuí dos Campos
- * Fonte: https://camaramojuidoscampos.pa.gov.br
+ * Dados reais extraídos do site oficial da Câmara Municipal de Rurópolis
+ * Fonte: https://camararuropolis.pa.gov.br
  */
 
 async function seedTransparencia() {
@@ -28,8 +28,8 @@ async function seedTransparencia() {
       dataAbertura: new Date('2023-12-15'),
       horaAbertura: '09:00',
       situacao: 'HOMOLOGADA' as const,
-      unidadeGestora: 'Câmara Municipal de Mojuí dos Campos',
-      linkEdital: 'https://camaramojuidoscampos.pa.gov.br/licitacoes/20',
+      unidadeGestora: 'Câmara Municipal de Rurópolis',
+      linkEdital: 'https://camararuropolis.pa.gov.br/licitacoes/20',
       observacoes: 'Homologação em 03/01/2024. Dez participantes concorreram. Valor total contratado: R$ 130.361,74',
     },
     {
@@ -43,7 +43,7 @@ async function seedTransparencia() {
       dataAbertura: new Date('2023-09-28'),
       horaAbertura: '09:00',
       situacao: 'HOMOLOGADA' as const,
-      unidadeGestora: 'Câmara Municipal de Mojuí dos Campos',
+      unidadeGestora: 'Câmara Municipal de Rurópolis',
       observacoes: 'Contrato vigente até dezembro de 2024',
     },
     {
@@ -57,7 +57,7 @@ async function seedTransparencia() {
       dataAbertura: new Date('2023-07-24'),
       horaAbertura: '09:00',
       situacao: 'HOMOLOGADA' as const,
-      unidadeGestora: 'Câmara Municipal de Mojuí dos Campos',
+      unidadeGestora: 'Câmara Municipal de Rurópolis',
     },
     {
       numero: '002',
@@ -70,7 +70,7 @@ async function seedTransparencia() {
       dataAbertura: new Date('2024-03-15'),
       horaAbertura: '09:00',
       situacao: 'HOMOLOGADA' as const,
-      unidadeGestora: 'Câmara Municipal de Mojuí dos Campos',
+      unidadeGestora: 'Câmara Municipal de Rurópolis',
     },
     {
       numero: '001',
@@ -83,7 +83,7 @@ async function seedTransparencia() {
       dataAbertura: new Date('2025-04-15'),
       horaAbertura: '09:00',
       situacao: 'EM_ANDAMENTO' as const,
-      unidadeGestora: 'Câmara Municipal de Mojuí dos Campos',
+      unidadeGestora: 'Câmara Municipal de Rurópolis',
     },
   ]
 
@@ -1187,9 +1187,9 @@ async function seedTransparencia() {
       responsavel: 'Câmara Municipal',
       situacao: 'EM_USO',
       matriculaImovel: '1234',
-      enderecoImovel: 'Rua Principal, S/N, Centro - Mojuí dos Campos/PA',
+      enderecoImovel: 'Rua Principal, S/N, Centro - Rurópolis/PA',
       areaImovel: 450.00,
-      observacoes: 'Sede administrativa da Câmara Municipal de Mojuí dos Campos',
+      observacoes: 'Sede administrativa da Câmara Municipal de Rurópolis',
     },
     {
       tipo: 'IMOVEL',
@@ -1203,7 +1203,7 @@ async function seedTransparencia() {
       responsavel: 'Câmara Municipal',
       situacao: 'EM_USO',
       matriculaImovel: '5678',
-      enderecoImovel: 'Rua Principal, S/N, Centro - Mojuí dos Campos/PA',
+      enderecoImovel: 'Rua Principal, S/N, Centro - Rurópolis/PA',
       areaImovel: 300.00,
       observacoes: 'Estacionamento para servidores e público',
     },
@@ -1268,19 +1268,19 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-12-18'),
       categoriaId: categoriaLeis.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
       titulo: 'Lei nº 206/2025 - Plano de Mobilidade Urbana (PLANMOB)',
-      conteudo: 'Institui o Plano Municipal de Mobilidade Urbana (PLANMOB) de Mojuí dos Campos e dá outras providências.',
+      conteudo: 'Institui o Plano Municipal de Mobilidade Urbana (PLANMOB) de Rurópolis e dá outras providências.',
       descricao: 'Institui o Plano Municipal de Mobilidade Urbana',
       tipo: 'LEI' as const,
       numero: '206',
       ano: 2025,
       data: new Date('2025-12-18'),
       categoriaId: categoriaLeis.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
@@ -1292,19 +1292,19 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-12-15'),
       categoriaId: categoriaLeis.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
       titulo: 'Lei nº 201/2025 - Lei Orçamentária Anual 2026',
-      conteudo: 'Estima a receita e fixa a despesa do Município de Mojuí dos Campos para o exercício financeiro de 2026.',
+      conteudo: 'Estima a receita e fixa a despesa do Município de Rurópolis para o exercício financeiro de 2026.',
       descricao: 'LOA 2026 - Orçamento do município para 2026',
       tipo: 'LEI' as const,
       numero: '201',
       ano: 2025,
       data: new Date('2025-12-01'),
       categoriaId: categoriaLeis.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
@@ -1316,7 +1316,7 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-11-07'),
       categoriaId: categoriaLeis.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
@@ -1328,7 +1328,7 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-04-17'),
       categoriaId: categoriaLeis.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
@@ -1340,7 +1340,7 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-04-17'),
       categoriaId: categoriaLeis.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
   ]
@@ -1367,43 +1367,43 @@ async function seedTransparencia() {
       ano: 2024,
       data: new Date('2024-04-22'),
       categoriaId: categoriaDecretos.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
       titulo: 'Decreto Legislativo nº 204/2022 - Cidadão Emérito Manoel Pinto da Silva',
-      conteudo: 'Concede o título de Cidadão Emérito de Mojuí dos Campos ao Sr. Manoel Pinto da Silva.',
+      conteudo: 'Concede o título de Cidadão Emérito de Rurópolis ao Sr. Manoel Pinto da Silva.',
       descricao: 'Concessão de título honorífico',
       tipo: 'DECRETO' as const,
       numero: '204',
       ano: 2022,
       data: new Date('2022-12-02'),
       categoriaId: categoriaDecretos.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
       titulo: 'Decreto Legislativo nº 185/2022 - Cidadão Honorário Deputado João Ferrari',
-      conteudo: 'Concede o título de Cidadão Honorário de Mojuí dos Campos ao Deputado Federal João Ferrari Júnior.',
+      conteudo: 'Concede o título de Cidadão Honorário de Rurópolis ao Deputado Federal João Ferrari Júnior.',
       descricao: 'Concessão de título honorífico',
       tipo: 'DECRETO' as const,
       numero: '185',
       ano: 2022,
       data: new Date('2022-12-02'),
       categoriaId: categoriaDecretos.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
       titulo: 'Decreto Legislativo nº 182/2021 - Cidadã Emérita Vice-Prefeita Suely Araújo',
-      conteudo: 'Concede o título de Cidadã Emérita de Mojuí dos Campos à Vice-Prefeita Suely da Silva Araújo.',
+      conteudo: 'Concede o título de Cidadã Emérita de Rurópolis à Vice-Prefeita Suely da Silva Araújo.',
       descricao: 'Concessão de título honorífico',
       tipo: 'DECRETO' as const,
       numero: '182',
       ano: 2021,
       data: new Date('2021-12-08'),
       categoriaId: categoriaDecretos.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
   ]
@@ -1430,7 +1430,7 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-12-16'),
       categoriaId: categoriaPortarias.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
@@ -1442,7 +1442,7 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-11-12'),
       categoriaId: categoriaPortarias.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
@@ -1454,7 +1454,7 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-11-12'),
       categoriaId: categoriaPortarias.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
     {
@@ -1466,7 +1466,7 @@ async function seedTransparencia() {
       ano: 2025,
       data: new Date('2025-09-05'),
       categoriaId: categoriaPortarias.id,
-      autorNome: 'Câmara Municipal de Mojuí dos Campos',
+      autorNome: 'Câmara Municipal de Rurópolis',
       publicada: true,
     },
   ]

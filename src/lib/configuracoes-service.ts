@@ -201,7 +201,7 @@ const usuariosMock: Usuario[] = [
   {
     id: '1',
     nome: 'Administrador',
-    email: 'admin@camaramojui.pa.gov.br',
+    email: 'admin@camara.gov.br',
     role: 'administrador',
     permissoes: ['*'],
     ativo: true,
@@ -212,7 +212,7 @@ const usuariosMock: Usuario[] = [
   {
     id: '2',
     nome: 'Secretário',
-    email: 'secretario@camaramojui.pa.gov.br',
+    email: 'secretario@camara.gov.br',
     role: 'secretario',
     permissoes: ['proposicoes', 'sessoes', 'pautas'],
     ativo: true,
@@ -223,7 +223,7 @@ const usuariosMock: Usuario[] = [
   {
     id: '3',
     nome: 'Parlamentar',
-    email: 'parlamentar@camaramojui.pa.gov.br',
+    email: 'parlamentar@camara.gov.br',
     role: 'parlamentar',
     permissoes: ['proposicoes', 'sessoes'],
     ativo: true,

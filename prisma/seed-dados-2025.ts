@@ -3,8 +3,8 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 /**
- * Seed com dados reais da Câmara Municipal de Mojuí dos Campos - 2025
- * Fonte: https://www.camaramojuidoscampos.pa.gov.br/
+ * Seed com dados reais da Câmara Municipal de Rurópolis - 2025
+ * Fonte: https://www.camararuropolis.pa.gov.br/
  */
 
 async function main() {
@@ -162,7 +162,7 @@ async function main() {
         tipo: 'ORDINARIA',
         data: new Date(sessao.data + 'T14:00:00Z'),
         horario: '14:00',
-        local: 'Plenário da Câmara Municipal de Mojuí dos Campos',
+        local: 'Plenário da Câmara Municipal de Rurópolis',
         status: sessao.status as any,
         descricao: sessao.descricao,
         legislaturaId: legislatura.id,
@@ -193,7 +193,7 @@ async function main() {
         tipo: 'SOLENE',
         data: new Date(sessao.data + 'T19:00:00Z'),
         horario: '19:00',
-        local: 'Plenário da Câmara Municipal de Mojuí dos Campos',
+        local: 'Plenário da Câmara Municipal de Rurópolis',
         status: new Date(sessao.data) < new Date() ? 'CONCLUIDA' : 'AGENDADA',
         descricao: sessao.descricao,
         legislaturaId: legislatura.id,
@@ -230,7 +230,7 @@ async function main() {
     { numero: '002', autor: 'Mesa Diretora', ementa: 'Dispõe sobre a constituição de Comissões Permanentes para o biênio 2025/2026', data: '2025-02-05', status: 'APROVADA', lei: '002/2025' },
     { numero: '003', autor: 'Mesa Diretora', ementa: 'Estabelece concessão de gratificação para servidores da Câmara Municipal', data: '2025-03-10', status: 'APROVADA', lei: '003/2025' },
     { numero: '004', autor: 'Executivo', ementa: 'Altera dispositivos sobre estrutura administrativa do Município', data: '2025-03-17', status: 'APROVADA', lei: '190/2025' },
-    { numero: '005', autor: 'Diego do Zé Neto', ementa: 'Institui o Dia do Evangelho no Município de Mojuí dos Campos', data: '2025-04-10', status: 'APROVADA', lei: '191/2025' },
+    { numero: '005', autor: 'Diego do Zé Neto', ementa: 'Institui o Dia do Evangelho no Município de Rurópolis', data: '2025-04-10', status: 'APROVADA', lei: '191/2025' },
     { numero: '006', autor: 'Executivo', ementa: 'Institui Programa de Regularização dos Débitos Fazendários - REFIS Municipal', data: '2025-04-10', status: 'APROVADA', lei: '192/2025' },
     { numero: '007', autor: 'Executivo', ementa: 'Acrescenta subitem ao Anexo sobre Imposto sobre Serviços de Qualquer Natureza', data: '2025-04-10', status: 'APROVADA', lei: '193/2025' },
     { numero: '008', autor: 'Executivo', ementa: 'Altera dispositivo sobre Segurança Alimentar e Nutricional do Município', data: '2025-04-10', status: 'APROVADA', lei: '194/2025' },
@@ -243,7 +243,7 @@ async function main() {
     { numero: '015', autor: 'Executivo', ementa: 'Inclui artigos à Lei nº 199/2025 sobre o Plano Plurianual', data: '2025-11-28', status: 'APROVADA', lei: '203/2025' },
     { numero: '016', autor: 'Executivo', ementa: 'Autoriza abertura de crédito adicional suplementar', data: '2025-12-08', status: 'APROVADA', lei: '204/2025' },
     { numero: '017', autor: 'Jesa do Palhalzinho', ementa: 'Denomina Vicente Ferreira Cruz a Praça da Comunidade Palhal', data: '2025-12-10', status: 'APROVADA', lei: '205/2025' },
-    { numero: '018', autor: 'Executivo', ementa: 'Institui o Plano Municipal de Mobilidade Urbana de Mojuí dos Campos', data: '2025-12-15', status: 'APROVADA', lei: '206/2025' },
+    { numero: '018', autor: 'Executivo', ementa: 'Institui o Plano Municipal de Mobilidade Urbana de Rurópolis', data: '2025-12-15', status: 'APROVADA', lei: '206/2025' },
     { numero: '019', autor: 'Executivo', ementa: 'Autorização legislativa para abertura de crédito adicional especial', data: '2025-12-15', status: 'APROVADA', lei: '207/2025' },
   ]
 
@@ -269,7 +269,7 @@ async function main() {
         tipo: 'PROJETO_DECRETO',
         titulo: `Projeto de Decreto Legislativo nº ${projeto.numero}/2025`,
         ementa: projeto.ementa,
-        texto: `PROJETO DE DECRETO LEGISLATIVO Nº ${projeto.numero}/2025\n\n${projeto.ementa}\n\nO PRESIDENTE DA CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS, no uso de suas atribuições legais, faz saber que a Câmara Municipal aprovou e eu promulgo o seguinte Decreto Legislativo:\n\nArt. 1º - ${projeto.ementa}.\n\nArt. 2º - Este Decreto Legislativo entra em vigor na data de sua publicação.\n\nCâmara Municipal de Mojuí dos Campos, ${new Date(projeto.data).toLocaleDateString('pt-BR')}.`,
+        texto: `PROJETO DE DECRETO LEGISLATIVO Nº ${projeto.numero}/2025\n\n${projeto.ementa}\n\nO PRESIDENTE DA CÂMARA MUNICIPAL DE RURÓPOLIS, no uso de suas atribuições legais, faz saber que a Câmara Municipal aprovou e eu promulgo o seguinte Decreto Legislativo:\n\nArt. 1º - ${projeto.ementa}.\n\nArt. 2º - Este Decreto Legislativo entra em vigor na data de sua publicação.\n\nCâmara Municipal de Rurópolis, ${new Date(projeto.data).toLocaleDateString('pt-BR')}.`,
         status: projeto.status as any,
         dataApresentacao: new Date(projeto.data),
         autorId: autorId,
@@ -293,7 +293,7 @@ async function main() {
         tipo: 'PROJETO_LEI',
         titulo: `Projeto de Lei nº ${projeto.numero}/2025`,
         ementa: projeto.ementa,
-        texto: `PROJETO DE LEI Nº ${projeto.numero}/2025\n\n${projeto.ementa}\n\nA CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS, Estado do Pará, no uso de suas atribuições legais, aprova e o Prefeito Municipal sanciona a seguinte Lei:\n\nArt. 1º - ${projeto.ementa}.\n\nArt. 2º - Esta Lei entra em vigor na data de sua publicação.\n\nCâmara Municipal de Mojuí dos Campos, ${new Date(projeto.data).toLocaleDateString('pt-BR')}.`,
+        texto: `PROJETO DE LEI Nº ${projeto.numero}/2025\n\n${projeto.ementa}\n\nA CÂMARA MUNICIPAL DE RURÓPOLIS, Estado do Pará, no uso de suas atribuições legais, aprova e o Prefeito Municipal sanciona a seguinte Lei:\n\nArt. 1º - ${projeto.ementa}.\n\nArt. 2º - Esta Lei entra em vigor na data de sua publicação.\n\nCâmara Municipal de Rurópolis, ${new Date(projeto.data).toLocaleDateString('pt-BR')}.`,
         status: projeto.status as any,
         dataApresentacao: new Date(projeto.data),
         autorId: autorId,

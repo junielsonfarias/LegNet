@@ -639,7 +639,7 @@ export async function GET(request: NextRequest) {
     success: true,
     data: dados,
     metadados: {
-      fonte: 'Camara Municipal de Mojui dos Campos',
+      fonte: 'Camara Municipal',
       atualizacao: new Date(),
       versao: '1.0',
       total
@@ -969,17 +969,17 @@ export async function GET() {
   const openapi = {
     openapi: '3.0.0',
     info: {
-      title: 'API Camara Municipal de Mojui dos Campos',
+      title: 'API Camara Municipal',
       version: '1.0.0',
       description: 'API publica para acesso a dados legislativos',
       contact: {
         name: 'Suporte',
-        email: 'suporte@camara.mojui.pa.gov.br'
+        email: 'suporte@camara.suacidade.gov.br'
       }
     },
     servers: [
       {
-        url: 'https://camara.mojui.pa.gov.br/api',
+        url: 'https://camara.suacidade.gov.br/api',
         description: 'Producao'
       }
     ],

@@ -61,8 +61,8 @@ export function gerarDocumentoResultadoVotacao(dados: DadosVotacao): string {
 
   // Cabeçalho
   doc += '═'.repeat(70) + '\n'
-  doc += '           CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS\n'
-  doc += '                     ESTADO DO PARÁ\n'
+  doc += '           CÂMARA MUNICIPAL\n'
+  doc += '                     \n'
   doc += '═'.repeat(70) + '\n\n'
 
   doc += '              RESULTADO DE VOTAÇÃO\n\n'
@@ -142,7 +142,7 @@ export function gerarDocumentoResultadoVotacao(dados: DadosVotacao): string {
   doc += '\n'
   doc += '═'.repeat(70) + '\n'
   doc += `Documento gerado em ${new Date().toLocaleString('pt-BR')}\n`
-  doc += 'Sistema Legislativo - Câmara Municipal de Mojuí dos Campos\n'
+  doc += 'Sistema Legislativo - Câmara Municipal\n'
   doc += '═'.repeat(70) + '\n'
 
   return doc
@@ -286,8 +286,8 @@ export function gerarHTMLResultadoVotacao(dados: DadosVotacao): string {
 </head>
 <body>
   <div class="header">
-    <h1>CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS</h1>
-    <h2>Estado do Pará</h2>
+    <h1>CÂMARA MUNICIPAL</h1>
+    <h2></h2>
   </div>
 
   <div class="titulo">RESULTADO DE VOTAÇÃO</div>
@@ -356,7 +356,7 @@ export function gerarHTMLResultadoVotacao(dados: DadosVotacao): string {
 
   <div class="footer">
     Documento gerado em ${new Date().toLocaleString('pt-BR')}<br>
-    Sistema Legislativo - Câmara Municipal de Mojuí dos Campos
+    Sistema Legislativo - Câmara Municipal
   </div>
 
   <button class="no-print" onclick="window.print()" style="position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; cursor: pointer;">

@@ -29,7 +29,7 @@ const DECRETOS = [
     ano: 2025,
     titulo: 'Decreto Legislativo nº 001/2025 - Recesso Parlamentar',
     descricao: 'Dispõe sobre o recesso parlamentar do período de janeiro de 2025',
-    conteudo: 'Art. 1º - Fica estabelecido o recesso parlamentar da Câmara Municipal de Mojuí dos Campos no período de 1º a 31 de janeiro de 2025.\n\nArt. 2º - Durante o recesso, os trabalhos administrativos funcionarão em regime de plantão.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    conteudo: 'Art. 1º - Fica estabelecido o recesso parlamentar da Câmara Municipal de Rurópolis no período de 1º a 31 de janeiro de 2025.\n\nArt. 2º - Durante o recesso, os trabalhos administrativos funcionarão em regime de plantão.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
     data: new Date('2025-01-02'),
     autorNome: 'Mesa Diretora'
   },
@@ -38,7 +38,7 @@ const DECRETOS = [
     ano: 2025,
     titulo: 'Decreto Legislativo nº 002/2025 - Calendário Legislativo',
     descricao: 'Aprova o Calendário das Sessões Ordinárias para o ano de 2025',
-    conteudo: 'Art. 1º - Fica aprovado o Calendário das Sessões Ordinárias da Câmara Municipal de Mojuí dos Campos para o exercício de 2025.\n\nArt. 2º - As sessões ordinárias serão realizadas às quartas-feiras, às 14h.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
+    conteudo: 'Art. 1º - Fica aprovado o Calendário das Sessões Ordinárias da Câmara Municipal de Rurópolis para o exercício de 2025.\n\nArt. 2º - As sessões ordinárias serão realizadas às quartas-feiras, às 14h.\n\nArt. 3º - Este Decreto Legislativo entra em vigor na data de sua publicação.',
     data: new Date('2025-02-05'),
     autorNome: 'Mesa Diretora'
   },
@@ -87,7 +87,7 @@ const PORTARIAS = [
     ano: 2025,
     titulo: 'Portaria nº 001/2025 - Horário de Funcionamento',
     descricao: 'Estabelece o horário de funcionamento da Câmara Municipal',
-    conteudo: 'Art. 1º - O horário de funcionamento da Câmara Municipal de Mojuí dos Campos será das 8h às 14h, de segunda a sexta-feira.\n\nArt. 2º - O atendimento ao público será realizado das 8h às 12h.\n\nArt. 3º - Esta Portaria entra em vigor na data de sua publicação.',
+    conteudo: 'Art. 1º - O horário de funcionamento da Câmara Municipal de Rurópolis será das 8h às 14h, de segunda a sexta-feira.\n\nArt. 2º - O atendimento ao público será realizado das 8h às 12h.\n\nArt. 3º - Esta Portaria entra em vigor na data de sua publicação.',
     data: new Date('2025-01-06'),
     autorNome: 'Presidência'
   },
@@ -162,8 +162,8 @@ const LEIS = [
     numero: '001',
     ano: 2025,
     titulo: 'Lei nº 001/2025 - Galeria das Legislaturas',
-    descricao: 'Institui Galeria das Legislaturas na Câmara Municipal de Mojuí dos Campos',
-    conteudo: 'Art. 1º - Fica instituída a Galeria das Legislaturas no âmbito da Câmara Municipal de Mojuí dos Campos.\n\nArt. 2º - A Galeria das Legislaturas terá como objetivo preservar a memória histórica do Poder Legislativo Municipal.\n\nArt. 3º - Esta Lei entra em vigor na data de sua publicação.',
+    descricao: 'Institui Galeria das Legislaturas na Câmara Municipal de Rurópolis',
+    conteudo: 'Art. 1º - Fica instituída a Galeria das Legislaturas no âmbito da Câmara Municipal de Rurópolis.\n\nArt. 2º - A Galeria das Legislaturas terá como objetivo preservar a memória histórica do Poder Legislativo Municipal.\n\nArt. 3º - Esta Lei entra em vigor na data de sua publicação.',
     data: new Date('2025-02-15'),
     autorNome: 'Câmara Municipal'
   },
@@ -181,7 +181,7 @@ const LEIS = [
     ano: 2025,
     titulo: 'Lei nº 003/2025 - Gratificação Servidores',
     descricao: 'Estabelece concessão de gratificação para servidores da Câmara Municipal',
-    conteudo: 'Art. 1º - Fica instituída gratificação de desempenho para os servidores efetivos da Câmara Municipal de Mojuí dos Campos.\n\nArt. 2º - A gratificação corresponderá a até 30% (trinta por cento) do vencimento base.\n\nArt. 3º - Esta Lei entra em vigor na data de sua publicação, com efeitos financeiros a partir do mês subsequente.',
+    conteudo: 'Art. 1º - Fica instituída gratificação de desempenho para os servidores efetivos da Câmara Municipal de Rurópolis.\n\nArt. 2º - A gratificação corresponderá a até 30% (trinta por cento) do vencimento base.\n\nArt. 3º - Esta Lei entra em vigor na data de sua publicação, com efeitos financeiros a partir do mês subsequente.',
     data: new Date('2025-03-05'),
     autorNome: 'Câmara Municipal'
   },
@@ -198,8 +198,8 @@ const LEIS = [
     numero: '005',
     ano: 2025,
     titulo: 'Lei nº 005/2025 - Dia do Evangelho',
-    descricao: 'Institui o Dia do Evangelho no Município de Mojuí dos Campos',
-    conteudo: 'Art. 1º - Fica instituído o Dia do Evangelho no Município de Mojuí dos Campos, a ser comemorado anualmente no segundo domingo de setembro.\n\nArt. 2º - O Dia do Evangelho constará no calendário oficial de eventos do Município.\n\nArt. 3º - Esta Lei entra em vigor na data de sua publicação.',
+    descricao: 'Institui o Dia do Evangelho no Município de Rurópolis',
+    conteudo: 'Art. 1º - Fica instituído o Dia do Evangelho no Município de Rurópolis, a ser comemorado anualmente no segundo domingo de setembro.\n\nArt. 2º - O Dia do Evangelho constará no calendário oficial de eventos do Município.\n\nArt. 3º - Esta Lei entra em vigor na data de sua publicação.',
     data: new Date('2025-04-01'),
     autorNome: 'Câmara Municipal'
   },
@@ -208,7 +208,7 @@ const LEIS = [
     ano: 2025,
     titulo: 'Lei nº 006/2025 - REFIS Municipal',
     descricao: 'Institui Programa de Regularização dos Débitos Fazendários - REFIS no âmbito municipal',
-    conteudo: 'Art. 1º - Fica instituído o Programa de Regularização dos Débitos Fazendários - REFIS no âmbito do Município de Mojuí dos Campos.\n\nArt. 2º - O REFIS permitirá o parcelamento de débitos tributários em até 60 (sessenta) parcelas mensais.\n\nArt. 3º - Os débitos poderão ser pagos com desconto de até 90% (noventa por cento) dos juros e multas para pagamento à vista.\n\nArt. 4º - Esta Lei entra em vigor na data de sua publicação.',
+    conteudo: 'Art. 1º - Fica instituído o Programa de Regularização dos Débitos Fazendários - REFIS no âmbito do Município de Rurópolis.\n\nArt. 2º - O REFIS permitirá o parcelamento de débitos tributários em até 60 (sessenta) parcelas mensais.\n\nArt. 3º - Os débitos poderão ser pagos com desconto de até 90% (noventa por cento) dos juros e multas para pagamento à vista.\n\nArt. 4º - Esta Lei entra em vigor na data de sua publicação.',
     data: new Date('2025-04-20'),
     autorNome: 'Câmara Municipal'
   },

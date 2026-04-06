@@ -94,7 +94,7 @@ export default function CompetenciasPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-3">Base Legal</h2>
             <ul className="space-y-2 text-sm text-gray-700">
               <li>Constituicao Federal de 1988, Art. 29 a 31</li>
-              <li>Lei Organica do Municipio de Mojui dos Campos</li>
+              <li>Lei Orgânica do Município</li>
               <li>Regimento Interno da Camara Municipal</li>
               <li>Lei de Responsabilidade Fiscal (LC 101/2000)</li>
               <li>Lei de Acesso a Informacao (Lei 12.527/2011)</li>

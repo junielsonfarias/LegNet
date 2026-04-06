@@ -13,7 +13,7 @@
 ## 📋 **VISÃO GERAL DO PLANO**
 
 ### 🎯 **Objetivo Principal:**
-Desenvolver um portal institucional completo e moderno para a Câmara Municipal de Mojuí dos Campos, com sistema modular, painel administrativo robusto e interface responsiva.
+Desenvolver um portal institucional completo e moderno para a Câmara Municipal, com sistema modular, painel administrativo robusto e interface responsiva.
 
 ### 🏗️ **Arquitetura do Projeto:**
 - **Frontend**: Next.js 14 + TypeScript + Tailwind CSS + Shadcn/ui
@@ -101,7 +101,7 @@ Desenvolver um portal institucional completo e moderno para a Câmara Municipal 
 ##### **✅ Sistema 100% Funcional:**
 - **URL**: http://localhost:3000
 - **Status**: 200 OK ✅
-- **Página**: Carregando corretamente com título "Câmara Municipal de Mojuí dos Campos"
+- **Página**: Carregando corretamente com título "Câmara Municipal"
 - **Processo**: PID estável e ativo
 
 ##### **✅ Problemas Eliminados:**
@@ -1627,7 +1627,7 @@ npx prisma studio
 - **Painel Público**: http://localhost:3000/painel.html
 
 ### 🔐 **CREDENCIAIS DE ACESSO (DESENVOLVIMENTO):**
-- **Email**: admin@camaramojui.com
+- **Email**: admin@camara.gov.br
 - **Senha**: admin123
 
 ### 📊 **ESTATÍSTICAS FINAIS:**
@@ -2554,7 +2554,7 @@ Criar um portal institucional **100% funcional, seguro e moderno** que sirva com
 **📝 Documento criado em:** 22/01/2025  
 **🔄 Última atualização:** 22/01/2025  
 **👤 Responsável:** Equipe de Desenvolvimento  
-**📧 Contato:** dev@camaramojui.pa.gov.br
+**📧 Contato:** dev@camara.suacidade.gov.br
 
 ---
 

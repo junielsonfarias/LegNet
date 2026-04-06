@@ -52,7 +52,7 @@ const DOCUMENTOS_LRF = [
     ano: 2025,
     titulo: 'LOA - Lei Orçamentária Anual 2025',
     descricao: 'Lei Orçamentária Anual para o exercício financeiro de 2025, estimando a receita e fixando a despesa da Câmara Municipal.',
-    conteudo: 'LEI ORÇAMENTÁRIA ANUAL - EXERCÍCIO 2025\n\nEstima a receita e fixa a despesa da Câmara Municipal de Mojuí dos Campos para o exercício financeiro de 2025.\n\nReceita Total Estimada: R$ 3.500.000,00\nDespesa Total Fixada: R$ 3.500.000,00',
+    conteudo: 'LEI ORÇAMENTÁRIA ANUAL - EXERCÍCIO 2025\n\nEstima a receita e fixa a despesa da Câmara Municipal de Rurópolis para o exercício financeiro de 2025.\n\nReceita Total Estimada: R$ 3.500.000,00\nDespesa Total Fixada: R$ 3.500.000,00',
     data: new Date('2024-12-20'),
     tipo: 'PLANEJAMENTO' as const
   },
@@ -61,7 +61,7 @@ const DOCUMENTOS_LRF = [
     ano: 2024,
     titulo: 'LOA - Lei Orçamentária Anual 2024',
     descricao: 'Lei Orçamentária Anual para o exercício financeiro de 2024, estimando a receita e fixando a despesa da Câmara Municipal.',
-    conteudo: 'LEI ORÇAMENTÁRIA ANUAL - EXERCÍCIO 2024\n\nEstima a receita e fixa a despesa da Câmara Municipal de Mojuí dos Campos para o exercício financeiro de 2024.',
+    conteudo: 'LEI ORÇAMENTÁRIA ANUAL - EXERCÍCIO 2024\n\nEstima a receita e fixa a despesa da Câmara Municipal de Rurópolis para o exercício financeiro de 2024.',
     data: new Date('2023-12-15'),
     tipo: 'PLANEJAMENTO' as const
   },
@@ -101,17 +101,17 @@ const LEI_ORGANICA = [
   {
     numero: '01',
     ano: 2013,
-    titulo: 'Lei Orgânica Municipal de Mojuí dos Campos',
-    descricao: 'Dispõe sobre a Lei Orgânica do Município de Mojuí dos Campos, estabelecendo a organização política e administrativa do município.',
-    conteudo: `LEI ORGÂNICA DO MUNICÍPIO DE MOJUÍ DOS CAMPOS
+    titulo: 'Lei Orgânica Municipal de Rurópolis',
+    descricao: 'Dispõe sobre a Lei Orgânica do Município de Rurópolis, estabelecendo a organização política e administrativa do município.',
+    conteudo: `LEI ORGÂNICA DO MUNICÍPIO DE RURÓPOLIS
 
 PREÂMBULO
 
-Os Vereadores do Município de Mojuí dos Campos, Estado do Pará, investidos da função de poder Constituinte Municipal, reunidos em Assembleia, decretam e promulgam a presente Lei Orgânica:
+Os Vereadores do Município de Rurópolis, Estado do Pará, investidos da função de poder Constituinte Municipal, reunidos em Assembleia, decretam e promulgam a presente Lei Orgânica:
 
 TÍTULO I - DOS PRINCÍPIOS FUNDAMENTAIS
 
-Art. 1º O Município de Mojuí dos Campos, unidade territorial do Estado do Pará, rege-se por esta Lei Orgânica e demais leis que adotar, observados os princípios estabelecidos nas Constituições Federal e Estadual.
+Art. 1º O Município de Rurópolis, unidade territorial do Estado do Pará, rege-se por esta Lei Orgânica e demais leis que adotar, observados os princípios estabelecidos nas Constituições Federal e Estadual.
 
 Art. 2º Todo o poder emana do povo, que o exerce por meio de representantes eleitos ou diretamente, nos termos desta Lei Orgânica.
 
@@ -129,12 +129,12 @@ Art. 11. Compete à Câmara Municipal, com a sanção do Prefeito, legislar sobr
     numero: '003',
     ano: 2022,
     titulo: 'Emenda à Lei Orgânica nº 003/2022',
-    descricao: 'Modifica o § 2º do Artigo 66 da Lei Orgânica do Município de Mojuí dos Campos, Estado do Pará, e dá outras providências.',
+    descricao: 'Modifica o § 2º do Artigo 66 da Lei Orgânica do Município de Rurópolis, Estado do Pará, e dá outras providências.',
     conteudo: `EMENDA À LEI ORGÂNICA Nº 003/2022
 
-SÚMULA: MODIFICA O § 2º DO ARTIGO 66 DA LEI ORGANICA DO MUNICÍPIO DE MOJUÍ DOS CAMPOS ESTADO DO PARÁ E DÁ OUTRAS PROVIDENCIAS.
+SÚMULA: MODIFICA O § 2º DO ARTIGO 66 DA LEI ORGANICA DO MUNICÍPIO DE RURÓPOLIS ESTADO DO PARÁ E DÁ OUTRAS PROVIDENCIAS.
 
-A MESA DIRETORA DA CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS, no uso de suas atribuições legais, FAZ SABER que a Câmara aprovou e ela PROMULGA a seguinte EMENDA À LEI ORGÂNICA:
+A MESA DIRETORA DA CÂMARA MUNICIPAL DE RURÓPOLIS, no uso de suas atribuições legais, FAZ SABER que a Câmara aprovou e ela PROMULGA a seguinte EMENDA À LEI ORGÂNICA:
 
 Art. 1º - O § 2º do Art. 66 da Lei Orgânica passa a ter a seguinte redação:
 
@@ -165,7 +165,7 @@ async function main() {
           publicada: true,
           visualizacoes: Math.floor(Math.random() * 100) + 10,
           autorTipo: 'ORGAO',
-          autorNome: 'Câmara Municipal de Mojuí dos Campos'
+          autorNome: 'Câmara Municipal de Rurópolis'
         }
       })
       console.log(`✓ Criado: ${doc.titulo}`)
@@ -190,7 +190,7 @@ async function main() {
           publicada: true,
           visualizacoes: Math.floor(Math.random() * 500) + 100,
           autorTipo: 'ORGAO',
-          autorNome: 'Câmara Municipal de Mojuí dos Campos'
+          autorNome: 'Câmara Municipal de Rurópolis'
         }
       })
       console.log(`✓ Criado: ${doc.titulo}`)

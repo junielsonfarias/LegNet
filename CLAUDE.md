@@ -103,7 +103,7 @@
 
 ## Informacoes do Projeto
 
-**Nome**: Sistema Portal Institucional - Camara Municipal de Mojui dos Campos
+**Nome**: Sistema Legislativo Municipal - Portal Institucional e Painel Administrativo
 **Stack**: Next.js 14 + React 18 + TypeScript + Tailwind CSS + Prisma + PostgreSQL
 **Baseado em**: SAPL (Sistema de Apoio ao Processo Legislativo) do Interlegis
 

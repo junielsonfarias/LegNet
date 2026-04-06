@@ -19,7 +19,7 @@ Guia completo para fazer deploy do Sistema da Camara Municipal na Vercel usando 
 1. Acesse [supabase.com](https://supabase.com) e faca login
 2. Clique em **New Project**
 3. Preencha:
-   - **Name**: `camara-mojui` (ou nome de sua preferencia)
+   - **Name**: `camara-[cidade]` (ou nome de sua preferencia)
    - **Database Password**: Crie uma senha forte (guarde-a!)
    - **Region**: `South America (Sao Paulo)` - mais proximo
 4. Clique em **Create new project**
@@ -65,7 +65,7 @@ git add .
 git commit -m "feat: preparacao para deploy Vercel"
 
 # Criar repositorio no GitHub e conectar
-git remote add origin https://github.com/seu-usuario/camara-mojui.git
+git remote add origin https://github.com/seu-usuario/sistema-legislativo.git
 git push -u origin main
 ```
 
@@ -88,7 +88,7 @@ Certifique-se que estes arquivos existem:
 2. Clique em **Add New** > **Project**
 3. Selecione **Import Git Repository**
 4. Conecte sua conta do GitHub (se ainda nao conectou)
-5. Encontre o repositorio `camara-mojui` e clique em **Import**
+5. Encontre o repositorio `sistema-legislativo` e clique em **Import**
 
 ### 3.2 Configurar Build
 
@@ -109,7 +109,7 @@ Clique em **Environment Variables** e adicione:
 | `DIRECT_URL` | `postgresql://postgres.xxx:senha@...pooler...5432/postgres` | Todos |
 | `NEXTAUTH_SECRET` | `sua-chave-secreta-32-chars` | Todos |
 | `NEXTAUTH_URL` | `https://seu-projeto.vercel.app` | Production |
-| `SITE_NAME` | `Camara Municipal de Mojui dos Campos` | Todos |
+| `SITE_NAME` | `Camara Municipal de [Sua Cidade]` | Todos |
 
 > **Dica**: Para gerar NEXTAUTH_SECRET, use:
 > ```bash
@@ -213,7 +213,7 @@ Deve mostrar status de todos os checks.
 
 1. No dashboard da Vercel, va em **Settings** > **Domains**
 2. Clique em **Add**
-3. Digite seu dominio: `camara.mojuidoscampos.pa.gov.br`
+3. Digite seu dominio: `camara.suacidade.gov.br`
 4. Siga as instrucoes para configurar DNS
 
 ### 6.2 Configurar DNS
@@ -235,7 +235,7 @@ Valor: cname.vercel-dns.com
 Apos configurar o dominio, atualize na Vercel:
 
 ```
-NEXTAUTH_URL=https://camara.mojuidoscampos.pa.gov.br
+NEXTAUTH_URL=https://camara.suacidade.gov.br
 ```
 
 ---

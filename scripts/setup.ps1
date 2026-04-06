@@ -1,7 +1,7 @@
-# Script de configuração do projeto Câmara Municipal de Mojuí dos Campos
+# Script de configuração do Sistema Legislativo Municipal
 # Desenvolvido para fins educacionais
 
-Write-Host "🏛️  Configurando o Portal da Câmara Municipal de Mojuí dos Campos" -ForegroundColor Blue
+Write-Host "🏛️  Configurando o Sistema Legislativo Municipal" -ForegroundColor Blue
 Write-Host "==================================================================" -ForegroundColor Blue
 
 # Verificar se o Node.js está instalado
@@ -59,9 +59,9 @@ Write-Host "📋 Próximos passos:" -ForegroundColor Cyan
 Write-Host "   1. Execute: npm run dev" -ForegroundColor White
 Write-Host "   2. Acesse: http://localhost:3000" -ForegroundColor White
 Write-Host "   3. Painel Admin: http://localhost:3000/admin" -ForegroundColor White
-Write-Host "   4. Login: admin@camaramojui.com / admin123" -ForegroundColor White
+Write-Host "   4. Login: admin@camara.gov.br / admin123" -ForegroundColor White
 Write-Host ""
 Write-Host "📚 Documentação completa no README.md" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "🏛️  Portal da Câmara Municipal de Mojuí dos Campos" -ForegroundColor Blue
-Write-Host "   Desenvolvido para fins educacionais e transparência pública" -ForegroundColor Blue
+Write-Host "🏛️  Sistema Legislativo Municipal" -ForegroundColor Blue
+Write-Host "   Desenvolvido para transparência pública e gestão legislativa" -ForegroundColor Blue

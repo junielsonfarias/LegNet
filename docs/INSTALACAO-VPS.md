@@ -85,8 +85,8 @@ sudo bash install.sh
 
 O instalador vai pedir as seguintes informacoes:
 
-1. **Nome da Camara**: Nome completo (ex: `Camara Municipal de Mojui dos Campos`)
-2. **Dominio**: Seu dominio (ex: `camara.mojuidoscampos.pa.gov.br`)
+1. **Nome da Camara**: Nome completo (ex: `Camara Municipal de [Sua Cidade]`)
+2. **Dominio**: Seu dominio (ex: `camara.suacidade.gov.br`)
 3. **Email do administrador**: Email de acesso ao sistema
 4. **Senha do administrador**: Senha de acesso (minimo 8 caracteres)
 5. **Email para SSL**: Email para o certificado HTTPS

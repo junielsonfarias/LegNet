@@ -190,7 +190,7 @@ export default function ParlamentarLayout({
 
   const nomeParlamentar = parlamentarInfo?.apelido || parlamentarInfo?.nome || (session?.user as any)?.name || 'Parlamentar'
   const iniciais = nomeParlamentar.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-  const cidade = configuracao.endereco?.cidade || 'Mojuí dos Campos'
+  const cidade = configuracao.endereco?.cidade || ''
 
   // Layout normal para dashboard
   return (

@@ -1,4 +1,4 @@
-# Analise Comparativa: SAPL vs Sistema Camara Mojui
+# Analise Comparativa: SAPL vs Sistema Legislativo Municipal
 
 ## Visao Geral
 

@@ -17,7 +17,7 @@ const leisData: Lei[] = [
     id: 'lei-1',
     numero: '001',
     ano: 2020,
-    titulo: 'Lei Orgânica do Município de Mojuí dos Campos',
+    titulo: 'Lei Orgânica do Município',
     tipo: 'lei_organica',
     dataPublicacao: '2020-01-15T00:00:00Z',
     dataVigencia: '2020-01-15T00:00:00Z',
@@ -82,7 +82,7 @@ const leisData: Lei[] = [
     dataPublicacao: '2022-06-20T00:00:00Z',
     dataVigencia: '2022-06-20T00:00:00Z',
     status: 'vigente',
-    ementa: 'Institui o Código Tributário do Município de Mojuí dos Campos',
+    ementa: 'Institui o Código Tributário do Município',
     palavrasChave: ['tributário', 'impostos', 'taxas', 'contribuições']
   },
   {

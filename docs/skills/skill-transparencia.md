@@ -673,7 +673,7 @@ export async function GET(request: NextRequest) {
       total: await prisma.votacao.count({ where: { tipo: 'NOMINAL', status: 'ENCERRADA' } })
     },
     metadados: {
-      fonte: 'Camara Municipal de Mojui dos Campos',
+      fonte: 'Camara Municipal',
       atualizacao: new Date(),
       formato: 'JSON'
     }
@@ -807,7 +807,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         dados,
         metadados: {
-          fonte: 'Camara Municipal de Mojui dos Campos',
+          fonte: 'Camara Municipal',
           atualizacao: new Date(),
           total: dados.length
         }

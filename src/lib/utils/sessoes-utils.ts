@@ -427,8 +427,8 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
 
     // =========== INÍCIO DA ATA ===========
     let ata = `═══════════════════════════════════════════════════════════════════════════════\n`
-    ata += `                        CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS\n`
-    ata += `                              ESTADO DO PARÁ\n`
+    ata += `                        CÂMARA MUNICIPAL\n`
+    ata += `\n`
     ata += `═══════════════════════════════════════════════════════════════════════════════\n\n`
 
     ata += `                    ATA DA ${sessao.numero}ª SESSÃO ${tipoSessaoLabel}\n\n`
@@ -442,7 +442,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     ata += `\n───────────────────────────────────────────────────────────────────────────────\n\n`
 
     // ABERTURA
-    ata += `Aos ${dataFormatada}, às ${horaInicio} horas, no ${sessao.local || 'Plenário da Câmara Municipal de Mojuí dos Campos'}, `
+    ata += `Aos ${dataFormatada}, às ${horaInicio} horas, no ${sessao.local || 'Plenário da Câmara Municipal'}, `
     ata += `reuniram-se os Vereadores abaixo relacionados para a realização da ${sessao.numero}ª Sessão ${tipoSessaoLabel}.\n\n`
 
     // PRESENÇAS
@@ -551,7 +551,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     ata += `da qual eu, Secretário(a), lavrei a presente ata que, após lida e aprovada, `
     ata += `será assinada pelo Presidente e demais Vereadores presentes.\n\n`
 
-    ata += `Mojuí dos Campos - PA, ${new Date().toLocaleDateString('pt-BR', {
+    ata += `${new Date().toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'long',
       year: 'numeric'

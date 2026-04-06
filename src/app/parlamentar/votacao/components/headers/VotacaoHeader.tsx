@@ -34,7 +34,7 @@ export function VotacaoHeader({
   variant = 'default'
 }: VotacaoHeaderProps) {
   const iniciais = nomeParlamentar.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-  const cidade = configuracao.endereco?.cidade || 'Mojuí dos Campos'
+  const cidade = configuracao.endereco?.cidade || ''
   const logoUrl = configuracao.logoUrl ?? undefined
   const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
   const fotoUrl = parlamentarInfo?.foto ?? undefined

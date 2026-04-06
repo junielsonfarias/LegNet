@@ -8,7 +8,7 @@ import { checkProductionReadiness, validateEnv } from '../src/lib/config/product
 async function main() {
   console.log('='.repeat(60))
   console.log('  VERIFICACAO DE PRODUCAO')
-  console.log('  Camara Municipal de Mojui dos Campos')
+  console.log('  Sistema Legislativo Municipal')
   console.log('='.repeat(60))
   console.log('')
 

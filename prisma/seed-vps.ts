@@ -19,6 +19,9 @@ async function main() {
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@camara.gov.br'
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
   const camaraNome = process.env.CAMARA_NOME || 'Camara Municipal'
+  const corPrimaria = process.env.COR_PRIMARIA || '#1e40af'
+  const corSecundaria = process.env.COR_SECUNDARIA || '#3b82f6'
+  const corAcento = process.env.COR_ACENTO || '#059669'
 
   // 1. Criar usuario administrador
   const hashedPassword = await bcrypt.hash(adminPassword, 12)
@@ -41,20 +44,27 @@ async function main() {
 
   console.log('✅ Usuario administrador criado:', admin.email)
 
-  // 2. Criar configuracao institucional
+  // 2. Criar configuracao institucional com identidade visual
   const config = await prisma.configuracaoInstitucional.upsert({
     where: { slug: 'principal' },
     update: {
       nomeCasa: camaraNome,
+      corPrimaria,
+      corSecundaria,
+      corAcento,
     },
     create: {
       slug: 'principal',
       nomeCasa: camaraNome,
       tipoEnte: 'CAMARA_MUNICIPAL',
+      corPrimaria,
+      corSecundaria,
+      corAcento,
     },
   })
 
   console.log('✅ Configuracao institucional criada:', config.nomeCasa)
+  console.log('   Cores:', corPrimaria, '/', corSecundaria, '/', corAcento)
 
   // 3. Criar tipos de expediente padrao
   const tiposExpediente = [

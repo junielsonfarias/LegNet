@@ -10,7 +10,7 @@ export const options = {
 }
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000'
-const USER_EMAIL = __ENV.LOGIN_EMAIL || 'admin@camaramojui.com'
+const USER_EMAIL = __ENV.LOGIN_EMAIL || 'admin@camararuropolis.com'
 const USER_PASSWORD = __ENV.LOGIN_PASSWORD || 'admin123'
 
 export default function () {

@@ -295,6 +295,20 @@ detect_existing_installation() {
 do_update() {
   header "ATUALIZANDO SISTEMA"
 
+  # Perguntar se quer alterar identidade visual
+  echo ""
+  read -rp "$(echo -e ${CYAN}Deseja alterar a identidade visual \(cores do portal\)?${NC} [s/N]: )" CHANGE_THEME
+  CHANGE_THEME="${CHANGE_THEME,,}"
+  if [ "$CHANGE_THEME" = "s" ]; then
+    select_identity
+    UPDATE_THEME=true
+  else
+    UPDATE_THEME=false
+    COR_PRIMARIA=""
+    COR_SECUNDARIA=""
+    COR_ACENTO=""
+  fi
+
   INSTALL_START_TIME=$(date +%s)
   TOTAL_STEPS=6
   CURRENT_STEP=0
@@ -337,7 +351,38 @@ do_update() {
   step "Atualizando banco de dados"
   npx prisma db push >> "$LOG_FILE" 2>&1
   log "Schema do banco atualizado (novas tabelas criadas, dados preservados)"
-  info "Novos modelos adicionados (se houver): e-SIC, Ouvidoria, Organograma, Diarias, Verbas, Concursos, Conteudos Educativos, Transparencia"
+
+  # Aplicar identidade visual se solicitado
+  if [ "$UPDATE_THEME" = true ]; then
+    info "Aplicando nova identidade visual..."
+    cat > /tmp/update-theme.ts << 'TSEOF'
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
+async function main() {
+  const corPrimaria = process.env.COR_PRIMARIA!
+  const corSecundaria = process.env.COR_SECUNDARIA!
+  const corAcento = process.env.COR_ACENTO!
+  await prisma.configuracaoInstitucional.upsert({
+    where: { slug: 'principal' },
+    update: { corPrimaria, corSecundaria, corAcento },
+    create: {
+      slug: 'principal',
+      nomeCasa: 'Camara Municipal',
+      tipoEnte: 'CAMARA_MUNICIPAL',
+      corPrimaria, corSecundaria, corAcento
+    }
+  })
+  console.log('Identidade visual atualizada:', corPrimaria, '/', corSecundaria, '/', corAcento)
+}
+main().catch(console.error).finally(() => prisma.$disconnect())
+TSEOF
+    COR_PRIMARIA="$COR_PRIMARIA" \
+    COR_SECUNDARIA="$COR_SECUNDARIA" \
+    COR_ACENTO="$COR_ACENTO" \
+    npx tsx /tmp/update-theme.ts >> "$LOG_FILE" 2>&1
+    rm -f /tmp/update-theme.ts
+    log "Identidade visual atualizada: ${COR_PRIMARIA} / ${COR_SECUNDARIA} / ${COR_ACENTO}"
+  fi
 
   # Etapa 6: Build, Nginx e restart
   step "Recompilando e reiniciando"
@@ -404,6 +449,9 @@ do_update() {
   echo -e "  ${GREEN}✓${NC} Parlamentares, sessoes, votacoes preservados"
   echo -e "  ${GREEN}✓${NC} Novos modulos disponiveis: e-SIC, Ouvidoria, Organograma"
   echo -e "  ${GREEN}✓${NC} Novos modulos disponiveis: Diarias, Verbas, Concursos"
+  if [ "$UPDATE_THEME" = true ]; then
+    echo -e "  ${GREEN}✓${NC} Identidade visual atualizada: ${COR_PRIMARIA} / ${COR_SECUNDARIA} / ${COR_ACENTO}"
+  fi
   echo ""
 
   # Verificar
@@ -448,6 +496,94 @@ do_clean_reinstall() {
 }
 
 # ============================================================================
+# IDENTIDADE VISUAL
+# ============================================================================
+
+# Temas predefinidos: nome|corPrimaria|corSecundaria|corAcento
+TEMAS_PREDEFINIDOS=(
+  "Azul Institucional|#1e40af|#3b82f6|#059669"
+  "Verde Amazonia|#065f46|#10b981|#0891b2"
+  "Vermelho Republicano|#991b1b|#dc2626|#ca8a04"
+  "Marrom Terra|#78350f|#a16207|#047857"
+  "Roxo Legislativo|#581c87|#7c3aed|#0891b2"
+  "Cinza Moderno|#1f2937|#4b5563|#0d9488"
+  "Dourado Oficial|#713f12|#b45309|#1d4ed8"
+  "Azul Marinho|#0c4a6e|#0284c7|#f59e0b"
+)
+
+select_identity() {
+  echo ""
+  echo -e "  ${BOLD}=== IDENTIDADE VISUAL ===${NC}"
+  echo -e "  ${YELLOW}Escolha o tema de cores do portal:${NC}"
+  echo ""
+
+  local i=1
+  for tema in "${TEMAS_PREDEFINIDOS[@]}"; do
+    local nome=$(echo "$tema" | cut -d'|' -f1)
+    local cor1=$(echo "$tema" | cut -d'|' -f2)
+    local cor2=$(echo "$tema" | cut -d'|' -f3)
+    local cor3=$(echo "$tema" | cut -d'|' -f4)
+    echo -e "  ${GREEN}${i})${NC} ${BOLD}${nome}${NC}"
+    echo -e "     Primaria: ${cor1}  Secundaria: ${cor2}  Acento: ${cor3}"
+    i=$((i + 1))
+  done
+
+  echo ""
+  echo -e "  ${GREEN}${i})${NC} ${BOLD}Personalizado${NC} - Informe suas proprias cores (hex)"
+  echo ""
+
+  local max_option=$i
+  while true; do
+    read -rp "$(echo -e ${CYAN}Opcao [1-${max_option}]${NC} [1]: )" TEMA_ESCOLHA
+    TEMA_ESCOLHA="${TEMA_ESCOLHA:-1}"
+
+    if [[ "$TEMA_ESCOLHA" =~ ^[0-9]+$ ]] && [ "$TEMA_ESCOLHA" -ge 1 ] && [ "$TEMA_ESCOLHA" -le "$max_option" ]; then
+      break
+    fi
+    warn "Opcao invalida! Digite um numero de 1 a ${max_option}"
+  done
+
+  if [ "$TEMA_ESCOLHA" -eq "$max_option" ]; then
+    # Personalizado
+    echo ""
+    echo -e "  ${YELLOW}Informe as cores em formato hexadecimal (ex: #1e40af)${NC}"
+    echo ""
+
+    while true; do
+      read -rp "$(echo -e ${CYAN}Cor primaria${NC} [#1e40af]: )" COR_PRIMARIA
+      COR_PRIMARIA="${COR_PRIMARIA:-#1e40af}"
+      if echo "$COR_PRIMARIA" | grep -qE '^#[0-9a-fA-F]{6}$'; then break; fi
+      warn "Formato invalido! Use #RRGGBB (ex: #1e40af)"
+    done
+
+    while true; do
+      read -rp "$(echo -e ${CYAN}Cor secundaria${NC} [#3b82f6]: )" COR_SECUNDARIA
+      COR_SECUNDARIA="${COR_SECUNDARIA:-#3b82f6}"
+      if echo "$COR_SECUNDARIA" | grep -qE '^#[0-9a-fA-F]{6}$'; then break; fi
+      warn "Formato invalido! Use #RRGGBB (ex: #3b82f6)"
+    done
+
+    while true; do
+      read -rp "$(echo -e ${CYAN}Cor de acento${NC} [#059669]: )" COR_ACENTO
+      COR_ACENTO="${COR_ACENTO:-#059669}"
+      if echo "$COR_ACENTO" | grep -qE '^#[0-9a-fA-F]{6}$'; then break; fi
+      warn "Formato invalido! Use #RRGGBB (ex: #059669)"
+    done
+
+    TEMA_NOME="Personalizado"
+  else
+    # Predefinido
+    local tema="${TEMAS_PREDEFINIDOS[$((TEMA_ESCOLHA - 1))]}"
+    TEMA_NOME=$(echo "$tema" | cut -d'|' -f1)
+    COR_PRIMARIA=$(echo "$tema" | cut -d'|' -f2)
+    COR_SECUNDARIA=$(echo "$tema" | cut -d'|' -f3)
+    COR_ACENTO=$(echo "$tema" | cut -d'|' -f4)
+  fi
+
+  info "Tema selecionado: ${TEMA_NOME} (${COR_PRIMARIA} / ${COR_SECUNDARIA} / ${COR_ACENTO})"
+}
+
+# ============================================================================
 # COLETA DE DADOS
 # ============================================================================
 
@@ -457,7 +593,7 @@ collect_data() {
   echo -e "${BOLD}Responda as perguntas abaixo para configurar o sistema:${NC}\n"
 
   # Nome da Camara
-  read -rp "$(echo -e ${CYAN}Nome da Camara Municipal${NC} [ex: Camara Municipal de Mojui dos Campos]: )" CAMARA_NOME
+  read -rp "$(echo -e ${CYAN}Nome da Camara Municipal${NC} [ex: Camara Municipal de Sua Cidade]: )" CAMARA_NOME
   CAMARA_NOME="${CAMARA_NOME:-Camara Municipal}"
 
   # Dominio ou IP
@@ -521,6 +657,9 @@ collect_data() {
   read -rp "$(echo -e ${CYAN}Email para certificado SSL${NC} [${ADMIN_EMAIL}]: )" SSL_EMAIL
   SSL_EMAIL="${SSL_EMAIL:-$ADMIN_EMAIL}"
 
+  # Identidade Visual
+  select_identity
+
   # Redis
   echo ""
   read -rp "$(echo -e ${CYAN}Instalar Redis para rate limiting?${NC} [s/N]: )" INSTALL_REDIS
@@ -555,6 +694,7 @@ collect_data() {
   echo -e "  ${BOLD}Dominio/IP:${NC}   $SITE_DOMAIN"
   echo -e "  ${BOLD}URL:${NC}          $SITE_URL"
   echo -e "  ${BOLD}Email Admin:${NC}  $ADMIN_EMAIL"
+  echo -e "  ${BOLD}Tema:${NC}         $TEMA_NOME ($COR_PRIMARIA / $COR_SECUNDARIA / $COR_ACENTO)"
   echo -e "  ${BOLD}Banco:${NC}        PostgreSQL local ($DB_NAME)"
   echo -e "  ${BOLD}Redis:${NC}        $([ "$INSTALL_REDIS" = "s" ] && echo 'Sim' || echo 'Nao')"
   echo -e "  ${BOLD}Diretorio:${NC}    $INSTALL_DIR"
@@ -802,10 +942,13 @@ setup_database() {
   npx prisma db push >> "$LOG_FILE" 2>&1
   log "Schema aplicado ao banco"
 
-  info "Criando dados minimos (admin + configuracao)..."
+  info "Criando dados minimos (admin + configuracao + identidade visual)..."
   ADMIN_EMAIL="$ADMIN_EMAIL" \
   ADMIN_PASSWORD="$ADMIN_PASSWORD" \
   CAMARA_NOME="$CAMARA_NOME" \
+  COR_PRIMARIA="$COR_PRIMARIA" \
+  COR_SECUNDARIA="$COR_SECUNDARIA" \
+  COR_ACENTO="$COR_ACENTO" \
   npx tsx prisma/seed-vps.ts >> "$LOG_FILE" 2>&1
   log "Banco inicializado (limpo, pronto para cadastro)"
 }
@@ -1017,6 +1160,9 @@ async function main() {
   const email = process.env.ADMIN_EMAIL!
   const password = process.env.ADMIN_PASSWORD!
   const nomeCamara = process.env.CAMARA_NOME!
+  const corPrimaria = process.env.COR_PRIMARIA
+  const corSecundaria = process.env.COR_SECUNDARIA
+  const corAcento = process.env.COR_ACENTO
 
   const hashedPassword = await bcrypt.hash(password, 12)
 
@@ -1029,18 +1175,26 @@ async function main() {
     }
   })
 
-  // Atualizar configuracao institucional
+  // Atualizar configuracao institucional (incluindo cores se fornecidas)
+  const updateData: Record<string, string> = { nomeCasa: nomeCamara }
+  if (corPrimaria) updateData.corPrimaria = corPrimaria
+  if (corSecundaria) updateData.corSecundaria = corSecundaria
+  if (corAcento) updateData.corAcento = corAcento
+
   await prisma.configuracaoInstitucional.upsert({
     where: { slug: 'principal' },
-    update: { nomeCasa: nomeCamara },
+    update: updateData,
     create: {
       slug: 'principal',
       nomeCasa: nomeCamara,
-      tipoEnte: 'CAMARA_MUNICIPAL'
+      tipoEnte: 'CAMARA_MUNICIPAL',
+      corPrimaria: corPrimaria || '#1e40af',
+      corSecundaria: corSecundaria || '#3b82f6',
+      corAcento: corAcento || '#059669'
     }
   })
 
-  console.log('Credenciais atualizadas com sucesso!')
+  console.log('Credenciais e identidade visual atualizadas com sucesso!')
 }
 
 main()
@@ -1051,6 +1205,9 @@ TSEOF
   ADMIN_EMAIL="$ADMIN_EMAIL" \
   ADMIN_PASSWORD="$ADMIN_PASSWORD" \
   CAMARA_NOME="$CAMARA_NOME" \
+  COR_PRIMARIA="$COR_PRIMARIA" \
+  COR_SECUNDARIA="$COR_SECUNDARIA" \
+  COR_ACENTO="$COR_ACENTO" \
   npx tsx /tmp/update-admin.ts >> "$LOG_FILE" 2>&1
 
   rm -f /tmp/update-admin.ts
@@ -1173,7 +1330,7 @@ show_summary() {
   echo ""
   echo -e "  1. Acesse ${GREEN}${SITE_URL}${NC}"
   echo -e "  2. Faca login com as credenciais acima"
-  echo -e "  3. Va em ${BOLD}Administracao > Configuracoes${NC} para personalizar"
+  echo -e "  3. Va em ${BOLD}Administracao > Configuracoes${NC} para ajustar cores e dados"
   echo -e "  4. Cadastre parlamentares, legislaturas e comissoes"
   echo -e "  5. Configure o ${BOLD}Organograma${NC} em Admin > Transparencia > Organograma"
   echo -e "  6. Cadastre ${BOLD}Conteudos Educativos${NC} em Admin > Atendimento > Conteudos"
@@ -1189,6 +1346,12 @@ Gerado em: $(date '+%Y-%m-%d %H:%M:%S')
 
 URL: ${SITE_URL}
 Email Admin: ${ADMIN_EMAIL}
+
+Identidade Visual:
+  Tema: ${TEMA_NOME}
+  Primaria: ${COR_PRIMARIA}
+  Secundaria: ${COR_SECUNDARIA}
+  Acento: ${COR_ACENTO}
 
 Banco de Dados:
   Host: localhost:5432

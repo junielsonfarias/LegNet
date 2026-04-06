@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script de configuração do projeto Câmara Municipal de Mojuí dos Campos
+# Script de configuração do Sistema Legislativo Municipal
 # Desenvolvido para fins educacionais
 
-echo "🏛️  Configurando o Portal da Câmara Municipal de Mojuí dos Campos"
+echo "🏛️  Configurando o Sistema Legislativo Municipal"
 echo "=================================================================="
 
 # Verificar se o Node.js está instalado
@@ -57,9 +57,9 @@ echo "📋 Próximos passos:"
 echo "   1. Execute: npm run dev"
 echo "   2. Acesse: http://localhost:3000"
 echo "   3. Painel Admin: http://localhost:3000/admin"
-echo "   4. Login: admin@camaramojui.com / admin123"
+echo "   4. Login: admin@camara.gov.br / admin123"
 echo ""
 echo "📚 Documentação completa no README.md"
 echo ""
-echo "🏛️  Portal da Câmara Municipal de Mojuí dos Campos"
-echo "   Desenvolvido para fins educacionais e transparência pública"
+echo "🏛️  Sistema Legislativo Municipal"
+echo "   Desenvolvido para transparência pública e gestão legislativa"

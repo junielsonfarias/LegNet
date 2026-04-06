@@ -68,10 +68,10 @@ export default function HorarioFuncionamentoPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700">
-                  Camara Municipal de Mojui dos Campos
+                  Câmara Municipal
                 </p>
                 <p className="text-gray-600 mt-1">
-                  Centro, Mojui dos Campos - PA
+                  Centro, Sua Cidade
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   CEP: 68.000-000
@@ -94,7 +94,7 @@ export default function HorarioFuncionamentoPage() {
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Mail className="h-4 w-4" />
-                    <span>contato@camara.mojuidoscampos.pa.gov.br</span>
+                    <span>contato@camara.gov.br</span>
                   </div>
                 </div>
               </CardContent>

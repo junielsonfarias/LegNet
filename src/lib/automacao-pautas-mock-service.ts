@@ -224,7 +224,7 @@ const templatesPadrao: TemplatePauta[] = [
       preenchimentoAutomatico: true,
       validacaoAutomatica: true,
       notificacoes: true,
-      emails: ['presidente@camaramojui.pa.gov.br', 'secretario@camaramojui.pa.gov.br'],
+      emails: ['presidente@camara.gov.br', 'secretario@camara.gov.br'],
       prazos: {
         notificacaoAntecipada: 1, // 1 dia antes
         lembrete: 2 // 2 horas antes

@@ -177,8 +177,8 @@ function renderCabecalho(cab: CabecalhoDocumento): string {
   return `
     <div class="header">
       ${cab.logoUrl ? `<img src="${cab.logoUrl}" alt="" class="header-logo" />` : ''}
-      <h1>${cab.nomeCasa || 'CÂMARA MUNICIPAL DE MOJUÍ DOS CAMPOS'}</h1>
-      <h2>${cab.estado || 'Estado do Pará'}</h2>
+      <h1>${cab.nomeCasa || 'CÂMARA MUNICIPAL'}</h1>
+      <h2>${cab.estado || ''}</h2>
     </div>
     <div class="doc-titulo">${cab.titulo}</div>
     ${cab.subtitulo ? `<div class="doc-subtitulo">${cab.subtitulo}</div>` : ''}
@@ -193,7 +193,7 @@ function renderRodape(rodape?: RodapeDocumento): string {
     <div class="footer">
       ${rodape?.textoExtra ? `<p>${rodape.textoExtra}</p>` : ''}
       <p>Documento gerado em ${new Date().toLocaleString('pt-BR')}</p>
-      <p>Sistema Legislativo - Câmara Municipal de Mojuí dos Campos</p>
+      <p>Sistema Legislativo - Câmara Municipal</p>
     </div>
   `
 }

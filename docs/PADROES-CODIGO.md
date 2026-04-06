@@ -164,7 +164,7 @@ EMAIL_FROM="noreply@camara.gov.br"
 UPLOAD_DIR="./public/uploads"
 MAX_FILE_SIZE=10485760
 
-SITE_NAME="Camara Municipal de Mojui dos Campos"
+SITE_NAME="Camara Municipal de [Sua Cidade]"
 SITE_URL="http://localhost:3000"
 ```
 

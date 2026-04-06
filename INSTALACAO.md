@@ -1,4 +1,4 @@
-# 🏛️ Instalação - Portal da Câmara Municipal de Mojuí dos Campos
+# 🏛️ Instalação - Sistema Legislativo Municipal
 
 ## 📋 Pré-requisitos
 
@@ -13,7 +13,7 @@ Antes de começar, certifique-se de ter instalado:
 ### 1. Clone o repositório
 ```bash
 git clone <url-do-repositorio>
-cd camara-mojui-dos-campos
+cd sistema-legislativo-municipal
 ```
 
 ### 2. Instale as dependências
@@ -24,7 +24,7 @@ npm install
 ### 3. Configure o banco de dados
 ```bash
 # Crie um banco PostgreSQL
-createdb camara_mojui_db
+createdb camara_legislativo_db
 
 # Configure as variáveis de ambiente
 cp env.example .env.local
@@ -32,7 +32,7 @@ cp env.example .env.local
 
 ### 4. Edite o arquivo .env.local
 ```env
-DATABASE_URL="postgresql://seu_usuario:sua_senha@localhost:5432/camara_mojui_db"
+DATABASE_URL="postgresql://seu_usuario:sua_senha@localhost:5432/camara_legislativo_db"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="sua-chave-secreta-aqui"
 ```
@@ -63,7 +63,7 @@ Após a instalação, o sistema estará disponível em:
 - **Login Admin**: http://localhost:3000/admin/login
 
 ### Credenciais Padrão
-- **Email**: admin@camaramojui.com
+- **Email**: admin@camara.gov.br
 - **Senha**: admin123
 
 ## 📱 Funcionalidades Implementadas
@@ -181,10 +181,10 @@ vercel
 ### Docker
 ```bash
 # Build da imagem
-docker build -t camara-mojui .
+docker build -t sistema-legislativo .
 
 # Execute o container
-docker run -p 3000:3000 camara-mojui
+docker run -p 3000:3000 sistema-legislativo
 ```
 
 ## 🆘 Solução de Problemas
@@ -192,7 +192,7 @@ docker run -p 3000:3000 camara-mojui
 ### Erro de conexão com banco
 - Verifique se o PostgreSQL está rodando
 - Confirme as credenciais no .env.local
-- Teste a conexão: `psql -h localhost -U seu_usuario -d camara_mojui_db`
+- Teste a conexão: `psql -h localhost -U seu_usuario -d camara_legislativo_db`
 
 ### Erro de dependências
 ```bash
@@ -213,9 +213,7 @@ npm run build
 ## 📞 Suporte
 
 Para dúvidas ou problemas:
-- 📧 Email: suporte@camaramojui.com
-- 📱 Telefone: (93) 9.9138-8426
-- 🌐 Site: https://camaramojuidoscampos.pa.gov.br/
+- 📧 Email: suporte@suacamara.gov.br
 
 ## 📄 Licença
 

@@ -17,7 +17,7 @@ const noticiasData: Noticia[] = [
   {
     id: '1',
     titulo: 'Câmara aprova projeto de lei sobre meio ambiente',
-    conteudo: 'A Câmara Municipal de Mojuí dos Campos aprovou por unanimidade o projeto de lei que estabelece novas diretrizes para a preservação do meio ambiente...',
+    conteudo: 'A Câmara Municipal aprovou por unanimidade o projeto de lei que estabelece novas diretrizes para a preservação do meio ambiente...',
     resumo: 'Projeto de lei sobre meio ambiente é aprovado por unanimidade',
     autor: 'Secretaria de Comunicação',
     dataPublicacao: '2025-01-20',

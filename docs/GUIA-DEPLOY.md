@@ -1,4 +1,4 @@
-# Guia de Deploy - Câmara Municipal de Mojuí dos Campos
+# Guia de Deploy - Sistema Legislativo Municipal
 
 ## Visão Geral
 
@@ -49,7 +49,7 @@ UPLOAD_DIR="/var/www/camara/uploads"
 MAX_FILE_SIZE=10485760
 
 # Site
-SITE_NAME="Câmara Municipal de Mojuí dos Campos"
+SITE_NAME="Câmara Municipal de [Sua Cidade]"
 SITE_URL="https://seudominio.gov.br"
 
 # Logs
@@ -105,7 +105,7 @@ Crie o arquivo `ecosystem.config.js`:
 ```javascript
 module.exports = {
   apps: [{
-    name: 'camara-mojui',
+    name: 'sistema-legislativo',
     script: 'npm',
     args: 'start',
     cwd: '/var/www/camara',
@@ -141,7 +141,7 @@ pm2 startup
 
 # Verificar status
 pm2 status
-pm2 logs camara-mojui
+pm2 logs sistema-legislativo
 ```
 
 ---
@@ -325,7 +325,7 @@ O sistema disponibiliza endpoints de monitoramento:
 pm2 monit
 
 # Ver logs em tempo real
-pm2 logs camara-mojui --lines 100
+pm2 logs sistema-legislativo --lines 100
 ```
 
 ---
@@ -426,7 +426,7 @@ cd /var/www/camara
 git checkout <commit-anterior>
 npm ci
 npm run build
-pm2 restart camara-mojui
+pm2 restart sistema-legislativo
 
 # Restaurar banco de dados
 gunzip < /opt/backup/camara/db_YYYY-MM-DD.sql.gz | psql -U camara_user camara_db

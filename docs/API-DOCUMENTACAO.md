@@ -1,4 +1,4 @@
-# Documentação da API - Câmara Municipal de Mojuí dos Campos
+# Documentação da API - Sistema Legislativo Municipal
 
 ## Visão Geral
 
@@ -85,7 +85,7 @@ GET /api/dados-abertos/parlamentares?page=1&limit=10&partido=PT
     "limite": 10,
     "paginas": 2,
     "atualizacao": "2024-01-15T10:00:00Z",
-    "fonte": "Camara Municipal de Mojui dos Campos"
+    "fonte": "Camara Municipal"
   }
 }
 ```

@@ -53,7 +53,7 @@ describe('API de Dados Abertos', () => {
           limite: 50,
           paginas: 0,
           atualizacao: expect.any(String),
-          fonte: 'Camara Municipal de Mojui dos Campos'
+          fonte: 'Câmara Municipal'
         }
       }
 
@@ -63,7 +63,7 @@ describe('API de Dados Abertos', () => {
       expect(respostaPadrao.metadados.total).toBeDefined()
       expect(respostaPadrao.metadados.pagina).toBeDefined()
       expect(respostaPadrao.metadados.limite).toBeDefined()
-      expect(respostaPadrao.metadados.fonte).toContain('Mojui dos Campos')
+      expect(respostaPadrao.metadados.fonte).toContain('Câmara Municipal')
     })
   })
 

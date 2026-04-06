@@ -284,7 +284,7 @@ PROJETO DE LEI No ${numero}/${ano}
 
 Dispoe sobre a validacao do fluxo legislativo completo do sistema.
 
-A CAMARA MUNICIPAL DE MOJUI DOS CAMPOS, Estado do Para, no uso de suas atribuicoes legais, DECRETA:
+A CAMARA MUNICIPAL DE RUROPOLIS, Estado do Para, no uso de suas atribuicoes legais, DECRETA:
 
 Art. 1o Este projeto de lei tem por objetivo validar todo o fluxo do processo legislativo no sistema.
 
@@ -295,7 +295,7 @@ III - Transparencia dos dados.
 
 Art. 3o Esta lei entra em vigor na data de sua publicacao.
 
-Mojui dos Campos, ${new Date().toLocaleDateString('pt-BR')}.
+Ruropolis, ${new Date().toLocaleDateString('pt-BR')}.
         `.trim(),
         status: 'APRESENTADA',
         dataApresentacao: new Date(),

@@ -1,10 +1,10 @@
-# Câmara Municipal de Mojuí dos Campos - Portal Institucional
+# Sistema Legislativo Municipal - Portal Institucional
 
-Sistema completo de portal institucional e painel administrativo para a Câmara Municipal de Mojuí dos Campos, desenvolvido para fins educacionais e de transparência pública.
+Sistema completo de portal institucional e painel administrativo para Câmaras Municipais, desenvolvido para transparência pública e gestão legislativa.
 
 ## 🏛️ Sobre o Projeto
 
-Este projeto replica o portal oficial da Câmara Municipal de Mojuí dos Campos (https://camaramojuidoscampos.pa.gov.br/), incluindo:
+Sistema multi-tenant de portal legislativo municipal, incluindo:
 
 - **Portal Institucional**: Site público com informações sobre a Câmara, vereadores, sessões, transparência
 - **Painel Administrativo**: Sistema completo de gerenciamento de conteúdo
@@ -55,7 +55,7 @@ Este projeto replica o portal oficial da Câmara Municipal de Mojuí dos Campos 
 ### 1. Clone o repositório
 ```bash
 git clone <url-do-repositorio>
-cd camara-mojui-dos-campos
+cd sistema-legislativo-municipal
 ```
 
 ### 2. Instale as dependências
@@ -66,7 +66,7 @@ npm install
 ### 3. Configure o banco de dados
 ```bash
 # Crie um banco PostgreSQL
-createdb camara_mojui_db
+createdb camara_legislativo_db
 
 # Configure a variável de ambiente
 cp env.example .env.local
@@ -74,7 +74,7 @@ cp env.example .env.local
 
 Edite o arquivo `.env.local` com suas configurações:
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/camara_mojui_db"
+DATABASE_URL="postgresql://username:password@localhost:5432/camara_legislativo_db"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="sua-chave-secreta-aqui"
 ```
@@ -102,7 +102,7 @@ O sistema estará disponível em:
 - **Login Admin**: http://localhost:3000/admin/login
 
 ### Credenciais Padrão
-- **Email**: admin@camaramojui.com
+- **Email**: admin@camara.gov.br
 - **Senha**: admin123
 
 ## 📁 Estrutura do Projeto
@@ -208,10 +208,10 @@ vercel
 ### Docker
 ```bash
 # Build da imagem
-docker build -t camara-mojui .
+docker build -t sistema-legislativo .
 
 # Execute o container
-docker run -p 3000:3000 camara-mojui
+docker run -p 3000:3000 sistema-legislativo
 ```
 
 ## 📊 Monitoramento
@@ -239,13 +239,10 @@ Este projeto é de código aberto e está disponível sob a licença MIT.
 ## 📞 Suporte
 
 Para dúvidas ou suporte:
-- 📧 Email: suporte@camaramojui.com
-- 📱 Telefone: (93) 9.9138-8426
-- 🌐 Site: https://camaramojuidoscampos.pa.gov.br/
+- 📧 Email: suporte@suacamara.gov.br
 
 ## 🙏 Agradecimentos
 
-- Câmara Municipal de Mojuí dos Campos
 - Comunidade Next.js
 - Equipe do Prisma
 - Desenvolvedores do Radix UI

@@ -1,9 +1,63 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-06 (Melhorias UX mobile, formatacao, cache, impressao, codigos sequenciais)
-> **Versao**: 1.8.0
+> **Ultima Atualizacao**: 2026-04-06 (Instalador: identidade visual + Supabase: producao corrigido)
+> **Versao**: 1.8.2
 > **Status Geral**: EM PRODUCAO
-> **URL Producao**: https://camara-mojui.vercel.app
+> **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
+> **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Instalador - Identidade Visual Dinamica (06/04/2026)
+
+### install.sh - Selecao de Tema na Instalacao/Atualizacao
+- **8 temas predefinidos**: Azul Institucional, Verde Amazonia, Vermelho Republicano, Marrom Terra, Roxo Legislativo, Cinza Moderno, Dourado Oficial, Azul Marinho
+- **Opcao personalizada**: Cores hex customizadas (#RRGGBB) com validacao
+- **Fluxo de instalacao**: Tema escolhido antes do Redis, mostrado na confirmacao
+- **Fluxo de atualizacao**: Pergunta se quer alterar identidade visual, aplica no banco
+- **seed-vps.ts**: Recebe COR_PRIMARIA, COR_SECUNDARIA, COR_ACENTO via env
+- **update-admin.ts**: Atualiza cores junto com credenciais na reinstalacao
+- **CREDENCIAIS.txt**: Inclui dados do tema escolhido
+
+### Producao Corrigida
+- Nome institucional configurado via ConfiguracaoInstitucional (dinamico por tenant)
+- Usuarios corrigidos: dominio configuravel por instalacao
+
+---
+
+## Supabase - Sincronizacao e Seguranca (06/04/2026)
+
+### Acoes Realizadas
+- **Migracao registrada**: `20260201_convert_tipo_to_string` registrada em `_prisma_migrations` (ja aplicada no banco)
+- **RLS habilitado**: 15 tabelas criticas com Row Level Security
+  - Sensiveis (bloqueio total via anon): `users`, `sessions`, `accounts`, `audit_logs`, `api_tokens`, `security_alerts`, `verificationtokens`
+  - Legislativas (leitura publica via anon para PNTP): `proposicoes`, `votacoes`, `sessoes`, `presencas_sessao`, `tramitacoes`, `emendas`, `protocolos`, `mandatos`
+  - Todas com policy `postgres_full_access` para acesso Prisma via pooler
+- **Usuarios corrigidos**: Dominio alterado para configuracao dinamica por tenant
+- **`.env.example` atualizado**: Variaveis Supabase (URL, ANON_KEY, SERVICE_ROLE_KEY) documentadas
+- **37 indices criados**: Foreign keys sem indice identificadas pelo Supabase Advisor e corrigidas
+- **Enum obsoleto removido**: `TipoProposicao` enum removido (migrado para text)
+- **Storage configurado**: 4 buckets criados com policies de acesso
+  - `documentos` (privado, 10MB, PDF/DOC/IMG)
+  - `fotos-parlamentares` (publico, 2MB, JPG/PNG/WebP)
+  - `anexos-proposicoes` (privado, 20MB, PDF/DOC/XLS)
+  - `publicacoes` (publico, 10MB, PDF/IMG)
+- **Supabase Advisor**: 0 alertas de seguranca
+
+### Estado do Banco Supabase
+- 105 tabelas no schema `public`
+- 379 indices (37 novos para foreign keys)
+- 2 migracoes Prisma aplicadas e registradas
+- 15 tabelas com RLS, 4 buckets de Storage
+- 3 usuarios (admin, parlamentar, operador)
+- 24 parlamentares, 27 proposicoes, 3 sessoes, 3 comissoes, 13 mandatos
+- 1.312 registros de auditoria
+- PostgreSQL 17.6, 20 MB, sa-east-1
+
+### Pendencias Manuais
+- [ ] **Rotacionar senha do banco** (auditoria seguranca) - Dashboard > Settings > Database
+- [ ] Atualizar .env.local, .env.production, GitHub Secrets e Vercel com nova senha
+- [ ] Popular dados de seed para normas juridicas e transparencia financeira
 
 ---
 
@@ -712,7 +766,7 @@ Vulnerabilidades restantes: 4 (todas no Next.js 14 - requerem upgrade major para
 ## Documento de Apresentacao do Sistema Legislativo (03/02/2026)
 
 ### Descricao
-Criado documento completo de apresentacao do sistema para a Camara Municipal de Mojui dos Campos, contendo especificacoes tecnicas, fluxos legislativos, funcionalidades e beneficios.
+Criado documento completo de apresentacao do sistema legislativo municipal, contendo especificacoes tecnicas, fluxos legislativos, funcionalidades e beneficios.
 
 ### Arquivo Criado
 | Arquivo | Descricao |
@@ -5051,7 +5105,7 @@ if (dataSessaoSemHora < dataHoje) {
 ### 2026-01-19 - Deploy para Producao (Vercel + Supabase)
 - **Ambiente**: Vercel (plano Hobby)
 - **Banco de Dados**: Supabase PostgreSQL
-- **URL Producao**: https://camara-mojui.vercel.app
+- **URL Producao**: https://cmchaves.transparencialeg.com
 - **GitHub Repo**: https://github.com/junielsonfarias/LegNet
 - **Configuracoes**:
   - Cron job diario as 6h (health check)
@@ -5232,9 +5286,9 @@ if (dataSessaoSemHora < dataHoje) {
   - Carregamento de dados da sessão selecionada (detalhes, presenças, pauta)
   - Botão "Atualizar" recarrega sessões disponíveis e dados da sessão selecionada
 
-### 2026-01-17 - Seed de Dados Reais da Câmara de Mojuí dos Campos 2025
+### 2026-01-17 - Seed de Dados Reais da Legislatura 2025
 - **Objetivo**: Popular o banco de dados com dados reais extraídos do site oficial da Câmara
-- **Fonte**: https://www.camaramojuidoscampos.pa.gov.br/
+- **Fonte**: Site oficial da Câmara Municipal
 - **Arquivo criado**: `prisma/seed-dados-2025.ts`
 - **Comando**: `npm run db:seed-2025`
 - **Dados criados**:
@@ -5682,7 +5736,7 @@ if (dataSessaoSemHora < dataHoje) {
 - **Banco de dados**: Supabase PostgreSQL conectado e sincronizado
 - **Schema Prisma**: `db:push` executado com sucesso
 - **Seed**: Banco populado com dados de teste
-  - 1 usuario admin (admin@camaramojui.com / admin123)
+  - 1 usuario admin (admin@camara.gov.br / admin123)
   - 11 parlamentares (com mandatos vinculados)
   - 1 legislatura (2025-2028) com periodo e mesa diretora
   - 3 sessoes (vinculadas a legislatura)
@@ -6480,7 +6534,7 @@ O painel eletronico DEVE usar o servico `painel-tempo-real-service.ts` que:
 
 #### Desativacao do Sistema de Mock Auth
 
-**Problema**: Usuarios antigos hardcoded (como `secretaria@camaramojui.com`) ainda conseguiam fazer login mesmo nao existindo no banco de dados.
+**Problema**: Usuarios antigos hardcoded ainda conseguiam fazer login mesmo nao existindo no banco de dados.
 
 **Causa**: Existia um arquivo `auth-mock.ts` com usuarios hardcoded que era consultado ANTES do banco de dados real.
 
@@ -6541,7 +6595,7 @@ O painel eletronico DEVE usar o servico `painel-tempo-real-service.ts` que:
 
 ### 2026-01-29 - Propagacao de Configuracao Dinamica em Todo Sistema
 
-**Objetivo**: Substituir todas as referencias hardcoded "Mojui dos Campos" por valores dinamicos da ConfiguracaoInstitucional, permitindo que alteracoes nas configuracoes se propaguem automaticamente em todo o portal.
+**Objetivo**: Substituir todas as referencias hardcoded de nome de cidade por valores dinamicos da ConfiguracaoInstitucional, permitindo que alteracoes nas configuracoes se propaguem automaticamente em todo o portal (multi-tenant).
 
 **Arquivos Atualizados** (60+ arquivos):
 
