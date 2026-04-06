@@ -17,6 +17,9 @@ const siteUrl = process.env.SITE_URL || 'https://camara.gov.br'
 const siteDescription = process.env.SITE_DESCRIPTION || `Portal Institucional da ${siteName} - Transparência, Democracia e Cidadania. Acesse leis, decretos, sessões, licitações e muito mais.`
 
 export const metadata: Metadata = {
+  other: {
+    'google': 'notranslate',
+  },
   title: {
     default: siteName,
     template: `%s | ${siteName}`
@@ -74,7 +77,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" translate="no" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>
           <MunicipalThemeProvider>
