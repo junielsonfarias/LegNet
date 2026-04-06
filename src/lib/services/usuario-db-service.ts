@@ -92,19 +92,22 @@ export const usuarioDbService = {
   },
 
   async getByEmail(email: string) {
-    return prisma.user.findUnique({ where: { email } })
+    return prisma.user.findUnique({
+      where: { email },
+      select: { ...safeSelect, password: true }
+    })
   },
 
   async checkEmailExists(email: string, excludeId?: string) {
     const where: any = { email }
     if (excludeId) where.id = { not: excludeId }
-    return prisma.user.findFirst({ where })
+    return prisma.user.findFirst({ where, select: { id: true, email: true } })
   },
 
   async checkParlamentarVinculado(parlamentarId: string, excludeId?: string) {
     const where: any = { parlamentarId }
     if (excludeId) where.id = { not: excludeId }
-    return prisma.user.findFirst({ where })
+    return prisma.user.findFirst({ where, select: { id: true, parlamentarId: true } })
   },
 
   async create(payload: UsuarioPayload) {

@@ -1150,7 +1150,7 @@ show_summary() {
   echo -e "  ${CYAN}Porta:${NC}              5432"
   echo -e "  ${CYAN}Banco:${NC}              ${DB_NAME}"
   echo -e "  ${CYAN}Usuario:${NC}            ${DB_USER}"
-  echo -e "  ${CYAN}Senha:${NC}              ${DB_PASSWORD}"
+  echo -e "  ${CYAN}Senha:${NC}              (salva em CREDENCIAIS.txt)"
   echo ""
   echo -e "  ${BOLD}=== ARQUIVOS IMPORTANTES ===${NC}"
   echo ""

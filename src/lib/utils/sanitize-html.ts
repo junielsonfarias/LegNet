@@ -12,12 +12,23 @@ import DOMPurify from 'dompurify'
 export function sanitizeHtml(dirty: string | null | undefined): string {
   if (!dirty) return ''
 
-  // No servidor, retorna string vazia (DOMPurify precisa do DOM)
+  // No servidor, sanitização robusta sem DOM
   if (typeof window === 'undefined') {
-    // Sanitização básica para SSR - remove tags script
     return dirty
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/on\w+\s*=/gi, '')
+      // Remove scripts (incluindo variações malformadas)
+      .replace(/<script\b[^]*?<\/script\s*>/gi, '')
+      .replace(/<script\b[^>]*\/?>/gi, '')
+      // Remove event handlers (on*)
+      .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+      // Remove tags perigosas (iframe, object, embed, form, input, svg com scripts)
+      .replace(/<\s*\/?\s*(iframe|object|embed|form|input|textarea|select|button|applet|meta|link|base)\b[^>]*\/?>/gi, '')
+      // Remove SVG event handlers e scripts inline
+      .replace(/<svg\b[^>]*\bon\w+\s*=/gi, '<svg ')
+      // Remove javascript: e data: URLs em atributos
+      .replace(/(href|src|action|formaction)\s*=\s*(?:"[^"]*(?:javascript|data|vbscript)\s*:[^"]*"|'[^']*(?:javascript|data|vbscript)\s*:[^']*')/gi, '')
+      // Remove expressões CSS perigosas
+      .replace(/expression\s*\(/gi, 'blocked(')
+      .replace(/url\s*\(\s*(?:"[^"]*(?:javascript|data)\s*:[^"]*"|'[^']*(?:javascript|data)\s*:[^']*')/gi, 'url(about:blank')
   }
 
   return DOMPurify.sanitize(dirty, {
@@ -43,8 +54,11 @@ export function sanitizeRichHtml(dirty: string | null | undefined): string {
 
   if (typeof window === 'undefined') {
     return dirty
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/on\w+\s*=/gi, '')
+      .replace(/<script\b[^]*?<\/script\s*>/gi, '')
+      .replace(/<script\b[^>]*\/?>/gi, '')
+      .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+      .replace(/<\s*\/?\s*(object|embed|form|input|textarea|select|button|applet|meta|link|base)\b[^>]*\/?>/gi, '')
+      .replace(/(href|src|action|formaction)\s*=\s*(?:"[^"]*(?:javascript|data|vbscript)\s*:[^"]*"|'[^']*(?:javascript|data|vbscript)\s*:[^']*')/gi, '')
   }
 
   return DOMPurify.sanitize(dirty, {

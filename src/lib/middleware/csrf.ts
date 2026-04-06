@@ -151,8 +151,7 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
     // Em produção, rejeitar requisições sem origem
     console.warn('[CSRF] Requisição rejeitada: sem Origin ou Referer', {
       method: request.method,
-      url: request.url,
-      headers: Object.fromEntries(request.headers.entries())
+      path: new URL(request.url).pathname
     })
 
     return NextResponse.json(
@@ -168,9 +167,8 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
   if (!allowedOrigins.includes(origin) && !isVercelOrigin(origin)) {
     console.warn('[CSRF] Requisição rejeitada: origem não permitida', {
       origin,
-      allowedOrigins,
       method: request.method,
-      url: request.url
+      path: new URL(request.url).pathname
     })
 
     return NextResponse.json(

@@ -140,8 +140,8 @@ export async function middleware(request: NextRequest) {
   // Configuração permissiva para Next.js mas ainda segura
   const cspDirectives = [
     "default-src 'self'",
-    // Scripts: self + inline (necessário para Next.js) + eval (necessário para alguns recursos)
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    // Scripts: self + inline (necessário para Next.js hydration)
+    "script-src 'self' 'unsafe-inline'",
     // Estilos: self + inline (necessário para Tailwind e componentes)
     "style-src 'self' 'unsafe-inline'",
     // Imagens: self + data URIs + HTTPS (para imagens externas)
