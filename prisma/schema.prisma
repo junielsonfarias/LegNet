@@ -104,8 +104,8 @@ model Tenant {
   // Configurações visuais
   logoUrl     String?
   faviconUrl  String?
-  corPrimaria String?      @default("#1e40af") // Azul padrão
-  corSecundaria String?    @default("#3b82f6")
+  corPrimaria String?      @default("#374151") // Azul padrão
+  corSecundaria String?    @default("#6b7280")
   // Localização
   cidade      String?
   estado      String?
@@ -164,8 +164,8 @@ model ConfiguracaoInstitucional {
   logoUrl            String?
   brasaoUrl          String?
   faviconUrl         String?
-  corPrimaria        String?  @default("#1e40af")
-  corSecundaria      String?  @default("#3b82f6")
+  corPrimaria        String?  @default("#374151")
+  corSecundaria      String?  @default("#6b7280")
   corAcento          String?  @default("#059669")
   tema               String?  @default("claro")
   tipoEnte           String?  @default("CAMARA_MUNICIPAL")

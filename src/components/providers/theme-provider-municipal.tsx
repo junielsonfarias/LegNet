@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
  */
 function hexToRgb(hex: string): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  if (!result) return '30 64 175'
+  if (!result) return '55 65 81'
   return `${parseInt(result[1], 16)} ${parseInt(result[2], 16)} ${parseInt(result[3], 16)}`
 }
 
@@ -58,8 +58,8 @@ export function MunicipalThemeProvider({ children }: { children: React.ReactNode
 
         const data = await res.json()
         const config: ThemeConfig = {
-          corPrimaria: data.dados?.configuracao?.corPrimaria || '#1e40af',
-          corSecundaria: data.dados?.configuracao?.corSecundaria || '#3b82f6',
+          corPrimaria: data.dados?.configuracao?.corPrimaria || '#374151',
+          corSecundaria: data.dados?.configuracao?.corSecundaria || '#6b7280',
           corAcento: data.dados?.configuracao?.corAcento || '#059669',
           brasaoUrl: data.dados?.configuracao?.brasaoUrl,
           logoUrl: data.dados?.configuracao?.logoUrl,

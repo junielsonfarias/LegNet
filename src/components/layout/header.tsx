@@ -287,7 +287,7 @@ export function Header() {
                   {/* Link Área Restrita */}
                   <Link
                     href="/login"
-                    className="flex items-center gap-3 px-3 py-2.5 bg-gradient-to-r from-camara-primary to-blue-700 text-white rounded-xl hover:opacity-90 transition-opacity shadow-sm"
+                    className="flex items-center gap-3 px-3 py-2.5 bg-camara-primary text-white rounded-xl hover:opacity-90 transition-opacity shadow-sm"
                     onClick={() => setIsOpen(false)}
                   >
                     <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">

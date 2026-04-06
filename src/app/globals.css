@@ -62,9 +62,9 @@
     --municipal-primary-light: #6b7280;
     --municipal-primary-lighter: #e5e7eb;
     --municipal-secondary-dark: #4b5563;
-    --municipal-secondary-light: #7ba8f7;
-    --municipal-primary-rgb: 30 64 175;
-    --municipal-secondary-rgb: 59 130 246;
+    --municipal-secondary-light: #9ca3af;
+    --municipal-primary-rgb: var(--tenant-primary-rgb, 55 65 81);
+    --municipal-secondary-rgb: var(--tenant-secondary-rgb, 107 114 128);
 
     /* ===== Design Tokens Portal ===== */
 

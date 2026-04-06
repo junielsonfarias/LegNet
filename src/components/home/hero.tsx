@@ -68,8 +68,8 @@ const quickAccessCards = [
     title: 'Proposicoes',
     subtitle: 'Acompanhe projetos de lei',
     href: '/legislativo/proposicoes',
-    gradient: 'from-blue-500 to-blue-700',
-    shadowColor: 'shadow-blue-500/25',
+    gradient: 'from-indigo-500 to-indigo-700',
+    shadowColor: 'shadow-indigo-500/25',
   },
   {
     icon: Video,

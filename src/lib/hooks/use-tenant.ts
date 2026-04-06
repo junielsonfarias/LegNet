@@ -49,8 +49,8 @@ export function useTenant(): UseTenantReturn {
   const tenantName = tenant?.nome || 'Câmara Municipal'
   const tenantLogo = tenant?.logoUrl || null
   const tenantColors = {
-    primary: tenant?.corPrimaria || '#1e40af',
-    secondary: tenant?.corSecundaria || '#3b82f6',
+    primary: tenant?.corPrimaria || '#374151',
+    secondary: tenant?.corSecundaria || '#6b7280',
   }
 
   return {

@@ -89,15 +89,15 @@ module.exports = {
         },
         // Cores específicas da Câmara (dinâmicas via tenant)
         camara: {
-          primary: "var(--tenant-primary, #1e40af)", // Azul institucional (padrão)
-          secondary: "var(--tenant-secondary, #3b82f6)", // Azul secundário (padrão)
+          primary: "var(--tenant-primary, #374151)", // Neutro (sobrescrito pelo tema)
+          secondary: "var(--tenant-secondary, #6b7280)", // Neutro (sobrescrito pelo tema)
           accent: "#059669", // Verde
           gold: "#d97706", // Dourado
         },
         // Cores do tenant (acesso direto)
         tenant: {
-          primary: "var(--tenant-primary, #1e40af)",
-          secondary: "var(--tenant-secondary, #3b82f6)",
+          primary: "var(--tenant-primary, #374151)",
+          secondary: "var(--tenant-secondary, #6b7280)",
         },
         // Cores de alto contraste
         'hc': {

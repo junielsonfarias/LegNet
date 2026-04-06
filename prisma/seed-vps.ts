@@ -19,8 +19,8 @@ async function main() {
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@camara.gov.br'
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
   const camaraNome = process.env.CAMARA_NOME || 'Camara Municipal'
-  const corPrimaria = process.env.COR_PRIMARIA || '#1e40af'
-  const corSecundaria = process.env.COR_SECUNDARIA || '#3b82f6'
+  const corPrimaria = process.env.COR_PRIMARIA || '#374151'
+  const corSecundaria = process.env.COR_SECUNDARIA || '#6b7280'
   const corAcento = process.env.COR_ACENTO || '#059669'
 
   // 1. Criar usuario administrador

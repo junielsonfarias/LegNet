@@ -29,8 +29,8 @@ const dadosPadrao = {
   site: null,
   logoUrl: null,
   brasaoUrl: null,
-  corPrimaria: '#1e40af',
-  corSecundaria: '#3b82f6',
+  corPrimaria: '#374151',
+  corSecundaria: '#6b7280',
   corAcento: '#059669',
   descricao: null
 }

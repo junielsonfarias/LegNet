@@ -84,7 +84,7 @@ function VereadorGridCard({ p, inactive }: { p: any; inactive?: boolean }) {
               className="w-full h-full flex items-center justify-center"
               style={{ background: inactive
                 ? 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
-                : 'linear-gradient(135deg, var(--municipal-primary, #1e40af) 0%, var(--municipal-secondary, #1e3a5f) 100%)'
+                : 'linear-gradient(135deg, var(--municipal-primary, #374151) 0%, var(--municipal-secondary, #6b7280) 100%)'
               }}
             >
               <span className="text-3xl sm:text-4xl font-bold text-white/60">{getInitials(p)}</span>
@@ -168,7 +168,7 @@ function VereadorListCard({ p, inactive }: { p: any; inactive?: boolean }) {
           ) : (
             <div
               className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-white text-sm ring-2 ring-gray-100 shadow-sm"
-              style={{ backgroundColor: inactive ? '#6b7280' : 'var(--municipal-primary, #1e40af)' }}
+              style={{ backgroundColor: inactive ? '#6b7280' : 'var(--municipal-primary, #374151)' }}
             >
               {getInitials(p)}
             </div>
@@ -290,7 +290,7 @@ export default function GaleriaParlamentaresPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero compacto */}
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--municipal-primary, #1e40af) 0%, var(--municipal-secondary, #1e3a5f) 100%)' }}>
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--municipal-primary, #374151) 0%, var(--municipal-secondary, #6b7280) 100%)' }}>
         <div className="absolute inset-0 opacity-10" aria-hidden="true">
           <div className="absolute top-10 left-10 w-40 h-40 rounded-full bg-white/20" />
           <div className="absolute bottom-10 right-20 w-60 h-60 rounded-full bg-white/10" />
