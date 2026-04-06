@@ -383,7 +383,7 @@ export default function ParticipacaoPublicaPage() {
               </p>
             </div>
             <Button asChild variant="outline" className="gap-2">
-              <Link href="/participacao-cidada#peticoes">
+              <Link href="/participacao#peticoes">
                 Criar nova petição
                 <FileText className="h-4 w-4" aria-hidden="true" />
               </Link>

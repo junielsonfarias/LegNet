@@ -30,7 +30,7 @@ interface QuickAction {
 
 const quickActionsByRole: Record<UserRole, QuickAction[]> = {
   ADMIN: [
-    { label: 'Nova Proposição', href: '/admin/proposicoes/nova', icon: FileText, description: 'Cadastrar proposição' },
+    { label: 'Nova Proposição', href: '/admin/proposicoes', icon: FileText, description: 'Cadastrar proposição' },
     { label: 'Nova Sessão', href: '/admin/sessoes/nova', icon: Calendar, description: 'Agendar sessão' },
     { label: 'Usuários', href: '/admin/usuarios', icon: Users, description: 'Gerenciar usuários' },
     { label: 'Configurações', href: '/admin/configuracoes', icon: Settings, description: 'Ajustes do sistema' },
@@ -46,17 +46,17 @@ const quickActionsByRole: Record<UserRole, QuickAction[]> = {
     { label: 'Relatórios', href: '/admin/relatorios', icon: BarChart3, description: 'Gerar relatórios' }
   ],
   AUXILIAR_LEGISLATIVO: [
-    { label: 'Nova Proposição', href: '/admin/proposicoes/nova', icon: FileText, description: 'Cadastrar proposição' },
-    { label: 'Tramitação', href: '/admin/tramitacao', icon: ClipboardList, description: 'Tramitar proposições' },
+    { label: 'Nova Proposição', href: '/admin/proposicoes', icon: FileText, description: 'Cadastrar proposição' },
+    { label: 'Tramitação', href: '/admin/tramitacoes', icon: ClipboardList, description: 'Tramitar proposições' },
     { label: 'Comissões', href: '/admin/comissoes', icon: Users, description: 'Gerenciar comissões' },
     { label: 'Pareceres', href: '/admin/pareceres', icon: FileText, description: 'Elaborar pareceres' },
     { label: 'Sessões', href: '/admin/sessoes-legislativas', icon: Calendar, description: 'Ver sessões' },
     { label: 'Relatórios', href: '/admin/relatorios', icon: BarChart3, description: 'Gerar relatórios' }
   ],
   EDITOR: [
-    { label: 'Nova Proposição', href: '/admin/proposicoes/nova', icon: FileText, description: 'Cadastrar proposição' },
+    { label: 'Nova Proposição', href: '/admin/proposicoes', icon: FileText, description: 'Cadastrar proposição' },
     { label: 'Nova Sessão', href: '/admin/sessoes/nova', icon: Calendar, description: 'Agendar sessão' },
-    { label: 'Nova Notícia', href: '/admin/noticias/nova', icon: Newspaper, description: 'Publicar notícia' },
+    { label: 'Nova Notícia', href: '/admin/noticias', icon: Newspaper, description: 'Publicar notícia' },
     { label: 'Publicações', href: '/admin/publicacoes', icon: Edit3, description: 'Gerenciar conteúdo' },
     { label: 'Pautas', href: '/admin/pautas-sessoes', icon: ClipboardList, description: 'Gerenciar pautas' },
     { label: 'Comissões', href: '/admin/comissoes', icon: Users, description: 'Gerenciar comissões' }
