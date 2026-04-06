@@ -7,12 +7,6 @@
 
 set -uo pipefail
 
-# Garantir que read funciona quando executado via pipe (curl | bash)
-# Redireciona stdin para /dev/tty para inputs interativos
-if [ ! -t 0 ]; then
-  exec 0</dev/tty || { echo "Erro: Este script precisa de um terminal interativo."; exit 1; }
-fi
-
 # ============================================================================
 # CORES E FORMATACAO
 # ============================================================================
@@ -262,7 +256,7 @@ detect_existing_installation() {
   echo ""
 
   while true; do
-    read -rp "$(echo -e ${CYAN}Opcao [1/2/3]${NC}: )" CHOICE
+    read -rp "$(echo -e ${CYAN}Opcao [1/2/3]${NC}: )" CHOICE < /dev/tty
     case "$CHOICE" in
       1)
         INSTALL_MODE="update"
@@ -275,7 +269,7 @@ detect_existing_installation() {
         echo -e "  ${RED}${BOLD}ATENCAO: Todos os dados serao APAGADOS permanentemente!${NC}"
         echo -e "  ${RED}Isso inclui: parlamentares, sessoes, votacoes, noticias, etc.${NC}"
         echo ""
-        read -rp "$(echo -e ${RED}Tem certeza que deseja apagar tudo?${NC} Digite ${BOLD}SIM${NC} para confirmar: )" CONFIRM_DELETE
+        read -rp "$(echo -e ${RED}Tem certeza que deseja apagar tudo?${NC} Digite ${BOLD}SIM${NC} para confirmar: )" CONFIRM_DELETE < /dev/tty
         if [ "$CONFIRM_DELETE" != "SIM" ]; then
           warn "Reinstalacao cancelada"
           exit 0
@@ -303,7 +297,7 @@ do_update() {
 
   # Perguntar se quer alterar identidade visual
   echo ""
-  read -rp "$(echo -e ${CYAN}Deseja alterar a identidade visual \(cores do portal\)?${NC} [s/N]: )" CHANGE_THEME
+  read -rp "$(echo -e ${CYAN}Deseja alterar a identidade visual \(cores do portal\)?${NC} [s/N]: )" CHANGE_THEME < /dev/tty
   CHANGE_THEME="${CHANGE_THEME,,}"
   if [ "$CHANGE_THEME" = "s" ]; then
     select_identity
@@ -540,7 +534,7 @@ select_identity() {
 
   local max_option=$i
   while true; do
-    read -rp "$(echo -e ${CYAN}Opcao [1-${max_option}]${NC} [1]: )" TEMA_ESCOLHA
+    read -rp "$(echo -e ${CYAN}Opcao [1-${max_option}]${NC} [1]: )" TEMA_ESCOLHA < /dev/tty
     TEMA_ESCOLHA="${TEMA_ESCOLHA:-1}"
 
     if [[ "$TEMA_ESCOLHA" =~ ^[0-9]+$ ]] && [ "$TEMA_ESCOLHA" -ge 1 ] && [ "$TEMA_ESCOLHA" -le "$max_option" ]; then
@@ -556,21 +550,21 @@ select_identity() {
     echo ""
 
     while true; do
-      read -rp "$(echo -e ${CYAN}Cor primaria${NC} [#1e40af]: )" COR_PRIMARIA
+      read -rp "$(echo -e ${CYAN}Cor primaria${NC} [#1e40af]: )" COR_PRIMARIA < /dev/tty
       COR_PRIMARIA="${COR_PRIMARIA:-#1e40af}"
       if echo "$COR_PRIMARIA" | grep -qE '^#[0-9a-fA-F]{6}$'; then break; fi
       warn "Formato invalido! Use #RRGGBB (ex: #1e40af)"
     done
 
     while true; do
-      read -rp "$(echo -e ${CYAN}Cor secundaria${NC} [#3b82f6]: )" COR_SECUNDARIA
+      read -rp "$(echo -e ${CYAN}Cor secundaria${NC} [#3b82f6]: )" COR_SECUNDARIA < /dev/tty
       COR_SECUNDARIA="${COR_SECUNDARIA:-#3b82f6}"
       if echo "$COR_SECUNDARIA" | grep -qE '^#[0-9a-fA-F]{6}$'; then break; fi
       warn "Formato invalido! Use #RRGGBB (ex: #3b82f6)"
     done
 
     while true; do
-      read -rp "$(echo -e ${CYAN}Cor de acento${NC} [#059669]: )" COR_ACENTO
+      read -rp "$(echo -e ${CYAN}Cor de acento${NC} [#059669]: )" COR_ACENTO < /dev/tty
       COR_ACENTO="${COR_ACENTO:-#059669}"
       if echo "$COR_ACENTO" | grep -qE '^#[0-9a-fA-F]{6}$'; then break; fi
       warn "Formato invalido! Use #RRGGBB (ex: #059669)"
@@ -599,7 +593,7 @@ collect_data() {
   echo -e "${BOLD}Responda as perguntas abaixo para configurar o sistema:${NC}\n"
 
   # Nome da Camara
-  read -rp "$(echo -e ${CYAN}Nome da Camara Municipal${NC} [ex: Camara Municipal de Sua Cidade]: )" CAMARA_NOME
+  read -rp "$(echo -e ${CYAN}Nome da Camara Municipal${NC} [ex: Camara Municipal de Sua Cidade]: )" CAMARA_NOME < /dev/tty
   CAMARA_NOME="${CAMARA_NOME:-Camara Municipal}"
 
   # Dominio ou IP
@@ -608,10 +602,10 @@ collect_data() {
   echo -e "  Exemplos: ${BOLD}camara.suacidade.gov.br${NC} ou ${BOLD}187.77.252.170${NC}"
   echo -e "  ${YELLOW}NAO inclua http:// ou https:// nem barra final.${NC}"
   echo ""
-  read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN
+  read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN < /dev/tty
   while [ -z "$SITE_DOMAIN" ]; do
     warn "Dominio ou IP e obrigatorio!"
-    read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN
+    read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN < /dev/tty
   done
 
   # Sanitizar: remover protocolo, barras, espacos
@@ -631,19 +625,19 @@ collect_data() {
 
   # Email admin
   echo ""
-  read -rp "$(echo -e ${CYAN}Email do administrador${NC} [ex: admin@camara.gov.br]: )" ADMIN_EMAIL
+  read -rp "$(echo -e ${CYAN}Email do administrador${NC} [ex: admin@camara.gov.br]: )" ADMIN_EMAIL < /dev/tty
   ADMIN_EMAIL="${ADMIN_EMAIL:-admin@${SITE_DOMAIN}}"
 
   # Senha admin
   echo ""
   while true; do
-    read -srp "$(echo -e ${CYAN}Senha do administrador${NC} [minimo 8 caracteres]: )" ADMIN_PASSWORD
+    read -srp "$(echo -e ${CYAN}Senha do administrador${NC} [minimo 8 caracteres]: )" ADMIN_PASSWORD < /dev/tty
     echo ""
     if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
       warn "Senha deve ter no minimo 8 caracteres!"
       continue
     fi
-    read -srp "$(echo -e ${CYAN}Confirme a senha${NC}: )" ADMIN_PASSWORD_CONFIRM
+    read -srp "$(echo -e ${CYAN}Confirme a senha${NC}: )" ADMIN_PASSWORD_CONFIRM < /dev/tty
     echo ""
     if [ "$ADMIN_PASSWORD" != "$ADMIN_PASSWORD_CONFIRM" ]; then
       warn "Senhas nao conferem!"
@@ -660,7 +654,7 @@ collect_data() {
 
   # Email SSL
   echo ""
-  read -rp "$(echo -e ${CYAN}Email para certificado SSL${NC} [${ADMIN_EMAIL}]: )" SSL_EMAIL
+  read -rp "$(echo -e ${CYAN}Email para certificado SSL${NC} [${ADMIN_EMAIL}]: )" SSL_EMAIL < /dev/tty
   SSL_EMAIL="${SSL_EMAIL:-$ADMIN_EMAIL}"
 
   # Identidade Visual
@@ -668,17 +662,17 @@ collect_data() {
 
   # Redis
   echo ""
-  read -rp "$(echo -e ${CYAN}Instalar Redis para rate limiting?${NC} [s/N]: )" INSTALL_REDIS
+  read -rp "$(echo -e ${CYAN}Instalar Redis para rate limiting?${NC} [s/N]: )" INSTALL_REDIS < /dev/tty
   INSTALL_REDIS="${INSTALL_REDIS,,}"
 
   # Repositorio
   echo ""
-  read -rp "$(echo -e ${CYAN}URL do repositorio Git${NC} [${REPO_URL}]: )" CUSTOM_REPO
+  read -rp "$(echo -e ${CYAN}URL do repositorio Git${NC} [${REPO_URL}]: )" CUSTOM_REPO < /dev/tty
   REPO_URL="${CUSTOM_REPO:-$REPO_URL}"
 
   # Diretorio de instalacao
   echo ""
-  read -rp "$(echo -e ${CYAN}Diretorio de instalacao${NC} [${INSTALL_DIR}]: )" CUSTOM_DIR
+  read -rp "$(echo -e ${CYAN}Diretorio de instalacao${NC} [${INSTALL_DIR}]: )" CUSTOM_DIR < /dev/tty
   INSTALL_DIR="${CUSTOM_DIR:-$INSTALL_DIR}"
 
   # Gerar secrets
@@ -707,7 +701,7 @@ collect_data() {
   echo -e "  ${BOLD}Repositorio:${NC}  $REPO_URL"
   echo ""
 
-  read -rp "$(echo -e ${YELLOW}Tudo correto? Iniciar instalacao?${NC} [S/n]: )" CONFIRM
+  read -rp "$(echo -e ${YELLOW}Tudo correto? Iniciar instalacao?${NC} [S/n]: )" CONFIRM < /dev/tty
   if [ "${CONFIRM,,}" = "n" ]; then
     warn "Instalacao cancelada pelo usuario"
     exit 0
@@ -862,7 +856,7 @@ clone_repository() {
 
   if [ -d "$INSTALL_DIR" ]; then
     warn "Diretorio $INSTALL_DIR ja existe"
-    read -rp "$(echo -e ${YELLOW}Deseja remover e clonar novamente?${NC} [s/N]: )" OVERWRITE
+    read -rp "$(echo -e ${YELLOW}Deseja remover e clonar novamente?${NC} [s/N]: )" OVERWRITE < /dev/tty
     if [ "${OVERWRITE,,}" = "s" ]; then
       rm -rf "$INSTALL_DIR"
     else
@@ -1104,7 +1098,7 @@ configure_ssl() {
   info "Certifique-se de que o DNS do dominio aponta para este servidor!"
   echo ""
 
-  read -rp "$(echo -e ${YELLOW}O DNS do dominio ja esta apontando para este servidor?${NC} [S/n]: )" DNS_OK
+  read -rp "$(echo -e ${YELLOW}O DNS do dominio ja esta apontando para este servidor?${NC} [S/n]: )" DNS_OK < /dev/tty
   if [ "${DNS_OK,,}" = "n" ]; then
     warn "SSL sera configurado depois. Para ativar SSL manualmente, execute:"
     echo -e "  ${BOLD}sudo certbot --nginx -d ${SITE_DOMAIN} --email ${SSL_EMAIL} --agree-tos --non-interactive${NC}"
