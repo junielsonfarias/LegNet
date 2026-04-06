@@ -95,14 +95,19 @@ export function AdminBreadcrumbs() {
       { label: 'Dashboard', href: '/admin' }
     ]
 
-    let currentPath = '/admin'
+    let currentPath = ''
     let previousSegment = ''
 
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`
 
-      // Pular o primeiro segmento 'admin' pois já foi adicionado
-      if (index > 0) {
+      // Pular o primeiro segmento 'admin' pois já foi adicionado como Dashboard
+      if (segment === 'admin' && index === 0) {
+        previousSegment = segment
+        return
+      }
+
+      {
         let label: string
 
         // Verificar se é um slug de proposição (ex: pl-0022-2025)
