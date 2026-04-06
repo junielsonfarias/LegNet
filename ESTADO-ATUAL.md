@@ -1,9 +1,84 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-03-29 (Correcoes responsividade completa do portal)
-> **Versao**: 1.7.1
+> **Ultima Atualizacao**: 2026-04-06 (Melhorias UX mobile, formatacao, cache, impressao, codigos sequenciais)
+> **Versao**: 1.8.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://camara-mojui.vercel.app
+
+---
+
+## Melhorias de Infraestrutura e UX (06/04/2026)
+
+### Fase 1: Utilitarios de Formatacao
+- **format-ptbr.ts** (`src/lib/utils/format-ptbr.ts`): Helpers completos PT-BR
+  - Monetario: `formatCurrency`, `formatCurrencyCompact`, `formatPercent`, `formatNumber`
+  - Documentos: `formatCPF`, `formatCNPJ`, `formatCPFCNPJ`
+  - Telefone: `formatTelefone`
+  - Endereco: `formatCEP`
+  - Legislativo: `formatNormaRef`, `formatProposicaoRef`, `formatResultadoVotacao`, `formatQuorum`
+  - Texto: `formatNomeProprio`, `formatPlural`
+  - Mascaras de input: `maskCPF`, `maskCNPJ`, `maskTelefone`, `maskCEP`, `unmask`
+- **use-persistent-filters.ts** (`src/lib/hooks/use-persistent-filters.ts`): Hook de filtros com persistencia URL + localStorage + cascade clearing
+
+### Fase 2: UX Mobile
+- **bottom-navigation.tsx** (`src/components/layout/bottom-navigation.tsx`): Navegacao bottom tab bar para mobile
+  - 5 tabs: Inicio, Legislativo, Vereadores, Transparencia, Buscar
+  - WCAG touch targets 44px, deteccao de rota ativa
+  - Integrado ao ConditionalLayout (apenas rotas publicas, apenas < md)
+  - Safe area para iPhone (notch/home indicator)
+- **globals.css**: Touch accessibility WCAG 2.2
+  - `@media (pointer: coarse)`: touch targets automaticos 44px, inputs 16px (previne zoom iOS)
+  - Classes utilitarias: `touch-scroll-y`, `touch-scroll-x`, `touch-feedback`, `touch-no-zoom`
+  - Safe area: `safe-area-bottom`, `safe-area-top`
+- **use-swipe.ts** (`src/lib/hooks/use-swipe.ts`): Hook de gestos swipe para mobile
+- **virtual-list.tsx** (`src/components/ui/virtual-list.tsx`): Lista virtualizada para 1000+ itens
+  - Overscan, infinite scroll, empty state, ARIA roles
+
+### Fase 3: Relatorios e Impressao
+- **print-service.ts** (`src/lib/services/print-service.ts`): Servico de geracao de relatorios HTML
+  - Template base com CSS de impressao oficial (Times New Roman, A4, cabecalho/rodape)
+  - `gerarRelatorioPresenca()`: Lista de presenca de sessao com quorum
+  - `gerarRelatorioPauta()`: Pauta da sessao com ordem do dia
+  - `gerarRelatorioTramitacao()`: Historico de tramitacao de proposicao
+  - `wrapDocumentoHTML()`: Wrapper generico para qualquer relatorio
+  - `abrirImpressao()`: Abre janela de impressao
+- **print-button.tsx** (`src/components/ui/print-button.tsx`): Componentes de impressao
+  - `PrintButton`: Botao que imprime HTML ou conteudo de ref
+  - `PrintOnly`: Container visivel apenas na impressao
+  - `ScreenOnly`: Container visivel apenas na tela
+
+### Fase 4: Performance e Codigos
+- **cache-strategy.ts** (`src/lib/cache/cache-strategy.ts`): Cache em 3 camadas
+  - Camada 1: Memoria (ultra-rapido)
+  - Camada 2: Redis (compartilhado entre processos)
+  - Camada 3: Stale-While-Revalidate (retorna dado antigo se fetch falhar)
+  - TTLs legislativos pre-configurados: STATIC, SLOW, MODERATE, FAST, REALTIME
+  - `cachedFetch()`, `invalidateCache()`, `invalidateCacheByPrefix()`, `cachedApiResponse()`
+- **codigo-sequencial-service.ts** (`src/lib/services/codigo-sequencial-service.ts`): Gerador de codigos
+  - Advisory locks PostgreSQL para protecao contra concorrencia
+  - `gerarCodigoProposicao()`: PL-2026-001, PDL-2026-003
+  - `gerarCodigoSessao()`: SO-2026-001
+  - `gerarCodigoProtocolo()`: PROT-2026-00001
+  - `gerarCodigoNorma()`: LO-2026-001, LC-2026-002
+
+### Arquivos Novos
+| Arquivo | Tipo |
+|---------|------|
+| `src/lib/utils/format-ptbr.ts` | Utilitario |
+| `src/lib/hooks/use-persistent-filters.ts` | Hook |
+| `src/lib/hooks/use-swipe.ts` | Hook |
+| `src/components/layout/bottom-navigation.tsx` | Componente |
+| `src/components/ui/virtual-list.tsx` | Componente |
+| `src/components/ui/print-button.tsx` | Componente |
+| `src/lib/services/print-service.ts` | Servico |
+| `src/lib/cache/cache-strategy.ts` | Infra |
+| `src/lib/services/codigo-sequencial-service.ts` | Servico |
+
+### Arquivos Modificados
+| Arquivo | Mudanca |
+|---------|---------|
+| `src/app/globals.css` | Touch accessibility CSS, safe areas |
+| `src/components/layout/conditional-layout.tsx` | BottomNavigation integrado, pb-20 mobile |
 
 ---
 

@@ -513,6 +513,93 @@ html[data-reduced-motion="true"] *::after {
   margin-bottom: 0.5em;
 }
 
+/* ===== TOUCH & MOBILE ACCESSIBILITY (WCAG 2.2) ===== */
+
+/* Safe area para bottom navigation (iPhone notch/home indicator) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Touch targets melhorados para mobile */
+@media (pointer: coarse) {
+  /* Aumenta area de toque em elementos interativos */
+  button,
+  a,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Espacamento entre itens clicaveis */
+  .touch-spacing > * + * {
+    margin-top: 8px;
+  }
+
+  /* Links em texto precisam de area clicavel maior */
+  p a, li a, td a {
+    padding: 4px 2px;
+    margin: -4px -2px;
+  }
+
+  /* Select e input maiores em mobile */
+  select,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  textarea {
+    min-height: 44px;
+    font-size: 16px; /* Previne zoom no iOS */
+  }
+}
+
+/* Previne scroll horizontal acidental */
+.touch-scroll-y {
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
+}
+
+/* Permite scroll horizontal controlado (tabelas, carousels) */
+.touch-scroll-x {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.touch-scroll-x > * {
+  scroll-snap-align: start;
+}
+
+/* Feedback visual de toque */
+@media (pointer: coarse) {
+  .touch-feedback {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .touch-feedback:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+    transition: transform 50ms ease, opacity 50ms ease;
+  }
+}
+
+/* Desabilita zoom em double-tap (mantendo pinch-zoom) */
+.touch-no-zoom {
+  touch-action: manipulation;
+}
+
 /* ===== DARK MODE AUTOMATICO ===== */
 @media (prefers-color-scheme: dark) {
   html:not(.light):not([data-theme="light"]) {

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
+import { BottomNavigation } from '@/components/layout/bottom-navigation'
 import { AccessibilityToolbar } from '@/components/accessibility'
 import { MainContent } from '@/components/ui/skip-link'
 
@@ -29,10 +30,12 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <MainContent className="flex-1">
+      <MainContent className="flex-1 pb-20 md:pb-0">
         {children}
       </MainContent>
       <Footer />
+      {/* Navegação bottom para mobile */}
+      <BottomNavigation />
       {/* Toolbar de acessibilidade - fixo no canto */}
       <AccessibilityToolbar position="top-right" />
     </div>
