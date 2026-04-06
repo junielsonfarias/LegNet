@@ -104,11 +104,17 @@ export default function ProtocoloListPage() {
   const [estatisticas, setEstatisticas] = useState<Estatisticas | null>(null)
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
+  const [debouncedBusca, setDebouncedBusca] = useState('')
   const [filtroTipo, setFiltroTipo] = useState<string>('todos')
   const [filtroSituacao, setFiltroSituacao] = useState<string>('todos')
   const [filtroPrioridade, setFiltroPrioridade] = useState<string>('todos')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedBusca(busca), 300)
+    return () => clearTimeout(timer)
+  }, [busca])
 
   const carregarProtocolos = useCallback(async () => {
     try {
@@ -117,7 +123,7 @@ export default function ProtocoloListPage() {
       params.set('page', page.toString())
       params.set('limit', '20')
 
-      if (busca) params.set('busca', busca)
+      if (debouncedBusca) params.set('busca', debouncedBusca)
       if (filtroTipo && filtroTipo !== 'todos') params.set('tipo', filtroTipo)
       if (filtroSituacao && filtroSituacao !== 'todos') params.set('situacao', filtroSituacao)
       if (filtroPrioridade && filtroPrioridade !== 'todos') params.set('prioridade', filtroPrioridade)
@@ -137,7 +143,7 @@ export default function ProtocoloListPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, busca, filtroTipo, filtroSituacao, filtroPrioridade])
+  }, [page, debouncedBusca, filtroTipo, filtroSituacao, filtroPrioridade])
 
   const carregarEstatisticas = async () => {
     try {

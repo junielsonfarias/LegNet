@@ -80,7 +80,16 @@ export default function UsuariosPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    if (!formData.nome.trim()) {
+      toast.error('O nome é obrigatório')
+      return
+    }
+    if (!formData.email.trim()) {
+      toast.error('O email é obrigatório')
+      return
+    }
+
     try {
       if (editingUser) {
         // Atualizar usuário existente

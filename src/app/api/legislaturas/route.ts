@@ -59,21 +59,25 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   // Validar dados
   const validatedData = LegislaturaSchema.parse(body)
 
-  // Verificar se já existe legislatura ativa
-  if (validatedData.ativa) {
-    const existingAtiva = await legislaturaDbService.checkAtivaExiste()
-    if (existingAtiva) {
-      throw new ConflictError('Já existe uma legislatura ativa. Desative a atual antes de criar uma nova.')
+  // Usar transação para evitar race condition (check + create atômico)
+  const { prisma } = await import('@/lib/prisma')
+  const legislatura = await prisma.$transaction(async (tx) => {
+    // Verificar se já existe legislatura ativa
+    if (validatedData.ativa) {
+      const existingAtiva = await tx.legislatura.findFirst({ where: { ativa: true } })
+      if (existingAtiva) {
+        throw new ConflictError('Já existe uma legislatura ativa. Desative a atual antes de criar uma nova.')
+      }
     }
-  }
 
-  // Verificar se já existe legislatura com mesmo número
-  const existingNumero = await legislaturaDbService.checkDuplicateNumero(validatedData.numero)
-  if (existingNumero) {
-    throw new ConflictError('Já existe uma legislatura com este número')
-  }
+    // Verificar se já existe legislatura com mesmo número
+    const existingNumero = await tx.legislatura.findFirst({ where: { numero: validatedData.numero } })
+    if (existingNumero) {
+      throw new ConflictError('Já existe uma legislatura com este número')
+    }
 
-  const legislatura = await legislaturaDbService.create(validatedData)
+    return legislaturaDbService.create(validatedData)
+  })
 
   await logAudit({
     request,

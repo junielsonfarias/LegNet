@@ -7,15 +7,83 @@ import {
   DEFAULT_TENANT_SLUG,
 } from '@/lib/tenant/tenant-resolver'
 
+// =========================================================================
+// Rate Limiter em memória (substituindo middleware.ts da raiz)
+// =========================================================================
+
+type RateLimitEntry = { count: number; expires: number }
+type RateLimiter = Map<string, RateLimitEntry>
+
+const getLimiter = (): RateLimiter => {
+  const g = globalThis as any
+  if (!g.__CAMARA_RATE_LIMITER__) {
+    g.__CAMARA_RATE_LIMITER__ = new Map<string, RateLimitEntry>()
+  }
+  return g.__CAMARA_RATE_LIMITER__
+}
+
+const allowRequest = (key: string, limit: number, windowMs: number) => {
+  const limiter = getLimiter()
+  const current = limiter.get(key)
+  const now = Date.now()
+
+  if (!current || current.expires < now) {
+    limiter.set(key, { count: 1, expires: now + windowMs })
+    return true
+  }
+  if (current.count >= limit) return false
+  current.count += 1
+  return true
+}
+
+const buildRateLimitKey = (request: NextRequest) => {
+  const ip =
+    (request as any).ip ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    '127.0.0.1'
+  return ip
+}
+
+const LOGIN_RATE_LIMIT = { limit: 10, windowMs: 5 * 60 * 1000 }
+const API_RATE_LIMIT = { limit: 120, windowMs: 60 * 1000 }
+
 /**
  * Middleware principal que:
- * 1. Identifica o tenant a partir do hostname
- * 2. Adiciona headers com informações do tenant (propagados para API routes)
- * 3. Verifica autenticação para rotas /admin
+ * 1. Rate limiting para APIs
+ * 2. Identifica o tenant a partir do hostname
+ * 3. Adiciona headers com informações do tenant (propagados para API routes)
+ * 4. Verifica autenticação para rotas /admin e /parlamentar
+ * 5. Headers de segurança (CSP, HSTS, etc.)
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const hostname = request.headers.get('host') || 'localhost'
+
+  // =========================================================================
+  // 0. Rate Limiting
+  // =========================================================================
+
+  const isApi = pathname.startsWith('/api')
+
+  if (isApi) {
+    const rlKey = `${buildRateLimitKey(request)}:${pathname}`
+    if (!allowRequest(rlKey, API_RATE_LIMIT.limit, API_RATE_LIMIT.windowMs)) {
+      return NextResponse.json(
+        { success: false, error: 'Muitas requisições. Aguarde e tente novamente.' },
+        { status: 429 }
+      )
+    }
+
+    if (pathname.startsWith('/api/auth')) {
+      const authKey = `${buildRateLimitKey(request)}:auth`
+      if (!allowRequest(authKey, LOGIN_RATE_LIMIT.limit, LOGIN_RATE_LIMIT.windowMs)) {
+        return NextResponse.json(
+          { success: false, error: 'Muitas tentativas de login. Aguarde 5 minutos.' },
+          { status: 429 }
+        )
+      }
+    }
+  }
 
   // =========================================================================
   // 1. Identificação do Tenant

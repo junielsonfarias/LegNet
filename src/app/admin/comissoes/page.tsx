@@ -154,10 +154,14 @@ export default function ComissoesAdminPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    if (!formData.nome.trim()) {
+      toast.error('Nome da comissão é obrigatório')
+      return
+    }
+
     try {
       if (editingId) {
-        // Editar comissão existente
         await update(editingId, {
           nome: formData.nome,
           descricao: formData.descricao,
@@ -165,8 +169,8 @@ export default function ComissoesAdminPage() {
           ativa: formData.ativa
         })
         await refetch()
+        toast.success('Comissão atualizada com sucesso')
       } else {
-        // Adicionar nova comissão
         await create({
           nome: formData.nome,
           descricao: formData.descricao,
@@ -174,9 +178,9 @@ export default function ComissoesAdminPage() {
           ativa: formData.ativa
         })
         await refetch()
+        toast.success('Comissão criada com sucesso')
       }
-      
-      // Limpar formulário
+
       setFormData({
         nome: '',
         descricao: '',
@@ -187,6 +191,7 @@ export default function ComissoesAdminPage() {
       setEditingId(null)
     } catch (error) {
       console.error('Erro ao salvar comissão:', error)
+      toast.error('Erro ao salvar comissão. Tente novamente.')
     }
   }
 
@@ -228,16 +233,20 @@ export default function ComissoesAdminPage() {
   }
 
   const handleToggleMembro = async (comissaoId: string, membro: any) => {
-    const novoStatus = !membro.ativo
-    const dataFim = novoStatus ? null : new Date().toISOString().split('T')[0]
+    try {
+      const novoStatus = !membro.ativo
+      const dataFim = novoStatus ? null : new Date().toISOString().split('T')[0]
 
-    const atualizado = await updateMember(comissaoId, membro.id, {
-      ativo: novoStatus,
-      dataFim
-    })
+      const atualizado = await updateMember(comissaoId, membro.id, {
+        ativo: novoStatus,
+        dataFim
+      })
 
-    if (atualizado) {
-      toast.success(`Membro ${novoStatus ? 'reativado' : 'inativado'} com sucesso`)
+      if (atualizado) {
+        toast.success(`Membro ${novoStatus ? 'reativado' : 'inativado'} com sucesso`)
+      }
+    } catch (error) {
+      toast.error('Erro ao alterar status do membro')
     }
   }
 
@@ -268,8 +277,10 @@ export default function ComissoesAdminPage() {
       try {
         await remove(id)
         await refetch()
+        toast.success('Comissão excluída com sucesso')
       } catch (error) {
         console.error('Erro ao excluir comissão:', error)
+        toast.error('Erro ao excluir comissão. Verifique se não há dependências.')
       }
     }
   }
@@ -608,6 +619,7 @@ export default function ComissoesAdminPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleAddMembro(comissao.id)}
+                    aria-label="Adicionar membro"
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
@@ -615,6 +627,7 @@ export default function ComissoesAdminPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleEdit(comissao)}
+                    aria-label="Editar comissão"
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
@@ -623,6 +636,7 @@ export default function ComissoesAdminPage() {
                     variant="outline"
                     onClick={() => handleDelete(comissao.id)}
                     className="text-red-600 hover:text-red-700"
+                    aria-label="Excluir comissão"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

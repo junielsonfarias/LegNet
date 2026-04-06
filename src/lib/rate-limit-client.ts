@@ -18,9 +18,33 @@ import {
 // Header secreto para validar chamadas internas
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || ''
 
-// Cache de resultados para evitar múltiplas chamadas
+// Cache de resultados para evitar múltiplas chamadas (com limite de tamanho)
 const resultCache = new Map<string, { result: RateLimitResult; timestamp: number }>()
 const CACHE_TTL = 1000 // 1 segundo
+const CACHE_MAX_SIZE = 1000 // Previne memory leak
+
+// Limpeza periódica de entradas expiradas
+function pruneCache() {
+  if (resultCache.size <= CACHE_MAX_SIZE) return
+  const now = Date.now()
+  const keysToDelete: string[] = []
+  resultCache.forEach((val, key) => {
+    if (now - val.timestamp > CACHE_TTL * 10) {
+      keysToDelete.push(key)
+    }
+  })
+  keysToDelete.forEach(key => resultCache.delete(key))
+  // Se ainda acima do limite, remover as mais antigas
+  if (resultCache.size > CACHE_MAX_SIZE) {
+    const entries: Array<[string, { result: RateLimitResult; timestamp: number }]> = []
+    resultCache.forEach((val, key) => entries.push([key, val]))
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp)
+    const removeCount = entries.length - CACHE_MAX_SIZE
+    for (let i = 0; i < removeCount; i++) {
+      resultCache.delete(entries[i][0])
+    }
+  }
+}
 
 /**
  * Verifica rate limit usando Redis (via API) quando possível
@@ -69,7 +93,8 @@ export async function checkRateLimitWithRedis(
     if (response.ok) {
       const data = await response.json()
 
-      // Atualiza cache
+      // Atualiza cache (com limpeza periódica)
+      pruneCache()
       resultCache.set(cacheKey, {
         result: {
           allowed: data.allowed,

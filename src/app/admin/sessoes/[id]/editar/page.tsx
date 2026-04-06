@@ -22,6 +22,7 @@ export default function EditarSessaoPage() {
   const { sessao, loading, error } = useSessao(id || null)
 
   const [saving, setSaving] = useState(false)
+  const [formPopulated, setFormPopulated] = useState(false)
   const [formData, setFormData] = useState({
     numero: '',
     tipo: 'ORDINARIA' as 'ORDINARIA' | 'EXTRAORDINARIA' | 'SOLENE' | 'ESPECIAL',
@@ -32,10 +33,10 @@ export default function EditarSessaoPage() {
     status: 'AGENDADA' as 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
   })
 
+  // Popula form APENAS na primeira carga (evita perder edições do usuário em refetch)
   useEffect(() => {
-    if (sessao) {
+    if (sessao && !formPopulated) {
       const dataObj = new Date(sessao.data)
-      // Formatar horário de forma mais segura
       const formatHorario = (date: Date): string => {
         const hours = date.getHours().toString().padStart(2, '0')
         const minutes = date.getMinutes().toString().padStart(2, '0')
@@ -50,8 +51,9 @@ export default function EditarSessaoPage() {
         descricao: sessao.descricao || '',
         status: sessao.status
       })
+      setFormPopulated(true)
     }
-  }, [sessao])
+  }, [sessao, formPopulated])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

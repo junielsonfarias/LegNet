@@ -243,7 +243,7 @@ export const POST = withAuth(async (request: NextRequest) => {
     { success: false, error: 'Tipo não especificado' },
     { status: 400 }
   )
-}, { permissions: 'audit.manage' })
+}, { roles: ['ADMIN', 'SECRETARIA'], permissions: 'audit.manage' })
 
 // PUT - Atualizar relatório
 export const PUT = withAuth(async (request: NextRequest) => {

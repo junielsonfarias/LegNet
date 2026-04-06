@@ -151,6 +151,22 @@ function processStatusTransition(
     return
   }
 
+  // Validar transições de status permitidas
+  const allowedTransitions: Record<string, string[]> = {
+    AGENDADA: ['EM_ANDAMENTO', 'CANCELADA'],
+    EM_ANDAMENTO: ['SUSPENSA', 'CONCLUIDA'],
+    SUSPENSA: ['EM_ANDAMENTO', 'CANCELADA'],
+    CONCLUIDA: [],
+    CANCELADA: [],
+  }
+
+  const allowed = allowedTransitions[statusAnterior]
+  if (!allowed || !allowed.includes(novoStatus)) {
+    throw new ValidationError(
+      `Transição de status inválida: ${statusAnterior} → ${novoStatus}`
+    )
+  }
+
   updateData.status = novoStatus
 
   switch (novoStatus) {

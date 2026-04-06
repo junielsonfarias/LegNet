@@ -249,12 +249,12 @@ export default function SessoesAdminPage() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowForm(true)} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            Rapido
+            Rápido
           </Button>
           <Button asChild className="flex items-center gap-2">
             <Link href="/admin/sessoes/nova">
               <Plus className="h-4 w-4" />
-              Nova Sessao com Pauta
+              Nova Sessão com Pauta
             </Link>
           </Button>
         </div>
@@ -367,13 +367,13 @@ export default function SessoesAdminPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="local">Local da Sessao</Label>
+                  <Label htmlFor="local">Local da Sessão</Label>
                   <Input
                     id="local"
                     name="local"
                     value={formData.local}
                     onChange={(e) => setFormData({...formData, local: e.target.value})}
-                    placeholder="Ex: Plenario da Camara Municipal"
+                    placeholder="Ex: Plenário da Câmara Municipal"
                   />
                 </div>
               </div>
@@ -464,6 +464,7 @@ export default function SessoesAdminPage() {
                     size="sm"
                     variant="outline"
                     asChild
+                    aria-label="Ver sessão"
                   >
                     <Link href={`/admin/sessoes/${gerarSlugSessao(sessao.numero, sessao.data)}`}>
                       <Eye className="h-3 w-3" />
@@ -473,6 +474,7 @@ export default function SessoesAdminPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleEdit(sessao)}
+                    aria-label="Editar sessão"
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
@@ -481,6 +483,7 @@ export default function SessoesAdminPage() {
                     variant="outline"
                     onClick={() => handleDelete(sessao.id)}
                     className="text-red-600 hover:text-red-700"
+                    aria-label="Excluir sessão"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>
@@ -509,7 +512,7 @@ export default function SessoesAdminPage() {
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-gray-500" />
                   <span className="text-gray-600">
-                    {sessao.local || 'Local nao informado'}
+                    {sessao.local || 'Local não informado'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">

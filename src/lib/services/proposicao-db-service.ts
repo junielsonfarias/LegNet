@@ -220,7 +220,11 @@ export const proposicaoDbService = {
   },
 
   async checkAutorExists(autorId: string) {
-    return prisma.parlamentar.findUnique({ where: { id: autorId } })
+    // Busca em Parlamentar (autorId legado) OU em Autor (autorEntidadeId novo)
+    const parlamentar = await prisma.parlamentar.findUnique({ where: { id: autorId } })
+    if (parlamentar) return parlamentar
+    const autor = await prisma.autor.findUnique({ where: { id: autorId } })
+    return autor
   },
 
   async create(data: ProposicaoCreateData) {
@@ -250,24 +254,26 @@ export const proposicaoDbService = {
   },
 
   async update(id: string, data: ProposicaoUpdateData) {
+    // Filtrar campos undefined para evitar sobrescrever com null
+    const updateFields: Record<string, any> = {}
+    if (data.slug !== undefined) updateFields.slug = data.slug
+    if (data.numero !== undefined) updateFields.numero = data.numero
+    if (data.ano !== undefined) updateFields.ano = data.ano
+    if (data.tipo !== undefined) updateFields.tipo = data.tipo
+    if (data.titulo !== undefined) updateFields.titulo = data.titulo
+    if (data.ementa !== undefined) updateFields.ementa = data.ementa
+    if (data.texto !== undefined) updateFields.texto = data.texto
+    if (data.urlDocumento !== undefined) updateFields.urlDocumento = data.urlDocumento
+    if (data.status !== undefined) updateFields.status = data.status as StatusProposicao
+    if (data.dataApresentacao !== undefined) updateFields.dataApresentacao = data.dataApresentacao
+    if (data.dataVotacao !== undefined) updateFields.dataVotacao = data.dataVotacao
+    if (data.resultado !== undefined) updateFields.resultado = data.resultado as ResultadoVotacao
+    if (data.sessaoId !== undefined) updateFields.sessaoId = data.sessaoId
+    if (data.autorId !== undefined) updateFields.autorId = data.autorId
+
     return prisma.proposicao.update({
       where: { id },
-      data: {
-        slug: data.slug,
-        numero: data.numero,
-        ano: data.ano,
-        tipo: data.tipo,
-        titulo: data.titulo,
-        ementa: data.ementa,
-        texto: data.texto,
-        urlDocumento: data.urlDocumento,
-        status: data.status as StatusProposicao | undefined,
-        dataApresentacao: data.dataApresentacao,
-        dataVotacao: data.dataVotacao,
-        resultado: data.resultado as ResultadoVotacao | undefined,
-        sessaoId: data.sessaoId,
-        autorId: data.autorId
-      },
+      data: updateFields,
       include: {
         autor: {
           select: { id: true, nome: true, apelido: true }

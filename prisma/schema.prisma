@@ -1475,10 +1475,10 @@ model PautaItem {
   updatedAt      DateTime        @updatedAt
 
   pauta       PautaSessao  @relation(fields: [pautaId], references: [id], onDelete: Cascade)
-  proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
+  proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
   sessaoAtual PautaSessao? @relation("SessaoItemAtual")
   destaques   DestaquePautaItem[]
-  parecer     Parecer?     @relation(fields: [parecerId], references: [id], onDelete: SetNull)
+  parecer     Parecer?     @relation(fields: [parecerId], references: [id], onDelete: Cascade)
   relator     Parlamentar? @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
 
   @@index([pautaId, secao, ordem])

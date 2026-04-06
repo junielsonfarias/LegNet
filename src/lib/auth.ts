@@ -56,25 +56,30 @@ export const authOptions: NextAuthOptions = {
             throw new Error('TOO_MANY_ATTEMPTS')
           }
 
-          // Tentar autenticar com mock primeiro
-          const result = await mockAuth.signIn(credentials)
-          if (result?.user) {
-            await recordLoginAttempt(credentials.email, true)
-            return result.user
-          }
-
-          // Se não encontrou no mock, tentar no banco (Prisma ou mockDb)
+          // Buscar usuario no banco (Prisma)
           const prisma = (await import('@/lib/prisma')).prisma
-          const user = await prisma.user.findUnique({
+          let user = await prisma.user.findUnique({
             where: { email: credentials.email },
             include: { parlamentar: { select: { id: true } } }
           })
 
-          if (!user || !user.password) {
+          // Fallback para mock auth (apenas desenvolvimento)
+          if (!user) {
+            const result = await mockAuth.signIn(credentials)
+            if (result?.user) {
+              await recordLoginAttempt(credentials.email, true)
+              return result.user
+            }
             await recordLoginAttempt(credentials.email, false)
             return null
           }
 
+          if (!user.password) {
+            await recordLoginAttempt(credentials.email, false)
+            return null
+          }
+
+          // SEGURANÇA: Verificar senha ANTES de resetar rate limit
           const bcrypt = (await import('bcryptjs')).default
           const passwordMatch = await bcrypt.compare(credentials.password, user.password)
 
@@ -83,10 +88,10 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
+          // SEGURANÇA: Verificar 2FA ANTES de resetar rate limit
           if (user.twoFactorEnabled && user.twoFactorSecret) {
             const code = credentials.code?.toString().trim()
             if (!code) {
-              // Não conta como falha - usuário precisa fornecer código 2FA
               throw new Error('2FA_REQUIRED')
             }
             const isValidCode = verifyTotpToken(user.twoFactorSecret, code)
@@ -96,7 +101,7 @@ export const authOptions: NextAuthOptions = {
             }
           }
 
-          // Login bem-sucedido
+          // Login bem-sucedido - resetar rate limit APÓS todas as verificações
           await recordLoginAttempt(credentials.email, true)
           return {
             id: user.id,
