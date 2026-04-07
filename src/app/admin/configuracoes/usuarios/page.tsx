@@ -200,7 +200,7 @@ export default function UsuariosPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestão de Usuários</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Gestão de Usuários</h1>
           <p className="text-gray-600">Gerencie usuários, roles e permissões do sistema</p>
         </div>
         <Button onClick={() => setShowForm(true)}>

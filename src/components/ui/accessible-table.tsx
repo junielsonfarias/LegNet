@@ -25,21 +25,25 @@ export function AccessibleTable({
   className
 }: AccessibleTableProps) {
   return (
-    <div className="overflow-x-auto" role="region" aria-label={caption}>
-      <table
-        className={cn('w-full border-collapse', className)}
-        aria-describedby={summary ? 'table-summary' : undefined}
-      >
-        <caption className={cn('text-left font-semibold mb-2 sr-only', captionClassName)}>
-          {caption}
-        </caption>
-        {summary && (
-          <caption id="table-summary" className="sr-only">
-            {summary}
+    <div className="relative">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0" role="region" aria-label={caption}>
+        <table
+          className={cn('w-full border-collapse min-w-[600px] sm:min-w-0', className)}
+          aria-describedby={summary ? 'table-summary' : undefined}
+        >
+          <caption className={cn('text-left font-semibold mb-2 sr-only', captionClassName)}>
+            {caption}
           </caption>
-        )}
-        {children}
-      </table>
+          {summary && (
+            <caption id="table-summary" className="sr-only">
+              {summary}
+            </caption>
+          )}
+          {children}
+        </table>
+      </div>
+      {/* Indicador de scroll no mobile */}
+      <div className="sm:hidden pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent" aria-hidden="true" />
     </div>
   )
 }

@@ -137,7 +137,7 @@ export default function PrazosUrgenciaPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
             <Clock className="h-8 w-8 text-blue-600" />
             Prazos por Regime de Urgencia
           </h1>

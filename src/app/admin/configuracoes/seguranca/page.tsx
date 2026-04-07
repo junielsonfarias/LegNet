@@ -151,7 +151,7 @@ export default function SecuritySettingsPage() {
         <AdminBreadcrumbs />
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
               <ShieldCheck className="h-8 w-8 text-camara-primary" />
               Segurança e Autenticação
             </h1>

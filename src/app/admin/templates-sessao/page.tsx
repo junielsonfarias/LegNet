@@ -288,7 +288,7 @@ export default function TemplatesSessaoPage() {
     <div className="container mx-auto space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Templates de Sessão</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Templates de Sessão</h1>
           <p className="text-gray-600">Crie estruturas padrão para geração automática de pautas.</p>
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>

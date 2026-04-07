@@ -138,7 +138,7 @@ function MesaCard({ p }: { p: Parlamentar }) {
 
 function VereadorCard({ p }: { p: Parlamentar }) {
   return (
-    <Link href={getPerfilUrl(p)} className="group shrink-0 w-36 md:w-40">
+    <Link href={getPerfilUrl(p)} className="group shrink-0 w-32 sm:w-36 md:w-40">
       <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-1 text-center">
         <div className="flex justify-center mb-3">
           <div className="transition-transform duration-300 group-hover:scale-110">

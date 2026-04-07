@@ -215,7 +215,7 @@ export default function SessoesAdminPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
               <Calendar className="h-8 w-8 text-blue-600" />
               Gerenciar Sessões Legislativas
             </h1>
@@ -238,7 +238,7 @@ export default function SessoesAdminPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Calendar className="h-8 w-8 text-blue-600" />
             Gerenciar Sessões Legislativas
           </h1>

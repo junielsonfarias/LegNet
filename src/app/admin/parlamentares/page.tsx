@@ -147,7 +147,7 @@ export default function ParlamentaresPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Parlamentares</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Parlamentares</h1>
           <p className="text-gray-600 mt-2">Gerencie os parlamentares da Câmara Municipal</p>
         </div>
         <Button 

@@ -210,7 +210,7 @@ export default function ProtocoloListPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">
                 {estatisticas.total}
               </div>
             </CardContent>
@@ -223,7 +223,7 @@ export default function ProtocoloListPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-yellow-600">
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-600">
                 {estatisticas.porSituacao.find(s => s.situacao === 'ABERTO')?.quantidade || 0}
               </div>
             </CardContent>
@@ -236,7 +236,7 @@ export default function ProtocoloListPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-600">
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-600">
                 {estatisticas.porSituacao.find(s => s.situacao === 'EM_TRAMITACAO')?.quantidade || 0}
               </div>
             </CardContent>
@@ -249,7 +249,7 @@ export default function ProtocoloListPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-600">
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-600">
                 {estatisticas.porSituacao.find(s => s.situacao === 'ARQUIVADO')?.quantidade || 0}
               </div>
             </CardContent>

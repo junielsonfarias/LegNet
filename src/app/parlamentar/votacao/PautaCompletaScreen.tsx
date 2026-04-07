@@ -141,9 +141,9 @@ export function PautaCompletaScreen({
                         </p>
                       )}
                       {itemEmDiscussao.proposicao.autor && (
-                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 min-w-0">
                           <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                          <span>
+                          <span className="truncate">
                             <strong>Autor:</strong> {itemEmDiscussao.proposicao.autor.apelido || itemEmDiscussao.proposicao.autor.nome}
                             {itemEmDiscussao.proposicao.autor.partido && (
                               <span className="text-blue-600 ml-1">

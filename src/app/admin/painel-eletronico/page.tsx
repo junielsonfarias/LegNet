@@ -130,16 +130,18 @@ export default function PainelEletronicoPage() {
       {/* Conteúdo Principal - Tabs */}
       {sessaoAtiva && (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="pauta">Pauta</TabsTrigger>
-            <TabsTrigger value="presenca">Presença</TabsTrigger>
-            <TabsTrigger value="votacao">Votação</TabsTrigger>
-            <TabsTrigger value="tempo">Tempo</TabsTrigger>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
-            <TabsTrigger value="configuracoes">Config</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-1 px-1">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 lg:grid-cols-8">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">Visão Geral</TabsTrigger>
+              <TabsTrigger value="pauta" className="text-xs sm:text-sm">Pauta</TabsTrigger>
+              <TabsTrigger value="presenca" className="text-xs sm:text-sm">Presença</TabsTrigger>
+              <TabsTrigger value="votacao" className="text-xs sm:text-sm">Votação</TabsTrigger>
+              <TabsTrigger value="tempo" className="text-xs sm:text-sm">Tempo</TabsTrigger>
+              <TabsTrigger value="chat" className="text-xs sm:text-sm">Chat</TabsTrigger>
+              <TabsTrigger value="relatorios" className="text-xs sm:text-sm">Relatórios</TabsTrigger>
+              <TabsTrigger value="configuracoes" className="text-xs sm:text-sm">Config</TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* === ABA VISÃO GERAL === */}
           <TabsContent value="overview" className="space-y-6">

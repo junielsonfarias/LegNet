@@ -12,24 +12,24 @@ export function ContagemVotos({ resultado }: ContagemVotosProps) {
       <h4 className="text-white font-semibold text-sm sm:text-base mb-3 text-center">
         Resultado da Votação
       </h4>
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
-        <div className="text-center p-3 bg-green-900/30 rounded-lg border border-green-500/30">
-          <div className="text-2xl sm:text-3xl font-bold text-green-400">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="text-center p-2 sm:p-3 bg-green-900/30 rounded-lg border border-green-500/30">
+          <div className="text-xl sm:text-3xl font-bold text-green-400">
             {resultado.votosSim}
           </div>
-          <div className="text-xs sm:text-sm text-green-300">SIM</div>
+          <div className="text-[10px] sm:text-sm text-green-300">SIM</div>
         </div>
-        <div className="text-center p-3 bg-red-900/30 rounded-lg border border-red-500/30">
-          <div className="text-2xl sm:text-3xl font-bold text-red-400">
+        <div className="text-center p-2 sm:p-3 bg-red-900/30 rounded-lg border border-red-500/30">
+          <div className="text-xl sm:text-3xl font-bold text-red-400">
             {resultado.votosNao}
           </div>
-          <div className="text-xs sm:text-sm text-red-300">NÃO</div>
+          <div className="text-[10px] sm:text-sm text-red-300">NÃO</div>
         </div>
-        <div className="text-center p-3 bg-yellow-900/30 rounded-lg border border-yellow-500/30">
-          <div className="text-2xl sm:text-3xl font-bold text-yellow-400">
+        <div className="text-center p-2 sm:p-3 bg-yellow-900/30 rounded-lg border border-yellow-500/30">
+          <div className="text-xl sm:text-3xl font-bold text-yellow-400">
             {resultado.votosAbstencao}
           </div>
-          <div className="text-xs sm:text-sm text-yellow-300">ABSTENÇÃO</div>
+          <div className="text-[10px] sm:text-sm text-yellow-300">ABST.</div>
         </div>
       </div>
       <div className="text-center text-slate-400 text-xs sm:text-sm mt-3">

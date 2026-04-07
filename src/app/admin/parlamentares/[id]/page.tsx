@@ -114,7 +114,7 @@ export default function VisualizarParlamentarPage() {
               </div>
             )}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{parlamentar.nome}</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{parlamentar.nome}</h1>
               {parlamentar.apelido && (
                 <p className="text-xl text-gray-600 mt-1">{parlamentar.apelido}</p>
               )}

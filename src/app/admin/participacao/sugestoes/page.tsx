@@ -155,7 +155,7 @@ export default function SugestoesPage() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Sugestoes Legislativas</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Sugestoes Legislativas</h1>
           <p className="text-muted-foreground">
             Gerencie sugestoes enviadas pelos cidadaos
           </p>

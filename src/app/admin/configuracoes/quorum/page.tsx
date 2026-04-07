@@ -169,7 +169,7 @@ export default function QuorumConfigPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Configuracao de Quorum</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Configuracao de Quorum</h1>
           <p className="text-gray-600">Gerencie os tipos de quorum para sessoes e votacoes</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">

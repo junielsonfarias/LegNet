@@ -108,7 +108,7 @@ export default function SessoesLegislativasPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Sessões Legislativas</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Sessões Legislativas</h1>
           <p className="text-gray-600">Gerencie as sessões legislativas da Câmara</p>
         </div>
         <Button

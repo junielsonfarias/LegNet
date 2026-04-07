@@ -155,7 +155,7 @@ export function AdminSidebarMobile({ userRole = 'ADMIN' }: AdminSidebarMobilePro
       {/* Sidebar Mobile */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 w-72 bg-white dark:bg-gray-900 z-50 lg:hidden transform transition-transform duration-300 ease-in-out shadow-2xl',
+          'fixed inset-y-0 left-0 w-[min(288px,85vw)] bg-white dark:bg-gray-900 z-50 lg:hidden transform transition-transform duration-300 ease-in-out shadow-2xl',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >

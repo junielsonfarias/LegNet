@@ -232,7 +232,7 @@ export default function TiposExpedientePage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Tipos de Expediente</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Tipos de Expediente</h1>
           <p className="text-gray-600">
             Configure os tipos de expediente que podem ser utilizados nas sessoes
           </p>

@@ -196,7 +196,7 @@ export default function AdminParticipacaoCidadaPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestão de Participação Cidadã</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Gestão de Participação Cidadã</h1>
           <p className="text-muted-foreground">
             Gerencie sugestões, consultas públicas e petições dos cidadãos
           </p>

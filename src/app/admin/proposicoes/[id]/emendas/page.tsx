@@ -421,7 +421,7 @@ export default function EmendasProposicaoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">
               {estatisticas.total}
             </div>
           </CardContent>
@@ -434,7 +434,7 @@ export default function EmendasProposicaoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600">
               {estatisticas.aprovadas}
             </div>
           </CardContent>
@@ -447,7 +447,7 @@ export default function EmendasProposicaoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-600">
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-red-600">
               {estatisticas.rejeitadas}
             </div>
           </CardContent>
@@ -460,7 +460,7 @@ export default function EmendasProposicaoPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-600">
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold text-yellow-600">
               {estatisticas.pendentes}
             </div>
           </CardContent>

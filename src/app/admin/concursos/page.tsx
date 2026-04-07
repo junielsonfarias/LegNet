@@ -291,12 +291,12 @@ export default function ConcursosAdminPage() {
               <textarea className="w-full px-3 py-2 border rounded-md min-h-[80px]" value={formData.descricao}
                 onChange={e => setFormData({ ...formData, descricao: e.target.value })} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div><Label>Data Publicacao *</Label><Input type="date" value={formData.dataPublicacao} onChange={e => setFormData({ ...formData, dataPublicacao: e.target.value })} /></div>
               <div><Label>Inscricao Inicio</Label><Input type="date" value={formData.dataInscricaoInicio} onChange={e => setFormData({ ...formData, dataInscricaoInicio: e.target.value })} /></div>
               <div><Label>Inscricao Fim</Label><Input type="date" value={formData.dataInscricaoFim} onChange={e => setFormData({ ...formData, dataInscricaoFim: e.target.value })} /></div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div><Label>Data Prova</Label><Input type="date" value={formData.dataProva} onChange={e => setFormData({ ...formData, dataProva: e.target.value })} /></div>
               <div><Label>Vagas</Label><Input type="number" value={formData.vagas} onChange={e => setFormData({ ...formData, vagas: e.target.value })} /></div>
               <div>

@@ -151,7 +151,7 @@ export default function TestesApiPage() {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 flex items-center gap-3">
           <TestTube className="h-8 w-8 text-blue-600" />
           Testes da API
         </h1>

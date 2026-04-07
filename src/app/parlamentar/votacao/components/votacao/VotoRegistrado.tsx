@@ -41,7 +41,7 @@ export function VotoRegistrado({ voto, onAlterar, disabled }: VotoRegistradoProp
         <Button
           onClick={onAlterar}
           variant="outline"
-          className="border-orange-500/50 text-orange-300 hover:bg-orange-500/20 hover:text-orange-200 h-10 sm:h-12 px-4 sm:px-5"
+          className="border-orange-500/50 text-orange-300 hover:bg-orange-500/20 hover:text-orange-200 h-11 sm:h-12 px-4 sm:px-5"
           disabled={disabled}
         >
           <Vote className="h-4 w-4 mr-2" />

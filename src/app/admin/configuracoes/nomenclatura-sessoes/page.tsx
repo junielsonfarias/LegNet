@@ -164,7 +164,7 @@ export default function NomenclaturaSessoesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Nomenclatura de Sessões</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Nomenclatura de Sessões</h1>
           <p className="text-gray-600 mt-2">
             Configure a nomenclatura e numeração das sessões legislativas
           </p>

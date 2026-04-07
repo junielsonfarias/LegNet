@@ -152,7 +152,7 @@ export default function IntegracoesPage() {
     <div className="container mx-auto space-y-6 p-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
             <ShieldCheck className="h-8 w-8 text-blue-600" />
             Tokens de Integração
           </h1>

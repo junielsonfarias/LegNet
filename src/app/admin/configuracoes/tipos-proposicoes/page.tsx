@@ -347,7 +347,7 @@ export default function TiposProposicoesPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Tipos de Proposicoes</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Tipos de Proposicoes</h1>
           <p className="text-gray-600">Configure os tipos de proposicoes legislativas e seus fluxos de tramitacao</p>
         </div>
         <div className="flex items-center gap-2">

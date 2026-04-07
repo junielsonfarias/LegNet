@@ -248,7 +248,7 @@ export default function UsuariosPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
             <Users className="h-8 w-8 text-blue-600" />
             Gerenciamento de Usuários
           </h1>
@@ -353,27 +353,29 @@ export default function UsuariosPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-[44px]"
                       onClick={() => toggleAtivo(usuario)}
                     >
                       {usuario.ativo ? (
                         <>
                           <UserX className="h-4 w-4 mr-1" />
-                          Desativar
+                          <span className="hidden sm:inline">Desativar</span>
                         </>
                       ) : (
                         <>
                           <UserCheck className="h-4 w-4 mr-1" />
-                          Ativar
+                          <span className="hidden sm:inline">Ativar</span>
                         </>
                       )}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-[44px]"
                       onClick={() => handleEdit(usuario)}
                     >
                       <Edit className="h-4 w-4" />
@@ -381,8 +383,8 @@ export default function UsuariosPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-[44px] text-red-600 hover:text-red-700"
                       onClick={() => handleDelete(usuario.id)}
-                      className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -397,7 +399,7 @@ export default function UsuariosPage() {
       {/* Modal de Criação/Edição */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <Card className="w-full max-w-sm sm:max-w-lg md:max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle>
                 {editingUsuario ? 'Editar Usuário' : 'Novo Usuário'}

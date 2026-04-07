@@ -67,12 +67,11 @@ function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
                 alt={parlamentar.apelido || parlamentar.nome}
                 width={88}
                 height={88}
-                className="w-18 h-18 sm:w-22 sm:h-22 rounded-full object-cover ring-[3px] ring-offset-2 ring-gray-200 group-hover:ring-[var(--municipal-primary-light)] transition-all shadow-md"
-                style={{ width: '80px', height: '80px' }}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-[3px] ring-offset-2 ring-gray-200 group-hover:ring-[var(--municipal-primary-light)] transition-all shadow-md"
               />
             ) : (
               <div
-                className="w-[80px] h-[80px] rounded-full flex items-center justify-center font-bold text-white text-xl ring-[3px] ring-offset-2 ring-gray-200 shadow-md"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center font-bold text-white text-lg sm:text-xl ring-[3px] ring-offset-2 ring-gray-200 shadow-md"
                 style={{ backgroundColor: 'var(--municipal-primary)' }}
               >
                 {initials}

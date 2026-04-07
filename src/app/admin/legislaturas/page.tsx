@@ -45,7 +45,7 @@ export default function LegislaturasAdminPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gerenciar Legislaturas</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Gerenciar Legislaturas</h1>
           <p className="text-gray-600 mt-2">
             Cadastre e gerencie as legislaturas da Camara Municipal
           </p>

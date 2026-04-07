@@ -354,7 +354,7 @@ export default function PublicacoesPage() {
         <AdminBreadcrumbs />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
               <BookOpen className="h-8 w-8 text-camara-primary" />
               Publicações Institucionais
             </h1>

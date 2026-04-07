@@ -50,7 +50,7 @@ export default function AudienciasPublicasAdminPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Audiencias Publicas</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Audiencias Publicas</h1>
           <p className="text-gray-600">Gerencie as audiencias publicas da Camara</p>
         </div>
         <Button onClick={() => setShowForm(true)} className="bg-camara-primary hover:bg-camara-primary/90">

@@ -181,7 +181,7 @@ export default function AuditoriaPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Auditoria do Sistema</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Auditoria do Sistema</h1>
           <p className="text-muted-foreground">
             Monitore e analise todas as atividades do sistema
           </p>
@@ -191,7 +191,7 @@ export default function AuditoriaPage() {
 
       {/* Estatísticas Resumidas */}
       {estatisticas && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
@@ -264,18 +264,18 @@ export default function AuditoriaPage() {
                     Histórico de todas as ações realizadas no sistema
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" onClick={detectarAtividadeSuspeita}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={detectarAtividadeSuspeita}>
                     <Shield className="mr-2 h-4 w-4" />
-                    Detectar Suspeitos
+                    <span className="hidden sm:inline">Detectar</span> Suspeitos
                   </Button>
-                  <Button variant="outline" onClick={() => exportarEventos('csv')}>
+                  <Button variant="outline" size="sm" onClick={() => exportarEventos('csv')}>
                     <Download className="mr-2 h-4 w-4" />
-                    Exportar CSV
+                    CSV
                   </Button>
-                  <Button variant="outline" onClick={() => exportarEventos('json')}>
+                  <Button variant="outline" size="sm" onClick={() => exportarEventos('json')}>
                     <Download className="mr-2 h-4 w-4" />
-                    Exportar JSON
+                    JSON
                   </Button>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function AuditoriaPage() {
                   <Filter className="h-4 w-4" />
                   <span className="font-medium">Filtros</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <Label>Data Início</Label>
                     <Popover>

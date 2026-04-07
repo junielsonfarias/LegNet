@@ -220,7 +220,7 @@ export default function TiposOrgaosPage() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Unidades de Tramitação</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Unidades de Tramitação</h1>
           <p className="text-gray-600">Configure as unidades responsáveis pela tramitação</p>
         </div>
         <div className="flex gap-2">

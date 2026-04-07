@@ -277,7 +277,7 @@ export default function UnidadesTramitacaoPage() {
       {/* Cabeçalho */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Unidades de Tramitação</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Unidades de Tramitação</h1>
           <p className="text-gray-600 mt-1">
             Configure os órgãos e setores para onde as proposições podem ser encaminhadas
           </p>
