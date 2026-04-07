@@ -15,6 +15,12 @@
 | Media | 10 | 10 Corrigidos |
 | Baixa | 6 | Pendente (melhorias opcionais) |
 
+### Correções Aplicadas em 2026-04-07 (Configurações Institucionais 400)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-040 | PUT /api/configuracoes retorna 400 "Dados inválidos" | Schema Zod usava `.optional()` mas DB retorna `null`; corrigido para `.nullish()` em todos os campos |
+
 ### Correções Aplicadas em 2026-02-03 (Loop Infinito e Permissões de Votação)
 
 | ID | Problema | Solução |

@@ -1,10 +1,32 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-06 (Notificacoes de prazo automaticas)
-> **Versao**: 1.9.0
+> **Ultima Atualizacao**: 2026-04-07 (Fix configuracoes 400 + upload logo)
+> **Versao**: 1.9.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Fix Configuracoes Institucionais + Upload Logo (07/04/2026)
+
+### Bug Fix: PUT /api/configuracoes retornava 400
+- Schema Zod usava `.optional()` (aceita `undefined`) mas DB retorna `null` para campos vazios
+- Corrigido para `.nullish()` (aceita `null | undefined`) em todos os campos opcionais
+- Campo `cnpj` adicionado ao schema (estava ausente)
+- URLs de redes sociais agora aceitam string vazia (convertida para null)
+- Interface `ConfiguracaoInstitucionalData` atualizada com campos sociais faltantes
+
+### Feature: Upload de Logo
+- Opcao de upload de arquivo de imagem para logo (alem da URL manual)
+- Usa API `/api/upload` existente com pasta `logos`
+- Preview da imagem atual com botao de remover
+- Aceita JPEG, PNG, GIF, WebP ate 5MB
+
+### Arquivos Alterados
+- `src/app/api/configuracoes/route.ts` — Fix schema Zod
+- `src/lib/services/configuracao-db-service.ts` — Fix interface + campos sociais
+- `src/app/admin/configuracoes/page.tsx` — Upload logo + fix campos
 
 ---
 

@@ -9,24 +9,24 @@ export const dynamic = 'force-dynamic'
 
 const ConfiguracaoSchema = z.object({
   nomeCasa: z.string().min(3, 'Nome da casa legislativa é obrigatório'),
-  sigla: z.string().optional(),
-  cnpj: z.string().optional(),
-  enderecoLogradouro: z.string().optional(),
-  enderecoNumero: z.string().optional(),
-  enderecoBairro: z.string().optional(),
-  enderecoCidade: z.string().optional(),
-  enderecoEstado: z.string().optional(),
-  enderecoCep: z.string().optional(),
-  telefone: z.string().optional(),
-  email: z.string().optional(),
-  site: z.string().optional(),
-  logoUrl: z.string().optional(),
-  tema: z.enum(['claro', 'escuro', 'auto']).optional(),
-  timezone: z.string().optional(),
-  descricao: z.string().optional(),
-  facebookUrl: z.string().url().nullable().optional(),
-  instagramUrl: z.string().url().nullable().optional(),
-  youtubeUrl: z.string().url().nullable().optional()
+  sigla: z.string().nullish(),
+  cnpj: z.string().nullish(),
+  enderecoLogradouro: z.string().nullish(),
+  enderecoNumero: z.string().nullish(),
+  enderecoBairro: z.string().nullish(),
+  enderecoCidade: z.string().nullish(),
+  enderecoEstado: z.string().nullish(),
+  enderecoCep: z.string().nullish(),
+  telefone: z.string().nullish(),
+  email: z.string().nullish(),
+  site: z.string().nullish(),
+  logoUrl: z.string().nullish(),
+  tema: z.enum(['claro', 'escuro', 'auto']).nullish(),
+  timezone: z.string().nullish(),
+  descricao: z.string().nullish(),
+  facebookUrl: z.string().url().nullish().or(z.literal('')).transform(v => v || null),
+  instagramUrl: z.string().url().nullish().or(z.literal('')).transform(v => v || null),
+  youtubeUrl: z.string().url().nullish().or(z.literal('')).transform(v => v || null)
 })
 
 export const GET = withAuth(async (_request: NextRequest) => {

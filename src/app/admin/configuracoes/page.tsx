@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-import { Save, Download, Upload, RefreshCcw, Building2, Settings, Shield, SlidersHorizontal, AlertCircle, ArrowRight, FileText, Workflow, Vote, Database, Layers, Key } from 'lucide-react'
+import { Save, Download, Upload, RefreshCcw, Building2, Settings, Shield, SlidersHorizontal, AlertCircle, ArrowRight, FileText, Workflow, Vote, Database, Layers, Key, ImageIcon, X } from 'lucide-react'
 import Link from 'next/link'
 
 import { configuracoesApi, ConfiguracaoInstitucionalApi } from '@/lib/api/configuracoes-api'
@@ -140,7 +140,9 @@ export default function ConfiguracoesPage() {
   const [savingSystem, setSavingSystem] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const role = session?.user?.role as string | undefined
   const canManage = !!role && SESSION_MANAGER_ROLES.includes(role as (typeof SESSION_MANAGER_ROLES)[number])
@@ -360,6 +362,48 @@ export default function ConfiguracoesPage() {
       toast.error(error?.message ?? 'Não foi possível importar o backup')
     } finally {
       setImporting(false)
+    }
+  }
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem (JPEG, PNG, GIF ou WebP)')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('A imagem deve ter no máximo 5MB')
+      return
+    }
+
+    setUploadingLogo(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'logos')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData?.error || 'Erro ao fazer upload')
+      }
+
+      const data = await response.json()
+      setInstitutional(prev => ({ ...prev, logoUrl: data.url }))
+      toast.success('Logo enviado com sucesso! Clique em Salvar para confirmar.')
+    } catch (error: any) {
+      console.error('Erro ao fazer upload do logo:', error)
+      toast.error(error?.message ?? 'Erro ao fazer upload do logo')
+    } finally {
+      setUploadingLogo(false)
     }
   }
 
@@ -704,14 +748,64 @@ export default function ConfiguracoesPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="logoUrl">URL do Logotipo</Label>
-              <Input
-                id="logoUrl"
-                value={institutional.logoUrl ?? ''}
-                onChange={handleInstitutionalChange('logoUrl')}
-                placeholder="https://.../logo.png"
-              />
+            <div className="space-y-3">
+              <Label htmlFor="logoUrl">Logotipo</Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                {institutional.logoUrl && (
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                    <img
+                      src={institutional.logoUrl}
+                      alt="Logo atual"
+                      className="h-full w-full object-contain p-1"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setInstitutional(prev => ({ ...prev, logoUrl: '' }))}
+                      className="absolute -right-1 -top-1 rounded-full bg-red-500 p-0.5 text-white shadow-sm hover:bg-red-600"
+                      title="Remover logo"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                <div className="flex-1 space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      id="logoUrl"
+                      value={institutional.logoUrl ?? ''}
+                      onChange={handleInstitutionalChange('logoUrl')}
+                      placeholder="https://.../logo.png ou faça upload"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="default"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                      title="Fazer upload de imagem"
+                    >
+                      {uploadingLogo ? (
+                        <RefreshCcw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4" />
+                      )}
+                      <span className="ml-2 hidden sm:inline">{uploadingLogo ? 'Enviando...' : 'Upload'}</span>
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Cole uma URL ou faça upload de uma imagem (JPEG, PNG, GIF, WebP — máx. 5MB)
+                  </p>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    className="hidden"
+                    onChange={handleLogoUpload}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">

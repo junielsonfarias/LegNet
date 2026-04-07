@@ -18,21 +18,24 @@ export interface ConfiguracaoSistemaUpsertData {
 
 export interface ConfiguracaoInstitucionalData {
   nomeCasa: string
-  sigla?: string
-  cnpj?: string
-  enderecoLogradouro?: string
-  enderecoNumero?: string
-  enderecoBairro?: string
-  enderecoCidade?: string
-  enderecoEstado?: string
-  enderecoCep?: string
-  telefone?: string
-  email?: string
-  site?: string
-  logoUrl?: string
-  tema?: string
-  timezone?: string
-  descricao?: string
+  sigla?: string | null
+  cnpj?: string | null
+  enderecoLogradouro?: string | null
+  enderecoNumero?: string | null
+  enderecoBairro?: string | null
+  enderecoCidade?: string | null
+  enderecoEstado?: string | null
+  enderecoCep?: string | null
+  telefone?: string | null
+  email?: string | null
+  site?: string | null
+  logoUrl?: string | null
+  tema?: string | null
+  timezone?: string | null
+  descricao?: string | null
+  facebookUrl?: string | null
+  instagramUrl?: string | null
+  youtubeUrl?: string | null
 }
 
 export interface RestoreSistemaConfig {
