@@ -18,7 +18,10 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
+  CalendarDays,
+  Users,
 } from 'lucide-react'
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from 'recharts'
 
 interface Proposicao {
   id: string
@@ -175,10 +178,17 @@ function ListSkeleton() {
   )
 }
 
+interface Estatisticas {
+  proposicoes: { total: number; aprovadas: number; rejeitadas: number; emTramitacao: number; porMes: Array<{ mes: string; mes_label: string; total: number }> }
+  sessoes: { total: number; realizadas: number; agendadas: number }
+  parlamentares: number
+}
+
 export function LegislativeActivitySection() {
   const [proposicoes, setProposicoes] = useState<Proposicao[]>([])
   const [votacoes, setVotacoes] = useState<Votacao[]>([])
   const [emTramitacao, setEmTramitacao] = useState<Proposicao[]>([])
+  const [stats, setStats] = useState<Estatisticas | null>(null)
   const [loading, setLoading] = useState({
     proposicoes: true,
     votacoes: true,
@@ -186,6 +196,11 @@ export function LegislativeActivitySection() {
   })
 
   useEffect(() => {
+    // Buscar estatísticas
+    fetch('/api/dados-abertos/estatisticas')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.success && setStats(d.data))
+      .catch(() => {})
     const fetchProposicoes = async () => {
       try {
         const res = await fetch('/api/dados-abertos/proposicoes?limit=5')
@@ -224,8 +239,8 @@ export function LegislativeActivitySection() {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Header com mini-gráficos */}
+        <div className="flex items-center justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="h-5 w-5" style={{ color: 'var(--municipal-primary)' }} />
@@ -234,10 +249,94 @@ export function LegislativeActivitySection() {
               </h2>
             </div>
             <p className="text-gray-500 mt-1">
-              Acompanhe proposicoes, votacoes e tramitacoes
+              Acompanhe proposições, votações e tramitações
             </p>
           </div>
         </div>
+
+        {/* Dashboard mini-gráficos */}
+        {stats && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            {/* Proposições por mês - bar chart */}
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-500">Proposições/Mês</span>
+                <FileText className="h-3.5 w-3.5 text-gray-400" />
+              </div>
+              {stats.proposicoes.porMes.length > 0 ? (
+                <div className="h-14">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.proposicoes.porMes} barSize={12}>
+                      <XAxis dataKey="mes_label" tick={{ fontSize: 8 }} interval={0} />
+                      <Tooltip formatter={(v: number) => [v, 'Proposições']} />
+                      <Bar dataKey="total" fill="var(--municipal-primary)" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-14 flex items-center justify-center text-xs text-gray-400">Sem dados</div>
+              )}
+            </div>
+
+            {/* Status - donut */}
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-500">Status</span>
+                <CheckCircle2 className="h-3.5 w-3.5 text-gray-400" />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-14 h-14 flex-shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Aprovadas', value: stats.proposicoes.aprovadas || 0, color: '#22c55e' },
+                          { name: 'Tramitando', value: stats.proposicoes.emTramitacao || 0, color: '#3b82f6' },
+                          { name: 'Rejeitadas', value: stats.proposicoes.rejeitadas || 0, color: '#ef4444' },
+                        ].filter(d => d.value > 0)}
+                        cx="50%" cy="50%" innerRadius={16} outerRadius={24} dataKey="value" strokeWidth={0}
+                      >
+                        {[
+                          { color: '#22c55e' }, { color: '#3b82f6' }, { color: '#ef4444' }
+                        ].map((c, i) => <Cell key={i} fill={c.color} />)}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 rounded-full bg-green-500" />{stats.proposicoes.aprovadas} aprov.</div>
+                  <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" />{stats.proposicoes.emTramitacao} tram.</div>
+                  <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 rounded-full bg-red-500" />{stats.proposicoes.rejeitadas} rej.</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sessões */}
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-500">Sessões {stats.sessoes.total > 0 ? new Date().getFullYear() : ''}</span>
+                <CalendarDays className="h-3.5 w-3.5 text-gray-400" />
+              </div>
+              <div className="text-2xl font-bold" style={{ color: 'var(--municipal-primary)' }}>{stats.sessoes.total}</div>
+              <div className="flex gap-3 mt-1">
+                <span className="text-[10px] text-gray-500">{stats.sessoes.realizadas} realizadas</span>
+                <span className="text-[10px] text-gray-500">{stats.sessoes.agendadas} agendadas</span>
+              </div>
+            </div>
+
+            {/* Parlamentares */}
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-500">Vereadores Ativos</span>
+                <Users className="h-3.5 w-3.5 text-gray-400" />
+              </div>
+              <div className="text-2xl font-bold" style={{ color: 'var(--municipal-primary)' }}>{stats.parlamentares}</div>
+              <div className="mt-1">
+                <span className="text-[10px] text-gray-500">{stats.proposicoes.total} proposições este ano</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="recentes" className="w-full">
