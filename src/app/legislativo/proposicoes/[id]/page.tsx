@@ -12,6 +12,7 @@ import {
   Loader2, GitBranch, Eye, Scale, MessageSquare, PenTool,
   ThumbsUp, ThumbsDown, Minus, Share2, Printer, ChevronDown, ChevronUp
 } from 'lucide-react'
+import { TramitacaoStepper } from '@/components/legislativo/tramitacao-stepper'
 
 const tipoConfig: Record<string, { label: string; sigla: string; color: string }> = {
   'PROJETO_LEI': { label: 'Projeto de Lei', sigla: 'PL', color: 'bg-blue-600 text-white' },
@@ -533,12 +534,24 @@ export default function ProposicaoDetalhePage() {
             )}
 
             {/* Tramitacao */}
+            {/* Stepper de Progresso */}
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-gray-500 mb-4">Progresso da Tramitação</h3>
+                <TramitacaoStepper
+                  status={proposicao.status}
+                  tramitacoes={tramitacoes}
+                  resultado={proposicao.resultado}
+                />
+              </CardContent>
+            </Card>
+
             {tramitacoes.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <GitBranch className="h-5 w-5 text-camara-primary" />
-                    Tramitacao ({tramitacoes.length})
+                    Tramitação ({tramitacoes.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
