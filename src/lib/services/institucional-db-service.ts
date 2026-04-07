@@ -16,15 +16,57 @@ export const institucionalDbService = {
   },
 
   /**
-   * Busca parlamentares da Mesa Diretora (cargo diferente de VEREADOR)
+   * Busca membros da Mesa Diretora ativa (da tabela MesaDiretora)
+   * Fallback: se não houver mesa cadastrada, usa Parlamentar.cargo legado
    */
   async getMesaDiretora() {
+    // Buscar mesa diretora ativa da tabela correta
+    const mesaAtiva = await prisma.mesaDiretora.findFirst({
+      where: { ativa: true },
+      include: {
+        membros: {
+          where: { ativo: true },
+          include: {
+            parlamentar: {
+              select: { id: true, nome: true, apelido: true, partido: true, foto: true }
+            },
+            cargo: {
+              select: { nome: true, ordem: true }
+            }
+          },
+          orderBy: { cargo: { ordem: 'asc' } }
+        }
+      }
+    })
+
+    if (mesaAtiva && mesaAtiva.membros.length > 0) {
+      // Mapear do novo modelo para o formato esperado pela API institucional
+      return mesaAtiva.membros.map(m => {
+        // Converter nome do cargo para o enum legado usado no frontend
+        const cargoMap: Record<string, string> = {
+          'Presidente': 'PRESIDENTE',
+          'Vice-Presidente': 'VICE_PRESIDENTE',
+          '1º Secretário': 'PRIMEIRO_SECRETARIO',
+          '1o Secretário': 'PRIMEIRO_SECRETARIO',
+          '2º Secretário': 'SEGUNDO_SECRETARIO',
+          '2o Secretário': 'SEGUNDO_SECRETARIO',
+        }
+        return {
+          id: m.parlamentar.id,
+          nome: m.parlamentar.nome,
+          apelido: m.parlamentar.apelido,
+          cargo: cargoMap[m.cargo.nome] || m.cargo.nome.toUpperCase().replace(/\s+/g, '_'),
+          partido: m.parlamentar.partido,
+          foto: m.parlamentar.foto
+        }
+      })
+    }
+
+    // Fallback: usar campo legado Parlamentar.cargo
     return prisma.parlamentar.findMany({
       where: {
         ativo: true,
-        cargo: {
-          not: 'VEREADOR'
-        }
+        cargo: { not: 'VEREADOR' }
       },
       select: {
         id: true,
@@ -34,9 +76,7 @@ export const institucionalDbService = {
         partido: true,
         foto: true
       },
-      orderBy: {
-        cargo: 'asc'
-      }
+      orderBy: { cargo: 'asc' }
     })
   },
 

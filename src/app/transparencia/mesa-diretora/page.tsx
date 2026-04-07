@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,28 @@ export default function MesaDiretoraTransparenciaPage() {
   // Dados usando hooks
   const { parlamentares } = useParlamentares({ ativo: true });
   const { legislaturas } = useLegislaturas();
+  const [mesaInstitucional, setMesaInstitucional] = useState<any[]>([]);
 
-  // Mesa Diretora - filtrar parlamentares que não são vereadores
-  const mesaDiretora = parlamentares.filter(p => p.cargo !== 'VEREADOR');
+  // Buscar mesa diretora da API institucional (fonte correta: tabela MesaDiretora)
+  useEffect(() => {
+    fetch('/api/institucional')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.dados?.mesaDiretora?.length > 0) {
+          setMesaInstitucional(data.dados.mesaDiretora)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Mesa Diretora - priorizar tabela MesaDiretora, fallback para Parlamentar.cargo
+  const mesaDiretora = mesaInstitucional.length > 0
+    ? mesaInstitucional.map((m: any) => ({
+        id: m.id, nome: m.nome, apelido: m.apelido,
+        cargo: m.cargo, partido: m.partido, foto: m.foto,
+        legislatura: null, email: null, telefone: null, gabinete: null
+      }))
+    : parlamentares.filter(p => p.cargo !== 'VEREADOR');
 
   // Obter todos os vereadores
   const vereadoresLegislatura = useMemo(() => {
