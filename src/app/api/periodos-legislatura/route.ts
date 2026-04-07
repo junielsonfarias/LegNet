@@ -9,10 +9,10 @@ export const dynamic = 'force-dynamic'
 
 const PeriodoLegislaturaSchema = z.object({
   legislaturaId: z.string().min(1, 'Legislatura é obrigatória'),
-  numero: z.number().min(1, 'Número do período deve ser maior que 0'),
+  numero: z.coerce.number().min(1, 'Número do período deve ser maior que 0'),
   dataInicio: z.string().min(1, 'Data de início é obrigatória'),
-  dataFim: z.string().optional(),
-  descricao: z.string().optional()
+  dataFim: z.string().nullish().transform(v => v || undefined),
+  descricao: z.string().nullish().transform(v => v || undefined)
 })
 
 export const GET = withAuth(async (request: NextRequest) => {

@@ -111,6 +111,7 @@ export function useLegislaturasAdmin() {
     const periodosExistentesResponse = await fetch(`/api/periodos-legislatura?legislaturaId=${legislaturaId}`)
     const periodosExistentesData = await periodosExistentesResponse.json()
     const periodosExistentes = periodosExistentesData.success ? periodosExistentesData.data : []
+    let erros = 0
 
     for (const periodo of periodos) {
       const periodoExistente = periodosExistentes.find((p: any) => p.numero === periodo.numero)
@@ -122,13 +123,14 @@ export function useLegislaturasAdmin() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             dataInicio: periodo.dataInicio,
-            dataFim: periodo.dataFim,
-            descricao: periodo.descricao
+            dataFim: periodo.dataFim || null,
+            descricao: periodo.descricao || null
           })
         })
         if (!updateResponse.ok) {
           const error = await updateResponse.json()
-          toast.error(`Erro ao atualizar periodo ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
+          toast.error(`Erro ao atualizar período ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
+          erros++
         }
         periodoId = periodoExistente.id
       } else {
@@ -139,15 +141,16 @@ export function useLegislaturasAdmin() {
             legislaturaId,
             numero: periodo.numero,
             dataInicio: periodo.dataInicio,
-            dataFim: periodo.dataFim,
-            descricao: periodo.descricao
+            dataFim: periodo.dataFim || null,
+            descricao: periodo.descricao || null
           })
         })
 
         if (!periodoResponse.ok) {
           const error = await periodoResponse.json()
           if (periodoResponse.status === 409) continue
-          toast.error(`Erro ao criar periodo ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
+          toast.error(`Erro ao criar período ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
+          erros++
           continue
         }
 
@@ -159,6 +162,10 @@ export function useLegislaturasAdmin() {
       if (periodo.cargos.length > 0) {
         await salvarCargosPeriodo(periodoId, periodo.cargos)
       }
+    }
+
+    if (erros > 0) {
+      throw new Error(`${erros} período(s) não foram salvos corretamente`)
     }
   }
 
