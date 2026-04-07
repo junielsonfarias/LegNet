@@ -21,45 +21,46 @@ interface Parlamentar {
   ativo: boolean
 }
 
-const cargoIcon: Record<string, any> = {
-  'PRESIDENTE': Crown,
-  'VICE_PRESIDENTE': Star,
-  'PRIMEIRO_SECRETARIO': Award,
-  'SEGUNDO_SECRETARIO': Award,
+// Funções inteligentes para resolver cargo (match parcial)
+function getCargoKey(cargo: string): string {
+  const c = (cargo || '').toUpperCase()
+  if (c === 'PRESIDENTE' || (c.includes('PRESIDENTE') && !c.includes('VICE'))) return 'PRESIDENTE'
+  if (c.includes('VICE')) return 'VICE_PRESIDENTE'
+  if (c.includes('1') && c.includes('SECRET')) return 'PRIMEIRO_SECRETARIO'
+  if (c.includes('2') && c.includes('SECRET')) return 'SEGUNDO_SECRETARIO'
+  return cargo
 }
 
-const cargoLabel: Record<string, string> = {
-  'PRESIDENTE': 'Presidente',
-  'VICE_PRESIDENTE': 'Vice-presidente',
-  'PRIMEIRO_SECRETARIO': '1o Secretario',
-  'SEGUNDO_SECRETARIO': '2o Secretario',
+function getCargoIcon(cargo: string) {
+  const k = getCargoKey(cargo)
+  if (k === 'PRESIDENTE') return Crown
+  if (k === 'VICE_PRESIDENTE') return Star
+  return Award
 }
 
-const cargoStyle: Record<string, { gradient: string; text: string; ring: string; bg: string }> = {
-  'PRESIDENTE': {
-    gradient: 'from-amber-500 to-yellow-600',
-    text: 'text-amber-700',
-    ring: 'ring-amber-400/60',
-    bg: 'bg-amber-50',
-  },
-  'VICE_PRESIDENTE': {
-    gradient: 'from-blue-500 to-indigo-600',
-    text: 'text-blue-700',
-    ring: 'ring-blue-400/60',
-    bg: 'bg-blue-50',
-  },
-  'PRIMEIRO_SECRETARIO': {
-    gradient: 'from-emerald-500 to-teal-600',
-    text: 'text-emerald-700',
-    ring: 'ring-emerald-400/60',
-    bg: 'bg-emerald-50',
-  },
-  'SEGUNDO_SECRETARIO': {
-    gradient: 'from-violet-500 to-purple-600',
-    text: 'text-violet-700',
-    ring: 'ring-violet-400/60',
-    bg: 'bg-violet-50',
-  },
+function getCargoLabel(cargo: string): string {
+  const labels: Record<string, string> = {
+    'PRESIDENTE': 'Presidente',
+    'VICE_PRESIDENTE': 'Vice-Presidente',
+    'PRIMEIRO_SECRETARIO': '1º Secretário',
+    'SEGUNDO_SECRETARIO': '2º Secretário',
+  }
+  return labels[getCargoKey(cargo)] || cargo.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function getCargoStyle(cargo: string) {
+  const styles: Record<string, { gradient: string; text: string; ring: string; bg: string }> = {
+    'PRESIDENTE': { gradient: 'from-amber-500 to-yellow-600', text: 'text-amber-700', ring: 'ring-amber-400/60', bg: 'bg-amber-50' },
+    'VICE_PRESIDENTE': { gradient: 'from-blue-500 to-indigo-600', text: 'text-blue-700', ring: 'ring-blue-400/60', bg: 'bg-blue-50' },
+    'PRIMEIRO_SECRETARIO': { gradient: 'from-emerald-500 to-teal-600', text: 'text-emerald-700', ring: 'ring-emerald-400/60', bg: 'bg-emerald-50' },
+    'SEGUNDO_SECRETARIO': { gradient: 'from-violet-500 to-purple-600', text: 'text-violet-700', ring: 'ring-violet-400/60', bg: 'bg-violet-50' },
+  }
+  return styles[getCargoKey(cargo)] || { gradient: 'from-gray-500 to-gray-600', text: 'text-gray-600', ring: 'ring-gray-300', bg: 'bg-gray-50' }
+}
+
+function getCargoOrdem(cargo: string): number {
+  const ordem: Record<string, number> = { 'PRESIDENTE': 0, 'VICE_PRESIDENTE': 1, 'PRIMEIRO_SECRETARIO': 2, 'SEGUNDO_SECRETARIO': 3 }
+  return ordem[getCargoKey(cargo)] ?? 99
 }
 
 const defaultStyle = { gradient: 'from-gray-500 to-gray-600', text: 'text-gray-600', ring: 'ring-gray-300', bg: 'bg-gray-50' }
@@ -95,8 +96,9 @@ function Avatar({ parlamentar, className }: { parlamentar: Parlamentar; classNam
 }
 
 function MesaCard({ p }: { p: Parlamentar }) {
-  const style = cargoStyle[p.cargo || ''] || defaultStyle
-  const Icon = cargoIcon[p.cargo || ''] || Users
+  const style = getCargoStyle(p.cargo || '')
+  const Icon = getCargoIcon(p.cargo || '')
+  const label = getCargoLabel(p.cargo || '')
 
   return (
     <Link href={getPerfilUrl(p)} className="group block h-full">
@@ -118,7 +120,7 @@ function MesaCard({ p }: { p: Parlamentar }) {
           {/* Badge cargo */}
           <div className={cn('inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-xs font-semibold', style.bg, style.text)}>
             <Icon className="h-3 w-3" />
-            {cargoLabel[p.cargo || ''] || p.cargo}
+            {label}
           </div>
 
           {/* Partido */}
@@ -241,8 +243,7 @@ export function ParliamentariansSection() {
   const vereadores = parlamentares.filter(p => !p.cargo || p.cargo === 'VEREADOR')
   const todosParaCarrossel = [...mesa, ...vereadores]
 
-  const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO']
-  mesa.sort((a, b) => ordemCargos.indexOf(a.cargo || '') - ordemCargos.indexOf(b.cargo || ''))
+  mesa.sort((a, b) => getCargoOrdem(a.cargo || '') - getCargoOrdem(b.cargo || ''))
 
   if (loading) {
     return (
@@ -289,20 +290,51 @@ export function ParliamentariansSection() {
               </div>
             </div>
 
-            {/* Grid uniforme - sempre 2 colunas no mobile */}
-            <div className={cn(
-              'grid gap-3 sm:gap-4',
-              mesa.length === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4',
-            )}>
-              {mesa.map((p, i) => (
-                <div key={p.id} className={cn(
-                  // Se 3 membros: primeiro card ocupa 2 cols no mobile, 1 no tablet+
-                  mesa.length === 3 && i === 0 && 'col-span-2 sm:col-span-1 max-w-xs mx-auto sm:max-w-none sm:mx-0',
-                )}>
-                  <MesaCard p={p} />
-                </div>
-              ))}
-            </div>
+            {/* Presidente em destaque + demais em grid */}
+            {(() => {
+              const presidente = mesa.find(p => getCargoKey(p.cargo || '') === 'PRESIDENTE')
+              const demais = mesa.filter(p => p !== presidente)
+              return (
+                <>
+                  {/* Presidente - card horizontal destacado */}
+                  {presidente && (
+                    <Link href={getPerfilUrl(presidente)} className="group block mb-4">
+                      <div className="relative bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 overflow-hidden">
+                        <div className="flex items-center gap-4 sm:gap-6 p-4 sm:p-6">
+                          <div className="ring-[3px] ring-offset-2 ring-amber-400/60 rounded-full shadow-lg flex-shrink-0">
+                            <Avatar parlamentar={presidente} className="w-20 h-20 sm:w-24 sm:h-24 text-2xl" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold mb-1.5', 'bg-amber-100 text-amber-700')}>
+                              <Crown className="h-3 w-3" />
+                              Presidente
+                            </div>
+                            <h4 className="font-bold text-gray-900 text-lg sm:text-xl truncate">
+                              {presidente.apelido || presidente.nome}
+                            </h4>
+                            {presidente.partido && (
+                              <span className="text-sm text-amber-600 font-medium">{presidente.partido}</span>
+                            )}
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-amber-400 group-hover:translate-x-1 transition-transform flex-shrink-0 hidden sm:block" />
+                        </div>
+                      </div>
+                    </Link>
+                  )}
+
+                  {/* Demais membros em grid */}
+                  {demais.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                      {demais.map(p => (
+                        <div key={p.id}>
+                          <MesaCard p={p} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
           </div>
         )}
 
