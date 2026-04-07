@@ -42,6 +42,7 @@ export default function CalendarioPage() {
     async function fetchProximos() {
       try {
         const res = await fetch('/api/calendario?periodo=proximos&limite=5')
+        if (!res.ok) throw new Error('Erro ao carregar dados')
         const data = await res.json()
         setProximosEventos(data.eventos || [])
       } catch (error) {

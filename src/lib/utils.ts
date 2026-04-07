@@ -5,8 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return '—'
   const d = new Date(date)
+  if (isNaN(d.getTime())) return '—'
   return d.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
@@ -14,8 +16,10 @@ export function formatDate(date: Date | string): string {
   })
 }
 
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(date: Date | string | null | undefined): string {
+  if (!date) return '—'
   const d = new Date(date)
+  if (isNaN(d.getTime())) return '—'
   return d.toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',

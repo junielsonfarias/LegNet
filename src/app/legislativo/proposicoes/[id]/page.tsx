@@ -60,6 +60,7 @@ export default function ProposicaoDetalhePage() {
       try {
         setLoading(true)
         const res = await fetch(`/api/proposicoes/${id}`)
+        if (!res.ok) throw new Error('Erro ao carregar dados')
         const data = await res.json()
         if (data.success && data.data) {
           setProposicao(data.data)

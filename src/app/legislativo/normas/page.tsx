@@ -82,6 +82,7 @@ export default function NormasPublicPage() {
       if (filtroAno && filtroAno !== 'all') params.set('ano', filtroAno)
 
       const response = await fetch(`/api/normas?${params.toString()}`)
+      if (!response.ok) throw new Error('Erro ao carregar dados')
       const data = await response.json()
 
       if (data.success) {

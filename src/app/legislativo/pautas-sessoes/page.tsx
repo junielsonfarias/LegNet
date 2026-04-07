@@ -99,6 +99,7 @@ export default function PautasSessoesPublicPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/publico/pautas-sessoes?publicadas=true')
+      if (!response.ok) throw new Error('Erro ao carregar dados')
       const result = await response.json()
 
       if (result.success && result.data) {

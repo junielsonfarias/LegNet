@@ -44,10 +44,10 @@ export default function ProposicoesPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/dados-abertos/proposicoes?limit=100')
+      if (!response.ok) throw new Error('Erro ao carregar dados')
       const result = await response.json()
 
       if (result.dados) {
-        console.log('Proposições carregadas:', result.dados.length)
         setProposicoes(result.dados)
       } else {
         console.error('Formato de resposta inesperado:', result)

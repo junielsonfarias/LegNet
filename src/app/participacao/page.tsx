@@ -222,7 +222,7 @@ export default function ParticipacaoPublicaPage() {
               </p>
             </div>
             <Button asChild variant="outline" className="gap-2">
-              <Link href="/participacao-cidada">
+              <Link href="/institucional/ouvidoria">
                 Enviar nova sugestão
                 <MessageSquare className="h-4 w-4" aria-hidden="true" />
               </Link>

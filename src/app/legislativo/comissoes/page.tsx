@@ -36,6 +36,7 @@ export default function ComissoesPage() {
       try {
         setLoading(true)
         const response = await fetch('/api/dados-abertos/comissoes?ativa=true')
+        if (!response.ok) throw new Error('Erro ao carregar dados')
         const result = await response.json()
         if (result.dados) {
           setComissoes(result.dados)

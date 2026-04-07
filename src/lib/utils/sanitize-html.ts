@@ -13,22 +13,25 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
   if (!dirty) return ''
 
   // No servidor, sanitização robusta sem DOM
+  // NOTA: regex não é 100% seguro - usar DOMPurify no client sempre que possível
   if (typeof window === 'undefined') {
-    return dirty
-      // Remove scripts (incluindo variações malformadas)
-      .replace(/<script\b[^]*?<\/script\s*>/gi, '')
-      .replace(/<script\b[^>]*\/?>/gi, '')
-      // Remove event handlers (on*)
-      .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
-      // Remove tags perigosas (iframe, object, embed, form, input, svg com scripts)
-      .replace(/<\s*\/?\s*(iframe|object|embed|form|input|textarea|select|button|applet|meta|link|base)\b[^>]*\/?>/gi, '')
-      // Remove SVG event handlers e scripts inline
-      .replace(/<svg\b[^>]*\bon\w+\s*=/gi, '<svg ')
-      // Remove javascript: e data: URLs em atributos
-      .replace(/(href|src|action|formaction)\s*=\s*(?:"[^"]*(?:javascript|data|vbscript)\s*:[^"]*"|'[^']*(?:javascript|data|vbscript)\s*:[^']*')/gi, '')
+    let clean = dirty
+    // Remove scripts (incluindo variações malformadas e nesting)
+    for (let i = 0; i < 3; i++) {
+      clean = clean.replace(/<script\b[^]*?<\/script\s*>/gi, '')
+    }
+    clean = clean.replace(/<script\b[^>]*\/?>/gi, '')
+    return clean
+      // Remove ALL event handlers (on*) em qualquer tag - inclui img onerror, div onmouseover, etc
+      .replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '')
+      // Remove tags perigosas
+      .replace(/<\s*\/?\s*(iframe|object|embed|form|input|textarea|select|button|applet|meta|link|base|svg)\b[^>]*\/?>/gi, '')
+      // Remove javascript:, data:, vbscript: URLs em QUALQUER atributo
+      .replace(/\b(href|src|action|formaction|xlink:href|poster|background)\s*=\s*["']?\s*(?:javascript|data|vbscript)\s*:/gi, '$1="about:blank"')
       // Remove expressões CSS perigosas
       .replace(/expression\s*\(/gi, 'blocked(')
-      .replace(/url\s*\(\s*(?:"[^"]*(?:javascript|data)\s*:[^"]*"|'[^']*(?:javascript|data)\s*:[^']*')/gi, 'url(about:blank')
+      .replace(/-moz-binding\s*:/gi, 'blocked:')
+      .replace(/url\s*\(\s*["']?\s*(?:javascript|data)\s*:/gi, 'url(about:blank')
   }
 
   return DOMPurify.sanitize(dirty, {

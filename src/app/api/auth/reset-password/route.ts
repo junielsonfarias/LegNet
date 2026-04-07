@@ -153,30 +153,28 @@ export async function POST(request: NextRequest) {
     // Hash da nova senha
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Atualizar senha do usuário
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashedPassword }
-    })
-
-    // Remover token usado
-    await prisma.verificationToken.delete({
-      where: { token: hashedToken }
-    })
-
-    // Registrar no audit log
-    await prisma.auditLog.create({
-      data: {
-        action: 'PASSWORD_RESET_COMPLETED',
-        entity: 'User',
-        entityId: user.id,
-        userId: user.id,
-        ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-        metadata: {
-          email: user.email
+    // Atualizar senha, remover token e registrar auditoria em transação
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword }
+      }),
+      prisma.verificationToken.delete({
+        where: { token: hashedToken }
+      }),
+      prisma.auditLog.create({
+        data: {
+          action: 'PASSWORD_RESET_COMPLETED',
+          entity: 'User',
+          entityId: user.id,
+          userId: user.id,
+          ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+          metadata: {
+            email: user.email
+          }
         }
-      }
-    })
+      })
+    ])
 
     logger.info('Senha redefinida com sucesso', {
       action: 'reset_password_success',

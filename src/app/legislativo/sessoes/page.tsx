@@ -51,10 +51,10 @@ export default function SessoesPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/dados-abertos/sessoes?limit=100')
+      if (!response.ok) throw new Error('Erro ao carregar dados')
       const result = await response.json()
 
       if (result.dados) {
-        console.log('Sessões carregadas da API pública:', result.dados.length)
         setSessoes(result.dados)
       } else {
         console.error('Formato de resposta inesperado:', result)
@@ -105,7 +105,6 @@ export default function SessoesPage() {
       return matchesSearch && matchesTipo && matchesStatus && matchesAno
     })
     
-    console.log('Sessões filtradas:', filtered.length, 'de', sessoes.length, 'total')
     return filtered
   }, [sessoes, searchTerm, tipoFilter, statusFilter, anoFilter])
 
@@ -214,17 +213,9 @@ export default function SessoesPage() {
 
           <Card className="camara-card text-center">
             <CardContent className="p-4 sm:p-6">
-              <FileText className="h-12 w-12 text-purple-600 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-purple-600 mb-2">{estatisticas.totalProposicoes}</div>
-              <div className="text-sm text-gray-600">Proposições</div>
-            </CardContent>
-          </Card>
-
-          <Card className="camara-card text-center">
-            <CardContent className="p-4 sm:p-6">
-              <Users className="h-12 w-12 text-orange-600 mx-auto mb-3" />
-              <div className="text-3xl font-bold text-orange-600 mb-2">{estatisticas.mediaPresenca}%</div>
-              <div className="text-sm text-gray-600">Presença Média</div>
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-red-500 mb-2">{estatisticas.canceladas}</div>
+              <div className="text-sm text-gray-600">Canceladas</div>
             </CardContent>
           </Card>
         </div>

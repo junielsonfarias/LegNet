@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 const CreateUsuarioSchema = z.object({
   name: z.string().optional(),
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
   role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']),
   parlamentarId: z.string().optional(),
   ativo: z.boolean().default(true)

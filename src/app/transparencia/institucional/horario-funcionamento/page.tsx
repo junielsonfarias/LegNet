@@ -1,7 +1,15 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Clock, MapPin, Phone, Mail } from 'lucide-react'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function HorarioFuncionamentoPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
+  const endereco = configuracao.endereco || {}
+  const enderecoResumo = endereco.bairro && endereco.cidade
+    ? `${endereco.bairro}, ${endereco.cidade}`
+    : endereco.cidade || 'Endereço não configurado'
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
@@ -71,7 +79,7 @@ export default function HorarioFuncionamentoPage() {
                   Câmara Municipal
                 </p>
                 <p className="text-gray-600 mt-1">
-                  Centro, Sua Cidade
+                  {enderecoResumo}
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
                   CEP: 68.000-000
@@ -90,11 +98,11 @@ export default function HorarioFuncionamentoPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Phone className="h-4 w-4" />
-                    <span>(93) 3000-0000</span>
+                    <span>{configuracao.telefone || 'Não configurado'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
                     <Mail className="h-4 w-4" />
-                    <span>contato@camara.gov.br</span>
+                    <span>{configuracao.email || 'Não configurado'}</span>
                   </div>
                 </div>
               </CardContent>

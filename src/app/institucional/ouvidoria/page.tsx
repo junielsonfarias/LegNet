@@ -14,8 +14,14 @@ import {
   Loader2, CheckCircle, Copy, Search
 } from 'lucide-react'
 import Link from 'next/link'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function OuvidoriaPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
+  const endereco = configuracao.endereco || {}
+  const enderecoResumo = endereco.logradouro
+    ? `${endereco.bairro || ''}, ${endereco.cidade || ''}`.replace(/^, /, '')
+    : 'Endereço não configurado'
   const [anonimo, setAnonimo] = useState(false)
   const [formData, setFormData] = useState({
     nome: '',
@@ -319,7 +325,7 @@ export default function OuvidoriaPage() {
             <CardContent className="p-4 sm:p-6 text-center">
               <Phone className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">Telefone</h3>
-              <p className="text-gray-600">(93) 3000-0000</p>
+              <p className="text-gray-600">{configuracao.telefone || 'Não configurado'}</p>
               <p className="text-sm text-gray-500 mt-1">Seg-Sex, 8h-14h</p>
             </CardContent>
           </Card>
@@ -327,7 +333,7 @@ export default function OuvidoriaPage() {
             <CardContent className="p-4 sm:p-6 text-center">
               <Mail className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">E-mail</h3>
-              <p className="text-gray-600 text-sm break-all">ouvidoria@camara.gov.br</p>
+              <p className="text-gray-600 text-sm break-all">{configuracao.email || 'Não configurado'}</p>
               <p className="text-sm text-gray-500 mt-1">Resposta em 48h</p>
             </CardContent>
           </Card>
@@ -335,7 +341,7 @@ export default function OuvidoriaPage() {
             <CardContent className="p-4 sm:p-6 text-center">
               <MapPin className="h-10 w-10 text-camara-primary mx-auto mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">Presencial</h3>
-              <p className="text-gray-600 text-sm">Centro, Sua Cidade</p>
+              <p className="text-gray-600 text-sm">{enderecoResumo}</p>
             </CardContent>
           </Card>
           <Card>

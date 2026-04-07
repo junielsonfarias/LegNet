@@ -352,8 +352,7 @@ export default function TransparenciaPage() {
                 ) : (
                   <>
                     <InfoRow icon={Building2} label={nomeCasa} color="municipal" bold />
-                    <InfoRow icon={Activity} label="Mesoregiao: Baixo Amazonas" color="municipal" />
-                    <InfoRow icon={Award} label="Codigo IBGE: 1504752" color="municipal" />
+                    <InfoRow icon={Activity} label={`Tipo: Câmara Municipal`} color="municipal" />
                     <InfoRow icon={Globe} label={`Site: ${config?.site || 'Nao configurado'}`} color="municipal" />
                     <InfoRow icon={MapPin} label={`Endereco: ${enderecoCompleto}`} color="municipal" />
                   </>
@@ -380,7 +379,7 @@ export default function TransparenciaPage() {
                   <>
                     <InfoRow icon={MapPin} label={`Presencial: ${enderecoCompleto}`} color="secondary" />
                     <InfoRow icon={Clock} label="Horario: 08:00h as 14:00h, Segunda a Sexta" color="secondary" />
-                    <InfoRow icon={Phone} label={`Telefone: ${config?.telefone || '(93) 991388426'}`} color="secondary" />
+                    <InfoRow icon={Phone} label={`Telefone: ${config?.telefone || 'Não configurado'}`} color="secondary" />
                     <InfoRow icon={Mail} label={`E-mail: ${config?.email || 'Nao configurado'}`} color="secondary" />
                     <InfoRow icon={Users} label="Ouvidor(a): A definir" color="secondary" />
                   </>

@@ -98,6 +98,7 @@ export default function NormaPublicaPage() {
   const carregarNorma = useCallback(async () => {
     try {
       const response = await fetch(`/api/normas/${normaId}`)
+      if (!response.ok) throw new Error('Erro ao carregar dados')
       const data = await response.json()
 
       if (data.success) {

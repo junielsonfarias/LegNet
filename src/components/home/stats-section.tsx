@@ -28,10 +28,10 @@ export function StatsSection() {
     { icon: Youtube, label: 'YouTube', href: configuracao.youtubeUrl || '#', color: 'hover:bg-red-500' },
   ].filter(s => s.href !== '#')
 
-  const endereco = configuracao.endereco
+  const endereco = configuracao.endereco || {}
   const enderecoLinha1 = endereco.logradouro
     ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', S/N'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`
-    : 'Endereco nao configurado'
+    : 'Endereço não configurado'
   const enderecoLinha2 = endereco.cidade
     ? `${endereco.cidade}${endereco.estado ? ` - ${endereco.estado}` : ''}`
     : ''
@@ -111,7 +111,7 @@ export function StatsSection() {
                 <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                   <Clock className="h-4 w-4 text-white/70" />
                 </div>
-                <p className="text-sm text-white/90">Segunda a Sexta: 8h as 14h</p>
+                <p className="text-sm text-white/90">Segunda a Sexta</p>
               </div>
             </div>
           </div>

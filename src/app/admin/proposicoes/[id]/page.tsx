@@ -154,7 +154,7 @@ export default function ProposicaoDetailPage() {
   // Handler para criar tramitação
   const handleCriarTramitacao = async () => {
     if (!proposicao?.id || !unidadeSelecionada || !tipoTramitacaoSelecionado) {
-      alert('Selecione o tipo de tramitação e a unidade de destino')
+      toast.error('Selecione o tipo de tramitação e a unidade de destino')
       return
     }
 
@@ -175,7 +175,7 @@ export default function ProposicaoDetailPage() {
       await refetchTramitacoes()
     } catch (err) {
       console.error('Erro ao criar tramitação:', err)
-      alert('Erro ao criar tramitação')
+      toast.error('Erro ao criar tramitação')
     } finally {
       setCriandoTramitacao(false)
     }

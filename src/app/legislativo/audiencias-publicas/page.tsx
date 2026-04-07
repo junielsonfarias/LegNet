@@ -109,6 +109,7 @@ export default function AudienciasPublicasPublicPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/publico/audiencias-publicas')
+      if (!response.ok) throw new Error('Erro ao carregar dados')
       const result = await response.json()
 
       if (result.success && result.data) {

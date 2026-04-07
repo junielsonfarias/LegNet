@@ -38,6 +38,7 @@ export default function AtasPage() {
       if (filtroTipo !== 'all') params.set('tipo', filtroTipo)
 
       const res = await fetch(`/api/dados-abertos/sessoes?${params}`)
+      if (!res.ok) throw new Error('Erro ao carregar dados')
       const data = await res.json()
 
       if (data.dados) {

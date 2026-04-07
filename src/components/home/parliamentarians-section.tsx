@@ -206,7 +206,9 @@ export function ParliamentariansSection() {
         const res = await fetch('/api/dados-abertos/parlamentares?ativo=true')
         const data = await res.json()
         setParlamentares(data.dados || [])
-      } catch {} finally { setLoading(false) }
+      } catch (err) {
+        console.warn('Erro ao carregar parlamentares:', err)
+      } finally { setLoading(false) }
     }
     fetch_()
   }, [])

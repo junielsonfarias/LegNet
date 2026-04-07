@@ -1731,6 +1731,8 @@ model Tramitacao {
   notificacoes   TramitacaoNotificacao[]
 
   @@index([proposicaoId])
+  @@index([proposicaoId, status])
+  @@index([status, dataEntrada])
   @@index([fluxoEtapaId])
   @@map("tramitacoes")
 }

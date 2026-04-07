@@ -12,8 +12,10 @@ import {
   Shield, FileText, Clock, CheckCircle, AlertCircle, Search, Loader2, Copy
 } from 'lucide-react'
 import Link from 'next/link'
+import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 
 export default function ESicPage() {
+  const { configuracao } = useConfiguracaoInstitucional()
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -379,15 +381,15 @@ export default function ESicPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-lg font-semibold mb-2">Contato E-SIC</h3>
-                <p className="opacity-90 mb-1"><strong>E-mail:</strong> esic@camara.gov.br</p>
-                <p className="opacity-90 mb-1"><strong>Telefone:</strong> (93) 3000-0000</p>
-                <p className="opacity-90"><strong>Horario:</strong> Segunda a Sexta, 8h as 14h</p>
+                <p className="opacity-90 mb-1"><strong>E-mail:</strong> {configuracao.email || 'Não configurado'}</p>
+                <p className="opacity-90 mb-1"><strong>Telefone:</strong> {configuracao.telefone || 'Não configurado'}</p>
+                <p className="opacity-90"><strong>Horário:</strong> Segunda a Sexta</p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold mb-2">Ouvidoria</h3>
-                <p className="opacity-90 mb-1"><strong>E-mail:</strong> ouvidoria@camara.gov.br</p>
-                <p className="opacity-90 mb-1"><strong>Telefone:</strong> (93) 3000-0000</p>
-                <p className="opacity-90"><strong>Horario:</strong> Segunda a Sexta, 8h as 14h</p>
+                <p className="opacity-90 mb-1"><strong>E-mail:</strong> {configuracao.email || 'Não configurado'}</p>
+                <p className="opacity-90 mb-1"><strong>Telefone:</strong> {configuracao.telefone || 'Não configurado'}</p>
+                <p className="opacity-90"><strong>Horário:</strong> Segunda a Sexta</p>
               </div>
             </div>
           </CardContent>
