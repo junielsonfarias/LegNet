@@ -78,7 +78,7 @@ export function LatestNews() {
         setNoticias(items.sort((a: Noticia, b: Noticia) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         ).slice(0, 5))
-      } catch {} finally { setLoading(false) }
+      } catch (e) { console.warn("Erro ao carregar dados:", e) } finally { setLoading(false) }
     }
     fetch_()
   }, [])

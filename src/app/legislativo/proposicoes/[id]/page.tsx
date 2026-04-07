@@ -64,6 +64,7 @@ export default function ProposicaoDetalhePage() {
         const data = await res.json()
         if (data.success && data.data) {
           setProposicao(data.data)
+          document.title = `${data.data.titulo || data.data.numero} | Proposição`
         } else {
           setError(data.error || 'Proposicao nao encontrada')
         }

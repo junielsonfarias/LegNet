@@ -191,7 +191,7 @@ export function LegislativeActivitySection() {
         const res = await fetch('/api/dados-abertos/proposicoes?limit=5')
         const data = await res.json()
         setProposicoes(data.dados || [])
-      } catch {} finally {
+      } catch (e) { console.warn("Erro ao carregar dados:", e) } finally {
         setLoading((prev) => ({ ...prev, proposicoes: false }))
       }
     }
@@ -201,7 +201,7 @@ export function LegislativeActivitySection() {
         const res = await fetch('/api/dados-abertos/votacoes?limit=5')
         const data = await res.json()
         setVotacoes(data.dados || data.data || [])
-      } catch {} finally {
+      } catch (e) { console.warn("Erro ao carregar dados:", e) } finally {
         setLoading((prev) => ({ ...prev, votacoes: false }))
       }
     }
@@ -211,7 +211,7 @@ export function LegislativeActivitySection() {
         const res = await fetch('/api/dados-abertos/proposicoes?status=EM_TRAMITACAO&limit=5')
         const data = await res.json()
         setEmTramitacao(data.dados || [])
-      } catch {} finally {
+      } catch (e) { console.warn("Erro ao carregar dados:", e) } finally {
         setLoading((prev) => ({ ...prev, tramitacao: false }))
       }
     }

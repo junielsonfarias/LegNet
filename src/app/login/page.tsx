@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +31,8 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || '/admin'
   const { configuracao } = useConfiguracaoInstitucional()
 
   const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'
@@ -70,7 +72,7 @@ export default function LoginPage() {
 
       const session = await getSession()
       if (session) {
-        router.push('/admin')
+        router.push(callbackUrl)
       }
     } catch (error) {
       setError('Erro ao fazer login. Tente novamente.')

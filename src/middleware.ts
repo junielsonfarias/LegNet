@@ -111,9 +111,7 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // Também adiciona headers no response (para o cliente)
-  response.headers.set(TENANT_HEADERS.TENANT_SLUG, tenantSlug)
-  response.headers.set('x-tenant-type', type)
+  // Headers internos não precisam ir para o cliente
 
   // =========================================================================
   // 2. Verificação de Autenticação (rotas /admin e /parlamentar)

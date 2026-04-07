@@ -58,7 +58,7 @@ export function HighlightsSection() {
         const res = await fetch('/api/dados-abertos/proposicoes?limit=4')
         const data = await res.json()
         setDestaques(data.dados || [])
-      } catch {} finally {
+      } catch (e) { console.warn("Erro ao carregar dados:", e) } finally {
         setLoading(false)
       }
     }

@@ -245,13 +245,40 @@ export const POST = withErrorHandler(async (
   // Detectar se é lançamento retroativo (sessão já concluída)
   const isRetroativo = sessao.status === 'CONCLUIDA'
 
-  // Criar ou atualizar voto
-  const voto = await upsertVotoIndividual({
-    proposicaoId: validatedData.proposicaoId,
-    parlamentarId: validatedData.parlamentarId,
-    voto: validatedData.voto,
-    turno: turnoAtual,
-    sessaoId
+  // Criar ou atualizar voto com re-check atômico do status do item
+  const voto = await prisma.$transaction(async (tx: any) => {
+    // Re-verificar status dentro da transação para evitar race condition
+    const itemAtual = await tx.pautaItem.findUnique({
+      where: { id: pautaItem.id },
+      select: { status: true }
+    })
+    if (itemAtual && statusFinaisItem.includes(itemAtual.status)) {
+      throw new ValidationError('Este item já foi encerrado e não aceita mais votos.')
+    }
+    return tx.votacao.upsert({
+      where: {
+        proposicaoId_parlamentarId_turno: {
+          proposicaoId: validatedData.proposicaoId,
+          parlamentarId: validatedData.parlamentarId,
+          turno: turnoAtual
+        }
+      },
+      update: {
+        voto: validatedData.voto,
+        sessaoId
+      },
+      create: {
+        proposicaoId: validatedData.proposicaoId,
+        parlamentarId: validatedData.parlamentarId,
+        voto: validatedData.voto,
+        turno: turnoAtual,
+        sessaoId
+      },
+      include: {
+        parlamentar: { select: { id: true, nome: true, apelido: true } },
+        proposicao: { select: { id: true, titulo: true, numero: true, ano: true, tipo: true } }
+      }
+    })
   })
 
   // RN-078: Registrar auditoria para voto retroativo

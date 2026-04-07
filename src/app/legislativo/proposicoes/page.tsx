@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -33,10 +34,11 @@ interface ProposicaoPublica {
 
 export default function ProposicoesPage() {
   const { configuracao } = useConfiguracaoInstitucional()
+  const params = useSearchParams()
   const [proposicoes, setProposicoes] = useState<ProposicaoPublica[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [tipoFilter, setTipoFilter] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState(params.get('search') || '')
+  const [tipoFilter, setTipoFilter] = useState<string | null>(params.get('tipo') || null)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
 
   // Carregar proposições da API pública

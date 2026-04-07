@@ -46,6 +46,7 @@ export default function NoticiaDetalhePage() {
 
         if (result.data) {
           setNoticia(result.data)
+          document.title = `${result.data.titulo} | Notícias`
         } else {
           throw new Error('Notícia não encontrada')
         }

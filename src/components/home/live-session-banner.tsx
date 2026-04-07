@@ -84,7 +84,7 @@ export function LiveSessionBanner() {
           setProximaSessao(nextData.data[0])
           setVisible(true)
         }
-      } catch {}
+      } catch (e) { console.warn("Erro ao carregar dados:", e) }
     }
     fetchData()
   }, [])

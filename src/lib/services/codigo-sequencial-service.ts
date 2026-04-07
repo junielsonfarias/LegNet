@@ -85,7 +85,7 @@ export async function gerarProximoNumero(
   // Usa transação com advisory lock para garantir atomicidade
   const result = await prisma.$transaction(async (tx) => {
     // Adquire advisory lock (liberado automaticamente no fim da transação)
-    await tx.$queryRawUnsafe(`SELECT pg_advisory_xact_lock(${lockId})`)
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(${lockId}::bigint)`
 
     // Busca maior número existente baseado na entidade
     let maiorNumero = 0

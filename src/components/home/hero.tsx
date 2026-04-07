@@ -269,6 +269,7 @@ export function Hero() {
                   type="submit"
                   className="mr-2 rounded-lg px-5 py-2.5 font-medium"
                   style={{ backgroundColor: 'var(--municipal-primary)' }}
+                  aria-label="Buscar proposições"
                 >
                   Buscar
                 </Button>
