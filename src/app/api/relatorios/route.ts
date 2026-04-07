@@ -30,14 +30,14 @@ const RelatorioQuerySchema = z.object({
   tipo: TipoRelatorioEnum,
   formato: z.enum(['excel', 'pdf']).default('excel'),
   filtros: z.object({
-    ativo: z.boolean().optional(),
-    status: z.string().optional(),
-    tipoSessao: z.string().optional(),
-    ano: z.number().optional(),
-    dataInicio: z.string().optional(),
-    dataFim: z.string().optional(),
-    parlamentarId: z.string().optional(),
-    legislaturaId: z.string().optional()
+    ativo: z.boolean().nullish().transform(v => v ?? undefined),
+    status: z.string().nullish().transform(v => v ?? undefined),
+    tipoSessao: z.string().nullish().transform(v => v ?? undefined),
+    ano: z.number().nullish().transform(v => v ?? undefined),
+    dataInicio: z.string().nullish().transform(v => v ?? undefined),
+    dataFim: z.string().nullish().transform(v => v ?? undefined),
+    parlamentarId: z.string().nullish().transform(v => v ?? undefined),
+    legislaturaId: z.string().nullish().transform(v => v ?? undefined)
   }).optional()
 })
 

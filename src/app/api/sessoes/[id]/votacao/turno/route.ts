@@ -43,7 +43,7 @@ const IniciarTurnoSchema = z.object({
 const FinalizarTurnoSchema = z.object({
   itemId: z.string(),
   turno: z.number().min(1).max(2),
-  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE', 'SEM_QUORUM', 'ADIADA']).optional()
+  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE', 'SEM_QUORUM', 'ADIADA']).nullish().transform(v => v ?? undefined)
 })
 
 /**

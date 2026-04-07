@@ -31,32 +31,32 @@ const AtualizarNormaSchema = z.object({
   situacao: z.enum([
     'VIGENTE', 'REVOGADA', 'REVOGADA_PARCIALMENTE', 'COM_ALTERACOES', 'SUSPENSA'
   ]).optional(),
-  ementa: z.string().optional(),
-  texto: z.string().optional(),
-  textoCompilado: z.string().optional(),
-  assunto: z.string().optional(),
-  indexacao: z.string().optional(),
-  observacao: z.string().optional()
+  ementa: z.string().nullish().transform(v => v ?? undefined),
+  texto: z.string().nullish().transform(v => v ?? undefined),
+  textoCompilado: z.string().nullish().transform(v => v ?? undefined),
+  assunto: z.string().nullish().transform(v => v ?? undefined),
+  indexacao: z.string().nullish().transform(v => v ?? undefined),
+  observacao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const ArtigoSchema = z.object({
   numero: z.string().min(1, 'Número é obrigatório'),
   caput: z.string().min(1, 'Caput é obrigatório'),
-  vigente: z.boolean().optional()
+  vigente: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const ParagrafoSchema = z.object({
   artigoId: z.string().min(1, 'Artigo é obrigatório'),
   tipo: z.enum(['PARAGRAFO', 'INCISO', 'ALINEA']),
-  numero: z.string().optional(),
+  numero: z.string().nullish().transform(v => v ?? undefined),
   texto: z.string().min(1, 'Texto é obrigatório'),
-  vigente: z.boolean().optional()
+  vigente: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const AlteracaoSchema = z.object({
   normaAlteradoraId: z.string().min(1, 'Norma alteradora é obrigatória'),
   tipoAlteracao: z.enum(['REVOGACAO', 'REVOGACAO_PARCIAL', 'ALTERACAO', 'ACRESCIMO', 'NOVA_REDACAO']),
-  artigoAlterado: z.string().optional(),
+  artigoAlterado: z.string().nullish().transform(v => v ?? undefined),
   descricao: z.string().min(1, 'Descrição é obrigatória')
 })
 

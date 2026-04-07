@@ -18,8 +18,8 @@ const StatusEnum = z.enum(['EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'])
 const ResultadoEnum = z.enum(['APROVADO', 'REJEITADO', 'APROVADO_COM_EMENDAS', 'ARQUIVADO'])
 
 const UpdateTramitacaoSchema = z.object({
-  tipoTramitacaoId: z.string().optional(),
-  unidadeId: z.string().optional(),
+  tipoTramitacaoId: z.string().nullish().transform(v => v ?? undefined),
+  unidadeId: z.string().nullish().transform(v => v ?? undefined),
   dataEntrada: z.string().datetime({ message: 'dataEntrada deve estar no formato ISO 8601' }).optional(),
   dataSaida: z
     .union([
@@ -39,14 +39,14 @@ const UpdateTramitacaoSchema = z.object({
     ])
     .optional(),
   diasVencidos: z.union([z.number().int().min(0), z.null()]).optional(),
-  automatica: z.boolean().optional()
+  automatica: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const ActionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('advance'),
     comentario: z.union([z.string(), z.null()]).optional(),
-    parecer: z.string().optional(),
+    parecer: z.string().nullish().transform(v => v ?? undefined),
     resultado: ResultadoEnum.optional()
   }),
   z.object({

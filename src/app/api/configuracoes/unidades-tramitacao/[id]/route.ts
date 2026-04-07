@@ -21,11 +21,11 @@ const TipoUnidadeEnum = z.enum([
 ])
 
 const UpdateUnidadeTramitacaoSchema = z.object({
-  nome: z.string().min(1).optional(),
+  nome: z.string().min(1).nullish().transform(v => v ?? undefined),
   sigla: z.string().nullable().optional(),
   descricao: z.string().nullable().optional(),
   tipo: TipoUnidadeEnum.optional(),
-  ativo: z.boolean().optional()
+  ativo: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Obter unidade de tramitação por ID

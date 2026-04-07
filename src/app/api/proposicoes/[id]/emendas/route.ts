@@ -19,17 +19,17 @@ export const dynamic = 'force-dynamic'
 
 const CriarEmendaSchema = z.object({
   autorId: z.string().min(1, 'Autor é obrigatório'),
-  coautores: z.array(z.string()).optional(),
+  coautores: z.array(z.string()).nullish().transform(v => v ?? undefined),
   tipo: z.enum(['ADITIVA', 'MODIFICATIVA', 'SUPRESSIVA', 'SUBSTITUTIVA', 'EMENDA_DE_REDACAO', 'AGLUTINATIVA']),
-  artigo: z.string().optional(),
-  paragrafo: z.string().optional(),
-  inciso: z.string().optional(),
-  alinea: z.string().optional(),
-  dispositivo: z.string().optional(),
-  textoOriginal: z.string().optional(),
+  artigo: z.string().nullish().transform(v => v ?? undefined),
+  paragrafo: z.string().nullish().transform(v => v ?? undefined),
+  inciso: z.string().nullish().transform(v => v ?? undefined),
+  alinea: z.string().nullish().transform(v => v ?? undefined),
+  dispositivo: z.string().nullish().transform(v => v ?? undefined),
+  textoOriginal: z.string().nullish().transform(v => v ?? undefined),
   textoNovo: z.string().min(1, 'Texto novo é obrigatório'),
   justificativa: z.string().min(1, 'Justificativa é obrigatória'),
-  turnoApresentacao: z.number().optional(),
+  turnoApresentacao: z.number().nullish().transform(v => v ?? undefined),
   prazoEmenda: z.string().datetime().transform(val => new Date(val)).optional()
 })
 

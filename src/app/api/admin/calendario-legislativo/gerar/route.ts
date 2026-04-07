@@ -13,7 +13,7 @@ const GerarCalendarioSchema = z.object({
   local: z.string().default('Plenário da Câmara Municipal'),
   mesInicio: z.number().int().min(1).max(12).default(2), // Fevereiro
   mesFim: z.number().int().min(1).max(12).default(12),   // Dezembro
-  excluirMeses: z.array(z.number()).optional(), // Ex: [1, 7] para janeiro e julho (recesso)
+  excluirMeses: z.array(z.number()).nullish().transform(v => v ?? undefined), // Ex: [1, 7] para janeiro e julho (recesso)
 })
 
 // POST - Gerar calendário de sessões ordinárias

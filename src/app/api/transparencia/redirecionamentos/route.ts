@@ -13,7 +13,7 @@ const RedirectSchema = z.object({
   slug: z.string().min(1),
   enabled: z.boolean(),
   url: z.string().url('URL inválida').or(z.literal('')),
-  label: z.string().optional()
+  label: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Listar redirecionamentos (PUBLICO - necessario para o frontend verificar)

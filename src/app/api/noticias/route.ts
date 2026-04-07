@@ -13,13 +13,13 @@ export const dynamic = 'force-dynamic'
 // Schema de validação para notícia
 const NoticiaSchema = z.object({
   titulo: z.string().min(3, 'Título deve ter pelo menos 3 caracteres'),
-  resumo: z.string().optional(),
+  resumo: z.string().nullish().transform(v => v ?? undefined),
   conteudo: z.string().min(10, 'Conteúdo deve ter pelo menos 10 caracteres'),
-  imagem: z.string().optional(),
-  categoria: z.string().optional(),
+  imagem: z.string().nullish().transform(v => v ?? undefined),
+  categoria: z.string().nullish().transform(v => v ?? undefined),
   tags: z.array(z.string()).default([]),
   publicada: z.boolean().default(false),
-  dataPublicacao: z.string().optional()
+  dataPublicacao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withErrorHandler(async (request: NextRequest) => {

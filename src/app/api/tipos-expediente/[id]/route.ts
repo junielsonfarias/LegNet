@@ -16,10 +16,10 @@ export const dynamic = 'force-dynamic'
 
 const TipoExpedienteUpdateSchema = z.object({
   nome: z.string().min(1).max(100).optional(),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(0).optional(),
   tempoMaximo: z.number().int().min(1).nullable().optional(),
-  ativo: z.boolean().optional()
+  ativo: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Obtém tipo

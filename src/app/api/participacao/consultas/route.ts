@@ -19,12 +19,12 @@ export const dynamic = 'force-dynamic'
 const CriarConsultaSchema = z.object({
   titulo: z.string().min(5, 'Titulo e obrigatorio'),
   descricao: z.string().min(10, 'Descricao e obrigatoria'),
-  proposicaoId: z.string().optional(),
+  proposicaoId: z.string().nullish().transform(v => v ?? undefined),
   dataInicio: z.string().datetime(),
   dataFim: z.string().datetime(),
-  permitirAnonimo: z.boolean().optional(),
-  requerCadastro: z.boolean().optional(),
-  moderacao: z.boolean().optional()
+  permitirAnonimo: z.boolean().nullish().transform(v => v ?? undefined),
+  requerCadastro: z.boolean().nullish().transform(v => v ?? undefined),
+  moderacao: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 /**

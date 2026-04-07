@@ -20,14 +20,14 @@ import {
 export const dynamic = 'force-dynamic'
 
 const AtualizarSchema = z.object({
-  nome: z.string().min(3).optional(),
-  descricao: z.string().optional(),
-  filtros: z.record(z.any()).optional(),
-  frequencia: z.enum(['DIARIO', 'SEMANAL', 'QUINZENAL', 'MENSAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL']).optional(),
+  nome: z.string().min(3).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  filtros: z.record(z.any()).nullish().transform(v => v ?? undefined),
+  frequencia: z.enum(['DIARIO', 'SEMANAL', 'QUINZENAL', 'MENSAL', 'TRIMESTRAL', 'SEMESTRAL', 'ANUAL']).nullish().transform(v => v ?? undefined),
   diaSemana: z.number().int().min(0).max(6).optional(),
-  diaHora: z.string().optional(),
-  destinatarios: z.array(z.string().email()).optional(),
-  formato: z.enum(['PDF', 'EXCEL', 'CSV']).optional()
+  diaHora: z.string().nullish().transform(v => v ?? undefined),
+  destinatarios: z.array(z.string().email()).nullish().transform(v => v ?? undefined),
+  formato: z.enum(['PDF', 'EXCEL', 'CSV']).nullish().transform(v => v ?? undefined)
 })
 
 /**

@@ -15,12 +15,12 @@ export const dynamic = 'force-dynamic'
 const VotarSchema = z.object({
   parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
   voto: z.enum(['SIM', 'NAO', 'ABSTENCAO']),
-  observacoes: z.string().optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const EncerrarVotacaoSchema = z.object({
   resultado: z.enum(['APROVADO_COMISSAO', 'REJEITADO_COMISSAO']),
-  motivoRejeicao: z.string().optional()
+  motivoRejeicao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // POST - Registrar voto de membro da comissão sobre o parecer

@@ -8,11 +8,11 @@ import { tiposTramitacaoDbService } from '@/lib/services/tipos-tramitacao-db-ser
 export const dynamic = 'force-dynamic'
 
 const UpdateTipoTramitacaoSchema = z.object({
-  nome: z.string().min(1).optional(),
-  descricao: z.string().optional(),
+  nome: z.string().min(1).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   prazoRegimental: z.number().int().min(0).optional(),
   prazoLegal: z.number().int().min(0).optional(),
-  ativo: z.boolean().optional(),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(0).optional(),
   unidadeResponsavelId: z.string().nullable().optional()
 })

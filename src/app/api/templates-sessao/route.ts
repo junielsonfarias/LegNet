@@ -13,17 +13,17 @@ const TemplateItemSchema = z.object({
   secao: z.enum(PAUTA_SECOES),
   ordem: z.number().int().min(1).optional(),
   titulo: z.string().min(1, 'Título é obrigatório'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   tempoEstimado: z.number().int().min(0).optional(),
-  tipoProposicao: z.string().optional(), // Codigo do tipo de proposicao (flexivel)
-  obrigatorio: z.boolean().optional()
+  tipoProposicao: z.string().nullish().transform(v => v ?? undefined), // Codigo do tipo de proposicao (flexivel)
+  obrigatorio: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const TemplateCreateSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   tipo: z.nativeEnum(TipoSessao),
-  ativo: z.boolean().optional(),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
   duracaoEstimativa: z.number().int().min(0).optional(),
   itens: z.array(TemplateItemSchema).min(1, 'Informe ao menos um item no template')
 })

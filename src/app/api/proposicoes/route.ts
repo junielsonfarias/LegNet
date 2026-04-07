@@ -27,16 +27,16 @@ const ProposicaoSchema = z.object({
   tipo: z.string().min(1, 'Tipo da proposição é obrigatório').max(50, 'Código do tipo deve ter no máximo 50 caracteres'),
   titulo: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
   ementa: z.string().min(10, 'Ementa deve ter pelo menos 10 caracteres'),
-  texto: z.string().optional(),
+  texto: z.string().nullish().transform(v => v ?? undefined),
   urlDocumento: z.string().url('URL deve ser válida').optional().or(z.literal('')), // URL externa do documento
   status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA', 'SANCIONADA', 'PROMULGADA']).default('APRESENTADA'),
   dataApresentacao: z.string().min(1, 'Data de apresentação é obrigatória'),
-  dataVotacao: z.string().optional(),
-  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).optional(),
-  sessaoId: z.string().optional(),
+  dataVotacao: z.string().nullish().transform(v => v ?? undefined),
+  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).nullish().transform(v => v ?? undefined),
+  sessaoId: z.string().nullish().transform(v => v ?? undefined),
   autorId: z.string().min(1, 'ID do autor é obrigatório'),
-  regime: z.enum(['NORMAL', 'PRIORIDADE', 'URGENCIA', 'URGENCIA_URGENTISSIMA']).optional(),
-  unidadeInicialId: z.string().optional() // RN-038: Unidade inicial para tramitacao (prioridade sobre fluxo)
+  regime: z.enum(['NORMAL', 'PRIORIDADE', 'URGENCIA', 'URGENCIA_URGENTISSIMA']).nullish().transform(v => v ?? undefined),
+  unidadeInicialId: z.string().nullish().transform(v => v ?? undefined) // RN-038: Unidade inicial para tramitacao (prioridade sobre fluxo)
 })
 
 // GET - Listar proposicoes

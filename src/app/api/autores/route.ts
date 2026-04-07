@@ -15,15 +15,15 @@ export const dynamic = 'force-dynamic'
 const AutorSchema = z.object({
   tipoAutorId: z.string().min(1, 'Tipo de autor é obrigatório'),
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  descricao: z.string().optional().nullable(),
-  parlamentarId: z.string().optional().nullable(),
-  comissaoId: z.string().optional().nullable(),
-  cargo: z.string().optional().nullable(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  parlamentarId: z.string().nullish().transform(v => v ?? undefined),
+  comissaoId: z.string().nullish().transform(v => v ?? undefined),
+  cargo: z.string().nullish().transform(v => v ?? undefined),
   email: z.preprocess(
     (val) => (val === '' ? undefined : val),
-    z.string().email('Email inválido').optional().nullable()
+    z.string().email('Email inválido').nullish().transform(v => v ?? undefined)
   ),
-  telefone: z.string().optional().nullable(),
+  telefone: z.string().nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true)
 }).transform(data => ({
   tipoAutorId: data.tipoAutorId,

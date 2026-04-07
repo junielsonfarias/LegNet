@@ -19,14 +19,14 @@ const MandatoSchema = z.object({
   numeroVotos: z.number().min(0, 'Número de votos deve ser positivo').default(0),
   cargo: z.enum(['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO', 'VEREADOR']),
   dataInicio: z.string().min(1, 'Data de início é obrigatória'),
-  dataFim: z.string().optional()
+  dataFim: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // Schema de validação para filiação
 const FiliacaoSchema = z.object({
   partido: z.string().min(2, 'Partido deve ter pelo menos 2 caracteres'),
   dataInicio: z.string().min(1, 'Data de início é obrigatória'),
-  dataFim: z.string().optional()
+  dataFim: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // Schema de validação para parlamentar
@@ -56,12 +56,12 @@ const ParlamentarSchema = z.object({
     .max(20, 'Telefone deve ter no máximo 20 caracteres')
     .optional()
     .refine(val => !val || validatePhone(val), 'Telefone deve ter formato válido'),
-  biografia: z.string().optional(),
-  foto: z.string().optional().nullable(),
-  gabinete: z.string().optional().nullable(),
+  biografia: z.string().nullish().transform(v => v ?? undefined),
+  foto: z.string().nullish().transform(v => v ?? undefined),
+  gabinete: z.string().nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true),
-  mandatos: z.array(MandatoSchema).optional(),
-  filiacoes: z.array(FiliacaoSchema).optional()
+  mandatos: z.array(MandatoSchema).nullish().transform(v => v ?? undefined),
+  filiacoes: z.array(FiliacaoSchema).nullish().transform(v => v ?? undefined)
 })
 
 // GET - Listar parlamentares

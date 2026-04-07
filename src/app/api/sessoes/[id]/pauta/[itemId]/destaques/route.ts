@@ -13,9 +13,9 @@ export const dynamic = 'force-dynamic'
 
 const DestaqueSchema = z.object({
   titulo: z.string().min(1, 'Titulo e obrigatorio'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   tipoVotacao: z.enum(['NOMINAL', 'SECRETA', 'SIMBOLICA', 'LEITURA']).default('NOMINAL'),
-  parlamentarId: z.string().optional()
+  parlamentarId: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const VotarDestaqueSchema = z.object({

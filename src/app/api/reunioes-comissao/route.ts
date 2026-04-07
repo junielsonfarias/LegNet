@@ -18,13 +18,13 @@ export const dynamic = 'force-dynamic'
 // Schema de validação
 const CriarReuniaoSchema = z.object({
   comissaoId: z.string().min(1, 'Comissão é obrigatória'),
-  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'ESPECIAL']).optional(),
+  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'ESPECIAL']).nullish().transform(v => v ?? undefined),
   data: z.string().datetime('Data inválida'),
-  horaInicio: z.string().datetime().optional(),
-  local: z.string().optional(),
-  motivoConvocacao: z.string().optional(),
+  horaInicio: z.string().datetime().nullish().transform(v => v ?? undefined),
+  local: z.string().nullish().transform(v => v ?? undefined),
+  motivoConvocacao: z.string().nullish().transform(v => v ?? undefined),
   quorumMinimo: z.number().int().min(1).optional(),
-  observacoes: z.string().optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**

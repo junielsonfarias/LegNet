@@ -20,15 +20,15 @@ const TipoProposicaoSchema = z.string()
 const FluxoCreateSchema = z.object({
   tipoProposicao: TipoProposicaoSchema,
   nome: z.string().min(1, 'Nome e obrigatorio'),
-  descricao: z.string().optional(),
-  ativo: z.boolean().optional().default(true)
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? true)
 })
 
 const FluxoUpdateSchema = z.object({
   id: z.string(),
-  nome: z.string().min(1).optional(),
-  descricao: z.string().optional(),
-  ativo: z.boolean().optional()
+  nome: z.string().min(1).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 /**

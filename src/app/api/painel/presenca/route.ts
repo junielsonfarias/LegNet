@@ -21,7 +21,7 @@ const PresencaSchema = z.object({
   sessaoId: z.string().min(1, 'sessaoId é obrigatório'),
   parlamentarId: z.string().min(1, 'parlamentarId é obrigatório'),
   presente: z.boolean(),
-  justificativa: z.string().optional()
+  justificativa: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**

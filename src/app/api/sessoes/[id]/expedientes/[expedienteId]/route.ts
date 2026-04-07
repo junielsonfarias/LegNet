@@ -15,7 +15,7 @@ import { expedienteSessaoDbService } from '@/lib/services/expediente-sessao-db-s
 export const dynamic = 'force-dynamic'
 
 const ExpedienteUpdateSchema = z.object({
-  conteudo: z.string().min(1).optional(),
+  conteudo: z.string().min(1).nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(0).optional()
 })
 

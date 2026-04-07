@@ -16,9 +16,9 @@ export const dynamic = 'force-dynamic'
 
 // Schema de validação para filtros
 const FilterSchema = z.object({
-  status: z.enum(['NEW', 'ACKNOWLEDGED', 'RESOLVED', 'FALSE_POSITIVE']).optional(),
-  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
-  type: z.string().optional(),
+  status: z.enum(['NEW', 'ACKNOWLEDGED', 'RESOLVED', 'FALSE_POSITIVE']).nullish().transform(v => v ?? undefined),
+  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).nullish().transform(v => v ?? undefined),
+  type: z.string().nullish().transform(v => v ?? undefined),
   limit: z.coerce.number().int().min(1).max(100).default(50)
 })
 
@@ -26,7 +26,7 @@ const FilterSchema = z.object({
 const UpdateStatusSchema = z.object({
   alertId: z.string().min(1, 'alertId é obrigatório'),
   status: z.enum(['NEW', 'ACKNOWLEDGED', 'RESOLVED', 'FALSE_POSITIVE']),
-  notes: z.string().optional()
+  notes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**

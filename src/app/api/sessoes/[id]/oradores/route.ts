@@ -17,8 +17,8 @@ const OradorCreateSchema = z.object({
     'TRIBUNA_LIVRE', 'COMUNICACAO'
   ]),
   tempoLimite: z.number().int().min(1).optional(),
-  assunto: z.string().optional(),
-  observacoes: z.string().optional()
+  assunto: z.string().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(withErrorHandler(async (

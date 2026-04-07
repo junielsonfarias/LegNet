@@ -11,12 +11,12 @@ export const dynamic = 'force-dynamic'
 const LicitacaoQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
-  modalidade: z.enum(['PREGAO_ELETRONICO', 'PREGAO_PRESENCIAL', 'CONCORRENCIA', 'TOMADA_DE_PRECOS', 'CONVITE', 'CONCURSO', 'LEILAO', 'DISPENSA', 'INEXIGIBILIDADE']).optional(),
-  situacao: z.enum(['EM_ANDAMENTO', 'HOMOLOGADA', 'ADJUDICADA', 'REVOGADA', 'ANULADA', 'DESERTA', 'FRACASSADA', 'SUSPENSA']).optional(),
+  modalidade: z.enum(['PREGAO_ELETRONICO', 'PREGAO_PRESENCIAL', 'CONCORRENCIA', 'TOMADA_DE_PRECOS', 'CONVITE', 'CONCURSO', 'LEILAO', 'DISPENSA', 'INEXIGIBILIDADE']).nullish().transform(v => v ?? undefined),
+  situacao: z.enum(['EM_ANDAMENTO', 'HOMOLOGADA', 'ADJUDICADA', 'REVOGADA', 'ANULADA', 'DESERTA', 'FRACASSADA', 'SUSPENSA']).nullish().transform(v => v ?? undefined),
   ano: z.coerce.number().int().min(2000).max(2100).optional(),
-  objeto: z.string().optional(),
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional(),
+  objeto: z.string().nullish().transform(v => v ?? undefined),
+  dataInicio: z.string().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
   valorMinimo: z.coerce.number().min(0).optional(),
   valorMaximo: z.coerce.number().min(0).optional()
 }).refine(

@@ -25,9 +25,9 @@ const StreamingSchema = z.object({
   acao: z.enum(['iniciar', 'parar', 'configurar'], {
     errorMap: () => ({ message: 'Ação inválida. Use: iniciar, parar, configurar' })
   }),
-  url: z.string().url().optional(),
-  titulo: z.string().optional(),
-  plataforma: z.enum(['youtube', 'vimeo', 'outro']).optional()
+  url: z.string().url().nullish().transform(v => v ?? undefined),
+  titulo: z.string().nullish().transform(v => v ?? undefined),
+  plataforma: z.enum(['youtube', 'vimeo', 'outro']).nullish().transform(v => v ?? undefined)
 })
 
 /**

@@ -22,8 +22,8 @@ export const dynamic = 'force-dynamic'
 
 const ModerarSchema = z.object({
   status: z.enum(['PENDENTE', 'EM_ANALISE', 'ACEITA', 'RECUSADA', 'CONVERTIDA_PROPOSICAO']),
-  motivoRecusa: z.string().optional(),
-  parlamentarResponsavelId: z.string().optional()
+  motivoRecusa: z.string().nullish().transform(v => v ?? undefined),
+  parlamentarResponsavelId: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const ApoiarSchema = z.object({

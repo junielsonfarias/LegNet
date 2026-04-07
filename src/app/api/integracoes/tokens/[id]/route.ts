@@ -23,11 +23,11 @@ const TokenPermissionsSchema = z
   })
 
 const TokenUpdateSchema = z.object({
-  nome: z.string().min(3).optional(),
-  descricao: z.string().optional(),
+  nome: z.string().min(3).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   permissoes: TokenPermissionsSchema.optional(),
-  ativo: z.boolean().optional(),
-  rotate: z.boolean().optional()
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
+  rotate: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const getTokenByIdOrThrow = async (id: string) => {

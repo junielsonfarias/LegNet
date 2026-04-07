@@ -10,12 +10,12 @@ export const dynamic = 'force-dynamic'
 
 const PautaCreateSchema = z.object({
   sessaoId: z.string().min(1, 'Sessão é obrigatória'),
-  observacoes: z.string().optional(),
-  geradaAutomaticamente: z.boolean().optional().default(false)
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
+  geradaAutomaticamente: z.boolean().nullish().transform(v => v ?? false)
 })
 
 const PautaQuerySchema = z.object({
-  status: z.enum(['RASCUNHO', 'APROVADA', 'EM_ANDAMENTO', 'CONCLUIDA']).optional(),
+  status: z.enum(['RASCUNHO', 'APROVADA', 'EM_ANDAMENTO', 'CONCLUIDA']).nullish().transform(v => v ?? undefined),
   page: z.coerce.number().int().min(1).optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(20)
 })

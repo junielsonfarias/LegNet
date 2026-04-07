@@ -14,35 +14,35 @@ export const dynamic = 'force-dynamic'
 
 const ConfiguracaoInstitucionalSchema = z.object({
   nomeCasa: z.string().min(3),
-  sigla: z.string().optional(),
-  cnpj: z.string().optional(),
-  enderecoLogradouro: z.string().optional(),
-  enderecoNumero: z.string().optional(),
-  enderecoBairro: z.string().optional(),
-  enderecoCidade: z.string().optional(),
-  enderecoEstado: z.string().optional(),
-  enderecoCep: z.string().optional(),
-  telefone: z.string().optional(),
-  email: z.string().optional(),
-  site: z.string().optional(),
-  logoUrl: z.string().optional(),
-  tema: z.enum(['claro', 'escuro', 'auto']).optional(),
-  timezone: z.string().optional(),
-  descricao: z.string().optional()
+  sigla: z.string().nullish().transform(v => v ?? undefined),
+  cnpj: z.string().nullish().transform(v => v ?? undefined),
+  enderecoLogradouro: z.string().nullish().transform(v => v ?? undefined),
+  enderecoNumero: z.string().nullish().transform(v => v ?? undefined),
+  enderecoBairro: z.string().nullish().transform(v => v ?? undefined),
+  enderecoCidade: z.string().nullish().transform(v => v ?? undefined),
+  enderecoEstado: z.string().nullish().transform(v => v ?? undefined),
+  enderecoCep: z.string().nullish().transform(v => v ?? undefined),
+  telefone: z.string().nullish().transform(v => v ?? undefined),
+  email: z.string().nullish().transform(v => v ?? undefined),
+  site: z.string().nullish().transform(v => v ?? undefined),
+  logoUrl: z.string().nullish().transform(v => v ?? undefined),
+  tema: z.enum(['claro', 'escuro', 'auto']).nullish().transform(v => v ?? undefined),
+  timezone: z.string().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const SistemaConfiguracaoSchema = z.object({
   chave: z.string().min(3),
   valor: z.any(),
-  tipo: z.enum(['string', 'number', 'boolean', 'json']).optional(),
-  descricao: z.string().optional(),
-  categoria: z.string().optional(),
-  editavel: z.boolean().optional()
+  tipo: z.enum(['string', 'number', 'boolean', 'json']).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  categoria: z.string().nullish().transform(v => v ?? undefined),
+  editavel: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const RestoreSchema = z.object({
   institucional: ConfiguracaoInstitucionalSchema.optional(),
-  sistema: z.array(SistemaConfiguracaoSchema).optional()
+  sistema: z.array(SistemaConfiguracaoSchema).nullish().transform(v => v ?? undefined)
 })
 
 const coerceTipo = (value: unknown, tipo?: SystemConfigType): SystemConfigType => {

@@ -22,7 +22,7 @@ const ItemSchema = z.object({
   url: z.string().min(1, 'URL é obrigatória'),
   ordem: z.number().int().default(0),
   ativo: z.boolean().default(true),
-  icone: z.string().optional()
+  icone: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Listar categorias (PÚBLICO para o portal)

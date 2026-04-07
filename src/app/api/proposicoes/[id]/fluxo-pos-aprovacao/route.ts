@@ -9,9 +9,9 @@ export const dynamic = 'force-dynamic'
 
 const AcaoSchema = z.object({
   acao: z.enum(['sancionar', 'vetar', 'derrubar-veto', 'arquivar', 'promulgar']),
-  motivo: z.string().optional(),
-  dataAcao: z.string().optional(),
-  tipoVeto: z.enum(['TOTAL', 'PARCIAL']).optional(),
+  motivo: z.string().nullish().transform(v => v ?? undefined),
+  dataAcao: z.string().nullish().transform(v => v ?? undefined),
+  tipoVeto: z.enum(['TOTAL', 'PARCIAL']).nullish().transform(v => v ?? undefined),
 })
 
 // POST - Execute post-approval actions

@@ -14,14 +14,14 @@ export const dynamic = 'force-dynamic'
 
 // Schema de validação para atualização
 const UpdateNoticiaSchema = z.object({
-  titulo: z.string().min(3, 'Título deve ter pelo menos 3 caracteres').optional(),
-  resumo: z.string().optional(),
-  conteudo: z.string().min(10, 'Conteúdo deve ter pelo menos 10 caracteres').optional(),
-  imagem: z.string().optional(),
-  categoria: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  publicada: z.boolean().optional(),
-  dataPublicacao: z.string().optional()
+  titulo: z.string().min(3, 'Título deve ter pelo menos 3 caracteres').nullish().transform(v => v ?? undefined),
+  resumo: z.string().nullish().transform(v => v ?? undefined),
+  conteudo: z.string().min(10, 'Conteúdo deve ter pelo menos 10 caracteres').nullish().transform(v => v ?? undefined),
+  imagem: z.string().nullish().transform(v => v ?? undefined),
+  categoria: z.string().nullish().transform(v => v ?? undefined),
+  tags: z.array(z.string()).nullish().transform(v => v ?? undefined),
+  publicada: z.boolean().nullish().transform(v => v ?? undefined),
+  dataPublicacao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Buscar notícia por ID

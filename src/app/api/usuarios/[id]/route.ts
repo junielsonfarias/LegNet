@@ -12,12 +12,12 @@ import { usuarioDbService } from '@/lib/services/usuario-db-service'
 export const dynamic = 'force-dynamic'
 
 const UpdateUsuarioSchema = z.object({
-  name: z.string().optional(),
-  email: z.string().email('Email inválido').optional(),
-  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres').optional(),
-  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']).optional(),
-  parlamentarId: z.string().optional().nullable(),
-  ativo: z.boolean().optional()
+  name: z.string().nullish().transform(v => v ?? undefined),
+  email: z.string().email('Email inválido').nullish().transform(v => v ?? undefined),
+  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres').nullish().transform(v => v ?? undefined),
+  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']).nullish().transform(v => v ?? undefined),
+  parlamentarId: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Buscar usuário por ID

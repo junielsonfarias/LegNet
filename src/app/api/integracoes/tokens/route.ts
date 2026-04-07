@@ -19,9 +19,9 @@ const TokenPermissionsSchema = z
 
 const TokenCreateSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter ao menos 3 caracteres'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   permissoes: TokenPermissionsSchema,
-  ativo: z.boolean().optional()
+  ativo: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const listTokens = withAuth(

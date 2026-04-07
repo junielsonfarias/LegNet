@@ -24,15 +24,15 @@ const CreateParecerSchema = z.object({
     'PELA_RETIRADA'
   ]),
   fundamentacao: z.string().min(10, 'Fundamentação deve ter pelo menos 10 caracteres'),
-  conclusao: z.string().optional(),
-  ementa: z.string().optional(),
-  emendasPropostas: z.string().optional(),
-  prazoEmissao: z.string().optional(),
-  observacoes: z.string().optional(),
-  arquivoUrl: z.string().url().optional().nullable(),
-  arquivoNome: z.string().optional().nullable(),
-  arquivoTamanho: z.number().int().optional().nullable(),
-  driveUrl: z.string().url().optional().nullable()
+  conclusao: z.string().nullish().transform(v => v ?? undefined),
+  ementa: z.string().nullish().transform(v => v ?? undefined),
+  emendasPropostas: z.string().nullish().transform(v => v ?? undefined),
+  prazoEmissao: z.string().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
+  arquivoUrl: z.string().url().nullish().transform(v => v ?? undefined),
+  arquivoNome: z.string().nullish().transform(v => v ?? undefined),
+  arquivoTamanho: z.number().int().nullish().transform(v => v ?? undefined),
+  driveUrl: z.string().url().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Listar pareceres com filtros

@@ -20,7 +20,7 @@ export const GET = withAuth(async (request: NextRequest, context: { params: Prom
 const QuestaoOrdemSchema = z.object({
   parlamentarId: z.string().min(1),
   descricao: z.string().min(5, 'Descrição é obrigatória'),
-  fundamentacao: z.string().optional(),
+  fundamentacao: z.string().nullish().transform(v => v ?? undefined),
 })
 
 // POST - Registrar questão de ordem

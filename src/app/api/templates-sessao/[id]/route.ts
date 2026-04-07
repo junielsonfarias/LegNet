@@ -9,23 +9,23 @@ import { templatesSessaoDbService } from '@/lib/services/templates-sessao-db-ser
 const PAUTA_SECOES = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
 
 const TemplateItemSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().nullish().transform(v => v ?? undefined),
   secao: z.enum(PAUTA_SECOES),
   ordem: z.number().int().min(1).optional(),
   titulo: z.string().min(1, 'Título é obrigatório'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   tempoEstimado: z.number().int().min(0).optional(),
-  tipoProposicao: z.string().optional(),
-  obrigatorio: z.boolean().optional()
+  tipoProposicao: z.string().nullish().transform(v => v ?? undefined),
+  obrigatorio: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const TemplateUpdateSchema = z.object({
-  nome: z.string().min(1).optional(),
+  nome: z.string().min(1).nullish().transform(v => v ?? undefined),
   descricao: z.string().nullable().optional(),
   tipo: z.nativeEnum(TipoSessao).optional(),
-  ativo: z.boolean().optional(),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
   duracaoEstimativa: z.number().int().min(0).nullable().optional(),
-  itens: z.array(TemplateItemSchema).min(1).optional()
+  itens: z.array(TemplateItemSchema).min(1).nullish().transform(v => v ?? undefined)
 })
 
 const sortTemplateItens = <T extends { secao: string; ordem: number }>(itens: T[]): T[] => {

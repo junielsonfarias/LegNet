@@ -19,10 +19,10 @@ const SystemConfigUpdateSchema = z.object({
   configuracoes: z.array(z.object({
     chave: z.string().min(3),
     valor: z.any(),
-    tipo: z.enum(['string', 'number', 'boolean', 'json']).optional(),
-    descricao: z.string().optional(),
-    categoria: z.string().optional(),
-    editavel: z.boolean().optional()
+    tipo: z.enum(['string', 'number', 'boolean', 'json']).nullish().transform(v => v ?? undefined),
+    descricao: z.string().nullish().transform(v => v ?? undefined),
+    categoria: z.string().nullish().transform(v => v ?? undefined),
+    editavel: z.boolean().nullish().transform(v => v ?? undefined)
   })).min(1)
 })
 

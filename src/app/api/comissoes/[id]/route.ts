@@ -16,10 +16,10 @@ export const dynamic = 'force-dynamic'
 
 // Schema de validação para atualização
 const UpdateComissaoSchema = z.object({
-  nome: z.string().min(3, 'Nome da comissão deve ter pelo menos 3 caracteres').optional(),
-  descricao: z.string().optional(),
-  tipo: z.enum(['PERMANENTE', 'TEMPORARIA', 'ESPECIAL', 'INQUERITO']).optional(),
-  ativa: z.boolean().optional()
+  nome: z.string().min(3, 'Nome da comissão deve ter pelo menos 3 caracteres').nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipo: z.enum(['PERMANENTE', 'TEMPORARIA', 'ESPECIAL', 'INQUERITO']).nullish().transform(v => v ?? undefined),
+  ativa: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Buscar comissão por ID

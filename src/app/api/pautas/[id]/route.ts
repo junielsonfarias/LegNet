@@ -9,8 +9,8 @@ import { proposicaoDbService } from '@/lib/services/proposicao-db-service'
 export const dynamic = 'force-dynamic'
 
 const PautaUpdateSchema = z.object({
-  observacoes: z.string().optional(),
-  status: z.enum(['RASCUNHO', 'APROVADA']).optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
+  status: z.enum(['RASCUNHO', 'APROVADA']).nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(withErrorHandler(async (request: NextRequest, context) => {

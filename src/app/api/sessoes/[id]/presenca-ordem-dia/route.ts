@@ -13,14 +13,14 @@ export const dynamic = 'force-dynamic'
 const PresencaSchema = z.object({
   parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
   presente: z.boolean(),
-  observacoes: z.string().optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const PresencaBulkSchema = z.object({
   presencas: z.array(z.object({
     parlamentarId: z.string().min(1),
     presente: z.boolean(),
-    observacoes: z.string().optional()
+    observacoes: z.string().nullish().transform(v => v ?? undefined)
   }))
 })
 

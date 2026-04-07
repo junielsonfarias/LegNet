@@ -15,16 +15,16 @@ const MembroMesaDiretoraSchema = z.object({
   parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
   cargoId: z.string().min(1, 'Cargo é obrigatório'),
   dataInicio: z.string().min(1, 'Data de início é obrigatória'),
-  dataFim: z.string().optional(),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true),
-  observacoes: z.string().optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // Schema de validação para mesa diretora
 const MesaDiretoraSchema = z.object({
   periodoId: z.string().min(1, 'Período é obrigatório'),
   ativa: z.boolean().default(false),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   membros: z.array(MembroMesaDiretoraSchema).min(1, 'Pelo menos um membro é obrigatório')
 })
 

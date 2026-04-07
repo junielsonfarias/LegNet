@@ -16,19 +16,19 @@ export const dynamic = 'force-dynamic'
 // Schema de validacao para atualizacao de proposicao
 // O campo 'tipo' aceita qualquer codigo de tipo cadastrado em TipoProposicaoConfig
 const UpdateProposicaoSchema = z.object({
-  numero: z.string().min(1).optional(),
-  ano: z.number().min(1900).optional(), // Permite anos anteriores para dados historicos
+  numero: z.string().min(1).nullish().transform(v => v ?? undefined),
+  ano: z.number().min(1900).nullish().transform(v => v ?? undefined), // Permite anos anteriores para dados historicos
   tipo: z.string().min(1).max(50).optional(), // Tipos sao dinamicos - validados contra TipoProposicaoConfig
-  titulo: z.string().min(5).optional(),
-  ementa: z.string().min(10).optional(),
-  texto: z.string().optional(),
+  titulo: z.string().min(5).nullish().transform(v => v ?? undefined),
+  ementa: z.string().min(10).nullish().transform(v => v ?? undefined),
+  texto: z.string().nullish().transform(v => v ?? undefined),
   urlDocumento: z.string().url('URL deve ser válida').optional().or(z.literal('')), // URL externa do documento
-  status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA', 'SANCIONADA', 'PROMULGADA']).optional(),
-  dataApresentacao: z.string().optional(),
-  dataVotacao: z.string().optional(),
-  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).optional(),
-  sessaoId: z.string().optional(),
-  autorId: z.string().optional()
+  status: z.enum(['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADA', 'REJEITADA', 'ARQUIVADA', 'VETADA', 'SANCIONADA', 'PROMULGADA']).nullish().transform(v => v ?? undefined),
+  dataApresentacao: z.string().nullish().transform(v => v ?? undefined),
+  dataVotacao: z.string().nullish().transform(v => v ?? undefined),
+  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE']).nullish().transform(v => v ?? undefined),
+  sessaoId: z.string().nullish().transform(v => v ?? undefined),
+  autorId: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Buscar proposicao por ID ou slug

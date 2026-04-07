@@ -13,17 +13,17 @@ const ResultadoEnum = z.enum(['APROVADO', 'REJEITADO', 'APROVADO_COM_EMENDAS', '
 const CreateTramitacaoSchema = z.object({
   proposicaoId: z.string().min(1, 'Proposição é obrigatória'),
   tipoTramitacaoId: z.string().min(1, 'Tipo de tramitação é obrigatório'),
-  unidadeId: z.string().optional(),
+  unidadeId: z.string().nullish().transform(v => v ?? undefined),
   dataEntrada: z.string().datetime({ message: 'dataEntrada deve estar no formato ISO 8601' }).optional(),
   dataSaida: z.string().datetime({ message: 'dataSaida deve estar no formato ISO 8601' }).optional(),
   status: StatusEnum.optional(),
-  observacoes: z.string().optional(),
-  parecer: z.string().optional(),
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
+  parecer: z.string().nullish().transform(v => v ?? undefined),
   resultado: ResultadoEnum.optional(),
-  responsavelId: z.string().optional(),
+  responsavelId: z.string().nullish().transform(v => v ?? undefined),
   prazoVencimento: z.string().datetime({ message: 'prazoVencimento deve estar no formato ISO 8601' }).optional(),
   diasVencidos: z.number().int().min(0).optional(),
-  automatica: z.boolean().optional()
+  automatica: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(async (request: NextRequest) => {

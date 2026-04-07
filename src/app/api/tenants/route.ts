@@ -25,16 +25,16 @@ const createTenantSchema = z.object({
   nome: z.string()
     .min(3, 'Nome deve ter pelo menos 3 caracteres')
     .max(200, 'Nome deve ter no máximo 200 caracteres'),
-  sigla: z.string().max(20).optional(),
-  cnpj: z.string().optional(),
-  dominio: z.string().optional(),
-  subdominio: z.string().optional(),
-  cidade: z.string().optional(),
-  estado: z.string().max(2).optional(),
-  logoUrl: z.string().url().optional(),
+  sigla: z.string().max(20).nullish().transform(v => v ?? undefined),
+  cnpj: z.string().nullish().transform(v => v ?? undefined),
+  dominio: z.string().nullish().transform(v => v ?? undefined),
+  subdominio: z.string().nullish().transform(v => v ?? undefined),
+  cidade: z.string().nullish().transform(v => v ?? undefined),
+  estado: z.string().max(2).nullish().transform(v => v ?? undefined),
+  logoUrl: z.string().url().nullish().transform(v => v ?? undefined),
   corPrimaria: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   corSecundaria: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  plano: z.enum(['BASICO', 'PROFISSIONAL', 'ENTERPRISE']).optional(),
+  plano: z.enum(['BASICO', 'PROFISSIONAL', 'ENTERPRISE']).nullish().transform(v => v ?? undefined),
 })
 
 /**

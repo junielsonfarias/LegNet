@@ -8,9 +8,9 @@ export const dynamic = 'force-dynamic'
 
 // Schema de atualização
 const updateSchema = z.object({
-  notificarMudancas: z.boolean().optional(),
-  notificarVotacao: z.boolean().optional(),
-  notificarParecer: z.boolean().optional(),
+  notificarMudancas: z.boolean().nullish().transform(v => v ?? undefined),
+  notificarVotacao: z.boolean().nullish().transform(v => v ?? undefined),
+  notificarParecer: z.boolean().nullish().transform(v => v ?? undefined),
   anotacao: z.string().nullable().optional(),
 })
 

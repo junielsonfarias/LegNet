@@ -13,17 +13,17 @@ const PAUTA_STATUS = ['PENDENTE', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADO', 'REJ
 const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
 
 const PautaItemUpdateSchema = z.object({
-  secao: z.enum(PAUTA_SECAO_ORDER).optional(),
-  titulo: z.string().min(1).optional(),
-  descricao: z.string().optional(),
+  secao: z.enum(PAUTA_SECAO_ORDER).nullish().transform(v => v ?? undefined),
+  titulo: z.string().min(1).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   proposicaoId: z.string().nullable().optional(),
   tempoEstimado: z.number().min(0).nullable().optional(),
   tempoReal: z.number().min(0).nullable().optional(),
-  status: z.enum(PAUTA_STATUS).optional(),
-  autor: z.string().optional(),
-  observacoes: z.string().optional(),
+  status: z.enum(PAUTA_STATUS).nullish().transform(v => v ?? undefined),
+  autor: z.string().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(1).optional(),
-  tipoAcao: z.enum(TIPO_ACAO_PAUTA).optional(), // Tipo de ação: LEITURA, VOTACAO, etc.
+  tipoAcao: z.enum(TIPO_ACAO_PAUTA).nullish().transform(v => v ?? undefined), // Tipo de ação: LEITURA, VOTACAO, etc.
   // === NOVOS CAMPOS DE ETAPA E LEITURA ===
   etapa: z.number().int().min(1).max(2).nullable().optional(), // 1 = 1ª Ordem do Dia, 2 = 2ª Ordem do Dia
   parecerId: z.string().nullable().optional(),

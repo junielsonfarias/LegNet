@@ -10,20 +10,20 @@ const APLICACOES_QUORUM = [
 ] as const
 
 const TipoProposicaoUpdateSchema = z.object({
-  nome: z.string().min(3).optional(),
+  nome: z.string().min(3).nullish().transform(v => v ?? undefined),
   sigla: z.string().min(1).max(10).optional(),
-  descricao: z.string().optional().nullable(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   prazoLimite: z.number().int().min(0).optional().nullable(),
-  requerVotacao: z.boolean().optional(),
-  requerSancao: z.boolean().optional(),
-  numeracaoAnual: z.boolean().optional(),
-  prefixoNumeracao: z.string().optional().nullable(),
-  ativo: z.boolean().optional(),
-  ordem: z.number().int().optional(),
-  corBadge: z.string().optional().nullable(),
-  icone: z.string().optional().nullable(),
-  quorumAplicacao: z.enum(APLICACOES_QUORUM).optional().nullable(),
-  quorumAplicacao2Turno: z.enum(APLICACOES_QUORUM).optional().nullable(),
+  requerVotacao: z.boolean().nullish().transform(v => v ?? undefined),
+  requerSancao: z.boolean().nullish().transform(v => v ?? undefined),
+  numeracaoAnual: z.boolean().nullish().transform(v => v ?? undefined),
+  prefixoNumeracao: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
+  ordem: z.number().int().nullish().transform(v => v ?? undefined),
+  corBadge: z.string().nullish().transform(v => v ?? undefined),
+  icone: z.string().nullish().transform(v => v ?? undefined),
+  quorumAplicacao: z.enum(APLICACOES_QUORUM).nullish().transform(v => v ?? undefined),
+  quorumAplicacao2Turno: z.enum(APLICACOES_QUORUM).nullish().transform(v => v ?? undefined),
   totalTurnos: z.number().int().min(1).max(2).optional(),
   intersticioDias: z.number().int().min(0).max(30).optional()
 })

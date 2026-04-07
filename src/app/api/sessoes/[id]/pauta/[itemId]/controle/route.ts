@@ -27,10 +27,10 @@ const ControleItemSchema = z.object({
     // Ações de turno
     'iniciar-turno', 'finalizar-turno', 'verificar-intersticio', 'segundo-turno', 'listar-intersticio'
   ]),
-  resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO', 'RETIRADA_PAUTA']).optional(),
-  parlamentarId: z.string().optional(), // Para pedido de vista
-  prazoDias: z.number().optional(),     // Prazo para devolução da vista
-  observacoes: z.string().optional()    // Observações (motivo de retirada, etc.)
+  resultado: z.enum(['CONCLUIDO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO', 'RETIRADA_PAUTA']).nullish().transform(v => v ?? undefined),
+  parlamentarId: z.string().nullish().transform(v => v ?? undefined), // Para pedido de vista
+  prazoDias: z.number().nullish().transform(v => v ?? undefined),     // Prazo para devolução da vista
+  observacoes: z.string().nullish().transform(v => v ?? undefined)    // Observações (motivo de retirada, etc.)
 })
 
 export const POST = withAuth(withErrorHandler(async (

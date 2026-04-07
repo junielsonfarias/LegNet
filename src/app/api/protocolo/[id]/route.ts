@@ -23,21 +23,21 @@ import {
 export const dynamic = 'force-dynamic'
 
 const AtualizarProtocoloSchema = z.object({
-  situacao: z.enum(['ABERTO', 'EM_TRAMITACAO', 'RESPONDIDO', 'ARQUIVADO', 'DEVOLVIDO', 'CANCELADO']).optional(),
-  prazoResposta: z.string().datetime().optional(),
-  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']).optional(),
-  descricao: z.string().optional()
+  situacao: z.enum(['ABERTO', 'EM_TRAMITACAO', 'RESPONDIDO', 'ARQUIVADO', 'DEVOLVIDO', 'CANCELADO']).nullish().transform(v => v ?? undefined),
+  prazoResposta: z.string().datetime().nullish().transform(v => v ?? undefined),
+  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const TramitarSchema = z.object({
   unidadeOrigem: z.string().min(1, 'Unidade de origem é obrigatória'),
   unidadeDestino: z.string().min(1, 'Unidade de destino é obrigatória'),
   acao: z.string().min(1, 'Ação é obrigatória'),
-  despacho: z.string().optional()
+  despacho: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const ArquivarSchema = z.object({
-  motivo: z.string().optional()
+  motivo: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const ConverterSchema = z.object({
@@ -48,8 +48,8 @@ const ConverterSchema = z.object({
 const AnexoSchema = z.object({
   titulo: z.string().min(1, 'Título do anexo é obrigatório'),
   arquivo: z.string().min(1, 'Caminho do arquivo é obrigatório'),
-  tamanho: z.number().optional(),
-  tipoMime: z.string().optional()
+  tamanho: z.number().nullish().transform(v => v ?? undefined),
+  tipoMime: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**

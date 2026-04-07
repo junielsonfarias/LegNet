@@ -19,8 +19,8 @@ export const dynamic = 'force-dynamic'
 // Schema de validação
 const PresencaSchema = z.object({
   membroComissaoId: z.string().min(1, 'ID do membro é obrigatório'),
-  presente: z.boolean().optional().default(true),
-  justificativa: z.string().optional()
+  presente: z.boolean().nullish().transform(v => v ?? true),
+  justificativa: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const SaidaSchema = z.object({

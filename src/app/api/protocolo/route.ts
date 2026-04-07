@@ -21,28 +21,28 @@ export const dynamic = 'force-dynamic'
 const CriarProtocoloSchema = z.object({
   tipo: z.enum(['ENTRADA', 'SAIDA', 'INTERNO']),
   nomeRemetente: z.string().min(2, 'Nome do remetente é obrigatório'),
-  cpfCnpjRemetente: z.string().optional(),
-  tipoRemetente: z.enum(['PESSOA_FISICA', 'PESSOA_JURIDICA', 'ORGAO_PUBLICO', 'PARLAMENTAR', 'EXECUTIVO']).optional(),
-  enderecoRemetente: z.string().optional(),
-  telefoneRemetente: z.string().optional(),
-  emailRemetente: z.string().email().optional().or(z.literal('')),
+  cpfCnpjRemetente: z.string().nullish().transform(v => v ?? undefined),
+  tipoRemetente: z.enum(['PESSOA_FISICA', 'PESSOA_JURIDICA', 'ORGAO_PUBLICO', 'PARLAMENTAR', 'EXECUTIVO']).nullish().transform(v => v ?? undefined),
+  enderecoRemetente: z.string().nullish().transform(v => v ?? undefined),
+  telefoneRemetente: z.string().nullish().transform(v => v ?? undefined),
+  emailRemetente: z.string().email().nullish().or(z.literal('')),
   assunto: z.string().min(5, 'Assunto é obrigatório'),
-  descricao: z.string().optional(),
-  tipoDocumento: z.string().optional(),
-  numeroDocOrigem: z.string().optional(),
-  prazoResposta: z.string().datetime().optional(),
-  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']).optional(),
-  sigiloso: z.boolean().optional()
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipoDocumento: z.string().nullish().transform(v => v ?? undefined),
+  numeroDocOrigem: z.string().nullish().transform(v => v ?? undefined),
+  prazoResposta: z.string().datetime().nullish().transform(v => v ?? undefined),
+  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']).nullish().transform(v => v ?? undefined),
+  sigiloso: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 const FiltrosSchema = z.object({
-  tipo: z.enum(['ENTRADA', 'SAIDA', 'INTERNO']).optional(),
-  situacao: z.enum(['ABERTO', 'EM_TRAMITACAO', 'RESPONDIDO', 'ARQUIVADO', 'DEVOLVIDO', 'CANCELADO']).optional(),
-  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']).optional(),
+  tipo: z.enum(['ENTRADA', 'SAIDA', 'INTERNO']).nullish().transform(v => v ?? undefined),
+  situacao: z.enum(['ABERTO', 'EM_TRAMITACAO', 'RESPONDIDO', 'ARQUIVADO', 'DEVOLVIDO', 'CANCELADO']).nullish().transform(v => v ?? undefined),
+  prioridade: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE']).nullish().transform(v => v ?? undefined),
   ano: z.coerce.number().optional(),
-  dataInicio: z.string().datetime().optional(),
-  dataFim: z.string().datetime().optional(),
-  busca: z.string().optional(),
+  dataInicio: z.string().datetime().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().datetime().nullish().transform(v => v ?? undefined),
+  busca: z.string().nullish().transform(v => v ?? undefined),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20)
 })

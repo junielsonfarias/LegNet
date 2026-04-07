@@ -7,17 +7,17 @@ import { authOptions } from '@/lib/auth'
 
 // Schema para validação de query params
 const AuditoriaQuerySchema = z.object({
-  tipo: z.enum(['eventos', 'recentes', 'erros', 'usuario', 'suspeitos', 'estatisticas', 'relatorios', 'export']).optional(),
+  tipo: z.enum(['eventos', 'recentes', 'erros', 'usuario', 'suspeitos', 'estatisticas', 'relatorios', 'export']).nullish().transform(v => v ?? undefined),
   limite: z.coerce.number().int().min(1).max(1000).default(50),
   formato: z.enum(['json', 'csv']).default('json'),
-  dataInicio: z.string().datetime().optional(),
-  dataFim: z.string().datetime().optional(),
-  usuarioId: z.string().optional(),
-  acao: z.string().optional(),
-  entidade: z.string().optional(),
-  entidadeId: z.string().optional(),
+  dataInicio: z.string().datetime().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().datetime().nullish().transform(v => v ?? undefined),
+  usuarioId: z.string().nullish().transform(v => v ?? undefined),
+  acao: z.string().nullish().transform(v => v ?? undefined),
+  entidade: z.string().nullish().transform(v => v ?? undefined),
+  entidadeId: z.string().nullish().transform(v => v ?? undefined),
   sucesso: z.coerce.boolean().optional(),
-  ip: z.string().optional()
+  ip: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Buscar eventos de auditoria (REQUER AUTENTICAÇÃO - dados sensíveis)

@@ -10,10 +10,10 @@ export const dynamic = 'force-dynamic'
 const favoritoSchema = z.object({
   tipoItem: z.enum(['PROPOSICAO', 'SESSAO', 'PARLAMENTAR', 'COMISSAO', 'PUBLICACAO']),
   itemId: z.string().min(1),
-  notificarMudancas: z.boolean().optional().default(true),
-  notificarVotacao: z.boolean().optional().default(true),
-  notificarParecer: z.boolean().optional().default(true),
-  anotacao: z.string().optional(),
+  notificarMudancas: z.boolean().nullish().transform(v => v ?? true),
+  notificarVotacao: z.boolean().nullish().transform(v => v ?? true),
+  notificarParecer: z.boolean().nullish().transform(v => v ?? true),
+  anotacao: z.string().nullish().transform(v => v ?? undefined),
 })
 
 /**

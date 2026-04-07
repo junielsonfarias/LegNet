@@ -26,15 +26,15 @@ const CriarNormaSchema = z.object({
   ano: z.number().int().min(1900).max(2100),
   data: z.string().datetime(),
   dataPublicacao: z.string().datetime({ message: 'Data de publicação é obrigatória' }),
-  dataVigencia: z.string().datetime().optional(),
+  dataVigencia: z.string().datetime().nullish().transform(v => v ?? undefined),
   ementa: z.string().min(10, 'Ementa é obrigatória'),
-  preambulo: z.string().optional(),
+  preambulo: z.string().nullish().transform(v => v ?? undefined),
   texto: z.string().min(10, 'Texto é obrigatório'),
-  assunto: z.string().optional(),
-  indexacao: z.string().optional(),
-  observacao: z.string().optional(),
-  textoCompilado: z.string().optional().nullable(),
-  proposicaoOrigemId: z.string().optional()
+  assunto: z.string().nullish().transform(v => v ?? undefined),
+  indexacao: z.string().nullish().transform(v => v ?? undefined),
+  observacao: z.string().nullish().transform(v => v ?? undefined),
+  textoCompilado: z.string().nullish().transform(v => v ?? undefined),
+  proposicaoOrigemId: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const FiltrosSchema = z.object({
@@ -46,7 +46,7 @@ const FiltrosSchema = z.object({
     'VIGENTE', 'REVOGADA', 'REVOGADA_PARCIALMENTE', 'COM_ALTERACOES', 'SUSPENSA'
   ]).optional(),
   ano: z.coerce.number().optional(),
-  busca: z.string().optional(),
+  busca: z.string().nullish().transform(v => v ?? undefined),
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20)
 })

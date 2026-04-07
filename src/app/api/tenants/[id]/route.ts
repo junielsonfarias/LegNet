@@ -29,18 +29,18 @@ const updateTenantSchema = z.object({
     .min(3, 'Nome deve ter pelo menos 3 caracteres')
     .max(200, 'Nome deve ter no máximo 200 caracteres')
     .optional(),
-  sigla: z.string().max(20).optional().nullable(),
-  cnpj: z.string().optional().nullable(),
-  dominio: z.string().optional().nullable(),
-  subdominio: z.string().optional().nullable(),
-  cidade: z.string().optional().nullable(),
-  estado: z.string().max(2).optional().nullable(),
-  logoUrl: z.string().url().optional().nullable(),
-  faviconUrl: z.string().url().optional().nullable(),
+  sigla: z.string().max(20).nullish().transform(v => v ?? undefined),
+  cnpj: z.string().nullish().transform(v => v ?? undefined),
+  dominio: z.string().nullish().transform(v => v ?? undefined),
+  subdominio: z.string().nullish().transform(v => v ?? undefined),
+  cidade: z.string().nullish().transform(v => v ?? undefined),
+  estado: z.string().max(2).nullish().transform(v => v ?? undefined),
+  logoUrl: z.string().url().nullish().transform(v => v ?? undefined),
+  faviconUrl: z.string().url().nullish().transform(v => v ?? undefined),
   corPrimaria: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   corSecundaria: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  plano: z.enum(['BASICO', 'PROFISSIONAL', 'ENTERPRISE']).optional(),
-  ativo: z.boolean().optional(),
+  plano: z.enum(['BASICO', 'PROFISSIONAL', 'ENTERPRISE']).nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
 })
 
 /**

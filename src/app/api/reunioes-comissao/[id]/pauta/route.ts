@@ -21,10 +21,10 @@ const STATUS_ITEM_PAUTA = ['PENDENTE', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADO',
 // Schema de validação para adicionar item
 const AdicionarItemSchema = z.object({
   titulo: z.string().min(1, 'Título do item é obrigatório'),
-  descricao: z.string().optional(),
-  tipo: z.enum(TIPOS_ITEM_PAUTA).optional(),
-  proposicaoId: z.string().optional(),
-  parecerId: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipo: z.enum(TIPOS_ITEM_PAUTA).nullish().transform(v => v ?? undefined),
+  proposicaoId: z.string().nullish().transform(v => v ?? undefined),
+  parecerId: z.string().nullish().transform(v => v ?? undefined),
   tempoEstimado: z.number().int().min(1).optional()
 })
 
@@ -36,14 +36,14 @@ const ReordenarItemSchema = z.object({
 
 // Schema para atualização ou reordenação
 const AtualizarPautaSchema = z.object({
-  itemId: z.string().optional(),
-  itensOrdenados: z.array(ReordenarItemSchema).optional(),
-  titulo: z.string().optional(),
-  descricao: z.string().optional(),
-  tipo: z.enum(TIPOS_ITEM_PAUTA).optional(),
-  status: z.enum(STATUS_ITEM_PAUTA).optional(),
-  resultado: z.string().optional(),
-  observacoes: z.string().optional(),
+  itemId: z.string().nullish().transform(v => v ?? undefined),
+  itensOrdenados: z.array(ReordenarItemSchema).nullish().transform(v => v ?? undefined),
+  titulo: z.string().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipo: z.enum(TIPOS_ITEM_PAUTA).nullish().transform(v => v ?? undefined),
+  status: z.enum(STATUS_ITEM_PAUTA).nullish().transform(v => v ?? undefined),
+  resultado: z.string().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
   tempoReal: z.number().int().min(0).optional()
 })
 

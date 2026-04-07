@@ -11,12 +11,12 @@ export const dynamic = 'force-dynamic'
 const ReceitaQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
-  categoria: z.enum(['RECEITA_CORRENTE', 'RECEITA_CAPITAL', 'RECEITA_INTRAORCAMENTARIA']).optional(),
-  origem: z.enum(['TRIBUTARIA', 'CONTRIBUICOES', 'PATRIMONIAL', 'SERVICOS', 'TRANSFERENCIAS', 'OUTRAS']).optional(),
-  situacao: z.enum(['PREVISTA', 'ARRECADADA', 'PARCIALMENTE_ARRECADADA', 'CANCELADA']).optional(),
+  categoria: z.enum(['RECEITA_CORRENTE', 'RECEITA_CAPITAL', 'RECEITA_INTRAORCAMENTARIA']).nullish().transform(v => v ?? undefined),
+  origem: z.enum(['TRIBUTARIA', 'CONTRIBUICOES', 'PATRIMONIAL', 'SERVICOS', 'TRANSFERENCIAS', 'OUTRAS']).nullish().transform(v => v ?? undefined),
+  situacao: z.enum(['PREVISTA', 'ARRECADADA', 'PARCIALMENTE_ARRECADADA', 'CANCELADA']).nullish().transform(v => v ?? undefined),
   ano: z.coerce.number().int().min(2000).max(2100).optional(),
   mes: z.coerce.number().int().min(1).max(12).optional(),
-  contribuinte: z.string().optional(),
+  contribuinte: z.string().nullish().transform(v => v ?? undefined),
   valorMinimo: z.coerce.number().min(0).optional(),
   valorMaximo: z.coerce.number().min(0).optional()
 }).refine(

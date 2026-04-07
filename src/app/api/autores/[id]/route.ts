@@ -13,15 +13,15 @@ import { autorDbService } from '@/lib/services/autor-db-service'
 export const dynamic = 'force-dynamic'
 
 const UpdateAutorSchema = z.object({
-  tipoAutorId: z.string().optional(),
-  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
-  descricao: z.string().optional().nullable(),
-  parlamentarId: z.string().optional().nullable(),
-  comissaoId: z.string().optional().nullable(),
-  cargo: z.string().optional().nullable(),
-  email: z.string().email().optional().or(z.literal('')).nullable(),
-  telefone: z.string().optional().nullable(),
-  ativo: z.boolean().optional()
+  tipoAutorId: z.string().nullish().transform(v => v ?? undefined),
+  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  parlamentarId: z.string().nullish().transform(v => v ?? undefined),
+  comissaoId: z.string().nullish().transform(v => v ?? undefined),
+  cargo: z.string().nullish().transform(v => v ?? undefined),
+  email: z.string().email().nullish().or(z.literal('')).nullable(),
+  telefone: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withErrorHandler(async (

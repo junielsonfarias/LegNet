@@ -29,21 +29,21 @@ const AtualizarEmendaSchema = z.object({
     'APRESENTADA', 'EM_ANALISE', 'PARECER_EMITIDO', 'EM_VOTACAO',
     'APROVADA', 'REJEITADA', 'PREJUDICADA', 'RETIRADA', 'INCORPORADA'
   ]).optional(),
-  parecerComissao: z.string().optional(),
+  parecerComissao: z.string().nullish().transform(v => v ?? undefined),
   parecerTipo: z.enum([
     'FAVORAVEL', 'FAVORAVEL_COM_RESSALVAS', 'CONTRARIO',
     'PELA_REJEICAO', 'PELA_APROVACAO_PARCIAL'
   ]).optional(),
-  parecerTexto: z.string().optional(),
+  parecerTexto: z.string().nullish().transform(v => v ?? undefined),
   parecerData: z.string().datetime().transform(val => new Date(val)).optional(),
-  parecerRelatorId: z.string().optional(),
-  observacoes: z.string().optional()
+  parecerRelatorId: z.string().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 const VotarEmendaSchema = z.object({
   parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
   voto: z.enum(['SIM', 'NAO', 'ABSTENCAO', 'AUSENTE']),
-  sessaoId: z.string().optional()
+  sessaoId: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**

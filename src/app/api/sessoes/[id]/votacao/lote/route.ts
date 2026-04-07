@@ -34,9 +34,9 @@ const VotacaoLoteSchema = z.object({
   proposicaoId: z.string().min(1, 'proposicaoId é obrigatório'),
   itemPautaId: z.string().min(1, 'itemPautaId é obrigatório'),
   votos: z.array(VotoIndividualSchema).min(1, 'Deve haver pelo menos 1 voto'),
-  motivo: z.string().optional(),
+  motivo: z.string().nullish().transform(v => v ?? undefined),
   finalizarVotacao: z.boolean().default(true),
-  resultado: z.enum(['APROVADO', 'REJEITADO']).optional()
+  resultado: z.enum(['APROVADO', 'REJEITADO']).nullish().transform(v => v ?? undefined)
 })
 
 /**

@@ -10,11 +10,11 @@ import { usuarioDbService } from '@/lib/services/usuario-db-service'
 export const dynamic = 'force-dynamic'
 
 const CreateUsuarioSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().nullish().transform(v => v ?? undefined),
   email: z.string().email('Email inválido'),
   password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
   role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']),
-  parlamentarId: z.string().optional(),
+  parlamentarId: z.string().nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true)
 })
 
@@ -22,9 +22,9 @@ const CreateUsuarioSchema = z.object({
 const ListUsuariosQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']).optional(),
+  role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']).nullish().transform(v => v ?? undefined),
   ativo: z.coerce.boolean().optional(),
-  search: z.string().optional()
+  search: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Listar todos os usuários (REQUER ADMIN ou SECRETARIA)

@@ -21,31 +21,31 @@ const TipoCondicaoEnum = z.enum([
 
 const EtapaCreateSchema = z.object({
   nome: z.string().min(1, 'Nome e obrigatorio'),
-  descricao: z.string().optional(),
-  unidadeId: z.string().optional(),
-  prazoDiasNormal: z.number().min(0).optional().default(15),
-  prazoDiasUrgencia: z.number().min(0).optional(),
-  requerParecer: z.boolean().optional().default(false),
-  habilitaPauta: z.boolean().optional().default(false),
-  ehEtapaFinal: z.boolean().optional().default(false),
-  condicional: z.boolean().optional().default(false),
-  tipoCondicao: TipoCondicaoEnum.optional().nullable(),
-  condicaoConfig: z.record(z.unknown()).optional().nullable()
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  unidadeId: z.string().nullish().transform(v => v ?? undefined),
+  prazoDiasNormal: z.number().min(0).nullish().transform(v => v ?? 15),
+  prazoDiasUrgencia: z.number().min(0).nullish().transform(v => v ?? undefined),
+  requerParecer: z.boolean().nullish().transform(v => v ?? false),
+  habilitaPauta: z.boolean().nullish().transform(v => v ?? false),
+  ehEtapaFinal: z.boolean().nullish().transform(v => v ?? false),
+  condicional: z.boolean().nullish().transform(v => v ?? false),
+  tipoCondicao: TipoCondicaoEnum.nullish().transform(v => v ?? undefined),
+  condicaoConfig: z.record(z.unknown()).nullish().transform(v => v ?? undefined)
 })
 
 const EtapaUpdateSchema = z.object({
   id: z.string(),
-  nome: z.string().min(1).optional(),
-  descricao: z.string().optional().nullable(),
-  unidadeId: z.string().optional().nullable(),
-  prazoDiasNormal: z.number().min(0).optional(),
-  prazoDiasUrgencia: z.number().min(0).optional().nullable(),
-  requerParecer: z.boolean().optional(),
-  habilitaPauta: z.boolean().optional(),
-  ehEtapaFinal: z.boolean().optional(),
-  condicional: z.boolean().optional(),
-  tipoCondicao: TipoCondicaoEnum.optional().nullable(),
-  condicaoConfig: z.record(z.unknown()).optional().nullable()
+  nome: z.string().min(1).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  unidadeId: z.string().nullish().transform(v => v ?? undefined),
+  prazoDiasNormal: z.number().min(0).nullish().transform(v => v ?? undefined),
+  prazoDiasUrgencia: z.number().min(0).nullish().transform(v => v ?? undefined),
+  requerParecer: z.boolean().nullish().transform(v => v ?? undefined),
+  habilitaPauta: z.boolean().nullish().transform(v => v ?? undefined),
+  ehEtapaFinal: z.boolean().nullish().transform(v => v ?? undefined),
+  condicional: z.boolean().nullish().transform(v => v ?? undefined),
+  tipoCondicao: TipoCondicaoEnum.nullish().transform(v => v ?? undefined),
+  condicaoConfig: z.record(z.unknown()).nullish().transform(v => v ?? undefined)
 })
 
 const ReordenarSchema = z.object({

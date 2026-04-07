@@ -4,19 +4,19 @@ import { z } from 'zod'
  * Schema de validação para atualização de sessão
  */
 export const UpdateSessaoSchema = z.object({
-  numero: z.number().min(1).optional(),
-  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'SOLENE', 'ESPECIAL']).optional(),
-  data: z.string().optional(),
-  horario: z.string().optional(),
-  local: z.string().optional(),
-  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA']).optional(),
-  descricao: z.string().optional(),
-  ata: z.string().optional(),
-  finalizada: z.boolean().optional(),
-  legislaturaId: z.string().optional(),
-  periodoId: z.string().optional(),
+  numero: z.number().min(1).nullish().transform(v => v ?? undefined),
+  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'SOLENE', 'ESPECIAL']).nullish().transform(v => v ?? undefined),
+  data: z.string().nullish().transform(v => v ?? undefined),
+  horario: z.string().nullish().transform(v => v ?? undefined),
+  local: z.string().nullish().transform(v => v ?? undefined),
+  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA']).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  ata: z.string().nullish().transform(v => v ?? undefined),
+  finalizada: z.boolean().nullish().transform(v => v ?? undefined),
+  legislaturaId: z.string().nullish().transform(v => v ?? undefined),
+  periodoId: z.string().nullish().transform(v => v ?? undefined),
   tempoInicio: z.string().nullable().optional(),
-  tempoAcumulado: z.number().min(0).optional()
+  tempoAcumulado: z.number().min(0).nullish().transform(v => v ?? undefined)
 })
 
 export type UpdateSessaoInput = z.infer<typeof UpdateSessaoSchema>

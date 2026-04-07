@@ -22,21 +22,21 @@ const UpdateParecerSchema = z.object({
     'RASCUNHO', 'AGUARDANDO_PAUTA', 'AGUARDANDO_VOTACAO',
     'APROVADO_COMISSAO', 'REJEITADO_COMISSAO', 'EMITIDO', 'ARQUIVADO'
   ]).optional(),
-  fundamentacao: z.string().min(10).optional(),
-  conclusao: z.string().optional(),
-  ementa: z.string().optional(),
-  emendasPropostas: z.string().optional(),
-  prazoEmissao: z.string().optional(),
-  dataElaboracao: z.string().optional(),
-  dataVotacao: z.string().optional(),
-  dataEmissao: z.string().optional(),
-  observacoes: z.string().optional(),
-  motivoRejeicao: z.string().optional(),
-  arquivoUrl: z.string().optional().nullable(),
-  arquivoNome: z.string().optional().nullable(),
-  arquivoTamanho: z.number().int().optional().nullable(),
-  driveUrl: z.string().optional().nullable(),
-  reuniaoId: z.string().optional()
+  fundamentacao: z.string().min(10).nullish().transform(v => v ?? undefined),
+  conclusao: z.string().nullish().transform(v => v ?? undefined),
+  ementa: z.string().nullish().transform(v => v ?? undefined),
+  emendasPropostas: z.string().nullish().transform(v => v ?? undefined),
+  prazoEmissao: z.string().nullish().transform(v => v ?? undefined),
+  dataElaboracao: z.string().nullish().transform(v => v ?? undefined),
+  dataVotacao: z.string().nullish().transform(v => v ?? undefined),
+  dataEmissao: z.string().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
+  motivoRejeicao: z.string().nullish().transform(v => v ?? undefined),
+  arquivoUrl: z.string().nullish().transform(v => v ?? undefined),
+  arquivoNome: z.string().nullish().transform(v => v ?? undefined),
+  arquivoTamanho: z.number().int().nullish().transform(v => v ?? undefined),
+  driveUrl: z.string().nullish().transform(v => v ?? undefined),
+  reuniaoId: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withErrorHandler(async (

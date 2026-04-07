@@ -12,14 +12,14 @@ export const dynamic = 'force-dynamic'
 // Schema de validação para busca
 const BuscaQuerySchema = z.object({
   q: z.string().min(2, 'Termo de busca deve ter pelo menos 2 caracteres'),
-  tipos: z.string().optional(),
-  dataInicio: z.string().datetime().optional(),
-  dataFim: z.string().datetime().optional(),
-  autorId: z.string().optional(),
-  status: z.string().optional(),
+  tipos: z.string().nullish().transform(v => v ?? undefined),
+  dataInicio: z.string().datetime().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().datetime().nullish().transform(v => v ?? undefined),
+  autorId: z.string().nullish().transform(v => v ?? undefined),
+  status: z.string().nullish().transform(v => v ?? undefined),
   limite: z.coerce.number().int().min(1).max(100).default(20),
   pagina: z.coerce.number().int().min(1).default(1),
-  rapida: z.enum(['true', 'false']).optional()
+  rapida: z.enum(['true', 'false']).nullish().transform(v => v ?? undefined)
 })
 
 // Lista de tipos válidos para busca

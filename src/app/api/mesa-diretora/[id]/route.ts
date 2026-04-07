@@ -15,17 +15,17 @@ const MembroMesaDiretoraSchema = z.object({
   parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
   cargoId: z.string().min(1, 'Cargo é obrigatório'),
   dataInicio: z.string().min(1, 'Data de início é obrigatória'),
-  dataFim: z.string().optional(),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true),
-  observacoes: z.string().optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // Schema de validação para atualização
 const UpdateMesaDiretoraSchema = z.object({
-  periodoId: z.string().min(1, 'Período é obrigatório').optional(),
-  ativa: z.boolean().optional(),
-  descricao: z.string().optional(),
-  membros: z.array(MembroMesaDiretoraSchema).optional()
+  periodoId: z.string().min(1, 'Período é obrigatório').nullish().transform(v => v ?? undefined),
+  ativa: z.boolean().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  membros: z.array(MembroMesaDiretoraSchema).nullish().transform(v => v ?? undefined)
 })
 
 // GET - Buscar mesa diretora por ID

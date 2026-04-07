@@ -9,12 +9,12 @@ import { regraTramitacaoDbService } from '@/lib/services/regra-tramitacao-db-ser
 export const dynamic = 'force-dynamic'
 
 const RegraEtapaSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(0).default(0),
   nome: z.string().min(1, 'Nome da etapa é obrigatório'),
-  descricao: z.string().optional(),
-  tipoTramitacaoId: z.string().optional(),
-  unidadeId: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipoTramitacaoId: z.string().nullish().transform(v => v ?? undefined),
+  unidadeId: z.string().nullish().transform(v => v ?? undefined),
   notificacoes: z.any().optional(),
   alertas: z.any().optional(),
   prazoDias: z.number().int().nullable().optional()
@@ -22,13 +22,13 @@ const RegraEtapaSchema = z.object({
 
 const RegraSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   condicoes: z.record(z.any()).default({}),
   acoes: z.record(z.any()),
-  excecoes: z.record(z.any()).optional(),
+  excecoes: z.record(z.any()).nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true),
   ordem: z.number().int().min(0).default(0),
-  etapas: z.array(RegraEtapaSchema).optional()
+  etapas: z.array(RegraEtapaSchema).nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(async (request: NextRequest) => {

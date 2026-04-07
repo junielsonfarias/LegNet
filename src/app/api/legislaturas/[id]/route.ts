@@ -11,10 +11,10 @@ const LegislaturaUpdateSchema = z.object({
   numero: z.number().int().positive().optional(),
   anoInicio: z.number().int().min(1900).max(2100).optional(),
   anoFim: z.number().int().min(1900).max(2100).optional(),
-  dataInicio: z.string().optional().nullable(),
-  dataFim: z.string().optional().nullable(),
-  ativa: z.boolean().optional(),
-  descricao: z.string().optional()
+  dataInicio: z.string().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
+  ativa: z.boolean().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(async (

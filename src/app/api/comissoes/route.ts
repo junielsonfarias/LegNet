@@ -15,8 +15,8 @@ export const dynamic = 'force-dynamic'
 // Schema de validação para comissão
 const ComissaoSchema = z.object({
   nome: z.string().min(3, 'Nome da comissão deve ter pelo menos 3 caracteres'),
-  sigla: z.string().optional().nullable(),
-  descricao: z.string().optional(),
+  sigla: z.string().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   tipo: z.enum(['PERMANENTE', 'TEMPORARIA', 'ESPECIAL', 'INQUERITO']),
   ativa: z.boolean().default(true)
 })

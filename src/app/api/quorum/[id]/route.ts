@@ -24,20 +24,20 @@ const TiposQuorum = [
 ] as const
 
 const UpdateQuorumSchema = z.object({
-  nome: z.string().min(3).optional(),
-  descricao: z.string().optional(),
-  tipoQuorum: z.enum(TiposQuorum).optional(),
+  nome: z.string().min(3).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipoQuorum: z.enum(TiposQuorum).nullish().transform(v => v ?? undefined),
   percentualMinimo: z.number().min(0).max(100).optional().nullable(),
   numeroMinimo: z.number().int().min(1).optional().nullable(),
-  baseCalculo: z.enum(['PRESENTES', 'TOTAL_MEMBROS', 'TOTAL_MANDATOS']).optional(),
-  tiposProposicao: z.array(z.string()).optional().nullable(),
-  permitirAbstencao: z.boolean().optional(),
-  abstencaoContaContra: z.boolean().optional(),
-  requererVotacaoNominal: z.boolean().optional(),
-  mensagemAprovacao: z.string().optional().nullable(),
-  mensagemRejeicao: z.string().optional().nullable(),
-  ativo: z.boolean().optional(),
-  ordem: z.number().int().optional()
+  baseCalculo: z.enum(['PRESENTES', 'TOTAL_MEMBROS', 'TOTAL_MANDATOS']).nullish().transform(v => v ?? undefined),
+  tiposProposicao: z.array(z.string()).nullish().transform(v => v ?? undefined),
+  permitirAbstencao: z.boolean().nullish().transform(v => v ?? undefined),
+  abstencaoContaContra: z.boolean().nullish().transform(v => v ?? undefined),
+  requererVotacaoNominal: z.boolean().nullish().transform(v => v ?? undefined),
+  mensagemAprovacao: z.string().nullish().transform(v => v ?? undefined),
+  mensagemRejeicao: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
+  ordem: z.number().int().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Obter configuracao por ID

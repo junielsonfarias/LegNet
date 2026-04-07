@@ -12,9 +12,9 @@ export const dynamic = 'force-dynamic'
 
 const TipoAutorSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  descricao: z.string().optional(),
-  ativo: z.boolean().optional().default(true),
-  ordem: z.number().optional().default(0)
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? true),
+  ordem: z.number().nullish().transform(v => v ?? 0)
 })
 
 export const GET = withErrorHandler(async (request: NextRequest) => {

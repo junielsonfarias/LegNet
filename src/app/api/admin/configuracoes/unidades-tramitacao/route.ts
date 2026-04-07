@@ -20,21 +20,21 @@ const TramitacaoUnidadeTipoEnum = z.enum([
 
 const UnidadeCreateSchema = z.object({
   nome: z.string().min(1, 'Nome e obrigatorio'),
-  sigla: z.string().optional(),
-  descricao: z.string().optional(),
+  sigla: z.string().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   tipo: TramitacaoUnidadeTipoEnum,
-  ativo: z.boolean().optional().default(true),
-  ordem: z.number().optional().default(0)
+  ativo: z.boolean().nullish().transform(v => v ?? true),
+  ordem: z.number().nullish().transform(v => v ?? 0)
 })
 
 const UnidadeUpdateSchema = z.object({
   id: z.string(),
-  nome: z.string().min(1).optional(),
-  sigla: z.string().optional().nullable(),
-  descricao: z.string().optional().nullable(),
-  tipo: TramitacaoUnidadeTipoEnum.optional(),
-  ativo: z.boolean().optional(),
-  ordem: z.number().optional()
+  nome: z.string().min(1).nullish().transform(v => v ?? undefined),
+  sigla: z.string().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipo: TramitacaoUnidadeTipoEnum.nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
+  ordem: z.number().nullish().transform(v => v ?? undefined)
 })
 
 /**

@@ -8,9 +8,9 @@ import { cargosMesaDbService } from '@/lib/services/cargos-mesa-db-service'
 export const dynamic = 'force-dynamic'
 
 const CargoUpdateSchema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório').optional(),
-  ordem: z.number().min(1).optional(),
-  obrigatorio: z.boolean().optional()
+  nome: z.string().min(1, 'Nome é obrigatório').nullish().transform(v => v ?? undefined),
+  ordem: z.number().min(1).nullish().transform(v => v ?? undefined),
+  obrigatorio: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(async (

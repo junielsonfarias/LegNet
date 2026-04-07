@@ -19,9 +19,9 @@ const MembroComissaoSchema = z.object({
   parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
   cargo: z.enum(['PRESIDENTE', 'VICE_PRESIDENTE', 'RELATOR', 'MEMBRO']),
   dataInicio: z.string().min(1, 'Data de início é obrigatória'),
-  dataFim: z.string().optional(),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true),
-  observacoes: z.string().optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(withErrorHandler(async (

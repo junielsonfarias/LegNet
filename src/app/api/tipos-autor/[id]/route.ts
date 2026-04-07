@@ -12,10 +12,10 @@ import { tiposAutorDbService } from '@/lib/services/tipos-autor-db-service'
 export const dynamic = 'force-dynamic'
 
 const UpdateTipoAutorSchema = z.object({
-  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
-  descricao: z.string().optional().nullable(),
-  ativo: z.boolean().optional(),
-  ordem: z.number().optional()
+  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
+  ordem: z.number().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withErrorHandler(async (

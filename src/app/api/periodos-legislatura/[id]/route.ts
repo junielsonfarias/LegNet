@@ -8,10 +8,10 @@ import { periodosLegislaturaDbService } from '@/lib/services/periodos-legislatur
 export const dynamic = 'force-dynamic'
 
 const PeriodoUpdateSchema = z.object({
-  numero: z.number().min(1).optional(),
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional().nullable(),
-  descricao: z.string().optional().nullable()
+  numero: z.number().min(1).nullish().transform(v => v ?? undefined),
+  dataInicio: z.string().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(async (

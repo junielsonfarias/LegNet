@@ -11,14 +11,14 @@ export const dynamic = 'force-dynamic'
 const ContratoQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
-  modalidade: z.enum(['CONTRATO_ORIGINAL', 'ADITIVO', 'APOSTILAMENTO', 'RESCISAO']).optional(),
-  situacao: z.enum(['VIGENTE', 'ENCERRADO', 'RESCINDIDO', 'SUSPENSO']).optional(),
+  modalidade: z.enum(['CONTRATO_ORIGINAL', 'ADITIVO', 'APOSTILAMENTO', 'RESCISAO']).nullish().transform(v => v ?? undefined),
+  situacao: z.enum(['VIGENTE', 'ENCERRADO', 'RESCINDIDO', 'SUSPENSO']).nullish().transform(v => v ?? undefined),
   ano: z.coerce.number().int().min(2000).max(2100).optional(),
-  contratado: z.string().optional(),
-  objeto: z.string().optional(),
-  licitacaoId: z.string().optional(),
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional(),
+  contratado: z.string().nullish().transform(v => v ?? undefined),
+  objeto: z.string().nullish().transform(v => v ?? undefined),
+  licitacaoId: z.string().nullish().transform(v => v ?? undefined),
+  dataInicio: z.string().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
   valorMinimo: z.coerce.number().min(0).optional(),
   valorMaximo: z.coerce.number().min(0).optional()
 }).refine(

@@ -8,12 +8,12 @@ export const dynamic = 'force-dynamic'
 
 const CreateTipoTramitacaoSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   prazoRegimental: z.number().int().min(0).default(15),
   prazoLegal: z.number().int().min(0).optional(),
   ativo: z.boolean().default(true),
   ordem: z.number().int().min(0).optional(),
-  unidadeResponsavelId: z.string().optional()
+  unidadeResponsavelId: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(async (request: NextRequest) => {

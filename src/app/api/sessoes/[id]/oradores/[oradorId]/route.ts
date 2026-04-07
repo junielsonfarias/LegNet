@@ -15,11 +15,11 @@ import { oradorSessaoDbService } from '@/lib/services/orador-sessao-db-service'
 export const dynamic = 'force-dynamic'
 
 const OradorUpdateSchema = z.object({
-  status: z.enum(['INSCRITO', 'FALANDO', 'CONCLUIDO', 'DESISTIU', 'TEMPO_ESGOTADO']).optional(),
+  status: z.enum(['INSCRITO', 'FALANDO', 'CONCLUIDO', 'DESISTIU', 'TEMPO_ESGOTADO']).nullish().transform(v => v ?? undefined),
   tempoLimite: z.number().int().min(1).optional(),
   tempoUsado: z.number().int().min(0).optional(),
-  assunto: z.string().optional(),
-  observacoes: z.string().optional(),
+  assunto: z.string().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(1).optional()
 })
 

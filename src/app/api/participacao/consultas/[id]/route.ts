@@ -27,15 +27,15 @@ const PerguntaSchema = z.object({
   ordem: z.number().int().min(1),
   texto: z.string().min(5, 'Texto e obrigatorio'),
   tipo: z.enum(['TEXTO_LIVRE', 'MULTIPLA_ESCOLHA', 'ESCALA', 'SIM_NAO']),
-  obrigatoria: z.boolean().optional(),
-  opcoes: z.array(z.string()).optional()
+  obrigatoria: z.boolean().nullish().transform(v => v ?? undefined),
+  opcoes: z.array(z.string()).nullish().transform(v => v ?? undefined)
 })
 
 const ParticipacaoSchema = z.object({
-  nome: z.string().optional(),
-  email: z.string().email().optional(),
-  cpf: z.string().optional(),
-  bairro: z.string().optional(),
+  nome: z.string().nullish().transform(v => v ?? undefined),
+  email: z.string().email().nullish().transform(v => v ?? undefined),
+  cpf: z.string().nullish().transform(v => v ?? undefined),
+  bairro: z.string().nullish().transform(v => v ?? undefined),
   respostas: z.array(z.object({
     perguntaId: z.string(),
     resposta: z.string()

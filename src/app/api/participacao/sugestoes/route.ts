@@ -20,12 +20,12 @@ const CriarSugestaoSchema = z.object({
   nome: z.string().min(3, 'Nome e obrigatorio'),
   email: z.string().email('Email invalido'),
   cpf: z.string().min(11, 'CPF e obrigatorio'),
-  bairro: z.string().optional(),
-  telefone: z.string().optional(),
+  bairro: z.string().nullish().transform(v => v ?? undefined),
+  telefone: z.string().nullish().transform(v => v ?? undefined),
   titulo: z.string().min(10, 'Titulo deve ter pelo menos 10 caracteres'),
   descricao: z.string().min(50, 'Descricao deve ter pelo menos 50 caracteres'),
   justificativa: z.string().min(30, 'Justificativa deve ter pelo menos 30 caracteres'),
-  categoria: z.string().optional()
+  categoria: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**

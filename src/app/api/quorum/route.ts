@@ -34,18 +34,18 @@ const AplicacoesQuorum = [
 
 const CreateQuorumSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   aplicacao: z.enum(AplicacoesQuorum),
   tipoQuorum: z.enum(TiposQuorum).default('MAIORIA_SIMPLES'),
   percentualMinimo: z.number().min(0).max(100).optional(),
   numeroMinimo: z.number().int().min(1).optional(),
   baseCalculo: z.enum(['PRESENTES', 'TOTAL_MEMBROS', 'TOTAL_MANDATOS']).default('PRESENTES'),
-  tiposProposicao: z.array(z.string()).optional(),
+  tiposProposicao: z.array(z.string()).nullish().transform(v => v ?? undefined),
   permitirAbstencao: z.boolean().default(true),
   abstencaoContaContra: z.boolean().default(false),
   requererVotacaoNominal: z.boolean().default(false),
-  mensagemAprovacao: z.string().optional(),
-  mensagemRejeicao: z.string().optional(),
+  mensagemAprovacao: z.string().nullish().transform(v => v ?? undefined),
+  mensagemRejeicao: z.string().nullish().transform(v => v ?? undefined),
   ativo: z.boolean().default(true),
   ordem: z.number().int().default(0)
 })

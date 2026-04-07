@@ -10,9 +10,9 @@ import { logInfo } from '@/lib/logging/structured-logger'
 const payloadSchema = z.object({
   canal: z.enum(['email', 'push', 'sms']),
   destinatario: z.string().min(3),
-  assunto: z.string().optional(),
+  assunto: z.string().nullish().transform(v => v ?? undefined),
   mensagem: z.string().min(3),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).nullish().transform(v => v ?? undefined)
 })
 
 const normalizeTokenFromHeaders = (request: NextRequest) => {

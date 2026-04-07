@@ -15,12 +15,12 @@ import { comissaoDbService } from '@/lib/services/comissao-db-service'
 export const dynamic = 'force-dynamic'
 
 const MembroComissaoUpdateSchema = z.object({
-  parlamentarId: z.string().min(1).optional(),
-  cargo: z.enum(['PRESIDENTE', 'VICE_PRESIDENTE', 'RELATOR', 'MEMBRO']).optional(),
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional().nullable(),
-  ativo: z.boolean().optional(),
-  observacoes: z.string().optional()
+  parlamentarId: z.string().min(1).nullish().transform(v => v ?? undefined),
+  cargo: z.enum(['PRESIDENTE', 'VICE_PRESIDENTE', 'RELATOR', 'MEMBRO']).nullish().transform(v => v ?? undefined),
+  dataInicio: z.string().nullish().transform(v => v ?? undefined),
+  dataFim: z.string().nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 export const PUT = withAuth(withErrorHandler(async (

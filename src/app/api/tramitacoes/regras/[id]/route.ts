@@ -13,26 +13,26 @@ import { regraTramitacaoDbService } from '@/lib/services/regra-tramitacao-db-ser
 export const dynamic = 'force-dynamic'
 
 const RegraEtapaSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(0).default(0),
   nome: z.string().min(1, 'Nome da etapa é obrigatório'),
-  descricao: z.string().optional(),
-  tipoTramitacaoId: z.string().optional(),
-  unidadeId: z.string().optional(),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  tipoTramitacaoId: z.string().nullish().transform(v => v ?? undefined),
+  unidadeId: z.string().nullish().transform(v => v ?? undefined),
   notificacoes: z.any().optional(),
   alertas: z.any().optional(),
   prazoDias: z.number().int().nullable().optional()
 })
 
 const UpdateRegraSchema = z.object({
-  nome: z.string().min(1).optional(),
-  descricao: z.string().optional(),
-  condicoes: z.record(z.any()).optional(),
-  acoes: z.record(z.any()).optional(),
-  excecoes: z.record(z.any()).optional(),
-  ativo: z.boolean().optional(),
+  nome: z.string().min(1).nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
+  condicoes: z.record(z.any()).nullish().transform(v => v ?? undefined),
+  acoes: z.record(z.any()).nullish().transform(v => v ?? undefined),
+  excecoes: z.record(z.any()).nullish().transform(v => v ?? undefined),
+  ativo: z.boolean().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(0).optional(),
-  etapas: z.array(RegraEtapaSchema).optional()
+  etapas: z.array(RegraEtapaSchema).nullish().transform(v => v ?? undefined)
 })
 
 export const GET = withAuth(async (_request: NextRequest, { params }) => {

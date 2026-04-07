@@ -19,8 +19,8 @@ import {
 // Schema de validacao
 const TramitarSchema = z.object({
   // Acao a ser executada (padrao: AVANCAR_ETAPA)
-  acao: z.enum(['AVANCAR_ETAPA', 'AGUARDANDO_PAUTA']).optional().default('AVANCAR_ETAPA'),
-  observacoes: z.string().optional(),
+  acao: z.enum(['AVANCAR_ETAPA', 'AGUARDANDO_PAUTA']).nullish().transform(v => v ?? 'AVANCAR_ETAPA'),
+  observacoes: z.string().nullish().transform(v => v ?? undefined),
   parecer: z.enum([
     'FAVORAVEL',
     'CONTRARIO',

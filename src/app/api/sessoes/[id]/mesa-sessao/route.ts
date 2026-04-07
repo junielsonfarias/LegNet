@@ -18,7 +18,7 @@ const MesaSessaoSchema = z.object({
     parlamentarId: z.string().min(1, 'Parlamentar é obrigatório'),
     cargo: z.enum(['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO']),
     titular: z.boolean().default(true),
-    observacoes: z.string().optional()
+    observacoes: z.string().nullish().transform(v => v ?? undefined)
   })).min(1, 'Pelo menos um membro é obrigatório')
     .refine(
       (membros) => {
@@ -34,7 +34,7 @@ const MesaSessaoSchema = z.object({
       },
       { message: 'O mesmo parlamentar não pode ocupar dois cargos' }
     ),
-  observacoes: z.string().optional()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 // GET - Obter mesa da sessão

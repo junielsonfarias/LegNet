@@ -13,8 +13,8 @@ const TipoUnidadeEnum = z.enum([
 
 const CreateUnidadeTramitacaoSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
-  sigla: z.string().optional(),
-  descricao: z.string().optional(),
+  sigla: z.string().nullish().transform(v => v ?? undefined),
+  descricao: z.string().nullish().transform(v => v ?? undefined),
   tipo: TipoUnidadeEnum,
   ativo: z.boolean().default(true)
 })

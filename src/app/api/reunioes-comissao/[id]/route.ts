@@ -18,16 +18,16 @@ export const dynamic = 'force-dynamic'
 
 // Schema de validação para atualização
 const AtualizarReuniaoSchema = z.object({
-  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'ESPECIAL']).optional(),
-  data: z.string().datetime().optional(),
-  horaInicio: z.string().datetime().optional().nullable(),
-  horaFim: z.string().datetime().optional().nullable(),
-  local: z.string().optional().nullable(),
-  motivoConvocacao: z.string().optional().nullable(),
-  pautaTexto: z.string().optional().nullable(),
-  ataTexto: z.string().optional().nullable(),
+  tipo: z.enum(['ORDINARIA', 'EXTRAORDINARIA', 'ESPECIAL']).nullish().transform(v => v ?? undefined),
+  data: z.string().datetime().nullish().transform(v => v ?? undefined),
+  horaInicio: z.string().datetime().nullish().transform(v => v ?? undefined),
+  horaFim: z.string().datetime().nullish().transform(v => v ?? undefined),
+  local: z.string().nullish().transform(v => v ?? undefined),
+  motivoConvocacao: z.string().nullish().transform(v => v ?? undefined),
+  pautaTexto: z.string().nullish().transform(v => v ?? undefined),
+  ataTexto: z.string().nullish().transform(v => v ?? undefined),
   quorumMinimo: z.number().int().min(1).optional(),
-  observacoes: z.string().optional().nullable()
+  observacoes: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**

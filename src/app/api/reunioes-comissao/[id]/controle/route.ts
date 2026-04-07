@@ -26,12 +26,12 @@ const ControleBaseSchema = z.object({
     'salvar_ata',
     'aprovar_ata'
   ], { errorMap: () => ({ message: 'Ação inválida' }) }),
-  motivo: z.string().optional(),
-  parecerId: z.string().optional(),
+  motivo: z.string().nullish().transform(v => v ?? undefined),
+  parecerId: z.string().nullish().transform(v => v ?? undefined),
   votosAFavor: z.number().int().min(0).optional(),
   votosContra: z.number().int().min(0).optional(),
   votosAbstencao: z.number().int().min(0).optional(),
-  ataTexto: z.string().optional()
+  ataTexto: z.string().nullish().transform(v => v ?? undefined)
 })
 
 /**
