@@ -47,9 +47,17 @@ export default function MesaDiretoraPage() {
     return parlamentares.filter(p => p.cargo === 'VEREADOR');
   }, [parlamentares]);
 
+  // Ordenar mesa pela hierarquia correta
+  const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', '1º_VICE-PRESIDENTE', '1_VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', '1º_SECRETARIO', '1_SECRETARIO', 'SEGUNDO_SECRETARIO', '2º_SECRETARIO', '2_SECRETARIO', '2º_VICE-PRESIDENTE', '2_VICE_PRESIDENTE']
+  const mesaOrdenada = [...mesaDiretora].sort((a, b) => {
+    const ia = ordemCargos.indexOf(a.cargo || '')
+    const ib = ordemCargos.indexOf(b.cargo || '')
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+  })
+
   // Dados enriquecidos com estatísticas
   const mesaEnriquecida = useMemo(() => {
-    return mesaDiretora.map(membro => {
+    return mesaOrdenada.map(membro => {
       // TODO: Calcular estatísticas quando API estiver disponível
       const estatisticas = {
         legislaturaAtual: { sessoes: 0, materias: 0, percentualPresenca: 0 }
@@ -119,49 +127,47 @@ export default function MesaDiretoraPage() {
     }
   }
 
-  const getCargoIcon = (cargo: string) => {
-    switch (cargo) {
-      case 'PRESIDENTE':
-        return Crown
-      case 'VICE_PRESIDENTE':
-        return Shield
-      case 'PRIMEIRO_SECRETARIO':
-        return Award
-      case 'SEGUNDO_SECRETARIO':
-        return Award
-      default:
-        return User
+  // Funções de cargo movidas para getCargoLabel acima
+
+  const getCargoLabel = (cargo: string) => {
+    const labels: Record<string, string> = {
+      'PRESIDENTE': 'Presidente',
+      'VICE_PRESIDENTE': 'Vice-Presidente',
+      '1º_VICE-PRESIDENTE': 'Vice-Presidente',
+      '1_VICE_PRESIDENTE': 'Vice-Presidente',
+      '2º_VICE-PRESIDENTE': '2º Vice-Presidente',
+      '2_VICE_PRESIDENTE': '2º Vice-Presidente',
+      'PRIMEIRO_SECRETARIO': '1º Secretário',
+      '1º_SECRETARIO': '1º Secretário',
+      '1_SECRETARIO': '1º Secretário',
+      'SEGUNDO_SECRETARIO': '2º Secretário',
+      '2º_SECRETARIO': '2º Secretário',
+      '2_SECRETARIO': '2º Secretário',
     }
+    return labels[cargo] || cargo.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  }
+
+  const getCargoIcon = (cargo: string) => {
+    if (cargo.includes('PRESIDENTE') && !cargo.includes('VICE')) return Crown
+    if (cargo.includes('VICE')) return Shield
+    if (cargo.includes('SECRETARIO') || cargo.includes('SECRETÁRIO')) return Award
+    return User
   }
 
   const getCargoColor = (cargo: string) => {
-    switch (cargo) {
-      case 'PRESIDENTE':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'VICE_PRESIDENTE':
-        return 'bg-camara-primary/10 text-camara-primary border-camara-primary/20'
-      case 'PRIMEIRO_SECRETARIO':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'SEGUNDO_SECRETARIO':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
+    if (cargo === 'PRESIDENTE') return 'bg-amber-100 text-amber-800 border-amber-300'
+    if (cargo.includes('VICE')) return 'bg-blue-100 text-blue-800 border-blue-200'
+    if (cargo.includes('1') && (cargo.includes('SECRETARIO') || cargo.includes('SECRETÁRIO'))) return 'bg-green-100 text-green-800 border-green-200'
+    if (cargo.includes('2') && (cargo.includes('SECRETARIO') || cargo.includes('SECRETÁRIO'))) return 'bg-purple-100 text-purple-800 border-purple-200'
+    return 'bg-gray-100 text-gray-800 border-gray-200'
   }
 
-  const getCargoLabel = (cargo: string) => {
-    switch (cargo) {
-      case 'PRESIDENTE':
-        return 'Presidente'
-      case 'VICE_PRESIDENTE':
-        return 'Vice-Presidente'
-      case 'PRIMEIRO_SECRETARIO':
-        return '1º Secretário'
-      case 'SEGUNDO_SECRETARIO':
-        return '2º Secretário'
-      default:
-        return cargo
-    }
+  const getBorderColor = (cargo: string) => {
+    if (cargo === 'PRESIDENTE') return 'border-amber-400 ring-amber-200'
+    if (cargo.includes('VICE')) return 'border-blue-400 ring-blue-200'
+    if (cargo.includes('1') && (cargo.includes('SECRETARIO') || cargo.includes('SECRETÁRIO'))) return 'border-green-400 ring-green-200'
+    if (cargo.includes('2') && (cargo.includes('SECRETARIO') || cargo.includes('SECRETÁRIO'))) return 'border-purple-400 ring-purple-200'
+    return 'border-gray-300'
   }
 
   return (
@@ -301,51 +307,95 @@ export default function MesaDiretoraPage() {
                 <Badge className="ml-2">Ativa</Badge>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {mesaEnriquecida.map((membro) => {
-                  const Icon = getCargoIcon(membro.cargo || '')
-                  const borderColors: Record<string, string> = {
-                    'PRESIDENTE': 'border-yellow-500',
-                    'VICE_PRESIDENTE': 'border-blue-500',
-                    'PRIMEIRO_SECRETARIO': 'border-green-500',
-                    'SEGUNDO_SECRETARIO': 'border-purple-500',
-                  }
-                  return (
-                    <Card key={membro.id} className="camara-card hover:shadow-lg transition-shadow">
-                      <CardHeader className="text-center">
-                        <div className={`relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 ${borderColors[membro.cargo || ''] || 'border-camara-primary'}`}>
-                          {membro.foto ? (
-                            <img src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
-                              {membro.nome.charAt(0)}
+              {/* Presidente em destaque */}
+              {(() => {
+                const presidente = mesaEnriquecida.find(m => m.cargo === 'PRESIDENTE' || (m.cargo && !m.cargo.includes('VICE') && m.cargo.includes('PRESIDENTE')))
+                const demais = mesaEnriquecida.filter(m => m !== presidente)
+
+                return (
+                  <>
+                    {presidente && (
+                      <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 shadow-lg mb-8">
+                        <CardContent className="p-6 sm:p-8">
+                          <div className="flex flex-col sm:flex-row items-center gap-6">
+                            <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-amber-400 ring-4 ring-amber-100 flex-shrink-0`}>
+                              {presidente.foto ? (
+                                <img src={presidente.foto} alt={presidente.apelido || presidente.nome} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-amber-100 flex items-center justify-center text-amber-600 text-3xl font-bold">
+                                  {presidente.nome.charAt(0)}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <Badge className={getCargoColor(membro.cargo || '')}>
-                          <Icon className="h-3 w-3 mr-1" />
-                          {getCargoLabel(membro.cargo || '')}
-                        </Badge>
-                      </CardHeader>
-                      <CardContent className="text-center space-y-2">
-                        <h3 className="font-semibold text-gray-900">{membro.nome}</h3>
-                        {membro.apelido && (
-                          <p className="text-sm text-gray-600">({membro.apelido})</p>
-                        )}
-                        <p className="text-sm text-camara-primary font-medium">{membro.partido || 'N/A'}</p>
-                        <div className="pt-2">
-                          <Button asChild variant="outline" size="sm" className="w-full text-xs">
-                            <Link href={`/parlamentares/${membro.apelido ? slugify(membro.apelido) : membro.id}`}>
-                              <Eye className="h-3 w-3 mr-1" />
-                              Ver Perfil
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
+                            <div className="text-center sm:text-left flex-1">
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-300 mb-2">
+                                <Crown className="h-3.5 w-3.5 mr-1.5" />
+                                Presidente
+                              </Badge>
+                              <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+                                {presidente.apelido || presidente.nome}
+                              </h3>
+                              {presidente.apelido && presidente.nome !== presidente.apelido && (
+                                <p className="text-sm text-gray-500 mt-0.5">{presidente.nome}</p>
+                              )}
+                              <p className="text-camara-primary font-semibold mt-1">{presidente.partido || 'N/A'}</p>
+                              <div className="mt-3">
+                                <Button asChild variant="outline" size="sm">
+                                  <Link href={`/parlamentares/${presidente.apelido ? slugify(presidente.apelido) : presidente.id}`}>
+                                    <Eye className="h-3.5 w-3.5 mr-1.5" />
+                                    Ver Perfil Completo
+                                  </Link>
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Demais membros */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {demais.map((membro) => {
+                        const Icon = getCargoIcon(membro.cargo || '')
+                        return (
+                          <Card key={membro.id} className="hover:shadow-lg transition-shadow">
+                            <CardContent className="p-5 text-center">
+                              <div className={`w-18 h-18 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full overflow-hidden border-3 ${getBorderColor(membro.cargo || '')} ring-2`}>
+                                {membro.foto ? (
+                                  <img src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-bold">
+                                    {membro.nome.charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                              <Badge className={`${getCargoColor(membro.cargo || '')} mb-2`}>
+                                <Icon className="h-3 w-3 mr-1" />
+                                {getCargoLabel(membro.cargo || '')}
+                              </Badge>
+                              <h3 className="font-semibold text-gray-900 text-sm">
+                                {membro.apelido || membro.nome}
+                              </h3>
+                              {membro.apelido && membro.nome !== membro.apelido && (
+                                <p className="text-xs text-gray-400 mt-0.5">{membro.nome}</p>
+                              )}
+                              <p className="text-xs text-camara-primary font-medium mt-1">{membro.partido || 'N/A'}</p>
+                              <div className="mt-3">
+                                <Button asChild variant="outline" size="sm" className="w-full text-xs">
+                                  <Link href={`/parlamentares/${membro.apelido ? slugify(membro.apelido) : membro.id}`}>
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Ver Perfil
+                                  </Link>
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  </>
+                )
+              })()}
             </>
           ) : (
             <Card className="camara-card">

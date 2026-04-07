@@ -46,10 +46,14 @@ export const institucionalDbService = {
         const cargoMap: Record<string, string> = {
           'Presidente': 'PRESIDENTE',
           'Vice-Presidente': 'VICE_PRESIDENTE',
+          '1º Vice-Presidente': 'VICE_PRESIDENTE',
+          '2º Vice-Presidente': '2_VICE_PRESIDENTE',
           '1º Secretário': 'PRIMEIRO_SECRETARIO',
           '1o Secretário': 'PRIMEIRO_SECRETARIO',
+          '1° Secretário': 'PRIMEIRO_SECRETARIO',
           '2º Secretário': 'SEGUNDO_SECRETARIO',
           '2o Secretário': 'SEGUNDO_SECRETARIO',
+          '2° Secretário': 'SEGUNDO_SECRETARIO',
         }
         return {
           id: m.parlamentar.id,
