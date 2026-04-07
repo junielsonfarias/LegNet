@@ -36,10 +36,15 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const legislatura = await periodosLegislaturaDbService.legislaturaExists(validatedData.legislaturaId)
   if (!legislatura) throw new ValidationError('Legislatura não encontrada')
 
-  const legislaturaInicio = new Date(legislatura.anoInicio, 0, 1)
-  const legislaturaFim = new Date(legislatura.anoFim, 11, 31)
-  if (dataInicio < legislaturaInicio || dataInicio > legislaturaFim) throw new ValidationError('A data de início deve estar dentro do intervalo da legislatura')
-  if (dataFim && (dataFim < legislaturaInicio || dataFim > legislaturaFim)) throw new ValidationError('A data de fim deve estar dentro do intervalo da legislatura')
+  // Validação flexível: permite 1 ano de margem para períodos de transição
+  const legislaturaInicio = new Date(legislatura.anoInicio - 1, 0, 1)
+  const legislaturaFim = new Date(legislatura.anoFim + 1, 11, 31)
+  if (dataInicio < legislaturaInicio || dataInicio > legislaturaFim) {
+    throw new ValidationError(`A data de início (${validatedData.dataInicio}) deve estar dentro do intervalo da legislatura (${legislatura.anoInicio}-${legislatura.anoFim})`)
+  }
+  if (dataFim && (dataFim < legislaturaInicio || dataFim > legislaturaFim)) {
+    throw new ValidationError(`A data de fim (${validatedData.dataFim}) deve estar dentro do intervalo da legislatura (${legislatura.anoInicio}-${legislatura.anoFim})`)
+  }
 
   const duplicateNumero = await periodosLegislaturaDbService.checkDuplicateNumero(validatedData.legislaturaId, validatedData.numero)
   if (duplicateNumero) throw new ConflictError('Já existe um período com este número nesta legislatura')

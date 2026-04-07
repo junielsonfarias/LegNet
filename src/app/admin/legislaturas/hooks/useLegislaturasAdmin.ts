@@ -148,7 +148,16 @@ export function useLegislaturasAdmin() {
 
         if (!periodoResponse.ok) {
           const error = await periodoResponse.json()
-          if (periodoResponse.status === 409) continue
+          if (periodoResponse.status === 409) {
+            // Período já existe - buscar ID do existente para salvar cargos
+            const existentes = await fetch(`/api/periodos-legislatura?legislaturaId=${legislaturaId}`)
+            const existentesData = await existentes.json()
+            const encontrado = existentesData.success && existentesData.data?.find((p: any) => p.numero === periodo.numero)
+            if (encontrado && periodo.cargos.length > 0) {
+              await salvarCargosPeriodo(encontrado.id, periodo.cargos)
+            }
+            continue
+          }
           toast.error(`Erro ao criar período ${periodo.numero}: ${error.error || 'Erro desconhecido'}`)
           erros++
           continue
