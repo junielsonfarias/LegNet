@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare, Heart, Accessibility } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -235,12 +234,11 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
             {logoUrl ? (
-              <Image
+              <img
                 src={logoUrl}
                 alt={nomeCasa}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full object-cover"
+                className="h-12 w-auto max-w-[60px] object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ) : (
               <div className="w-12 h-12 bg-camara-primary rounded-full flex items-center justify-center">

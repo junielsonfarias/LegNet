@@ -72,13 +72,11 @@ export function VotacaoHeader({
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {logoUrl ? (
-              <Image
+              <img
                 src={logoUrl}
                 alt="Logo"
-                width={44}
-                height={44}
-                className={`${sizeClass.logo} rounded-full object-contain bg-white p-0.5`}
-                unoptimized
+                className={`${sizeClass.logo} object-contain bg-white rounded-md p-0.5`}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ) : (
               <div className={`${sizeClass.logo} ${isDark ? 'bg-blue-600/30' : 'bg-white/20'} rounded-full flex items-center justify-center flex-shrink-0`}>
