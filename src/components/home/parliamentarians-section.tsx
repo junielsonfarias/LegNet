@@ -240,7 +240,9 @@ export function ParliamentariansSection() {
       }))
     : parlamentares.filter(p => p.cargo && p.cargo !== 'VEREADOR')
 
-  const vereadores = parlamentares.filter(p => !p.cargo || p.cargo === 'VEREADOR')
+  // Filtrar vereadores removendo quem já está na mesa (evita duplicata)
+  const mesaIds = new Set(mesa.map(m => m.id))
+  const vereadores = parlamentares.filter(p => (!p.cargo || p.cargo === 'VEREADOR') && !mesaIds.has(p.id))
   const todosParaCarrossel = [...mesa, ...vereadores]
 
   mesa.sort((a, b) => getCargoOrdem(a.cargo || '') - getCargoOrdem(b.cargo || ''))
