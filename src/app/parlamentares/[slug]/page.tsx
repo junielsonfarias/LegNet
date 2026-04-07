@@ -153,6 +153,19 @@ export default function ParlamentarPerfilPage() {
 
   const loading = loadingParlamentares || loadingPerfil
 
+  // Memoizar votos (antes dos early returns para respeitar regra de hooks)
+  const votosResumo = useMemo(() => {
+    if (!perfil) return []
+    const sim = perfil.votacoesRecentes.filter(v => v.voto === 'SIM').length
+    const nao = perfil.votacoesRecentes.filter(v => v.voto === 'NAO').length
+    const abst = perfil.votacoesRecentes.filter(v => v.voto === 'ABSTENCAO').length
+    return [
+      { name: 'SIM', value: sim, color: '#22c55e' },
+      { name: 'NÃO', value: nao, color: '#ef4444' },
+      { name: 'ABST.', value: abst, color: '#eab308' },
+    ]
+  }, [perfil])
+
   // Loading state
   if (loading) {
     return (
@@ -274,16 +287,7 @@ export default function ParlamentarPerfilPage() {
     value: d.quantidade,
     fill: CHART_COLORS[i % CHART_COLORS.length]
   }))
-  const votosResumo = useMemo(() => {
-    const sim = perfil.votacoesRecentes.filter(v => v.voto === 'SIM').length
-    const nao = perfil.votacoesRecentes.filter(v => v.voto === 'NAO').length
-    const abst = perfil.votacoesRecentes.filter(v => v.voto === 'ABSTENCAO').length
-    return [
-      { name: 'SIM', value: sim, color: '#22c55e' },
-      { name: 'NÃO', value: nao, color: '#ef4444' },
-      { name: 'ABST.', value: abst, color: '#eab308' },
-    ]
-  }, [perfil.votacoesRecentes])
+  // votosResumo calculado antes dos early returns
 
   return (
     <div className="min-h-screen bg-gray-50">

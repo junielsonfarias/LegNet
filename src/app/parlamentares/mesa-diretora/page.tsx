@@ -47,17 +47,15 @@ export default function MesaDiretoraPage() {
     return parlamentares.filter(p => p.cargo === 'VEREADOR');
   }, [parlamentares]);
 
-  // Ordenar mesa pela hierarquia correta
+  // Dados enriquecidos com estatísticas (ordenados por hierarquia)
   const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', '1º_VICE-PRESIDENTE', '1_VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', '1º_SECRETARIO', '1_SECRETARIO', 'SEGUNDO_SECRETARIO', '2º_SECRETARIO', '2_SECRETARIO', '2º_VICE-PRESIDENTE', '2_VICE_PRESIDENTE']
-  const mesaOrdenada = [...mesaDiretora].sort((a, b) => {
-    const ia = ordemCargos.indexOf(a.cargo || '')
-    const ib = ordemCargos.indexOf(b.cargo || '')
-    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
-  })
-
-  // Dados enriquecidos com estatísticas
   const mesaEnriquecida = useMemo(() => {
-    return mesaOrdenada.map(membro => {
+    const ordenada = [...mesaDiretora].sort((a, b) => {
+      const ia = ordemCargos.indexOf(a.cargo || '')
+      const ib = ordemCargos.indexOf(b.cargo || '')
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+    })
+    return ordenada.map(membro => {
       // TODO: Calcular estatísticas quando API estiver disponível
       const estatisticas = {
         legislaturaAtual: { sessoes: 0, materias: 0, percentualPresenca: 0 }
