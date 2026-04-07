@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Users, FileText, UserCheck, Loader2, AlertCircle } from 'lucide-react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 
 interface Membro {
   id: string
@@ -27,6 +29,7 @@ interface Comissao {
 
 export default function ComissoesPage() {
   const { configuracao } = useConfiguracaoInstitucional()
+  const breadcrumbs = useBreadcrumbs()
   const [comissoes, setComissoes] = useState<Comissao[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -179,6 +182,11 @@ export default function ComissoesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumbs */}
+        <div className="mb-6">
+          <Breadcrumb items={breadcrumbs} />
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">

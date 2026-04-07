@@ -1,10 +1,42 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-07 (Fix configuracoes 400 + upload logo)
-> **Versao**: 1.9.1
+> **Ultima Atualizacao**: 2026-04-07 (F7 melhorias globais)
+> **Versao**: 1.9.2
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## F6 Sobre com Organograma Visual (07/04/2026)
+
+### Melhorias visuais na pagina Sobre
+- `src/app/institucional/sobre/page.tsx` — Reescrita visual completa:
+  - Hero com gradiente usando `var(--municipal-primary)` e icone centralizado
+  - Breadcrumb adicionado (Inicio > Institucional > Sobre)
+  - Organograma visual da Mesa Diretora (presidente no topo, demais abaixo com linhas conectoras)
+  - Cards de estatisticas animados (vereadores, comissoes, legislatura, mesa diretora)
+  - Horario hardcoded "08:00h as 14:00h" removido, substituido por "Segunda a Sexta"
+
+---
+
+## F7 Melhorias Globais (07/04/2026)
+
+### Breadcrumbs adicionados a paginas publicas
+- `src/app/legislativo/proposicoes/page.tsx` — Breadcrumb + badge "Novo" para proposicoes recentes (7 dias)
+- `src/app/legislativo/comissoes/page.tsx` — Breadcrumb
+- `src/app/transparencia/page.tsx` — Breadcrumb
+- `src/app/parlamentares/page.tsx` — Breadcrumb
+- `src/app/noticias/page.tsx` — Ja possuia breadcrumbs
+
+### Badge "Novo" em proposicoes recentes
+- Proposicoes com dataApresentacao nos ultimos 7 dias exibem badge verde "Novo"
+
+### Botao compartilhar WhatsApp na pagina de detalhe de proposicao
+- `src/app/legislativo/proposicoes/[id]/page.tsx` — Botao WhatsApp ao lado do "Copiar Link"
+
+### Badge PNTP Nivel Diamante no footer
+- `src/components/layout/footer.tsx` — Badge com icone Shield verde ao lado do copyright
 
 ---
 

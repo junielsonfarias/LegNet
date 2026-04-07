@@ -11,6 +11,8 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { BotaoFavorito } from '@/components/favoritos'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 
 // Interface para proposição da API pública
 interface ProposicaoPublica {
@@ -34,6 +36,7 @@ interface ProposicaoPublica {
 
 export default function ProposicoesPage() {
   const { configuracao } = useConfiguracaoInstitucional()
+  const breadcrumbs = useBreadcrumbs()
   const params = useSearchParams()
   const [proposicoes, setProposicoes] = useState<ProposicaoPublica[]>([])
   const [loading, setLoading] = useState(true)
@@ -143,6 +146,11 @@ export default function ProposicoesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
+        {/* Breadcrumbs */}
+        <div className="mb-6">
+          <Breadcrumb items={breadcrumbs} />
+        </div>
+
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
@@ -318,6 +326,9 @@ export default function ProposicoesPage() {
                         </CardTitle>
                         {getTipoBadge(proposicao.tipo)}
                         {getStatusBadge(proposicao.status)}
+                        {new Date(proposicao.dataApresentacao) > new Date(Date.now() - 7 * 86400000) && (
+                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px]">Novo</Badge>
+                        )}
                       </div>
                       <h2 className="text-xl font-semibold text-gray-900 mb-2">
                         {proposicao.titulo}

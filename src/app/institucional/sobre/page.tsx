@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building, Users, Calendar, FileText, Shield, Heart, Loader2, AlertCircle } from 'lucide-react'
+import { Building, Users, Calendar, FileText, Shield, Heart, Loader2, AlertCircle, Landmark, Scale } from 'lucide-react'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
 
 interface MembroMesaDiretora {
   id: string
@@ -145,20 +146,47 @@ export default function SobrePage() {
   const config = dados?.configuracao
   const nomeCasa = config?.nome || 'Câmara Municipal'
 
+  const presidente = dados?.mesaDiretora?.find(m => m.cargo === 'PRESIDENTE')
+  const outrosMembros = dados?.mesaDiretora?.filter(m => m.cargo !== 'PRESIDENTE') || []
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            Sobre a Câmara Municipal
-          </h1>
-          <p className="text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">
-            Conheça a história, missão e valores da {nomeCasa},
-            instituição dedicada ao exercício do Poder Legislativo e à representação do povo.
-          </p>
+      {/* Hero Section com gradiente */}
+      <section
+        className="relative overflow-hidden py-16 md:py-20"
+        style={{
+          background: `linear-gradient(135deg, var(--municipal-primary, #1e3a5f) 0%, color-mix(in srgb, var(--municipal-primary, #1e3a5f) 70%, #000) 100%)`,
+        }}
+      >
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.15) 0%, transparent 50%)',
+          }} />
         </div>
+        <div className="container mx-auto px-4 relative z-10">
+          <Breadcrumb
+            items={[
+              { label: 'Institucional', href: '/institucional' },
+              { label: 'Sobre', current: true },
+            ]}
+            className="mb-6 [&_ol]:text-white/70 [&_a]:text-white/70 [&_a:hover]:text-white [&_svg]:text-white/50 [&_span.font-medium]:text-white"
+          />
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/15 backdrop-blur-sm mb-6">
+              <Landmark className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+              Sobre a Câmara Municipal
+            </h1>
+            <p className="text-base md:text-lg lg:text-xl text-white/80 max-w-3xl mx-auto">
+              Conheça a história, missão e valores da {nomeCasa},
+              instituição dedicada ao exercício do Poder Legislativo e à representação do povo.
+            </p>
+          </div>
+        </div>
+      </section>
 
+      <div className="container mx-auto px-4 py-12">
         {/* História */}
         <div className="mb-12">
           <Card className="camara-card">
@@ -246,60 +274,147 @@ export default function SobrePage() {
           </Card>
         </div>
 
-        {/* Estrutura Organizacional */}
+        {/* Estrutura Organizacional - Organograma Visual */}
         <div className="mb-12">
           <Card className="camara-card">
             <CardHeader>
-              <CardTitle className="text-2xl font-semibold text-camara-primary">
+              <CardTitle className="text-2xl font-semibold text-camara-primary flex items-center">
+                <Scale className="h-6 w-6 mr-2" />
                 Estrutura Organizacional
               </CardTitle>
+              <p className="text-sm text-gray-500 mt-1">Mesa Diretora da {dados?.legislatura ? `${dados.legislatura.numero}a Legislatura` : 'Legislatura Atual'}</p>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Mesa Diretora</h3>
-                  <div className="space-y-3">
-                    {dados?.mesaDiretora && dados.mesaDiretora.length > 0 ? (
-                      dados.mesaDiretora.map((membro) => (
-                        <div key={membro.id} className="flex items-center space-x-3">
-                          <div className={`w-3 h-3 ${getCargoColor(membro.cargo)} rounded-full`}></div>
-                          <span className="text-gray-700">
-                            {membro.cargoLabel}: {membro.apelido || membro.nome}
+              {dados?.mesaDiretora && dados.mesaDiretora.length > 0 ? (
+                <div className="flex flex-col items-center">
+                  {/* Presidente no topo */}
+                  {presidente && (
+                    <div className="flex flex-col items-center mb-2">
+                      <div className="relative rounded-xl border-2 border-camara-gold bg-gradient-to-br from-amber-50 to-yellow-50 shadow-lg px-6 py-4 text-center min-w-[200px] max-w-[280px]">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                          <span className="inline-block bg-camara-gold text-white text-xs font-bold px-3 py-0.5 rounded-full shadow">
+                            {presidente.cargoLabel}
                           </span>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 italic">Informação não disponível</p>
-                    )}
-                  </div>
-                </div>
+                        {presidente.foto ? (
+                          <img
+                            src={presidente.foto}
+                            alt={presidente.apelido || presidente.nome}
+                            className="w-16 h-16 rounded-full mx-auto mt-2 mb-2 object-cover border-2 border-camara-gold/30"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full mx-auto mt-2 mb-2 bg-camara-gold/10 flex items-center justify-center">
+                            <Users className="h-7 w-7 text-camara-gold" />
+                          </div>
+                        )}
+                        <p className="font-semibold text-gray-900 text-sm">{presidente.apelido || presidente.nome}</p>
+                        {presidente.partido && (
+                          <p className="text-xs text-gray-500">{presidente.partido}</p>
+                        )}
+                      </div>
+                      {/* Linha vertical conectora */}
+                      {outrosMembros.length > 0 && (
+                        <div className="w-0.5 h-8 bg-gray-300" />
+                      )}
+                    </div>
+                  )}
 
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Composição</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <Users className="h-5 w-5 text-camara-primary" />
-                      <span className="text-gray-700">
-                        {dados?.estatisticas?.totalParlamentares || 0} Vereadores eleitos
-                      </span>
+                  {/* Linha horizontal conectora */}
+                  {outrosMembros.length > 0 && (
+                    <div className="relative w-full max-w-3xl mb-2">
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 bg-gray-300" style={{
+                        width: outrosMembros.length > 1 ? `${Math.min(100, outrosMembros.length * 33)}%` : '0%',
+                      }} />
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Calendar className="h-5 w-5 text-camara-primary" />
-                      <span className="text-gray-700">
-                        Legislatura {dados?.legislatura?.periodo || '2025/2028'}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-camara-primary" />
-                      <span className="text-gray-700">
-                        {dados?.estatisticas?.totalComissoes || 0} Comissões ativas
-                      </span>
-                    </div>
+                  )}
+
+                  {/* Demais membros abaixo */}
+                  <div className="flex flex-wrap justify-center gap-4 md:gap-6 mt-2">
+                    {outrosMembros.map((membro) => {
+                      const cargoColorMap: Record<string, { border: string; badge: string; bg: string; icon: string }> = {
+                        VICE_PRESIDENTE: { border: 'border-blue-400', badge: 'bg-blue-500', bg: 'from-blue-50 to-sky-50', icon: 'text-blue-500' },
+                        PRIMEIRO_SECRETARIO: { border: 'border-emerald-400', badge: 'bg-emerald-500', bg: 'from-emerald-50 to-green-50', icon: 'text-emerald-500' },
+                        SEGUNDO_SECRETARIO: { border: 'border-purple-400', badge: 'bg-purple-500', bg: 'from-purple-50 to-violet-50', icon: 'text-purple-500' },
+                      }
+                      const colors = cargoColorMap[membro.cargo] || { border: 'border-gray-300', badge: 'bg-gray-500', bg: 'from-gray-50 to-slate-50', icon: 'text-gray-500' }
+
+                      return (
+                        <div key={membro.id} className="flex flex-col items-center">
+                          {/* Linha vertical de cima */}
+                          <div className="w-0.5 h-4 bg-gray-300" />
+                          <div className={`relative rounded-xl border-2 ${colors.border} bg-gradient-to-br ${colors.bg} shadow-md px-5 py-3 text-center min-w-[170px] max-w-[220px]`}>
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                              <span className={`inline-block ${colors.badge} text-white text-xs font-bold px-3 py-0.5 rounded-full shadow`}>
+                                {membro.cargoLabel}
+                              </span>
+                            </div>
+                            {membro.foto ? (
+                              <img
+                                src={membro.foto}
+                                alt={membro.apelido || membro.nome}
+                                className={`w-12 h-12 rounded-full mx-auto mt-2 mb-2 object-cover border-2 ${colors.border} opacity-80`}
+                              />
+                            ) : (
+                              <div className={`w-12 h-12 rounded-full mx-auto mt-2 mb-2 bg-white/60 flex items-center justify-center`}>
+                                <Users className={`h-5 w-5 ${colors.icon}`} />
+                              </div>
+                            )}
+                            <p className="font-semibold text-gray-900 text-sm">{membro.apelido || membro.nome}</p>
+                            {membro.partido && (
+                              <p className="text-xs text-gray-500">{membro.partido}</p>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
-              </div>
+              ) : (
+                <p className="text-gray-500 italic text-center py-8">Informação da Mesa Diretora não disponível</p>
+              )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Números / Estatísticas */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+          {[
+            {
+              label: 'Vereadores',
+              value: dados?.estatisticas?.totalParlamentares || 0,
+              icon: Users,
+            },
+            {
+              label: 'Comissões',
+              value: dados?.estatisticas?.totalComissoes || 0,
+              icon: FileText,
+            },
+            {
+              label: 'Legislatura',
+              value: dados?.legislatura ? `${dados.legislatura.numero}a` : '-',
+              icon: Calendar,
+            },
+            {
+              label: 'Mesa Diretora',
+              value: dados?.mesaDiretora?.length || 0,
+              icon: Landmark,
+            },
+          ].map((stat, idx) => (
+            <div
+              key={idx}
+              className="relative rounded-2xl p-6 text-white overflow-hidden shadow-lg group hover:scale-[1.03] transition-transform duration-200"
+              style={{
+                background: `linear-gradient(135deg, var(--municipal-primary, #1e3a5f) 0%, color-mix(in srgb, var(--municipal-primary, #1e3a5f) 60%, #000) 100%)`,
+              }}
+            >
+              <div className="absolute top-0 right-0 w-20 h-20 opacity-10">
+                <stat.icon className="w-full h-full" />
+              </div>
+              <stat.icon className="h-6 w-6 text-white/70 mb-2" />
+              <p className="text-3xl md:text-4xl font-bold">{stat.value}</p>
+              <p className="text-sm text-white/70 mt-1">{stat.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* Atribuições */}
@@ -376,7 +491,7 @@ export default function SobrePage() {
                     {config?.site && (
                       <p><strong>Site:</strong> {config.site}</p>
                     )}
-                    <p><strong>Horário:</strong> De 08:00h às 14:00h, Segunda à Sexta</p>
+                    <p><strong>Atendimento:</strong> Segunda a Sexta</p>
                   </div>
                 </div>
               </div>

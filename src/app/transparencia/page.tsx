@@ -11,6 +11,8 @@ import {
   GraduationCap, ClipboardList, PieChart, Wallet
 } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs';
 
 interface ConfiguracaoInstitucional {
   nome: string;
@@ -32,6 +34,7 @@ interface ConfiguracaoInstitucional {
 export default function TransparenciaPage() {
   const [dados, setDados] = useState<{ configuracao: ConfiguracaoInstitucional | null } | null>(null);
   const [loading, setLoading] = useState(true);
+  const breadcrumbs = useBreadcrumbs();
 
   useEffect(() => {
     const fetchDados = async () => {
@@ -165,6 +168,11 @@ export default function TransparenciaPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      {/* Breadcrumbs */}
+      <div className="container mx-auto px-4 pt-6">
+        <Breadcrumb items={breadcrumbs} />
+      </div>
+
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br gradient-municipal-hero text-white overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />

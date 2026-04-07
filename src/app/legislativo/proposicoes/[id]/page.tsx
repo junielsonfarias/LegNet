@@ -234,6 +234,12 @@ export default function ProposicaoDetalhePage() {
               <Share2 className="h-4 w-4 mr-1.5" />
               Copiar Link
             </Button>
+            <Button size="sm" variant="outline" asChild title="Compartilhar no WhatsApp">
+              <a href={`https://wa.me/?text=${encodeURIComponent((proposicao.titulo || '') + ' ' + (typeof window !== 'undefined' ? window.location.href : ''))}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-1.5" />
+                WhatsApp
+              </a>
+            </Button>
           </div>
         </div>
       </div>

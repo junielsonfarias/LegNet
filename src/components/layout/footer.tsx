@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube } from 'lucide-react'
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube, Shield } from 'lucide-react'
 import { useConfiguracaoInstitucional, formatarEnderecoClient } from '@/lib/hooks/use-configuracao-institucional'
 
 export function Footer() {
@@ -205,9 +205,10 @@ export function Footer() {
               <p className="text-xs md:text-sm text-gray-400">
                 © {anoAtual} {nomeCasa}
               </p>
-              <p className="text-[11px] text-gray-500">
-                Transparencia publica
-              </p>
+              <div className="flex items-center justify-center md:justify-end gap-1.5 text-xs text-gray-400 mt-1">
+                <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                <span>PNTP Nivel Diamante</span>
+              </div>
             </div>
           </div>
         </div>

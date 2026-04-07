@@ -23,6 +23,8 @@ import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { ParlamentaresListSkeleton } from '@/components/skeletons/parlamentar-skeleton'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { slugify, cn } from '@/lib/utils'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 
 interface Legislatura {
   id: string
@@ -130,6 +132,7 @@ function ParlamentarCard({ parlamentar }: { parlamentar: any }) {
 }
 
 export default function ParlamentaresPage() {
+  const breadcrumbs = useBreadcrumbs()
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'todos' | 'mesa' | 'vereadores'>('todos')
   const [legislaturas, setLegislaturas] = useState<Legislatura[]>([])
@@ -217,6 +220,11 @@ export default function ParlamentaresPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 md:py-12">
+        {/* Breadcrumbs */}
+        <div className="mb-6">
+          <Breadcrumb items={breadcrumbs} />
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8 md:mb-10">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2 sm:gap-3">
