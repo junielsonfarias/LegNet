@@ -33,7 +33,7 @@ function getEtapaAtual(status: string, tramitacoes: TramitacaoStepperProps['tram
 
   // Verificar tramitações para determinar estágio
   const temParecer = tramitacoes.some(t =>
-    t.resultado || t.parecer || (t.tipoTramitacao?.nome || '').toLowerCase().includes('parecer')
+    t.resultado || (t as any).parecer || (t.tipoTramitacao?.nome || '').toLowerCase().includes('parecer')
   )
   if (temParecer) return 4
 
