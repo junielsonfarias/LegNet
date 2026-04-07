@@ -198,23 +198,46 @@ function MarqueeCarousel({ vereadores }: { vereadores: Parlamentar[] }) {
 
 export function ParliamentariansSection() {
   const [parlamentares, setParlamentares] = useState<Parlamentar[]>([])
+  const [mesaInstitucional, setMesaInstitucional] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetch_ = async () => {
+    const fetchAll = async () => {
       try {
-        const res = await fetch('/api/dados-abertos/parlamentares?ativo=true')
-        if (!res.ok) throw new Error('Erro ao carregar parlamentares')
-        const data = await res.json()
-        setParlamentares(data.dados || [])
+        // Buscar parlamentares + mesa diretora em paralelo
+        const [parlRes, instRes] = await Promise.all([
+          fetch('/api/dados-abertos/parlamentares?ativo=true'),
+          fetch('/api/institucional')
+        ])
+
+        if (parlRes.ok) {
+          const parlData = await parlRes.json()
+          setParlamentares(parlData.dados || [])
+        }
+
+        // Mesa diretora da API institucional (fonte correta: tabela MesaDiretora)
+        if (instRes.ok) {
+          const instData = await instRes.json()
+          const mesaInst = instData?.dados?.mesaDiretora || []
+          if (mesaInst.length > 0) {
+            setMesaInstitucional(mesaInst)
+          }
+        }
       } catch (err) {
         console.warn('Erro ao carregar parlamentares:', err)
       } finally { setLoading(false) }
     }
-    fetch_()
+    fetchAll()
   }, [])
 
-  const mesa = parlamentares.filter(p => p.cargo && p.cargo !== 'VEREADOR')
+  // Mesa diretora: priorizar tabela MesaDiretora, fallback para Parlamentar.cargo
+  const mesa = mesaInstitucional.length > 0
+    ? mesaInstitucional.map((m: any) => ({
+        id: m.id, nome: m.nome, apelido: m.apelido,
+        cargo: m.cargo, partido: m.partido, foto: m.foto, ativo: true
+      }))
+    : parlamentares.filter(p => p.cargo && p.cargo !== 'VEREADOR')
+
   const vereadores = parlamentares.filter(p => !p.cargo || p.cargo === 'VEREADOR')
   const todosParaCarrossel = [...mesa, ...vereadores]
 

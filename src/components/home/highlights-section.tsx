@@ -44,7 +44,9 @@ const statusColors: Record<string, string> = {
 }
 
 function formatDateShort(dateStr: string) {
+  if (!dateStr) return '—'
   const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return '—'
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
