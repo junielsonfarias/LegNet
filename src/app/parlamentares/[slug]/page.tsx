@@ -7,13 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Crown, Mail, Phone, FileText, Users,
   Eye, ArrowLeft, Clock, CheckCircle, XCircle,
-  AlertCircle, Loader2, BarChart3, Calendar
+  AlertCircle, Loader2, BarChart3, Calendar, TrendingUp
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { slugify } from '@/lib/utils'
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 
 interface PerfilParlamentar {
   id: string
@@ -262,165 +263,211 @@ export default function ParlamentarPerfilPage() {
     }
   }
 
+  // Dados para gráficos
+  const CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
+  const presencaData = [
+    { name: 'Presente', value: perfil.estatisticas.legislaturaAtual.sessoes, color: '#22c55e' },
+    { name: 'Ausente', value: Math.max(0, perfil.estatisticas.legislaturaAtual.totalSessoes - perfil.estatisticas.legislaturaAtual.sessoes), color: '#ef4444' },
+  ]
+  const distribuicaoData = perfil.estatisticasMaterias.distribuicao.map((d, i) => ({
+    name: d.tipo.replace(/_/g, ' ').replace(/PROJETO /i, '').substring(0, 12),
+    value: d.quantidade,
+    fill: CHART_COLORS[i % CHART_COLORS.length]
+  }))
+  const votosResumo = useMemo(() => {
+    const sim = perfil.votacoesRecentes.filter(v => v.voto === 'SIM').length
+    const nao = perfil.votacoesRecentes.filter(v => v.voto === 'NAO').length
+    const abst = perfil.votacoesRecentes.filter(v => v.voto === 'ABSTENCAO').length
+    return [
+      { name: 'SIM', value: sim, color: '#22c55e' },
+      { name: 'NÃO', value: nao, color: '#ef4444' },
+      { name: 'ABST.', value: abst, color: '#eab308' },
+    ]
+  }, [perfil.votacoesRecentes])
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-          <Link href="/parlamentares" className="hover:text-camara-primary">
-            Parlamentares
-          </Link>
-          <span>/</span>
-          <span className="text-gray-900">{perfil.apelido || perfil.nome}</span>
+      {/* Hero Header com Gradiente */}
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--municipal-primary) 0%, var(--municipal-primary-dark) 100%)' }}>
+        <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/5" />
+          <div className="absolute bottom-0 -left-12 w-64 h-64 rounded-full bg-white/5" />
         </div>
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          {/* Breadcrumb + Voltar */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2 text-sm text-white/70">
+              <Link href="/parlamentares" className="hover:text-white">Parlamentares</Link>
+              <span>/</span>
+              <span className="text-white">{perfil.apelido || perfil.nome}</span>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+              <Link href="/parlamentares">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Link>
+            </Button>
+          </div>
 
-        {/* Botão Voltar */}
-        <div className="mb-6">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/parlamentares">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar para Parlamentares
-            </Link>
-          </Button>
-        </div>
-
-        {/* Header do Vereador */}
-        <Card className="mb-8 shadow-lg">
-          <CardContent className="p-8">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
-              {/* Foto */}
-              <div className="relative">
-                {perfil.foto ? (
-                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                    <img src={perfil.foto} alt={perfil.nome} className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className={`w-32 h-32 ${perfil.cargo === 'PRESIDENTE' ? 'bg-camara-gold' : 'bg-camara-primary'} rounded-full flex items-center justify-center text-white`}>
-                    {perfil.cargo === 'PRESIDENTE' ? (
-                      <Crown className="h-16 w-16" />
-                    ) : (
-                      <Users className="h-16 w-16" />
-                    )}
-                  </div>
-                )}
-                <Badge className={`absolute -top-2 -right-2 ${getCargoColor(perfil.cargo)} border`}>
+          {/* Info do Parlamentar */}
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+            {/* Foto */}
+            <div className="relative flex-shrink-0">
+              {perfil.foto ? (
+                <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-white/30 shadow-xl ring-4 ring-white/10">
+                  <img src={perfil.foto} alt={perfil.nome} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30">
+                  {perfil.cargo === 'PRESIDENTE' ? (
+                    <Crown className="h-14 w-14 text-white" />
+                  ) : (
+                    <Users className="h-14 w-14 text-white" />
+                  )}
+                </div>
+              )}
+              {perfil.cargo !== 'VEREADOR' && (
+                <Badge className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-amber-500 text-white border-0 shadow-lg text-xs">
                   {getCargoLabel(perfil.cargo)}
                 </Badge>
+              )}
+            </div>
+
+            {/* Nome + Info */}
+            <div className="text-center md:text-left flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
+                {perfil.apelido || perfil.nome}
+              </h1>
+              {perfil.apelido && perfil.nome !== perfil.apelido && (
+                <p className="text-white/60 text-sm mb-2">{perfil.nome}</p>
+              )}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-3">
+                <Badge className="bg-white/20 text-white border-0">{perfil.partido || 'Sem partido'}</Badge>
+                <Badge className="bg-white/10 text-white/80 border-0">
+                  <Calendar className="h-3 w-3 mr-1" />{perfil.legislatura}
+                </Badge>
               </div>
-
-              {/* Informações Principais */}
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {perfil.nome}
-                </h1>
-                <h2 className="text-xl text-camara-primary font-semibold mb-4">
-                  {perfil.apelido || ''}
-                </h2>
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  {perfil.cargo !== 'VEREADOR' && (
-                    <Badge className={`${getCargoColor(perfil.cargo)} border`}>
-                      {getCargoLabel(perfil.cargo)} - Mesa Diretora
-                    </Badge>
-                  )}
-                  <Badge variant="outline">
-                    {perfil.partido || 'Sem partido'}
-                  </Badge>
-                  <Badge variant="outline" className="bg-camara-primary/5">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    {perfil.legislatura}
-                  </Badge>
-                </div>
-
-                {/* Contato */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    <span>{perfil.email || 'Email não informado'}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{perfil.telefone || 'Telefone não informado'}</span>
-                  </div>
-                </div>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-white/70">
+                {perfil.email && (
+                  <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{perfil.email}</span>
+                )}
+                {perfil.telefone && (
+                  <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />{perfil.telefone}</span>
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
 
-        {/* Estatísticas da Legislatura */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+      <div className="container mx-auto px-4 py-8">
+        {/* Dashboard: Stats + Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 -mt-12 relative z-20">
+          {/* Presença - Donut Chart */}
+          <Card className="shadow-lg border-0">
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold text-gray-500 mb-3">Presença em Sessões</h3>
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-24 flex-shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={presencaData} cx="50%" cy="50%" innerRadius={28} outerRadius={42} dataKey="value" strokeWidth={0}>
+                        {presencaData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
                 <div>
-                  <p className="text-sm text-gray-600">Presenças em Sessões</p>
-                  <p className="text-3xl font-bold text-camara-primary">
-                    {perfil.estatisticas.legislaturaAtual.sessoes}
-                  </p>
+                  <div className="text-3xl font-bold" style={{ color: 'var(--municipal-primary)' }}>
+                    {perfil.estatisticas.legislaturaAtual.percentualPresenca}%
+                  </div>
                   <p className="text-xs text-gray-500">
-                    de {perfil.estatisticas.legislaturaAtual.totalSessoes} sessões
+                    {perfil.estatisticas.legislaturaAtual.sessoes} de {perfil.estatisticas.legislaturaAtual.totalSessoes} sessões
                   </p>
+                  <div className="flex gap-3 mt-1.5">
+                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />Presente
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                      <span className="w-2 h-2 rounded-full bg-red-500" />Ausente
+                    </span>
+                  </div>
                 </div>
-                <CheckCircle className="h-10 w-10 text-green-500 opacity-50" />
-              </div>
-              <div className="mt-2">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full"
-                    style={{ width: `${perfil.estatisticas.legislaturaAtual.percentualPresenca}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {perfil.estatisticas.legislaturaAtual.percentualPresenca}% de presença
-                </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Matérias Apresentadas</p>
-                  <p className="text-3xl font-bold text-camara-secondary">
-                    {perfil.estatisticas.legislaturaAtual.materias}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {perfil.estatisticas.legislaturaAtual.percentualMaterias}% do total
-                  </p>
+          {/* Produção - Números */}
+          <Card className="shadow-lg border-0">
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold text-gray-500 mb-3">Produção Legislativa</h3>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-2 rounded-lg bg-blue-50">
+                  <div className="text-2xl font-bold text-blue-600">{perfil.estatisticasMaterias.total}</div>
+                  <div className="text-[10px] text-blue-500">Total</div>
                 </div>
-                <FileText className="h-10 w-10 text-camara-secondary opacity-50" />
+                <div className="p-2 rounded-lg bg-green-50">
+                  <div className="text-2xl font-bold text-green-600">{perfil.estatisticasMaterias.aprovadas}</div>
+                  <div className="text-[10px] text-green-500">Aprovadas</div>
+                </div>
+                <div className="p-2 rounded-lg bg-amber-50">
+                  <div className="text-2xl font-bold text-amber-600">{perfil.estatisticasMaterias.emTramitacao}</div>
+                  <div className="text-[10px] text-amber-500">Tramitando</div>
+                </div>
               </div>
+              {distribuicaoData.length > 0 && (
+                <div className="mt-3 h-20">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={distribuicaoData} barSize={16}>
+                      <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} />
+                      <Tooltip formatter={(v: number) => [v, 'Qtd']} />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {distribuicaoData.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Aprovadas</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {perfil.estatisticasMaterias.aprovadas}
-                  </p>
-                  <p className="text-xs text-gray-500">proposições</p>
+          {/* Votações - Resumo */}
+          <Card className="shadow-lg border-0">
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold text-gray-500 mb-3">Votações Recentes</h3>
+              {perfil.votacoesRecentes.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 flex-shrink-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={votosResumo.filter(v => v.value > 0)} cx="50%" cy="50%" innerRadius={28} outerRadius={42} dataKey="value" strokeWidth={0}>
+                          {votosResumo.filter(v => v.value > 0).map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="space-y-1.5">
+                    {votosResumo.map(v => (
+                      <div key={v.name} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: v.color }} />
+                        <span className="text-sm text-gray-600 w-10">{v.name}</span>
+                        <span className="text-sm font-bold">{v.value}</span>
+                      </div>
+                    ))}
+                    <p className="text-[10px] text-gray-400 pt-1">{perfil.votacoesRecentes.length} votos registrados</p>
+                  </div>
                 </div>
-                <CheckCircle className="h-10 w-10 text-green-500 opacity-50" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Em Tramitação</p>
-                  <p className="text-3xl font-bold text-yellow-600">
-                    {perfil.estatisticasMaterias.emTramitacao}
-                  </p>
-                  <p className="text-xs text-gray-500">proposições</p>
+              ) : (
+                <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
+                  Nenhuma votação registrada
                 </div>
-                <Clock className="h-10 w-10 text-yellow-500 opacity-50" />
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
