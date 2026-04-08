@@ -35,8 +35,10 @@ export function useSessoesState() {
   const { legislaturas } = useLegislaturas({ ativa: true })
   const legislaturaAtiva = legislaturas.find(l => l.ativa) || legislaturas[0]
   const { periodos } = usePeriodosLegislatura(legislaturaAtiva?.id)
-  // Filtrar apenas proposições aguardando inclusão em pauta
-  const { proposicoes } = useProposicoes({ status: 'AGUARDANDO_PAUTA' })
+  // Proposições aguardando pauta (para sessões novas)
+  const { proposicoes: proposicoesAguardando } = useProposicoes({ status: 'AGUARDANDO_PAUTA' })
+  // Todas as proposições (para sessões já realizadas - lançamento retroativo)
+  const { proposicoes: todasProposicoes } = useProposicoes({ limit: 500 })
   const { templates: templatesSessao, loading: loadingTemplates } = useSessaoTemplates({ ativo: true })
 
   // Tipos de expediente do banco
@@ -103,6 +105,16 @@ export function useSessoesState() {
     refetchSuggestions,
     addSuggestionAsItem
   } = usePauta(selectedSessaoForPauta?.id)
+
+  // Para sessões concluídas/canceladas: mostrar todas as proposições (lançamento retroativo)
+  // Para sessões ativas/agendadas: mostrar apenas as que aguardam pauta
+  const proposicoes = useMemo(() => {
+    const status = selectedSessaoForPauta?.status
+    if (status === 'CONCLUIDA' || status === 'CANCELADA') {
+      return todasProposicoes
+    }
+    return proposicoesAguardando
+  }, [selectedSessaoForPauta?.status, proposicoesAguardando, todasProposicoes])
 
   // Sincronizar sessões da API com estado local
   useEffect(() => {
