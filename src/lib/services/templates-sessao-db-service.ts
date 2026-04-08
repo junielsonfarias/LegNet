@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import type { TipoSessao, PautaSecao } from '@prisma/client'
+import type { TipoSessao } from '@prisma/client'
 
 export interface TemplateSessaoFilters {
   tipo?: TipoSessao
@@ -62,7 +62,7 @@ export const templatesSessaoDbService = {
         duracaoEstimativa: payload.duracaoEstimativa ?? null,
         itens: {
           create: payload.itens.map((item, index) => ({
-            secao: item.secao as PautaSecao,
+            secao: item.secao,
             ordem: item.ordem ?? index + 1,
             titulo: item.titulo,
             descricao: item.descricao || null,

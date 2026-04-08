@@ -560,7 +560,7 @@ model SessaoTemplate {
 model TemplateItem {
   id             String          @id @default(cuid())
   templateId     String
-  secao          PautaSecao
+  secao          String          // ID do TipoExpediente ou valor legado
   ordem          Int
   titulo         String
   descricao      String?         @db.Text
@@ -1498,7 +1498,7 @@ model PautaSessao {
 model PautaItem {
   id             String          @id @default(cuid())
   pautaId        String
-  secao          PautaSecao
+  secao          String          // ID do TipoExpediente ou valor legado
   ordem          Int
   titulo         String
   descricao      String?         @db.Text
