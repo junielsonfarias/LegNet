@@ -73,8 +73,7 @@ const listInclude = {
       membros: {
         include: {
           parlamentar: { select: { id: true, nome: true, apelido: true } }
-        },
-        orderBy: { ordem: 'asc' as const }
+        }
       }
     }
   },
