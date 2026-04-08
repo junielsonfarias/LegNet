@@ -7,11 +7,10 @@ import { prisma } from '@/lib/prisma'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
 import { pautasDbService } from '@/lib/services/pautas-db-service'
 
-const PAUTA_SECAO_ORDER = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
 const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
 
 const PautaItemCreateSchema = z.object({
-  secao: z.enum(PAUTA_SECAO_ORDER),
+  secao: z.string().min(1, 'Secao e obrigatoria'),
   titulo: z.string().min(1, 'Titulo e obrigatorio'),
   descricao: z.string().nullish().transform(v => v ?? undefined),
   proposicaoId: z.string().nullish().transform(v => v ?? undefined),

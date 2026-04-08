@@ -12,7 +12,7 @@ export type { PautaItemApi, PautaSugestaoApi }
 export type TipoSessao = 'ORDINARIA' | 'EXTRAORDINARIA' | 'SOLENE' | 'ESPECIAL'
 export type StatusSessao = 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | 'SUSPENSA'
 export type StatusPautaItem = 'PENDENTE' | 'EM_DISCUSSAO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
-export type SecaoPauta = 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS'
+export type SecaoPauta = string
 export type TemplateMode = 'REPLACE' | 'APPEND'
 
 // Formulário de sessão
@@ -57,13 +57,15 @@ export interface SessaoLocal {
 }
 
 // Constantes
-export const PAUTA_SECOES: Array<{ value: SecaoPauta; label: string }> = [
+// Fallback - sera substituido por tipos de expediente do banco nos componentes
+export const PAUTA_SECOES_FALLBACK: Array<{ value: string; label: string }> = [
   { value: 'EXPEDIENTE', label: 'Expediente' },
   { value: 'ORDEM_DO_DIA', label: 'Ordem do Dia' },
   { value: 'COMUNICACOES', label: 'Comunicações' },
   { value: 'HONRAS', label: 'Homenagens e Honras' },
   { value: 'OUTROS', label: 'Outros Assuntos' }
 ]
+export const PAUTA_SECOES = PAUTA_SECOES_FALLBACK
 
 export const PAUTA_ITEM_STATUS_OPTIONS: Array<{ value: StatusPautaItem; label: string }> = [
   { value: 'PENDENTE', label: 'Pendente' },

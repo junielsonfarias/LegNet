@@ -16,7 +16,7 @@ import {
   type PautaItemApi,
   type PautaSugestaoApi,
   type TemplateMode,
-  PAUTA_SECOES,
+  PAUTA_SECOES as PAUTA_SECOES_FALLBACK,
   getFormDataInicial,
   getNovoPautaItemInicial
 } from '../_types'
@@ -38,6 +38,20 @@ export function useSessoesState() {
   // Filtrar apenas proposições aguardando inclusão em pauta
   const { proposicoes } = useProposicoes({ status: 'AGUARDANDO_PAUTA' })
   const { templates: templatesSessao, loading: loadingTemplates } = useSessaoTemplates({ ativo: true })
+
+  // Tipos de expediente do banco
+  const [tiposExpediente, setTiposExpediente] = useState<Array<{ value: string; label: string }>>([])
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setTiposExpediente(data.data.map((t: any) => ({ value: t.id, label: t.nome })))
+        }
+      })
+      .catch(() => {})
+  }, [])
+  const PAUTA_SECOES = tiposExpediente.length > 0 ? tiposExpediente : PAUTA_SECOES_FALLBACK
 
   // Estado local de sessões (any[] para flexibilidade com tipos da API)
   const [sessoes, setSessoes] = useState<any[]>([])
@@ -119,13 +133,31 @@ export function useSessoesState() {
 
   const groupedSections = useMemo(() => {
     if (!pautaSessao) return []
-    return PAUTA_SECOES.map(section => ({
+    // Agrupar por seções conhecidas
+    const sections = PAUTA_SECOES.map(section => ({
       ...section,
       items: pautaSessao.itens
         .filter(item => item.secao === section.value)
         .sort((a, b) => a.ordem - b.ordem)
     }))
-  }, [pautaSessao])
+    // Incluir seções que existem nos itens mas não nos tipos cadastrados
+    const knownValues = new Set(PAUTA_SECOES.map(s => s.value))
+    const unknownSections = new Set(
+      pautaSessao.itens
+        .filter(item => !knownValues.has(item.secao))
+        .map(item => item.secao)
+    )
+    unknownSections.forEach(secao => {
+      sections.push({
+        value: secao,
+        label: secao,
+        items: pautaSessao.itens
+          .filter(item => item.secao === secao)
+          .sort((a, b) => a.ordem - b.ordem)
+      })
+    })
+    return sections
+  }, [pautaSessao, PAUTA_SECOES])
 
   const filteredTemplatesSessao = useMemo(() => {
     const term = templateSearch.trim().toLowerCase()

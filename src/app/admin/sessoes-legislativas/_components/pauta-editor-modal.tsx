@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +26,7 @@ import type {
   StatusPautaItem
 } from '../_types'
 import {
-  PAUTA_SECOES,
+  PAUTA_SECOES as PAUTA_SECOES_FALLBACK,
   PAUTA_ITEM_STATUS_OPTIONS,
   STATUS_BADGES
 } from '../_types'
@@ -105,6 +106,21 @@ export function PautaEditorModal({
   onDropOnItem,
   onDropOnSectionEnd
 }: PautaEditorModalProps) {
+  const [tiposExpediente, setTiposExpediente] = useState<Array<{ value: string; label: string }>>([])
+
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setTiposExpediente(data.data.map((t: any) => ({ value: t.id, label: t.nome })))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const PAUTA_SECOES = tiposExpediente.length > 0 ? tiposExpediente : PAUTA_SECOES_FALLBACK
+
   if (!isOpen || !sessao) return null
 
   return (

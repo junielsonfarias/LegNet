@@ -7,15 +7,9 @@ import { logAudit } from '@/lib/audit'
 import { sessaoDbService } from '@/lib/services/sessao-db-service'
 import { pautasDbService } from '@/lib/services/pautas-db-service'
 
-const PAUTA_SECOES = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
-
 const sortPautaItens = <T extends { secao: string; ordem: number }>(itens: T[]): T[] => {
   return [...itens].sort((a, b) => {
-    const secaoDiff = PAUTA_SECOES.indexOf(a.secao as typeof PAUTA_SECOES[number]) -
-      PAUTA_SECOES.indexOf(b.secao as typeof PAUTA_SECOES[number])
-    if (secaoDiff !== 0) {
-      return secaoDiff
-    }
+    if (a.secao !== b.secao) return a.secao.localeCompare(b.secao)
     return a.ordem - b.ordem
   })
 }
