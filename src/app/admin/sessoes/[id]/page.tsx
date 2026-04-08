@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import nextDynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -92,6 +92,21 @@ export default function SessaoDetailPage() {
   const { sessao, loading, error, mutate } = useSessao(id || null)
   const [editingPauta, setEditingPauta] = useState(false)
   const [atualizandoPauta, setAtualizandoPauta] = useState(false)
+
+  // Mapa de IDs de tipos de expediente para nomes
+  const [tiposExpedienteMap, setTiposExpedienteMap] = useState<Record<string, string>>({})
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          const map: Record<string, string> = {}
+          data.data.forEach((t: any) => { map[t.id] = t.nome })
+          setTiposExpedienteMap(map)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Função para publicar/despublicar pauta
   const alterarStatusPauta = async (novoStatus: 'RASCUNHO' | 'APROVADA') => {
@@ -213,6 +228,8 @@ export default function SessaoDetailPage() {
   }
 
   const getSecaoLabel = (secao: string) => {
+    // Primeiro tenta resolver pelo mapa de tipos de expediente do banco
+    if (tiposExpedienteMap[secao]) return tiposExpedienteMap[secao]
     const labels: Record<string, string> = {
       'EXPEDIENTE': 'Expediente',
       'ORDEM_DO_DIA': 'Ordem do Dia',
@@ -540,7 +557,7 @@ export default function SessaoDetailPage() {
                       </div>
                     ) : (
                       <div className="space-y-6">
-                        {['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'].map(secao => {
+                        {Object.keys(itensPorSecao).map(secao => {
                           const itens = itensPorSecao[secao]
                           if (!itens || itens.length === 0) return null
 
