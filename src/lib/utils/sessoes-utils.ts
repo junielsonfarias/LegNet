@@ -429,9 +429,8 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     const config = await prisma.configuracaoInstitucional.findFirst({ where: { slug: 'principal' } })
     const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
     const logoUrl = config?.logoUrl || ''
-    const endereco = config?.endereco as any || {}
-    const cidade = endereco?.cidade || ''
-    const estado = endereco?.estado || ''
+    const cidade = config?.enderecoCidade || ''
+    const estado = config?.enderecoEstado || ''
     const localidade = cidade && estado ? `${cidade} - ${estado}` : ''
 
     // Buscar tipos de expediente para resolver nomes de seções
