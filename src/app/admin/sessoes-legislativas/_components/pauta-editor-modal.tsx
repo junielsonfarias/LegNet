@@ -143,7 +143,7 @@ function MateriasSearchSection({
       const res = await fetch(`/api/sessoes/${sessaoId}/pauta/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ proposicaoIds: Array.from(selectedIds) })
+        body: JSON.stringify({ proposicaoIds: Array.from(selectedIds), secao: newPautaItem.secao })
       })
       const data = await res.json()
       if (res.ok && data.success) {
