@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -327,105 +327,73 @@ export default function ProposicoesPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {paginatedProposicoes.map((proposicao) => (
-              <Card key={proposicao.id} className="camara-card hover:shadow-lg transition-shadow duration-200">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <CardTitle className="text-lg font-semibold text-gray-900">
-                          {getTipoSigla(proposicao.tipo)} {proposicao.numero}/{proposicao.ano}
-                        </CardTitle>
-                        {getTipoBadge(proposicao.tipo)}
-                        {getStatusBadge(proposicao.status)}
-                        {new Date(proposicao.dataApresentacao) > new Date(Date.now() - 7 * 86400000) && (
-                          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px]">Novo</Badge>
-                        )}
-                      </div>
-                      <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                        {proposicao.titulo}
-                      </h2>
-                      <p className="text-gray-700 mb-4 line-clamp-2">
+              <Link
+                key={proposicao.id}
+                href={`/legislativo/proposicoes/${proposicao.id}`}
+                className="block"
+              >
+                <Card className="camara-card hover:shadow-lg hover:border-camara-primary/30 transition-all duration-200 cursor-pointer">
+                  <CardContent className="p-5">
+                    {/* Linha superior: tipo + numero + badges */}
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      {getTipoBadge(proposicao.tipo)}
+                      <span className="font-bold text-gray-900">
+                        {getTipoSigla(proposicao.tipo)} {proposicao.numero}/{proposicao.ano}
+                      </span>
+                      {getStatusBadge(proposicao.status)}
+                      {proposicao.resultado && (
+                        <Badge variant="outline" className="text-xs">
+                          {proposicao.resultado === 'APROVADA' ? 'Aprovada' : proposicao.resultado === 'REJEITADA' ? 'Rejeitada' : 'Empate'}
+                        </Badge>
+                      )}
+                      {new Date(proposicao.dataApresentacao) > new Date(Date.now() - 7 * 86400000) && (
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px]">Novo</Badge>
+                      )}
+                    </div>
+
+                    {/* Titulo */}
+                    <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-camara-primary">
+                      {proposicao.titulo || proposicao.ementa}
+                    </h2>
+
+                    {/* Ementa (se diferente do titulo) */}
+                    {proposicao.titulo && proposicao.ementa && proposicao.titulo !== proposicao.ementa && (
+                      <p className="text-gray-600 text-sm line-clamp-2 mb-3">
                         {proposicao.ementa}
                       </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-2">Informações</h3>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center space-x-2">
-                            <User className="h-4 w-4 text-gray-500" />
-                            <span className="text-gray-600">Autor:</span>
-                            <span className="font-medium">{proposicao.autor?.apelido || proposicao.autor?.nome || 'Autor nao informado'}</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="h-4 w-4 text-gray-500" />
-                            <span className="text-gray-600">Apresentação:</span>
-                            <span className="font-medium">
-                              {new Date(proposicao.dataApresentacao).toLocaleDateString('pt-BR')}
-                            </span>
-                          </div>
-                          {proposicao.dataVotacao && (
-                            <div className="flex items-center space-x-2">
-                              <Calendar className="h-4 w-4 text-gray-500" />
-                              <span className="text-gray-600">Votação:</span>
-                              <span className="font-medium">
-                                {new Date(proposicao.dataVotacao).toLocaleDateString('pt-BR')}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    )}
 
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-2">Status</h3>
-                        {proposicao.status === 'APROVADA' ? (
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                            <p className="text-sm text-green-800">
-                              Esta proposição foi aprovada pela Câmara Municipal.
-                            </p>
-                          </div>
-                        ) : proposicao.status === 'REJEITADA' ? (
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                            <p className="text-sm text-red-800">
-                              Esta proposição foi rejeitada pela Câmara Municipal.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                            <p className="text-sm text-yellow-800">
-                              {proposicao.status === 'EM_TRAMITACAO'
-                                ? 'Esta proposição está em tramitação nas comissões competentes.'
-                                : 'Esta proposição foi apresentada e aguarda tramitação.'}
-                            </p>
-                          </div>
+                    {/* Meta info */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm text-gray-500">
+                      <div className="flex items-center gap-1.5">
+                        <User className="h-3.5 w-3.5" />
+                        <span>{proposicao.autor?.apelido || proposicao.autor?.nome || 'Autor nao informado'}</span>
+                        {proposicao.autor?.partido && (
+                          <span className="text-gray-400">({proposicao.autor.partido})</span>
                         )}
                       </div>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>{new Date(proposicao.dataApresentacao).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      {proposicao.dataVotacao && (
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 text-green-500" />
+                          <span>Votada em {new Date(proposicao.dataVotacao).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-gray-900 mb-2">Ações</h3>
-                        <div className="space-y-2">
-                          <Button asChild variant="outline" size="sm" className="w-full">
-                            <Link href={`/tramitacoes?proposicao=${proposicao.id}`}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Ver Tramitação
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
+                    {/* CTA */}
+                    <div className="flex items-center gap-1 mt-3 text-sm text-camara-primary font-medium">
+                      <Eye className="h-4 w-4" />
+                      Ver detalhes
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
