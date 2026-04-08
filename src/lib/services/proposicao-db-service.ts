@@ -105,7 +105,7 @@ export const proposicaoDbService = {
           autor: { select: defaultAutorSelect },
           sessao: { select: defaultSessaoSelect }
         },
-        orderBy: [{ ano: 'desc' }, { numero: 'desc' }],
+        orderBy: { dataApresentacao: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       }),
