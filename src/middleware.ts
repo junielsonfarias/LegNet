@@ -66,16 +66,24 @@ export async function middleware(request: NextRequest) {
   const isApi = pathname.startsWith('/api')
 
   if (isApi) {
-    const rlKey = `${buildRateLimitKey(request)}:${pathname}`
-    if (!allowRequest(rlKey, API_RATE_LIMIT.limit, API_RATE_LIMIT.windowMs)) {
-      return NextResponse.json(
-        { success: false, error: 'Muitas requisições. Aguarde e tente novamente.' },
-        { status: 429 }
-      )
+    // Rotas internas do NextAuth não precisam de rate limit
+    const isNextAuthInternal = pathname.startsWith('/api/auth/') &&
+      !pathname.startsWith('/api/auth/callback') &&
+      pathname !== '/api/auth/signin'
+
+    if (!isNextAuthInternal) {
+      const rlKey = `${buildRateLimitKey(request)}:${pathname}`
+      if (!allowRequest(rlKey, API_RATE_LIMIT.limit, API_RATE_LIMIT.windowMs)) {
+        return NextResponse.json(
+          { success: false, error: 'Muitas requisições. Aguarde e tente novamente.' },
+          { status: 429 }
+        )
+      }
     }
 
-    if (pathname.startsWith('/api/auth')) {
-      const authKey = `${buildRateLimitKey(request)}:auth`
+    // Rate limit apenas para login/signin (não para session, csrf, _log, etc.)
+    if (pathname === '/api/auth/callback/credentials' || pathname === '/api/auth/signin') {
+      const authKey = `${buildRateLimitKey(request)}:auth-login`
       if (!allowRequest(authKey, LOGIN_RATE_LIMIT.limit, LOGIN_RATE_LIMIT.windowMs)) {
         return NextResponse.json(
           { success: false, error: 'Muitas tentativas de login. Aguarde 5 minutos.' },
