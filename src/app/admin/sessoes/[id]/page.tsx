@@ -413,7 +413,7 @@ export default function SessaoDetailPage() {
         {/* Left column - Tabs with Pauta and Presenca */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="pauta" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+            <TabsList className="w-full overflow-x-auto flex">
               <TabsTrigger value="pauta" className="flex items-center gap-2">
                 <ClipboardList className="h-4 w-4" />
                 <span className="hidden sm:inline">Pauta</span>
@@ -421,6 +421,10 @@ export default function SessaoDetailPage() {
               <TabsTrigger value="presenca" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">Presenca</span>
+              </TabsTrigger>
+              <TabsTrigger value="mesa" className="flex items-center gap-2">
+                <Gavel className="h-4 w-4" />
+                <span className="hidden sm:inline">Mesa</span>
               </TabsTrigger>
               <TabsTrigger value="oradores" className="flex items-center gap-2">
                 <Mic className="h-4 w-4" />
@@ -608,6 +612,14 @@ export default function SessaoDetailPage() {
                 sessaoStatus={sessao.status}
                 sessaoData={sessao.data}
                 sessaoHorario={sessao.horario ?? null}
+                readOnly={sessao.status === 'CANCELADA'}
+              />
+            </TabsContent>
+
+            {/* Mesa Diretora Tab */}
+            <TabsContent value="mesa" className="mt-4">
+              <MesaSessaoEditor
+                sessaoId={sessao.id}
                 readOnly={sessao.status === 'CANCELADA'}
               />
             </TabsContent>
@@ -802,11 +814,6 @@ export default function SessaoDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Mesa da Sessão */}
-          <MesaSessaoEditor
-            sessaoId={sessao.id}
-            readOnly={sessao.status === 'CANCELADA'}
-          />
         </div>
       </div>
     </div>
