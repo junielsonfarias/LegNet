@@ -272,7 +272,10 @@ export const painelDbService = {
             anoInicio: true,
             anoFim: true,
             mandatos: {
-              where: { ativo: true },
+              where: {
+                ativo: true,
+                parlamentar: { ativo: true }
+              },
               include: {
                 parlamentar: {
                   select: {

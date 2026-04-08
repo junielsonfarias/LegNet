@@ -523,8 +523,8 @@ export default function PainelOperadorPage() {
     ? dataSessao.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : '--/--/----'
 
-  // Total de parlamentares = maior entre presencas registradas e mandatos da legislatura
-  const totalMandatos = (sessao.legislatura as any)?.mandatos?.filter((m: any) => m.ativo)?.length || 0
+  // Total de parlamentares = mandatos ativos com parlamentar ativo
+  const totalMandatos = (sessao.legislatura as any)?.mandatos?.filter((m: any) => m.ativo && m.parlamentar?.ativo)?.length || 0
   const totalPresencasRegistradas = sessao.presencas?.length || 0
   const totalParlamentares = Math.max(totalMandatos, totalPresencasRegistradas) || totalPresencasRegistradas
   const presentes = sessao.presencas?.filter((p: any) => p.presente).length || 0

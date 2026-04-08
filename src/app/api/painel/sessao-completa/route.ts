@@ -33,7 +33,9 @@ export const GET = withErrorHandler(async (
 
   // Montar lista completa de presenças incluindo parlamentares da legislatura
   // que ainda não têm registro de presença
-  const parlamentaresLegislatura = sessao.legislatura?.mandatos?.map(m => m.parlamentar) || []
+  const parlamentaresLegislatura = sessao.legislatura?.mandatos
+    ?.filter(m => m.ativo && m.parlamentar?.ativo)
+    ?.map(m => m.parlamentar) || []
   const presencasRegistradas = sessao.presencas || []
 
   // Criar mapa de presenças já registradas

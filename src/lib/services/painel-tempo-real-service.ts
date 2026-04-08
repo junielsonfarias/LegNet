@@ -216,7 +216,10 @@ export async function getEstadoPainel(sessaoId: string): Promise<EstadoPainel | 
       legislatura: {
         include: {
           mandatos: {
-            where: { ativo: true },
+            where: {
+              ativo: true,
+              parlamentar: { ativo: true }
+            },
             include: { parlamentar: true }
           }
         }
@@ -226,8 +229,17 @@ export async function getEstadoPainel(sessaoId: string): Promise<EstadoPainel | 
 
   if (!sessao) return null
 
-  // Montar estado do painel
-  const parlamentaresLegislatura = sessao.legislatura?.mandatos.map(m => m.parlamentar) || []
+  // Montar estado do painel - parlamentares ativos da legislatura
+  let parlamentaresLegislatura = sessao.legislatura?.mandatos
+    .map(m => m.parlamentar)
+    .filter(p => p.ativo) || []
+
+  // Fallback: se sessão não tem legislatura vinculada, buscar parlamentares ativos
+  if (parlamentaresLegislatura.length === 0) {
+    parlamentaresLegislatura = await prisma.parlamentar.findMany({
+      where: { ativo: true }
+    })
+  }
 
   const presencas: PresencaAtiva[] = parlamentaresLegislatura.map(parlamentar => {
     const presenca = sessao.presencas.find(p => p.parlamentarId === parlamentar.id)
