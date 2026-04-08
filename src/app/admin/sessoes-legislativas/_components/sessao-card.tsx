@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -136,14 +137,18 @@ export function SessaoCard({
 
         {/* Barra de ações */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-          <Button variant="ghost" size="sm" onClick={() => onView(sessao)} className="text-gray-600 hover:text-gray-900">
-            <Eye className="h-4 w-4 mr-1.5" />
-            <span className="hidden sm:inline">Detalhes</span>
+          <Button variant="ghost" size="sm" asChild className="text-gray-600 hover:text-gray-900">
+            <Link href={`/admin/sessoes/${slug}`}>
+              <Eye className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Detalhes</span>
+            </Link>
           </Button>
 
-          <Button variant="ghost" size="sm" onClick={() => onEdit(sessao)} className="text-gray-600 hover:text-gray-900">
-            <Edit className="h-4 w-4 mr-1.5" />
-            <span className="hidden sm:inline">Editar</span>
+          <Button variant="ghost" size="sm" asChild className="text-gray-600 hover:text-gray-900">
+            <Link href={`/admin/sessoes/${slug}`}>
+              <Edit className="h-4 w-4 mr-1.5" />
+              <span className="hidden sm:inline">Editar</span>
+            </Link>
           </Button>
 
           <Button variant="ghost" size="sm" onClick={() => onManagePauta(sessao)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50">
