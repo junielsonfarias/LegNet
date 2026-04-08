@@ -9,7 +9,7 @@ import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
 import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
 const PAUTA_STATUS = ['PENDENTE', 'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADO', 'REJEITADO', 'RETIRADO', 'ADIADO', 'CONCLUIDO', 'VISTA'] as const
-const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
+const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'LEITURA_VOTACAO', 'DISCUSSAO_VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
 
 const PautaItemUpdateSchema = z.object({
   secao: z.string().min(1).nullish().transform(v => v ?? undefined),

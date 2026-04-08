@@ -21,6 +21,8 @@ export const TIPOS_ACAO_PAUTA = [
   { value: 'LEITURA', label: 'Leitura' },
   { value: 'DISCUSSAO', label: 'Discussao' },
   { value: 'VOTACAO', label: 'Votacao' },
+  { value: 'LEITURA_VOTACAO', label: 'Leitura e Votacao' },
+  { value: 'DISCUSSAO_VOTACAO', label: 'Discussao e Votacao' },
   { value: 'COMUNICADO', label: 'Comunicado' },
   { value: 'HOMENAGEM', label: 'Homenagem' }
 ] as const

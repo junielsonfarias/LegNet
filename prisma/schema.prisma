@@ -772,11 +772,13 @@ enum StatusProposicao {
 
 // Tipo de ação do item na pauta (LEITURA vs VOTAÇÃO)
 enum TipoAcaoPauta {
-  LEITURA       // Apenas leitura no Expediente (primeira apresentação)
-  DISCUSSAO     // Discussão sem votação
-  VOTACAO       // Discussão e votação na Ordem do Dia
-  COMUNICADO    // Informes e comunicações
-  HOMENAGEM     // Votos de pesar, aplauso, moções
+  LEITURA             // Apenas leitura no Expediente (primeira apresentação)
+  DISCUSSAO           // Discussão sem votação
+  VOTACAO             // Discussão e votação na Ordem do Dia
+  LEITURA_VOTACAO     // Leitura seguida de votação
+  DISCUSSAO_VOTACAO   // Discussão seguida de votação
+  COMUNICADO          // Informes e comunicações
+  HOMENAGEM           // Votos de pesar, aplauso, moções
 }
 
 enum ResultadoVotacao {

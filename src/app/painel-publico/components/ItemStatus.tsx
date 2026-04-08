@@ -61,7 +61,22 @@ export function ItemStatus({ itemAtual, estatisticas, totalPresentes }: ItemStat
           </>
         )}
 
-        {/* Item em Leitura para Votacao */}
+        {/* Item em Leitura e Votacao */}
+        {status === 'EM_DISCUSSAO' && tipoAcao === 'LEITURA_VOTACAO' && (
+          <>
+            <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-sky-400 mx-auto mb-3" />
+            <p className="text-lg sm:text-xl text-sky-200 font-bold mb-1">EM LEITURA</p>
+            {proposicaoLabel && (
+              <p className="text-sm sm:text-base text-sky-300 font-semibold mb-1">{proposicaoLabel}</p>
+            )}
+            {descricao && (
+              <p className="text-xs sm:text-sm text-sky-300/80 line-clamp-2 max-w-lg mx-auto">{descricao}</p>
+            )}
+            <p className="text-xs text-sky-400/60 mt-2">Apos leitura, sera colocada em votacao</p>
+          </>
+        )}
+
+        {/* Item em Leitura para Votacao (legado VOTACAO) */}
         {status === 'EM_DISCUSSAO' && tipoAcao === 'VOTACAO' && (
           <>
             <Gavel className="h-10 w-10 sm:h-12 sm:w-12 text-purple-400 mx-auto mb-3" />
@@ -73,6 +88,21 @@ export function ItemStatus({ itemAtual, estatisticas, totalPresentes }: ItemStat
               <p className="text-xs sm:text-sm text-purple-300/70 line-clamp-2 max-w-lg mx-auto">{descricao}</p>
             )}
             <p className="text-xs text-purple-400/60 mt-2">Apos leitura e discussao, sera colocada em votacao</p>
+          </>
+        )}
+
+        {/* Item em Discussao e Votacao */}
+        {status === 'EM_DISCUSSAO' && tipoAcao === 'DISCUSSAO_VOTACAO' && (
+          <>
+            <Users className="h-10 w-10 sm:h-12 sm:w-12 text-teal-400 mx-auto mb-3" />
+            <p className="text-lg sm:text-xl text-teal-200 font-bold mb-1">EM DISCUSSAO</p>
+            {proposicaoLabel && (
+              <p className="text-sm sm:text-base text-teal-300 font-semibold mb-1">{proposicaoLabel}</p>
+            )}
+            {descricao && (
+              <p className="text-xs sm:text-sm text-teal-300/70 line-clamp-2 max-w-lg mx-auto">{descricao}</p>
+            )}
+            <p className="text-xs text-teal-400/60 mt-2">Apos discussao, sera colocada em votacao</p>
           </>
         )}
 
@@ -167,7 +197,8 @@ export function ItemStatus({ itemAtual, estatisticas, totalPresentes }: ItemStat
           <>
             <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-teal-400 mx-auto mb-3" />
             <p className="text-lg text-teal-200 font-semibold">
-              {tipoAcao === 'LEITURA' ? 'Leitura Concluida' :
+              {tipoAcao === 'LEITURA' || tipoAcao === 'LEITURA_VOTACAO' ? 'Leitura Concluida' :
+               tipoAcao === 'DISCUSSAO' || tipoAcao === 'DISCUSSAO_VOTACAO' ? 'Discussao Concluida' :
                tipoAcao === 'COMUNICADO' ? 'Comunicado Realizado' :
                tipoAcao === 'HOMENAGEM' ? 'Homenagem Realizada' :
                'Item Concluido'}

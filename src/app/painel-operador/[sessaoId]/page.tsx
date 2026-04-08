@@ -142,10 +142,12 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
   if (status === 'PENDENTE') {
     switch (tipoAcao) {
       case 'LEITURA':
+      case 'LEITURA_VOTACAO':
         return { iniciar: { label: 'Iniciar Leitura', icon: BookOpen, color: 'text-sky-400 hover:text-sky-300 hover:bg-sky-900/30' } }
       case 'VOTACAO':
         return { iniciar: { label: 'Iniciar Leitura', icon: BookOpen, color: 'text-sky-400 hover:text-sky-300 hover:bg-sky-900/30' } }
       case 'DISCUSSAO':
+      case 'DISCUSSAO_VOTACAO':
         return { iniciar: { label: 'Iniciar Discussão', icon: MessageSquare, color: 'text-teal-400 hover:text-teal-300 hover:bg-teal-900/30' } }
       case 'COMUNICADO':
         return { iniciar: { label: 'Iniciar Comunicado', icon: Megaphone, color: 'text-amber-400 hover:text-amber-300 hover:bg-amber-900/30' } }
@@ -165,6 +167,13 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
           finalizar: { label: 'Concluir Leitura', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' },
           ...acaoRetirarPauta
         }
+      case 'LEITURA_VOTACAO':
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          votacao: { label: 'Abrir Votação', icon: Vote, color: 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/30' },
+          finalizar: { label: 'Concluir Leitura', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' },
+          ...acaoRetirarPauta
+        }
       case 'VOTACAO':
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
@@ -175,6 +184,13 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
       case 'DISCUSSAO':
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          finalizar: { label: 'Concluir Discussão', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' },
+          ...acaoRetirarPauta
+        }
+      case 'DISCUSSAO_VOTACAO':
+        return {
+          pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
+          votacao: { label: 'Abrir Votação', icon: Vote, color: 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/30' },
           finalizar: { label: 'Concluir Discussão', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' },
           ...acaoRetirarPauta
         }

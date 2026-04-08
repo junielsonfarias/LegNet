@@ -411,6 +411,8 @@ export function PautaEditorModal({
                   <option value="LEITURA">Leitura</option>
                   <option value="DISCUSSAO">Discussão</option>
                   <option value="VOTACAO">Votação</option>
+                  <option value="LEITURA_VOTACAO">Leitura e Votação</option>
+                  <option value="DISCUSSAO_VOTACAO">Discussão e Votação</option>
                   <option value="COMUNICADO">Comunicado</option>
                   <option value="HOMENAGEM">Homenagem</option>
                 </select>
@@ -502,15 +504,17 @@ export function PautaEditorModal({
                               <p className="font-medium truncate">{item.titulo}</p>
                               {item.tipoAcao && (
                                 <Badge variant="outline" className={cn('text-[10px] shrink-0',
-                                  item.tipoAcao === 'LEITURA' && 'border-blue-300 text-blue-700',
-                                  item.tipoAcao === 'VOTACAO' && 'border-green-300 text-green-700',
-                                  item.tipoAcao === 'DISCUSSAO' && 'border-yellow-300 text-yellow-700',
+                                  (item.tipoAcao === 'LEITURA' || item.tipoAcao === 'LEITURA_VOTACAO') && 'border-blue-300 text-blue-700',
+                                  (item.tipoAcao === 'VOTACAO') && 'border-green-300 text-green-700',
+                                  (item.tipoAcao === 'DISCUSSAO' || item.tipoAcao === 'DISCUSSAO_VOTACAO') && 'border-yellow-300 text-yellow-700',
                                   item.tipoAcao === 'COMUNICADO' && 'border-gray-300 text-gray-700',
                                   item.tipoAcao === 'HOMENAGEM' && 'border-purple-300 text-purple-700'
                                 )}>
                                   {item.tipoAcao === 'LEITURA' ? 'Leitura' :
                                    item.tipoAcao === 'VOTACAO' ? 'Votação' :
                                    item.tipoAcao === 'DISCUSSAO' ? 'Discussão' :
+                                   item.tipoAcao === 'LEITURA_VOTACAO' ? 'Leitura e Votação' :
+                                   item.tipoAcao === 'DISCUSSAO_VOTACAO' ? 'Discussão e Votação' :
                                    item.tipoAcao === 'COMUNICADO' ? 'Comunicado' :
                                    item.tipoAcao === 'HOMENAGEM' ? 'Homenagem' :
                                    item.tipoAcao}
