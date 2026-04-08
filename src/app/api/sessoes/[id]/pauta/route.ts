@@ -57,29 +57,35 @@ export const POST = withAuth(async (
     throw new ValidationError(payload.error.issues[0]?.message ?? 'Dados invalidos')
   }
 
-  // Valida elegibilidade da proposicao para pauta (apenas quando vinculada a uma proposicao)
-  if (payload.data.proposicaoId) {
-    const { verificarElegibilidadePauta } = await import('@/lib/services/fluxo-tramitacao-service')
-    const elegibilidade = await verificarElegibilidadePauta(payload.data.proposicaoId)
-    if (!elegibilidade.elegivel) {
-      throw new ValidationError(`Proposição não elegível para pauta: ${elegibilidade.motivo}`)
+  // Detectar se sessão é CONCLUIDA (lançamento retroativo - pular validações)
+  const sessaoDb = await prisma.sessao.findUnique({ where: { id: sessaoId }, select: { status: true } })
+  const isRetroativo = sessaoDb?.status === 'CONCLUIDA'
+
+  if (!isRetroativo) {
+    // Valida elegibilidade da proposicao para pauta (apenas quando vinculada a uma proposicao)
+    if (payload.data.proposicaoId) {
+      const { verificarElegibilidadePauta } = await import('@/lib/services/fluxo-tramitacao-service')
+      const elegibilidade = await verificarElegibilidadePauta(payload.data.proposicaoId)
+      if (!elegibilidade.elegivel) {
+        throw new ValidationError(`Proposição não elegível para pauta: ${elegibilidade.motivo}`)
+      }
     }
-  }
 
-  // Verificar se pauta esta trancada por veto pendente 30+ dias
-  const vetosPendentes = await prisma.proposicao.findMany({
-    where: { status: 'VETADA' },
-    select: { id: true, updatedAt: true }
-  })
+    // Verificar se pauta esta trancada por veto pendente 30+ dias
+    const vetosPendentes = await prisma.proposicao.findMany({
+      where: { status: 'VETADA' },
+      select: { id: true, updatedAt: true }
+    })
 
-  const agora = new Date()
-  const vetoTrancante = vetosPendentes.find(v => {
-    const dias = Math.floor((agora.getTime() - v.updatedAt.getTime()) / (1000 * 60 * 60 * 24))
-    return dias >= 30
-  })
+    const agora = new Date()
+    const vetoTrancante = vetosPendentes.find(v => {
+      const dias = Math.floor((agora.getTime() - v.updatedAt.getTime()) / (1000 * 60 * 60 * 24))
+      return dias >= 30
+    })
 
-  if (vetoTrancante && payload.data.proposicaoId !== vetoTrancante.id) {
-    throw new ValidationError('Pauta trancada: existe veto pendente há mais de 30 dias. Apenas o veto pode ser incluído na pauta até sua apreciação.')
+    if (vetoTrancante && payload.data.proposicaoId !== vetoTrancante.id) {
+      throw new ValidationError('Pauta trancada: existe veto pendente há mais de 30 dias. Apenas o veto pode ser incluído na pauta até sua apreciação.')
+    }
   }
 
   const pautaAtualizada = await pautasDbService.addItem(
@@ -87,7 +93,8 @@ export const POST = withAuth(async (
     payload.data,
     {
       userId: session?.user?.id,
-      requestIp: request.headers.get('x-forwarded-for') || undefined
+      requestIp: request.headers.get('x-forwarded-for') || undefined,
+      skipValidation: isRetroativo
     }
   )
 
