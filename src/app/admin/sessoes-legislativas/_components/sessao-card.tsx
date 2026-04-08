@@ -45,7 +45,8 @@ export function SessaoCard({
   const totalItens = sessao.pautaSessao?.itens?.length || 0
   const presencasPresentes = (sessao.presencas || []).filter((p: any) => p.presente).length
   const totalPresencas = sessao.presencas?.length || 0
-  const presidente = ((sessao as any).mesaSessao || []).find((m: any) => m.cargo === 'PRESIDENTE' || (m.cargo || '').toLowerCase().includes('presidente'))
+  const membros = (sessao as any).mesaSessao?.membros || []
+  const presidente = membros.find((m: any) => m.cargo === 'PRESIDENTE' || (m.cargo || '').toLowerCase().includes('presidente'))
   const presidenteNome = presidente?.parlamentar?.apelido || presidente?.parlamentar?.nome || null
   const isAtiva = sessao.status === 'EM_ANDAMENTO' || sessao.status === 'SUSPENSA'
   const isAgendada = sessao.status === 'AGENDADA'
