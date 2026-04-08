@@ -169,20 +169,26 @@ export default function SessaoDetailPage() {
     win.document.write(`<!DOCTYPE html><html><head>
 <title>Ata da ${sessao.numero}ª Sessão</title>
 <style>
-  @page { margin: 2cm; size: A4; }
-  body { font-family: 'Times New Roman', Georgia, serif; font-size: 14px; line-height: 1.8; color: #000; margin: 0; padding: 20px; }
-  h2 { font-size: 18px; margin: 0; }
-  h3 { font-size: 16px; margin: 8px 0; }
-  h4 { font-size: 14px; margin: 20px 0 8px; border-bottom: 1px solid #333; padding-bottom: 4px; }
-  h5 { font-size: 13px; background: #eee; padding: 6px 12px; margin: 12px 0 6px; }
-  p { margin: 8px 0; text-align: justify; }
-  ol, ul { margin: 4px 0 4px 20px; }
-  li { margin: 2px 0; }
-  img { max-height: 80px; }
-  div[style*="border-left"] { page-break-inside: avoid; }
+  @page { margin: 2.5cm 2cm; size: A4; }
+  body {
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 13pt;
+    line-height: 1.8;
+    color: #000;
+    margin: 0;
+    padding: 24px;
+  }
+  h2 { font-size: 16pt; margin: 0; letter-spacing: 2px; }
+  h3 { font-size: 14pt; margin: 12px 0; }
+  h4 { font-size: 13pt; margin: 24px 0 10px; border-bottom: 2px solid #000; padding-bottom: 4px; }
+  h5 { font-size: 12pt; background: #f5f5f5; padding: 8px 14px; margin: 16px 0 8px; border: 1px solid #ddd; }
+  p { margin: 10px 0; text-align: justify; text-indent: 2em; }
+  ol { margin: 8px 0 8px 24px; padding: 0; }
+  li { margin: 4px 0; text-indent: 0; }
+  img { max-height: 90px; display: block; margin: 0 auto 8px; }
+  div[style*="border-left"] { page-break-inside: avoid; margin: 10px 0; }
   @media print {
     body { padding: 0; }
-    div[style*="border-top: 2px double"] { position: fixed; bottom: 0; left: 0; right: 0; }
   }
 </style>
 </head><body>`)
@@ -190,7 +196,7 @@ export default function SessaoDetailPage() {
     win.document.write('</body></html>')
     win.document.close()
     win.focus()
-    setTimeout(() => win.print(), 500)
+    setTimeout(() => win.print(), 800)
   }
 
   if (!id) {

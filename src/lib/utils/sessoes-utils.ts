@@ -561,35 +561,48 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     }
 
     // ENCERRAMENTO
-    ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">ENCERRAMENTO</h4>`
+    ata += `<div style="page-break-inside: avoid;">`
+    ata += `<h4 style="border-bottom: 2px solid #000; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">ENCERRAMENTO</h4>`
     if (duracaoTotal > 0) {
-      ata += `<p>A sessão teve duração total de ${formatarTempoAta(duracaoTotal)}.</p>`
+      ata += `<p style="text-indent: 2em;">A sessão teve duração total de ${formatarTempoAta(duracaoTotal)}.</p>`
     }
     ata += `<p style="text-indent: 2em; text-align: justify;">Nada mais havendo a tratar, o Senhor Presidente declarou `
     ata += `encerrada a sessão, da qual eu, Secretário(a), lavrei a presente ata que, após lida e aprovada, `
     ata += `será assinada pelo Presidente e demais Vereadores presentes.</p>`
-
-    ata += `<p style="text-align: right; margin-top: 16px;">${new Date(sessao.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>`
-
-    // ASSINATURAS
-    ata += `<div style="margin-top: 60px; text-align: center;">`
-    ata += `<div style="display: inline-block; width: 300px; margin: 30px 40px 10px; text-align: center;">`
-    ata += `<div style="border-top: 1px solid #333; padding-top: 6px; font-size: 13px;"><strong>Presidente da ${nomeCasa}</strong></div></div>`
-    ata += `<div style="display: inline-block; width: 300px; margin: 30px 40px 10px; text-align: center;">`
-    ata += `<div style="border-top: 1px solid #333; padding-top: 6px; font-size: 13px;"><strong>1º Secretário(a)</strong></div></div>`
+    ata += `<p style="text-align: right; margin-top: 20px; font-weight: bold;">${new Date(sessao.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>`
     ata += `</div>`
 
-    ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 40px; font-size: 15px; text-transform: uppercase;">ASSINATURAS DOS PRESENTES</h4>`
-    ata += `<div style="margin-top: 20px;">`
-    presentes.forEach(p => {
-      ata += `<div style="display: inline-block; width: 280px; text-align: center; margin: 30px 20px 0;">`
-      ata += `<div style="border-top: 1px solid #333; padding-top: 6px; font-size: 13px;">${p.parlamentar.nome}</div></div>`
-    })
-    ata += `</div>`
+    // ASSINATURAS MESA
+    ata += `<div style="page-break-inside: avoid; margin-top: 50px; text-align: center;">`
+    ata += `<table style="width: 100%; border: none; border-collapse: collapse;"><tr>`
+    ata += `<td style="width: 50%; text-align: center; padding: 40px 20px 0; border: none; vertical-align: bottom;">`
+    ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 250px;"><strong>Presidente da ${nomeCasa}</strong></div></td>`
+    ata += `<td style="width: 50%; text-align: center; padding: 40px 20px 0; border: none; vertical-align: bottom;">`
+    ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 250px;"><strong>1º Secretário(a)</strong></div></td>`
+    ata += `</tr></table></div>`
+
+    // ASSINATURAS DOS PRESENTES
+    ata += `<div style="page-break-before: auto; margin-top: 40px;">`
+    ata += `<h4 style="border-bottom: 2px solid #000; padding-bottom: 6px; font-size: 15px; text-transform: uppercase;">ASSINATURAS DOS PRESENTES</h4>`
+    ata += `<table style="width: 100%; border: none; border-collapse: collapse;">`
+    for (let i = 0; i < presentes.length; i += 2) {
+      ata += `<tr>`
+      ata += `<td style="width: 50%; text-align: center; padding: 35px 15px 0; border: none; vertical-align: bottom;">`
+      ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 240px;">${presentes[i].parlamentar.nome}</div></td>`
+      if (presentes[i + 1]) {
+        ata += `<td style="width: 50%; text-align: center; padding: 35px 15px 0; border: none; vertical-align: bottom;">`
+        ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 240px;">${presentes[i + 1].parlamentar.nome}</div></td>`
+      } else {
+        ata += `<td style="border: none;"></td>`
+      }
+      ata += `</tr>`
+    }
+    ata += `</table></div>`
 
     // RODAPÉ
-    ata += `<div style="margin-top: 40px; padding-top: 8px; border-top: 2px double #333; text-align: center; font-size: 11px; color: #888;">`
+    ata += `<div style="margin-top: 50px; padding-top: 10px; border-top: 3px double #000; text-align: center; font-size: 10px; color: #666;">`
     ata += `Documento gerado automaticamente pelo Sistema Legislativo — ${nomeCasa}`
+    if (localidade) ata += ` — ${localidade}`
     ata += `</div></div>`
 
     return ata
