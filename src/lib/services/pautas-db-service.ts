@@ -536,15 +536,16 @@ export const pautasDbService = {
       if (!parecer) throw new ValidationError('Parecer nao encontrado')
     }
 
-    // Evitar duplicacao de proposicao na pauta
+    // Evitar duplicacao de proposicao na MESMA SECAO da pauta
+    // Permite a mesma proposicao em secoes diferentes (ex: Leitura no Expediente + Votacao na Ordem do Dia)
     if (payload.proposicaoId) {
       const itemExistente = await prisma.pautaItem.findFirst({
-        where: { pautaId: pautaSessao.id, proposicaoId: payload.proposicaoId }
+        where: { pautaId: pautaSessao.id, proposicaoId: payload.proposicaoId, secao: payload.secao }
       })
       if (itemExistente) {
         throw new ValidationError(
-          'Esta proposicao ja esta na pauta desta sessao. ' +
-          'Nao e permitido adicionar a mesma proposicao duas vezes.'
+          'Esta proposicao ja esta nesta secao da pauta. ' +
+          'Para adicionar em outra secao, selecione uma secao diferente.'
         )
       }
     }
