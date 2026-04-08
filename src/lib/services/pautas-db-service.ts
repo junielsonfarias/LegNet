@@ -30,7 +30,7 @@ export interface PautaItemPayload {
   tempoEstimado?: number | null
   autor?: string | null
   observacoes?: string | null
-  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
+  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
   etapa?: number | null
   parecerId?: string | null
   leituraNumero?: number | null
