@@ -447,23 +447,30 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
       return labels[secao] || secao
     }
 
+    // URL base para resolver logos relativas
+    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || ''
+    const logoAbsoluta = logoUrl && logoUrl.startsWith('/') ? `${appUrl}${logoUrl}` : logoUrl
+
     // =========== INÍCIO DA ATA (HTML) ===========
-    let ata = `<div style="font-family: 'Times New Roman', serif; max-width: 800px; margin: 0 auto; color: #1a1a1a; line-height: 1.6;">`
+    let ata = `<div style="font-family: 'Times New Roman', Georgia, serif; max-width: 800px; margin: 0 auto; color: #1a1a1a; line-height: 1.8; font-size: 14px;">`
 
     // CABEÇALHO com logo e dados institucionais
-    ata += `<div style="text-align: center; border-bottom: 3px double #333; padding-bottom: 16px; margin-bottom: 24px;">`
-    if (logoUrl) {
-      ata += `<img src="${logoUrl}" alt="Logo" style="max-height: 80px; margin-bottom: 8px;" /><br/>`
+    ata += `<div style="text-align: center; border-bottom: 3px double #333; padding-bottom: 20px; margin-bottom: 30px;">`
+    if (logoAbsoluta) {
+      ata += `<img src="${logoAbsoluta}" alt="${nomeCasa}" style="max-height: 90px; margin-bottom: 12px;" /><br/>`
     }
-    ata += `<h2 style="margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 2px;">${nomeCasa}</h2>`
+    ata += `<h2 style="margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;">${nomeCasa}</h2>`
     if (localidade) {
-      ata += `<p style="margin: 4px 0 0; font-size: 13px; color: #555;">${localidade}</p>`
+      ata += `<p style="margin: 6px 0 0; font-size: 14px; color: #444;">${localidade}</p>`
+    }
+    if (config?.cnpj) {
+      ata += `<p style="margin: 2px 0 0; font-size: 12px; color: #666;">CNPJ: ${config.cnpj}</p>`
     }
     ata += `</div>`
 
     // TÍTULO DA ATA
-    ata += `<div style="text-align: center; margin-bottom: 24px;">`
-    ata += `<h3 style="margin: 0 0 8px; font-size: 16px;">ATA DA ${sessao.numero}ª SESSÃO ${tipoSessaoLabel}</h3>`
+    ata += `<div style="text-align: center; margin-bottom: 30px;">`
+    ata += `<h3 style="margin: 0 0 10px; font-size: 18px; font-weight: bold; text-transform: uppercase;">ATA DA ${sessao.numero}ª SESSÃO ${tipoSessaoLabel}</h3>`
     if (sessao.legislatura) {
       ata += `<p style="margin: 0; font-size: 14px;">${sessao.legislatura.numero}ª Legislatura (${sessao.legislatura.anoInicio}-${sessao.legislatura.anoFim})</p>`
     }
@@ -478,7 +485,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     ata += `relacionados para a realização da ${sessao.numero}ª Sessão ${tipoSessaoLabel}.</p>`
 
     // VERIFICAÇÃO DE QUÓRUM
-    ata += `<h4 style="border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 24px;">VERIFICAÇÃO DE QUÓRUM</h4>`
+    ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">VERIFICAÇÃO DE QUÓRUM</h4>`
     ata += `<p><strong>PRESENTES (${presentes.length} Vereador${presentes.length !== 1 ? 'es' : ''}):</strong></p><ol style="margin: 4px 0;">`
     presentes.forEach(p => {
       ata += `<li>${p.parlamentar.nome}${p.parlamentar.partido ? ` (${p.parlamentar.partido})` : ''}</li>`
@@ -501,7 +508,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     // PAUTA DA SESSÃO
     const itens = sessao.pautaSessao?.itens || []
     if (itens.length > 0) {
-      ata += `<h4 style="border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 24px;">ORDEM DOS TRABALHOS</h4>`
+      ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">ORDEM DOS TRABALHOS</h4>`
 
       // Agrupar por seção (dinâmico)
       const secoesMap = new Map<string, typeof itens>()
@@ -554,7 +561,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     }
 
     // ENCERRAMENTO
-    ata += `<h4 style="border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 24px;">ENCERRAMENTO</h4>`
+    ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">ENCERRAMENTO</h4>`
     if (duracaoTotal > 0) {
       ata += `<p>A sessão teve duração total de ${formatarTempoAta(duracaoTotal)}.</p>`
     }
@@ -565,15 +572,18 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     ata += `<p style="text-align: right; margin-top: 16px;">${new Date(sessao.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>`
 
     // ASSINATURAS
-    ata += `<div style="margin-top: 40px; text-align: center;">`
-    ata += `<div style="display: inline-block; width: 300px; margin: 20px 40px; text-align: center; border-top: 1px solid #333; padding-top: 4px;">Presidente da ${nomeCasa}</div>`
-    ata += `<div style="display: inline-block; width: 300px; margin: 20px 40px; text-align: center; border-top: 1px solid #333; padding-top: 4px;">1º Secretário(a)</div>`
+    ata += `<div style="margin-top: 60px; text-align: center;">`
+    ata += `<div style="display: inline-block; width: 300px; margin: 30px 40px 10px; text-align: center;">`
+    ata += `<div style="border-top: 1px solid #333; padding-top: 6px; font-size: 13px;"><strong>Presidente da ${nomeCasa}</strong></div></div>`
+    ata += `<div style="display: inline-block; width: 300px; margin: 30px 40px 10px; text-align: center;">`
+    ata += `<div style="border-top: 1px solid #333; padding-top: 6px; font-size: 13px;"><strong>1º Secretário(a)</strong></div></div>`
     ata += `</div>`
 
-    ata += `<h4 style="border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 32px;">ASSINATURAS DOS PRESENTES</h4>`
-    ata += `<div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px;">`
+    ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 40px; font-size: 15px; text-transform: uppercase;">ASSINATURAS DOS PRESENTES</h4>`
+    ata += `<div style="margin-top: 20px;">`
     presentes.forEach(p => {
-      ata += `<div style="width: 280px; text-align: center; margin-top: 24px; border-top: 1px solid #333; padding-top: 4px;">${p.parlamentar.nome}</div>`
+      ata += `<div style="display: inline-block; width: 280px; text-align: center; margin: 30px 20px 0;">`
+      ata += `<div style="border-top: 1px solid #333; padding-top: 6px; font-size: 13px;">${p.parlamentar.nome}</div></div>`
     })
     ata += `</div>`
 

@@ -166,7 +166,26 @@ export default function SessaoDetailPage() {
     if (!sessao?.ata) return
     const win = window.open('', '_blank')
     if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><title>Ata da ${sessao.numero}ª Sessão</title><style>@media print { body { margin: 0; } } body { font-family: 'Times New Roman', serif; }</style></head><body>`)
+    win.document.write(`<!DOCTYPE html><html><head>
+<title>Ata da ${sessao.numero}ª Sessão</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  body { font-family: 'Times New Roman', Georgia, serif; font-size: 14px; line-height: 1.8; color: #000; margin: 0; padding: 20px; }
+  h2 { font-size: 18px; margin: 0; }
+  h3 { font-size: 16px; margin: 8px 0; }
+  h4 { font-size: 14px; margin: 20px 0 8px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+  h5 { font-size: 13px; background: #eee; padding: 6px 12px; margin: 12px 0 6px; }
+  p { margin: 8px 0; text-align: justify; }
+  ol, ul { margin: 4px 0 4px 20px; }
+  li { margin: 2px 0; }
+  img { max-height: 80px; }
+  div[style*="border-left"] { page-break-inside: avoid; }
+  @media print {
+    body { padding: 0; }
+    div[style*="border-top: 2px double"] { position: fixed; bottom: 0; left: 0; right: 0; }
+  }
+</style>
+</head><body>`)
     win.document.write(sessao.ata)
     win.document.write('</body></html>')
     win.document.close()
