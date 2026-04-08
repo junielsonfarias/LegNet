@@ -43,8 +43,11 @@ export async function updateSessaoHandler(
   // Construir objeto de atualização
   const updateData = buildUpdateData(validatedData, existingSessao)
 
-  // Gerar ata automaticamente se necessário
-  if (validatedData.finalizada && validatedData.status === 'CONCLUIDA' && !validatedData.ata) {
+  // Gerar ata automaticamente se necessário ou se explicitamente solicitado
+  const deveGerarAta = (body.regenerarAta === true) ||
+    (validatedData.finalizada && validatedData.status === 'CONCLUIDA' && !validatedData.ata)
+
+  if (deveGerarAta) {
     try {
       const ataGerada = await gerarAtaSessao(id)
       updateData.ata = ataGerada

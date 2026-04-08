@@ -146,7 +146,7 @@ export default function SessaoDetailPage() {
       const response = await fetch(`/api/sessoes/${sessao.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ata: null, status: sessao.status })
+        body: JSON.stringify({ ata: null, status: sessao.status, finalizada: true, regenerarAta: true })
       })
       if (response.ok) {
         toast.success('Ata gerada com sucesso')
