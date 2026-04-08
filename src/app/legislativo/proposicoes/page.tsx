@@ -47,16 +47,23 @@ export default function ProposicoesPage() {
   const fetchProposicoes = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/dados-abertos/proposicoes?limit=100')
-      if (!response.ok) throw new Error('Erro ao carregar dados')
-      const result = await response.json()
+      const todas: ProposicaoPublica[] = []
+      let page = 1
+      let totalPages = 1
 
-      if (result.dados) {
-        setProposicoes(result.dados)
-      } else {
-        console.error('Formato de resposta inesperado:', result)
-        setProposicoes([])
-      }
+      do {
+        const response = await fetch(`/api/dados-abertos/proposicoes?limit=100&page=${page}`)
+        if (!response.ok) throw new Error('Erro ao carregar dados')
+        const result = await response.json()
+
+        if (result.dados) {
+          todas.push(...result.dados)
+          totalPages = result.metadados?.paginas || 1
+        }
+        page++
+      } while (page <= totalPages)
+
+      setProposicoes(todas)
     } catch (error) {
       console.error('Erro ao carregar proposições:', error)
       toast.error('Erro ao carregar proposições')
