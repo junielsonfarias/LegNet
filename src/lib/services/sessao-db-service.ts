@@ -50,7 +50,11 @@ const listInclude = {
       id: true,
       numero: true,
       anoInicio: true,
-      anoFim: true
+      anoFim: true,
+      mandatos: {
+        where: { ativo: true, parlamentar: { ativo: true } },
+        include: { parlamentar: { select: { id: true, nome: true, apelido: true } } }
+      }
     }
   },
   periodo: {
@@ -60,6 +64,15 @@ const listInclude = {
       dataInicio: true,
       dataFim: true
     }
+  },
+  presencas: {
+    select: { id: true, presente: true, parlamentarId: true }
+  },
+  mesaSessao: {
+    include: {
+      parlamentar: { select: { id: true, nome: true, apelido: true } }
+    },
+    orderBy: { ordem: 'asc' as const }
   },
   pautaSessao: {
     include: {

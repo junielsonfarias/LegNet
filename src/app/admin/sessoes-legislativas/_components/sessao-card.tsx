@@ -43,7 +43,10 @@ export function SessaoCard({
 
   const slug = gerarSlugSessao(sessao.numero, new Date(sessao.data))
   const totalItens = sessao.pautaSessao?.itens?.length || 0
+  const presencasPresentes = (sessao.presencas || []).filter((p: any) => p.presente).length
   const totalPresencas = sessao.presencas?.length || 0
+  const presidente = (sessao.mesaSessao || []).find((m: any) => m.cargo === 'PRESIDENTE' || (m.cargo || '').toLowerCase().includes('presidente'))
+  const presidenteNome = presidente?.parlamentar?.apelido || presidente?.parlamentar?.nome || null
   const isAtiva = sessao.status === 'EM_ANDAMENTO' || sessao.status === 'SUSPENSA'
   const isAgendada = sessao.status === 'AGENDADA'
   const isFinalizada = sessao.status === 'CONCLUIDA' || sessao.status === 'CANCELADA'
@@ -66,14 +69,12 @@ export function SessaoCard({
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
-                {formatDateTime(sessao.data)}
+                {new Date(sessao.data).toLocaleDateString('pt-BR')}
               </span>
-              {sessao.horario && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  {sessao.horario}
-                </span>
-              )}
+              <span className="flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                {sessao.horario || new Date(sessao.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
               <span className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5" />
                 {sessao.local || 'Local nao definido'}
@@ -114,7 +115,7 @@ export function SessaoCard({
         <div className="flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-1.5 text-gray-600">
             <Users className="h-4 w-4 text-gray-400" />
-            <span>{(sessao.presidente as any)?.apelido || sessao.presidente?.nome || 'Presidente nao definido'}</span>
+            <span>{presidenteNome || 'Presidente nao definido'}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <ClipboardList className="h-4 w-4 text-gray-400" />
@@ -124,7 +125,7 @@ export function SessaoCard({
           </div>
           <div className="flex items-center gap-1.5 text-gray-600">
             <Users className="h-4 w-4 text-gray-400" />
-            <span>{totalPresencas} presencas</span>
+            <span>{presencasPresentes > 0 ? `${presencasPresentes} presentes` : `${totalPresencas} presencas`}</span>
           </div>
         </div>
 
