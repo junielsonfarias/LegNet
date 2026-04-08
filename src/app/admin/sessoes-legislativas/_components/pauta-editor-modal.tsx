@@ -51,19 +51,23 @@ const TIPO_LABELS: Record<string, string> = {
 
 function MateriasSearchSection({
   proposicoes, sugestoes, suggestionApplyingId, newPautaItem, secoes,
-  onNewPautaItemChange, onAddItem, onAddSuggestion
+  sessaoId, onNewPautaItemChange, onAddItem, onAddSuggestion, onBulkAdded
 }: {
   proposicoes: ProposicaoSimples[]
   sugestoes: PautaSugestaoApi[]
   suggestionApplyingId: string | null
   newPautaItem: NovoPautaItem
   secoes: Array<{ value: string; label: string }>
+  sessaoId?: string
   onNewPautaItemChange: (item: NovoPautaItem) => void
   onAddItem: () => void
   onAddSuggestion: (sugestao: PautaSugestaoApi) => void
+  onBulkAdded?: () => void
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [tipoFilter, setTipoFilter] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
 
   const allMaterias = useMemo(() => {
     const sugestaoIds = new Set(sugestoes.map(s => s.proposicao?.id).filter(Boolean))
@@ -116,6 +120,48 @@ function MateriasSearchSection({
     }
   }
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(m => m.id)))
+    }
+  }
+
+  const handleBulkAdd = async () => {
+    if (!sessaoId || selectedIds.size === 0) return
+    setBulkLoading(true)
+    try {
+      const res = await fetch(`/api/sessoes/${sessaoId}/pauta/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposicaoIds: Array.from(selectedIds) })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        const { adicionados, jaExistentes } = data.data
+        const msg = `${adicionados} adicionada(s)${jaExistentes > 0 ? `, ${jaExistentes} ja na pauta` : ''}`
+        alert(msg)
+        setSelectedIds(new Set())
+        onBulkAdded?.()
+      } else {
+        alert(data.error || 'Erro ao adicionar em lote')
+      }
+    } catch {
+      alert('Erro ao adicionar em lote')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
   return (
     <div className="border rounded-lg p-4 space-y-3">
       <h4 className="font-semibold flex items-center gap-2">
@@ -149,12 +195,52 @@ function MateriasSearchSection({
           </Button>
         )}
       </div>
+      {/* Barra de seleção em lote */}
+      {sessaoId && (
+        <div className="flex items-center gap-2 text-sm">
+          <button
+            type="button"
+            onClick={toggleSelectAll}
+            className="text-blue-600 hover:underline text-xs"
+          >
+            {selectedIds.size === filtered.length ? 'Desmarcar todas' : 'Selecionar todas'}
+          </button>
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-600">{selectedIds.size} selecionada(s)</span>
+              <Button
+                size="sm"
+                onClick={handleBulkAdd}
+                disabled={bulkLoading}
+                className="ml-auto"
+              >
+                {bulkLoading ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Plus className="h-3 w-3 mr-1" />
+                )}
+                Adicionar {selectedIds.size} à Pauta
+              </Button>
+            </>
+          )}
+        </div>
+      )}
       <div className="max-h-64 overflow-y-auto space-y-1">
         {filtered.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">Nenhuma matéria encontrada</p>
         ) : (
           filtered.map(materia => (
             <div key={materia.id} className="flex items-center gap-3 p-2.5 rounded-lg border bg-white hover:bg-blue-50 transition-colors">
+              {/* Checkbox de seleção */}
+              {sessaoId && (
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(materia.id)}
+                  onChange={() => toggleSelect(materia.id)}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 shrink-0"
+                />
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   {materia.tipo && (
@@ -344,9 +430,11 @@ export function PautaEditorModal({
             suggestionApplyingId={suggestionApplyingId}
             newPautaItem={newPautaItem}
             secoes={PAUTA_SECOES}
+            sessaoId={sessao?.id}
             onNewPautaItemChange={onNewPautaItemChange}
             onAddItem={onAddItem}
             onAddSuggestion={onAddSuggestion}
+            onBulkAdded={() => { /* refetch pauta handled by parent */ }}
           />
 
           {/* Lista de itens por seção */}

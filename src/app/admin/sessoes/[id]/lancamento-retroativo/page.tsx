@@ -584,6 +584,58 @@ export default function LancamentoRetroativoPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                {/* Botões de Voto Rápido */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-blue-700 uppercase mb-2">Voto Rápido</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => {
+                        setVotos(prev => prev.map(v => v.presente ? { ...v, voto: 'SIM' as TipoVoto } : v))
+                        setMotivo(prev => prev || 'Aprovada por unanimidade')
+                      }}
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5 mr-1.5" />
+                      Aprovada por Unanimidade
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                      onClick={() => {
+                        setVotos(prev => prev.map(v => v.presente ? { ...v, voto: 'NAO' as TipoVoto } : v))
+                        setMotivo(prev => prev || 'Rejeitada por unanimidade')
+                      }}
+                    >
+                      <ThumbsDown className="h-3.5 w-3.5 mr-1.5" />
+                      Rejeitada por Unanimidade
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-green-300 text-green-700 hover:bg-green-50"
+                      onClick={() => {
+                        setVotos(prev => prev.map(v => v.presente ? { ...v, voto: 'SIM' as TipoVoto } : v))
+                        setMotivo(prev => prev || 'Aprovada por maioria')
+                      }}
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5 mr-1.5" />
+                      Maioria SIM (ajuste os NAO)
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-gray-500"
+                      onClick={() => {
+                        setVotos(prev => prev.map(v => v.presente ? { ...v, voto: null } : v))
+                      }}
+                    >
+                      <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                      Limpar Todos
+                    </Button>
+                  </div>
+                </div>
+
                 {/* Lista de parlamentares */}
                 <div className="max-h-[400px] overflow-y-auto space-y-2">
                   {votos.map(parlamentar => (

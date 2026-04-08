@@ -442,7 +442,7 @@ export const pautasDbService = {
   async addItem(
     sessaoId: string,
     payload: PautaItemPayload,
-    options: { userId?: string; requestIp?: string } = {}
+    options: { userId?: string; requestIp?: string; skipValidation?: boolean } = {}
   ) {
     const sessao = await prisma.sessao.findUnique({ where: { id: sessaoId } })
     if (!sessao) throw new NotFoundError('Sessao')
@@ -473,7 +473,9 @@ export const pautasDbService = {
         }
 
         // RN-030 / RN-057: validar parecer ao incluir na ORDEM_DO_DIA
+        // Pular validação para lançamento retroativo (sessão CONCLUIDA)
         if (
+          !options.skipValidation &&
           payload.secao === 'ORDEM_DO_DIA' &&
           (tipoAcao === 'VOTACAO' || tipoAcao === 'DISCUSSAO')
         ) {
@@ -485,7 +487,7 @@ export const pautasDbService = {
             )
           }
 
-          // Tramitar para plenario se necessario
+          // Tramitar para plenario se necessario (não para retroativo)
           if (proposicao.status !== 'EM_PAUTA') {
             await tramitarParaPlenario(
               payload.proposicaoId,
