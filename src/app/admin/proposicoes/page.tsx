@@ -1,9 +1,9 @@
 'use client'
 
-import { Suspense, useMemo } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, Loader2 } from 'lucide-react'
+import { FileText, Plus, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ProposicoesListSkeleton } from '@/components/skeletons/proposicao-skeleton'
 import { useProposicoesState } from './_hooks/use-proposicoes-state'
 import {
@@ -123,6 +123,21 @@ function ProposicoesContent() {
     })
   }, [proposicoes, searchTerm, statusFilter, tipoFilter, anoFilter, autorFilter])
 
+  // Paginação client-side
+  const ITEMS_PER_PAGE = 50
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const totalPages = Math.ceil(filteredProposicoes.length / ITEMS_PER_PAGE)
+  const paginatedProposicoes = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredProposicoes.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredProposicoes, currentPage])
+
+  // Resetar página ao mudar filtros
+  const handleFilterReset = () => {
+    setCurrentPage(1)
+  }
+
   // Anos disponíveis (extraídos das proposições)
   const anosDisponiveis = useMemo(() => {
     const anos = Array.from(new Set((proposicoes || []).map(p => String(p.ano))))
@@ -135,7 +150,15 @@ function ProposicoesContent() {
     setTipoFilter('TODOS')
     setAnoFilter('TODOS')
     setAutorFilter('TODOS')
+    setCurrentPage(1)
   }
+
+  // Wrappers que resetam a página ao filtrar
+  const handleSearchChange = (v: string) => { setSearchTerm(v); setCurrentPage(1) }
+  const handleStatusChange = (v: string) => { setStatusFilter(v); setCurrentPage(1) }
+  const handleTipoFilterChange = (v: string) => { setTipoFilter(v); setCurrentPage(1) }
+  const handleAnoFilterChange = (v: string) => { setAnoFilter(v); setCurrentPage(1) }
+  const handleAutorFilterChange = (v: string) => { setAutorFilter(v); setCurrentPage(1) }
 
   const statusDetalhadoAtual = useMemo(() => {
     if (!selectedProposicao) return null
@@ -271,17 +294,17 @@ function ProposicoesContent() {
         tiposProposicao={tiposProposicao}
         parlamentares={parlamentares}
         anosDisponiveis={anosDisponiveis}
-        onSearchChange={setSearchTerm}
-        onStatusChange={setStatusFilter}
-        onTipoChange={setTipoFilter}
-        onAnoChange={setAnoFilter}
-        onAutorChange={setAutorFilter}
+        onSearchChange={handleSearchChange}
+        onStatusChange={handleStatusChange}
+        onTipoChange={handleTipoFilterChange}
+        onAnoChange={handleAnoFilterChange}
+        onAutorChange={handleAutorFilterChange}
         onClear={handleClearFilters}
       />
 
       {/* Lista de Proposições */}
       <div className="space-y-3">
-        {filteredProposicoes.map((proposicao) => (
+        {paginatedProposicoes.map((proposicao) => (
           <ProposicaoCard
             key={proposicao.id}
             proposicao={proposicao}
@@ -308,10 +331,56 @@ function ProposicoesContent() {
         )}
       </div>
 
-      {/* Contador de resultados */}
+      {/* Paginação e contador */}
       {filteredProposicoes.length > 0 && (
-        <div className="text-center text-sm text-gray-500 py-2">
-          Mostrando {filteredProposicoes.length} de {proposicoes.length} proposições
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3">
+          <div className="text-sm text-gray-500">
+            Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredProposicoes.length)} de {filteredProposicoes.length} proposições
+            {filteredProposicoes.length !== proposicoes.length && ` (${proposicoes.length} total)`}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Anterior
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .map((p, idx, arr) => {
+                    const prev = arr[idx - 1]
+                    const showEllipsis = prev && p - prev > 1
+                    return (
+                      <span key={p} className="flex items-center gap-1">
+                        {showEllipsis && <span className="px-1 text-gray-400">...</span>}
+                        <Button
+                          variant={currentPage === p ? 'default' : 'outline'}
+                          size="sm"
+                          className="min-w-[36px]"
+                          onClick={() => setCurrentPage(p)}
+                        >
+                          {p}
+                        </Button>
+                      </span>
+                    )
+                  })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

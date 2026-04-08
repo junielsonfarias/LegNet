@@ -116,7 +116,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
   const searchParams = useSearchParams()
 
   // Hooks externos
-  const { proposicoes, loading: loadingProposicoes, create, update, remove, refetch } = useProposicoes({ limit: 100 })
+  const { proposicoes, loading: loadingProposicoes, create, update, remove, refetch } = useProposicoes({ limit: 500 })
   const { parlamentares, loading: loadingParlamentares } = useParlamentares()
 
   // Estados de tipos e dados

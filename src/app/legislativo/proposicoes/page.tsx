@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, RefreshCw, X } from 'lucide-react'
+import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -100,6 +100,18 @@ export default function ProposicoesPage() {
       return matchesSearch && matchesTipo && matchesStatus
     })
   }, [proposicoes, searchTerm, tipoFilter, statusFilter])
+
+  // Paginação
+  const ITEMS_PER_PAGE = 50
+  const [currentPage, setCurrentPage] = useState(1)
+  const totalPages = Math.ceil(filteredProposicoes.length / ITEMS_PER_PAGE)
+  const paginatedProposicoes = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredProposicoes.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredProposicoes, currentPage])
+
+  // Resetar página ao mudar filtros
+  useEffect(() => { setCurrentPage(1) }, [searchTerm, tipoFilter, statusFilter])
 
   const getTipoBadge = (tipo: string) => {
     const tipoConfig: Record<string, { label: string; className: string }> = {
@@ -293,6 +305,7 @@ export default function ProposicoesPage() {
 
         <div className="mb-4 text-sm text-gray-600">
           Encontradas {filteredProposicoes.length} proposição(ões)
+          {totalPages > 1 && ` — Página ${currentPage} de ${totalPages}`}
         </div>
 
         {/* Lista de Proposições */}
@@ -315,7 +328,7 @@ export default function ProposicoesPage() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {filteredProposicoes.map((proposicao) => (
+            {paginatedProposicoes.map((proposicao) => (
               <Card key={proposicao.id} className="camara-card hover:shadow-lg transition-shadow duration-200">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -414,6 +427,51 @@ export default function ProposicoesPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Anterior
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                .map((p, idx, arr) => {
+                  const prev = arr[idx - 1]
+                  const showEllipsis = prev && p - prev > 1
+                  return (
+                    <span key={p} className="flex items-center gap-1">
+                      {showEllipsis && <span className="px-1 text-gray-400">...</span>}
+                      <Button
+                        variant={currentPage === p ? 'default' : 'outline'}
+                        size="sm"
+                        className="min-w-[36px]"
+                        onClick={() => { setCurrentPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                      >
+                        {p}
+                      </Button>
+                    </span>
+                  )
+                })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
           </div>
         )}
 
