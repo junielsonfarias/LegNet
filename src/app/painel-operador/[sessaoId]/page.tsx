@@ -220,6 +220,22 @@ export default function PainelOperadorPage() {
   const sessaoId = params?.sessaoId as string
   const { configuracao } = useConfiguracaoInstitucional()
 
+  // Mapa de IDs de tipo de expediente para nomes
+  const [tiposExpedienteMap, setTiposExpedienteMap] = useState<Record<string, string>>({})
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          const map: Record<string, string> = {}
+          data.data.forEach((t: any) => { map[t.id] = t.nome })
+          setTiposExpedienteMap(map)
+        }
+      })
+      .catch(() => {})
+  }, [])
+  const getSecaoLabel = (secao: string) => tiposExpedienteMap[secao] || secao.replace(/_/g, ' ')
+
   const [sessao, setSessao] = useState<SessaoApi | null>(null)
   const [loading, setLoading] = useState(true)
   const [executando, setExecutando] = useState(false)
@@ -465,7 +481,16 @@ export default function PainelOperadorPage() {
     }, {} as Record<string, PautaItemApi[]>)
   }, [sessao?.pautaSessao?.itens])
 
-  const ordemSecoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'EXPLICACOES_PESSOAIS', 'SEM_SECAO']
+  // Ordem das seções: usa as seções que existem nos itens da pauta
+  const ordemSecoes = useMemo(() => {
+    const secoes = Object.keys(itensPorSecao)
+    // Manter SEM_SECAO por último
+    return secoes.sort((a, b) => {
+      if (a === 'SEM_SECAO') return 1
+      if (b === 'SEM_SECAO') return -1
+      return 0
+    })
+  }, [itensPorSecao])
 
   const toggleSecao = (secao: string) => {
     setSecoesExpandidas(prev => ({ ...prev, [secao]: !prev[secao] }))
@@ -743,7 +768,7 @@ export default function PainelOperadorPage() {
                             <div className="flex items-center gap-2">
                               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                               <span className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-                                {secao.replace(/_/g, ' ')}
+                                {getSecaoLabel(secao)}
                               </span>
                             </div>
                             <Badge variant="outline" className="text-slate-400 text-xs">

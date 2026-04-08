@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
@@ -18,6 +19,20 @@ export default function PainelEletronicoOperadorPage() {
   const params = useParams()
   const sessaoId = params?.sessaoId as string
   const { configuracao } = useConfiguracaoInstitucional()
+
+  const [secaoLabelMap, setSecaoLabelMap] = useState<Record<string, string>>({})
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          const map: Record<string, string> = {}
+          data.data.forEach((t: any) => { map[t.id] = t.nome })
+          setSecaoLabelMap(map)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const {
     sessao,
@@ -133,6 +148,7 @@ export default function PainelEletronicoOperadorPage() {
               sessaoEmAndamento={sessao.status === 'EM_ANDAMENTO'}
               executando={executando}
               presencas={sessao.presencas}
+              secaoLabelMap={secaoLabelMap}
               onExecutarAcaoItem={executarAcaoItem}
               onAtualizarTipoAcao={atualizarTipoAcao}
               onAbrirModalRetirada={abrirModalRetirada}

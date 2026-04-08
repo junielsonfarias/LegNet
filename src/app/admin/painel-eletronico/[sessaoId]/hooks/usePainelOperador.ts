@@ -42,14 +42,15 @@ export function usePainelOperador(sessaoId: string) {
 
   const groupedItens = useMemo(() => {
     if (!sessao?.pautaSessao?.itens) return [] as Array<{ secao: string; itens: PautaItemApi[] }>
-    const secoes = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS']
     const pautaItens = sessao.pautaSessao.itens
-    return secoes
-      .map(secao => ({
-        secao,
-        itens: pautaItens.filter(item => item.secao === secao)
-      }))
-      .filter(grupo => grupo.itens.length > 0)
+    // Agrupar por seções que existem nos itens (dinâmico)
+    const secoesMap = new Map<string, PautaItemApi[]>()
+    pautaItens.forEach(item => {
+      const secao = item.secao || 'OUTROS'
+      if (!secoesMap.has(secao)) secoesMap.set(secao, [])
+      secoesMap.get(secao)!.push(item)
+    })
+    return Array.from(secoesMap.entries()).map(([secao, itens]) => ({ secao, itens }))
   }, [sessao?.pautaSessao])
 
   const iniciarSessaoTimer = useCallback((dados: SessaoApi) => {

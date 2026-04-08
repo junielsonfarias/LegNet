@@ -25,6 +25,7 @@ interface PautaSectionProps {
   sessaoEmAndamento: boolean
   executando: boolean
   presencas?: Presenca[]
+  secaoLabelMap?: Record<string, string>
   onExecutarAcaoItem: (
     itemId: string,
     acao: 'iniciar' | 'pausar' | 'retomar' | 'votacao' | 'finalizar' | 'vista' | 'retomarVista' | 'subir' | 'descer',
@@ -41,10 +42,12 @@ export function PautaSection({
   sessaoEmAndamento,
   executando,
   presencas,
+  secaoLabelMap = {},
   onExecutarAcaoItem,
   onAtualizarTipoAcao,
   onAbrirModalRetirada
 }: PautaSectionProps) {
+  const getSecaoLabel = (secao: string) => secaoLabelMap[secao] || secao.replace(/_/g, ' ')
   return (
     <Card className="border-slate-700 bg-slate-800">
       <CardHeader>
@@ -61,7 +64,7 @@ export function PautaSection({
           <div key={grupo.secao} className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-200">
-                {grupo.secao.replace(/_/g, ' ')}
+                {getSecaoLabel(grupo.secao)}
               </h2>
               <span className="text-sm text-slate-400">{grupo.itens.length} item(s)</span>
             </div>
