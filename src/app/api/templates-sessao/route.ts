@@ -7,10 +7,8 @@ import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { templatesSessaoDbService } from '@/lib/services/templates-sessao-db-service'
 
-const PAUTA_SECOES = ['EXPEDIENTE', 'ORDEM_DO_DIA', 'COMUNICACOES', 'HONRAS', 'OUTROS'] as const
-
 const TemplateItemSchema = z.object({
-  secao: z.enum(PAUTA_SECOES),
+  secao: z.string().min(1, 'Seção é obrigatória'),
   ordem: z.number().int().min(1).optional(),
   titulo: z.string().min(1, 'Título é obrigatório'),
   descricao: z.string().nullish().transform(v => v ?? undefined),
@@ -30,10 +28,8 @@ const TemplateCreateSchema = z.object({
 
 const sortTemplateItens = <T extends { secao: string; ordem: number }>(itens: T[]): T[] => {
   return [...itens].sort((a, b) => {
-    const secaoDiff = PAUTA_SECOES.indexOf(a.secao as typeof PAUTA_SECOES[number]) -
-      PAUTA_SECOES.indexOf(b.secao as typeof PAUTA_SECOES[number])
-    if (secaoDiff !== 0) {
-      return secaoDiff
+    if (a.secao !== b.secao) {
+      return a.secao.localeCompare(b.secao)
     }
     return a.ordem - b.ordem
   })
