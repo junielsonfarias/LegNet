@@ -342,7 +342,7 @@ export function useSessoesState() {
       descricao: newPautaItem.descricao.trim() || undefined,
       tempoEstimado: newPautaItem.tempoEstimado ? Number(newPautaItem.tempoEstimado) : undefined,
       proposicaoId: newPautaItem.proposicaoId || undefined,
-      tipoAcao: newPautaItem.tipoAcao || undefined
+      tipoAcao: (newPautaItem.tipoAcao || undefined) as 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | undefined
     })
 
     setNewPautaItem(prev => ({
