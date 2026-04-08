@@ -511,7 +511,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
         secoesMap.get(s)!.push(item)
       })
 
-      for (const [secao, itensSecao] of secoesMap) {
+      for (const [secao, itensSecao] of Array.from(secoesMap.entries())) {
         ata += `<h5 style="background: #f0f0f0; padding: 6px 12px; margin: 16px 0 8px; font-size: 13px; text-transform: uppercase;">${resolverSecao(secao)}</h5>`
 
         for (const item of itensSecao) {
