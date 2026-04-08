@@ -315,44 +315,42 @@ export default function SessaoDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button asChild variant="outline">
-                <Link href="/legislativo/sessoes">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+          <div className="space-y-4">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/legislativo/sessoes">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Link>
+            </Button>
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                   {sessao?.numero || 'N/A'}ª Sessão {sessao?.tipo ? getTipoLabel(sessao.tipo) : ''}
                 </h1>
-                <p className="text-gray-600 mt-1">
-                  {sessao?.data ? new Date(sessao.data).toLocaleDateString('pt-BR', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  }) : 'Data não disponível'}
-                </p>
+                {sessao?.status && (
+                  <Badge className={getStatusColor(sessao.status)}>
+                    {getStatusLabel(sessao.status)}
+                  </Badge>
+                )}
+                {sessao?.tipo && (
+                  <Badge className={getTipoColor(sessao.tipo)}>
+                    {getTipoLabel(sessao.tipo)}
+                  </Badge>
+                )}
               </div>
-            </div>
-            <div className="flex gap-2">
-              {sessao?.status && (
-                <Badge className={getStatusColor(sessao.status)}>
-                  {getStatusLabel(sessao.status)}
-                </Badge>
-              )}
-              {sessao?.tipo && (
-                <Badge className={getTipoColor(sessao.tipo)}>
-                  {getTipoLabel(sessao.tipo)}
-                </Badge>
-              )}
+              <p className="text-sm sm:text-base text-gray-600">
+                {sessao?.data ? new Date(sessao.data).toLocaleDateString('pt-BR', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : 'Data não disponível'}
+              </p>
             </div>
           </div>
 
@@ -360,9 +358,9 @@ export default function SessaoDetailPage() {
             <div className="lg:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PlayCircle className="h-5 w-5 text-camara-primary" aria-hidden="true" />
-                    Transmissão ao vivo e repositório multimídia
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <PlayCircle className="h-5 w-5 text-camara-primary shrink-0" aria-hidden="true" />
+                    <span>Transmissão ao vivo e repositório multimídia</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -524,8 +522,8 @@ export default function SessaoDetailPage() {
                     <div className="space-y-4">
                       {proposicoesOrganizadas.aprovadas.map((proposicao) => (
                         <div key={proposicao.id} className="border-l-4 border-green-500 pl-4 py-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <Badge className={getStatusProposicaoColor(proposicao.status)}>
                                   {getTipoProposicaoLabel(proposicao.tipo)}
@@ -573,8 +571,8 @@ export default function SessaoDetailPage() {
                     <div className="space-y-4">
                       {proposicoesOrganizadas.rejeitadas.map((proposicao) => (
                         <div key={proposicao.id} className="border-l-4 border-red-500 pl-4 py-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <Badge className={getStatusProposicaoColor(proposicao.status)}>
                                   {getTipoProposicaoLabel(proposicao.tipo)}
@@ -622,8 +620,8 @@ export default function SessaoDetailPage() {
                     <div className="space-y-4">
                       {proposicoesOrganizadas.arquivadas.map((proposicao) => (
                         <div key={proposicao.id} className="border-l-4 border-gray-400 pl-4 py-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <Badge className={getStatusProposicaoColor(proposicao.status)}>
                                   {getTipoProposicaoLabel(proposicao.tipo)}
@@ -666,8 +664,8 @@ export default function SessaoDetailPage() {
                     <div className="space-y-4">
                       {proposicoesOrganizadas.emTramitacao.map((proposicao) => (
                         <div key={proposicao.id} className="border-l-4 border-yellow-500 pl-4 py-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <Badge className={getStatusProposicaoColor(proposicao.status)}>
                                   {getTipoProposicaoLabel(proposicao.tipo)}
