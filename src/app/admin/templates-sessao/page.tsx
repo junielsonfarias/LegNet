@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,7 +31,8 @@ const TIPO_SESSAO_OPTIONS: Array<{ value: UseSessaoTemplatesOptions["tipo"] | "T
   { value: "ESPECIAL", label: "Especial" },
 ]
 
-const PAUTA_SECOES = [
+// Fallback caso o fetch de tipos falhe
+const PAUTA_SECOES_FALLBACK = [
   { value: "EXPEDIENTE", label: "Expediente" },
   { value: "ORDEM_DO_DIA", label: "Ordem do Dia" },
   { value: "COMUNICACOES", label: "Comunicações" },
@@ -71,22 +72,40 @@ interface TemplateFormData {
   itens: TemplateItemForm[]
 }
 
-const createEmptyItem = (): TemplateItemForm => ({
-  localId: crypto.randomUUID(),
-  secao: "EXPEDIENTE",
-  titulo: "",
-  descricao: "",
-  tempoEstimado: "",
-  tipoProposicao: "",
-  obrigatorio: false,
-})
-
 export default function TemplatesSessaoPage() {
   const [tipoFiltro, setTipoFiltro] = useState<UseSessaoTemplatesOptions["tipo"] | "TODOS">("TODOS")
   const [apenasAtivos, setApenasAtivos] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
+
+  // Tipos de expediente do banco
+  const [tiposExpediente, setTiposExpediente] = useState<Array<{ value: string; label: string }>>([])
+
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setTiposExpediente(data.data.map((t: any) => ({ value: t.id, label: t.nome })))
+        } else {
+          setTiposExpediente(PAUTA_SECOES_FALLBACK)
+        }
+      })
+      .catch(() => setTiposExpediente(PAUTA_SECOES_FALLBACK))
+  }, [])
+
+  const PAUTA_SECOES = tiposExpediente.length > 0 ? tiposExpediente : PAUTA_SECOES_FALLBACK
+
+  const createEmptyItem = (): TemplateItemForm => ({
+    localId: crypto.randomUUID(),
+    secao: PAUTA_SECOES[0]?.value || "EXPEDIENTE",
+    titulo: "",
+    descricao: "",
+    tempoEstimado: "",
+    tipoProposicao: "",
+    obrigatorio: false,
+  })
 
   const {
     templates,
