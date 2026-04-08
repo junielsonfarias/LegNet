@@ -502,24 +502,25 @@ export function PautaEditorModal({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <p className="font-medium truncate">{item.titulo}</p>
-                              {item.tipoAcao && (
-                                <Badge variant="outline" className={cn('text-[10px] shrink-0',
-                                  (item.tipoAcao === 'LEITURA' || item.tipoAcao === 'LEITURA_VOTACAO') && 'border-blue-300 text-blue-700',
-                                  (item.tipoAcao === 'VOTACAO') && 'border-green-300 text-green-700',
-                                  (item.tipoAcao === 'DISCUSSAO' || item.tipoAcao === 'DISCUSSAO_VOTACAO') && 'border-yellow-300 text-yellow-700',
-                                  item.tipoAcao === 'COMUNICADO' && 'border-gray-300 text-gray-700',
-                                  item.tipoAcao === 'HOMENAGEM' && 'border-purple-300 text-purple-700'
-                                )}>
-                                  {item.tipoAcao === 'LEITURA' ? 'Leitura' :
-                                   item.tipoAcao === 'VOTACAO' ? 'Votação' :
-                                   item.tipoAcao === 'DISCUSSAO' ? 'Discussão' :
-                                   item.tipoAcao === 'LEITURA_VOTACAO' ? 'Leitura e Votação' :
-                                   item.tipoAcao === 'DISCUSSAO_VOTACAO' ? 'Discussão e Votação' :
-                                   item.tipoAcao === 'COMUNICADO' ? 'Comunicado' :
-                                   item.tipoAcao === 'HOMENAGEM' ? 'Homenagem' :
-                                   item.tipoAcao}
-                                </Badge>
-                              )}
+                              {item.tipoAcao && (() => {
+                                const acao = item.tipoAcao as string
+                                const labels: Record<string, string> = {
+                                  LEITURA: 'Leitura', VOTACAO: 'Votação', DISCUSSAO: 'Discussão',
+                                  LEITURA_VOTACAO: 'Leitura e Votação', DISCUSSAO_VOTACAO: 'Discussão e Votação',
+                                  COMUNICADO: 'Comunicado', HOMENAGEM: 'Homenagem'
+                                }
+                                const colors: Record<string, string> = {
+                                  LEITURA: 'border-blue-300 text-blue-700', LEITURA_VOTACAO: 'border-blue-300 text-blue-700',
+                                  VOTACAO: 'border-green-300 text-green-700',
+                                  DISCUSSAO: 'border-yellow-300 text-yellow-700', DISCUSSAO_VOTACAO: 'border-yellow-300 text-yellow-700',
+                                  COMUNICADO: 'border-gray-300 text-gray-700', HOMENAGEM: 'border-purple-300 text-purple-700'
+                                }
+                                return (
+                                  <Badge variant="outline" className={cn('text-[10px] shrink-0', colors[acao] || '')}>
+                                    {labels[acao] || acao}
+                                  </Badge>
+                                )
+                              })()}
                             </div>
                             {item.proposicao && (
                               <p className="text-xs text-gray-500">
