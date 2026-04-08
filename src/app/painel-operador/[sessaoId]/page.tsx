@@ -129,7 +129,7 @@ const getTipoAcaoConfig = (tipoAcao: string) => {
 
 // Configuração de ações baseada no tipoAcao e status do item
 const getAcoesDisponiveis = (item: PautaItemApi) => {
-  const tipoAcao = item.tipoAcao || 'LEITURA'
+  const tipoAcao = (item.tipoAcao || 'LEITURA') as string
   const status = item.status
   const temProposicao = !!item.proposicao
 
