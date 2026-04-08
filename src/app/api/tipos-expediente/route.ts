@@ -16,8 +16,8 @@ export const dynamic = 'force-dynamic'
 const TipoExpedienteSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório').max(100),
   descricao: z.string().nullish().transform(v => v ?? undefined),
-  ordem: z.number().int().min(0).optional(),
-  tempoMaximo: z.number().int().min(1).optional(),
+  ordem: z.number().int().min(0).nullish().transform(v => v ?? undefined),
+  tempoMaximo: z.number().int().min(1).nullish().transform(v => v ?? undefined),
   ativo: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
