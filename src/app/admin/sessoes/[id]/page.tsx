@@ -31,7 +31,10 @@ import {
   UserX,
   BookOpen,
   PenLine,
-  Mic
+  Mic,
+  Printer,
+  Eye,
+  RefreshCw
 } from 'lucide-react'
 import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
@@ -92,6 +95,8 @@ export default function SessaoDetailPage() {
   const { sessao, loading, error, mutate } = useSessao(id || null)
   const [editingPauta, setEditingPauta] = useState(false)
   const [atualizandoPauta, setAtualizandoPauta] = useState(false)
+  const [previewAta, setPreviewAta] = useState(false)
+  const [gerandoAta, setGerandoAta] = useState(false)
 
   // Mapa de IDs de tipos de expediente para nomes
   const [tiposExpedienteMap, setTiposExpedienteMap] = useState<Record<string, string>>({})
@@ -132,6 +137,41 @@ export default function SessaoDetailPage() {
     } finally {
       setAtualizandoPauta(false)
     }
+  }
+
+  const gerarOuRegerarAta = async () => {
+    if (!sessao?.id) return
+    setGerandoAta(true)
+    try {
+      const response = await fetch(`/api/sessoes/${sessao.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ata: null, status: sessao.status })
+      })
+      if (response.ok) {
+        toast.success('Ata gerada com sucesso')
+        mutate()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Erro ao gerar ata')
+      }
+    } catch {
+      toast.error('Erro ao gerar ata')
+    } finally {
+      setGerandoAta(false)
+    }
+  }
+
+  const imprimirAta = () => {
+    if (!sessao?.ata) return
+    const win = window.open('', '_blank')
+    if (!win) return
+    win.document.write(`<!DOCTYPE html><html><head><title>Ata da ${sessao.numero}ª Sessão</title><style>@media print { body { margin: 0; } } body { font-family: 'Times New Roman', serif; }</style></head><body>`)
+    win.document.write(sessao.ata)
+    win.document.write('</body></html>')
+    win.document.close()
+    win.focus()
+    setTimeout(() => win.print(), 500)
   }
 
   if (!id) {
@@ -684,13 +724,38 @@ export default function SessaoDetailPage() {
                     </div>
                   )}
 
-                  {sessao.ata && (
+                  {/* Botões de ata */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={gerarOuRegerarAta}
+                      disabled={gerandoAta}
+                    >
+                      {gerandoAta ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1.5" />}
+                      {sessao.ata ? 'Regerar Ata' : 'Gerar Ata'}
+                    </Button>
+                    {sessao.ata && (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => setPreviewAta(!previewAta)}>
+                          <Eye className="h-4 w-4 mr-1.5" />
+                          {previewAta ? 'Ocultar Preview' : 'Visualizar Ata'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={imprimirAta}>
+                          <Printer className="h-4 w-4 mr-1.5" />
+                          Imprimir
+                        </Button>
+                      </>
+                    )}
+                  </div>
+
+                  {sessao.ata && previewAta && (
                     <div>
                       <h3 className="text-sm font-medium text-gray-500 mb-2 flex items-center gap-2">
                         <FileText className="h-4 w-4" />
-                        Ata da Sessao
+                        Preview da Ata
                       </h3>
-                      <div className="bg-white p-4 rounded-lg border overflow-x-auto max-w-full">
+                      <div className="bg-white p-6 rounded-lg border shadow-sm overflow-x-auto max-w-full">
                         <div
                           className="prose prose-sm max-w-none text-gray-900 break-words [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full"
                           dangerouslySetInnerHTML={{ __html: sessao.ata }}
