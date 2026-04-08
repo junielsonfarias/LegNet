@@ -172,6 +172,9 @@ export const proposicaoDbService = {
         },
         orderBy: { createdAt: 'asc' as const }
       },
+      votacoesAgrupadas: {
+        orderBy: { turno: 'asc' as const }
+      },
       emendas: {
         include: {
           autor: { select: { id: true, nome: true, apelido: true, partido: true } }

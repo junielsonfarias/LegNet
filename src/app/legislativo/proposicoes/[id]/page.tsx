@@ -127,14 +127,20 @@ export default function ProposicaoDetalhePage() {
 
   const tramitacoes = proposicao.tramitacoes || []
   const votacoes = proposicao.votacoes || []
+  const votacoesAgrupadas = proposicao.votacoesAgrupadas || []
   const emendas = proposicao.emendas || []
   const pareceres = proposicao.pareceres || []
   const pautaItens = proposicao.pautaItens || []
 
+  // Votos individuais (tabela Votacao)
   const votosSim = votacoes.filter((v: any) => v.voto === 'SIM').length
   const votosNao = votacoes.filter((v: any) => v.voto === 'NAO').length
   const votosAbst = votacoes.filter((v: any) => v.voto === 'ABSTENCAO').length
   const totalVotos = votacoes.length
+
+  // Votação agrupada (painel eletrônico) - usa como fallback se não há votos individuais
+  const votacaoAgrupada = votacoesAgrupadas.length > 0 ? votacoesAgrupadas[votacoesAgrupadas.length - 1] : null
+  const temVotacao = totalVotos > 0 || votacaoAgrupada
 
   const docUrl = proposicao.urlDocumento
   const isLocalPdf = docUrl && isPdfUrl(docUrl) && docUrl.startsWith('/uploads/')
@@ -362,7 +368,7 @@ export default function ProposicaoDetalhePage() {
             )}
 
             {/* Votacao */}
-            {votacoes.length > 0 && (
+            {temVotacao && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -376,58 +382,113 @@ export default function ProposicaoDetalhePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* Barra de resultado */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-2 text-sm">
-                      <span className="font-medium text-green-700">Sim: {votosSim}</span>
-                      <span className="font-medium text-gray-500">Abstencao: {votosAbst}</span>
-                      <span className="font-medium text-red-700">Nao: {votosNao}</span>
-                    </div>
-                    <div className="h-4 bg-gray-200 rounded-full overflow-hidden flex">
-                      {votosSim > 0 && (
-                        <div
-                          className="bg-green-500 h-full transition-all"
-                          style={{ width: `${(votosSim / totalVotos) * 100}%` }}
-                        />
-                      )}
-                      {votosAbst > 0 && (
-                        <div
-                          className="bg-gray-400 h-full transition-all"
-                          style={{ width: `${(votosAbst / totalVotos) * 100}%` }}
-                        />
-                      )}
-                      {votosNao > 0 && (
-                        <div
-                          className="bg-red-500 h-full transition-all"
-                          style={{ width: `${(votosNao / totalVotos) * 100}%` }}
-                        />
-                      )}
-                    </div>
-                  </div>
+                  {/* Resumo da votação (agrupada ou individual) */}
+                  {(() => {
+                    const sim = totalVotos > 0 ? votosSim : (votacaoAgrupada?.votosSim || 0)
+                    const nao = totalVotos > 0 ? votosNao : (votacaoAgrupada?.votosNao || 0)
+                    const abst = totalVotos > 0 ? votosAbst : (votacaoAgrupada?.votosAbstencao || 0)
+                    const ausente = votacaoAgrupada?.votosAusente || 0
+                    const total = sim + nao + abst || 1
+                    const resultado = proposicao.resultado || votacaoAgrupada?.resultado
 
-                  {/* Lista de votos */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {votacoes.map((v: any) => {
-                      const votoInfo = votoIcons[v.voto] || { icon: Minus, color: 'text-gray-500', label: v.voto }
-                      const VotoIcon = votoInfo.icon
-                      return (
-                        <div key={v.id || `${v.parlamentarId}-${v.turno}`} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50">
-                          <VotoIcon className={`h-4 w-4 ${votoInfo.color} shrink-0`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {v.parlamentar?.apelido || v.parlamentar?.nome || 'Parlamentar'}
+                    return (
+                      <>
+                        {/* Resultado destaque */}
+                        {resultado && (
+                          <div className={`text-center py-3 px-4 rounded-lg mb-4 ${
+                            resultado === 'APROVADA' ? 'bg-green-50 border border-green-200' :
+                            resultado === 'REJEITADA' ? 'bg-red-50 border border-red-200' :
+                            'bg-gray-50 border border-gray-200'
+                          }`}>
+                            <p className={`text-lg font-bold ${
+                              resultado === 'APROVADA' ? 'text-green-700' :
+                              resultado === 'REJEITADA' ? 'text-red-700' :
+                              'text-gray-700'
+                            }`}>
+                              {resultado === 'APROVADA' ? 'Aprovada' :
+                               resultado === 'REJEITADA' ? 'Rejeitada' :
+                               resultado === 'EMPATE' ? 'Empate' :
+                               resultado.replace(/_/g, ' ')}
                             </p>
-                            {v.parlamentar?.partido && (
-                              <p className="text-xs text-gray-500">{v.parlamentar.partido}</p>
+                            {votacaoAgrupada?.tipoVotacao && (
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                Votacao {votacaoAgrupada.tipoVotacao === 'NOMINAL' ? 'Nominal' :
+                                  votacaoAgrupada.tipoVotacao === 'SECRETA' ? 'Secreta' :
+                                  votacaoAgrupada.tipoVotacao.replace(/_/g, ' ')}
+                                {votacaoAgrupada.votoMinerva && ' (Voto de Minerva)'}
+                              </p>
                             )}
                           </div>
-                          <Badge variant="outline" className={`text-xs ${votoInfo.color} shrink-0`}>
-                            {votoInfo.label}
-                          </Badge>
+                        )}
+
+                        {/* Barra de resultado */}
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2 text-sm">
+                            <span className="font-medium text-green-700">Sim: {sim}</span>
+                            <span className="font-medium text-gray-500">Abstencao: {abst}</span>
+                            <span className="font-medium text-red-700">Nao: {nao}</span>
+                          </div>
+                          <div className="h-5 bg-gray-200 rounded-full overflow-hidden flex">
+                            {sim > 0 && (
+                              <div className="bg-green-500 h-full transition-all flex items-center justify-center"
+                                style={{ width: `${(sim / total) * 100}%` }}>
+                                {sim > 0 && <span className="text-[10px] font-bold text-white">{sim}</span>}
+                              </div>
+                            )}
+                            {abst > 0 && (
+                              <div className="bg-gray-400 h-full transition-all"
+                                style={{ width: `${(abst / total) * 100}%` }} />
+                            )}
+                            {nao > 0 && (
+                              <div className="bg-red-500 h-full transition-all flex items-center justify-center"
+                                style={{ width: `${(nao / total) * 100}%` }}>
+                                {nao > 0 && <span className="text-[10px] font-bold text-white">{nao}</span>}
+                              </div>
+                            )}
+                          </div>
+                          {ausente > 0 && (
+                            <p className="text-xs text-gray-400 mt-1">Ausentes: {ausente}</p>
+                          )}
                         </div>
-                      )
-                    })}
-                  </div>
+                      </>
+                    )
+                  })()}
+
+                  {/* Lista de votos individuais */}
+                  {totalVotos > 0 && (
+                    <>
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Como votou cada parlamentar</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {votacoes.map((v: any) => {
+                          const votoInfo = votoIcons[v.voto] || { icon: Minus, color: 'text-gray-500', label: v.voto }
+                          const VotoIcon = votoInfo.icon
+                          return (
+                            <div key={v.id || `${v.parlamentarId}-${v.turno}`} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50">
+                              <VotoIcon className={`h-4 w-4 ${votoInfo.color} shrink-0`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {v.parlamentar?.apelido || v.parlamentar?.nome || 'Parlamentar'}
+                                </p>
+                                {v.parlamentar?.partido && (
+                                  <p className="text-xs text-gray-500">{v.parlamentar.partido}</p>
+                                )}
+                              </div>
+                              <Badge variant="outline" className={`text-xs ${votoInfo.color} shrink-0`}>
+                                {votoInfo.label}
+                              </Badge>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Sem votos individuais mas tem agrupada */}
+                  {totalVotos === 0 && votacaoAgrupada && (
+                    <p className="text-sm text-gray-500 italic">
+                      Votacao registrada pelo painel eletronico. Votos individuais nominais serao exibidos quando disponiveis.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -751,22 +812,22 @@ export default function ProposicaoDetalhePage() {
                 )}
 
                 {/* Resultado votacao resumo */}
-                {totalVotos > 0 && (
+                {temVotacao && (
                   <>
                     <hr className="border-gray-100" />
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Resultado da Votacao</p>
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div className="bg-green-50 rounded-lg p-2">
-                          <p className="text-lg font-bold text-green-700">{votosSim}</p>
+                          <p className="text-lg font-bold text-green-700">{totalVotos > 0 ? votosSim : (votacaoAgrupada?.votosSim || 0)}</p>
                           <p className="text-[10px] text-green-600 uppercase">Sim</p>
                         </div>
                         <div className="bg-gray-50 rounded-lg p-2">
-                          <p className="text-lg font-bold text-gray-600">{votosAbst}</p>
+                          <p className="text-lg font-bold text-gray-600">{totalVotos > 0 ? votosAbst : (votacaoAgrupada?.votosAbstencao || 0)}</p>
                           <p className="text-[10px] text-gray-500 uppercase">Abstencao</p>
                         </div>
                         <div className="bg-red-50 rounded-lg p-2">
-                          <p className="text-lg font-bold text-red-700">{votosNao}</p>
+                          <p className="text-lg font-bold text-red-700">{totalVotos > 0 ? votosNao : (votacaoAgrupada?.votosNao || 0)}</p>
                           <p className="text-[10px] text-red-600 uppercase">Nao</p>
                         </div>
                       </div>
