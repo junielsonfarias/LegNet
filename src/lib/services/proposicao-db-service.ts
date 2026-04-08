@@ -173,6 +173,9 @@ export const proposicaoDbService = {
         orderBy: { createdAt: 'asc' as const }
       },
       votacoesAgrupadas: {
+        include: {
+          sessao: { select: { id: true, numero: true, data: true, tipo: true } }
+        },
         orderBy: { turno: 'asc' as const }
       },
       emendas: {

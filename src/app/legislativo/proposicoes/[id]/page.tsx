@@ -391,11 +391,23 @@ export default function ProposicaoDetalhePage() {
                     const total = sim + nao + abst || 1
                     const resultado = proposicao.resultado || votacaoAgrupada?.resultado
 
+                    // Qualificação do resultado
+                    const ehUnanimidade = resultado === 'APROVADA' && nao === 0 && abst === 0 && sim > 0
+                    const tipoQuorum = votacaoAgrupada?.tipoQuorum
+                    const qualificacao = ehUnanimidade ? 'por Unanimidade'
+                      : tipoQuorum === 'MAIORIA_ABSOLUTA' ? 'por Maioria Absoluta'
+                      : tipoQuorum === 'DOIS_TERCOS' ? 'por 2/3 dos votos'
+                      : tipoQuorum === 'TRES_QUINTOS' ? 'por 3/5 dos votos'
+                      : (sim > 0 || nao > 0) ? 'por Maioria Simples'
+                      : ''
+
+                    const sessaoVot = votacaoAgrupada?.sessao || proposicao.sessaoVotacao
+
                     return (
                       <>
                         {/* Resultado destaque */}
                         {resultado && (
-                          <div className={`text-center py-3 px-4 rounded-lg mb-4 ${
+                          <div className={`text-center py-4 px-4 rounded-lg mb-4 ${
                             resultado === 'APROVADA' ? 'bg-green-50 border border-green-200' :
                             resultado === 'REJEITADA' ? 'bg-red-50 border border-red-200' :
                             'bg-gray-50 border border-gray-200'
@@ -409,14 +421,41 @@ export default function ProposicaoDetalhePage() {
                                resultado === 'REJEITADA' ? 'Rejeitada' :
                                resultado === 'EMPATE' ? 'Empate' :
                                resultado.replace(/_/g, ' ')}
+                              {qualificacao && <span className="font-semibold"> {qualificacao}</span>}
                             </p>
-                            {votacaoAgrupada?.tipoVotacao && (
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                Votacao {votacaoAgrupada.tipoVotacao === 'NOMINAL' ? 'Nominal' :
-                                  votacaoAgrupada.tipoVotacao === 'SECRETA' ? 'Secreta' :
-                                  votacaoAgrupada.tipoVotacao.replace(/_/g, ' ')}
-                                {votacaoAgrupada.votoMinerva && ' (Voto de Minerva)'}
-                              </p>
+
+                            {/* Tipo de votação e quorum */}
+                            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-1.5 text-xs text-gray-500">
+                              {votacaoAgrupada?.tipoVotacao && (
+                                <span>
+                                  Votacao {votacaoAgrupada.tipoVotacao === 'NOMINAL' ? 'Nominal' :
+                                    votacaoAgrupada.tipoVotacao === 'SECRETA' ? 'Secreta' :
+                                    votacaoAgrupada.tipoVotacao === 'SIMBOLICA' ? 'Simbolica' :
+                                    votacaoAgrupada.tipoVotacao.replace(/_/g, ' ')}
+                                </span>
+                              )}
+                              {votacaoAgrupada?.votoMinerva && (
+                                <span className="text-amber-600 font-medium">Voto de Minerva</span>
+                              )}
+                              {votacaoAgrupada?.turno && votacaoAgrupada.turno > 1 && (
+                                <span>{votacaoAgrupada.turno}o Turno</span>
+                              )}
+                            </div>
+
+                            {/* Sessão onde foi votada */}
+                            {sessaoVot && (
+                              <div className="mt-2 pt-2 border-t border-gray-200/50">
+                                <Link
+                                  href={`/legislativo/sessoes/${sessaoVot.id || sessaoVot.numero}`}
+                                  className="inline-flex items-center gap-1.5 text-xs text-camara-primary hover:underline"
+                                >
+                                  <Calendar className="h-3 w-3" />
+                                  Votada na {sessaoVot.numero}a Sessao
+                                  {sessaoVot.tipo && ` ${sessaoVot.tipo === 'ORDINARIA' ? 'Ordinaria' : sessaoVot.tipo === 'EXTRAORDINARIA' ? 'Extraordinaria' : sessaoVot.tipo.replace(/_/g, ' ')}`}
+                                  {' - '}
+                                  {new Date(sessaoVot.data).toLocaleDateString('pt-BR')}
+                                </Link>
+                              </div>
                             )}
                           </div>
                         )}
