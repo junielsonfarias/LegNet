@@ -690,8 +690,11 @@ export default function SessaoDetailPage() {
                         <FileText className="h-4 w-4" />
                         Ata da Sessao
                       </h3>
-                      <div className="bg-gray-50 p-4 rounded-lg border">
-                        <p className="text-gray-900 whitespace-pre-wrap">{sessao.ata}</p>
+                      <div className="bg-white p-4 rounded-lg border overflow-x-auto max-w-full">
+                        <div
+                          className="prose prose-sm max-w-none text-gray-900 break-words [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full"
+                          dangerouslySetInnerHTML={{ __html: sessao.ata }}
+                        />
                       </div>
                     </div>
                   )}
