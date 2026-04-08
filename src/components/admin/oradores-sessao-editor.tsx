@@ -71,7 +71,7 @@ interface Orador {
 
 interface OradoresData {
   oradores: Orador[]
-  totaisPorTipo: Record<string, number>
+  totaisPorTipo?: Record<string, number>
 }
 
 interface OradoresSessaoEditorProps {
@@ -130,7 +130,15 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
         throw new Error(result.message || 'Erro ao carregar oradores')
       }
 
-      setData(result.data)
+      const apiData = result.data
+      // Computar totaisPorTipo a partir dos oradores
+      const totaisPorTipo: Record<string, number> = {}
+      if (apiData?.oradores) {
+        apiData.oradores.forEach((o: any) => {
+          totaisPorTipo[o.tipo] = (totaisPorTipo[o.tipo] || 0) + 1
+        })
+      }
+      setData({ ...apiData, totaisPorTipo })
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
