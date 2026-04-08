@@ -40,7 +40,7 @@ interface ProposicaoSimples {
   tipo?: string
   ementa?: string
   status?: string
-  autor?: { nome?: string; apelido?: string; partido?: string } | null
+  autor?: { id?: string; nome: string; apelido?: string | null; partido?: string | null } | null
 }
 
 const TIPO_LABELS: Record<string, string> = {
