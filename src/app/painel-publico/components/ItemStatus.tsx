@@ -40,7 +40,8 @@ function getProposicaoLabel(item: PautaItem): string | null {
 }
 
 export function ItemStatus({ itemAtual, estatisticas, totalPresentes }: ItemStatusProps) {
-  const { status, tipoAcao } = itemAtual
+  const status = itemAtual.status
+  const tipoAcao = itemAtual.tipoAcao as string | null | undefined
   const proposicaoLabel = getProposicaoLabel(itemAtual)
   const descricao = itemAtual.proposicao?.titulo || itemAtual.descricao
 
