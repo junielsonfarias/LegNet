@@ -55,6 +55,16 @@ export function useSessoesState() {
   }, [])
   const PAUTA_SECOES = tiposExpediente.length > 0 ? tiposExpediente : PAUTA_SECOES_FALLBACK
 
+  // Atualizar seção padrão do novo item quando tipos são carregados
+  useEffect(() => {
+    if (tiposExpediente.length > 0) {
+      setNewPautaItem(prev => ({
+        ...prev,
+        secao: prev.secao === 'EXPEDIENTE' ? tiposExpediente[0].value : prev.secao
+      }))
+    }
+  }, [tiposExpediente])
+
   // Estado local de sessões (any[] para flexibilidade com tipos da API)
   const [sessoes, setSessoes] = useState<any[]>([])
 
