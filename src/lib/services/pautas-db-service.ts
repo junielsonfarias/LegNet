@@ -451,7 +451,7 @@ export const pautasDbService = {
     if (!pautaSessao) throw new NotFoundError('Pauta da sessao')
 
     // ---- Determinar tipoAcao ----
-    type TipoAcao = 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM'
+    type TipoAcao = 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM'
     let tipoAcao: TipoAcao | null = payload.tipoAcao ?? null
 
     if (payload.proposicaoId) {
