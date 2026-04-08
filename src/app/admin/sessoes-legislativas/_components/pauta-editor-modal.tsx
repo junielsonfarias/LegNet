@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,8 @@ import {
   ChevronDown,
   Lightbulb,
   Trash2,
-  X
+  X,
+  Search
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type {
@@ -36,6 +37,165 @@ interface ProposicaoSimples {
   numero: string
   ano: number
   titulo: string
+  tipo?: string
+  ementa?: string
+  status?: string
+  autor?: { nome?: string; apelido?: string; partido?: string } | null
+}
+
+const TIPO_LABELS: Record<string, string> = {
+  'PROJETO_LEI': 'PL', 'PROJETO_RESOLUCAO': 'PR', 'PROJETO_DECRETO': 'PD',
+  'INDICACAO': 'IND', 'REQUERIMENTO': 'REQ', 'MOCAO': 'MOC',
+  'VOTO_PESAR': 'VP', 'VOTO_APLAUSO': 'VA'
+}
+
+function MateriasSearchSection({
+  proposicoes, sugestoes, suggestionApplyingId, newPautaItem, secoes,
+  onNewPautaItemChange, onAddItem, onAddSuggestion
+}: {
+  proposicoes: ProposicaoSimples[]
+  sugestoes: PautaSugestaoApi[]
+  suggestionApplyingId: string | null
+  newPautaItem: NovoPautaItem
+  secoes: Array<{ value: string; label: string }>
+  onNewPautaItemChange: (item: NovoPautaItem) => void
+  onAddItem: () => void
+  onAddSuggestion: (sugestao: PautaSugestaoApi) => void
+}) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [tipoFilter, setTipoFilter] = useState('')
+
+  const allMaterias = useMemo(() => {
+    const sugestaoIds = new Set(sugestoes.map(s => s.proposicao?.id).filter(Boolean))
+    return [
+      ...sugestoes.map(s => ({
+        ...s.proposicao,
+        id: s.proposicao?.id || s.id,
+        numero: s.proposicao?.numero || '',
+        ano: s.proposicao?.ano || 0,
+        titulo: s.titulo || s.proposicao?.titulo || '',
+        tipo: s.proposicao?.tipo,
+        _sugestao: s
+      })),
+      ...proposicoes
+        .filter(p => !sugestaoIds.has(p.id))
+        .map(p => ({ ...p, _sugestao: null as PautaSugestaoApi | null }))
+    ]
+  }, [proposicoes, sugestoes])
+
+  const tipos = useMemo(() => {
+    const set = new Set(allMaterias.map(m => m.tipo).filter(Boolean))
+    return Array.from(set) as string[]
+  }, [allMaterias])
+
+  const filtered = useMemo(() => {
+    const term = searchTerm.toLowerCase()
+    return allMaterias.filter(m => {
+      const matchSearch = !searchTerm ||
+        (m.titulo || '').toLowerCase().includes(term) ||
+        (m.numero || '').includes(searchTerm) ||
+        (m.ementa || '').toLowerCase().includes(term) ||
+        (m.autor?.nome || '').toLowerCase().includes(term) ||
+        (m.autor?.apelido || '').toLowerCase().includes(term)
+      const matchTipo = !tipoFilter || m.tipo === tipoFilter
+      return matchSearch && matchTipo
+    })
+  }, [allMaterias, searchTerm, tipoFilter])
+
+  const handleAddMateria = (materia: typeof allMaterias[0]) => {
+    if (materia._sugestao) {
+      onAddSuggestion(materia._sugestao)
+    } else {
+      const sigla = TIPO_LABELS[materia.tipo || ''] || materia.tipo || ''
+      onNewPautaItemChange({
+        ...newPautaItem,
+        titulo: `${sigla} ${materia.numero}/${materia.ano} - ${materia.titulo}`,
+        proposicaoId: materia.id
+      })
+      onAddItem()
+    }
+  }
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <h4 className="font-semibold flex items-center gap-2">
+        <Search className="h-4 w-4" />
+        Matérias Disponíveis para Pauta
+        <Badge variant="outline" className="ml-auto">{filtered.length} encontradas</Badge>
+      </h4>
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar por titulo, numero, ementa ou autor..."
+            className="pl-9"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <select
+          value={tipoFilter}
+          onChange={(e) => setTipoFilter(e.target.value)}
+          className="px-3 py-2 border rounded-md text-sm"
+        >
+          <option value="">Todos os tipos</option>
+          {tipos.map(t => (
+            <option key={t} value={t}>{TIPO_LABELS[t] || t.replace(/_/g, ' ')}</option>
+          ))}
+        </select>
+        {(searchTerm || tipoFilter) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearchTerm(''); setTipoFilter('') }}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      <div className="max-h-64 overflow-y-auto space-y-1">
+        {filtered.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-4">Nenhuma matéria encontrada</p>
+        ) : (
+          filtered.map(materia => (
+            <div key={materia.id} className="flex items-center gap-3 p-2.5 rounded-lg border bg-white hover:bg-blue-50 transition-colors">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  {materia.tipo && (
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {TIPO_LABELS[materia.tipo] || materia.tipo}
+                    </Badge>
+                  )}
+                  <span className="text-sm font-medium text-gray-900 truncate">
+                    {materia.numero}/{materia.ano}
+                  </span>
+                  {materia._sugestao && (
+                    <Badge className="bg-yellow-100 text-yellow-700 text-[10px] shrink-0">Sugerida</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-700 truncate">{materia.titulo}</p>
+                {materia.autor && (
+                  <p className="text-xs text-gray-500">
+                    {materia.autor.apelido || materia.autor.nome}
+                    {materia.autor.partido && ` (${materia.autor.partido})`}
+                  </p>
+                )}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleAddMateria(materia)}
+                disabled={suggestionApplyingId === materia._sugestao?.id}
+                className="shrink-0"
+              >
+                {suggestionApplyingId === materia._sugestao?.id ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Plus className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
 }
 
 interface GroupedSection {
@@ -162,71 +322,32 @@ export function PautaEditorModal({
                   placeholder="Título do item"
                 />
               </div>
-              <div className="flex items-end">
-                <Button onClick={onAddItem} className="w-full">
-                  <Plus className="h-4 w-4 mr-2" /> Adicionar
-                </Button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Proposição (opcional)</Label>
-                <select
-                  value={newPautaItem.proposicaoId}
-                  onChange={(e) => onNewPautaItemChange({ ...newPautaItem, proposicaoId: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
-                >
-                  <option value="">Nenhuma</option>
-                  {proposicoes.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.numero}/{p.ano} - {p.titulo}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label>Tempo Estimado (min)</Label>
+              <div className="flex items-end gap-2">
                 <Input
                   type="number"
                   value={newPautaItem.tempoEstimado}
                   onChange={(e) => onNewPautaItemChange({ ...newPautaItem, tempoEstimado: e.target.value })}
-                  placeholder="Ex: 10"
+                  placeholder="Min"
+                  className="w-20"
                 />
+                <Button onClick={onAddItem} className="flex-1">
+                  <Plus className="h-4 w-4 mr-1" /> Adicionar
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Sugestões */}
-          {sugestoes && sugestoes.length > 0 && (
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-semibold flex items-center gap-2 mb-3">
-                <Lightbulb className="h-4 w-4" />
-                Sugestões de Itens
-              </h4>
-              <div className="space-y-2">
-                {sugestoes.slice(0, 5).map(sugestao => (
-                  <div key={sugestao.id} className="flex items-center justify-between bg-white p-2 rounded border">
-                    <div>
-                      <p className="font-medium text-sm">{sugestao.titulo}</p>
-                      <p className="text-xs text-gray-500">{sugestao.proposicao?.numero}/{sugestao.proposicao?.ano}</p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onAddSuggestion(sugestao)}
-                      disabled={suggestionApplyingId === sugestao.id}
-                    >
-                      {suggestionApplyingId === sugestao.id ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Plus className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Busca de Matérias para inclusão na pauta */}
+          <MateriasSearchSection
+            proposicoes={proposicoes}
+            sugestoes={sugestoes}
+            suggestionApplyingId={suggestionApplyingId}
+            newPautaItem={newPautaItem}
+            secoes={PAUTA_SECOES}
+            onNewPautaItemChange={onNewPautaItemChange}
+            onAddItem={onAddItem}
+            onAddSuggestion={onAddSuggestion}
+          />
 
           {/* Lista de itens por seção */}
           {loadingPauta ? (
