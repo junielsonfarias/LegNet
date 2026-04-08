@@ -23,7 +23,7 @@ export interface PautaPayload {
 }
 
 export interface PautaItemPayload {
-  secao: 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS'
+  secao: string
   titulo: string
   descricao?: string | null
   proposicaoId?: string | null
