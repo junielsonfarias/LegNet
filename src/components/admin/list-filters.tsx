@@ -37,32 +37,41 @@ export function ListFilters({
   return (
     <Card>
       <CardContent className="pt-4 pb-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={searchPlaceholder}
-              className="pl-10"
-              value={searchTerm}
-              onChange={e => onSearchChange(e.target.value)}
-            />
+        <div className="flex flex-col gap-3">
+          {/* Busca + botão limpar */}
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={searchPlaceholder}
+                className="pl-10"
+                value={searchTerm}
+                onChange={e => onSearchChange(e.target.value)}
+              />
+            </div>
+            {showClear && hasActiveFilters && onClear && (
+              <Button variant="outline" onClick={onClear} title="Limpar filtros" className="shrink-0">
+                <X className="h-4 w-4 mr-2" />
+                Limpar
+              </Button>
+            )}
           </div>
-          {filters.map((filter) => (
-            <Select key={filter.label} value={filter.value} onValueChange={filter.onChange}>
-              <SelectTrigger className={filter.width || 'w-full sm:w-[180px]'}>
-                <SelectValue placeholder={filter.placeholder || filter.label} />
-              </SelectTrigger>
-              <SelectContent>
-                {filter.options.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ))}
-          {showClear && hasActiveFilters && onClear && (
-            <Button variant="outline" size="icon" onClick={onClear} title="Limpar filtros">
-              <X className="h-4 w-4" />
-            </Button>
+          {/* Filtros select */}
+          {filters.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {filters.map((filter) => (
+                <Select key={filter.label} value={filter.value} onValueChange={filter.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={filter.placeholder || filter.label} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filter.options.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ))}
+            </div>
           )}
         </div>
       </CardContent>

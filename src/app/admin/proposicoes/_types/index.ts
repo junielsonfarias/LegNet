@@ -122,6 +122,8 @@ export interface ProposicoesState {
   searchTerm: string
   statusFilter: string
   tipoFilter: string
+  anoFilter: string
+  autorFilter: string
 
   // Formulários
   formData: ProposicaoFormData
@@ -178,6 +180,8 @@ export interface ProposicoesActions {
   setSearchTerm: (term: string) => void
   setStatusFilter: (status: string) => void
   setTipoFilter: (tipo: string) => void
+  setAnoFilter: (ano: string) => void
+  setAutorFilter: (autor: string) => void
   setFormData: React.Dispatch<React.SetStateAction<ProposicaoFormData>>
   setTramitacaoFormData: React.Dispatch<React.SetStateAction<TramitacaoFormData>>
   setIsModalOpen: (open: boolean) => void

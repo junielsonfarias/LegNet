@@ -140,6 +140,8 @@ export function useProposicoesState(): UseProposicoesStateReturn {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('TODOS')
   const [tipoFilter, setTipoFilter] = useState('TODOS')
+  const [anoFilter, setAnoFilter] = useState('TODOS')
+  const [autorFilter, setAutorFilter] = useState('TODOS')
 
   // Estados de formulários
   const [formData, setFormData] = useState<ProposicaoFormData>(getFormDataInicial())
@@ -681,6 +683,8 @@ export function useProposicoesState(): UseProposicoesStateReturn {
     searchTerm,
     statusFilter,
     tipoFilter,
+    anoFilter,
+    autorFilter,
 
     // Formulários
     formData,
@@ -725,6 +729,8 @@ export function useProposicoesState(): UseProposicoesStateReturn {
     setSearchTerm,
     setStatusFilter,
     setTipoFilter,
+    setAnoFilter,
+    setAutorFilter,
     setFormData,
     setTramitacaoFormData,
     setIsModalOpen,

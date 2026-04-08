@@ -6,10 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, RefreshCw, X, Heart } from 'lucide-react'
+import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, RefreshCw, X } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { BotaoFavorito } from '@/components/favoritos'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
@@ -88,11 +87,12 @@ export default function ProposicoesPage() {
   // Filtrar proposições
   const filteredProposicoes = useMemo(() => {
     return proposicoes.filter(p => {
+      const term = searchTerm.toLowerCase()
       const matchesSearch = !searchTerm ||
-        p.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.ementa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.numero.includes(searchTerm) ||
-        (p.autor?.nome || '').toLowerCase().includes(searchTerm.toLowerCase())
+        (p.titulo || '').toLowerCase().includes(term) ||
+        (p.ementa || '').toLowerCase().includes(term) ||
+        (p.numero || '').includes(searchTerm) ||
+        (p.autor?.nome || '').toLowerCase().includes(term)
 
       const matchesTipo = !tipoFilter || p.tipo === tipoFilter
       const matchesStatus = !statusFilter || p.status === statusFilter
@@ -337,12 +337,6 @@ export default function ProposicoesPage() {
                         {proposicao.ementa}
                       </p>
                     </div>
-                    <BotaoFavorito
-                      tipoItem="PROPOSICAO"
-                      itemId={proposicao.id}
-                      variant="outline"
-                      size="default"
-                    />
                   </div>
                 </CardHeader>
                 <CardContent>

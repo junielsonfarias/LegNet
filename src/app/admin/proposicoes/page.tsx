@@ -45,6 +45,8 @@ function ProposicoesContent() {
     searchTerm,
     statusFilter,
     tipoFilter,
+    anoFilter,
+    autorFilter,
 
     // Formulários
     formData,
@@ -87,6 +89,8 @@ function ProposicoesContent() {
     setSearchTerm,
     setStatusFilter,
     setTipoFilter,
+    setAnoFilter,
+    setAutorFilter,
     setFormData,
     setTramitacaoFormData,
     setIsModalOpen,
@@ -101,17 +105,37 @@ function ProposicoesContent() {
 
   // Computed values
   const filteredProposicoes = useMemo(() => {
+    const term = searchTerm.toLowerCase()
     return (proposicoes || []).filter(proposicao => {
       if (!proposicao) return false
-      const matchesSearch = searchTerm === '' ||
-        (proposicao.titulo?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (proposicao.ementa?.toLowerCase().includes(searchTerm.toLowerCase()))
+      const matchesSearch = !searchTerm ||
+        (proposicao.titulo || '').toLowerCase().includes(term) ||
+        (proposicao.ementa || '').toLowerCase().includes(term) ||
+        (proposicao.numero || '').includes(searchTerm) ||
+        (proposicao.autor?.nome || '').toLowerCase().includes(term) ||
+        (proposicao.autor?.apelido || '').toLowerCase().includes(term)
       const matchesStatus = statusFilter === 'TODOS' || proposicao.status === statusFilter
       const matchesTipo = tipoFilter === 'TODOS' ||
-        (proposicao.tipo?.toLowerCase() === tipoFilter.toLowerCase())
-      return matchesSearch && matchesStatus && matchesTipo
+        (proposicao.tipo || '').toLowerCase() === tipoFilter.toLowerCase()
+      const matchesAno = anoFilter === 'TODOS' || String(proposicao.ano) === anoFilter
+      const matchesAutor = autorFilter === 'TODOS' || proposicao.autorId === autorFilter
+      return matchesSearch && matchesStatus && matchesTipo && matchesAno && matchesAutor
     })
-  }, [proposicoes, searchTerm, statusFilter, tipoFilter])
+  }, [proposicoes, searchTerm, statusFilter, tipoFilter, anoFilter, autorFilter])
+
+  // Anos disponíveis (extraídos das proposições)
+  const anosDisponiveis = useMemo(() => {
+    const anos = Array.from(new Set((proposicoes || []).map(p => String(p.ano))))
+    return anos.sort((a, b) => Number(b) - Number(a))
+  }, [proposicoes])
+
+  const handleClearFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('TODOS')
+    setTipoFilter('TODOS')
+    setAnoFilter('TODOS')
+    setAutorFilter('TODOS')
+  }
 
   const statusDetalhadoAtual = useMemo(() => {
     if (!selectedProposicao) return null
@@ -242,10 +266,17 @@ function ProposicoesContent() {
         searchTerm={searchTerm}
         statusFilter={statusFilter}
         tipoFilter={tipoFilter}
+        anoFilter={anoFilter}
+        autorFilter={autorFilter}
         tiposProposicao={tiposProposicao}
+        parlamentares={parlamentares}
+        anosDisponiveis={anosDisponiveis}
         onSearchChange={setSearchTerm}
         onStatusChange={setStatusFilter}
         onTipoChange={setTipoFilter}
+        onAnoChange={setAnoFilter}
+        onAutorChange={setAutorFilter}
+        onClear={handleClearFilters}
       />
 
       {/* Lista de Proposições */}
@@ -269,7 +300,7 @@ function ProposicoesContent() {
             <FileText className="h-12 w-12 mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhuma proposição encontrada</h3>
             <p className="text-gray-500">
-              {searchTerm || statusFilter !== 'TODOS' || tipoFilter !== 'TODOS'
+              {searchTerm || statusFilter !== 'TODOS' || tipoFilter !== 'TODOS' || anoFilter !== 'TODOS' || autorFilter !== 'TODOS'
                 ? 'Tente ajustar os filtros de busca'
                 : 'Clique em "Nova Proposição" para criar a primeira'}
             </p>
