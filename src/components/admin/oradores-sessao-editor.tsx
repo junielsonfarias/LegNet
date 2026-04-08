@@ -322,7 +322,7 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
                 {TIPOS_ORADOR.map(tipo => (
                   <SelectItem key={tipo.value} value={tipo.value}>
                     {tipo.label}
-                    {data?.totaisPorTipo[tipo.value] ? (
+                    {data?.totaisPorTipo?.[tipo.value] ? (
                       <span className="ml-2 text-gray-500">
                         ({data.totaisPorTipo[tipo.value]})
                       </span>
