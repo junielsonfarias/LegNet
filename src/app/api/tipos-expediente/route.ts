@@ -24,10 +24,12 @@ const TipoExpedienteSchema = z.object({
 // GET - Lista tipos de expediente
 export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
-  const apenasAtivos = searchParams.get('ativo') !== 'false'
+  const includeInactive = searchParams.get('includeInactive') === 'true'
+  const ativoParam = searchParams.get('ativo')
+  const filtroAtivo = includeInactive ? undefined : (ativoParam === 'false' ? false : true)
 
   const tipos = await tiposExpedienteDbService.list({
-    ativo: apenasAtivos ? true : undefined
+    ativo: filtroAtivo
   })
 
   return createSuccessResponse(tipos)
