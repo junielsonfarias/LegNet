@@ -94,9 +94,9 @@ function MateriasSearchSection({
       const matchSearch = !searchTerm ||
         (m.titulo || '').toLowerCase().includes(term) ||
         (m.numero || '').includes(searchTerm) ||
-        (m.ementa || '').toLowerCase().includes(term) ||
-        (m.autor?.nome || '').toLowerCase().includes(term) ||
-        (m.autor?.apelido || '').toLowerCase().includes(term)
+        ((m as any).ementa || '').toLowerCase().includes(term) ||
+        ((m as any).autor?.nome || '').toLowerCase().includes(term) ||
+        ((m as any).autor?.apelido || '').toLowerCase().includes(term)
       const matchTipo = !tipoFilter || m.tipo === tipoFilter
       return matchSearch && matchTipo
     })
