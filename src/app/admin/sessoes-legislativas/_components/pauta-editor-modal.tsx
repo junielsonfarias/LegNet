@@ -387,7 +387,7 @@ export function PautaEditorModal({
           {/* Adicionar novo item */}
           <div className="bg-gray-50 p-4 rounded-lg space-y-4">
             <h4 className="font-semibold">Adicionar Item à Pauta</h4>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <div>
                 <Label>Seção</Label>
                 <select
@@ -398,6 +398,21 @@ export function PautaEditorModal({
                   {PAUTA_SECOES.map(s => (
                     <option key={s.value} value={s.value}>{s.label}</option>
                   ))}
+                </select>
+              </div>
+              <div>
+                <Label>Ação</Label>
+                <select
+                  value={newPautaItem.tipoAcao}
+                  onChange={(e) => onNewPautaItemChange({ ...newPautaItem, tipoAcao: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                >
+                  <option value="">Automática</option>
+                  <option value="LEITURA">Leitura</option>
+                  <option value="DISCUSSAO">Discussão</option>
+                  <option value="VOTACAO">Votação</option>
+                  <option value="COMUNICADO">Comunicado</option>
+                  <option value="HOMENAGEM">Homenagem</option>
                 </select>
               </div>
               <div className="md:col-span-2">
@@ -482,8 +497,26 @@ export function PautaEditorModal({
                             draggedItemId === item.id && 'opacity-50'
                           )}
                         >
-                          <div className="flex-1">
-                            <p className="font-medium">{item.titulo}</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <p className="font-medium truncate">{item.titulo}</p>
+                              {item.tipoAcao && (
+                                <Badge variant="outline" className={cn('text-[10px] shrink-0',
+                                  item.tipoAcao === 'LEITURA' && 'border-blue-300 text-blue-700',
+                                  item.tipoAcao === 'VOTACAO' && 'border-green-300 text-green-700',
+                                  item.tipoAcao === 'DISCUSSAO' && 'border-yellow-300 text-yellow-700',
+                                  item.tipoAcao === 'COMUNICADO' && 'border-gray-300 text-gray-700',
+                                  item.tipoAcao === 'HOMENAGEM' && 'border-purple-300 text-purple-700'
+                                )}>
+                                  {item.tipoAcao === 'LEITURA' ? 'Leitura' :
+                                   item.tipoAcao === 'VOTACAO' ? 'Votação' :
+                                   item.tipoAcao === 'DISCUSSAO' ? 'Discussão' :
+                                   item.tipoAcao === 'COMUNICADO' ? 'Comunicado' :
+                                   item.tipoAcao === 'HOMENAGEM' ? 'Homenagem' :
+                                   item.tipoAcao}
+                                </Badge>
+                              )}
+                            </div>
                             {item.proposicao && (
                               <p className="text-xs text-gray-500">
                                 {item.proposicao.numero}/{item.proposicao.ano}

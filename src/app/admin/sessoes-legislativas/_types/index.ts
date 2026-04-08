@@ -34,6 +34,7 @@ export interface NovoPautaItem {
   descricao: string
   tempoEstimado: string
   proposicaoId: string
+  tipoAcao: string
 }
 
 // Sessão com campos adicionais para compatibilidade
@@ -127,7 +128,8 @@ export const getNovoPautaItemInicial = (): NovoPautaItem => ({
   titulo: '',
   descricao: '',
   tempoEstimado: '',
-  proposicaoId: ''
+  proposicaoId: '',
+  tipoAcao: ''
 })
 
 export const formatDateTime = (dateTime: string): string => {

@@ -341,7 +341,8 @@ export function useSessoesState() {
       titulo: newPautaItem.titulo.trim(),
       descricao: newPautaItem.descricao.trim() || undefined,
       tempoEstimado: newPautaItem.tempoEstimado ? Number(newPautaItem.tempoEstimado) : undefined,
-      proposicaoId: newPautaItem.proposicaoId || undefined
+      proposicaoId: newPautaItem.proposicaoId || undefined,
+      tipoAcao: newPautaItem.tipoAcao || undefined
     })
 
     setNewPautaItem(prev => ({
@@ -349,7 +350,8 @@ export function useSessoesState() {
       titulo: '',
       descricao: '',
       tempoEstimado: '',
-      proposicaoId: ''
+      proposicaoId: '',
+      tipoAcao: ''
     }))
 
     await refetchPauta()
