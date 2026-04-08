@@ -102,14 +102,17 @@ export const dadosAbertosService = {
           numero: true,
           ano: true,
           tipo: true,
+          titulo: true,
           ementa: true,
           status: true,
           dataApresentacao: true,
           dataVotacao: true,
+          resultado: true,
           autor: {
             select: {
               id: true,
               nome: true,
+              apelido: true,
               partido: true
             }
           },
@@ -120,7 +123,7 @@ export const dadosAbertosService = {
             }
           }
         },
-        orderBy: [{ ano: 'desc' }, { numero: 'desc' }],
+        orderBy: { dataApresentacao: 'desc' },
         skip: (page - 1) * limit,
         take: limit
       }),
@@ -132,13 +135,19 @@ export const dadosAbertosService = {
       numero: p.numero,
       ano: p.ano,
       tipo: p.tipo,
+      titulo: p.titulo,
       ementa: p.ementa,
       status: p.status,
+      dataApresentacao: p.dataApresentacao?.toISOString() || null,
+      dataVotacao: p.dataVotacao?.toISOString() || null,
+      resultado: p.resultado || null,
+      // Manter snake_case para compatibilidade CSV/dados abertos
       data_apresentacao: p.dataApresentacao?.toISOString().split('T')[0] || null,
       data_votacao: p.dataVotacao?.toISOString().split('T')[0] || null,
       autor: p.autor ? {
         id: p.autor.id,
         nome: p.autor.nome,
+        apelido: p.autor.apelido || null,
         partido: p.autor.partido
       } : null,
       total_tramitacoes: p._count.tramitacoes,
