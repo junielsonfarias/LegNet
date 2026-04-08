@@ -139,24 +139,20 @@ export function SessaoCard({
             <span className="hidden sm:inline">Detalhes</span>
           </Button>
 
-          {!isFinalizada && (
-            <Button variant="ghost" size="sm" onClick={() => onEdit(sessao)} className="text-gray-600 hover:text-gray-900">
-              <Edit className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Editar</span>
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" onClick={() => onEdit(sessao)} className="text-gray-600 hover:text-gray-900">
+            <Edit className="h-4 w-4 mr-1.5" />
+            <span className="hidden sm:inline">Editar</span>
+          </Button>
 
           <Button variant="ghost" size="sm" onClick={() => onManagePauta(sessao)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50">
             <FileText className="h-4 w-4 mr-1.5" />
             <span className="hidden sm:inline">{totalItens > 0 ? 'Editar Pauta' : 'Criar Pauta'}</span>
           </Button>
 
-          {!isFinalizada && (
-            <Button variant="ghost" size="sm" onClick={() => onOpenTemplateModal(sessao)} className="text-gray-600 hover:text-gray-900">
-              <Layers className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Template</span>
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" onClick={() => onOpenTemplateModal(sessao)} className="text-gray-600 hover:text-gray-900">
+            <Layers className="h-4 w-4 mr-1.5" />
+            <span className="hidden sm:inline">Template</span>
+          </Button>
 
           {isFinalizada && (
             <a
