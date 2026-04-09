@@ -656,6 +656,12 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
         } else {
           ata += item.titulo.toUpperCase()
           if (item.descricao) ata += ` – ${item.descricao}`
+          // Resultado da votação para itens sem proposição (ex: ata)
+          if (item.tipoAcao === 'LEITURA_ATA' && ['APROVADO', 'CONCLUIDO'].includes(item.status)) {
+            ata += `. <strong>Ata aprovada</strong>`
+          } else if (item.tipoAcao === 'LEITURA_ATA' && item.status === 'REJEITADO') {
+            ata += `. <strong>Ata rejeitada</strong>`
+          }
         }
         ata += `. `
       }
@@ -749,6 +755,12 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
         } else {
           ata += item.titulo.toUpperCase()
           if (item.descricao) ata += ` – ${item.descricao}`
+          // Resultado para itens sem proposição (ata, ofício)
+          if (item.tipoAcao === 'LEITURA_ATA' && ['APROVADO', 'CONCLUIDO'].includes(item.status)) {
+            ata += `. <strong>Ata lida e aprovada pelos Vereadores presentes</strong>`
+          } else if (item.tipoAcao === 'LEITURA_ATA' && item.status === 'REJEITADO') {
+            ata += `. <strong>Ata rejeitada, devendo ser refeita e reapresentada</strong>`
+          }
         }
         ata += `. `
       }
