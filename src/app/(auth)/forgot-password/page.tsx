@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
               <Building2 className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Câmara Municipal</h1>
+              <h1 className="text-2xl font-bold text-white">{configuracao?.nomeCasa || 'Câmara Municipal'}</h1>
               <p className="text-white/80">{configuracao?.endereco?.cidade || 'Cidade'} - {configuracao?.endereco?.estado || 'UF'}</p>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
                 <Building2 className="h-6 w-6 text-white" />
               </div>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">Câmara Municipal</h1>
+            <h1 className="text-xl font-bold text-gray-900">{configuracao?.nomeCasa || 'Câmara Municipal'}</h1>
             <p className="text-gray-500 text-sm">{configuracao?.endereco?.cidade || 'Cidade'} - {configuracao?.endereco?.estado || 'UF'}</p>
           </div>
 

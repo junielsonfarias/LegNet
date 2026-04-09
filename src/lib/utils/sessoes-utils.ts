@@ -94,7 +94,7 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
     })
 
     if (periodoProximo) {
-      console.log(`⚠️ Usando período ${periodoProximo.numero} para data ${data.toISOString()} (período com dataFim expirada)`)
+      // Debug: Usando período ${periodoProximo.numero} para data ${data.toISOString()} (período com dataFim expirada)`)
       return {
         id: periodoProximo.id,
         legislaturaId: periodoProximo.legislaturaId,
@@ -113,7 +113,7 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
     })
 
     if (periodoRecente) {
-      console.log(`⚠️ Usando período mais recente ${periodoRecente.numero} da legislatura`)
+      // Debug: Usando período mais recente ${periodoRecente.numero} da legislatura`)
       return {
         id: periodoRecente.id,
         legislaturaId: periodoRecente.legislaturaId,
@@ -172,7 +172,7 @@ export async function getPeriodoParaData(data: Date, legislaturaId: string): Pro
     })
 
     if (periodoProximo) {
-      console.log(`⚠️ Data ${data.toISOString()} está fora do período ${periodoProximo.numero}, mas será aceita (dados pretéritos)`)
+      // Debug: Data ${data.toISOString()} está fora do período ${periodoProximo.numero}, mas será aceita (dados pretéritos)`)
       return {
         id: periodoProximo.id,
         legislaturaId: periodoProximo.legislaturaId,
@@ -190,7 +190,7 @@ export async function getPeriodoParaData(data: Date, legislaturaId: string): Pro
     })
 
     if (primeiroPeriodo) {
-      console.log(`⚠️ Usando primeiro período da legislatura para data ${data.toISOString()} (dados pretéritos)`)
+      // Debug: Usando primeiro período da legislatura para data ${data.toISOString()} (dados pretéritos)`)
       return {
         id: primeiroPeriodo.id,
         legislaturaId: primeiroPeriodo.legislaturaId,

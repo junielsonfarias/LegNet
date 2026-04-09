@@ -931,7 +931,7 @@ export async function pedirVistaItem(
     })
   ])
 
-  console.log(`[Vista] Item ${item.titulo} - Vista pedida por ${parlamentar.apelido || parlamentar.nome}. Prazo: ${prazo.toLocaleDateString('pt-BR')}`)
+  // Log removido em produção — dados de vista já ficam no registro do PautaItem
 
   return prisma.pautaItem.findUnique({ where: { id: itemId } })
 }
