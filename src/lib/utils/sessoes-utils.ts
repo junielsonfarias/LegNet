@@ -731,19 +731,17 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
             }
 
             // Votação nominal: listar como votou cada vereador
-            if (!unanime) {
-              ata += `. Votaram: `
-              if (votosSim.length > 0) {
-                ata += `<strong>SIM:</strong> ${votosSim.map(v => v.parlamentar.nome).join(', ')}`
-              }
-              if (votosNao.length > 0) {
-                if (votosSim.length > 0) ata += `; `
-                ata += `<strong>NÃO:</strong> ${votosNao.map(v => v.parlamentar.nome).join(', ')}`
-              }
-              if (votosAbst.length > 0) {
-                if (votosSim.length > 0 || votosNao.length > 0) ata += `; `
-                ata += `<strong>ABSTENÇÃO:</strong> ${votosAbst.map(v => v.parlamentar.nome).join(', ')}`
-              }
+            ata += `. Votaram: `
+            if (votosSim.length > 0) {
+              ata += `<strong>SIM:</strong> ${votosSim.map(v => v.parlamentar.nome).join(', ')}`
+            }
+            if (votosNao.length > 0) {
+              if (votosSim.length > 0) ata += `; `
+              ata += `<strong>NÃO:</strong> ${votosNao.map(v => v.parlamentar.nome).join(', ')}`
+            }
+            if (votosAbst.length > 0) {
+              if (votosSim.length > 0 || votosNao.length > 0) ata += `; `
+              ata += `<strong>ABSTENÇÃO:</strong> ${votosAbst.map(v => v.parlamentar.nome).join(', ')}`
             }
           }
         } else {
