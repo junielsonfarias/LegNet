@@ -280,7 +280,9 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
       proposicaoId: item.proposicaoId || undefined,
       tempoEstimado: item.tempoEstimado || 15,
       tipoAcao: item.tipoAcao || 'VOTACAO',
-      tipoVotacao: item.tipoVotacao || 'NOMINAL'
+      tipoVotacao: item.tipoVotacao || 'NOMINAL',
+      sessaoAtaOrigemId: item.sessaoAtaOrigemId || undefined,
+      oficioId: item.oficioId || undefined
     })
     setIsAddingItem(false)
   }
@@ -330,7 +332,9 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
           descricao: formData.descricao || undefined,
           tempoEstimado: formData.tempoEstimado,
           tipoAcao: formData.tipoAcao as any,
-          tipoVotacao: formData.tipoVotacao as any
+          tipoVotacao: formData.tipoVotacao as any,
+          sessaoAtaOrigemId: formData.sessaoAtaOrigemId || undefined,
+          oficioId: formData.oficioId || undefined
         })
       } else {
         await addItem({

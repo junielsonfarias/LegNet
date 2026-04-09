@@ -25,6 +25,8 @@ const PautaItemUpdateSchema = z.object({
   ordem: z.number().int().min(1).optional(),
   tipoAcao: z.enum(TIPO_ACAO_PAUTA).nullish().transform(v => v ?? undefined),
   tipoVotacao: z.enum(['NOMINAL', 'SECRETA', 'SIMBOLICA', 'LEITURA'] as const).nullish().transform(v => v ?? undefined),
+  sessaoAtaOrigemId: z.string().nullable().optional(),
+  oficioId: z.string().nullable().optional(),
   // === NOVOS CAMPOS DE ETAPA E LEITURA ===
   etapa: z.number().int().min(1).max(2).nullable().optional(), // 1 = 1ª Ordem do Dia, 2 = 2ª Ordem do Dia
   parecerId: z.string().nullable().optional(),
@@ -117,6 +119,8 @@ export const PUT = withAuth(async (
   if (data.observacoes !== undefined) updateData.observacoes = data.observacoes ?? null
   if (data.tipoAcao !== undefined) updateData.tipoAcao = data.tipoAcao
   if (data.tipoVotacao !== undefined) updateData.tipoVotacao = data.tipoVotacao
+  if (data.sessaoAtaOrigemId !== undefined) updateData.sessaoAtaOrigemId = data.sessaoAtaOrigemId
+  if (data.oficioId !== undefined) updateData.oficioId = data.oficioId
   if (data.etapa !== undefined) updateData.etapa = data.etapa
   if (data.parecerId !== undefined) updateData.parecerId = data.parecerId
   if (data.leituraNumero !== undefined) updateData.leituraNumero = data.leituraNumero

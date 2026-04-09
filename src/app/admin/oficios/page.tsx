@@ -81,6 +81,11 @@ export default function OficiosPage() {
         })
       })
 
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        toast.error(err.error || 'Erro ao salvar ofício')
+        return
+      }
       const result = await res.json()
       if (result.success) {
         toast.success(editingId ? 'Ofício atualizado' : 'Ofício cadastrado')
@@ -127,12 +132,18 @@ export default function OficiosPage() {
 
   const handleToggleLido = async (oficio: Oficio) => {
     try {
-      await fetch(`/api/oficios/${oficio.id}`, {
+      const res = await fetch(`/api/oficios/${oficio.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lido: !oficio.lido })
       })
-      fetchOficios()
+      const result = await res.json()
+      if (result.success) {
+        toast.success(oficio.lido ? 'Marcado como não lido' : 'Marcado como lido')
+        fetchOficios()
+      } else {
+        toast.error(result.error || 'Erro ao atualizar status')
+      }
     } catch {
       toast.error('Erro ao atualizar status')
     }
