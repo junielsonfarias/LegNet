@@ -75,6 +75,7 @@ interface ItemPauta {
   ordem: number
   secao: string
   status: string
+  tipoAcao?: string
   proposicao?: {
     id: string
     numero: string
@@ -84,6 +85,8 @@ interface ItemPauta {
     status: string
   }
   tipoVotacao?: string
+  sessaoAtaOrigemId?: string
+  oficioId?: string
 }
 
 export default function LancamentoRetroativoPage() {
@@ -333,18 +336,53 @@ export default function LancamentoRetroativoPage() {
     )
   }
 
-  // Itens da pauta com proposicao
+  // Todos os itens da pauta (não só com proposição)
   const itensPauta: ItemPauta[] = (sessao.pautaSessao?.itens || [])
-    .filter((item: any) => item.proposicao)
     .map((item: any) => ({
       id: item.id,
       titulo: item.titulo,
       ordem: item.ordem,
       secao: item.secao,
       status: item.status,
-      proposicao: item.proposicao,
-      tipoVotacao: item.tipoVotacao
+      tipoAcao: item.tipoAcao,
+      proposicao: item.proposicao || undefined,
+      tipoVotacao: item.tipoVotacao,
+      sessaoAtaOrigemId: item.sessaoAtaOrigemId,
+      oficioId: item.oficioId
     }))
+
+  // Agrupar por seção
+  const itensPorSecao = itensPauta.reduce((acc, item) => {
+    const secao = item.secao || 'OUTROS'
+    if (!acc[secao]) acc[secao] = []
+    acc[secao].push(item)
+    return acc
+  }, {} as Record<string, ItemPauta[]>)
+
+  // Resolver nomes de seção
+  const [nomesSecao, setNomesSecao] = useState<Record<string, string>>({})
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          const map: Record<string, string> = {
+            'ORDEM_DO_DIA': 'Ordem do Dia', 'OUTROS': 'Outros',
+            'EXPEDIENTE': 'Expediente', 'COMUNICACOES': 'Comunicações', 'HONRAS': 'Honras'
+          }
+          data.data.forEach((t: any) => { map[t.id] = t.nome })
+          setNomesSecao(map)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Verificar se ação envolve votação
+  const ehVotacao = (tipoAcao?: string) =>
+    ['VOTACAO', 'LEITURA_VOTACAO', 'DISCUSSAO_VOTACAO', 'LEITURA_ATA'].includes(tipoAcao || '')
+
+  const ehLeitura = (tipoAcao?: string) =>
+    ['LEITURA', 'LEITURA_OFICIO', 'COMUNICADO', 'HOMENAGEM'].includes(tipoAcao || '')
 
   const presentes = (sessao.presencas || []).filter(p => p.presente).length
   const totalParlamentares = (sessao.presencas || []).length
@@ -402,11 +440,11 @@ export default function LancamentoRetroativoPage() {
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <Vote className="h-5 w-5" />
-                  Selecione a Proposição
+                  <ClipboardList className="h-5 w-5" />
+                  Itens da Pauta
                 </CardTitle>
                 <CardDescription>
-                  Escolha o item da pauta para registrar os votos
+                  Registre leituras, votações e resultados de cada item
                 </CardDescription>
               </div>
               {!editandoPauta && itensPauta.length > 0 && (
@@ -434,122 +472,154 @@ export default function LancamentoRetroativoPage() {
               <div className="text-center py-8">
                 <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">
-                  Nenhuma proposição na pauta desta sessão.
-                </p>
-                <p className="text-sm text-gray-400 mb-6">
-                  Para lançar votações retroativas, primeiro adicione as proposições que foram votadas na sessão.
+                  Nenhum item na pauta desta sessão.
                 </p>
                 <Button onClick={() => setEditandoPauta(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Proposições à Pauta
+                  Editar Pauta
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {itensPauta.map(item => (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      'p-3 rounded-lg border transition-colors',
-                      itemSelecionado?.id === item.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    )}
-                  >
-                    <div
-                      className="flex items-start justify-between cursor-pointer"
-                      onClick={() => setItemSelecionado(item)}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium">
-                            {item.proposicao?.tipo} {item.proposicao?.numero}/{item.proposicao?.ano}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              'text-xs',
-                              item.status === 'APROVADO' && 'bg-green-50 text-green-700 border-green-200',
-                              item.status === 'REJEITADO' && 'bg-red-50 text-red-700 border-red-200',
-                              item.status === 'ADIADO' && 'bg-orange-50 text-orange-700 border-orange-200',
-                              item.status === 'RETIRADO' && 'bg-purple-50 text-purple-700 border-purple-200',
-                              item.status === 'PENDENTE' && 'bg-gray-50 text-gray-700'
-                            )}
-                          >
-                            {item.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                          {item.proposicao?.titulo || item.titulo}
-                        </p>
-                      </div>
-                      {itemSelecionado?.id === item.id && (
-                        <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                      )}
-                    </div>
-
-                    {/* Ações Rápidas - alterar status diretamente */}
-                    {item.status === 'PENDENTE' && (
-                      <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-                        <span className="text-xs text-gray-500 mr-2">Ação rápida:</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs text-green-600 hover:bg-green-50"
-                          disabled={alterandoStatus === item.id}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            alterarStatusItem(item.id, 'APROVADO')
-                          }}
-                        >
-                          {alterandoStatus === item.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <>
-                              <ThumbsUp className="h-3 w-3 mr-1" />
-                              Aprovado
-                            </>
+              <div className="space-y-4">
+                {Object.entries(itensPorSecao).map(([secao, itens]) => (
+                  <div key={secao}>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      {nomesSecao[secao] || secao.replace(/_/g, ' ')}
+                    </h3>
+                    <div className="space-y-2">
+                      {itens.map(item => (
+                        <div
+                          key={item.id}
+                          className={cn(
+                            'p-3 rounded-lg border transition-colors',
+                            itemSelecionado?.id === item.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : item.status !== 'PENDENTE'
+                                ? 'border-gray-200 bg-gray-50/50'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                           )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs text-red-600 hover:bg-red-50"
-                          disabled={alterandoStatus === item.id}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            alterarStatusItem(item.id, 'REJEITADO')
-                          }}
                         >
-                          <ThumbsDown className="h-3 w-3 mr-1" />
-                          Rejeitado
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs text-orange-600 hover:bg-orange-50"
-                          disabled={alterandoStatus === item.id}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            alterarStatusItem(item.id, 'ADIADO')
-                          }}
-                        >
-                          Adiado
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs text-purple-600 hover:bg-purple-50"
-                          disabled={alterandoStatus === item.id}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            alterarStatusItem(item.id, 'RETIRADO')
-                          }}
-                        >
-                          Retirado
-                        </Button>
-                      </div>
-                    )}
+                          <div
+                            className={cn('flex items-start justify-between', ehVotacao(item.tipoAcao) && item.proposicao && 'cursor-pointer')}
+                            onClick={() => {
+                              if (ehVotacao(item.tipoAcao) && item.proposicao) {
+                                setItemSelecionado(item)
+                              }
+                            }}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-sm">
+                                  {item.proposicao
+                                    ? `${item.proposicao.tipo} ${item.proposicao.numero}/${item.proposicao.ano}`
+                                    : item.titulo
+                                  }
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    'text-xs',
+                                    item.status === 'APROVADO' && 'bg-green-50 text-green-700 border-green-200',
+                                    item.status === 'REJEITADO' && 'bg-red-50 text-red-700 border-red-200',
+                                    item.status === 'CONCLUIDO' && 'bg-green-50 text-green-700 border-green-200',
+                                    item.status === 'ADIADO' && 'bg-orange-50 text-orange-700 border-orange-200',
+                                    item.status === 'RETIRADO' && 'bg-purple-50 text-purple-700 border-purple-200',
+                                    item.status === 'PENDENTE' && 'bg-gray-50 text-gray-700'
+                                  )}
+                                >
+                                  {item.status === 'CONCLUIDO' ? 'Concluído' : item.status}
+                                </Badge>
+                              </div>
+                              {item.proposicao && (
+                                <p className="text-xs text-gray-500 line-clamp-1">{item.proposicao.titulo || item.titulo}</p>
+                              )}
+                            </div>
+                            {itemSelecionado?.id === item.id && (
+                              <CheckCircle2 className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                            )}
+                          </div>
+
+                          {/* Ações por tipo - só para itens PENDENTES */}
+                          {item.status === 'PENDENTE' && (
+                            <div className="flex items-center gap-2 mt-3 pt-3 border-t flex-wrap">
+                              <span className="text-xs text-gray-500 mr-1">Ação:</span>
+
+                              {/* LEITURA simples (ofício, comunicado, etc) */}
+                              {ehLeitura(item.tipoAcao) && (
+                                <Button
+                                  size="sm" variant="outline"
+                                  className="h-7 text-xs text-blue-600 hover:bg-blue-50"
+                                  disabled={alterandoStatus === item.id}
+                                  onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'APROVADO') }}
+                                >
+                                  {alterandoStatus === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><CheckCircle2 className="h-3 w-3 mr-1" />Leitura Concluída</>}
+                                </Button>
+                              )}
+
+                              {/* LEITURA_ATA */}
+                              {item.tipoAcao === 'LEITURA_ATA' && (
+                                <>
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="h-7 text-xs text-green-600 hover:bg-green-50"
+                                    disabled={alterandoStatus === item.id}
+                                    onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'APROVADO') }}
+                                  >
+                                    {alterandoStatus === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ThumbsUp className="h-3 w-3 mr-1" />Ata Aprovada</>}
+                                  </Button>
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="h-7 text-xs text-red-600 hover:bg-red-50"
+                                    disabled={alterandoStatus === item.id}
+                                    onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'REJEITADO') }}
+                                  >
+                                    <ThumbsDown className="h-3 w-3 mr-1" />Ata Rejeitada
+                                  </Button>
+                                </>
+                              )}
+
+                              {/* VOTAÇÃO (proposição) */}
+                              {ehVotacao(item.tipoAcao) && item.tipoAcao !== 'LEITURA_ATA' && (
+                                <>
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="h-7 text-xs text-green-600 hover:bg-green-50"
+                                    disabled={alterandoStatus === item.id}
+                                    onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'APROVADO') }}
+                                  >
+                                    {alterandoStatus === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><ThumbsUp className="h-3 w-3 mr-1" />Aprovado</>}
+                                  </Button>
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="h-7 text-xs text-red-600 hover:bg-red-50"
+                                    disabled={alterandoStatus === item.id}
+                                    onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'REJEITADO') }}
+                                  >
+                                    <ThumbsDown className="h-3 w-3 mr-1" />Rejeitado
+                                  </Button>
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="h-7 text-xs text-orange-600 hover:bg-orange-50"
+                                    disabled={alterandoStatus === item.id}
+                                    onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'ADIADO') }}
+                                  >
+                                    Adiado
+                                  </Button>
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="h-7 text-xs text-purple-600 hover:bg-purple-50"
+                                    disabled={alterandoStatus === item.id}
+                                    onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'RETIRADO') }}
+                                  >
+                                    Retirado
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
