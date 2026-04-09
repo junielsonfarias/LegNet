@@ -393,12 +393,14 @@ export default function SessoesPage() {
                       <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          {new Date(sessao.data).toLocaleDateString('pt-BR')}
+                          {new Date(sessao.data.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </div>
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {new Date(sessao.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
+                        {sessao.horario && (
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {sessao.horario}
+                          </div>
+                        )}
                       </div>
                       {sessao.descricao && (
                         <p className="text-gray-700">

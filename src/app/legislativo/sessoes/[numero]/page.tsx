@@ -295,14 +295,17 @@ export default function SessaoDetailPage() {
                 )}
               </div>
               <p className="text-sm sm:text-base text-gray-600">
-                {sessao?.data ? new Date(sessao.data).toLocaleDateString('pt-BR', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) : 'Data não disponível'}
+                {sessao?.data ? (
+                  <>
+                    {new Date(sessao.data.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                    {sessao.horario && ` às ${sessao.horario}`}
+                  </>
+                ) : 'Data não disponível'}
               </p>
             </div>
           </div>
@@ -427,13 +430,12 @@ export default function SessaoDetailPage() {
                         Data e Horário
                       </h3>
                       <p className="text-gray-900">
-                        {new Date(sessao.data).toLocaleDateString('pt-BR', {
+                        {new Date(sessao.data.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', {
                           day: '2-digit',
                           month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
+                          year: 'numeric'
                         })}
+                        {sessao.horario && ` às ${sessao.horario}`}
                       </p>
                     </div>
                   )}
