@@ -30,6 +30,7 @@ interface SessaoPublica {
   urlVideo: string | null
   urlTransmissao: string | null
   presentes: number
+  total_proposicoes: number
   legislatura: {
     numero: number
     anoInicio: number
@@ -78,13 +79,15 @@ export default function SessoesPage() {
   }, [])
 
   // Estatísticas calculadas
+  const sessoesRealizadas = sessoes.filter(s => s.status === 'CONCLUIDA')
+  const totalPresencas = sessoesRealizadas.reduce((acc, s) => acc + (s.presentes || 0), 0)
   const estatisticas = {
     total: sessoes.length,
-    realizadas: sessoes.filter(s => s.status === 'CONCLUIDA').length,
+    realizadas: sessoesRealizadas.length,
     agendadas: sessoes.filter(s => s.status === 'AGENDADA').length,
     canceladas: sessoes.filter(s => s.status === 'CANCELADA').length,
-    totalProposicoes: 0, // TODO: Calcular quando houver relacionamento
-    mediaPresenca: 0 // TODO: Calcular quando houver relacionamento
+    totalProposicoes: sessoes.reduce((acc, s) => acc + (s.total_proposicoes || 0), 0),
+    mediaPresenca: sessoesRealizadas.length > 0 ? Math.round(totalPresencas / sessoesRealizadas.length) : 0
   }
 
   // Tipos únicos
