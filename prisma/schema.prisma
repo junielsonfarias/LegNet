@@ -476,14 +476,6 @@ enum PautaStatus {
   CONCLUIDA
 }
 
-enum PautaSecao {
-  EXPEDIENTE
-  ORDEM_DO_DIA
-  COMUNICACOES
-  HONRAS
-  OUTROS
-}
-
 enum PautaItemStatus {
   PENDENTE
   EM_DISCUSSAO
