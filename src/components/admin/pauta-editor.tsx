@@ -56,13 +56,34 @@ interface PautaEditorProps {
   onClose?: () => void
 }
 
-const SECOES = [
+// Seções fixas que sempre aparecem
+const SECOES_FIXAS = [
+  { value: 'ORDEM_DO_DIA', label: 'Ordem do Dia', icon: Gavel, color: 'bg-purple-100 text-purple-700' },
+  { value: 'OUTROS', label: 'Outros', icon: MoreHorizontal, color: 'bg-gray-100 text-gray-700' }
+]
+
+// Fallback caso não carregue tipos do banco
+const SECOES_FALLBACK = [
   { value: 'EXPEDIENTE', label: 'Expediente', icon: BookOpen, color: 'bg-blue-100 text-blue-700' },
   { value: 'ORDEM_DO_DIA', label: 'Ordem do Dia', icon: Gavel, color: 'bg-purple-100 text-purple-700' },
   { value: 'COMUNICACOES', label: 'Comunicações', icon: MessageSquare, color: 'bg-green-100 text-green-700' },
   { value: 'HONRAS', label: 'Honras', icon: Award, color: 'bg-amber-100 text-amber-700' },
   { value: 'OUTROS', label: 'Outros', icon: MoreHorizontal, color: 'bg-gray-100 text-gray-700' }
 ]
+
+// Ícones para tipos de expediente vindos do banco
+const ICON_MAP: Record<string, any> = {
+  expediente: BookOpen, pequeno: BookOpen, grande: BookOpen,
+  comunicac: MessageSquare, honra: Award, homenag: Award
+}
+
+function resolverIcone(nome: string) {
+  const nomeLower = nome.toLowerCase()
+  for (const [key, icon] of Object.entries(ICON_MAP)) {
+    if (nomeLower.includes(key)) return icon
+  }
+  return FileText
+}
 
 const TIPOS_ACAO = [
   { value: 'LEITURA', label: 'Leitura' },
@@ -116,6 +137,27 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
     addSuggestionAsItem
   } = usePauta(sessaoId)
 
+  // Tipos de expediente do banco
+  const [secoes, setSecoes] = useState(SECOES_FALLBACK)
+
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const tiposDoBanco = data.data.map((t: any) => ({
+            value: t.id,
+            label: t.nome,
+            icon: resolverIcone(t.nome),
+            color: 'bg-blue-100 text-blue-700'
+          }))
+          // Tipos do banco + seções fixas (Ordem do Dia, Outros)
+          setSecoes([...tiposDoBanco, ...SECOES_FIXAS])
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   const [editingItem, setEditingItem] = useState<PautaItemApi | null>(null)
   const [isAddingItem, setIsAddingItem] = useState(false)
   const [formData, setFormData] = useState<ItemFormData>(defaultFormData)
@@ -134,6 +176,18 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
     acc[secao].push(item)
     return acc
   }, {} as Record<string, PautaItemApi[]>) || {}
+
+  // Detectar seções com itens que não estão na lista dinâmica (legado)
+  const secoesConhecidas = new Set(secoes.map(s => s.value))
+  const secoesOrfas = Object.keys(itensPorSecao)
+    .filter(s => !secoesConhecidas.has(s))
+    .map(s => ({
+      value: s,
+      label: s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      icon: FileText,
+      color: 'bg-gray-100 text-gray-700'
+    }))
+  const todasSecoes = [...secoes, ...secoesOrfas]
 
   // Garantir que suggestions seja um array antes de filtrar
   const suggestionsArray = Array.isArray(suggestions) ? suggestions : []
@@ -262,7 +316,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
   }
 
   const getSecaoConfig = (secao: string) => {
-    return SECOES.find(s => s.value === secao) || SECOES[4]
+    return todasSecoes.find(s => s.value === secao) || { value: secao, label: secao, icon: FileText, color: 'bg-gray-100 text-gray-700' }
   }
 
   const getStatusConfig = (status: string) => {
@@ -344,7 +398,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SECOES.map(secao => (
+                    {secoes.map(secao => (
                       <SelectItem key={secao.value} value={secao.value}>
                         <div className="flex items-center gap-2">
                           <secao.icon className="h-4 w-4" />
@@ -477,7 +531,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
       {/* Lista de itens por seção */}
       {pauta?.itens && pauta.itens.length > 0 ? (
         <div className="space-y-3">
-          {SECOES.map(secao => {
+          {todasSecoes.map(secao => {
             const itens = itensPorSecao[secao.value] || []
             if (itens.length === 0) return null
 
