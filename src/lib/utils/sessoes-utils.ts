@@ -641,7 +641,14 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
         ata += `<strong>ITEM ${String(i + 1).padStart(2, '0')}</strong> – `
         if (item.proposicao) {
           const prop = item.proposicao
-          ata += `LEITURA DO ${prop.tipo.toUpperCase()} Nº ${prop.numero}/${prop.ano}`
+          // Texto baseado no tipoAcao cadastrado
+          const acaoLabels: Record<string, string> = {
+            'LEITURA': 'LEITURA', 'DISCUSSAO': 'DISCUSSÃO', 'VOTACAO': 'DISCUSSÃO E VOTAÇÃO',
+            'LEITURA_VOTACAO': 'LEITURA E VOTAÇÃO', 'DISCUSSAO_VOTACAO': 'DISCUSSÃO E VOTAÇÃO',
+            'COMUNICADO': 'LEITURA', 'HOMENAGEM': 'LEITURA'
+          }
+          const acaoLabel = acaoLabels[item.tipoAcao] || 'LEITURA'
+          ata += `${acaoLabel} DO ${prop.tipo.toUpperCase()} Nº ${prop.numero}/${prop.ano}`
           if (prop.autor) ata += ` – AUTORIA – ${prop.autor.nome?.toUpperCase() || 'NÃO INFORMADO'}`
           if (item.descricao) ata += ` – ${item.descricao}`
           else if (prop.ementa) ata += ` – ${prop.ementa}`
@@ -677,7 +684,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     // ── ORDEM DO DIA ──
     const itensOD = secoesMap.get('ORDEM_DO_DIA') || []
     if (itensOD.length > 0) {
-      ata += `<p style="${S.p}">Na seqüência, iniciou-se a <strong>Ordem do Dia</strong>, com as seguintes matérias para deliberação: `
+      ata += `<p style="${S.p}">Na sequência, iniciou-se a <strong>Ordem do Dia</strong>, com as seguintes matérias para deliberação: `
       ata += `<strong>ITENS:</strong> `
 
       for (let i = 0; i < itensOD.length; i++) {
@@ -686,33 +693,57 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
 
         if (item.proposicao) {
           const prop = item.proposicao
-          ata += `<strong>DISCUSSÃO E VOTAÇÃO DO ${prop.tipo.toUpperCase()} Nº ${prop.numero}/${prop.ano}`
+
+          // Texto baseado no tipoAcao cadastrado na pauta
+          const acaoODLabels: Record<string, string> = {
+            'LEITURA': 'LEITURA', 'DISCUSSAO': 'DISCUSSÃO',
+            'VOTACAO': 'DISCUSSÃO E VOTAÇÃO', 'LEITURA_VOTACAO': 'LEITURA E VOTAÇÃO',
+            'DISCUSSAO_VOTACAO': 'DISCUSSÃO E VOTAÇÃO', 'COMUNICADO': 'LEITURA', 'HOMENAGEM': 'HOMENAGEM'
+          }
+          const acaoLabel = acaoODLabels[item.tipoAcao] || 'DISCUSSÃO E VOTAÇÃO'
+
+          ata += `<strong>${acaoLabel} DO ${prop.tipo.toUpperCase()} Nº ${prop.numero}/${prop.ano}`
           if (prop.autor) ata += ` – AUTORIA – ${prop.autor.nome?.toUpperCase() || ''}`
           ata += `</strong>`
+
           // Ementa/descrição
           if (item.descricao) ata += ` – ${item.descricao}`
           else if (prop.ementa) ata += ` – ${prop.ementa}`
 
-          // Resultado da votação
-          if (prop.votacoes && prop.votacoes.length > 0) {
+          // Resultado da votação (só se matéria já foi votada)
+          if (prop.votacoes && prop.votacoes.length > 0 && ['APROVADO', 'REJEITADO', 'CONCLUIDO'].includes(item.status)) {
             const votosSim = prop.votacoes.filter(v => v.voto === 'SIM')
             const votosNao = prop.votacoes.filter(v => v.voto === 'NAO')
             const votosAbst = prop.votacoes.filter(v => v.voto === 'ABSTENCAO')
-            const totalVotos = prop.votacoes.length
 
-            // Verificar se foi por unanimidade
             const unanime = votosNao.length === 0 && votosAbst.length === 0 && votosSim.length > 0
 
             if (item.status === 'APROVADO' || item.status === 'CONCLUIDO') {
               if (unanime) {
-                ata += `. ${prop.tipo} Aprovado por Unanimidade`
+                ata += `. <strong>${prop.tipo} Aprovado por Unanimidade</strong>`
               } else {
-                ata += `. ${prop.tipo} nº ${prop.numero}/${prop.ano} <strong>Aprovado Nominalmente por ${votosSim.length} Votos Favoráveis</strong>`
+                ata += `. <strong>${prop.tipo} nº ${prop.numero}/${prop.ano} Aprovado Nominalmente por ${votosSim.length} Votos Favoráveis</strong>`
                 if (votosNao.length > 0) ata += `, ${votosNao.length} Contrário(s)`
                 if (votosAbst.length > 0) ata += `, ${votosAbst.length} Abstenção(ões)`
               }
             } else if (item.status === 'REJEITADO') {
-              ata += `. ${prop.tipo} nº ${prop.numero}/${prop.ano} <strong>Rejeitado</strong> com ${votosNao.length} votos contrários e ${votosSim.length} favoráveis`
+              ata += `. <strong>${prop.tipo} nº ${prop.numero}/${prop.ano} Rejeitado</strong> com ${votosNao.length} votos contrários e ${votosSim.length} favoráveis`
+            }
+
+            // Votação nominal: listar como votou cada vereador
+            if (!unanime) {
+              ata += `. Votaram: `
+              if (votosSim.length > 0) {
+                ata += `<strong>SIM:</strong> ${votosSim.map(v => v.parlamentar.nome).join(', ')}`
+              }
+              if (votosNao.length > 0) {
+                if (votosSim.length > 0) ata += `; `
+                ata += `<strong>NÃO:</strong> ${votosNao.map(v => v.parlamentar.nome).join(', ')}`
+              }
+              if (votosAbst.length > 0) {
+                if (votosSim.length > 0 || votosNao.length > 0) ata += `; `
+                ata += `<strong>ABSTENÇÃO:</strong> ${votosAbst.map(v => v.parlamentar.nome).join(', ')}`
+              }
             }
           }
         } else {
