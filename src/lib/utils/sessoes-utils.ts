@@ -367,12 +367,24 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
         legislatura: true,
         periodo: true,
         presencas: {
+          include: { parlamentar: true },
+          orderBy: { parlamentar: { nome: 'asc' } }
+        },
+        mesaSessao: {
           include: {
-            parlamentar: true
-          },
-          orderBy: {
-            parlamentar: { nome: 'asc' }
+            membros: {
+              include: { parlamentar: true },
+              orderBy: { cargo: 'asc' }
+            }
           }
+        },
+        oradores: {
+          include: { parlamentar: true },
+          orderBy: [{ tipo: 'asc' }, { ordem: 'asc' }]
+        },
+        expedientes: {
+          include: { tipoExpediente: true },
+          orderBy: { ordem: 'asc' }
         },
         pautaSessao: {
           include: {
@@ -382,11 +394,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
                 proposicao: {
                   include: {
                     autor: true,
-                    votacoes: {
-                      include: {
-                        parlamentar: true
-                      }
-                    }
+                    votacoes: { include: { parlamentar: true } }
                   }
                 }
               }
@@ -400,210 +408,301 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
       throw new Error('Sessão não encontrada')
     }
 
-    const dataFormatada = new Date(sessao.data).toLocaleDateString('pt-BR', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-
-    const horaInicio = sessao.tempoInicio
-      ? new Date(sessao.tempoInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      : sessao.horario || '14:00'
-
-    const tipoSessaoLabel = {
-      'ORDINARIA': 'ORDINÁRIA',
-      'EXTRAORDINARIA': 'EXTRAORDINÁRIA',
-      'SOLENE': 'SOLENE',
-      'ESPECIAL': 'ESPECIAL'
-    }[sessao.tipo] || sessao.tipo
-
-    // Contar presenças
-    const presentes = sessao.presencas.filter(p => p.presente)
-    const ausentes = sessao.presencas.filter(p => !p.presente)
-
-    // Calcular duração total
-    const duracaoTotal = sessao.pautaSessao?.tempoTotalReal || 0
-
-    // Buscar configuração institucional
+    // ── Configuração institucional ──
     const config = await prisma.configuracaoInstitucional.findFirst({ where: { slug: 'principal' } })
     const nomeCasa = config?.nomeCasa || 'Câmara Municipal'
     const logoUrl = config?.logoUrl || ''
     const cidade = config?.enderecoCidade || ''
     const estado = config?.enderecoEstado || ''
-    const localidade = cidade && estado ? `${cidade} - ${estado}` : ''
+    const cnpj = config?.cnpj || ''
+    const logradouro = config?.enderecoLogradouro || ''
+    const numero = config?.enderecoNumero || ''
+    const bairro = config?.enderecoBairro || ''
+    const cep = config?.enderecoCep || ''
+    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || ''
+    const logoAbsoluta = logoUrl && logoUrl.startsWith('/') ? `${appUrl}${logoUrl}` : logoUrl
 
-    // Buscar tipos de expediente para resolver nomes de seções
+    // ── Dados derivados ──
+    const tipoSessaoLabel: Record<string, string> = {
+      'ORDINARIA': 'Ordinária', 'EXTRAORDINARIA': 'Extraordinária',
+      'SOLENE': 'Solene', 'ESPECIAL': 'Especial'
+    }
+    const tipoLabel = tipoSessaoLabel[sessao.tipo] || sessao.tipo
+    const tipoUpper = tipoLabel.toUpperCase()
+
+    const horaInicio = sessao.horario || '14:00'
+
+    // Data por extenso
+    const dataSessao = new Date(sessao.data)
+    const dataExtenso = dataSessao.toLocaleDateString('pt-BR', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      timeZone: 'America/Sao_Paulo'
+    })
+
+    // Presença
+    const presentes = sessao.presencas.filter(p => p.presente)
+    const ausentes = sessao.presencas.filter(p => !p.presente)
+
+    // Mesa da sessão
+    const mesaMembros = sessao.mesaSessao?.membros || []
+    const cargoLabels: Record<string, string> = {
+      'PRESIDENTE': 'Presidente',
+      'VICE_PRESIDENTE': '1º Vice-Presidente(a)',
+      'PRIMEIRO_SECRETARIO': '1º Secretária',
+      'SEGUNDO_SECRETARIO': '2º Secretário(a)'
+    }
+    const presidente = mesaMembros.find(m => m.cargo === 'PRESIDENTE')
+    const secretario = mesaMembros.find(m => m.cargo === 'PRIMEIRO_SECRETARIO' || m.cargo === 'SEGUNDO_SECRETARIO')
+
+    // Oradores por tipo
+    const oradoresPorTipo = (tipo: string) =>
+      sessao.oradores.filter(o => o.tipo === tipo && o.status === 'CONCLUIDO')
+
+    // Período legislativo
+    const periodoNum = sessao.periodo?.numero || 1
+
+    // Endereço para rodapé
+    const enderecoCompleto = [logradouro, numero ? `nº ${numero}` : '', bairro].filter(Boolean).join(', ')
+    const rodapeEndereco = [nomeCasa, cnpj ? `CNPJ ${cnpj}` : '', enderecoCompleto, cep ? `CEP ${cep}` : '', cidade && estado ? `${cidade}-${estado}` : ''].filter(Boolean).join(' - ')
+
+    // Buscar tipos de expediente
     const tiposExpediente = await prisma.tipoExpediente.findMany({ where: { ativo: true } })
     const tipoExpMap: Record<string, string> = {}
     tiposExpediente.forEach(t => { tipoExpMap[t.id] = t.nome })
 
     const resolverSecao = (secao: string) => {
-      if (tipoExpMap[secao]) return tipoExpMap[secao].toUpperCase()
+      if (tipoExpMap[secao]) return tipoExpMap[secao]
       const labels: Record<string, string> = {
-        'EXPEDIENTE': 'EXPEDIENTE', 'ORDEM_DO_DIA': 'ORDEM DO DIA',
-        'COMUNICACOES': 'COMUNICAÇÕES', 'HONRAS': 'HONRAS DO DIA', 'OUTROS': 'OUTROS ASSUNTOS'
+        'EXPEDIENTE': 'Pequeno Expediente', 'ORDEM_DO_DIA': 'Ordem do Dia',
+        'COMUNICACOES': 'Comunicações', 'HONRAS': 'Honras do Dia', 'OUTROS': 'Outros Assuntos'
       }
       return labels[secao] || secao
     }
 
-    // URL base para resolver logos relativas
-    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || ''
-    const logoAbsoluta = logoUrl && logoUrl.startsWith('/') ? `${appUrl}${logoUrl}` : logoUrl
-
     // =========== INÍCIO DA ATA (HTML) ===========
-    let ata = `<div style="font-family: 'Times New Roman', Georgia, serif; max-width: 800px; margin: 0 auto; color: #1a1a1a; line-height: 1.8; font-size: 14px;">`
+    const S = {
+      body: 'font-family: "Times New Roman", Georgia, serif; max-width: 800px; margin: 0 auto; color: #000; line-height: 2; font-size: 13pt;',
+      header: 'text-align: center; margin-bottom: 24px;',
+      title: 'font-weight: bold; text-decoration: underline; text-align: center; font-size: 13pt; margin: 20px 0 16px;',
+      mesa: 'text-align: center; margin: 16px 0 24px; line-height: 1.6;',
+      p: 'text-indent: 0; text-align: justify; margin: 8px 0;',
+      bold: 'font-weight: bold;',
+      secao: 'font-weight: bold;',
+      rodape: 'text-align: center; font-size: 9pt; color: #555; border-top: 1px solid #999; padding-top: 6px; margin-top: 40px;',
+      assinatura: 'text-align: center; margin-top: 60px;',
+      assTd: 'width: 50%; text-align: center; padding: 50px 20px 0; border: none; vertical-align: bottom;',
+      assLine: 'border-top: 1px solid #000; padding-top: 6px; font-size: 11pt; display: inline-block; min-width: 260px;'
+    }
 
-    // CABEÇALHO com logo e dados institucionais
-    ata += `<div style="text-align: center; border-bottom: 3px double #333; padding-bottom: 20px; margin-bottom: 30px;">`
+    let ata = `<div style="${S.body}">`
+
+    // ── CABEÇALHO ──
+    ata += `<div style="${S.header}">`
     if (logoAbsoluta) {
-      ata += `<img src="${logoAbsoluta}" alt="${nomeCasa}" style="max-height: 90px; margin-bottom: 12px;" /><br/>`
+      ata += `<img src="${logoAbsoluta}" alt="${nomeCasa}" style="max-height: 80px; margin-bottom: 4px;" /><br/>`
     }
-    ata += `<h2 style="margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: 3px; font-weight: bold;">${nomeCasa}</h2>`
-    if (localidade) {
-      ata += `<p style="margin: 6px 0 0; font-size: 14px; color: #444;">${localidade}</p>`
+    ata += `<span style="font-size: 10pt;">ESTADO DO PARÁ</span><br/>`
+    ata += `<strong style="font-size: 15pt; letter-spacing: 1px;">${nomeCasa.toUpperCase()}</strong><br/>`
+    if (config?.descricao) {
+      ata += `<span style="font-size: 10pt;">${config.descricao}</span><br/>`
     }
-    if (config?.cnpj) {
-      ata += `<p style="margin: 2px 0 0; font-size: 12px; color: #666;">CNPJ: ${config.cnpj}</p>`
+    if (cnpj) {
+      ata += `<span style="font-size: 10pt;">CNPJ nº ${cnpj}</span>`
     }
     ata += `</div>`
 
-    // TÍTULO DA ATA
-    ata += `<div style="text-align: center; margin-bottom: 30px;">`
-    ata += `<h3 style="margin: 0 0 10px; font-size: 18px; font-weight: bold; text-transform: uppercase;">ATA DA ${sessao.numero}ª SESSÃO ${tipoSessaoLabel}</h3>`
+    // ── TÍTULO ──
+    ata += `<p style="${S.title}">ATA DA ${sessao.numero}ª SESSÃO ${tipoUpper} DA ${nomeCasa.toUpperCase()}, `
+    ata += `${periodoNum}º PERÍODO LEGISLATIVO, OCORRIDA EM ${dataExtenso.toUpperCase()}.</p>`
+
+    // ── PLENÁRIO ──
+    if (sessao.local) {
+      ata += `<p style="text-align: center; font-weight: bold; margin: 16px 0;">${sessao.local.toUpperCase()}</p>`
+    }
+
+    // ── MESA DIRETORA ──
+    if (mesaMembros.length > 0) {
+      ata += `<div style="${S.mesa}">`
+      for (const membro of mesaMembros) {
+        const cargoLabel = cargoLabels[membro.cargo] || membro.cargo
+        ata += `${cargoLabel}: <strong>${membro.parlamentar.nome.toUpperCase()}</strong><br/>`
+      }
+      ata += `</div>`
+    }
+
+    // ── PARÁGRAFO DE ABERTURA (narrativo, como o modelo) ──
+    const nomePresidente = presidente?.parlamentar.nome.toUpperCase() || 'o Presidente'
+    const nomeSecretario = secretario?.parlamentar.nome.toUpperCase() || 'o(a) Secretário(a)'
+
+    ata += `<p style="${S.p}">No dia ${dataExtenso}, às ${horaInicio} horas, `
+    ata += `no ${sessao.local || 'Plenário'} da ${nomeCasa}`
+    if (cidade) ata += `, nesta Cidade de ${cidade}, Estado do ${estado || 'Pará'}`
+    ata += `, sob a Presidência do Vereador <strong>${nomePresidente}</strong>, `
+    ata += `reuniram-se os Vereadores e Vereadoras para a realização da ${sessao.numero}ª Sessão `
+    ata += `${tipoLabel}`
     if (sessao.legislatura) {
-      ata += `<p style="margin: 0; font-size: 14px;">${sessao.legislatura.numero}ª Legislatura (${sessao.legislatura.anoInicio}-${sessao.legislatura.anoFim})</p>`
+      ata += `, da Legislatura de ${sessao.legislatura.anoInicio}/${sessao.legislatura.anoFim}`
     }
-    if (sessao.periodo) {
-      ata += `<p style="margin: 0; font-size: 14px;">${sessao.periodo.numero}º Período Legislativo</p>`
+    ata += `. `
+
+    // Presentes (nomes em negrito separados por vírgula)
+    if (presentes.length > 0) {
+      ata += `Presentes em Plenário os senhores(as) vereadores(as), `
+      ata += `<strong>${presentes.map(p => p.parlamentar.nome.toUpperCase()).join(', ')}</strong>. `
     }
-    ata += `</div>`
 
-    // ABERTURA
-    ata += `<p style="text-indent: 2em; text-align: justify;">Aos ${dataFormatada}, às ${horaInicio} horas, `
-    ata += `no ${sessao.local || 'Plenário da Câmara Municipal'}, reuniram-se os Vereadores abaixo `
-    ata += `relacionados para a realização da ${sessao.numero}ª Sessão ${tipoSessaoLabel}.</p>`
+    // Quórum
+    ata += `Havendo número legal de <strong>${presentes.length} Vereadores presentes</strong>, `
+    ata += `o Presidente declarou abertos os trabalhos desejando boas-vindas a todos os Vereadores e Vereadoras, `
+    ata += `Funcionários da Casa e Público Presente. `
 
-    // VERIFICAÇÃO DE QUÓRUM
-    ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">VERIFICAÇÃO DE QUÓRUM</h4>`
-    ata += `<p><strong>PRESENTES (${presentes.length} Vereador${presentes.length !== 1 ? 'es' : ''}):</strong></p><ol style="margin: 4px 0;">`
-    presentes.forEach(p => {
-      ata += `<li>${p.parlamentar.nome}${p.parlamentar.partido ? ` (${p.parlamentar.partido})` : ''}</li>`
-    })
-    ata += `</ol>`
+    // Chamada pela Secretária
+    ata += `O Presidente solicitou ${secretario ? `a Secretária da Mesa Diretora, Vereadora <strong>${nomeSecretario}</strong>,` : 'ao(à) Secretário(a)'} `
+    ata += `a fazer a Chamada dos Vereadores(as), com a presença de <strong>${presentes.length} Vereadores</strong> na Plenária da ${nomeCasa}`
+    if (cidade) ata += ` de ${cidade}`
+    ata += `. `
 
+    // Ausentes
     if (ausentes.length > 0) {
-      ata += `<p><strong>AUSENTES (${ausentes.length} Vereador${ausentes.length !== 1 ? 'es' : ''}):</strong></p><ol style="margin: 4px 0;">`
-      ausentes.forEach(p => {
-        ata += `<li>${p.parlamentar.nome}${p.parlamentar.partido ? ` (${p.parlamentar.partido})` : ''}`
-        if (p.justificativa) ata += ` — <em>${p.justificativa}</em>`
-        ata += `</li>`
-      })
-      ata += `</ol>`
+      ata += `Ausentes os senhores(as) vereadores(as): <strong>${ausentes.map(p => p.parlamentar.nome.toUpperCase()).join(', ')}</strong>`
+      const justificados = ausentes.filter(p => p.justificativa)
+      if (justificados.length > 0) {
+        ata += ` (${justificados.map(p => `${p.parlamentar.nome}: ${p.justificativa}`).join('; ')})`
+      }
+      ata += `. `
+    }
+    ata += `</p>`
+
+    // ── PEQUENO EXPEDIENTE ──
+    const itens = sessao.pautaSessao?.itens || []
+    const secoesMap = new Map<string, typeof itens>()
+    itens.forEach(item => {
+      const s = item.secao || 'OUTROS'
+      if (!secoesMap.has(s)) secoesMap.set(s, [])
+      secoesMap.get(s)!.push(item)
+    })
+
+    // Expedientes cadastrados ou itens da pauta por seção
+    for (const [secao, itensSecao] of Array.from(secoesMap.entries())) {
+      if (secao === 'ORDEM_DO_DIA') continue // Ordem do dia tratada separadamente
+
+      const nomeSecao = resolverSecao(secao)
+      ata += `<p style="${S.p}">O Presidente solicitou à Secretária que fizesse a leitura das matérias constantes do <strong>${nomeSecao}</strong>: `
+
+      for (let i = 0; i < itensSecao.length; i++) {
+        const item = itensSecao[i]
+        ata += `<strong>ITEM ${String(i + 1).padStart(2, '0')}</strong> – ${item.titulo}`
+        if (item.proposicao) {
+          ata += ` – ${item.proposicao.tipo} nº ${item.proposicao.numero}/${item.proposicao.ano}`
+          if (item.descricao) ata += ` – ${item.descricao}`
+        } else if (item.descricao) {
+          ata += ` – ${item.descricao}`
+        }
+        ata += `. `
+      }
+
+      ata += `</p>`
     }
 
-    ata += `<p style="text-indent: 2em; text-align: justify;">Verificado o quórum regimental com ${presentes.length} `
-    ata += `parlamentar${presentes.length !== 1 ? 'es' : ''} presente${presentes.length !== 1 ? 's' : ''}, a sessão foi declarada aberta.</p>`
+    // ── GRANDE EXPEDIENTE (Oradores) ──
+    const oradoresGE = oradoresPorTipo('GRANDE_EXPEDIENTE')
+    if (oradoresGE.length > 0) {
+      ata += `<p style="${S.p}">Terminada a leitura do Pequeno Expediente, passou-se para o <strong>Grande Expediente</strong>, `
+      ata += `no qual o Presidente concede o uso da Palavra conforme Inscrição de Vereadores. `
 
-    // PAUTA DA SESSÃO
-    const itens = sessao.pautaSessao?.itens || []
-    if (itens.length > 0) {
-      ata += `<h4 style="border-bottom: 2px solid #333; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">ORDEM DOS TRABALHOS</h4>`
-
-      // Agrupar por seção (dinâmico)
-      const secoesMap = new Map<string, typeof itens>()
-      itens.forEach(item => {
-        const s = item.secao || 'OUTROS'
-        if (!secoesMap.has(s)) secoesMap.set(s, [])
-        secoesMap.get(s)!.push(item)
-      })
-
-      for (const [secao, itensSecao] of Array.from(secoesMap.entries())) {
-        ata += `<h5 style="background: #f0f0f0; padding: 6px 12px; margin: 16px 0 8px; font-size: 13px; text-transform: uppercase;">${resolverSecao(secao)}</h5>`
-
-        for (const item of itensSecao) {
-          const statusColors: Record<string, string> = {
-            'APROVADO': '#16a34a', 'REJEITADO': '#dc2626', 'CONCLUIDO': '#16a34a',
-            'ADIADO': '#ca8a04', 'RETIRADO': '#9333ea', 'PENDENTE': '#6b7280'
-          }
-          const statusLabels: Record<string, string> = {
-            'APROVADO': 'APROVADO', 'REJEITADO': 'REJEITADO', 'CONCLUIDO': 'CONCLUÍDO',
-            'ADIADO': 'ADIADO', 'RETIRADO': 'RETIRADO', 'PENDENTE': 'PENDENTE'
-          }
-
-          ata += `<div style="margin: 8px 0; padding: 8px 12px; border-left: 3px solid ${statusColors[item.status] || '#ccc'}; background: #fafafa;">`
-          ata += `<strong>${item.ordem}. ${item.titulo}</strong>`
-          if (item.descricao) ata += `<br/><span style="color: #555; font-size: 13px;">${item.descricao}</span>`
-
-          if (item.proposicao) {
-            const prop = item.proposicao
-            ata += `<br/><span style="font-size: 13px;">Proposição: ${prop.tipo} nº ${prop.numero}/${prop.ano} — Autor: ${prop.autor?.nome || 'Não informado'}</span>`
-
-            if (prop.votacoes && prop.votacoes.length > 0) {
-              const votosSim = prop.votacoes.filter(v => v.voto === 'SIM')
-              const votosNao = prop.votacoes.filter(v => v.voto === 'NAO')
-              const votosAbst = prop.votacoes.filter(v => v.voto === 'ABSTENCAO')
-
-              ata += `<div style="margin-top: 6px; padding: 6px; background: #fff; border: 1px solid #e5e5e5; font-size: 13px;">`
-              ata += `<strong>Votação Nominal:</strong> ${votosSim.length} Favorável, ${votosNao.length} Contrário, ${votosAbst.length} Abstenção<br/>`
-              if (votosSim.length > 0) ata += `SIM: ${votosSim.map(v => v.parlamentar.apelido || v.parlamentar.nome.split(' ')[0]).join(', ')}<br/>`
-              if (votosNao.length > 0) ata += `NÃO: ${votosNao.map(v => v.parlamentar.apelido || v.parlamentar.nome.split(' ')[0]).join(', ')}<br/>`
-              if (votosAbst.length > 0) ata += `ABSTENÇÃO: ${votosAbst.map(v => v.parlamentar.apelido || v.parlamentar.nome.split(' ')[0]).join(', ')}`
-              ata += `</div>`
-            }
-          }
-
-          ata += `<div style="margin-top: 4px;"><span style="font-size: 12px; color: ${statusColors[item.status] || '#555'}; font-weight: bold;">${statusLabels[item.status] || item.status}</span>`
-          if (item.tempoReal && item.tempoReal > 0) ata += ` <span style="font-size: 12px; color: #888;">(${formatarTempoAta(item.tempoReal)})</span>`
-          ata += `</div></div>`
+      for (const orador of oradoresGE) {
+        ata += `Inscrito para o Uso da Palavra o(a) Vereador(a) <strong>${orador.parlamentar.nome}</strong>. `
+        if (orador.observacoes) {
+          ata += `"${orador.observacoes}" `
         }
       }
+      ata += `</p>`
     }
 
-    // ENCERRAMENTO
-    ata += `<div style="page-break-inside: avoid;">`
-    ata += `<h4 style="border-bottom: 2px solid #000; padding-bottom: 6px; margin-top: 30px; font-size: 15px; text-transform: uppercase;">ENCERRAMENTO</h4>`
-    if (duracaoTotal > 0) {
-      ata += `<p style="text-indent: 2em;">A sessão teve duração total de ${formatarTempoAta(duracaoTotal)}.</p>`
-    }
-    ata += `<p style="text-indent: 2em; text-align: justify;">Nada mais havendo a tratar, o Senhor Presidente declarou `
-    ata += `encerrada a sessão, da qual eu, Secretário(a), lavrei a presente ata que, após lida e aprovada, `
-    ata += `será assinada pelo Presidente e demais Vereadores presentes.</p>`
-    ata += `<p style="text-align: right; margin-top: 20px; font-weight: bold;">${new Date(sessao.data).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}.</p>`
-    ata += `</div>`
+    // ── ORDEM DO DIA ──
+    const itensOD = secoesMap.get('ORDEM_DO_DIA') || []
+    if (itensOD.length > 0) {
+      ata += `<p style="${S.p}">Na sequência, iniciou-se a <strong>Ordem do Dia</strong>, com as seguintes matérias para deliberação: `
 
-    // ASSINATURAS MESA
-    ata += `<div style="page-break-inside: avoid; margin-top: 50px; text-align: center;">`
+      for (let i = 0; i < itensOD.length; i++) {
+        const item = itensOD[i]
+        ata += `<strong>ITEM ${String(i + 1).padStart(2, '0')}</strong> – `
+
+        if (item.proposicao) {
+          const prop = item.proposicao
+          ata += `DISCUSSÃO E VOTAÇÃO NOMINAL DO ${prop.tipo.toUpperCase()} Nº ${prop.numero}/${prop.ano}`
+          if (item.descricao) ata += ` – ${item.descricao.toUpperCase()}`
+
+          // Resultado da votação
+          if (prop.votacoes && prop.votacoes.length > 0) {
+            const votosSim = prop.votacoes.filter(v => v.voto === 'SIM')
+            const votosNao = prop.votacoes.filter(v => v.voto === 'NAO')
+            const votosAbst = prop.votacoes.filter(v => v.voto === 'ABSTENCAO')
+            const statusLabels: Record<string, string> = {
+              'APROVADO': 'Aprovado', 'REJEITADO': 'Rejeitado', 'CONCLUIDO': 'Aprovado'
+            }
+            const resultado = statusLabels[item.status] || item.status
+            ata += `. ${prop.tipo} nº ${prop.numero}/${prop.ano} <strong>${resultado} Nominalmente por ${votosSim.length} Votos Favoráveis</strong>`
+            if (votosNao.length > 0) ata += `, ${votosNao.length} Contrário(s)`
+            if (votosAbst.length > 0) ata += `, ${votosAbst.length} Abstenção(ões)`
+          }
+        } else {
+          ata += item.titulo.toUpperCase()
+          if (item.descricao) ata += ` – ${item.descricao.toUpperCase()}`
+        }
+        ata += `. `
+      }
+      ata += `</p>`
+    }
+
+    // ── EXPLICAÇÕES PESSOAIS ──
+    const oradoresEP = oradoresPorTipo('EXPLICACAO_PESSOAL')
+    if (oradoresEP.length > 0) {
+      ata += `<p style="${S.p}">Encerrado a Ordem do Dia, o Presidente concedeu a palavra para <strong>Explicações Pessoais</strong> aos vereadores que desejassem se manifestar. `
+
+      for (const orador of oradoresEP) {
+        ata += `Na explicação pessoal, usou da palavra o(a) Vereador(a) <strong>${orador.parlamentar.nome.toUpperCase()}</strong>. `
+        if (orador.observacoes) {
+          ata += `"${orador.observacoes}" `
+        }
+      }
+      ata += `</p>`
+    }
+
+    // ── ENCERRAMENTO ──
+    ata += `<p style="${S.p}">Nada mais havendo a tratar, o Presidente agradeceu a presença de todos e declarou `
+    ata += `encerrada a ${sessao.numero}ª Sessão ${tipoLabel}`
+    if (sessao.periodo) ata += ` do ${sessao.periodo.numero}º Período Legislativo`
+    ata += `. `
+
+    // Fecho da Secretária
+    ata += `Eu, <strong>${secretario ? nomeSecretario : 'Secretário(a)'}</strong>, `
+    ata += `determinei que fosse lavrada a presente Ata, que após lida e aprovada vai assinada por mim, `
+    ata += `Secretária e pelo Senhor Presidente. `
+    ata += `Sala das Sessões da ${nomeCasa}`
+    if (cidade) ata += ` de ${cidade} - ${estado || 'PA'}`
+    ata += `, ${dataExtenso}.`
+    ata += `</p>`
+
+    // ── ASSINATURAS ──
+    ata += `<div style="${S.assinatura}">`
     ata += `<table style="width: 100%; border: none; border-collapse: collapse;"><tr>`
-    ata += `<td style="width: 50%; text-align: center; padding: 40px 20px 0; border: none; vertical-align: bottom;">`
-    ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 250px;"><strong>Presidente da ${nomeCasa}</strong></div></td>`
-    ata += `<td style="width: 50%; text-align: center; padding: 40px 20px 0; border: none; vertical-align: bottom;">`
-    ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 250px;"><strong>1º Secretário(a)</strong></div></td>`
+    // Presidente
+    ata += `<td style="${S.assTd}">`
+    ata += `<div style="${S.assLine}">`
+    if (presidente) ata += `<strong>${presidente.parlamentar.nome.toUpperCase()}</strong><br/>`
+    ata += `Presidente da ${nomeCasa.replace('Câmara Municipal', 'CMC')}</div></td>`
+    // Secretária
+    ata += `<td style="${S.assTd}">`
+    ata += `<div style="${S.assLine}">`
+    if (secretario) ata += `<strong>${secretario.parlamentar.nome.toUpperCase()}</strong><br/>`
+    ata += `Secretária da ${nomeCasa.replace('Câmara Municipal', 'CMC')}</div></td>`
     ata += `</tr></table></div>`
 
-    // ASSINATURAS DOS PRESENTES
-    ata += `<div style="page-break-before: auto; margin-top: 40px;">`
-    ata += `<h4 style="border-bottom: 2px solid #000; padding-bottom: 6px; font-size: 15px; text-transform: uppercase;">ASSINATURAS DOS PRESENTES</h4>`
-    ata += `<table style="width: 100%; border: none; border-collapse: collapse;">`
-    for (let i = 0; i < presentes.length; i += 2) {
-      ata += `<tr>`
-      ata += `<td style="width: 50%; text-align: center; padding: 35px 15px 0; border: none; vertical-align: bottom;">`
-      ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 240px;">${presentes[i].parlamentar.nome}</div></td>`
-      if (presentes[i + 1]) {
-        ata += `<td style="width: 50%; text-align: center; padding: 35px 15px 0; border: none; vertical-align: bottom;">`
-        ata += `<div style="border-top: 1px solid #000; padding-top: 8px; font-size: 12px; display: inline-block; min-width: 240px;">${presentes[i + 1].parlamentar.nome}</div></td>`
-      } else {
-        ata += `<td style="border: none;"></td>`
-      }
-      ata += `</tr>`
-    }
-    ata += `</table></div>`
+    // ── RODAPÉ ──
+    ata += `<div style="${S.rodape}">${rodapeEndereco}</div>`
 
-    // RODAPÉ
-    ata += `<div style="margin-top: 50px; padding-top: 10px; border-top: 3px double #000; text-align: center; font-size: 10px; color: #666;">`
-    ata += `Documento gerado automaticamente pelo Sistema Legislativo — ${nomeCasa}`
-    if (localidade) ata += ` — ${localidade}`
-    ata += `</div></div>`
+    ata += `</div>`
 
     return ata
   } catch (error) {
