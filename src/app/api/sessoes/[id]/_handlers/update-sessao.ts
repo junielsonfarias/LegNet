@@ -51,6 +51,7 @@ export async function updateSessaoHandler(
     try {
       const ataGerada = await gerarAtaSessao(id)
       updateData.ata = ataGerada
+      updateData.statusAta = 'PENDENTE'
     } catch (error) {
       console.error('⚠️ Erro ao gerar ata (não crítico):', error)
     }

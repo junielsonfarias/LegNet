@@ -1309,6 +1309,26 @@ export async function finalizarItemPauta(
     })
   }
 
+  // Aprovar/rejeitar ata da sessão anterior quando item LEITURA_ATA é finalizado
+  if (item.tipoAcao === 'LEITURA_ATA' && item.sessaoAtaOrigemId) {
+    const novoStatusAta = (resultado === 'APROVADO' || resultado === 'CONCLUIDO') ? 'APROVADA' : 'REJEITADA'
+    await prisma.sessao.update({
+      where: { id: item.sessaoAtaOrigemId },
+      data: {
+        statusAta: novoStatusAta as any,
+        sessaoAprovacaoAtaId: sessaoId
+      }
+    })
+  }
+
+  // Marcar ofício como lido quando item LEITURA_OFICIO é finalizado
+  if (item.tipoAcao === 'LEITURA_OFICIO' && item.oficioId && (resultado === 'CONCLUIDO' || resultado === 'APROVADO')) {
+    await prisma.oficio.update({
+      where: { id: item.oficioId },
+      data: { lido: true }
+    })
+  }
+
   // Auto-avanço: encontrar próximo item PENDENTE ou ADIADO na ordem da pauta
   const proximoItem = await prisma.pautaItem.findFirst({
     where: {
