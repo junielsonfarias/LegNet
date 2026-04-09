@@ -93,7 +93,7 @@ const TIPOS_ACAO = [
   { value: 'DISCUSSAO_VOTACAO', label: 'Discussão + Votação' },
   { value: 'COMUNICADO', label: 'Comunicado' },
   { value: 'HOMENAGEM', label: 'Homenagem' },
-  { value: 'LEITURA_ATA', label: 'Leitura da Ata' },
+  { value: 'LEITURA_ATA', label: 'Leitura e Votação da Ata' },
   { value: 'LEITURA_OFICIO', label: 'Leitura de Ofício' }
 ]
 
@@ -496,7 +496,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
                   </SelectContent>
                 </Select>
               </div>
-              {['VOTACAO', 'LEITURA_VOTACAO', 'DISCUSSAO_VOTACAO'].includes(formData.tipoAcao) && (
+              {['VOTACAO', 'LEITURA_VOTACAO', 'DISCUSSAO_VOTACAO', 'LEITURA_ATA'].includes(formData.tipoAcao) && (
                 <div>
                   <Label>Tipo de Votação</Label>
                   <Select
@@ -540,7 +540,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
                       'SOLENE': 'Solene', 'ESPECIAL': 'Especial'
                     }
                     const titulo = sessao
-                      ? `Leitura da Ata da ${sessao.numero}ª Sessão ${tipoLabels[sessao.tipo] || sessao.tipo}`
+                      ? `Leitura e Votação da Ata da ${sessao.numero}ª Sessão ${tipoLabels[sessao.tipo] || sessao.tipo}`
                       : ''
                     setFormData({ ...formData, sessaoAtaOrigemId: value, titulo })
                   }}

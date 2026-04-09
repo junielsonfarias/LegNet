@@ -48,8 +48,8 @@ export function ItemStatus({ itemAtual, estatisticas, totalPresentes }: ItemStat
   return (
     <Card className="bg-white/10 backdrop-blur-lg border border-white/20 text-white">
       <CardContent className="py-6 sm:py-8 text-center">
-        {/* Item em Leitura (tipoAcao LEITURA) */}
-        {status === 'EM_DISCUSSAO' && tipoAcao === 'LEITURA' && (
+        {/* Item em Leitura (tipoAcao LEITURA ou LEITURA_OFICIO) */}
+        {status === 'EM_DISCUSSAO' && (tipoAcao === 'LEITURA' || tipoAcao === 'LEITURA_OFICIO') && (
           <>
             <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-sky-400 mx-auto mb-3" />
             <p className="text-lg sm:text-xl text-sky-200 font-bold mb-1">EM LEITURA</p>
@@ -62,8 +62,8 @@ export function ItemStatus({ itemAtual, estatisticas, totalPresentes }: ItemStat
           </>
         )}
 
-        {/* Item em Leitura e Votacao */}
-        {status === 'EM_DISCUSSAO' && tipoAcao === 'LEITURA_VOTACAO' && (
+        {/* Item em Leitura e Votacao (LEITURA_VOTACAO ou LEITURA_ATA) */}
+        {status === 'EM_DISCUSSAO' && (tipoAcao === 'LEITURA_VOTACAO' || tipoAcao === 'LEITURA_ATA') && (
           <>
             <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-sky-400 mx-auto mb-3" />
             <p className="text-lg sm:text-xl text-sky-200 font-bold mb-1">EM LEITURA</p>
@@ -198,7 +198,7 @@ export function ItemStatus({ itemAtual, estatisticas, totalPresentes }: ItemStat
           <>
             <CheckCircle className="h-10 w-10 sm:h-12 sm:w-12 text-teal-400 mx-auto mb-3" />
             <p className="text-lg text-teal-200 font-semibold">
-              {tipoAcao === 'LEITURA' || tipoAcao === 'LEITURA_VOTACAO' ? 'Leitura Concluida' :
+              {tipoAcao === 'LEITURA' || tipoAcao === 'LEITURA_VOTACAO' || tipoAcao === 'LEITURA_ATA' || tipoAcao === 'LEITURA_OFICIO' ? 'Leitura Concluida' :
                tipoAcao === 'DISCUSSAO' || tipoAcao === 'DISCUSSAO_VOTACAO' ? 'Discussao Concluida' :
                tipoAcao === 'COMUNICADO' ? 'Comunicado Realizado' :
                tipoAcao === 'HOMENAGEM' ? 'Homenagem Realizada' :

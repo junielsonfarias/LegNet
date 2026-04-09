@@ -645,7 +645,8 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
           const acaoLabels: Record<string, string> = {
             'LEITURA': 'LEITURA', 'DISCUSSAO': 'DISCUSSÃO', 'VOTACAO': 'DISCUSSÃO E VOTAÇÃO',
             'LEITURA_VOTACAO': 'LEITURA E VOTAÇÃO', 'DISCUSSAO_VOTACAO': 'DISCUSSÃO E VOTAÇÃO',
-            'COMUNICADO': 'LEITURA', 'HOMENAGEM': 'LEITURA'
+            'COMUNICADO': 'LEITURA', 'HOMENAGEM': 'LEITURA',
+            'LEITURA_ATA': 'LEITURA E VOTAÇÃO', 'LEITURA_OFICIO': 'LEITURA'
           }
           const acaoLabel = acaoLabels[item.tipoAcao] || 'LEITURA'
           ata += `${acaoLabel} DO ${prop.tipo.toUpperCase()} Nº ${prop.numero}/${prop.ano}`
@@ -698,7 +699,8 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
           const acaoODLabels: Record<string, string> = {
             'LEITURA': 'LEITURA', 'DISCUSSAO': 'DISCUSSÃO',
             'VOTACAO': 'DISCUSSÃO E VOTAÇÃO', 'LEITURA_VOTACAO': 'LEITURA E VOTAÇÃO',
-            'DISCUSSAO_VOTACAO': 'DISCUSSÃO E VOTAÇÃO', 'COMUNICADO': 'LEITURA', 'HOMENAGEM': 'HOMENAGEM'
+            'DISCUSSAO_VOTACAO': 'DISCUSSÃO E VOTAÇÃO', 'COMUNICADO': 'LEITURA', 'HOMENAGEM': 'HOMENAGEM',
+            'LEITURA_ATA': 'LEITURA E VOTAÇÃO', 'LEITURA_OFICIO': 'LEITURA'
           }
           const acaoLabel = acaoODLabels[item.tipoAcao] || 'DISCUSSÃO E VOTAÇÃO'
 

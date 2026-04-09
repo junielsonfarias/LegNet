@@ -142,7 +142,9 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
   if (status === 'PENDENTE') {
     switch (tipoAcao) {
       case 'LEITURA':
+      case 'LEITURA_OFICIO':
       case 'LEITURA_VOTACAO':
+      case 'LEITURA_ATA':
         return { iniciar: { label: 'Iniciar Leitura', icon: BookOpen, color: 'text-sky-400 hover:text-sky-300 hover:bg-sky-900/30' } }
       case 'VOTACAO':
         return { iniciar: { label: 'Iniciar Leitura', icon: BookOpen, color: 'text-sky-400 hover:text-sky-300 hover:bg-sky-900/30' } }
@@ -162,12 +164,14 @@ const getAcoesDisponiveis = (item: PautaItemApi) => {
   if (status === 'EM_DISCUSSAO') {
     switch (tipoAcao) {
       case 'LEITURA':
+      case 'LEITURA_OFICIO':
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
           finalizar: { label: 'Concluir Leitura', icon: CheckCircle, color: 'text-green-400 hover:text-green-300 hover:bg-green-900/30', resultado: 'CONCLUIDO' },
           ...acaoRetirarPauta
         }
       case 'LEITURA_VOTACAO':
+      case 'LEITURA_ATA':
         return {
           pausar: { label: 'Pausar', icon: Pause, color: 'text-yellow-400 hover:text-yellow-300 hover:bg-yellow-900/30' },
           votacao: { label: 'Abrir Votação', icon: Vote, color: 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/30' },
