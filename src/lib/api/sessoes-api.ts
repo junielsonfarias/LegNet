@@ -12,6 +12,9 @@ export interface SessaoApi {
   descricao: string | null
   ata: string | null
   arquivoAta?: string | null
+  urlTransmissao?: string | null
+  urlVideo?: string | null
+  urlAudio?: string | null
   finalizada: boolean
   legislaturaId?: string | null
   periodoId?: string | null

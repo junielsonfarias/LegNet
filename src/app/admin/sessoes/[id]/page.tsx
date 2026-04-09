@@ -38,7 +38,9 @@ import {
   Eye,
   RefreshCw,
   Link2,
-  Save
+  Save,
+  Video,
+  Radio
 } from 'lucide-react'
 import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
@@ -102,14 +104,21 @@ export default function SessaoDetailPage() {
   const [previewAta, setPreviewAta] = useState(false)
   const [gerandoAta, setGerandoAta] = useState(false)
   const [arquivoAtaUrl, setArquivoAtaUrl] = useState('')
+  const [urlTransmissao, setUrlTransmissao] = useState('')
+  const [urlVideo, setUrlVideo] = useState('')
+  const [urlAudio, setUrlAudio] = useState('')
   const [salvandoUrl, setSalvandoUrl] = useState(false)
+  const [salvandoLinks, setSalvandoLinks] = useState(false)
 
-  // Sincronizar URL da ata quando sessão carrega
+  // Sincronizar URLs quando sessão carrega
   useEffect(() => {
-    if (sessao?.arquivoAta) {
-      setArquivoAtaUrl(sessao.arquivoAta)
+    if (sessao) {
+      setArquivoAtaUrl(sessao.arquivoAta || '')
+      setUrlTransmissao(sessao.urlTransmissao || '')
+      setUrlVideo(sessao.urlVideo || '')
+      setUrlAudio(sessao.urlAudio || '')
     }
-  }, [sessao?.arquivoAta])
+  }, [sessao?.arquivoAta, sessao?.urlTransmissao, sessao?.urlVideo, sessao?.urlAudio])
 
   const salvarArquivoAta = async () => {
     if (!sessao?.id) return
@@ -131,6 +140,33 @@ export default function SessaoDetailPage() {
       toast.error('Erro ao salvar URL da ata')
     } finally {
       setSalvandoUrl(false)
+    }
+  }
+
+  const salvarLinksTransmissao = async () => {
+    if (!sessao?.id) return
+    setSalvandoLinks(true)
+    try {
+      const response = await fetch(`/api/sessoes/${sessao.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          urlTransmissao: urlTransmissao.trim() || null,
+          urlVideo: urlVideo.trim() || null,
+          urlAudio: urlAudio.trim() || null
+        })
+      })
+      if (response.ok) {
+        toast.success('Links de transmissão salvos com sucesso')
+        mutate()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Erro ao salvar links')
+      }
+    } catch {
+      toast.error('Erro ao salvar links de transmissão')
+    } finally {
+      setSalvandoLinks(false)
     }
   }
 
@@ -854,6 +890,73 @@ export default function SessaoDetailPage() {
                         <CheckCircle2 className="h-3 w-3" />
                         URL salva: <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer" className="underline">{sessao.arquivoAta}</a>
                       </p>
+                    )}
+                  </div>
+
+                  {/* Links de Transmissão */}
+                  <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                    <Label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Radio className="h-4 w-4" />
+                      Links de Transmissão da Sessão
+                    </Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Radio className="h-4 w-4 text-red-500 shrink-0" />
+                        <Input
+                          type="url"
+                          placeholder="URL da transmissão ao vivo (YouTube, etc)"
+                          value={urlTransmissao}
+                          onChange={(e) => setUrlTransmissao(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Video className="h-4 w-4 text-blue-500 shrink-0" />
+                        <Input
+                          type="url"
+                          placeholder="URL do vídeo gravado (YouTube, etc)"
+                          value={urlVideo}
+                          onChange={(e) => setUrlVideo(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mic className="h-4 w-4 text-purple-500 shrink-0" />
+                        <Input
+                          type="url"
+                          placeholder="URL do áudio da sessão"
+                          value={urlAudio}
+                          onChange={(e) => setUrlAudio(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={salvarLinksTransmissao}
+                      disabled={salvandoLinks}
+                    >
+                      {salvandoLinks ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                      Salvar Links
+                    </Button>
+                    {(sessao.urlTransmissao || sessao.urlVideo || sessao.urlAudio) && (
+                      <div className="text-xs space-y-1">
+                        {sessao.urlTransmissao && (
+                          <p className="text-green-600 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Transmissão: <a href={sessao.urlTransmissao} target="_blank" rel="noopener noreferrer" className="underline truncate">{sessao.urlTransmissao}</a>
+                          </p>
+                        )}
+                        {sessao.urlVideo && (
+                          <p className="text-green-600 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Vídeo: <a href={sessao.urlVideo} target="_blank" rel="noopener noreferrer" className="underline truncate">{sessao.urlVideo}</a>
+                          </p>
+                        )}
+                        {sessao.urlAudio && (
+                          <p className="text-green-600 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Áudio: <a href={sessao.urlAudio} target="_blank" rel="noopener noreferrer" className="underline truncate">{sessao.urlAudio}</a>
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
 

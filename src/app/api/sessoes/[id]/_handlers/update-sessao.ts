@@ -90,6 +90,9 @@ function buildUpdateData(
   if (validatedData.descricao !== undefined) updateData.descricao = validatedData.descricao
   if (validatedData.ata !== undefined) updateData.ata = validatedData.ata
   if (validatedData.arquivoAta !== undefined) updateData.arquivoAta = validatedData.arquivoAta
+  if (validatedData.urlTransmissao !== undefined) updateData.urlTransmissao = validatedData.urlTransmissao
+  if (validatedData.urlVideo !== undefined) updateData.urlVideo = validatedData.urlVideo
+  if (validatedData.urlAudio !== undefined) updateData.urlAudio = validatedData.urlAudio
   if (validatedData.legislaturaId !== undefined) updateData.legislaturaId = validatedData.legislaturaId
   if (validatedData.periodoId !== undefined) updateData.periodoId = validatedData.periodoId
 
