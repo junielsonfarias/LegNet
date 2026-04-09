@@ -30,7 +30,10 @@ export interface PautaItemPayload {
   tempoEstimado?: number | null
   autor?: string | null
   observacoes?: string | null
-  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
+  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | 'LEITURA_ATA' | 'LEITURA_OFICIO' | null
+  tipoVotacao?: 'NOMINAL' | 'SECRETA' | 'SIMBOLICA' | 'LEITURA'
+  sessaoAtaOrigemId?: string | null
+  oficioId?: string | null
   etapa?: number | null
   parecerId?: string | null
   leituraNumero?: number | null
@@ -451,7 +454,7 @@ export const pautasDbService = {
     if (!pautaSessao) throw new NotFoundError('Pauta da sessao')
 
     // ---- Determinar tipoAcao ----
-    type TipoAcao = 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM'
+    type TipoAcao = 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | 'LEITURA_ATA' | 'LEITURA_OFICIO'
     let tipoAcao: TipoAcao | null = payload.tipoAcao ?? null
 
     if (payload.proposicaoId) {
@@ -579,8 +582,11 @@ export const pautasDbService = {
         tempoEstimado: payload.tempoEstimado ?? null,
         status: 'PENDENTE',
         tipoAcao: tipoAcao,
+        tipoVotacao: payload.tipoVotacao ?? 'NOMINAL',
         autor: payload.autor ?? null,
         observacoes: payload.observacoes ?? null,
+        sessaoAtaOrigemId: payload.sessaoAtaOrigemId ?? null,
+        oficioId: payload.oficioId ?? null,
         etapa,
         parecerId: payload.parecerId ?? null,
         leituraNumero: payload.leituraNumero ?? null,

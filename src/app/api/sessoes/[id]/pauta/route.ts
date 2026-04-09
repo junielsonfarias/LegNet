@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
 import { pautasDbService } from '@/lib/services/pautas-db-service'
 
-const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'LEITURA_VOTACAO', 'DISCUSSAO_VOTACAO', 'COMUNICADO', 'HOMENAGEM'] as const
+const TIPO_ACAO_PAUTA = ['LEITURA', 'DISCUSSAO', 'VOTACAO', 'LEITURA_VOTACAO', 'DISCUSSAO_VOTACAO', 'COMUNICADO', 'HOMENAGEM', 'LEITURA_ATA', 'LEITURA_OFICIO'] as const
 
 const PautaItemCreateSchema = z.object({
   secao: z.string().min(1, 'Secao e obrigatoria'),
@@ -19,6 +19,8 @@ const PautaItemCreateSchema = z.object({
   observacoes: z.string().nullish().transform(v => v ?? undefined),
   tipoAcao: z.enum(TIPO_ACAO_PAUTA).nullish().transform(v => v ?? undefined),
   tipoVotacao: z.enum(['NOMINAL', 'SECRETA', 'SIMBOLICA', 'LEITURA'] as const).nullish().transform(v => v ?? undefined),
+  sessaoAtaOrigemId: z.string().nullish().transform(v => v ?? undefined),
+  oficioId: z.string().nullish().transform(v => v ?? undefined),
   etapa: z.number().int().min(1).max(2).nullable().optional(),
   parecerId: z.string().nullable().optional(),
   leituraNumero: z.number().int().min(1).max(3).nullable().optional(),

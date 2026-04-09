@@ -92,7 +92,9 @@ const TIPOS_ACAO = [
   { value: 'LEITURA_VOTACAO', label: 'Leitura + Votação' },
   { value: 'DISCUSSAO_VOTACAO', label: 'Discussão + Votação' },
   { value: 'COMUNICADO', label: 'Comunicado' },
-  { value: 'HOMENAGEM', label: 'Homenagem' }
+  { value: 'HOMENAGEM', label: 'Homenagem' },
+  { value: 'LEITURA_ATA', label: 'Leitura da Ata' },
+  { value: 'LEITURA_OFICIO', label: 'Leitura de Ofício' }
 ]
 
 const TIPOS_VOTACAO = [

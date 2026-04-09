@@ -260,6 +260,10 @@ model Sessao {
   urlTransmissao String?     // Link da transmissão ao vivo
   arquivoPauta   String?     // URL do PDF da pauta publicada
   arquivoAta     String?     // URL do PDF da ata aprovada
+  // === CAMPOS DE APROVAÇÃO DA ATA ===
+  statusAta              StatusAta?          // null = sem ata; PENDENTE = aguardando aprovação na próxima sessão
+  sessaoAprovacaoAtaId   String?             // Sessão N+1 que aprovou/rejeitou esta ata
+  arquivoAtaAssinada     String?             // URL do PDF da ata assinada após aprovação
   painelAberto   Boolean     @default(false) // Se o painel eletrônico está aberto para votação
   temaSolene     String?     @db.Text // Tema da sessão (para sessões solenes)
 
@@ -280,6 +284,9 @@ model Sessao {
   expedientes         ExpedienteSessao[]  // Conteúdo dos expedientes
   presencasOrdemDia   PresencaOrdemDia[]  // Presença específica para ordem do dia
   questoesOrdem       QuestaoOrdem[]
+  sessaoAprovacaoAta  Sessao?             @relation("AtaAprovadaEm", fields: [sessaoAprovacaoAtaId], references: [id])
+  atasAprovadas       Sessao[]            @relation("AtaAprovadaEm")   // Sessões cuja ata foi aprovada NESTA sessão
+  pautaItensAta       PautaItem[]         @relation("AtaOrigemPauta")  // Itens de pauta referentes à ata desta sessão
 
   @@index([status, data])
   @@index([tipo, status])
@@ -433,6 +440,30 @@ model ExpedienteSessao {
 }
 
 // =============================================================================
+// OFÍCIOS RECEBIDOS
+// =============================================================================
+
+model Oficio {
+  id          String    @id @default(cuid())
+  numero      String                        // Número do ofício (ex: "001/2026")
+  data        DateTime                      // Data do ofício
+  remetente   String                        // Quem enviou (ex: "Gabinete do Prefeito")
+  assunto     String    @db.Text            // Assunto do ofício
+  arquivo     String?                       // URL do PDF/arquivo digitalizado
+  observacoes String?   @db.Text
+  lido        Boolean   @default(false)     // Se já foi lido em sessão
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  pautaItens  PautaItem[] @relation("OficioPautaItem")
+
+  @@index([numero])
+  @@index([data])
+  @@index([lido])
+  @@map("oficios")
+}
+
+// =============================================================================
 // PRESENÇA NA ORDEM DO DIA (SAPL)
 // =============================================================================
 
@@ -467,6 +498,12 @@ enum StatusSessao {
   SUSPENSA
   CONCLUIDA
   CANCELADA
+}
+
+enum StatusAta {
+  PENDENTE            // Ata gerada, aguardando aprovação na próxima sessão
+  APROVADA            // Ata lida e aprovada em sessão
+  REJEITADA           // Ata rejeitada (deve ser refeita)
 }
 
 enum PautaStatus {
@@ -773,6 +810,8 @@ enum TipoAcaoPauta {
   DISCUSSAO_VOTACAO   // Discussão seguida de votação
   COMUNICADO          // Informes e comunicações
   HOMENAGEM           // Votos de pesar, aplauso, moções
+  LEITURA_ATA         // Leitura e votação da ata da sessão anterior
+  LEITURA_OFICIO      // Leitura de ofício recebido
 }
 
 enum ResultadoVotacao {
@@ -1524,6 +1563,10 @@ model PautaItem {
   dataIntersticio      DateTime?                        // Data em que o interstício foi iniciado
   prazoIntersticio     DateTime?                        // Data limite para votação em 2º turno
 
+  // === CAMPOS DE ATA E OFÍCIO ===
+  sessaoAtaOrigemId String?         // Para itens "Leitura da Ata" - sessão cuja ata será lida/aprovada
+  oficioId          String?         // Para itens "Leitura de Ofício" - ofício a ser lido
+
   // === CAMPOS DE ETAPA E LEITURA ===
   etapa           Int?              // Sub-etapa: 1 = "1ª Ordem do Dia" (leituras), 2 = "2ª Ordem do Dia" (votações)
   parecerId       String?           // Referência ao parecer da comissão vinculado
@@ -1537,8 +1580,10 @@ model PautaItem {
   proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
   sessaoAtual PautaSessao? @relation("SessaoItemAtual")
   destaques   DestaquePautaItem[]
-  parecer     Parecer?     @relation(fields: [parecerId], references: [id], onDelete: Cascade)
-  relator     Parlamentar? @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
+  parecer         Parecer?     @relation(fields: [parecerId], references: [id], onDelete: Cascade)
+  relator         Parlamentar? @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
+  sessaoAtaOrigem Sessao?      @relation("AtaOrigemPauta", fields: [sessaoAtaOrigemId], references: [id], onDelete: SetNull)
+  oficio          Oficio?      @relation("OficioPautaItem", fields: [oficioId], references: [id], onDelete: SetNull)
 
   @@index([pautaId, secao, ordem])
   @@index([tipoAcao])
@@ -1546,6 +1591,8 @@ model PautaItem {
   @@index([secao, etapa])
   @@index([parecerId])
   @@index([relatorId])
+  @@index([sessaoAtaOrigemId])
+  @@index([oficioId])
   @@map("pauta_itens")
 }
 
