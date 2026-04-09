@@ -43,7 +43,9 @@ import {
   CheckCircle2,
   User,
   Timer,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  Save
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -63,6 +65,7 @@ interface Orador {
   tempoLimite: number | null
   tempoUsado: number | null
   assunto: string | null
+  observacoes: string | null
   status: 'INSCRITO' | 'FALANDO' | 'CONCLUIDO' | 'CANCELADO'
   iniciadoEm: string | null
   finalizadoEm: string | null
@@ -111,6 +114,9 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
     nome: ''
   })
   const [deleting, setDeleting] = useState(false)
+  const [transcricaoAberta, setTranscricaoAberta] = useState<string | null>(null)
+  const [transcricaoTexto, setTranscricaoTexto] = useState('')
+  const [salvandoTranscricao, setSalvandoTranscricao] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -244,6 +250,34 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
       toast.error(err instanceof Error ? err.message : 'Erro ao remover orador')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const abrirTranscricao = (orador: Orador) => {
+    setTranscricaoAberta(orador.id)
+    setTranscricaoTexto(orador.observacoes || '')
+  }
+
+  const salvarTranscricao = async () => {
+    if (!transcricaoAberta) return
+    try {
+      setSalvandoTranscricao(true)
+      const response = await fetch(`/api/sessoes/${sessaoId}/oradores/${transcricaoAberta}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ observacoes: transcricaoTexto || null })
+      })
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.message || 'Erro ao salvar transcrição')
+      }
+      toast.success('Transcrição salva com sucesso')
+      setTranscricaoAberta(null)
+      fetchOradores()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar transcrição')
+    } finally {
+      setSalvandoTranscricao(false)
     }
   }
 
@@ -389,6 +423,12 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
                         {orador.assunto && (
                           <p className="text-sm text-gray-600 mt-1">{orador.assunto}</p>
                         )}
+                        {orador.observacoes && (
+                          <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                            <FileText className="h-3 w-3" />
+                            Transcrição registrada ({orador.observacoes.length} caracteres)
+                          </p>
+                        )}
                         <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
                             <Timer className="h-3 w-3" />
@@ -409,6 +449,21 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
                         </Badge>
                         {!readOnly && (
                           <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className={cn(
+                                'h-7 w-7 p-0',
+                                orador.observacoes
+                                  ? 'text-green-600 hover:text-green-700 hover:bg-green-100'
+                                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                              )}
+                              onClick={() => abrirTranscricao(orador)}
+                              title="Transcrição da fala"
+                              aria-label="Transcrição da fala"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
                             {orador.status === 'INSCRITO' && (
                               <Button
                                 size="sm"
@@ -538,6 +593,42 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
             <Button onClick={handleAddOrador} disabled={saving || !formData.parlamentarId}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Inscrever
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de transcrição da fala */}
+      <Dialog open={!!transcricaoAberta} onOpenChange={(open) => { if (!open) setTranscricaoAberta(null) }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Transcrição da Fala do Vereador
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-gray-500">
+              Digite a transcrição completa da fala do vereador. Este texto será incluído na ata da sessão entre aspas.
+            </p>
+            <Textarea
+              value={transcricaoTexto}
+              onChange={(e) => setTranscricaoTexto(e.target.value)}
+              placeholder="Digite aqui a transcrição da fala do vereador..."
+              rows={12}
+              className="font-serif text-sm leading-relaxed"
+            />
+            <p className="text-xs text-gray-400 text-right">
+              {transcricaoTexto.length} caracteres
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTranscricaoAberta(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={salvarTranscricao} disabled={salvandoTranscricao}>
+              {salvandoTranscricao ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Salvar Transcrição
             </Button>
           </DialogFooter>
         </DialogContent>
