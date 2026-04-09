@@ -543,10 +543,26 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     // Endereço do plenário
     const enderecoStr = [logradouro, numero ? `nº ${numero}` : '', bairro].filter(Boolean).join(', ')
 
+    // Resolver nome do plenário evitando duplicação com nomeCasa
+    const localSessao = sessao.local || 'Plenário'
+    const localJaTemNomeCasa = localSessao.toLowerCase().includes('câmara') || localSessao.toLowerCase().includes('camara')
+    const localCompleto = localJaTemNomeCasa ? localSessao : `${localSessao} da ${nomeCasa}`
+
     ata += `<p style="${S.p}">No dia ${dataExtenso}, às ${horaInicio} horas, `
-    ata += `no ${sessao.local || 'Plenário'} da ${nomeCasa}`
+    ata += `no ${localCompleto}`
     if (enderecoStr) ata += `, sito a ${enderecoStr}`
-    if (cidade) ata += `, nesta Cidade de ${cidade}, Estado do ${estado || 'Pará'}`
+    // Resolver estado por extenso (PA → Pará, etc)
+    const estadosMap: Record<string, string> = {
+      'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas', 'BA': 'Bahia',
+      'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo', 'GO': 'Goiás',
+      'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul', 'MG': 'Minas Gerais',
+      'PA': 'Pará', 'PB': 'Paraíba', 'PR': 'Paraná', 'PE': 'Pernambuco', 'PI': 'Piauí',
+      'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte', 'RS': 'Rio Grande do Sul',
+      'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina', 'SP': 'São Paulo',
+      'SE': 'Sergipe', 'TO': 'Tocantins'
+    }
+    const estadoExtenso = estadosMap[estado?.toUpperCase()] || estado || 'Pará'
+    if (cidade) ata += `, nesta Cidade de ${cidade}, Estado do ${estadoExtenso}`
     ata += `, sob a Presidência do <strong>Vereador ${nomePresidente}</strong>, `
     ata += `reuniram-se os Vereadores e Vereadoras para a realização da ${sessao.numero}ª Sessão `
     ata += `${tipoLabel}`
@@ -588,8 +604,10 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     if (ausentesJustificados.length > 0) {
       ata += ` e ${ausentesJustificados.length} Vereadores (as) com falta Justificada`
     }
+    // Evitar duplicação: "Câmara Municipal de Chaves de Chaves"
+    const nomeCasaJaTemCidade = cidade && nomeCasa.toLowerCase().includes(cidade.toLowerCase())
     ata += ` na Plenária da ${nomeCasa}`
-    if (cidade) ata += ` de ${cidade}`
+    if (cidade && !nomeCasaJaTemCidade) ata += ` de ${cidade}`
     ata += `. `
 
     // Leitura bíblica (se houver orador do tipo COMUNICACAO no início)
@@ -620,19 +638,21 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
 
       for (let i = 0; i < itensSecao.length; i++) {
         const item = itensSecao[i]
-        ata += `<strong>ITEM ${String(i + 1).padStart(2, '0')}</strong> – ${item.titulo.toUpperCase()}`
+        ata += `<strong>ITEM ${String(i + 1).padStart(2, '0')}</strong> – `
         if (item.proposicao) {
           const prop = item.proposicao
+          ata += `LEITURA DO ${prop.tipo.toUpperCase()} Nº ${prop.numero}/${prop.ano}`
           if (prop.autor) ata += ` – AUTORIA – ${prop.autor.nome?.toUpperCase() || 'NÃO INFORMADO'}`
           if (item.descricao) ata += ` – ${item.descricao}`
           else if (prop.ementa) ata += ` – ${prop.ementa}`
-        } else if (item.descricao) {
-          ata += ` – ${item.descricao}`
+        } else {
+          ata += item.titulo.toUpperCase()
+          if (item.descricao) ata += ` – ${item.descricao}`
         }
         ata += `. `
       }
 
-      ata += `Terminada a Leitura do ${nomeSecao}, passou-se para o </p>`
+      ata += `Terminada a leitura do ${nomeSecao}, passou-se para a leitura do </p>`
     }
 
     // ── GRANDE EXPEDIENTE (Oradores) ──
@@ -745,7 +765,8 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
     ata += `Eu, <strong>${secretario ? nomeSecretario : 'Secretário(a)'}</strong> determinei que fosse lavrada a presente Ata, `
     ata += `que após lida e aprovada vai assinada por mim, <strong>${labelSecretario}</strong> e pelo Senhor Presidente. `
     ata += `Sala das Sessões da ${nomeCasa}`
-    if (cidade) ata += ` de ${cidade} - ${estado || 'PA'}`
+    if (cidade && !nomeCasaJaTemCidade) ata += ` de ${cidade}`
+    if (estado) ata += ` - ${estado}`
     ata += `, ${dataExtenso}.`
     ata += `</p>`
 
