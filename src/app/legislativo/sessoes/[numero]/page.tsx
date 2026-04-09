@@ -23,67 +23,24 @@ import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import { proposicoesApi, ProposicaoApi } from '@/lib/api/proposicoes-api'
 import Link from 'next/link'
 import { useState, useEffect, useMemo } from 'react'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
 export const dynamicParams = true
 
-const STREAMING_MOCK: Record<
-  number,
-  {
-    descricao: string
-    linkTransmissao?: string | null
-    plataforma?: string | null
-    midias: Array<{
-      id: string
-      titulo: string
-      tipo: 'video' | 'audio' | 'documento'
-      url: string
-      duracao?: string | null
-      publicadoEm: string
-    }>
-  }
-> = {
-  1: {
-    descricao: 'Transmissão oficial com tradução em Libras e descrição em tempo real.',
-    linkTransmissao: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    plataforma: 'YouTube',
-    midias: [
-      {
-        id: 'midia-video-1',
-        titulo: 'Sessão plenária - gravação completa',
-        tipo: 'video',
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        duracao: '02:15:00',
-        publicadoEm: new Date().toISOString()
-      },
-      {
-        id: 'midia-audio-1',
-        titulo: 'Podcast resumo das votações',
-        tipo: 'audio',
-        url: 'https://example.com/audio/resumo-sessao-1.mp3',
-        duracao: '00:18:32',
-        publicadoEm: new Date().toISOString()
-      }
-    ]
-  },
-  2: {
-    descricao: 'Sessão extraordinária com foco em pautas orçamentárias.',
-    linkTransmissao: 'https://player.vimeo.com/video/76979871?h=9b9b9b9b9b',
-    plataforma: 'Vimeo',
-    midias: [
-      {
-        id: 'midia-video-2',
-        titulo: 'Resumo em vídeo - principais destaques',
-        tipo: 'video',
-        url: 'https://player.vimeo.com/video/76979871?h=9b9b9b9b9b',
-        duracao: '00:12:45',
-        publicadoEm: new Date().toISOString()
-      }
-    ]
-  }
+// Converte URL do YouTube para embed
+function toYouTubeEmbed(url: string): string | null {
+  try {
+    const u = new URL(url)
+    let videoId: string | null = null
+    if (u.hostname.includes('youtube.com')) {
+      videoId = u.searchParams.get('v') || u.pathname.split('/').pop() || null
+    } else if (u.hostname.includes('youtu.be')) {
+      videoId = u.pathname.slice(1)
+    }
+    if (videoId) return `https://www.youtube.com/embed/${videoId}`
+  } catch { /* não é URL válida */ }
+  return null
 }
 
 export default function SessaoDetailPage() {
@@ -307,12 +264,8 @@ export default function SessaoDetailPage() {
     return null
   }
 
-  const streaming = STREAMING_MOCK[sessao.numero] ?? {
-    descricao: 'A sessão será transmitida pelos canais oficiais da Câmara Municipal.',
-    linkTransmissao: null,
-    plataforma: null,
-    midias: []
-  }
+  const temLinks = sessao.urlTransmissao || sessao.urlVideo || sessao.urlAudio
+  const embedUrl = sessao.urlTransmissao ? toYouTubeEmbed(sessao.urlTransmissao) : (sessao.urlVideo ? toYouTubeEmbed(sessao.urlVideo) : null)
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -356,68 +309,57 @@ export default function SessaoDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <PlayCircle className="h-5 w-5 text-camara-primary shrink-0" aria-hidden="true" />
-                    <span>Transmissão ao vivo e repositório multimídia</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600">{streaming.descricao}</p>
-                  {streaming.linkTransmissao ? (
-                    <div className="rounded-lg overflow-hidden bg-black shadow-md">
-                      <iframe
-                        src={streaming.linkTransmissao}
-                        title={`Transmissão da sessão ${sessao.numero}`}
-                        className="w-full aspect-video"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
-                  ) : (
-                    <div className="bg-gray-100 border border-gray-200 rounded-lg p-6 text-center text-sm text-gray-500">
-                      A transmissão será disponibilizada no início da sessão.
-                    </div>
-                  )}
-
-                  {streaming.midias.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                        <Radio className="h-4 w-4 text-camara-primary" aria-hidden="true" />
-                        Repositório multimídia
-                      </h3>
-                      <div className="grid grid-cols-1 gap-3">
-                        {streaming.midias.map(midia => (
-                          <div
-                            key={midia.id}
-                            className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-3"
-                          >
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold text-gray-800">{midia.titulo}</p>
-                              <p className="text-xs text-gray-500">
-                                {midia.tipo === 'video' ? 'Vídeo' : midia.tipo === 'audio' ? 'Áudio' : 'Documento'} •{' '}
-                                {midia.duracao ?? 'Sem duração informada'} •{' '}
-                                {format(new Date(midia.publicadoEm), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                              </p>
-                            </div>
-                            <Button asChild variant="outline" size="sm" className="ml-4 gap-2">
-                              <Link href={midia.url} target="_blank" rel="noreferrer noopener">
-                                {midia.tipo === 'video' ? (
-                                  <PlayCircle className="h-4 w-4" aria-hidden="true" />
-                                ) : (
-                                  <Download className="h-4 w-4" aria-hidden="true" />
-                                )}
-                                Acessar
-                              </Link>
-                            </Button>
-                          </div>
-                        ))}
+              {/* Transmissão - só mostra se tiver links cadastrados */}
+              {temLinks && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                      <PlayCircle className="h-5 w-5 text-camara-primary shrink-0" aria-hidden="true" />
+                      <span>Transmissão e Multimídia</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {embedUrl && (
+                      <div className="rounded-lg overflow-hidden bg-black shadow-md">
+                        <iframe
+                          src={embedUrl}
+                          title={`Transmissão da sessão ${sessao.numero}`}
+                          className="w-full aspect-video"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
                       </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      {sessao.urlTransmissao && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={sessao.urlTransmissao} target="_blank" rel="noopener noreferrer">
+                            <Radio className="h-4 w-4 mr-1.5 text-red-500" />
+                            Transmissão ao Vivo
+                          </a>
+                        </Button>
+                      )}
+                      {sessao.urlVideo && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={sessao.urlVideo} target="_blank" rel="noopener noreferrer">
+                            <PlayCircle className="h-4 w-4 mr-1.5 text-blue-500" />
+                            Vídeo da Sessão
+                          </a>
+                        </Button>
+                      )}
+                      {sessao.urlAudio && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={sessao.urlAudio} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4 mr-1.5 text-purple-500" />
+                            Áudio da Sessão
+                          </a>
+                        </Button>
+                      )}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               <Card>
                 <CardHeader>
@@ -437,8 +379,11 @@ export default function SessaoDetailPage() {
                         <FileText className="h-4 w-4" />
                         Ata da Sessão
                       </h3>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-gray-900 whitespace-pre-wrap">{sessao.ata}</p>
+                      <div className="bg-white p-6 rounded-lg border shadow-sm overflow-x-auto">
+                        <div
+                          className="prose prose-sm max-w-none text-gray-900 break-words [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full"
+                          dangerouslySetInnerHTML={{ __html: sessao.ata }}
+                        />
                       </div>
                     </div>
                   )}
