@@ -102,6 +102,7 @@ export default function LancamentoRetroativoPage() {
   const [carregandoVotos, setCarregandoVotos] = useState(false)
   const [editandoPauta, setEditandoPauta] = useState(false)
   const [alterandoStatus, setAlterandoStatus] = useState<string | null>(null)
+  const [nomesSecao, setNomesSecao] = useState<Record<string, string>>({})
 
   // Alterar status diretamente (sem votos individuais)
   const alterarStatusItem = async (itemId: string, novoStatus: 'APROVADO' | 'REJEITADO' | 'ADIADO' | 'RETIRADO') => {
@@ -173,6 +174,23 @@ export default function LancamentoRetroativoPage() {
       setCarregandoVotos(false)
     }
   }, [sessao, id])
+
+  // Resolver nomes de seção
+  useEffect(() => {
+    fetch('/api/tipos-expediente?ativo=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          const map: Record<string, string> = {
+            'ORDEM_DO_DIA': 'Ordem do Dia', 'OUTROS': 'Outros',
+            'EXPEDIENTE': 'Expediente', 'COMUNICACOES': 'Comunicações', 'HONRAS': 'Honras'
+          }
+          data.data.forEach((t: any) => { map[t.id] = t.nome })
+          setNomesSecao(map)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Quando seleciona um item
   useEffect(() => {
@@ -358,24 +376,6 @@ export default function LancamentoRetroativoPage() {
     acc[secao].push(item)
     return acc
   }, {} as Record<string, ItemPauta[]>)
-
-  // Resolver nomes de seção
-  const [nomesSecao, setNomesSecao] = useState<Record<string, string>>({})
-  useEffect(() => {
-    fetch('/api/tipos-expediente?ativo=true')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.data)) {
-          const map: Record<string, string> = {
-            'ORDEM_DO_DIA': 'Ordem do Dia', 'OUTROS': 'Outros',
-            'EXPEDIENTE': 'Expediente', 'COMUNICACOES': 'Comunicações', 'HONRAS': 'Honras'
-          }
-          data.data.forEach((t: any) => { map[t.id] = t.nome })
-          setNomesSecao(map)
-        }
-      })
-      .catch(() => {})
-  }, [])
 
   // Verificar se ação envolve votação
   const ehVotacao = (tipoAcao?: string) =>
