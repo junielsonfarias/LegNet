@@ -374,7 +374,7 @@ export default function SessaoDetailPage() {
                   )}
 
                   {sessao?.ata && (
-                    <div>
+                    <div id="ata-sessao">
                       <h3 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-2">
                         <FileText className="h-4 w-4" />
                         Ata da Sessão
@@ -439,6 +439,63 @@ export default function SessaoDetailPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Links Rápidos */}
+              {(sessao.ata || sessao.arquivoAta || sessao.urlTransmissao || sessao.urlVideo || sessao.urlAudio) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Documentos e Mídias</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {sessao.ata && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          const el = document.getElementById('ata-sessao')
+                          if (el) el.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                      >
+                        <FileText className="h-4 w-4 mr-2 text-camara-primary" />
+                        Ver Ata da Sessão
+                      </Button>
+                    )}
+                    {sessao.arquivoAta && (
+                      <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                        <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-4 w-4 mr-2 text-green-600" />
+                          Baixar Ata (PDF)
+                        </a>
+                      </Button>
+                    )}
+                    {sessao.urlTransmissao && (
+                      <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                        <a href={sessao.urlTransmissao} target="_blank" rel="noopener noreferrer">
+                          <Radio className="h-4 w-4 mr-2 text-red-500" />
+                          Transmissão ao Vivo
+                        </a>
+                      </Button>
+                    )}
+                    {sessao.urlVideo && (
+                      <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                        <a href={sessao.urlVideo} target="_blank" rel="noopener noreferrer">
+                          <PlayCircle className="h-4 w-4 mr-2 text-blue-500" />
+                          Vídeo da Sessão
+                        </a>
+                      </Button>
+                    )}
+                    {sessao.urlAudio && (
+                      <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                        <a href={sessao.urlAudio} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-4 w-4 mr-2 text-purple-500" />
+                          Áudio da Sessão
+                        </a>
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
 
