@@ -756,6 +756,8 @@ enum StatusProposicao {
   EM_VOTACAO        // Em processo de votação
   APROVADA
   REJEITADA
+  RETIRADA          // Retirada pelo autor antes da votação
+  ADIADA            // Adiada para sessão futura
   ARQUIVADA
   VETADA
   SANCIONADA        // Sancionada pelo Executivo

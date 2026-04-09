@@ -5,6 +5,7 @@ import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { validarInclusaoOrdemDoDia } from '@/lib/services/proposicao-validacao-service'
 import { pautasDbService } from '@/lib/services/pautas-db-service'
+import { proposicaoDbService } from '@/lib/services/proposicao-db-service'
 import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
 import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
@@ -22,7 +23,8 @@ const PautaItemUpdateSchema = z.object({
   autor: z.string().nullish().transform(v => v ?? undefined),
   observacoes: z.string().nullish().transform(v => v ?? undefined),
   ordem: z.number().int().min(1).optional(),
-  tipoAcao: z.enum(TIPO_ACAO_PAUTA).nullish().transform(v => v ?? undefined), // Tipo de ação: LEITURA, VOTACAO, etc.
+  tipoAcao: z.enum(TIPO_ACAO_PAUTA).nullish().transform(v => v ?? undefined),
+  tipoVotacao: z.enum(['NOMINAL', 'SECRETA', 'SIMBOLICA', 'LEITURA'] as const).nullish().transform(v => v ?? undefined),
   // === NOVOS CAMPOS DE ETAPA E LEITURA ===
   etapa: z.number().int().min(1).max(2).nullable().optional(), // 1 = 1ª Ordem do Dia, 2 = 2ª Ordem do Dia
   parecerId: z.string().nullable().optional(),
@@ -114,6 +116,7 @@ export const PUT = withAuth(async (
   if (data.autor !== undefined) updateData.autor = data.autor ?? null
   if (data.observacoes !== undefined) updateData.observacoes = data.observacoes ?? null
   if (data.tipoAcao !== undefined) updateData.tipoAcao = data.tipoAcao
+  if (data.tipoVotacao !== undefined) updateData.tipoVotacao = data.tipoVotacao
   if (data.etapa !== undefined) updateData.etapa = data.etapa
   if (data.parecerId !== undefined) updateData.parecerId = data.parecerId
   if (data.leituraNumero !== undefined) updateData.leituraNumero = data.leituraNumero
@@ -171,6 +174,11 @@ export const DELETE = withAuth(async (
   const existingItem = await pautasDbService.getItem(validatedItemId)
   if (!existingItem) {
     throw new NotFoundError('Item da pauta')
+  }
+
+  // Reverter status da proposição vinculada (EM_PAUTA → AGUARDANDO_PAUTA)
+  if (existingItem.proposicaoId) {
+    await proposicaoDbService.revertStatusPauta([existingItem.proposicaoId])
   }
 
   await pautasDbService.deleteItem(validatedItemId)

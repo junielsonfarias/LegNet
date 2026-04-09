@@ -89,8 +89,16 @@ const TIPOS_ACAO = [
   { value: 'LEITURA', label: 'Leitura' },
   { value: 'DISCUSSAO', label: 'Discussão' },
   { value: 'VOTACAO', label: 'Votação' },
+  { value: 'LEITURA_VOTACAO', label: 'Leitura + Votação' },
+  { value: 'DISCUSSAO_VOTACAO', label: 'Discussão + Votação' },
   { value: 'COMUNICADO', label: 'Comunicado' },
   { value: 'HOMENAGEM', label: 'Homenagem' }
+]
+
+const TIPOS_VOTACAO = [
+  { value: 'NOMINAL', label: 'Nominal' },
+  { value: 'SIMBOLICA', label: 'Simbólica' },
+  { value: 'SECRETA', label: 'Secreta' }
 ]
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
@@ -113,6 +121,7 @@ interface ItemFormData {
   proposicaoId?: string
   tempoEstimado?: number
   tipoAcao: string
+  tipoVotacao: string
 }
 
 const defaultFormData: ItemFormData = {
@@ -120,6 +129,7 @@ const defaultFormData: ItemFormData = {
   titulo: '',
   descricao: '',
   tipoAcao: 'VOTACAO',
+  tipoVotacao: 'NOMINAL',
   tempoEstimado: 15
 }
 
@@ -219,7 +229,8 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
       descricao: item.descricao || '',
       proposicaoId: item.proposicaoId || undefined,
       tempoEstimado: item.tempoEstimado || 15,
-      tipoAcao: item.tipoAcao || 'VOTACAO'
+      tipoAcao: item.tipoAcao || 'VOTACAO',
+      tipoVotacao: item.tipoVotacao || 'NOMINAL'
     })
     setIsAddingItem(false)
   }
@@ -268,7 +279,8 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
           titulo: formData.titulo,
           descricao: formData.descricao || undefined,
           tempoEstimado: formData.tempoEstimado,
-          tipoAcao: formData.tipoAcao as any
+          tipoAcao: formData.tipoAcao as any,
+          tipoVotacao: formData.tipoVotacao as any
         })
       } else {
         await addItem({
@@ -277,6 +289,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
           descricao: formData.descricao || undefined,
           tempoEstimado: formData.tempoEstimado,
           tipoAcao: formData.tipoAcao as any,
+          tipoVotacao: formData.tipoVotacao as any,
           proposicaoId: formData.proposicaoId
         })
       }
@@ -427,6 +440,26 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
                   </SelectContent>
                 </Select>
               </div>
+              {['VOTACAO', 'LEITURA_VOTACAO', 'DISCUSSAO_VOTACAO'].includes(formData.tipoAcao) && (
+                <div>
+                  <Label>Tipo de Votação</Label>
+                  <Select
+                    value={formData.tipoVotacao}
+                    onValueChange={(value) => setFormData({ ...formData, tipoVotacao: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIPOS_VOTACAO.map(tipo => (
+                        <SelectItem key={tipo.value} value={tipo.value}>
+                          {tipo.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <Label>Tempo Estimado (min)</Label>
                 <Input

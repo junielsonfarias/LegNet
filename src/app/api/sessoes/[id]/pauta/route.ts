@@ -18,6 +18,7 @@ const PautaItemCreateSchema = z.object({
   autor: z.string().nullish().transform(v => v ?? undefined),
   observacoes: z.string().nullish().transform(v => v ?? undefined),
   tipoAcao: z.enum(TIPO_ACAO_PAUTA).nullish().transform(v => v ?? undefined),
+  tipoVotacao: z.enum(['NOMINAL', 'SECRETA', 'SIMBOLICA', 'LEITURA'] as const).nullish().transform(v => v ?? undefined),
   etapa: z.number().int().min(1).max(2).nullable().optional(),
   parecerId: z.string().nullable().optional(),
   leituraNumero: z.number().int().min(1).max(3).nullable().optional(),
