@@ -12,7 +12,7 @@ export interface PautaItemApi {
   tempoReal?: number | null
   tempoAcumulado?: number
   status: string
-  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
+  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | 'LEITURA_ATA' | 'LEITURA_OFICIO' | null
   autor?: string | null
   observacoes?: string | null
   iniciadoEm?: string | null
@@ -29,6 +29,10 @@ export interface PautaItemApi {
   intersticio?: boolean
   dataIntersticio?: string | null
   prazoIntersticio?: string | null
+
+  // === CAMPOS DE ATA E OFÍCIO ===
+  sessaoAtaOrigemId?: string | null    // Sessão cuja ata será lida/aprovada
+  oficioId?: string | null             // Ofício a ser lido
 
   // === CAMPOS DE ETAPA E LEITURA ===
   etapa?: number | null                // 1 = 1ª Ordem do Dia (leituras), 2 = 2ª Ordem do Dia (votações)
@@ -87,7 +91,7 @@ export interface PautaSugestaoApi {
   titulo: string
   descricao?: string | null
   secao: 'EXPEDIENTE' | 'ORDEM_DO_DIA' | 'COMUNICACOES' | 'HONRAS' | 'OUTROS'
-  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | null
+  tipoAcao?: 'LEITURA' | 'DISCUSSAO' | 'VOTACAO' | 'LEITURA_VOTACAO' | 'DISCUSSAO_VOTACAO' | 'COMUNICADO' | 'HOMENAGEM' | 'LEITURA_ATA' | 'LEITURA_OFICIO' | null
   tempoEstimado?: number | null
   prioridade: 'ALTA' | 'MEDIA' | 'BAIXA'
   tipoProposicao?: string | null

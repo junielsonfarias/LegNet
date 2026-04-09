@@ -54,7 +54,8 @@ import {
   Palette,
   ExternalLink,
   Globe,
-  Tv
+  Tv,
+  Mail
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -102,6 +103,7 @@ const navigationCategories: NavCategory[] = [
       { name: 'Pareceres', href: '/admin/pareceres', icon: ClipboardList, permissions: ['tramitacao.view'] },
       { name: 'Protocolo', href: '/admin/protocolo', icon: FileInput, permissions: ['tramitacao.view'] },
       { name: 'Normas Juridicas', href: '/admin/normas', icon: Scale, permissions: ['transparencia.view'] },
+      { name: 'Oficios', href: '/admin/oficios', icon: Mail, permissions: ['sessao.manage'] },
     ]
   },
   {

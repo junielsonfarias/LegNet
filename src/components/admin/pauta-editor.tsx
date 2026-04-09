@@ -124,6 +124,8 @@ interface ItemFormData {
   tempoEstimado?: number
   tipoAcao: string
   tipoVotacao: string
+  sessaoAtaOrigemId?: string
+  oficioId?: string
 }
 
 const defaultFormData: ItemFormData = {
@@ -133,6 +135,21 @@ const defaultFormData: ItemFormData = {
   tipoAcao: 'VOTACAO',
   tipoVotacao: 'NOMINAL',
   tempoEstimado: 15
+}
+
+interface AtaPendente {
+  id: string
+  numero: number
+  tipo: string
+  data: string
+}
+
+interface OficioDisponivel {
+  id: string
+  numero: string
+  remetente: string
+  assunto: string
+  data: string
 }
 
 export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditorProps) {
@@ -165,6 +182,37 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
           }))
           // Tipos do banco + seções fixas (Ordem do Dia, Outros)
           setSecoes([...tiposDoBanco, ...SECOES_FIXAS])
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Atas pendentes e ofícios disponíveis
+  const [atasPendentes, setAtasPendentes] = useState<AtaPendente[]>([])
+  const [oficiosDisponiveis, setOficiosDisponiveis] = useState<OficioDisponivel[]>([])
+
+  useEffect(() => {
+    // Buscar sessões com ata pendente de aprovação
+    fetch('/api/sessoes?status=CONCLUIDA&limit=50')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          const sessoes = data.data.filter((s: any) => s.ata && (!s.statusAta || s.statusAta === 'PENDENTE'))
+          setAtasPendentes(sessoes.map((s: any) => ({
+            id: s.id, numero: s.numero, tipo: s.tipo, data: s.data
+          })))
+        }
+      })
+      .catch(() => {})
+
+    // Buscar ofícios não lidos
+    fetch('/api/oficios?lido=false')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setOficiosDisponiveis(data.data.map((o: any) => ({
+            id: o.id, numero: o.numero, remetente: o.remetente, assunto: o.assunto, data: o.data
+          })))
         }
       })
       .catch(() => {})
@@ -292,7 +340,9 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
           tempoEstimado: formData.tempoEstimado,
           tipoAcao: formData.tipoAcao as any,
           tipoVotacao: formData.tipoVotacao as any,
-          proposicaoId: formData.proposicaoId
+          proposicaoId: formData.proposicaoId,
+          sessaoAtaOrigemId: formData.sessaoAtaOrigemId || undefined,
+          oficioId: formData.oficioId || undefined
         })
       }
       handleCancelEdit()
@@ -472,6 +522,72 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
                 />
               </div>
             </div>
+
+            {/* Seletor de Ata pendente */}
+            {formData.tipoAcao === 'LEITURA_ATA' && (
+              <div>
+                <Label>Ata da Sessão *</Label>
+                <Select
+                  value={formData.sessaoAtaOrigemId || ''}
+                  onValueChange={(value) => {
+                    const sessao = atasPendentes.find(a => a.id === value)
+                    const tipoLabels: Record<string, string> = {
+                      'ORDINARIA': 'Ordinária', 'EXTRAORDINARIA': 'Extraordinária',
+                      'SOLENE': 'Solene', 'ESPECIAL': 'Especial'
+                    }
+                    const titulo = sessao
+                      ? `Leitura da Ata da ${sessao.numero}ª Sessão ${tipoLabels[sessao.tipo] || sessao.tipo}`
+                      : ''
+                    setFormData({ ...formData, sessaoAtaOrigemId: value, titulo })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a sessão cuja ata será lida" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {atasPendentes.map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.numero}ª Sessão — {new Date(s.data.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {atasPendentes.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-1">Nenhuma sessão com ata pendente de aprovação</p>
+                )}
+              </div>
+            )}
+
+            {/* Seletor de Ofício */}
+            {formData.tipoAcao === 'LEITURA_OFICIO' && (
+              <div>
+                <Label>Ofício *</Label>
+                <Select
+                  value={formData.oficioId || ''}
+                  onValueChange={(value) => {
+                    const oficio = oficiosDisponiveis.find(o => o.id === value)
+                    const titulo = oficio
+                      ? `Leitura do Ofício nº ${oficio.numero} – ${oficio.remetente} – ${oficio.assunto.substring(0, 80)}`
+                      : ''
+                    setFormData({ ...formData, oficioId: value, titulo })
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o ofício a ser lido" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {oficiosDisponiveis.map(o => (
+                      <SelectItem key={o.id} value={o.id}>
+                        Ofício nº {o.numero} — {o.remetente}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {oficiosDisponiveis.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-1">Nenhum ofício pendente de leitura</p>
+                )}
+              </div>
+            )}
 
             <div>
               <Label>Título *</Label>
