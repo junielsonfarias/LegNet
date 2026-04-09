@@ -104,7 +104,7 @@ export default function ComissoesPage() {
   }
 
   const getVicePresidente = (membros: Membro[]) => {
-    return membros.find(m => m.cargo === 'VICE_PRESIDENTE')?.parlamentar.nome || 'Não definido'
+    return membros.find(m => m.cargo === 'VICE_PRESIDENTE')?.parlamentar.nome || null
   }
 
   const getOutrosMembros = (membros: Membro[]) => {
@@ -272,11 +272,13 @@ export default function ComissoesPage() {
                             Presidente: {getPresidente(comissao.membros)}
                           </p>
                         </div>
-                        <div className="bg-green-50 p-3 rounded-lg">
-                          <p className="font-medium text-green-900">
-                            Vice-Presidente: {getVicePresidente(comissao.membros)}
-                          </p>
-                        </div>
+                        {getVicePresidente(comissao.membros) && (
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <p className="font-medium text-green-900">
+                              Vice-Presidente: {getVicePresidente(comissao.membros)}
+                            </p>
+                          </div>
+                        )}
                         <div className="space-y-1">
                           {getOutrosMembros(comissao.membros).map((membro) => (
                             <p key={membro.id} className="text-sm text-gray-700 pl-4">

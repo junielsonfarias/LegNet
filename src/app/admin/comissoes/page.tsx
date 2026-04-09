@@ -50,6 +50,7 @@ export default function ComissoesAdminPage() {
   const [loading, setLoading] = useState(false)
   const [showMembrosForm, setShowMembrosForm] = useState(false)
   const [selectedComissao, setSelectedComissao] = useState<string | null>(null)
+  const [editingMembro, setEditingMembro] = useState<{ comissaoId: string; membro: any } | null>(null)
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -197,21 +198,35 @@ export default function ComissoesAdminPage() {
 
   const handleMembroSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!selectedComissao) return
-    
-    try {
-      const novoMembro = await addMember(selectedComissao, {
-        parlamentarId: membroFormData.parlamentarId,
-        cargo: membroFormData.cargo as any,
-        dataInicio: membroFormData.dataInicio,
-        dataFim: membroFormData.dataFim || undefined,
-        ativo: membroFormData.ativo,
-        observacoes: membroFormData.observacoes || undefined
-      })
 
-      if (novoMembro) {
-        toast.success('Membro adicionado com sucesso')
+    if (!selectedComissao) return
+
+    try {
+      if (editingMembro) {
+        const atualizado = await updateMember(editingMembro.comissaoId, editingMembro.membro.id, {
+          cargo: membroFormData.cargo as any,
+          dataInicio: membroFormData.dataInicio,
+          dataFim: membroFormData.dataFim || undefined,
+          ativo: membroFormData.ativo,
+          observacoes: membroFormData.observacoes || undefined
+        })
+
+        if (atualizado) {
+          toast.success('Membro atualizado com sucesso')
+        }
+      } else {
+        const novoMembro = await addMember(selectedComissao, {
+          parlamentarId: membroFormData.parlamentarId,
+          cargo: membroFormData.cargo as any,
+          dataInicio: membroFormData.dataInicio,
+          dataFim: membroFormData.dataFim || undefined,
+          ativo: membroFormData.ativo,
+          observacoes: membroFormData.observacoes || undefined
+        })
+
+        if (novoMembro) {
+          toast.success('Membro adicionado com sucesso')
+        }
       }
 
       await refetch()
@@ -226,9 +241,10 @@ export default function ComissoesAdminPage() {
       })
       setShowMembrosForm(false)
       setSelectedComissao(null)
+      setEditingMembro(null)
     } catch (error) {
-      console.error('Erro ao adicionar membro:', error)
-      toast.error('Não foi possível adicionar o membro')
+      console.error('Erro ao salvar membro:', error)
+      toast.error(editingMembro ? 'Não foi possível atualizar o membro' : 'Não foi possível adicionar o membro')
     }
   }
 
@@ -286,7 +302,30 @@ export default function ComissoesAdminPage() {
   }
 
   const handleAddMembro = (comissaoId: string) => {
+    setEditingMembro(null)
     setSelectedComissao(comissaoId)
+    setMembroFormData({
+      parlamentarId: '',
+      cargo: 'MEMBRO',
+      dataInicio: new Date().toISOString().split('T')[0],
+      dataFim: '',
+      ativo: true,
+      observacoes: ''
+    })
+    setShowMembrosForm(true)
+  }
+
+  const handleEditMembro = (comissaoId: string, membro: any) => {
+    setEditingMembro({ comissaoId, membro })
+    setSelectedComissao(comissaoId)
+    setMembroFormData({
+      parlamentarId: membro.parlamentarId,
+      cargo: membro.cargo,
+      dataInicio: membro.dataInicio ? new Date(membro.dataInicio).toISOString().split('T')[0] : '',
+      dataFim: membro.dataFim ? new Date(membro.dataFim).toISOString().split('T')[0] : '',
+      ativo: membro.ativo,
+      observacoes: membro.observacoes || ''
+    })
     setShowMembrosForm(true)
   }
 
@@ -471,14 +510,18 @@ export default function ComissoesAdminPage() {
       {showMembrosForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Adicionar Membro à Comissão</CardTitle>
+            <CardTitle>{editingMembro ? 'Editar Membro da Comissão' : 'Adicionar Membro à Comissão'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleMembroSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="parlamentarId">Parlamentar</Label>
-                  <Select value={membroFormData.parlamentarId} onValueChange={(value) => setMembroFormData({...membroFormData, parlamentarId: value})}>
+                  <Select
+                    value={membroFormData.parlamentarId}
+                    onValueChange={(value) => setMembroFormData({...membroFormData, parlamentarId: value})}
+                    disabled={!!editingMembro}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o parlamentar" />
                     </SelectTrigger>
@@ -553,14 +596,15 @@ export default function ComissoesAdminPage() {
 
               <div className="flex items-center gap-4">
                 <Button type="submit">
-                  Adicionar Membro
+                  {editingMembro ? 'Salvar Alterações' : 'Adicionar Membro'}
                 </Button>
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => {
                     setShowMembrosForm(false)
                     setSelectedComissao(null)
+                    setEditingMembro(null)
                     setMembroFormData({
                       parlamentarId: '',
                       cargo: 'MEMBRO',
@@ -684,6 +728,15 @@ export default function ComissoesAdminPage() {
                               ) : (
                                 <ToggleLeft className="h-4 w-4 text-gray-500" />
                               )}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleEditMembro(comissao.id, membro)}
+                              aria-label="Editar membro"
+                            >
+                              <Edit className="h-4 w-4 text-blue-600" />
                             </Button>
                             <Button
                               type="button"
