@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   FileText, Search, Calendar, Download,
-  Loader2, BookOpen, ArrowLeft
+  Loader2, BookOpen, ArrowLeft, Eye, X
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatDateBR, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
@@ -30,6 +30,7 @@ export default function AtasPage() {
   const [busca, setBusca] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('all')
   const [filtroAno, setFiltroAno] = useState('all')
+  const [ataAberta, setAtaAberta] = useState<string | null>(null)
 
   const fetchAtas = useCallback(async () => {
     setLoading(true)
@@ -161,6 +162,16 @@ export default function AtasPage() {
                       {sessao.ata || sessao.arquivoAta ? (
                         <>
                           <Badge className="bg-green-100 text-green-800">Publicada</Badge>
+                          {sessao.ata && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setAtaAberta(ataAberta === sessao.id ? null : sessao.id)}
+                            >
+                              {ataAberta === sessao.id ? <X className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+                              {ataAberta === sessao.id ? 'Fechar' : 'Visualizar'}
+                            </Button>
+                          )}
                           {sessao.arquivoAta && (
                             <Button asChild variant="outline" size="sm">
                               <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer">
@@ -174,6 +185,14 @@ export default function AtasPage() {
                       )}
                     </div>
                   </div>
+                  {ataAberta === sessao.id && sessao.ata && (
+                    <div className="mt-4 pt-4 border-t">
+                      <div
+                        className="prose prose-sm max-w-none text-gray-900 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full"
+                        dangerouslySetInnerHTML={{ __html: sessao.ata }}
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

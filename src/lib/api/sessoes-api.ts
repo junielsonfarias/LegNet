@@ -11,6 +11,7 @@ export interface SessaoApi {
   status: 'AGENDADA' | 'EM_ANDAMENTO' | 'SUSPENSA' | 'CONCLUIDA' | 'CANCELADA'
   descricao: string | null
   ata: string | null
+  arquivoAta?: string | null
   finalizada: boolean
   legislaturaId?: string | null
   periodoId?: string | null

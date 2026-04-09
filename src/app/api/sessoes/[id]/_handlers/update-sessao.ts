@@ -89,6 +89,7 @@ function buildUpdateData(
   if (validatedData.local !== undefined) updateData.local = validatedData.local
   if (validatedData.descricao !== undefined) updateData.descricao = validatedData.descricao
   if (validatedData.ata !== undefined) updateData.ata = validatedData.ata
+  if (validatedData.arquivoAta !== undefined) updateData.arquivoAta = validatedData.arquivoAta
   if (validatedData.legislaturaId !== undefined) updateData.legislaturaId = validatedData.legislaturaId
   if (validatedData.periodoId !== undefined) updateData.periodoId = validatedData.periodoId
 

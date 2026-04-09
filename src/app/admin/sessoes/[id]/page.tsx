@@ -6,6 +6,8 @@ import nextDynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -34,7 +36,9 @@ import {
   Mic,
   Printer,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Link2,
+  Save
 } from 'lucide-react'
 import { useSessao } from '@/lib/hooks/use-sessoes'
 import Link from 'next/link'
@@ -97,6 +101,38 @@ export default function SessaoDetailPage() {
   const [atualizandoPauta, setAtualizandoPauta] = useState(false)
   const [previewAta, setPreviewAta] = useState(false)
   const [gerandoAta, setGerandoAta] = useState(false)
+  const [arquivoAtaUrl, setArquivoAtaUrl] = useState('')
+  const [salvandoUrl, setSalvandoUrl] = useState(false)
+
+  // Sincronizar URL da ata quando sessão carrega
+  useEffect(() => {
+    if (sessao?.arquivoAta) {
+      setArquivoAtaUrl(sessao.arquivoAta)
+    }
+  }, [sessao?.arquivoAta])
+
+  const salvarArquivoAta = async () => {
+    if (!sessao?.id) return
+    setSalvandoUrl(true)
+    try {
+      const response = await fetch(`/api/sessoes/${sessao.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ arquivoAta: arquivoAtaUrl.trim() || null })
+      })
+      if (response.ok) {
+        toast.success('URL da ata salva com sucesso')
+        mutate()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Erro ao salvar URL da ata')
+      }
+    } catch {
+      toast.error('Erro ao salvar URL da ata')
+    } finally {
+      setSalvandoUrl(false)
+    }
+  }
 
   // Mapa de IDs de tipos de expediente para nomes
   const [tiposExpedienteMap, setTiposExpedienteMap] = useState<Record<string, string>>({})
@@ -788,6 +824,38 @@ export default function SessaoDetailPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Campo URL do Arquivo da Ata */}
+                  <div className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                    <Label htmlFor="arquivoAta" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                      <Link2 className="h-4 w-4" />
+                      URL do Arquivo da Ata (PDF ou documento externo)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="arquivoAta"
+                        type="url"
+                        placeholder="https://exemplo.com/ata-sessao.pdf"
+                        value={arquivoAtaUrl}
+                        onChange={(e) => setArquivoAtaUrl(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={salvarArquivoAta}
+                        disabled={salvandoUrl}
+                      >
+                        {salvandoUrl ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                        Salvar
+                      </Button>
+                    </div>
+                    {sessao.arquivoAta && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        URL salva: <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer" className="underline">{sessao.arquivoAta}</a>
+                      </p>
+                    )}
+                  </div>
 
                   {sessao.pautaSessao?.observacoes && (
                     <div>
