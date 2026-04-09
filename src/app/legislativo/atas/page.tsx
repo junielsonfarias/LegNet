@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatDateBR, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
+import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 
 interface SessaoAta {
   id: string
@@ -189,7 +190,7 @@ export default function AtasPage() {
                     <div className="mt-4 pt-4 border-t">
                       <div
                         className="prose prose-sm max-w-none text-gray-900 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full"
-                        dangerouslySetInnerHTML={{ __html: sessao.ata }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(sessao.ata) }}
                       />
                     </div>
                   )}

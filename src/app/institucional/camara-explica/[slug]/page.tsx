@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { BookOpen, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 
 interface ConteudoEducativo {
   id: string
@@ -101,7 +102,7 @@ export default function ConteudoEducativoPage() {
             <CardContent className="p-8">
               <div
                 className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700"
-                dangerouslySetInnerHTML={{ __html: conteudo.conteudo }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(conteudo.conteudo) }}
               />
             </CardContent>
           </Card>

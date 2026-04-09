@@ -5,23 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
-} from 'recharts'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import dynamic from 'next/dynamic'
+
+// Recharts components loaded dynamically to avoid SSR issues with window dependency
+const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart) as any, { ssr: false }) as any
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar) as any, { ssr: false }) as any
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis) as any, { ssr: false }) as any
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis) as any, { ssr: false }) as any
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid) as any, { ssr: false }) as any
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip) as any, { ssr: false }) as any
+const Legend = dynamic(() => import('recharts').then(mod => mod.Legend) as any, { ssr: false }) as any
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer) as any, { ssr: false }) as any
+const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart) as any, { ssr: false }) as any
+const Pie = dynamic(() => import('recharts').then(mod => mod.Pie) as any, { ssr: false }) as any
+const Cell = dynamic(() => import('recharts').then(mod => mod.Cell) as any, { ssr: false }) as any
+const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart) as any, { ssr: false }) as any
+const Line = dynamic(() => import('recharts').then(mod => mod.Line) as any, { ssr: false }) as any
+const Area = dynamic(() => import('recharts').then(mod => mod.Area) as any, { ssr: false }) as any
+const AreaChart = dynamic(() => import('recharts').then(mod => mod.AreaChart) as any, { ssr: false }) as any
 import {
   TrendingUp,
   TrendingDown,

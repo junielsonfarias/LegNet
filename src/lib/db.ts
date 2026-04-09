@@ -774,7 +774,6 @@ if (!globalForMockData.__CAMARA_MOCK_DATA__) {
     auditLogs: [] as any[],
     notificacoesMulticanal: [] as any[]
   }
-  console.log('🔄 MockData inicializado com arrays vazios')
 } else {
   // Garantir que os arrays existem mesmo se mockData já existir
   if (!globalForMockData.__CAMARA_MOCK_DATA__.sessoes) {
@@ -951,9 +950,6 @@ const mapMembroComissaoInclude = (membro: any, include?: any) => {
 
 // Garantir que mockData sempre aponte para o global (referência única)
 export const mockData = globalForMockData.__CAMARA_MOCK_DATA__!
-
-// Log de diagnóstico ao carregar o módulo
-console.log('📦 db.ts carregado, mockData.sessoes.length:', mockData.sessoes?.length || 0)
 
 export const getMockSnapshot = (): Record<string, any> => deepClone(mockData)
 
@@ -1157,57 +1153,39 @@ export const db = {
   },
   sessao: {
     findMany: (args?: { where?: any; orderBy?: any; skip?: number; take?: number; include?: any }) => {
-      console.log('🔍 Mock findMany chamado com:', args)
-
       // Garantir que o array existe
       if (!globalForMockData.__CAMARA_MOCK_DATA__) {
         globalForMockData.__CAMARA_MOCK_DATA__ = {
           ...mockDataBase,
           sessoes: []
         } as any
-        console.log('⚠️ globalForMockData não existia, recriado')
+
       }
 
       const globalMockData = globalForMockData.__CAMARA_MOCK_DATA__!
 
       if (!globalMockData.sessoes) {
         globalMockData.sessoes = []
-        console.log('⚠️ Array de sessões não existia, criado agora no findMany')
+
       }
 
       // Usar sempre a referência global
       const sessoesArray = globalMockData.sessoes
-      console.log('📊 Referência do array no findMany:', {
-        global: globalMockData.sessoes.length,
-        mockData: mockData.sessoes?.length || 0,
-        saoIguais: globalMockData.sessoes === mockData.sessoes,
-        referencia: globalMockData.sessoes
-      })
-      
       let results = [...sessoesArray]
-      console.log('📊 Sessões no array antes de filtrar:', results.length)
-      if (results.length > 0) {
-        console.log('📋 Primeiras sessões:', results.slice(0, 3).map(s => ({ id: s.id, numero: s.numero })))
-      }
       
       // Aplicar filtros
       if (args?.where) {
-        console.log('🔍 Aplicando filtros:', args.where)
         if (args.where.status) {
           results = results.filter(s => s.status === args.where.status)
-          console.log('📊 Após filtrar por status:', results.length)
         }
         if (args.where.tipo) {
           results = results.filter(s => s.tipo === args.where.tipo)
-          console.log('📊 Após filtrar por tipo:', results.length)
         }
         if (args.where.numero !== undefined) {
           results = results.filter(s => s.numero === args.where.numero)
-          console.log('📊 Após filtrar por numero:', results.length)
         }
         if (args.where.id) {
           results = results.filter(s => s.id === args.where.id)
-          console.log('📊 Após filtrar por id:', results.length)
         }
       }
       
@@ -1280,12 +1258,10 @@ export const db = {
       
       // Aplicar paginação
       if (args?.skip !== undefined && args?.take !== undefined) {
-        console.log('📄 Aplicando paginação:', { skip: args.skip, take: args.take })
         results = results.slice(args.skip, args.skip + args.take)
-        console.log('📊 Após paginação:', results.length)
       }
       
-      console.log('✅ Mock findMany retornando:', results.length, 'sessões')
+
       return Promise.resolve(results)
     },
     findFirst: (args?: { where?: any; include?: any }) => {
@@ -1407,8 +1383,6 @@ export const db = {
       return Promise.resolve(result)
     },
     create: async (args: { data: any; include?: any }) => {
-      console.log('🔨 Mock create chamado com:', args.data)
-      
       // Garantir que o array existe
       if (!globalForMockData.__CAMARA_MOCK_DATA__) {
         globalForMockData.__CAMARA_MOCK_DATA__ = {
@@ -1421,7 +1395,7 @@ export const db = {
 
       if (!globalMockData.sessoes) {
         globalMockData.sessoes = []
-        console.log('⚠️ Array de sessões não existia, criado agora')
+
       }
       
       // Processar data se for string
@@ -1480,18 +1454,7 @@ export const db = {
         }
       }
 
-      console.log('📝 Nova sessão criada:', {
-        id: newSessao.id,
-        numero: newSessao.numero,
-        tipo: newSessao.tipo,
-        legislaturaId: newSessao.legislaturaId,
-        periodoId: newSessao.periodoId
-      })
-
       globalMockData.sessoes.push(newSessao)
-
-      console.log('✅ Mock: Sessão adicionada ao array')
-      console.log('📊 Total de sessões no mock AGORA:', globalMockData.sessoes.length)
 
       // Criar pauta padrão associada à sessão
       if (!globalMockData.pautasSessao) {
@@ -2138,9 +2101,8 @@ export const db = {
         updatedAt: new Date()
       }
 
-      console.log('📝 Criando legislatura no mock:', newLegislatura)
       mockData.legislaturas.push(newLegislatura)
-      console.log('✅ Legislatura adicionada. Total:', mockData.legislaturas.length)
+
 
       return Promise.resolve(newLegislatura)
     },
@@ -2751,12 +2713,6 @@ export const db = {
   },
   mesaDiretora: {
     findMany: (args?: { where?: any; include?: any; orderBy?: any; skip?: number; take?: number }) => {
-      console.log('🔍 mesaDiretora.findMany chamado:', {
-        temInclude: !!args?.include,
-        include: args?.include,
-        totalMesas: globalForMockData.__CAMARA_MOCK_DATA__?.mesasDiretora?.length || 0
-      })
-      
       const mesas = globalForMockData.__CAMARA_MOCK_DATA__?.mesasDiretora || []
       let results = [...mesas]
       
@@ -2835,12 +2791,6 @@ export const db = {
             const membros = (globalForMockData.__CAMARA_MOCK_DATA__?.membrosMesaDiretora || [])
               .filter(mb => mb.mesaDiretoraId === m.id)
             
-            console.log(`📋 Encontrados ${membros.length} membros para mesa ${m.id}`, {
-              includeMembros: args.include.membros,
-              temParlamentar: !!args.include.membros.parlamentar,
-              temCargo: !!args.include.membros.cargo
-            })
-            
             result.membros = membros.map(mb => {
               const membro: any = { ...mb }
               
@@ -2848,17 +2798,6 @@ export const db = {
               const includeParlamentar = args.include.membros.parlamentar || args.include.membros.include?.parlamentar
               if (includeParlamentar) {
                 const parlamentar = mockData.parlamentares.find(p => p.id === mb.parlamentarId)
-                console.log('🔍 Buscando parlamentar (findMany):', { 
-                  mesaId: m.id,
-                  membroId: mb.id,
-                  parlamentarId: mb.parlamentarId, 
-                  encontrado: !!parlamentar,
-                  totalParlamentares: mockData.parlamentares.length,
-                  idsDisponiveis: mockData.parlamentares.map(p => p.id).slice(0, 10)
-                })
-                if (!parlamentar) {
-                  console.warn(`⚠️ Parlamentar ${mb.parlamentarId} não encontrado no mockData!`)
-                }
                 // Se includeParlamentar é um objeto com select, retornar apenas os campos selecionados
                 if (typeof includeParlamentar === 'object' && includeParlamentar.select) {
                   const selectedFields: any = {}
@@ -2882,10 +2821,6 @@ export const db = {
               if (includeCargo) {
                 const cargo = (globalForMockData.__CAMARA_MOCK_DATA__?.cargosMesaDiretora || [])
                   .find(c => c.id === mb.cargoId)
-                console.log('🔍 Buscando cargo:', { 
-                  cargoId: mb.cargoId, 
-                  encontrado: !!cargo 
-                })
                 membro.cargo = cargo ? {
                   id: cargo.id,
                   nome: cargo.nome,
@@ -3007,15 +2942,6 @@ export const db = {
             const membro: any = { ...mb }
             if (args.include.membros.parlamentar) {
               const parlamentar = mockData.parlamentares.find(p => p.id === mb.parlamentarId)
-              console.log('🔍 Buscando parlamentar (findUnique):', { 
-                parlamentarId: mb.parlamentarId, 
-                encontrado: !!parlamentar, 
-                totalParlamentares: mockData.parlamentares.length,
-                idsDisponiveis: mockData.parlamentares.map(p => p.id).slice(0, 5)
-              })
-              if (!parlamentar) {
-                console.warn(`⚠️ Parlamentar ${mb.parlamentarId} não encontrado no mockData!`)
-              }
               membro.parlamentar = parlamentar ? {
                 id: parlamentar.id,
                 nome: parlamentar.nome,
@@ -3083,11 +3009,7 @@ export const db = {
           globalForMockData.__CAMARA_MOCK_DATA__.membrosMesaDiretora = []
         }
         
-        console.log('📝 Criando membros da mesa diretora:', membrosParaCriar)
-        console.log('📋 Parlamentares disponíveis:', mockData.parlamentares.map(p => ({ id: p.id, nome: p.nome })))
-        
         membrosParaCriar.forEach((membroData: any) => {
-          console.log('👤 Criando membro:', { parlamentarId: membroData.parlamentarId, cargoId: membroData.cargoId })
           
           // Verificar se parlamentar existe
           const parlamentarExiste = mockData.parlamentares.find(p => p.id === membroData.parlamentarId)
@@ -3116,11 +3038,10 @@ export const db = {
             updatedAt: new Date()
           }
           
-          console.log('✅ Membro criado:', newMembro)
+
           globalForMockData.__CAMARA_MOCK_DATA__.membrosMesaDiretora.push(newMembro)
         })
         
-        console.log('📊 Total de membros após criar:', globalForMockData.__CAMARA_MOCK_DATA__.membrosMesaDiretora.length)
       }
       
       let result: any = { ...newMesa }
@@ -3143,14 +3064,6 @@ export const db = {
             const membro: any = { ...mb }
             if (args.include.membros.parlamentar) {
               const parlamentar = mockData.parlamentares.find(p => p.id === mb.parlamentarId)
-              console.log('🔍 Buscando parlamentar (create):', { 
-                parlamentarId: mb.parlamentarId, 
-                encontrado: !!parlamentar,
-                totalParlamentares: mockData.parlamentares.length
-              })
-              if (!parlamentar) {
-                console.warn(`⚠️ Parlamentar ${mb.parlamentarId} não encontrado no mockData!`)
-              }
               membro.parlamentar = parlamentar ? {
                 id: parlamentar.id,
                 nome: parlamentar.nome,
@@ -3193,16 +3106,7 @@ export const db = {
             globalForMockData.__CAMARA_MOCK_DATA__.membrosMesaDiretora = []
           }
           
-          console.log('📝 Atualizando membros da mesa diretora:', membrosParaCriar)
-          
           membrosParaCriar.forEach((membroData: any) => {
-            console.log('👤 Atualizando membro:', { parlamentarId: membroData.parlamentarId, cargoId: membroData.cargoId })
-            
-            // Verificar se parlamentar existe
-            const parlamentarExiste = mockData.parlamentares.find(p => p.id === membroData.parlamentarId)
-            if (!parlamentarExiste) {
-              console.warn(`⚠️ Parlamentar ${membroData.parlamentarId} não encontrado!`)
-            }
             
             const newMembro = {
               ...membroData,
@@ -3225,7 +3129,7 @@ export const db = {
               updatedAt: new Date()
             }
             
-            console.log('✅ Membro atualizado:', newMembro)
+
             globalForMockData.__CAMARA_MOCK_DATA__.membrosMesaDiretora.push(newMembro)
           })
         }
@@ -3265,15 +3169,6 @@ export const db = {
               const membro: any = { ...mb }
               if (args.include.membros.parlamentar) {
                 const parlamentar = mockData.parlamentares.find(p => p.id === mb.parlamentarId)
-                console.log('🔍 Buscando parlamentar (findMany):', { 
-                  parlamentarId: mb.parlamentarId, 
-                  encontrado: !!parlamentar,
-                  totalParlamentares: mockData.parlamentares.length,
-                  idsDisponiveis: mockData.parlamentares.map(p => p.id).slice(0, 5)
-                })
-                if (!parlamentar) {
-                  console.warn(`⚠️ Parlamentar ${mb.parlamentarId} não encontrado no mockData!`)
-                }
                 membro.parlamentar = parlamentar ? {
                   id: parlamentar.id,
                   nome: parlamentar.nome,

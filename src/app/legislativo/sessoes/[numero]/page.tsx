@@ -23,6 +23,7 @@ import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import { proposicoesApi, ProposicaoApi } from '@/lib/api/proposicoes-api'
 import Link from 'next/link'
 import { useState, useEffect, useMemo } from 'react'
+import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -385,7 +386,7 @@ export default function SessaoDetailPage() {
                       <div className="bg-white p-6 rounded-lg border shadow-sm overflow-x-auto">
                         <div
                           className="prose prose-sm max-w-none text-gray-900 break-words [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full"
-                          dangerouslySetInnerHTML={{ __html: sessao.ata }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(sessao.ata) }}
                         />
                       </div>
                     </div>
