@@ -17,6 +17,9 @@ import {
 
 // Header secreto para validar chamadas internas
 const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET || ''
+if (!INTERNAL_SECRET && process.env.NODE_ENV === 'production') {
+  console.warn('[SECURITY] INTERNAL_API_SECRET nao configurado - chamadas internas nao serao validadas')
+}
 
 // Cache de resultados para evitar múltiplas chamadas (com limite de tamanho)
 const resultCache = new Map<string, { result: RateLimitResult; timestamp: number }>()

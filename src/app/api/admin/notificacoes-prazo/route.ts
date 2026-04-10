@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic'
 export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const agora = new Date()
   const em3Dias = new Date(agora.getTime() + 3 * 24 * 60 * 60 * 1000)
+  const ontem = new Date(agora.getTime() - 24 * 60 * 60 * 1000)
   let notificacoesCriadas = 0
 
   // 1. Pareceres com prazo próximo
@@ -24,48 +25,64 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     }
   })
 
-  for (const p of pareceresPendentes) {
-    if (!p.relatorId) continue
-    const dias = Math.ceil(((p.prazoEmissao?.getTime() || 0) - agora.getTime()) / (1000 * 60 * 60 * 24))
-    const assunto = dias < 0
-      ? `VENCIDO: Parecer ${p.comissao?.sigla} - ${p.proposicao?.tipo} ${p.proposicao?.numero}/${p.proposicao?.ano}`
-      : `Prazo em ${dias} dia(s): Parecer ${p.comissao?.sigla} - ${p.proposicao?.tipo} ${p.proposicao?.numero}/${p.proposicao?.ano}`
-
-    // Verificar se já existe notificação recente para este parecer
-    const existente = await prisma.notificacaoMulticanal.findFirst({
+  if (pareceresPendentes.length > 0) {
+    // Batch: buscar notificações existentes para todos os pareceres de uma vez
+    const parecerIds = pareceresPendentes.map(p => p.id)
+    const notificacoesExistentes = await prisma.notificacaoMulticanal.findMany({
       where: {
         canal: 'SISTEMA',
-        metadata: { path: ['entidadeId'], equals: p.id },
-        createdAt: { gte: new Date(agora.getTime() - 24 * 60 * 60 * 1000) }
-      }
+        metadata: { path: ['entidadeTipo'], equals: 'PARECER' },
+        createdAt: { gte: ontem }
+      },
+      select: { metadata: true }
     })
+    const idsNotificados = new Set(
+      notificacoesExistentes
+        .map(n => (n.metadata as Record<string, unknown>)?.entidadeId)
+        .filter(Boolean)
+    )
 
-    if (!existente) {
-      // Buscar o usuário vinculado ao parlamentar relator
-      const usuario = await prisma.user.findFirst({
-        where: { parlamentarId: p.relatorId, ativo: true },
-        select: { id: true, email: true }
-      })
+    // Batch: buscar todos os usuários relatores de uma vez
+    const relatorIds = [...new Set(pareceresPendentes.map(p => p.relatorId).filter(Boolean))] as string[]
+    const usuarios = relatorIds.length > 0
+      ? await prisma.user.findMany({
+          where: { parlamentarId: { in: relatorIds }, ativo: true },
+          select: { id: true, email: true, parlamentarId: true }
+        })
+      : []
+    const usuarioPorParlamentar = new Map(usuarios.map(u => [u.parlamentarId, u]))
 
+    // Criar notificações em batch
+    const notificacoesParaCriar = []
+    for (const p of pareceresPendentes) {
+      if (!p.relatorId || idsNotificados.has(p.id)) continue
+      const dias = Math.ceil(((p.prazoEmissao?.getTime() || 0) - agora.getTime()) / (1000 * 60 * 60 * 24))
+      const assunto = dias < 0
+        ? `VENCIDO: Parecer ${p.comissao?.sigla} - ${p.proposicao?.tipo} ${p.proposicao?.numero}/${p.proposicao?.ano}`
+        : `Prazo em ${dias} dia(s): Parecer ${p.comissao?.sigla} - ${p.proposicao?.tipo} ${p.proposicao?.numero}/${p.proposicao?.ano}`
+
+      const usuario = usuarioPorParlamentar.get(p.relatorId)
       const destinatario = usuario?.email || p.relatorId
 
-      await prisma.notificacaoMulticanal.create({
-        data: {
-          canal: 'SISTEMA',
-          destinatario,
-          assunto,
-          mensagem: `O prazo para emissão do parecer da ${p.comissao?.nome || 'comissão'} sobre ${p.proposicao?.tipo} ${p.proposicao?.numero}/${p.proposicao?.ano} ${dias < 0 ? 'está vencido' : `vence em ${dias} dia(s)`}.`,
-          metadata: {
-            tipo: 'ALERTA_PRAZO',
-            entidadeId: p.id,
-            entidadeTipo: 'PARECER',
-            prioridade: dias < 0 ? 'ALTA' : 'MEDIA',
-            destinatarioUserId: usuario?.id || null,
-            diasRestantes: dias
-          }
+      notificacoesParaCriar.push({
+        canal: 'SISTEMA' as const,
+        destinatario,
+        assunto,
+        mensagem: `O prazo para emissão do parecer da ${p.comissao?.nome || 'comissão'} sobre ${p.proposicao?.tipo} ${p.proposicao?.numero}/${p.proposicao?.ano} ${dias < 0 ? 'está vencido' : `vence em ${dias} dia(s)`}.`,
+        metadata: {
+          tipo: 'ALERTA_PRAZO',
+          entidadeId: p.id,
+          entidadeTipo: 'PARECER',
+          prioridade: dias < 0 ? 'ALTA' : 'MEDIA',
+          destinatarioUserId: usuario?.id || null,
+          diasRestantes: dias
         }
       })
-      notificacoesCriadas++
+    }
+
+    if (notificacoesParaCriar.length > 0) {
+      await prisma.notificacaoMulticanal.createMany({ data: notificacoesParaCriar })
+      notificacoesCriadas += notificacoesParaCriar.length
     }
   }
 
@@ -75,48 +92,63 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     select: { id: true, numero: true, ano: true, tipo: true, updatedAt: true }
   })
 
-  for (const v of vetosPendentes) {
+  const vetosComPrazo = vetosPendentes.filter(v => {
     const prazoVeto = new Date(v.updatedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
     const dias = Math.ceil((prazoVeto.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24))
+    return dias <= 7
+  })
 
-    if (dias <= 7) {
-      const existente = await prisma.notificacaoMulticanal.findFirst({
-        where: {
-          canal: 'SISTEMA',
-          metadata: { path: ['entidadeId'], equals: v.id },
-          createdAt: { gte: new Date(agora.getTime() - 24 * 60 * 60 * 1000) }
-        }
-      })
+  if (vetosComPrazo.length > 0) {
+    // Batch: buscar notificações existentes para vetos
+    const notificacoesVetoExistentes = await prisma.notificacaoMulticanal.findMany({
+      where: {
+        canal: 'SISTEMA',
+        metadata: { path: ['entidadeTipo'], equals: 'PROPOSICAO' },
+        createdAt: { gte: ontem }
+      },
+      select: { metadata: true }
+    })
+    const idsVetoNotificados = new Set(
+      notificacoesVetoExistentes
+        .map(n => (n.metadata as Record<string, unknown>)?.entidadeId)
+        .filter(Boolean)
+    )
 
-      if (!existente) {
-        // Notificar todos os admins/secretaria
-        const admins = await prisma.user.findMany({
-          where: { role: { in: ['ADMIN', 'SECRETARIA'] }, ativo: true },
-          select: { id: true, email: true }
+    // Batch: buscar admins/secretaria UMA vez
+    const admins = await prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'SECRETARIA'] }, ativo: true },
+      select: { id: true, email: true }
+    })
+
+    const notificacoesVetoCriar = []
+    for (const v of vetosComPrazo) {
+      if (idsVetoNotificados.has(v.id)) continue
+      const prazoVeto = new Date(v.updatedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
+      const dias = Math.ceil((prazoVeto.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24))
+
+      for (const admin of admins) {
+        notificacoesVetoCriar.push({
+          canal: 'SISTEMA' as const,
+          destinatario: admin.email,
+          assunto: dias < 0
+            ? `URGENTE: Veto com prazo expirado - ${v.tipo} ${v.numero}/${v.ano}`
+            : `Veto em ${dias} dia(s) - ${v.tipo} ${v.numero}/${v.ano}`,
+          mensagem: `O prazo de 30 dias para apreciação do veto sobre ${v.tipo} ${v.numero}/${v.ano} ${dias < 0 ? 'está expirado (pauta trancada)' : `expira em ${dias} dia(s)`}.`,
+          metadata: {
+            tipo: 'ALERTA_PRAZO',
+            entidadeId: v.id,
+            entidadeTipo: 'PROPOSICAO',
+            prioridade: dias < 0 ? 'URGENTE' : 'ALTA',
+            destinatarioUserId: admin.id,
+            diasRestantes: dias
+          }
         })
-
-        for (const admin of admins) {
-          await prisma.notificacaoMulticanal.create({
-            data: {
-              canal: 'SISTEMA',
-              destinatario: admin.email,
-              assunto: dias < 0
-                ? `URGENTE: Veto com prazo expirado - ${v.tipo} ${v.numero}/${v.ano}`
-                : `Veto em ${dias} dia(s) - ${v.tipo} ${v.numero}/${v.ano}`,
-              mensagem: `O prazo de 30 dias para apreciação do veto sobre ${v.tipo} ${v.numero}/${v.ano} ${dias < 0 ? 'está expirado (pauta trancada)' : `expira em ${dias} dia(s)`}.`,
-              metadata: {
-                tipo: 'ALERTA_PRAZO',
-                entidadeId: v.id,
-                entidadeTipo: 'PROPOSICAO',
-                prioridade: dias < 0 ? 'URGENTE' : 'ALTA',
-                destinatarioUserId: admin.id,
-                diasRestantes: dias
-              }
-            }
-          })
-          notificacoesCriadas++
-        }
       }
+    }
+
+    if (notificacoesVetoCriar.length > 0) {
+      await prisma.notificacaoMulticanal.createMany({ data: notificacoesVetoCriar })
+      notificacoesCriadas += notificacoesVetoCriar.length
     }
   }
 

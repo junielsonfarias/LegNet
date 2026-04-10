@@ -834,6 +834,7 @@ model Votacao {
 
   @@unique([proposicaoId, parlamentarId, turno]) // Permite votos diferentes por turno
   @@index([proposicaoId, turno])
+  @@index([parlamentarId])
   @@index([sessaoId])
   @@map("votacoes")
 }
@@ -1077,6 +1078,8 @@ model MembroComissao {
   presencasReuniao PresencaReuniaoComissao[]
 
   @@unique([comissaoId, parlamentarId])
+  @@index([parlamentarId])
+  @@index([ativo])
   @@map("membros_comissao")
 }
 
@@ -1493,6 +1496,8 @@ model Mandato {
   legislatura Legislatura @relation(fields: [legislaturaId], references: [id], onDelete: Cascade)
 
   @@unique([parlamentarId, legislaturaId])
+  @@index([ativo, legislaturaId])
+  @@index([dataInicio])
   @@map("mandatos")
 }
 

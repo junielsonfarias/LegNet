@@ -1,7 +1,25 @@
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 import { esicService } from '@/lib/services/esic-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
+
+const AcaoESICSchema = z.discriminatedUnion('acao', [
+  z.object({
+    acao: z.literal('responder'),
+    resposta: z.string().min(1).max(10000).trim(),
+    respondidoPor: z.string().max(200).optional()
+  }),
+  z.object({
+    acao: z.literal('prorrogar'),
+    motivo: z.string().min(1).max(5000).trim()
+  }),
+  z.object({
+    acao: z.literal('negar'),
+    motivo: z.string().min(1).max(5000).trim(),
+    respondidoPor: z.string().max(200).optional()
+  })
+])
 
 export const dynamic = 'force-dynamic'
 
@@ -34,41 +52,35 @@ export const PATCH = withAuth(async (
   const { id } = await params
   const body = await request.json()
 
+  const parsed = AcaoESICSchema.safeParse(body)
+  if (!parsed.success) {
+    throw new ValidationError(parsed.error.errors.map(e => e.message).join(', '))
+  }
+
   const solicitacao = await esicService.getById(id)
   if (!solicitacao) {
     throw new NotFoundError('Solicitação')
   }
 
+  const data = parsed.data
   let resultado
 
-  switch (body.acao) {
+  switch (data.acao) {
     case 'responder':
-      if (!body.resposta) {
-        throw new ValidationError('Campo resposta é obrigatório')
-      }
-      resultado = await esicService.responder(id, body.resposta, body.respondidoPor || session?.user?.name || 'Sistema')
+      resultado = await esicService.responder(id, data.resposta, data.respondidoPor || session?.user?.name || 'Sistema')
       break
 
     case 'prorrogar':
-      if (!body.motivo) {
-        throw new ValidationError('Campo motivo é obrigatório para prorrogação')
-      }
-      resultado = await esicService.prorrogar(id, body.motivo)
+      resultado = await esicService.prorrogar(id, data.motivo)
       break
 
     case 'negar':
-      if (!body.motivo) {
-        throw new ValidationError('Campo motivo é obrigatório para negativa')
-      }
-      resultado = await esicService.negar(id, body.motivo, body.respondidoPor || session?.user?.name || 'Sistema')
+      resultado = await esicService.negar(id, data.motivo, data.respondidoPor || session?.user?.name || 'Sistema')
       break
-
-    default:
-      throw new ValidationError('Ação inválida. Use: responder, prorrogar ou negar')
   }
 
   return createSuccessResponse(
     resultado,
-    `Solicitação ${body.acao === 'responder' ? 'respondida' : body.acao === 'prorrogar' ? 'prorrogada' : 'negada'} com sucesso`
+    `Solicitação ${data.acao === 'responder' ? 'respondida' : data.acao === 'prorrogar' ? 'prorrogada' : 'negada'} com sucesso`
   )
 })

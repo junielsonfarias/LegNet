@@ -1,6 +1,12 @@
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 import { esicService } from '@/lib/services/esic-service'
 import { withErrorHandler, createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
+
+const RecursoSchema = z.object({
+  motivo: z.string().min(10).max(5000).trim(),
+  instancia: z.number().int().min(1).max(3).optional().default(1)
+})
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +21,9 @@ export const POST = withErrorHandler(async (
   const { id } = await params
   const body = await request.json()
 
-  if (!body.motivo) {
-    throw new ValidationError('Campo motivo é obrigatório')
+  const parsed = RecursoSchema.safeParse(body)
+  if (!parsed.success) {
+    throw new ValidationError(parsed.error.errors.map(e => e.message).join(', '))
   }
 
   const solicitacao = await esicService.getById(id)
@@ -24,7 +31,7 @@ export const POST = withErrorHandler(async (
     throw new NotFoundError('Solicitação')
   }
 
-  const recurso = await esicService.criarRecurso(id, body.motivo, body.instancia || 1)
+  const recurso = await esicService.criarRecurso(id, parsed.data.motivo, parsed.data.instancia)
 
   return createSuccessResponse(recurso, 'Recurso registrado com sucesso', undefined, 201)
 })

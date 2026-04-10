@@ -290,7 +290,12 @@ export function withCors(
       'http://localhost:3000',
     ].filter(Boolean) as string[]
     const origin = request.headers.get('origin') || ''
-    const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0] || '*'
+    const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0] || ''
+    if (!corsOrigin) {
+      // Rejeitar requisição se nenhuma origem permitida configurada
+      response.headers.delete('Access-Control-Allow-Origin')
+      return response
+    }
     response.headers.set('Access-Control-Allow-Origin', corsOrigin)
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
