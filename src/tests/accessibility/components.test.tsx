@@ -6,6 +6,15 @@ import React from 'react'
 import { render } from '@testing-library/react'
 import { axe, toHaveNoViolations } from 'jest-axe'
 
+// Declarar matcher customizado para TypeScript
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toHaveNoViolations(): R
+    }
+  }
+}
+
 expect.extend(toHaveNoViolations)
 
 // Mock next/image

@@ -156,7 +156,7 @@ describe('sessao-controle service', () => {
         .mockResolvedValueOnce({ id: 'sessao-1', status: 'EM_ANDAMENTO' })
 
       const resultado = await iniciarSessaoControle('sessao-1')
-      expect(resultado.status).toBe('EM_ANDAMENTO')
+      expect(resultado!.status).toBe('EM_ANDAMENTO')
     })
   })
 
