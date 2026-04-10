@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/seguranca')
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Copy, Eye, EyeOff, Loader2, Lock, RefreshCw, ShieldCheck, ShieldOff, Smartphone } from 'lucide-react'
 import { toast } from 'sonner'
@@ -34,7 +37,7 @@ export default function SecuritySettingsPage() {
       const data = await twoFactorApi.getStatus()
       setStatus(data)
     } catch (error: any) {
-      console.error('Erro ao carregar status 2FA:', error)
+      log.error('Erro ao carregar status 2FA', error)
       toast.error(error?.message ?? 'Falha ao carregar informações de segurança')
     } finally {
       setLoading(false)
@@ -54,7 +57,7 @@ export default function SecuritySettingsPage() {
       setVerificationCode('')
       toast.success('Código 2FA gerado. Escaneie o QR Code no autenticador.')
     } catch (error: any) {
-      console.error('Erro ao gerar código 2FA:', error)
+      log.error('Erro ao gerar código 2FA', error)
       toast.error(error?.message ?? 'Não foi possível gerar o código 2FA')
     } finally {
       setEnabling(false)
@@ -76,7 +79,7 @@ export default function SecuritySettingsPage() {
       loadStatus()
       toast.success('2FA habilitado com sucesso!')
     } catch (error: any) {
-      console.error('Erro ao verificar 2FA:', error)
+      log.error('Erro ao verificar 2FA', error)
       toast.error(error?.message ?? 'Código inválido, tente novamente')
     } finally {
       setVerifying(false)
@@ -94,7 +97,7 @@ export default function SecuritySettingsPage() {
       loadStatus()
       toast.success('Autenticação em duas etapas desabilitada.')
     } catch (error: any) {
-      console.error('Erro ao desabilitar 2FA:', error)
+      log.error('Erro ao desabilitar 2FA', error)
       toast.error(error?.message ?? 'Não foi possível desabilitar o 2FA')
     } finally {
       setDisabling(false)

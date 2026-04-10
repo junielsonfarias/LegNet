@@ -23,7 +23,7 @@ function toPayload(row: {
   destinatario: string
   assunto: string | null
   mensagem: string
-  metadata: any
+  metadata: unknown
   tentativas: number
   status: string
   erro: string | null

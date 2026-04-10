@@ -176,7 +176,7 @@ export async function listarEmendasProposicao(
   proposicaoId: string,
   turno?: number
 ) {
-  const where: any = { proposicaoId }
+  const where: Record<string, unknown> = { proposicaoId }
 
   if (turno) {
     where.turnoApresentacao = turno
@@ -208,7 +208,7 @@ export async function listarEmendas(
   page: number = 1,
   limit: number = 20
 ) {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filtros.proposicaoId) {
     where.proposicaoId = filtros.proposicaoId
@@ -268,7 +268,7 @@ export async function atualizarEmenda(
   id: string,
   input: AtualizarEmendaInput
 ) {
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
 
   if (input.status !== undefined) updateData.status = input.status
   if (input.parecerComissao !== undefined) updateData.parecerComissao = input.parecerComissao

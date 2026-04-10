@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/tipos-proposicoes')
+
 import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -127,7 +130,7 @@ export default function TiposProposicoesPage() {
         toast.error('Erro ao carregar tipos de proposicao')
       }
     } catch (error) {
-      console.error('Erro ao carregar tipos:', error)
+      log.error('Erro ao carregar tipos', error)
       toast.error('Erro ao carregar tipos de proposicao')
     } finally {
       setLoading(false)
@@ -207,7 +210,7 @@ export default function TiposProposicoesPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao salvar tipo:', error)
+      log.error('Erro ao salvar tipo', error)
       toast.error('Erro ao salvar tipo de proposicao')
     } finally {
       setSaving(false)
@@ -254,7 +257,7 @@ export default function TiposProposicoesPage() {
         toast.error(result.error || 'Erro ao excluir tipo de proposicao')
       }
     } catch (error) {
-      console.error('Erro ao excluir tipo:', error)
+      log.error('Erro ao excluir tipo', error)
       toast.error('Erro ao excluir tipo de proposicao')
     }
   }
@@ -279,7 +282,7 @@ export default function TiposProposicoesPage() {
         toast.error(result.error || 'Erro ao popular tipos')
       }
     } catch (error) {
-      console.error('Erro ao popular tipos:', error)
+      log.error('Erro ao popular tipos', error)
       toast.error('Erro ao popular tipos de proposicao')
     } finally {
       setSaving(false)

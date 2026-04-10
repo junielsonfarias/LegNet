@@ -111,7 +111,7 @@ export const receitasDbService = {
   },
 
   async update(id: string, payload: Partial<ReceitaPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.numero !== undefined) data.numero = payload.numero
     if (payload.ano !== undefined) data.ano = payload.ano

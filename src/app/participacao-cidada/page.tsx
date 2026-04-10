@@ -34,6 +34,9 @@ import {
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { participacaoCidadaService, SugestaoCidada, ConsultaPublica, Peticao } from '@/lib/participacao-cidada-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('participacao-cidada')
 
 export default function ParticipacaoCidadaPage() {
   const [sugestoes, setSugestoes] = useState<SugestaoCidada[]>([])
@@ -94,7 +97,7 @@ export default function ParticipacaoCidadaPage() {
       setConsultas(participacaoCidadaService.getAllConsultas())
       setPeticoes(participacaoCidadaService.getAllPeticoes())
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados de participação cidadã')
     } finally {
       setLoading(false)
@@ -127,7 +130,7 @@ export default function ParticipacaoCidadaPage() {
       setModalSugestaoOpen(false)
       toast.success('Sugestão enviada com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar sugestão:', error)
+      log.error('Erro ao criar sugestão', error)
       toast.error('Erro ao enviar sugestão')
     }
   }
@@ -170,7 +173,7 @@ export default function ParticipacaoCidadaPage() {
       setModalConsultaOpen(false)
       toast.success('Consulta pública criada com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar consulta:', error)
+      log.error('Erro ao criar consulta', error)
       toast.error('Erro ao criar consulta pública')
     }
   }
@@ -207,7 +210,7 @@ export default function ParticipacaoCidadaPage() {
       setModalPeticaoOpen(false)
       toast.success('Petição criada com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar petição:', error)
+      log.error('Erro ao criar petição', error)
       toast.error('Erro ao criar petição')
     }
   }
@@ -220,7 +223,7 @@ export default function ParticipacaoCidadaPage() {
         toast.success('Voto registrado com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao votar:', error)
+      log.error('Erro ao votar', error)
       toast.error('Erro ao registrar voto')
     }
   }
@@ -233,7 +236,7 @@ export default function ParticipacaoCidadaPage() {
         toast.success('Voto registrado com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao votar:', error)
+      log.error('Erro ao votar', error)
       toast.error('Erro ao registrar voto')
     }
   }

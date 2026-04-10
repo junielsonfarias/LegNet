@@ -239,7 +239,7 @@ async function gerarDadosRelatorio(
 /**
  * Relatório de Produção Legislativa
  */
-async function gerarRelatorioProducaoLegislativa(ano: number, filtros: any) {
+async function gerarRelatorioProducaoLegislativa(ano: number, filtros: Record<string, unknown>) {
   const [
     totalProposicoes,
     porTipo,
@@ -309,7 +309,7 @@ async function gerarRelatorioProducaoLegislativa(ano: number, filtros: any) {
 /**
  * Relatório de Presença Parlamentar
  */
-async function gerarRelatorioPresencaParlamentar(ano: number, filtros: any) {
+async function gerarRelatorioPresencaParlamentar(ano: number, filtros: Record<string, unknown>) {
   const [
     totalSessoes,
     presencas
@@ -389,7 +389,7 @@ async function gerarRelatorioPresencaParlamentar(ano: number, filtros: any) {
 /**
  * Relatório de Votações
  */
-async function gerarRelatorioVotacoes(ano: number, filtros: any) {
+async function gerarRelatorioVotacoes(ano: number, filtros: Record<string, unknown>) {
   const [
     totalVotacoes,
     porResultado,
@@ -440,7 +440,7 @@ async function gerarRelatorioVotacoes(ano: number, filtros: any) {
 /**
  * Relatório de Tramitação
  */
-async function gerarRelatorioTramitacao(ano: number, filtros: any) {
+async function gerarRelatorioTramitacao(ano: number, filtros: Record<string, unknown>) {
   const [
     totalTramitacoes,
     porUnidade,
@@ -486,7 +486,7 @@ async function gerarRelatorioTramitacao(ano: number, filtros: any) {
 /**
  * Relatório de Protocolo
  */
-async function gerarRelatorioProtocolo(ano: number, filtros: any) {
+async function gerarRelatorioProtocolo(ano: number, filtros: Record<string, unknown>) {
   const [
     total,
     porTipo,
@@ -524,7 +524,7 @@ async function gerarRelatorioProtocolo(ano: number, filtros: any) {
 /**
  * Relatório de Comissões
  */
-async function gerarRelatorioComissoes(ano: number, filtros: any) {
+async function gerarRelatorioComissoes(ano: number, filtros: Record<string, unknown>) {
   const [
     totalComissoes,
     totalPareceres,

@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parlamentar')
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -64,7 +67,7 @@ export default function ParlamentarDashboardPage() {
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar acesso:', error)
+        log.error('Erro ao verificar acesso', error)
       } finally {
         setVerificandoAcesso(false)
       }

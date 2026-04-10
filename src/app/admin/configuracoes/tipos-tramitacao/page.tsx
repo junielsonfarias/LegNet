@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/tipos-tramitacao')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -72,7 +75,7 @@ export default function TiposTramitacaoPage() {
         toast.error(data.error || 'Erro ao carregar tipos de tramitação')
       }
     } catch (error) {
-      console.error('Erro ao carregar tipos:', error)
+      log.error('Erro ao carregar tipos', error)
       toast.error('Erro ao carregar tipos de tramitação')
     } finally {
       setLoading(false)
@@ -126,7 +129,7 @@ export default function TiposTramitacaoPage() {
         toast.error(data.error || 'Erro ao salvar tipo de tramitação')
       }
     } catch (error) {
-      console.error('Erro ao salvar tipo de tramitação:', error)
+      log.error('Erro ao salvar tipo de tramitação', error)
       toast.error('Erro ao salvar tipo de tramitação')
     } finally {
       setSaving(false)
@@ -165,7 +168,7 @@ export default function TiposTramitacaoPage() {
         toast.error(data.error || 'Erro ao excluir tipo de tramitação')
       }
     } catch (error) {
-      console.error('Erro ao excluir tipo de tramitação:', error)
+      log.error('Erro ao excluir tipo de tramitação', error)
       toast.error('Erro ao excluir tipo de tramitação')
     }
   }
@@ -187,7 +190,7 @@ export default function TiposTramitacaoPage() {
         toast.error(data.error || 'Erro ao atualizar status')
       }
     } catch (error) {
-      console.error('Erro ao atualizar status:', error)
+      log.error('Erro ao atualizar status', error)
       toast.error('Erro ao atualizar status')
     }
   }

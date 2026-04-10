@@ -4,6 +4,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('use-painel-tempo-real')
 
 // Tipos do painel
 export interface EstadoSessao {
@@ -249,7 +252,7 @@ export function useSessaoAtiva(intervaloAtualizacao = 5000) {
           }
         }
       } catch (error) {
-        console.error('Erro ao buscar sessao ativa:', error)
+        log.error('Erro ao buscar sessao ativa', error)
       } finally {
         setBuscando(false)
       }

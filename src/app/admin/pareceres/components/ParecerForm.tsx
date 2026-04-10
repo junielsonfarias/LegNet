@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/pareceres/components/ParecerForm')
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -117,7 +120,7 @@ export function ParecerForm({
           setProximoNumeroInfo(null)
         }
       } catch (error) {
-        console.error('Erro ao buscar dados da comissao:', error)
+        log.error('Erro ao buscar dados da comissao', error)
         setProposicoesPendentes([])
         setProximoNumeroInfo(null)
       } finally {

@@ -26,7 +26,10 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
+import { createLogger } from '@/lib/logging/logger'
 import type { EventoCalendario, TipoEvento } from '@/lib/services/calendario-service'
+
+const log = createLogger('calendario-legislativo')
 
 type VisualizacaoCalendario = 'mes' | 'semana' | 'lista'
 
@@ -74,7 +77,7 @@ export function CalendarioLegislativo({ className }: CalendarioLegislativoProps)
       const data = await res.json()
       setEventos(data.eventos || [])
     } catch (error) {
-      console.error('Erro ao buscar eventos:', error)
+      log.error('Erro ao buscar eventos', error)
       setEventos([])
     } finally {
       setLoading(false)

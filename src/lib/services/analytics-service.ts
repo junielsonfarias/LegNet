@@ -103,52 +103,68 @@ export async function calcularMetricasProposicoes(
 ): Promise<MetricasProposicoes> {
   const { inicio, fim } = periodo
 
-  // Total de proposições no período
-  const proposicoes = await prisma.proposicao.findMany({
-    where: {
-      dataApresentacao: {
-        gte: inicio,
-        lte: fim
-      }
-    },
-    include: {
-      autor: {
-        select: { id: true, nome: true }
-      }
-    }
-  })
+  const dateFilter = { dataApresentacao: { gte: inicio, lte: fim } }
+
+  // Usar groupBy no banco em vez de carregar todos os registros
+  const [totalCount, tipoGroup, statusGroup, autorGroup, proposicoesParaMes] = await Promise.all([
+    prisma.proposicao.count({ where: dateFilter }),
+    prisma.proposicao.groupBy({
+      by: ['tipo'],
+      _count: { id: true },
+      where: dateFilter,
+    }),
+    prisma.proposicao.groupBy({
+      by: ['status'],
+      _count: { id: true },
+      where: dateFilter,
+    }),
+    prisma.proposicao.groupBy({
+      by: ['autorId'],
+      _count: { id: true },
+      where: { ...dateFilter, autorId: { not: null } },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    }),
+    prisma.proposicao.findMany({
+      where: dateFilter,
+      select: { dataApresentacao: true },
+    }),
+  ])
 
   // Por tipo
   const porTipo: Record<string, number> = {}
-  for (const p of proposicoes) {
-    porTipo[p.tipo] = (porTipo[p.tipo] || 0) + 1
+  for (const g of tipoGroup) {
+    porTipo[g.tipo] = g._count.id
   }
 
   // Por status
   const porStatus: Record<string, number> = {}
-  for (const p of proposicoes) {
-    porStatus[p.status] = (porStatus[p.status] || 0) + 1
+  for (const g of statusGroup) {
+    porStatus[g.status] = g._count.id
   }
 
-  // Por autor
-  const autorCount: Record<string, { nome: string; quantidade: number }> = {}
-  for (const p of proposicoes) {
-    if (p.autor) {
-      if (!autorCount[p.autor.id]) {
-        autorCount[p.autor.id] = { nome: p.autor.nome, quantidade: 0 }
-      }
-      autorCount[p.autor.id].quantidade++
-    }
-  }
-  const porAutor = Object.entries(autorCount)
-    .map(([autorId, data]) => ({ autorId, ...data }))
-    .sort((a, b) => b.quantidade - a.quantidade)
-    .slice(0, 10)
+  // Por autor (buscar nomes dos top 10)
+  const autorIds = autorGroup.filter(g => g.autorId).map(g => g.autorId!)
+  const autores = autorIds.length > 0
+    ? await prisma.parlamentar.findMany({
+        where: { id: { in: autorIds } },
+        select: { id: true, nome: true },
+      })
+    : []
+  const autoresMap = new Map(autores.map(a => [a.id, a.nome]))
 
-  // Por mês
+  const porAutor = autorGroup
+    .filter(g => g.autorId)
+    .map(g => ({
+      autorId: g.autorId!,
+      nome: autoresMap.get(g.autorId!) || 'Desconhecido',
+      quantidade: g._count.id,
+    }))
+
+  // Por mês (só precisa das datas, não dos registros completos)
   const porMes: Array<{ mes: string; quantidade: number }> = []
   const mesesMap: Record<string, number> = {}
-  for (const p of proposicoes) {
+  for (const p of proposicoesParaMes) {
     const mes = formatDateShort(p.dataApresentacao).substring(3) // MM/YYYY
     mesesMap[mes] = (mesesMap[mes] || 0) + 1
   }
@@ -157,17 +173,19 @@ export async function calcularMetricasProposicoes(
   }
   porMes.sort((a, b) => a.mes.localeCompare(b.mes))
 
-  // Taxa de aprovação
-  const aprovadas = proposicoes.filter(p => p.status === 'APROVADA').length
-  const votadas = proposicoes.filter(p =>
-    ['APROVADA', 'REJEITADA', 'ARQUIVADA'].includes(p.status)
-  ).length
+  // Taxa de aprovação (usa dados do groupBy)
+  const aprovadas = porStatus['APROVADA'] || 0
+  const votadas = (porStatus['APROVADA'] || 0) + (porStatus['REJEITADA'] || 0) + (porStatus['ARQUIVADA'] || 0)
   const taxaAprovacao = votadas > 0 ? (aprovadas / votadas) * 100 : 0
 
   // Tempo médio de tramitação (proposições concluídas)
-  const concluidas = proposicoes.filter(p =>
-    p.status === 'APROVADA' || p.status === 'REJEITADA'
-  )
+  const concluidas = await prisma.proposicao.findMany({
+    where: {
+      ...dateFilter,
+      status: { in: ['APROVADA', 'REJEITADA'] },
+    },
+    select: { dataApresentacao: true, dataVotacao: true, updatedAt: true },
+  })
   let tempoTotal = 0
   for (const p of concluidas) {
     const dataFim = p.dataVotacao || p.updatedAt
@@ -180,11 +198,11 @@ export async function calcularMetricasProposicoes(
   logger.debug('Métricas de proposições calculadas', {
     action: 'calcular_metricas_proposicoes',
     periodo: { inicio, fim },
-    total: proposicoes.length
+    total: totalCount
   })
 
   return {
-    total: proposicoes.length,
+    total: totalCount,
     porTipo,
     porStatus,
     porAutor,

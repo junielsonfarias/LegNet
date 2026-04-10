@@ -4,6 +4,9 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('dashboard-service')
 
 // ============================================================
 // Tipos
@@ -300,7 +303,7 @@ export const dashboardService = {
         })
       })
     } catch (e) {
-      console.error('[Dashboard] Erro ao buscar proposições recentes:', e)
+      log.error('Erro ao buscar proposições recentes', e)
     }
 
     try {
@@ -326,7 +329,7 @@ export const dashboardService = {
         })
       })
     } catch (e) {
-      console.error('[Dashboard] Erro ao buscar sessões recentes:', e)
+      log.error('Erro ao buscar sessões recentes', e)
     }
 
     try {
@@ -360,7 +363,7 @@ export const dashboardService = {
         })
       }
     } catch (e) {
-      console.error('[Dashboard] Erro ao buscar votações recentes:', e)
+      log.error('Erro ao buscar votações recentes', e)
     }
 
     try {
@@ -389,7 +392,7 @@ export const dashboardService = {
         })
       })
     } catch (e) {
-      console.error('[Dashboard] Erro ao buscar pareceres recentes:', e)
+      log.error('Erro ao buscar pareceres recentes', e)
     }
 
     try {
@@ -410,7 +413,7 @@ export const dashboardService = {
         })
       })
     } catch (e) {
-      console.error('[Dashboard] Erro ao buscar usuários recentes:', e)
+      log.error('Erro ao buscar usuários recentes', e)
     }
 
     // Ordenar por timestamp e limitar

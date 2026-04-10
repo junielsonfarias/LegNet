@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { apiLogger } from '@/lib/logging/logger'
 import { withAuth } from '@/lib/auth/permissions'
 import { relatoriosDbService } from '@/lib/services/relatorios-db-service'
 import { logAudit } from '@/lib/audit'
@@ -222,7 +223,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx, session) => {
       }
     })
   } catch (error) {
-    console.error('Erro ao gerar relatório:', error)
+    apiLogger.error('Erro ao gerar relatório', error)
     return NextResponse.json(
       { error: 'Erro ao gerar relatório' },
       { status: 500 }

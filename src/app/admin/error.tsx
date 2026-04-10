@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/error')
+
 import { useEffect } from 'react'
 
 export default function AdminError({
@@ -10,7 +13,7 @@ export default function AdminError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Erro no painel admin:', error)
+    log.error('Erro no painel admin', error)
   }, [error])
 
   return (

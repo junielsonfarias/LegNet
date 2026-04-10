@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { TenantInfo } from './tenant-resolver'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('tenant-context')
 
 /**
  * Interface do contexto de tenant
@@ -54,7 +57,7 @@ export function TenantProvider({ children, initialTenant = null }: TenantProvide
       const data = await response.json()
       setTenant(data.tenant)
     } catch (err) {
-      console.error('Erro ao buscar tenant:', err)
+      log.error('Erro ao buscar tenant', err)
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
     } finally {
       setIsLoading(false)

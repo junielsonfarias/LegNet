@@ -13,6 +13,9 @@ import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-insti
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/sessoes')
 
 // Interface para sessão da API pública
 interface SessaoPublica {
@@ -61,11 +64,11 @@ export default function SessoesPage() {
       if (result.dados) {
         setSessoes(result.dados)
       } else {
-        console.error('Formato de resposta inesperado:', result)
+        log.warn('Formato de resposta inesperado', { action: 'carregar-sessoes' })
         setSessoes([])
       }
     } catch (error) {
-      console.error('Erro ao carregar sessões:', error)
+      log.error('Erro ao carregar sessões', error)
       toast.error('Erro ao carregar sessões')
       setSessoes([])
     } finally {

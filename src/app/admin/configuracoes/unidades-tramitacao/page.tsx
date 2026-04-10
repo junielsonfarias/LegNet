@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/unidades-tramitacao')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -132,7 +135,7 @@ export default function UnidadesTramitacaoPage() {
         toast.error(result.error || 'Erro ao carregar unidades')
       }
     } catch (error) {
-      console.error('Erro ao carregar unidades:', error)
+      log.error('Erro ao carregar unidades', error)
       toast.error('Erro ao conectar com o servidor')
     } finally {
       setLoading(false)
@@ -170,7 +173,7 @@ export default function UnidadesTramitacaoPage() {
         toast.error(result.error || 'Erro ao salvar unidade')
       }
     } catch (error) {
-      console.error('Erro ao salvar unidade:', error)
+      log.error('Erro ao salvar unidade', error)
       toast.error('Erro ao conectar com o servidor')
     } finally {
       setSaving(false)
@@ -222,7 +225,7 @@ export default function UnidadesTramitacaoPage() {
         toast.error(result.error || 'Erro ao excluir unidade')
       }
     } catch (error) {
-      console.error('Erro ao excluir unidade:', error)
+      log.error('Erro ao excluir unidade', error)
       toast.error('Erro ao conectar com o servidor')
     }
   }
@@ -244,7 +247,7 @@ export default function UnidadesTramitacaoPage() {
         toast.error(result.error || 'Erro ao atualizar unidade')
       }
     } catch (error) {
-      console.error('Erro ao atualizar unidade:', error)
+      log.error('Erro ao atualizar unidade', error)
       toast.error('Erro ao conectar com o servidor')
     }
   }

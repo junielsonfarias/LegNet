@@ -22,7 +22,7 @@ function addBusinessDays(date: Date, days: number): Date {
 }
 
 const buildWhereClause = (filters: ESICFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.status) where.status = filters.status
   if (filters.ano) where.ano = filters.ano

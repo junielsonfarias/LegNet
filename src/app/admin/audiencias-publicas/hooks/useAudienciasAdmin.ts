@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/audiencias-publicas/hooks/useAudienciasAdmin')
+
 import { useState, useEffect, useCallback } from 'react'
 import type {
   AudienciaPublica,
@@ -33,7 +36,7 @@ export function useAudienciasAdmin() {
           setAudiencias(data.data.audiencias)
         }
       } catch (error) {
-        console.error('Erro ao carregar audiencias:', error)
+        log.error('Erro ao carregar audiencias', error)
       }
     }
     carregarAudiencias()
@@ -46,7 +49,7 @@ export function useAudienciasAdmin() {
           setParlamentares(data.data)
         }
       } catch (error) {
-        console.error('Erro ao carregar parlamentares:', error)
+        log.error('Erro ao carregar parlamentares', error)
       }
     }
     carregarParlamentares()
@@ -103,7 +106,7 @@ export function useAudienciasAdmin() {
   const handleSubmit = async () => {
     // TODO: Implementar quando modelo Prisma AudienciaPublica for criado
     // Por enquanto apenas fecha o formulario
-    console.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
+    log.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
     handleClose()
   }
 
@@ -135,7 +138,7 @@ export function useAudienciasAdmin() {
 
   const handleDelete = (id: string) => {
     // TODO: Implementar quando modelo Prisma AudienciaPublica for criado
-    console.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
+    log.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
   }
 
   const handleClose = () => {

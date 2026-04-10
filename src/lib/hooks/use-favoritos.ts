@@ -3,6 +3,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('use-favoritos')
 
 export type TipoFavorito = 'PROPOSICAO' | 'SESSAO' | 'PARLAMENTAR' | 'COMISSAO' | 'PUBLICACAO'
 
@@ -58,10 +61,10 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
         setPagina(data.pagina)
         setTotalPaginas(data.totalPaginas)
       } else {
-        console.error('Erro ao buscar favoritos:', data.error)
+        log.error('Erro ao buscar favoritos', undefined, { detail: data.error })
       }
     } catch (error) {
-      console.error('Erro ao buscar favoritos:', error)
+      log.error('Erro ao buscar favoritos', error)
     } finally {
       setLoading(false)
     }
@@ -116,7 +119,7 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
         return null
       }
     } catch (error) {
-      console.error('Erro ao adicionar favorito:', error)
+      log.error('Erro ao adicionar favorito', error)
       toast.error('Erro ao adicionar favorito')
       return null
     }
@@ -143,7 +146,7 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
         return false
       }
     } catch (error) {
-      console.error('Erro ao remover favorito:', error)
+      log.error('Erro ao remover favorito', error)
       toast.error('Erro ao remover favorito')
       return false
     }
@@ -205,7 +208,7 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
         return null
       }
     } catch (error) {
-      console.error('Erro ao atualizar favorito:', error)
+      log.error('Erro ao atualizar favorito', error)
       toast.error('Erro ao atualizar favorito')
       return null
     }
@@ -254,7 +257,7 @@ export function useFavoritoItem(tipoItem: TipoFavorito, itemId: string) {
       setIsFavorito(data.favorito)
       setFavorito(data.dados)
     } catch (error) {
-      console.error('Erro ao verificar favorito:', error)
+      log.error('Erro ao verificar favorito', error)
     } finally {
       setLoading(false)
     }

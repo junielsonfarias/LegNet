@@ -23,7 +23,10 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, MapPin, FileText, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
 import { DeadlineIndicator } from './DeadlineIndicator'
+
+const log = createLogger('quick-meeting-dialog')
 
 interface ProposicaoPendente {
   id: string
@@ -140,7 +143,7 @@ export function QuickMeetingDialog({
         }))
       }
     } catch (error) {
-      console.error('Erro ao carregar defaults:', error)
+      log.error('Erro ao carregar defaults', error)
     } finally {
       setLoadingDefaults(false)
     }

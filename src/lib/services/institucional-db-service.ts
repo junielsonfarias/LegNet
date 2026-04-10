@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 export const institucionalDbService = {
   /**
@@ -119,7 +120,7 @@ export const institucionalDbService = {
   /**
    * Atualiza uma configuracao institucional existente
    */
-  async updateConfiguracao(id: string, data: any) {
+  async updateConfiguracao(id: string, data: Record<string, unknown>) {
     return prisma.configuracaoInstitucional.update({
       where: { id },
       data
@@ -129,7 +130,7 @@ export const institucionalDbService = {
   /**
    * Cria uma nova configuracao institucional
    */
-  async createConfiguracao(data: any) {
+  async createConfiguracao(data: Prisma.ConfiguracaoInstitucionalCreateInput) {
     return prisma.configuracaoInstitucional.create({
       data
     })

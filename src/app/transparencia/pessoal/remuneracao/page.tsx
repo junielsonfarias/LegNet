@@ -1,4 +1,7 @@
 import { prisma } from '@/lib/prisma'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('transparencia/remuneracao')
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -35,7 +38,7 @@ export default async function RemuneracaoPage() {
       maiorBruto: Math.max(...data.valores),
     }))
   } catch (error) {
-    console.error('Erro ao buscar remuneracoes:', error)
+    log.error('Erro ao buscar remuneracoes', error)
   }
 
   return (

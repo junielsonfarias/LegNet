@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  withErrorHandler,
   createSuccessResponse
 } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import {
   gerarDashboard,
   gerarDashboardMesAtual,
@@ -14,15 +14,15 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-// GET - Obter metricas de analytics
-export const GET = withErrorHandler(async (request: NextRequest) => {
+// GET - Obter metricas de analytics (requer autenticação admin)
+export const GET = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const tipo = searchParams.get('tipo') || 'mes' // mes, ano, periodo, parlamentares, produtividade
   const inicioParam = searchParams.get('inicio')
   const fimParam = searchParams.get('fim')
   const comparativo = searchParams.get('comparativo') === 'true'
 
-  let resultado: any
+  let resultado: unknown
 
   switch (tipo) {
     case 'mes':
@@ -71,4 +71,4 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   }
 
   return createSuccessResponse(resultado, 'Analytics obtidos com sucesso')
-})
+}, { roles: ['ADMIN', 'SECRETARIA'], skipCsrf: true })

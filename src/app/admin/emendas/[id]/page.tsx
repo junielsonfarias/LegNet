@@ -1,5 +1,8 @@
 "use client"
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/emendas')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -95,7 +98,7 @@ export default function EmendaDetalhePage() {
         toast.error(data.error || 'Erro ao carregar emenda')
       }
     } catch (error) {
-      console.error('Erro ao carregar emenda:', error)
+      log.error('Erro ao carregar emenda', error)
       toast.error('Erro ao carregar emenda')
     } finally {
       setLoading(false)

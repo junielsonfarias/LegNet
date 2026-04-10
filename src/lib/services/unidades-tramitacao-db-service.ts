@@ -83,7 +83,7 @@ export const unidadesTramitacaoDbService = {
   },
 
   async update(id: string, payload: Partial<UnidadeTramitacaoPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
     if (payload.nome !== undefined) data.nome = payload.nome
     if (payload.sigla !== undefined) data.sigla = payload.sigla
     if (payload.descricao !== undefined) data.descricao = payload.descricao

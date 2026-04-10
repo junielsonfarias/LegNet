@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/participacao/consultas')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -99,7 +102,7 @@ export default function ConsultasPage() {
         setConsultas(data.data.consultas || [])
       }
     } catch (error) {
-      console.error('Erro ao carregar consultas:', error)
+      log.error('Erro ao carregar consultas', error)
     } finally {
       setLoading(false)
     }
@@ -135,7 +138,7 @@ export default function ConsultasPage() {
         carregarConsultas()
       }
     } catch (error) {
-      console.error('Erro ao criar consulta:', error)
+      log.error('Erro ao criar consulta', error)
     }
   }
 

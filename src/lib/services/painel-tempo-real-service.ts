@@ -947,10 +947,10 @@ export async function configurarTransmissao(
  * Exporta dados do painel para relatorio
  */
 export async function exportarDadosPainel(sessaoId: string): Promise<{
-  sessao: any
-  presencas: any[]
-  votacoes: any[]
-  pauta: any[]
+  sessao: Record<string, unknown> | null
+  presencas: Record<string, unknown>[]
+  votacoes: Record<string, unknown>[]
+  pauta: Record<string, unknown>[]
 }> {
   const sessao = await prisma.sessao.findUnique({
     where: { id: sessaoId },

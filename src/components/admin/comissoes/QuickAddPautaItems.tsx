@@ -15,7 +15,10 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { FileText, Search, Loader2, Plus, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
 import { DeadlineIndicator } from './DeadlineIndicator'
+
+const log = createLogger('quick-add-pauta-items')
 
 interface ProposicaoPendente {
   id: string
@@ -81,7 +84,7 @@ export function QuickAddPautaItems({
         setProposicoes(pendentes)
       }
     } catch (error) {
-      console.error('Erro ao carregar proposicoes:', error)
+      log.error('Erro ao carregar proposicoes', error)
       toast.error('Erro ao carregar proposicoes')
     } finally {
       setLoadingProposicoes(false)

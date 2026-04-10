@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/normas')
 import {
   ArrowLeft,
   Scale,
@@ -105,7 +108,7 @@ export default function NormaPublicaPage() {
         setNorma(data.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar norma:', error)
+      log.error('Erro ao carregar norma', error)
     } finally {
       setLoading(false)
     }

@@ -16,6 +16,9 @@ import { useParams } from 'next/navigation'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { slugify } from '@/lib/utils'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parlamentares')
 
 interface PerfilParlamentar {
   id: string
@@ -143,7 +146,7 @@ export default function ParlamentarPerfilPage() {
         }
       } catch (err) {
         setError('Erro ao carregar perfil do parlamentar')
-        console.error(err)
+        log.error('Erro ao carregar perfil do parlamentar', err)
       } finally {
         setLoadingPerfil(false)
       }

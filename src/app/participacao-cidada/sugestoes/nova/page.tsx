@@ -17,6 +17,9 @@ import {
 } from '@/components/ui/select'
 import { ArrowLeft, Lightbulb, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('participacao-cidada/sugestoes')
 
 const CATEGORIAS = [
   { value: 'SAUDE', label: 'Saude' },
@@ -119,7 +122,7 @@ export default function NovaSugestaoPage() {
         toast.error(data.error || 'Erro ao enviar sugestao')
       }
     } catch (error) {
-      console.error('Erro ao enviar sugestao:', error)
+      log.error('Erro ao enviar sugestao', error)
       toast.error('Erro ao enviar sugestao')
     } finally {
       setSubmitting(false)

@@ -15,6 +15,9 @@ import { ArrowLeft, Calendar, Users, CheckCircle, AlertCircle } from 'lucide-rea
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('participacao-cidada/consultas')
 
 interface Pergunta {
   id: string
@@ -71,7 +74,7 @@ export default function ParticiparConsultaPage() {
         router.push('/participacao-cidada/consultas')
       }
     } catch (error) {
-      console.error('Erro ao carregar consulta:', error)
+      log.error('Erro ao carregar consulta', error)
       toast.error('Erro ao carregar consulta')
     } finally {
       setLoading(false)
@@ -124,7 +127,7 @@ export default function ParticiparConsultaPage() {
         toast.error(data.error || 'Erro ao registrar participacao')
       }
     } catch (error) {
-      console.error('Erro ao submeter:', error)
+      log.error('Erro ao submeter', error)
       toast.error('Erro ao registrar participacao')
     } finally {
       setSubmitting(false)

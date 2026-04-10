@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/proposicoes')
+
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -126,7 +129,7 @@ export default function ProposicaoDetailPage() {
       setObservacoes('')
       await refetchTramitacoes()
     } catch (err) {
-      console.error('Erro ao criar tramitação:', err)
+      log.error('Erro ao criar tramitação', err)
       toast.error('Erro ao criar tramitação')
     } finally {
       setCriandoTramitacao(false)

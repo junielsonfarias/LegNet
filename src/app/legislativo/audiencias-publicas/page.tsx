@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/audiencias-publicas')
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -119,7 +122,7 @@ export default function AudienciasPublicasPublicPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar audiências:', error)
+      log.error('Erro ao carregar audiências', error)
     } finally {
       setLoading(false)
     }

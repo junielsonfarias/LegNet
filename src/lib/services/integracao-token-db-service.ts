@@ -44,7 +44,7 @@ export const integracaoTokenDbService = {
   },
 
   async update(id: string, payload: Partial<Omit<TokenPayload, 'permissoes'> & { permissoes?: string[] }>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
     if (payload.nome !== undefined) data.nome = payload.nome
     if (payload.descricao !== undefined) data.descricao = payload.descricao || null
     if (payload.permissoes !== undefined) data.permissoes = payload.permissoes

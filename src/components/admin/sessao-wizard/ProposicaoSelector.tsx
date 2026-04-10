@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Search, Loader2, CheckCircle, FileText, AlertTriangle } from 'lucide-react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('proposicao-selector')
 
 interface ProposicaoElegivel {
   id: string
@@ -51,7 +54,7 @@ export function ProposicaoSelector({ onSelect }: ProposicaoSelectorProps) {
         setError(data.error || 'Erro ao carregar proposicoes')
       }
     } catch (err) {
-      console.error('Erro ao carregar proposicoes:', err)
+      log.error('Erro ao carregar proposicoes', err)
       setError('Erro ao carregar proposicoes elegiveis')
     } finally {
       setLoading(false)

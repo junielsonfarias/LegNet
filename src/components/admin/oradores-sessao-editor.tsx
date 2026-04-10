@@ -49,6 +49,9 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('oradores-sessao-editor')
 
 interface Parlamentar {
   id: string
@@ -161,7 +164,7 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
         setParlamentares(result.data || result)
       }
     } catch (err) {
-      console.error('Erro ao carregar parlamentares:', err)
+      log.error('Erro ao carregar parlamentares', err)
     }
   }, [])
 
@@ -201,7 +204,7 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
       })
       fetchOradores()
     } catch (err) {
-      console.error('Erro ao inscrever orador:', err)
+      log.error('Erro ao inscrever orador', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao inscrever orador')
     } finally {
       setSaving(false)
@@ -223,7 +226,7 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
 
       fetchOradores()
     } catch (err) {
-      console.error('Erro ao atualizar status:', err)
+      log.error('Erro ao atualizar status', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao atualizar status')
     }
   }
@@ -246,7 +249,7 @@ export function OradoresSessaoEditor({ sessaoId, readOnly = false }: OradoresSes
       setDeleteConfirm({ open: false, oradorId: null, nome: '' })
       fetchOradores()
     } catch (err) {
-      console.error('Erro ao remover orador:', err)
+      log.error('Erro ao remover orador', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao remover orador')
     } finally {
       setDeleting(false)

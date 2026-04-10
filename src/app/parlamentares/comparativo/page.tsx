@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parlamentares/comparativo')
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -72,7 +75,7 @@ export default function ComparativoPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao carregar comparativo:', error)
+      log.error('Erro ao carregar comparativo', error)
       toast.error('Erro ao carregar dados do comparativo')
     } finally {
       setLoading(false)
@@ -85,7 +88,7 @@ export default function ComparativoPage() {
     try {
       toast.success('Comparativo exportado com sucesso!')
     } catch (error) {
-      console.error('Erro ao exportar comparativo:', error)
+      log.error('Erro ao exportar comparativo', error)
       toast.error('Erro ao exportar comparativo')
     }
   }

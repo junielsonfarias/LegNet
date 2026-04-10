@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('use-painel-sse')
 
 // Tipos para o estado do painel
 interface VereadorVoto {
@@ -181,7 +184,7 @@ export function usePainelSSE(
       }
 
       eventSource.onerror = (event) => {
-        console.error('Erro SSE:', event)
+        log.error('Erro SSE', undefined, { event: String(event) })
         setConectado(false)
         callbacksRef.current?.onConexao?.(false)
 
@@ -205,7 +208,7 @@ export function usePainelSSE(
           setEstado(data)
           callbacksRef.current?.onEstado?.(data)
         } catch (e) {
-          console.error('Erro ao parsear evento estado:', e)
+          log.error('Erro ao parsear evento estado', e)
         }
       })
 
@@ -215,7 +218,7 @@ export function usePainelSSE(
           const data: EventoVoto = JSON.parse(event.data)
           callbacksRef.current?.onVoto?.(data)
         } catch (e) {
-          console.error('Erro ao parsear evento voto:', e)
+          log.error('Erro ao parsear evento voto', e)
         }
       })
 
@@ -225,7 +228,7 @@ export function usePainelSSE(
           const data: EventoVotacaoIniciada = JSON.parse(event.data)
           callbacksRef.current?.onVotacaoIniciada?.(data)
         } catch (e) {
-          console.error('Erro ao parsear evento votacao-iniciada:', e)
+          log.error('Erro ao parsear evento votacao-iniciada', e)
         }
       })
 
@@ -235,7 +238,7 @@ export function usePainelSSE(
           const data: EventoVotacaoFinalizada = JSON.parse(event.data)
           callbacksRef.current?.onVotacaoFinalizada?.(data)
         } catch (e) {
-          console.error('Erro ao parsear evento votacao-finalizada:', e)
+          log.error('Erro ao parsear evento votacao-finalizada', e)
         }
       })
 
@@ -245,7 +248,7 @@ export function usePainelSSE(
           const data: EventoPresenca = JSON.parse(event.data)
           callbacksRef.current?.onPresenca?.(data)
         } catch (e) {
-          console.error('Erro ao parsear evento presenca:', e)
+          log.error('Erro ao parsear evento presenca', e)
         }
       })
     } catch (e) {

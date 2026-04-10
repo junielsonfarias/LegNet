@@ -24,6 +24,9 @@ import { proposicoesApi, ProposicaoApi } from '@/lib/api/proposicoes-api'
 import Link from 'next/link'
 import { useState, useEffect, useMemo } from 'react'
 import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/sessoes')
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -86,7 +89,7 @@ export default function SessaoDetailPage() {
           setSessao(sessaoEncontrada)
         }
       } catch (err) {
-        console.error('Erro ao buscar sessão:', err)
+        log.error('Erro ao buscar sessão', err)
         setError(err instanceof Error ? err.message : 'Erro ao carregar sessão')
       } finally {
         setLoading(false)
@@ -111,7 +114,7 @@ export default function SessaoDetailPage() {
         const proposicoesSessao = data.filter(p => p.sessaoId === sessao.id)
         setProposicoes(proposicoesSessao)
       } catch (err) {
-        console.error('Erro ao carregar proposições:', err)
+        log.error('Erro ao carregar proposições', err)
       } finally {
         setLoadingProposicoes(false)
       }

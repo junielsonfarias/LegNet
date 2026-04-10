@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/busca')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -170,7 +173,7 @@ export default function BuscaPage() {
         setTempoMs(data.tempoMs)
       }
     } catch (error) {
-      console.error('Erro na busca:', error)
+      log.error('Erro na busca', error)
     } finally {
       setLoading(false)
     }

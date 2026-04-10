@@ -70,6 +70,9 @@ import {
   getTipoAcaoConfig,
   getAcoesDisponiveis
 } from './_helpers'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('painel-operador')
 
 export default function PainelOperadorPage() {
   const params = useParams()
@@ -184,7 +187,7 @@ export default function PainelOperadorPage() {
         null
       )
     } catch (error: any) {
-      console.error('Erro ao carregar sessão:', error)
+      log.error('Erro ao carregar sessão', error)
       toast.error(error?.message || 'Erro ao carregar sessão')
     } finally {
       if (mostrarLoader) setLoading(false)

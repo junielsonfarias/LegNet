@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar, ArrowLeft, Share2, Loader2, AlertCircle, Newspaper, User } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('noticias')
 import { toast } from 'sonner'
 import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 
@@ -51,7 +54,7 @@ export default function NoticiaDetalhePage() {
           throw new Error('Notícia não encontrada')
         }
       } catch (err) {
-        console.error('Erro ao carregar notícia:', err)
+        log.error('Erro ao carregar notícia', err)
         setError(err instanceof Error ? err.message : 'Erro ao carregar notícia')
       } finally {
         setLoading(false)

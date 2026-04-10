@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('calendario')
 import {
   Calendar,
   ChevronRight,
@@ -46,7 +49,7 @@ export default function CalendarioPage() {
         const data = await res.json()
         setProximosEventos(data.eventos || [])
       } catch (error) {
-        console.error('Erro ao buscar proximos eventos:', error)
+        log.error('Erro ao buscar proximos eventos', error)
       } finally {
         setLoading(false)
       }

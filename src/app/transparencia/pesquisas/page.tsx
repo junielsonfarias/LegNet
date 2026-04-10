@@ -21,6 +21,9 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('transparencia/pesquisas')
 
 // Interface para documentos da API
 interface DocumentoLRF {
@@ -85,7 +88,7 @@ export default function PesquisasPublicasPage() {
 
       setDocumentos(todosDocumentos)
     } catch (error) {
-      console.error('Erro ao carregar documentos:', error)
+      log.error('Erro ao carregar documentos', error)
       toast.error('Erro ao carregar documentos')
       setDocumentos([])
     } finally {

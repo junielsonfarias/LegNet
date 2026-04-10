@@ -20,6 +20,9 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('mesa-sessao-editor')
 
 interface Parlamentar {
   id: string
@@ -123,7 +126,7 @@ export function MesaSessaoEditor({ sessaoId, readOnly = false }: MesaSessaoEdito
         setParlamentaresDisponiveis(parlData.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar mesa da sessão:', error)
+      log.error('Erro ao carregar mesa da sessao', error)
       toast.error('Erro ao carregar dados da mesa')
     } finally {
       setLoading(false)
@@ -228,7 +231,7 @@ export function MesaSessaoEditor({ sessaoId, readOnly = false }: MesaSessaoEdito
         toast.error(data.error || 'Erro ao salvar mesa')
       }
     } catch (error) {
-      console.error('Erro ao salvar mesa:', error)
+      log.error('Erro ao salvar mesa', error)
       toast.error('Erro ao salvar mesa da sessão')
     } finally {
       setSaving(false)
@@ -255,7 +258,7 @@ export function MesaSessaoEditor({ sessaoId, readOnly = false }: MesaSessaoEdito
         toast.error(data.error || 'Erro ao restaurar mesa')
       }
     } catch (error) {
-      console.error('Erro ao restaurar mesa:', error)
+      log.error('Erro ao restaurar mesa', error)
       toast.error('Erro ao restaurar mesa')
     } finally {
       setSaving(false)

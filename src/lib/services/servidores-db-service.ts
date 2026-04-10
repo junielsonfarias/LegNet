@@ -103,7 +103,7 @@ export const servidoresDbService = {
   },
 
   async update(id: string, payload: Partial<ServidorPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.nome !== undefined) data.nome = payload.nome.trim()
     if (payload.cpf !== undefined) data.cpf = payload.cpf
@@ -234,7 +234,7 @@ export const folhaPagamentoDbService = {
   },
 
   async update(id: string, payload: Partial<FolhaPagamentoPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.competencia !== undefined) data.competencia = payload.competencia.trim()
     if (payload.mes !== undefined) data.mes = payload.mes

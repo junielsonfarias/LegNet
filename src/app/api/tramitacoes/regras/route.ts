@@ -76,7 +76,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     entityId: regra.id,
     metadata: {
       nome: regra.nome,
-      etapas: regra.etapas.length
+      etapas: (regra as Record<string, unknown>).etapas ? ((regra as Record<string, unknown>).etapas as unknown[]).length : 0
     }
   })
 

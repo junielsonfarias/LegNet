@@ -860,7 +860,7 @@ export async function atualizarProposicaoAposVotacaoFinal(
     const { validarTransicaoStatus } = await import('./status-transitions')
     const validacao = validarTransicaoStatus(proposicao.status, statusProposicao)
     if (!validacao.valid) {
-      console.warn(`[atualizarProposicaoAposVotacaoFinal] ${validacao.error}`)
+      logger.warn(`[atualizarProposicaoAposVotacaoFinal] ${validacao.error}`)
     }
   }
 

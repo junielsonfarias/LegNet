@@ -58,7 +58,7 @@ export const cargosMesaDbService = {
   },
 
   async update(id: string, payload: Partial<CargoMesaPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
     if (payload.nome !== undefined) data.nome = payload.nome
     if (payload.ordem !== undefined) data.ordem = payload.ordem
     if (payload.obrigatorio !== undefined) data.obrigatorio = payload.obrigatorio

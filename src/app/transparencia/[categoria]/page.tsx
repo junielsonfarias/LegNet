@@ -22,6 +22,9 @@ import {
 } from 'lucide-react'
 import { TransparenciaItem } from '@/lib/types/transparencia'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('transparencia/categoria')
 
 export default function CategoriaTransparenciaPage() {
   const params = useParams()
@@ -65,7 +68,7 @@ export default function CategoriaTransparenciaPage() {
       setItens(itensData || [])
       setItensFiltrados(itensData || [])
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados da categoria')
     } finally {
       setLoading(false)

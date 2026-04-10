@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import type { TipoVoto } from '@prisma/client'
+import type { TipoVoto, TipoParecer } from '@prisma/client'
 
 export interface ParecerFilters {
   comissaoId?: string
@@ -204,7 +204,7 @@ export const pareceresDbService = {
       relatorId: data.relatorId,
       numero,
       ano: anoAtual,
-      tipo: data.tipo,
+      tipo: data.tipo as TipoParecer,
       status: 'AGUARDANDO_PAUTA',
       fundamentacao: data.fundamentacao,
       conclusao: data.conclusao,
@@ -220,7 +220,7 @@ export const pareceresDbService = {
     })
   },
 
-  async create(data: any) {
+  async create(data: Prisma.ParecerUncheckedCreateInput) {
     return prisma.parecer.create({
       data,
       include: {
@@ -231,7 +231,7 @@ export const pareceresDbService = {
     })
   },
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Record<string, unknown>) {
     return prisma.parecer.update({
       where: { id },
       data,
@@ -439,7 +439,7 @@ export const pareceresDbService = {
       )
     }
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status: resultado,
       dataVotacao: new Date()
     }

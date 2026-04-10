@@ -13,6 +13,9 @@ import {
 import Link from 'next/link'
 import { formatDateBR, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
 import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/atas')
 
 interface SessaoAta {
   id: string
@@ -62,7 +65,7 @@ export default function AtasPage() {
         setSessoes(items)
       }
     } catch (err) {
-      console.error('Erro ao buscar atas:', err)
+      log.error('Erro ao buscar atas', err)
     } finally {
       setLoading(false)
     }

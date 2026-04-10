@@ -1,5 +1,8 @@
 "use client"
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/transparencia/conformidade')
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -66,7 +69,7 @@ export default function AdminConformidadePage() {
       const json = await res.json()
       if (json.success) setDados(json.data)
     } catch (err) {
-      console.error("Erro ao carregar conformidade:", err)
+      log.error("Erro ao carregar conformidade", err)
     } finally {
       setLoading(false)
       setRefreshing(false)

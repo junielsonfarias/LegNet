@@ -156,7 +156,7 @@ export const sessaoDbService = {
   /**
    * Verifica se uma sessao existe. Retorna a sessao ou null.
    */
-  async getById(id: string, include?: any) {
+  async getById(id: string, include?: Record<string, unknown>) {
     return prisma.sessao.findUnique({
       where: { id },
       ...(include ? { include } : {})
@@ -183,7 +183,7 @@ export const sessaoDbService = {
   /**
    * Atualiza uma sessao pelo ID.
    */
-  async update(id: string, data: any, include?: any) {
+  async update(id: string, data: Record<string, unknown>, include?: Record<string, unknown>) {
     return prisma.sessao.update({
       where: { id },
       data,
@@ -207,7 +207,7 @@ export const sessaoDbService = {
    * Lista sessoes disponiveis para vinculacao de pauta.
    */
   async listSessoesDisponiveis(options: { incluirComPauta?: boolean; incluirFinalizadas?: boolean } = {}) {
-    const whereClause: any = options.incluirComPauta ? {} : { pautaSessao: null }
+    const whereClause: Record<string, unknown> = options.incluirComPauta ? {} : { pautaSessao: null }
 
     if (!options.incluirFinalizadas) {
       whereClause.status = { not: 'CANCELADA' }

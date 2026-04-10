@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import type { LegislaturaApi } from '@/lib/api/legislaturas-api'
 import type { PeriodoLegislaturaApi } from '@/lib/api/mesa-diretora-api'
+import { dbLogger } from '@/lib/logging/logger'
 
 /**
  * Gera o slug amigável para uma sessão no formato "sessao-{numero}-{ano}"
@@ -40,7 +41,7 @@ export async function getLegislaturaAtual(): Promise<LegislaturaApi | null> {
       updatedAt: legislatura.updatedAt.toISOString()
     }
   } catch (error) {
-    console.error('Erro ao buscar legislatura atual:', error)
+    dbLogger.error('Erro ao buscar legislatura atual', error)
     return null
   }
 }
@@ -126,7 +127,7 @@ export async function getPeriodoAtual(data: Date, legislaturaId?: string): Promi
 
     return null
   } catch (error) {
-    console.error('Erro ao buscar período atual:', error)
+    dbLogger.error('Erro ao buscar periodo atual', error)
     return null
   }
 }
@@ -203,7 +204,7 @@ export async function getPeriodoParaData(data: Date, legislaturaId: string): Pro
 
     return null
   } catch (error) {
-    console.error('Erro ao buscar período para data:', error)
+    dbLogger.error('Erro ao buscar periodo para data', error)
     return null
   }
 }
@@ -242,7 +243,7 @@ export async function getLegislaturaParaData(data: Date): Promise<LegislaturaApi
     // Se não encontrou, tenta a legislatura ativa
     return getLegislaturaAtual()
   } catch (error) {
-    console.error('Erro ao buscar legislatura para data:', error)
+    dbLogger.error('Erro ao buscar legislatura para data', error)
     return null
   }
 }
@@ -271,7 +272,7 @@ export async function getProximoNumeroSessaoOrdinaria(
     
     return ultimaSessao.numero + 1
   } catch (error) {
-    console.error('Erro ao calcular próximo número de sessão:', error)
+    dbLogger.error('Erro ao calcular proximo numero de sessao', error)
     return 1
   }
 }
@@ -834,7 +835,7 @@ export async function gerarAtaSessao(sessaoId: string): Promise<string> {
 
     return ata
   } catch (error) {
-    console.error('Erro ao gerar ata da sessão:', error)
+    dbLogger.error('Erro ao gerar ata da sessao', error)
     throw error
   }
 }

@@ -73,7 +73,7 @@ export const periodosLegislaturaDbService = {
   },
 
   async update(id: string, payload: Partial<PeriodoLegislaturaPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
     if (payload.legislaturaId !== undefined) data.legislaturaId = payload.legislaturaId
     if (payload.numero !== undefined) data.numero = payload.numero
     if (payload.dataInicio !== undefined) data.dataInicio = payload.dataInicio

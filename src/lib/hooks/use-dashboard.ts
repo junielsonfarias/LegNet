@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('use-dashboard')
 
 // Tipos para estatísticas do dashboard
 export interface DashboardStats {
@@ -123,7 +126,7 @@ export function useDashboardStats() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar estatísticas'
       setError(errorMessage)
-      console.error('Erro ao carregar estatísticas:', err)
+      log.error('Erro ao carregar estatisticas', err)
     } finally {
       setLoading(false)
     }
@@ -161,7 +164,7 @@ export function useAtividadesRecentes(limit: number = 10) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar atividades'
       setError(errorMessage)
-      console.error('Erro ao carregar atividades:', err)
+      log.error('Erro ao carregar atividades', err)
     } finally {
       setLoading(false)
     }
@@ -199,7 +202,7 @@ export function useProximosEventos(limit: number = 10) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar eventos'
       setError(errorMessage)
-      console.error('Erro ao carregar eventos:', err)
+      log.error('Erro ao carregar eventos', err)
     } finally {
       setLoading(false)
     }

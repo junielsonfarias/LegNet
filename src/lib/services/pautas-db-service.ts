@@ -306,7 +306,7 @@ export const pautasDbService = {
     })
   },
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Record<string, unknown>) {
     return prisma.pautaSessao.update({
       where: { id },
       data,

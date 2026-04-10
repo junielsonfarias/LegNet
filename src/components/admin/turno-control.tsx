@@ -14,6 +14,9 @@ import {
   Info
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('turno-control')
 
 interface TurnoInfo {
   itemId: string
@@ -66,7 +69,7 @@ export function TurnoControl({
         setTurnoInfo(data.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar informações de turno:', error)
+      log.error('Erro ao carregar informacoes de turno', error)
     } finally {
       setLoading(false)
     }
@@ -94,7 +97,7 @@ export function TurnoControl({
         toast.error(data.error || 'Erro ao iniciar turno')
       }
     } catch (error) {
-      console.error('Erro ao iniciar turno:', error)
+      log.error('Erro ao iniciar turno', error)
       toast.error('Erro ao iniciar turno')
     } finally {
       setExecutando(false)
@@ -119,7 +122,7 @@ export function TurnoControl({
         toast.error(data.error || 'Erro ao finalizar turno')
       }
     } catch (error) {
-      console.error('Erro ao finalizar turno:', error)
+      log.error('Erro ao finalizar turno', error)
       toast.error('Erro ao finalizar turno')
     } finally {
       setExecutando(false)

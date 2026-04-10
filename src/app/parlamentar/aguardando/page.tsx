@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parlamentar/aguardando')
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Users,
@@ -75,7 +78,7 @@ export default function AguardandoPresencaPage() {
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar acesso:', error)
+        log.error('Erro ao verificar acesso', error)
       } finally {
         setVerificandoAcesso(false)
       }

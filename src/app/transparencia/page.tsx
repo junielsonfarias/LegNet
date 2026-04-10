@@ -13,6 +13,9 @@ import {
 import Link from 'next/link';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs';
+import { createLogger } from '@/lib/logging/logger';
+
+const log = createLogger('transparencia');
 
 interface ConfiguracaoInstitucional {
   nome: string;
@@ -43,7 +46,7 @@ export default function TransparenciaPage() {
         const result = await response.json();
         if (result.dados) setDados(result.dados);
       } catch (err) {
-        console.error('Erro ao buscar dados institucionais:', err);
+        log.error('Erro ao buscar dados institucionais', err);
       } finally {
         setLoading(false);
       }

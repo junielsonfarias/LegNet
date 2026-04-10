@@ -10,7 +10,7 @@ export interface OuvidoriaFilters {
 }
 
 const buildWhereClause = (filters: OuvidoriaFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.tipo) where.tipo = filters.tipo
   if (filters.status) where.status = filters.status

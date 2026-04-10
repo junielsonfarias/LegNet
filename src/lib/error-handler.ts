@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ZodError } from 'zod'
 import { logAuditError } from '@/lib/audit'
 import { authOptions } from '@/lib/auth'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('error-handler')
 
 export interface ApiError {
   success: false
@@ -204,10 +207,7 @@ export function createErrorResponse(
   const errorMessage = error instanceof Error ? error.message : 'Erro interno do servidor'
   const errorStack = error instanceof Error ? error.stack : undefined
 
-  console.error('Erro não tratado:', {
-    message: errorMessage,
-    stack: errorStack,
-    error,
+  log.error('Erro nao tratado', error instanceof Error ? error : undefined, {
     path
   })
   
@@ -279,7 +279,7 @@ export function withErrorHandler<T extends any[]>(
             const { getServerSession } = await import('next-auth')
             session = await getServerSession(authOptions)
           } catch (sessionError) {
-            console.error('Erro ao obter sessão para auditoria de falha:', sessionError)
+            log.error('Erro ao obter sessao para auditoria de falha', sessionError)
           }
         }
 
@@ -295,13 +295,13 @@ export function withErrorHandler<T extends any[]>(
             }
           })
         } catch (auditError) {
-          console.error('Erro ao registrar auditoria de falha:', auditError)
+          log.error('Erro ao registrar auditoria de falha', auditError)
         }
 
         return createErrorResponse(error, path)
       } catch (err) {
         // Fallback se não conseguir extrair o path
-        console.error('Erro ao processar erro:', err)
+        log.error('Erro ao processar erro', err)
         return createErrorResponse(error, 'unknown')
       }
     }

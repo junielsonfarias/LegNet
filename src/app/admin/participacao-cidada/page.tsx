@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/participacao-cidada')
+
 import { useState, useEffect } from 'react'
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -65,7 +68,7 @@ export default function AdminParticipacaoCidadaPage() {
       setConsultas(participacaoCidadaService.getAllConsultas())
       setPeticoes(participacaoCidadaService.getAllPeticoes())
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados de participação cidadã')
     } finally {
       setLoading(false)
@@ -80,7 +83,7 @@ export default function AdminParticipacaoCidadaPage() {
         toast.success(`Status da sugestão alterado para ${status}`)
       }
     } catch (error) {
-      console.error('Erro ao atualizar status:', error)
+      log.error('Erro ao atualizar status', error)
       toast.error('Erro ao atualizar status da sugestão')
     }
   }
@@ -106,7 +109,7 @@ export default function AdminParticipacaoCidadaPage() {
         toast.success('Resposta oficial enviada com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao responder sugestão:', error)
+      log.error('Erro ao responder sugestão', error)
       toast.error('Erro ao enviar resposta oficial')
     }
   }
@@ -137,7 +140,7 @@ export default function AdminParticipacaoCidadaPage() {
         toast.success('Consulta finalizada com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao finalizar consulta:', error)
+      log.error('Erro ao finalizar consulta', error)
       toast.error('Erro ao finalizar consulta')
     }
   }

@@ -2,6 +2,9 @@
 
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('auth/reset-password')
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -57,7 +60,7 @@ export default function ResetPasswordPage({ params }: PageProps) {
           setTokenError(data.error || 'Link inválido ou expirado')
         }
       } catch (error) {
-        console.error('Erro ao verificar token de reset:', error)
+        log.error('Erro ao verificar token de reset', error)
         setTokenValid(false)
         setTokenError('Erro ao verificar link')
       } finally {
@@ -109,7 +112,7 @@ export default function ResetPasswordPage({ params }: PageProps) {
         setError(data.error || 'Erro ao redefinir senha')
       }
     } catch (error) {
-      console.error('Erro ao redefinir senha:', error)
+      log.error('Erro ao redefinir senha', error)
       setError('Erro de conexão. Tente novamente.')
     } finally {
       setIsLoading(false)

@@ -9,7 +9,7 @@ export interface DiariaFilters {
 }
 
 const buildWhereClause = (filters: DiariaFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.ano) where.ano = filters.ano
   if (filters.mes) where.mes = filters.mes
@@ -107,7 +107,7 @@ export const diariasService = {
     ano: number
     mes: number
   }>) {
-    const updateData: any = { ...data }
+    const updateData: Record<string, unknown> = { ...data }
 
     if (data.dataInicio) updateData.dataInicio = new Date(data.dataInicio)
     if (data.dataFim) updateData.dataFim = new Date(data.dataFim)

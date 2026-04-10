@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/usuarios')
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -74,7 +77,7 @@ export default function UsuariosPage() {
       const usuarios = await usuariosApi.getAll()
       setUsuarios(Array.isArray(usuarios) ? usuarios : [])
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
+      log.error('Erro ao carregar usuários', error)
       toast.error('Erro ao carregar usuários')
       setUsuarios([])
     } finally {
@@ -128,7 +131,7 @@ export default function UsuariosPage() {
         }
       }
     } catch (error: any) {
-      console.error('Erro ao salvar usuário:', error)
+      log.error('Erro ao salvar usuário', error)
       toast.error(error?.message || 'Erro ao salvar usuário')
     }
   }
@@ -170,7 +173,7 @@ export default function UsuariosPage() {
       toast.success('Usuario excluido com sucesso!')
       carregarUsuarios()
     } catch (error) {
-      console.error('Erro ao excluir usuario:', error)
+      log.error('Erro ao excluir usuario', error)
       toast.error('Erro ao excluir usuario')
     }
   }
@@ -196,7 +199,7 @@ export default function UsuariosPage() {
       toast.success(`Usuário ${!usuario.ativo ? 'ativado' : 'desativado'} com sucesso!`)
       carregarUsuarios()
     } catch (error) {
-      console.error('Erro ao alterar status:', error)
+      log.error('Erro ao alterar status', error)
       toast.error('Erro ao alterar status do usuário')
     }
   }

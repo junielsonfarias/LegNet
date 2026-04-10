@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes')
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
@@ -79,7 +82,7 @@ const buildDraftValue = (config: SystemConfigApi): string | boolean => {
       try {
         return JSON.stringify(config.valor ?? null, null, 2)
       } catch (error) {
-        console.error('Erro ao serializar valor de configuração:', error)
+        log.error('Erro ao serializar valor de configuração', error)
         return String(config.valor ?? '')
       }
     default:
@@ -99,7 +102,7 @@ const isEqualValue = (tipo: SystemConfigType, original: any, draft: string | boo
         const draftParsed = typeof draft === 'string' ? JSON.parse(draft) : draft
         return originalString === JSON.stringify(draftParsed ?? null)
       } catch (error) {
-        console.error('Erro ao comparar valores JSON:', error)
+        log.error('Erro ao comparar valores JSON', error)
         return false
       }
     default:
@@ -165,7 +168,7 @@ export default function ConfiguracoesPage() {
       })
       setSystemDraft(drafts)
     } catch (error: any) {
-      console.error('Erro ao carregar configurações:', error)
+      log.error('Erro ao carregar configurações', error)
       toast.error(error?.message ?? 'Erro ao carregar configurações')
     } finally {
       setLoading(false)
@@ -235,7 +238,7 @@ export default function ConfiguracoesPage() {
       setInstitutional({ ...institutional, ...updated })
       toast.success('Configurações institucionais atualizadas com sucesso!')
     } catch (error: any) {
-      console.error('Erro ao atualizar configurações institucionais:', error)
+      log.error('Erro ao atualizar configurações institucionais', error)
       toast.error(error?.message ?? 'Erro ao atualizar configurações institucionais')
     } finally {
       setSavingInstitutional(false)
@@ -313,7 +316,7 @@ export default function ConfiguracoesPage() {
 
       toast.success('Configurações do sistema atualizadas com sucesso!')
     } catch (error: any) {
-      console.error('Erro ao atualizar configurações de sistema:', error)
+      log.error('Erro ao atualizar configurações de sistema', error)
       toast.error(error?.message ?? 'Erro ao atualizar configurações do sistema')
     } finally {
       setSavingSystem(false)
@@ -335,7 +338,7 @@ export default function ConfiguracoesPage() {
       URL.revokeObjectURL(url)
       toast.success('Backup exportado com sucesso!')
     } catch (error: any) {
-      console.error('Erro ao exportar backup:', error)
+      log.error('Erro ao exportar backup', error)
       toast.error(error?.message ?? 'Não foi possível exportar o backup')
     } finally {
       setExporting(false)
@@ -359,7 +362,7 @@ export default function ConfiguracoesPage() {
       toast.success('Backup importado com sucesso!')
       await handleLoad()
     } catch (error: any) {
-      console.error('Erro ao importar backup:', error)
+      log.error('Erro ao importar backup', error)
       toast.error(error?.message ?? 'Não foi possível importar o backup')
     } finally {
       setImporting(false)
@@ -401,7 +404,7 @@ export default function ConfiguracoesPage() {
       setInstitutional(prev => ({ ...prev, logoUrl: data.url }))
       toast.success('Logo enviado com sucesso! Clique em Salvar para confirmar.')
     } catch (error: any) {
-      console.error('Erro ao fazer upload do logo:', error)
+      log.error('Erro ao fazer upload do logo', error)
       toast.error(error?.message ?? 'Erro ao fazer upload do logo')
     } finally {
       setUploadingLogo(false)

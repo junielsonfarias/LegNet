@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parlamentar/votacao')
 import { sessoesApi } from '@/lib/api/sessoes-api'
 import type { PautaItem, SessaoCompleta, ParlamentarInfo, ResultadoVotacao, VotoTipo } from '../types/votacao'
 
@@ -50,7 +53,7 @@ export function useVotacaoData({
         }
       }
     } catch (error) {
-      console.error('Erro ao buscar parlamentar:', error)
+      log.error('Erro ao buscar parlamentar', error)
     }
   }, [parlamentarId, actions])
 
@@ -148,7 +151,7 @@ export function useVotacaoData({
         actions.setVoto(null)
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados da sessão')
     } finally {
       actions.setLoading(false)
@@ -189,7 +192,7 @@ export function useVotacaoData({
         toast.error(error.message || 'Erro ao registrar voto')
       }
     } catch (error) {
-      console.error('Erro ao registrar voto:', error)
+      log.error('Erro ao registrar voto', error)
       toast.error('Erro ao registrar voto')
     } finally {
       actions.setVotando(false)

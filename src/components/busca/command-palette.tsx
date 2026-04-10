@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { createLogger } from '@/lib/logging/logger'
 import {
   Search,
   FileText,
@@ -22,6 +23,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ResultadoBusca, TipoResultado } from '@/lib/services/busca-service'
+
+const log = createLogger('command-palette')
 
 interface CommandPaletteProps {
   open?: boolean
@@ -108,7 +111,7 @@ export function CommandPalette({ open: controlledOpen, onOpenChange }: CommandPa
         setResultados(data.resultados || [])
         setSelectedIndex(0)
       } catch (error) {
-        console.error('Erro na busca:', error)
+        log.error('Erro na busca', error)
         setResultados([])
       } finally {
         setLoading(false)

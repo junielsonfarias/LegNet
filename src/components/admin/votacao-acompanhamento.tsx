@@ -17,6 +17,9 @@ import {
   Square
 } from 'lucide-react'
 import { VereadorVotoCard } from '@/components/painel/vereador-voto-card'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('votacao-acompanhamento')
 
 interface Voto {
   id: string
@@ -96,7 +99,7 @@ export function VotacaoAcompanhamento({ sessaoId, itemEmVotacao, onEncerrarVotac
         setPresentes(presencas.filter((p: Presenca) => p.presente))
       }
     } catch (error) {
-      console.error('Erro ao carregar dados de votação:', error)
+      log.error('Erro ao carregar dados de votacao', error)
     } finally {
       setLoading(false)
     }

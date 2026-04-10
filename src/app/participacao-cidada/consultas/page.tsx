@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input'
 import { Search, Calendar, Users, MessageSquare, ArrowRight } from 'lucide-react'
 import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('participacao-cidada/consultas')
 
 interface Consulta {
   id: string
@@ -42,7 +45,7 @@ export default function ConsultasPublicasPage() {
         setConsultas(data.data.consultas || [])
       }
     } catch (error) {
-      console.error('Erro ao carregar consultas:', error)
+      log.error('Erro ao carregar consultas', error)
     } finally {
       setLoading(false)
     }

@@ -1,4 +1,7 @@
 import { prisma } from '@/lib/prisma'
+import type { UnidadeOrganizacional } from '@prisma/client'
+
+type UnidadeNode = UnidadeOrganizacional & { children: UnidadeNode[] }
 
 export const organogramaService = {
   async list() {
@@ -14,8 +17,8 @@ export const organogramaService = {
       orderBy: { ordem: 'asc' },
     })
 
-    const map = new Map<string, any>()
-    const roots: any[] = []
+    const map = new Map<string, UnidadeNode>()
+    const roots: UnidadeNode[] = []
 
     for (const u of unidades) {
       map.set(u.id, { ...u, children: [] })

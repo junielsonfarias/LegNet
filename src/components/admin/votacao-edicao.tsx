@@ -19,6 +19,9 @@ import {
   Save
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('votacao-edicao')
 
 interface Parlamentar {
   id: string
@@ -106,7 +109,7 @@ export function VotacaoEdicao({ sessaoId, item, open, onClose, onSaved }: Votaca
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar dados de votação:', error)
+      log.error('Erro ao carregar dados de votacao', error)
       toast.error('Erro ao carregar dados de votação')
     } finally {
       setLoading(false)
@@ -167,11 +170,11 @@ export function VotacaoEdicao({ sessaoId, item, open, onClose, onSaved }: Votaca
           } else {
             erros++
             const error = await response.json()
-            console.error(`Erro ao salvar voto de ${parlamentarId}:`, error)
+            log.error(`Erro ao salvar voto de ${parlamentarId}`, error)
           }
         } catch (error) {
           erros++
-          console.error(`Erro ao salvar voto de ${parlamentarId}:`, error)
+          log.error(`Erro ao salvar voto de ${parlamentarId}`, error)
         }
       }
 
@@ -187,7 +190,7 @@ export function VotacaoEdicao({ sessaoId, item, open, onClose, onSaved }: Votaca
         toast.info('Nenhuma alteração para salvar')
       }
     } catch (error) {
-      console.error('Erro ao salvar votos:', error)
+      log.error('Erro ao salvar votos', error)
       toast.error('Erro ao salvar votos')
     } finally {
       setSalvando(false)

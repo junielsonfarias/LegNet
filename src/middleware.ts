@@ -22,8 +22,22 @@ const getLimiter = (): RateLimiter => {
   return g.__CAMARA_RATE_LIMITER__
 }
 
+// Limpa entradas expiradas a cada 60s para evitar memory leak
+const CLEANUP_INTERVAL = 60_000
+let lastCleanup = Date.now()
+
+const cleanupExpired = (limiter: RateLimiter) => {
+  const now = Date.now()
+  if (now - lastCleanup < CLEANUP_INTERVAL) return
+  lastCleanup = now
+  for (const [key, entry] of limiter) {
+    if (entry.expires < now) limiter.delete(key)
+  }
+}
+
 const allowRequest = (key: string, limit: number, windowMs: number) => {
   const limiter = getLimiter()
+  cleanupExpired(limiter)
   const current = limiter.get(key)
   const now = Date.now()
 

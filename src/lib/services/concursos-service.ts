@@ -5,7 +5,7 @@ export interface ConcursoFilters {
 }
 
 const buildWhereClause = (filters: ConcursoFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.status) where.status = filters.status
 
@@ -91,7 +91,7 @@ export const concursosService = {
     observacoes: string | null
     arquivo: string | null
   }>) {
-    const updateData: any = { ...data }
+    const updateData: Record<string, unknown> = { ...data }
 
     if (data.dataPublicacao) updateData.dataPublicacao = new Date(data.dataPublicacao)
     if (data.dataInscricaoInicio) updateData.dataInscricaoInicio = new Date(data.dataInscricaoInicio)

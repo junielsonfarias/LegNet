@@ -125,7 +125,7 @@ export const mesaDiretoraDbService = {
   },
 
   async update(id: string, payload: Partial<MesaDiretoraPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.periodoId !== undefined) data.periodoId = payload.periodoId
     if (payload.ativa !== undefined) data.ativa = payload.ativa

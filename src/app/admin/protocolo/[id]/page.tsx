@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/protocolo')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -188,7 +191,7 @@ export default function DetalhesProtocoloPage() {
         router.push('/admin/protocolo')
       }
     } catch (error) {
-      console.error('Erro ao carregar protocolo:', error)
+      log.error('Erro ao carregar protocolo', error)
       toast.error('Erro ao carregar protocolo')
     } finally {
       setLoading(false)
@@ -221,7 +224,7 @@ export default function DetalhesProtocoloPage() {
         toast.error(data.error || 'Erro ao atualizar protocolo')
       }
     } catch (error) {
-      console.error('Erro ao atualizar protocolo:', error)
+      log.error('Erro ao atualizar protocolo', error)
       toast.error('Erro ao atualizar protocolo')
     } finally {
       setSaving(false)
@@ -252,7 +255,7 @@ export default function DetalhesProtocoloPage() {
         toast.error(data.error || 'Erro ao tramitar protocolo')
       }
     } catch (error) {
-      console.error('Erro ao tramitar:', error)
+      log.error('Erro ao tramitar', error)
       toast.error('Erro ao tramitar protocolo')
     }
   }
@@ -272,7 +275,7 @@ export default function DetalhesProtocoloPage() {
         toast.error(data.error || 'Erro ao arquivar protocolo')
       }
     } catch (error) {
-      console.error('Erro ao arquivar:', error)
+      log.error('Erro ao arquivar', error)
       toast.error('Erro ao arquivar protocolo')
     }
   }

@@ -17,7 +17,7 @@ function gerarSlug(titulo: string): string {
 }
 
 const buildWhereClause = (filters: ConteudoEducativoFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.categoria) where.categoria = filters.categoria
   if (filters.publicado !== undefined) where.publicado = filters.publicado
@@ -97,7 +97,7 @@ export const conteudoEducativoService = {
   },
 
   async getPublicados(categoria?: string) {
-    const where: any = { publicado: true }
+    const where: Record<string, unknown> = { publicado: true }
     if (categoria) where.categoria = categoria
 
     return prisma.conteudoEducativo.findMany({

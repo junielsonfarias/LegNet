@@ -10,6 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('export-button')
 
 export type TipoRelatorio = 'parlamentares' | 'sessoes' | 'proposicoes' | 'presenca' | 'votacoes'
 
@@ -84,7 +87,7 @@ export function ExportButton({
 
       toast.success(`Relatório de ${tipoLabels[tipo]} exportado com sucesso!`)
     } catch (error: any) {
-      console.error('Erro ao exportar:', error)
+      log.error('Erro ao exportar', error)
       toast.error(error.message || 'Erro ao exportar relatório')
     } finally {
       setLoading(false)
@@ -156,7 +159,7 @@ export function QuickExportButton({ tipo, filtros = {} }: QuickExportButtonProps
 
       toast.success('Relatório exportado com sucesso!')
     } catch (error: any) {
-      console.error('Erro ao exportar:', error)
+      log.error('Erro ao exportar', error)
       toast.error(error.message || 'Erro ao exportar relatório')
     } finally {
       setLoading(false)

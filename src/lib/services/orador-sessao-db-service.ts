@@ -68,7 +68,7 @@ export const oradorSessaoDbService = {
     })
   },
 
-  async getById(id: string, include?: any) {
+  async getById(id: string, include?: Record<string, unknown>) {
     return prisma.oradorSessao.findUnique({
       where: { id },
       include: include ?? {
@@ -85,7 +85,7 @@ export const oradorSessaoDbService = {
     })
   },
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Record<string, unknown>) {
     return prisma.oradorSessao.update({ where: { id }, data, include: defaultInclude })
   },
 

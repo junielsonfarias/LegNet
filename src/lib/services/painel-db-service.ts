@@ -7,6 +7,9 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('painel-db-service')
 
 // Tipo para o estado do painel (usado pelo SSE stream)
 export interface EstadoPainelSSE {
@@ -253,7 +256,7 @@ export const painelDbService = {
 
       return estado
     } catch (error) {
-      console.error('Erro ao buscar estado do painel:', error)
+      log.error('Erro ao buscar estado do painel', error)
       return null
     }
   },

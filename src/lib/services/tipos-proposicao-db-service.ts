@@ -48,7 +48,7 @@ export const tiposProposicaoDbService = {
   },
 
   async update(id: string, payload: Partial<TipoProposicaoPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
     if (payload.codigo !== undefined) data.codigo = payload.codigo
     if (payload.nome !== undefined) data.nome = payload.nome
     if (payload.sigla !== undefined) data.sigla = payload.sigla

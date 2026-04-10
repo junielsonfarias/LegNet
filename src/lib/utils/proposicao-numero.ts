@@ -2,6 +2,10 @@
  * Utilitário para gerar números automáticos de proposições
  */
 
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('proposicao-numero')
+
 /**
  * Gera o próximo número disponível para uma proposição do tipo e ano especificados
  * @param tipo Tipo da proposição
@@ -55,7 +59,7 @@ export async function buscarProximoNumero(tipo: string, ano: number): Promise<st
     
     return gerarNumeroAutomatico(tipo, ano, proposicoes)
   } catch (error) {
-    console.error('Erro ao buscar próximo número:', error)
+    log.error('Erro ao buscar proximo numero', error)
     // Fallback: retornar "001" se houver erro
     return '001'
   }

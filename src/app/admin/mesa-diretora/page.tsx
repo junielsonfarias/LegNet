@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/mesa-diretora')
+
 import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -220,7 +223,7 @@ export default function MesaDiretoraAdminPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao salvar mesa diretora:', error)
+      log.error('Erro ao salvar mesa diretora', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao salvar mesa diretora')
     } finally {
       setLoading(false)

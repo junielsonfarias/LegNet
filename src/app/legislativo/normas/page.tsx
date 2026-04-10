@@ -13,6 +13,9 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/normas')
 import {
   BookOpen,
   Search,
@@ -92,7 +95,7 @@ export default function NormasPublicPage() {
         toast.error(data.error || 'Erro ao carregar normas')
       }
     } catch (error) {
-      console.error('Erro ao carregar normas:', error)
+      log.error('Erro ao carregar normas', error)
       toast.error('Erro ao carregar normas')
     } finally {
       setLoading(false)

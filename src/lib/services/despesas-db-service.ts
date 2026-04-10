@@ -137,7 +137,7 @@ export const despesasDbService = {
   },
 
   async update(id: string, payload: Partial<DespesaPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.numeroEmpenho !== undefined) data.numeroEmpenho = payload.numeroEmpenho.trim()
     if (payload.ano !== undefined) data.ano = payload.ano

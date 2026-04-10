@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/monitoramento')
+
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -64,7 +67,7 @@ export default function MonitoramentoPage() {
       setAlerts(systemAlerts)
       
     } catch (error) {
-      console.error('Erro ao atualizar dados de monitoramento:', error)
+      log.error('Erro ao atualizar dados de monitoramento', error)
     } finally {
       setLoading(false)
     }

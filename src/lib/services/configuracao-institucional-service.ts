@@ -5,6 +5,9 @@
 
 import { prisma } from '@/lib/prisma'
 import { cache } from 'react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('configuracao-institucional-service')
 
 export interface ConfiguracaoInstitucionalData {
   id: string
@@ -64,7 +67,7 @@ export const getConfiguracaoInstitucional = cache(async (): Promise<Configuracao
 
     return configuracao
   } catch (error) {
-    console.error('Erro ao buscar configuração institucional:', error)
+    log.error('Erro ao buscar configuração institucional', error)
     return null
   }
 })
@@ -85,7 +88,7 @@ export const getLegislaturaAtiva = cache(async (): Promise<LegislaturaInfo | nul
 
     return legislatura
   } catch (error) {
-    console.error('Erro ao buscar legislatura ativa:', error)
+    log.error('Erro ao buscar legislatura ativa', error)
     return null
   }
 })
@@ -114,7 +117,7 @@ export const getPresidenteMesaDiretora = cache(async (): Promise<MesaDiretoraInf
       partido: presidente.partido
     }
   } catch (error) {
-    console.error('Erro ao buscar presidente da Mesa Diretora:', error)
+    log.error('Erro ao buscar presidente da Mesa Diretora', error)
     return null
   }
 })

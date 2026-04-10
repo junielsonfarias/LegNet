@@ -11,6 +11,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { pautaApi, type PautaSessaoApi, type PautaItemApi, type PautaSugestaoApi } from '@/lib/api/pauta-api'
 import { templatesSessaoApi } from '@/lib/api/templates-sessao-api'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('use-pauta')
 
 interface UsePautaReturn {
   pauta: PautaSessaoApi | null
@@ -49,7 +52,7 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
       setPauta(data)
       setError(null)
     } catch (err: any) {
-      console.error('Erro ao carregar pauta:', err)
+      log.error('Erro ao carregar pauta', err)
       setError(err.message || 'Erro ao carregar pauta')
       toast.error(err.message || 'Erro ao carregar pauta da sessão')
     } finally {
@@ -75,7 +78,7 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
       // Garantir que data seja sempre um array
       setSuggestions(Array.isArray(data) ? data : [])
     } catch (err) {
-      console.error('Erro ao carregar sugestões de pauta:', err)
+      log.error('Erro ao carregar sugestoes de pauta', err)
       setSuggestions([]) // Garantir array vazio em caso de erro
     } finally {
       setLoadingSuggestions(false)
@@ -93,7 +96,7 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
       setPauta(data)
       toast.success('Item adicionado à pauta')
     } catch (err: any) {
-      console.error('Erro ao adicionar item na pauta:', err)
+      log.error('Erro ao adicionar item na pauta', err)
       toast.error(err.message || 'Erro ao adicionar item à pauta')
     }
   }, [sessaoId])
@@ -111,7 +114,7 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
       })
       toast.success('Item da pauta atualizado com sucesso')
     } catch (err: any) {
-      console.error('Erro ao atualizar item da pauta:', err)
+      log.error('Erro ao atualizar item da pauta', err)
       toast.error(err.message || 'Erro ao atualizar item da pauta')
     }
   }, [])
@@ -128,7 +131,7 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
       })
       toast.success('Item removido da pauta com sucesso')
     } catch (err: any) {
-      console.error('Erro ao remover item da pauta:', err)
+      log.error('Erro ao remover item da pauta', err)
       toast.error(err.message || 'Erro ao remover item da pauta')
     }
   }, [])
@@ -142,7 +145,7 @@ export function usePauta(sessaoId?: string | null): UsePautaReturn {
       toast.success('Template aplicado à pauta da sessão')
       await fetchSuggestions()
     } catch (err: any) {
-      console.error('Erro ao aplicar template na pauta:', err)
+      log.error('Erro ao aplicar template na pauta', err)
       toast.error(err.message || 'Erro ao aplicar template na pauta')
     } finally {
       setRefreshing(false)

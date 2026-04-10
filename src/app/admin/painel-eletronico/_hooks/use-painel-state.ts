@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/painel-eletronico/hooks/use-painel-state')
+
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
@@ -67,7 +70,7 @@ export function usePainelState(): UsePainelStateReturn {
       }
       return []
     } catch (error) {
-      console.error('Erro ao carregar sessões disponíveis:', error)
+      log.error('Erro ao carregar sessões disponíveis', error)
       toast.error('Erro ao carregar sessões disponíveis')
       return []
     } finally {
@@ -193,7 +196,7 @@ export function usePainelState(): UsePainelStateReturn {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados da sessão')
     } finally {
       setLoading(false)
@@ -220,7 +223,7 @@ export function usePainelState(): UsePainelStateReturn {
         toast.error(data.error || 'Erro ao iniciar sessão')
       }
     } catch (error) {
-      console.error('Erro ao iniciar sessão:', error)
+      log.error('Erro ao iniciar sessão', error)
       toast.error('Erro ao iniciar sessão')
     }
   }, [carregarDados])
@@ -246,7 +249,7 @@ export function usePainelState(): UsePainelStateReturn {
         toast.error(data.error || 'Erro ao finalizar sessão')
       }
     } catch (error) {
-      console.error('Erro ao finalizar sessão:', error)
+      log.error('Erro ao finalizar sessão', error)
       toast.error('Erro ao finalizar sessão')
     }
   }, [sessaoAtiva, carregarDados])
@@ -267,7 +270,7 @@ export function usePainelState(): UsePainelStateReturn {
         await carregarDados()
       }
     } catch (error) {
-      console.error('Erro ao iniciar item:', error)
+      log.error('Erro ao iniciar item', error)
       toast.error('Erro ao iniciar item')
     }
   }, [sessaoAtiva, carregarDados])
@@ -286,7 +289,7 @@ export function usePainelState(): UsePainelStateReturn {
         await carregarDados()
       }
     } catch (error) {
-      console.error('Erro ao finalizar item:', error)
+      log.error('Erro ao finalizar item', error)
       toast.error('Erro ao finalizar item')
     }
   }, [carregarDados])
@@ -305,7 +308,7 @@ export function usePainelState(): UsePainelStateReturn {
         await carregarDados()
       }
     } catch (error) {
-      console.error('Erro ao concluir item:', error)
+      log.error('Erro ao concluir item', error)
       toast.error('Erro ao concluir item')
     }
   }, [carregarDados])
@@ -328,7 +331,7 @@ export function usePainelState(): UsePainelStateReturn {
         await carregarDados()
       }
     } catch (error) {
-      console.error('Erro ao iniciar votação:', error)
+      log.error('Erro ao iniciar votação', error)
       toast.error('Erro ao iniciar votação')
     }
   }, [sessaoAtiva, carregarDados])
@@ -365,7 +368,7 @@ export function usePainelState(): UsePainelStateReturn {
         await carregarDados()
       }
     } catch (error) {
-      console.error('Erro ao registrar presença:', error)
+      log.error('Erro ao registrar presença', error)
       toast.error('Erro ao registrar presença')
     }
   }, [sessaoAtiva, carregarDados])
@@ -428,7 +431,7 @@ export function usePainelState(): UsePainelStateReturn {
     try {
       toast.success('Relatório gerado com sucesso!')
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error)
+      log.error('Erro ao gerar relatório', error)
       toast.error('Erro ao gerar relatório')
     }
   }, [sessaoAtiva])

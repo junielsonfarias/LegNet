@@ -24,12 +24,9 @@ export interface CacheClient {
   isRedis(): boolean
 }
 
-// Logging simplificado para evitar dependências circulares
-const log = {
-  info: (msg: string, ctx?: any) => console.log(`[INFO] ${msg}`, ctx ? JSON.stringify(ctx) : ''),
-  warn: (msg: string, ctx?: any) => console.warn(`[WARN] ${msg}`, ctx ? JSON.stringify(ctx) : ''),
-  error: (msg: string, ctx?: any) => console.error(`[ERROR] ${msg}`, ctx ? JSON.stringify(ctx) : '')
-}
+import { cacheLogger } from '@/lib/logging/logger'
+
+const log = cacheLogger
 
 // Implementação em memória (fallback)
 class MemoryCacheClient implements CacheClient {
@@ -165,7 +162,7 @@ class RedisCacheClient implements CacheClient {
       })
 
       this.redis.on('error', (err: Error) => {
-        log.error('Erro no Redis', { error: err.message })
+        log.error('Erro no Redis', err)
         this.connected = false
       })
 
@@ -191,7 +188,7 @@ class RedisCacheClient implements CacheClient {
         })
       })
     } catch (error) {
-      log.error('Falha ao inicializar Redis', { error: String(error) })
+      log.error('Falha ao inicializar Redis', error)
       throw error
     }
   }

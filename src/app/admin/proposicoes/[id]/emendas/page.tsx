@@ -1,5 +1,8 @@
 "use client"
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/proposicoes/emendas')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -150,7 +153,7 @@ export default function EmendasProposicaoPage() {
         setParlamentares(parlData.data || parlData)
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados')
     } finally {
       setLoading(false)
@@ -205,7 +208,7 @@ export default function EmendasProposicaoPage() {
         toast.error(data.error || 'Erro ao criar emenda')
       }
     } catch (error) {
-      console.error('Erro ao criar emenda:', error)
+      log.error('Erro ao criar emenda', error)
       toast.error('Erro ao criar emenda')
     }
   }

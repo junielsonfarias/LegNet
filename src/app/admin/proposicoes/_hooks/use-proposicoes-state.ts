@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/proposicoes/hooks/use-proposicoes-state')
+
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useProposicoes } from '@/lib/hooks/use-proposicoes'
@@ -174,11 +177,11 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       if (result.success && result.data) {
         setTiposProposicao(result.data)
       } else {
-        console.error('Erro ao carregar tipos de proposição:', result.error)
+        log.error('Erro ao carregar tipos de proposição', result.error)
         toast.error('Não foi possível carregar os tipos de proposição')
       }
     } catch (error) {
-      console.error('Erro ao carregar tipos de proposição:', error)
+      log.error('Erro ao carregar tipos de proposição', error)
       toast.error('Erro ao carregar tipos de proposição')
     } finally {
       setLoadingTiposProposicao(false)
@@ -202,10 +205,10 @@ export function useProposicoesState(): UseProposicoesStateReturn {
         }))
         setTiposTramitacao(tipos)
       } else {
-        console.error('Erro ao carregar tipos de tramitação:', result.error)
+        log.error('Erro ao carregar tipos de tramitação', result.error)
       }
     } catch (error) {
-      console.error('Erro ao carregar tipos de tramitação:', error)
+      log.error('Erro ao carregar tipos de tramitação', error)
     }
   }, [])
 
@@ -225,10 +228,10 @@ export function useProposicoesState(): UseProposicoesStateReturn {
         }))
         setTiposOrgaos(unidades)
       } else {
-        console.error('Erro ao carregar unidades de tramitação:', result.error)
+        log.error('Erro ao carregar unidades de tramitação', result.error)
       }
     } catch (error) {
-      console.error('Erro ao carregar unidades de tramitação:', error)
+      log.error('Erro ao carregar unidades de tramitação', error)
     }
   }, [])
 
@@ -237,7 +240,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       const response = await tramitacoesApi.list()
       setTramitacoes(response.data)
     } catch (error) {
-      console.error('Erro ao carregar tramitações:', error)
+      log.error('Erro ao carregar tramitações', error)
       toast.error('Não foi possível carregar as tramitações (modo offline).')
       setTramitacoes([])
     }
@@ -322,7 +325,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
         }
       }
     } catch (error) {
-      console.error('Erro ao salvar proposição:', error)
+      log.error('Erro ao salvar proposição', error)
     }
     // Note: handleClose is defined after this useCallback but is stable (empty deps)
   }, [formData, editingProposicao, create, update]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -427,7 +430,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       handleCloseTramitacao()
       void loadTramitacoes()
     } catch (error) {
-      console.error('Erro ao registrar tramitação:', error)
+      log.error('Erro ao registrar tramitação', error)
       toast.error('Erro ao registrar tramitação.')
     }
   }, [selectedProposicao, tramitacaoFormData, handleCloseTramitacao, loadTramitacoes])
@@ -444,7 +447,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       toast.success('Tramitação avançada com sucesso!')
       void loadTramitacoes()
     } catch (error) {
-      console.error('Erro ao avançar tramitação:', error)
+      log.error('Erro ao avançar tramitação', error)
       toast.error('Erro ao avançar tramitação.')
     } finally {
       setAcaoEmProcesso(null)
@@ -463,7 +466,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       toast.success('Tramitação reaberta com sucesso!')
       void loadTramitacoes()
     } catch (error) {
-      console.error('Erro ao reabrir tramitação:', error)
+      log.error('Erro ao reabrir tramitação', error)
       toast.error('Erro ao reabrir tramitação.')
     } finally {
       setAcaoEmProcesso(null)
@@ -489,7 +492,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       handleCloseTramitacao()
       void loadTramitacoes()
     } catch (error) {
-      console.error('Erro ao finalizar tramitação:', error)
+      log.error('Erro ao finalizar tramitação', error)
       toast.error('Erro ao finalizar tramitação.')
     } finally {
       setAcaoEmProcesso(null)
@@ -509,7 +512,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
       // Recarregar proposições para atualizar status
       await refetch()
     } catch (error) {
-      console.error('Erro ao enviar para pauta:', error)
+      log.error('Erro ao enviar para pauta', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao enviar para pauta.')
     } finally {
       setAcaoEmProcesso(null)
@@ -527,7 +530,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
           numero: proximoNumero
         }))
       } catch (error) {
-        console.error('Erro ao gerar número automático:', error)
+        log.error('Erro ao gerar número automático', error)
         setFormData(prev => ({
           ...prev,
           tipo: novoTipo
@@ -551,7 +554,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
           numero: proximoNumero
         }))
       } catch (error) {
-        console.error('Erro ao gerar número automático:', error)
+        log.error('Erro ao gerar número automático', error)
         setFormData(prev => ({
           ...prev,
           ano: novoAno

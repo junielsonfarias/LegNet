@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/sessoes/editar')
+
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -112,7 +115,7 @@ export default function EditarSessaoPage() {
         toast.error(data.error || 'Erro ao atualizar sessão')
       }
     } catch (error) {
-      console.error('Erro ao atualizar sessão:', error)
+      log.error('Erro ao atualizar sessão', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao atualizar sessão')
     } finally {
       setSaving(false)

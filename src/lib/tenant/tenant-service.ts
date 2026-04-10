@@ -4,6 +4,7 @@
 
 import { prisma } from '@/lib/prisma'
 import type { Tenant } from '@prisma/client'
+import { dbLogger } from '@/lib/logging/logger'
 import {
   TenantInfo,
   extractTenantIdentifier,
@@ -92,7 +93,7 @@ export async function findTenantByIdentifier(
 
     return result
   } catch (error) {
-    console.error('Erro ao buscar tenant:', error)
+    dbLogger.error('Erro ao buscar tenant', error)
     return null
   }
 }
@@ -150,7 +151,7 @@ export async function findTenantById(id: string, includeInactive = false): Promi
 
     return result
   } catch (error) {
-    console.error('Erro ao buscar tenant por ID:', error)
+    dbLogger.error('Erro ao buscar tenant por ID', error)
     return null
   }
 }
@@ -167,7 +168,7 @@ export async function listActiveTenants(): Promise<TenantInfo[]> {
 
     return tenants.map(toTenantInfo)
   } catch (error) {
-    console.error('Erro ao listar tenants:', error)
+    dbLogger.error('Erro ao listar tenants', error)
     return []
   }
 }
@@ -245,7 +246,7 @@ export async function updateTenant(
 
     return toTenantInfo(tenant)
   } catch (error) {
-    console.error('Erro ao atualizar tenant:', error)
+    dbLogger.error('Erro ao atualizar tenant', error)
     return null
   }
 }
@@ -265,7 +266,7 @@ export async function deactivateTenant(id: string): Promise<boolean> {
 
     return true
   } catch (error) {
-    console.error('Erro ao desativar tenant:', error)
+    dbLogger.error('Erro ao desativar tenant', error)
     return false
   }
 }

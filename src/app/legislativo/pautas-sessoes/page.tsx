@@ -23,6 +23,9 @@ import {
   CheckCircle,
   PlayCircle
 } from 'lucide-react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/pautas-sessoes')
 
 // Interfaces locais (originalmente de parlamentares-data)
 interface PautaItem {
@@ -109,7 +112,7 @@ export default function PautasSessoesPublicPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar pautas:', error)
+      log.error('Erro ao carregar pautas', error)
     } finally {
       setLoading(false)
     }

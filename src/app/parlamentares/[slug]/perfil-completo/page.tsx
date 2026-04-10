@@ -27,6 +27,9 @@ import {
 } from 'lucide-react'
 import { ParlamentarCompleto } from '@/lib/types/parlamentar-avancado'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parlamentares/perfil-completo')
 
 interface PerfilCompletoPageProps {
   params: Promise<{
@@ -130,7 +133,7 @@ export default function PerfilCompletoPage({ params: paramsPromise }: PerfilComp
         setParlamentar(parlamentarCompleto)
       }
     } catch (error) {
-      console.error('Erro ao carregar parlamentar:', error)
+      log.error('Erro ao carregar parlamentar', error)
       toast.error('Erro ao carregar dados do parlamentar')
     } finally {
       setLoading(false)
@@ -147,7 +150,7 @@ export default function PerfilCompletoPage({ params: paramsPromise }: PerfilComp
     try {
       toast.info('Funcionalidade de relatório em desenvolvimento')
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error)
+      log.error('Erro ao gerar relatório', error)
       toast.error('Erro ao gerar relatório')
     }
   }

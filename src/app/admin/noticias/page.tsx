@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/noticias')
+
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -97,7 +100,7 @@ export default function NoticiasAdminPage() {
         }
       }
     } catch (error) {
-      console.error('Erro ao salvar noticia:', error)
+      log.error('Erro ao salvar noticia', error)
       toast.error('Erro ao salvar noticia')
     } finally {
       setSubmitting(false)
@@ -193,7 +196,7 @@ export default function NoticiasAdminPage() {
         toast.error('Erro ao enviar imagem')
       }
     } catch (error) {
-      console.error('Erro ao enviar imagem:', error)
+      log.error('Erro ao enviar imagem', error)
       toast.error('Erro ao enviar imagem')
     }
   }

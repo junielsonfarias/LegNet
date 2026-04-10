@@ -1,4 +1,7 @@
 import { exportMetric } from '@/lib/monitoring/exporter'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('metrics')
 
 type MetricPayload = {
   timestamp: string
@@ -31,9 +34,9 @@ export const registerApiMetric = (
   Promise.resolve(exportMetric(payload)).catch(() => undefined)
 
   try {
-    console.info('[metric]', JSON.stringify(payload))
+    log.info('Metrica registrada', payload as Record<string, unknown>)
   } catch (error) {
-    console.warn('Não foi possível serializar métrica', error)
+    log.warn('Nao foi possivel serializar metrica', { errorDetails: String(error) })
   }
 }
 

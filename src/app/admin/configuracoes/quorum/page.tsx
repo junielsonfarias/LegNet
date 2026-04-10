@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/quorum')
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -114,7 +117,7 @@ export default function QuorumConfigPage() {
 
       handleClose()
     } catch (error) {
-      console.error('Erro ao salvar configuracao:', error)
+      log.error('Erro ao salvar configuracao', error)
     } finally {
       setSaving(false)
     }

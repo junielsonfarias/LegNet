@@ -13,6 +13,9 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('live-session-banner')
 
 interface Sessao {
   id: string
@@ -84,7 +87,7 @@ export function LiveSessionBanner() {
           setProximaSessao(nextData.data[0])
           setVisible(true)
         }
-      } catch (e) { console.warn("Erro ao carregar dados:", e) }
+      } catch (e) { log.warn("Erro ao carregar dados", { error: String(e) }) }
     }
     fetchData()
   }, [])

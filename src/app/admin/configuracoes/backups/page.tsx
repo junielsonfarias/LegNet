@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/backups')
+
 import { useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
@@ -40,7 +43,7 @@ const formatDateTime = (iso?: string) => {
       timeStyle: 'short'
     })
   } catch (error) {
-    console.error('Erro ao formatar data:', error)
+    log.error('Erro ao formatar data', error)
     return iso
   }
 }

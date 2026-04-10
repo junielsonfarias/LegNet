@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/comissoes/reunioes')
+
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -125,7 +128,7 @@ export default function ReunioesComissaoPage() {
         setReunioes(dataReunioes.data?.reunioes || dataReunioes.data || [])
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados')
     } finally {
       setLoading(false)
@@ -170,7 +173,7 @@ export default function ReunioesComissaoPage() {
         toast.error(data.error || 'Erro ao criar reuniao')
       }
     } catch (error) {
-      console.error('Erro ao criar reuniao:', error)
+      log.error('Erro ao criar reuniao', error)
       toast.error('Erro ao criar reuniao')
     } finally {
       setSaving(false)

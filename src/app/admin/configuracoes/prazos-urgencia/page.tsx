@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/prazos-urgencia')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -72,7 +75,7 @@ export default function PrazosUrgenciaPage() {
         })))
       }
     } catch (error) {
-      console.error('Erro ao carregar configuracoes:', error)
+      log.error('Erro ao carregar configuracoes', error)
       // Mantem os valores padrao se houver erro
     } finally {
       setLoading(false)
@@ -112,7 +115,7 @@ export default function PrazosUrgenciaPage() {
       toast.success('Configuracoes de prazo salvas com sucesso!')
       setHasChanges(false)
     } catch (error) {
-      console.error('Erro ao salvar configuracoes:', error)
+      log.error('Erro ao salvar configuracoes', error)
       toast.error('Erro ao salvar configuracoes')
     } finally {
       setSaving(false)

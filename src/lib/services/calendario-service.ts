@@ -4,6 +4,9 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('calendario-service')
 
 export type TipoEvento =
   | 'sessao_ordinaria'
@@ -137,7 +140,7 @@ async function buscarSessoes(inicio: Date, fim: Date, tipos: TipoEvento[]): Prom
       }
     })
   } catch (error) {
-    console.error('Erro ao buscar sessões:', error)
+    log.error('Erro ao buscar sessões', error)
     return []
   }
 }
@@ -168,7 +171,7 @@ async function buscarAudienciasPublicas(inicio: Date, fim: Date): Promise<Evento
       orderBy: { data: 'asc' },
     })
 
-    return audiencias.map((a: any) => ({
+    return audiencias.map((a: { id: string; titulo: string; descricao?: string; data: Date; dataFim?: Date; local?: string; status?: string; comissao?: { nome: string; sigla: string } }) => ({
       id: a.id,
       titulo: a.titulo,
       descricao: a.descricao || undefined,
@@ -221,7 +224,7 @@ async function buscarReunioesComissoes(
       orderBy: { data: 'asc' },
     })
 
-    return reunioes.map((r: any) => ({
+    return reunioes.map((r: { id: string; pauta?: string; data: Date; dataFim?: Date; local?: string; comissaoId: string; comissao?: { nome: string; sigla: string } }) => ({
       id: r.id,
       titulo: `Reuniao ${r.comissao?.sigla || 'Comissao'}`,
       descricao: r.pauta || undefined,

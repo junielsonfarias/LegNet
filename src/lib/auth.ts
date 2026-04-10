@@ -6,6 +6,7 @@ import {
   checkRateLimitWithRedis,
   resetRateLimitWithRedis
 } from '@/lib/rate-limit-client'
+import { authLogger } from '@/lib/logging/logger'
 
 // Rate limiting para login usando Redis (ou fallback memória)
 async function checkLoginRateLimit(email: string): Promise<{ allowed: boolean; remainingAttempts: number; message?: string }> {
@@ -119,7 +120,7 @@ export const authOptions: NextAuthOptions = {
           )) {
             throw error
           }
-          console.error('Erro na autenticação:', error)
+          authLogger.error('Erro na autenticacao', error)
           return null
         }
       }

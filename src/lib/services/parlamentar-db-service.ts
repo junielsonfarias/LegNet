@@ -118,9 +118,9 @@ export const parlamentarDbService = {
     ])
 
     if (legislaturaAtual) {
-      parlamentares.sort((a: any, b: any) => {
-        const aAtual = a.mandatos?.some((m: any) => m.legislaturaId === legislaturaAtual.id && m.ativo) || false
-        const bAtual = b.mandatos?.some((m: any) => m.legislaturaId === legislaturaAtual.id && m.ativo) || false
+      parlamentares.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+        const aAtual = (a.mandatos as Array<Record<string, unknown>>)?.some((m: Record<string, unknown>) => m.legislaturaId === legislaturaAtual.id && m.ativo) || false
+        const bAtual = (b.mandatos as Array<Record<string, unknown>>)?.some((m: Record<string, unknown>) => m.legislaturaId === legislaturaAtual.id && m.ativo) || false
         if (aAtual && !bAtual) return -1
         if (!aAtual && bAtual) return 1
         return 0
@@ -201,7 +201,7 @@ export const parlamentarDbService = {
   },
 
   async update(id: string, payload: Partial<ParlamentarPayload>) {
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
 
     if (payload.nome !== undefined) updateData.nome = payload.nome
     if (payload.apelido !== undefined) updateData.apelido = payload.apelido
@@ -423,7 +423,7 @@ export const parlamentarDbService = {
       })),
 
       // Comissões
-      comissoes: parlamentar.comissoes.map((mc: any) => ({
+      comissoes: parlamentar.comissoes.map((mc: { comissao: { id: string; nome: string }; cargo: string; dataInicio: Date | null; dataFim: Date | null }) => ({
         id: mc.comissao.id,
         nome: mc.comissao.nome,
         cargo: mc.cargo,

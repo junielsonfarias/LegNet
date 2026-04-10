@@ -1,5 +1,8 @@
 "use client"
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/protocolo')
+
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -138,7 +141,7 @@ export default function ProtocoloListPage() {
         toast.error(data.error || 'Erro ao carregar protocolos')
       }
     } catch (error) {
-      console.error('Erro ao carregar protocolos:', error)
+      log.error('Erro ao carregar protocolos', error)
       toast.error('Erro ao carregar protocolos')
     } finally {
       setLoading(false)
@@ -153,7 +156,7 @@ export default function ProtocoloListPage() {
         setEstatisticas(data.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error)
+      log.error('Erro ao carregar estatísticas', error)
     }
   }
 

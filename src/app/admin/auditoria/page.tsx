@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/auditoria')
+
 import { useState, useEffect, useCallback } from 'react'
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -64,7 +67,7 @@ export default function AuditoriaPage() {
       setRelatorios(relatoriosData)
       setEstatisticas(estatisticasData)
     } catch (error) {
-      console.error('Erro ao carregar dados de auditoria:', error)
+      log.error('Erro ao carregar dados de auditoria', error)
       toast.error('Erro ao carregar dados de auditoria')
     } finally {
       setLoading(false)
@@ -93,7 +96,7 @@ export default function AuditoriaPage() {
       setEventos(eventosFiltrados)
       setEstatisticas(estatisticasAtualizadas)
     } catch (error) {
-      console.error('Erro ao aplicar filtros:', error)
+      log.error('Erro ao aplicar filtros', error)
       toast.error('Erro ao aplicar filtros')
     }
   }
@@ -122,7 +125,7 @@ export default function AuditoriaPage() {
       setNovoRelatorio({ nome: '', descricao: '' })
       toast.success('Relatório criado com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar relatório:', error)
+      log.error('Erro ao criar relatório', error)
       toast.error('Erro ao criar relatório')
     }
   }
@@ -141,7 +144,7 @@ export default function AuditoriaPage() {
       URL.revokeObjectURL(url)
       toast.success(`Exportação ${formato.toUpperCase()} realizada com sucesso!`)
     } catch (error) {
-      console.error('Erro ao exportar eventos:', error)
+      log.error('Erro ao exportar eventos', error)
       toast.error('Erro ao exportar eventos')
     }
   }
@@ -161,7 +164,7 @@ export default function AuditoriaPage() {
         toast.success('Nenhuma atividade suspeita detectada')
       }
     } catch (error) {
-      console.error('Erro ao detectar atividade suspeita:', error)
+      log.error('Erro ao detectar atividade suspeita', error)
       toast.error('Erro ao detectar atividade suspeita')
     }
   }

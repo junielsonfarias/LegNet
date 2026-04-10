@@ -1,5 +1,8 @@
 "use client";
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/transparencia')
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Plus, Edit, Trash2, Eye, Save, X,
@@ -127,7 +130,7 @@ export default function TransparenciaAdminPage() {
         setPublicacoes(data.data || []);
       }
     } catch (err) {
-      console.error("Erro ao carregar publicacoes:", err);
+      log.error("Erro ao carregar publicacoes", err);
       toast.error("Erro ao carregar documentos");
     } finally {
       setLoading(false);

@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/relatorios/agendados')
+
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -130,7 +133,7 @@ export default function RelatoriosAgendadosPage() {
         setRelatorios(data.data || [])
       }
     } catch (error) {
-      console.error('Erro ao carregar relatorios:', error)
+      log.error('Erro ao carregar relatorios', error)
     } finally {
       setLoading(false)
     }
@@ -170,7 +173,7 @@ export default function RelatoriosAgendadosPage() {
         toast.error('Erro ao criar relatorio')
       }
     } catch (error) {
-      console.error('Erro ao criar relatorio:', error)
+      log.error('Erro ao criar relatorio', error)
       toast.error('Erro ao criar relatorio')
     }
   }
@@ -188,7 +191,7 @@ export default function RelatoriosAgendadosPage() {
         toast.error('Erro ao executar relatorio')
       }
     } catch (error) {
-      console.error('Erro ao executar relatorio:', error)
+      log.error('Erro ao executar relatorio', error)
       toast.error('Erro ao executar relatorio')
     }
   }
@@ -208,7 +211,7 @@ export default function RelatoriosAgendadosPage() {
         toast.error('Erro ao remover relatorio')
       }
     } catch (error) {
-      console.error('Erro ao remover relatorio:', error)
+      log.error('Erro ao remover relatorio', error)
       toast.error('Erro ao remover relatorio')
     }
   }

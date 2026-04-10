@@ -4,6 +4,9 @@
  */
 
 import { z } from 'zod'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('config')
 
 // Schema de validacao de variaveis de ambiente
 const envSchema = z.object({
@@ -54,15 +57,11 @@ export function validateEnv(): EnvConfig {
         .filter(issue => !issue.message.includes('Required'))
         .map(issue => `${issue.path.join('.')}: ${issue.message}`)
 
-      console.error('❌ Erro na configuracao do ambiente:')
-      if (missing.length > 0) {
-        console.error('   Variaveis faltando:', missing.join(', '))
-      }
-      if (invalid.length > 0) {
-        console.error('   Variaveis invalidas:', invalid.join(', '))
-      }
-      console.error('')
-      console.error('Consulte o arquivo .env.example para configuracao')
+      log.error('Erro na configuracao do ambiente', undefined, {
+        ...(missing.length > 0 ? { variaveisFaltando: missing.join(', ') } : {}),
+        ...(invalid.length > 0 ? { variaveisInvalidas: invalid.join(', ') } : {}),
+        dica: 'Consulte o arquivo .env.example para configuracao'
+      })
 
       if (process.env.NODE_ENV === 'production') {
         throw new Error('Configuracao de ambiente invalida')

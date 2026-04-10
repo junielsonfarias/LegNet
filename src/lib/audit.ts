@@ -5,6 +5,9 @@ import type { Session } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { AuditStatus } from '@prisma/client'
 import { recordSecurityEvent } from '@/lib/security/alert-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('audit')
 
 interface LogAuditParams {
   request: NextRequest | Request
@@ -22,7 +25,7 @@ const toSafeJson = (metadata?: Record<string, any>) => {
   try {
     return JSON.parse(JSON.stringify(metadata))
   } catch (error) {
-    console.warn('Não foi possível serializar metadata do audit log:', error)
+    log.warn('Nao foi possivel serializar metadata do audit log', { errorDetails: String(error) })
     return undefined
   }
 }
@@ -76,7 +79,7 @@ export async function logAudit({
       }
     })
   } catch (error) {
-    console.error('Erro ao registrar audit log:', error)
+    log.error('Erro ao registrar audit log', error)
   }
 }
 

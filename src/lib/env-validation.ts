@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('env-validation')
 
 // Schema de validacao para variaveis de ambiente
 const envSchema = z.object({
@@ -75,13 +78,7 @@ export function getEnv(): EnvConfig {
       return `  - ${path}: ${issue.message}`
     })
 
-    console.error('\n========================================')
-    console.error('ERRO: Variaveis de ambiente invalidas!')
-    console.error('========================================')
-    console.error('\nProblemas encontrados:')
-    console.error(errors.join('\n'))
-    console.error('\nVerifique seu arquivo .env ou variaveis de ambiente.')
-    console.error('========================================\n')
+    log.error('Variaveis de ambiente invalidas', undefined, { problems: errors.join('; ') })
 
     // Em producao, nao inicia a aplicacao com configuracao invalida
     if (process.env.NODE_ENV === 'production') {
@@ -89,7 +86,7 @@ export function getEnv(): EnvConfig {
     }
 
     // Em desenvolvimento, apenas avisa mas continua (para permitir desenvolvimento)
-    console.warn('\n[DEV] Continuando com configuracao parcial...\n')
+    log.warn('Continuando com configuracao parcial em desenvolvimento')
 
     // Retorna valores parciais em dev para permitir desenvolvimento
     // SEGURANCA: Nunca usar secrets padrao - gerar automaticamente se nao configurado
@@ -97,7 +94,7 @@ export function getEnv(): EnvConfig {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
       let result = 'dev-auto-'
       for (let i = 0; i < 40; i++) result += chars.charAt(Math.floor(Math.random() * chars.length))
-      console.warn('[DEV] NEXTAUTH_SECRET gerado automaticamente. Configure um valor fixo no .env')
+      log.warn('NEXTAUTH_SECRET gerado automaticamente. Configure um valor fixo no .env')
       return result
     })()
 

@@ -9,6 +9,9 @@ import { FileText, Search, Calendar, Download, Eye, Filter, BookOpen, User, Load
 import Link from 'next/link'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('transparencia/portarias')
 
 // Interface para publicação da API
 interface PublicacaoPortaria {
@@ -50,11 +53,11 @@ export default function PortariasPage() {
       if (result.dados) {
         setPortarias(result.dados)
       } else {
-        console.error('Formato de resposta inesperado:', result)
+        log.warn('Formato de resposta inesperado', { action: 'carregar-portarias' })
         setPortarias([])
       }
     } catch (error) {
-      console.error('Erro ao carregar portarias:', error)
+      log.error('Erro ao carregar portarias', error)
       toast.error('Erro ao carregar portarias')
       setPortarias([])
     } finally {

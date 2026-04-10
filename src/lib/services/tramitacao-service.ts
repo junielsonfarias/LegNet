@@ -57,7 +57,7 @@ export async function list(
   pagination: PaginationParams
 ) {
   const { page, limit } = pagination
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.proposicaoId) {
     where.proposicaoId = filters.proposicaoId
@@ -703,46 +703,57 @@ export async function getDashboard() {
     })
   ])
 
-  // Estatísticas por unidade
-  const porUnidadePromises = unidades.map(async unidade => {
-    const [totalUnidade, emAndamento, concluidas, canceladas] = await Promise.all([
-      prisma.tramitacao.count({ where: { unidadeId: unidade.id } }),
-      prisma.tramitacao.count({ where: { unidadeId: unidade.id, status: 'EM_ANDAMENTO' } }),
-      prisma.tramitacao.count({ where: { unidadeId: unidade.id, status: 'CONCLUIDA' } }),
-      prisma.tramitacao.count({ where: { unidadeId: unidade.id, status: 'CANCELADA' } })
-    ])
-    return {
-      unidadeId: unidade.id,
-      unidadeNome: unidade.nome,
-      total: totalUnidade,
-      emAndamento,
-      concluidas,
-      canceladas
-    }
+  // Estatísticas por unidade (groupBy em vez de N×4 counts)
+  const unidadeGroupBy = await prisma.tramitacao.groupBy({
+    by: ['unidadeId', 'status'],
+    _count: { id: true },
+    where: { unidadeId: { in: unidades.map(u => u.id) } }
   })
 
-  // Estatísticas por tipo
-  const porTipoPromises = tiposTramitacao.map(async tipo => {
-    const [totalTipo, emAndamento, concluidas, canceladas] = await Promise.all([
-      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id } }),
-      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id, status: 'EM_ANDAMENTO' } }),
-      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id, status: 'CONCLUIDA' } }),
-      prisma.tramitacao.count({ where: { tipoTramitacaoId: tipo.id, status: 'CANCELADA' } })
-    ])
-    return {
-      tipoTramitacaoId: tipo.id,
-      tipoTramitacaoNome: tipo.nome,
-      total: totalTipo,
-      emAndamento,
-      concluidas,
-      canceladas
+  const unidadeMap = new Map<string, { total: number; emAndamento: number; concluidas: number; canceladas: number }>()
+  for (const row of unidadeGroupBy) {
+    if (!row.unidadeId) continue
+    if (!unidadeMap.has(row.unidadeId)) {
+      unidadeMap.set(row.unidadeId, { total: 0, emAndamento: 0, concluidas: 0, canceladas: 0 })
     }
+    const entry = unidadeMap.get(row.unidadeId)!
+    entry.total += row._count.id
+    if (row.status === 'EM_ANDAMENTO') entry.emAndamento = row._count.id
+    if (row.status === 'CONCLUIDA') entry.concluidas = row._count.id
+    if (row.status === 'CANCELADA') entry.canceladas = row._count.id
+  }
+
+  const porUnidade = unidades.map(u => ({
+    unidadeId: u.id,
+    unidadeNome: u.nome,
+    ...(unidadeMap.get(u.id) || { total: 0, emAndamento: 0, concluidas: 0, canceladas: 0 })
+  }))
+
+  // Estatísticas por tipo (groupBy em vez de N×4 counts)
+  const tipoGroupBy = await prisma.tramitacao.groupBy({
+    by: ['tipoTramitacaoId', 'status'],
+    _count: { id: true },
+    where: { tipoTramitacaoId: { in: tiposTramitacao.map(t => t.id) } }
   })
 
-  const [porUnidade, porTipo] = await Promise.all([
-    Promise.all(porUnidadePromises),
-    Promise.all(porTipoPromises)
-  ])
+  const tipoMap = new Map<string, { total: number; emAndamento: number; concluidas: number; canceladas: number }>()
+  for (const row of tipoGroupBy) {
+    if (!row.tipoTramitacaoId) continue
+    if (!tipoMap.has(row.tipoTramitacaoId)) {
+      tipoMap.set(row.tipoTramitacaoId, { total: 0, emAndamento: 0, concluidas: 0, canceladas: 0 })
+    }
+    const entry = tipoMap.get(row.tipoTramitacaoId)!
+    entry.total += row._count.id
+    if (row.status === 'EM_ANDAMENTO') entry.emAndamento = row._count.id
+    if (row.status === 'CONCLUIDA') entry.concluidas = row._count.id
+    if (row.status === 'CANCELADA') entry.canceladas = row._count.id
+  }
+
+  const porTipo = tiposTramitacao.map(t => ({
+    tipoTramitacaoId: t.id,
+    tipoTramitacaoNome: t.nome,
+    ...(tipoMap.get(t.id) || { total: 0, emAndamento: 0, concluidas: 0, canceladas: 0 })
+  }))
 
   const tempoMedioConclusao = tempoMedioResult[0]?.avg_dias
     ? Math.round(Number(tempoMedioResult[0].avg_dias))
@@ -2115,7 +2126,7 @@ export async function publicList(
   pagination: PaginationParams
 ) {
   const { page, limit } = pagination
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.status) {
     where.status = filters.status

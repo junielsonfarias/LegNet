@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/sessoes/lancamento-retroativo')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import nextDynamic from 'next/dynamic'
@@ -126,7 +129,7 @@ export default function LancamentoRetroativoPage() {
       toast.success(mensagemStatus)
       router.refresh()
     } catch (err) {
-      console.error('Erro ao alterar status:', err)
+      log.error('Erro ao alterar status', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao alterar status')
     } finally {
       setAlterandoStatus(null)
@@ -169,7 +172,7 @@ export default function LancamentoRetroativoPage() {
         setVotos(parlamentaresComVoto)
       }
     } catch (err) {
-      console.error('Erro ao carregar votos:', err)
+      log.error('Erro ao carregar votos', err)
       toast.error('Erro ao carregar votos existentes')
     } finally {
       setCarregandoVotos(false)
@@ -290,7 +293,7 @@ export default function LancamentoRetroativoPage() {
       setMotivo('')
       router.refresh()
     } catch (err) {
-      console.error('Erro ao salvar:', err)
+      log.error('Erro ao salvar', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar votacao')
     } finally {
       setSalvando(false)

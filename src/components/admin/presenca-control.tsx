@@ -15,6 +15,9 @@ import {
 import { Users, UserCheck, UserX, Loader2, FileText, Clock, AlertCircle } from 'lucide-react'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('presenca-control')
 
 type StatusPresenca = 'PRESENTE' | 'AUSENTE' | 'FALTA_JUSTIFICADA'
 
@@ -95,7 +98,7 @@ export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHora
         setPresencas(data)
       }
     } catch (error) {
-      console.error('Erro ao carregar presenças:', error)
+      log.error('Erro ao carregar presencas', error)
     } finally {
       setLoading(false)
     }

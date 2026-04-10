@@ -22,11 +22,14 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { FileText, User, Wand2, Loader2, AlertCircle, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
 import {
   gerarTextoParecer,
   getTiposParecer,
   type TipoParecer
 } from '@/lib/services/parecer-template-service'
+
+const log = createLogger('quick-parecer-form')
 
 interface Proposicao {
   id: string
@@ -117,7 +120,7 @@ export function QuickParecerForm({
         })))
       }
     } catch (error) {
-      console.error('Erro ao carregar proposicoes:', error)
+      log.error('Erro ao carregar proposicoes', error)
     } finally {
       setLoadingProposicoes(false)
     }

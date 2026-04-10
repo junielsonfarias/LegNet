@@ -1,5 +1,8 @@
 "use client"
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/protocolo/novo')
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -93,7 +96,7 @@ export default function NovoProtocoloPage() {
         toast.error(data.error || 'Erro ao criar protocolo')
       }
     } catch (error) {
-      console.error('Erro ao criar protocolo:', error)
+      log.error('Erro ao criar protocolo', error)
       toast.error('Erro ao criar protocolo')
     } finally {
       setLoading(false)

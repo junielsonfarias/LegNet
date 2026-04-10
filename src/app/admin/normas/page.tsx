@@ -1,5 +1,8 @@
 "use client"
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/normas')
+
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -89,7 +92,7 @@ export default function NormasListPage() {
         toast.error(data.error || 'Erro ao carregar normas')
       }
     } catch (error) {
-      console.error('Erro ao carregar normas:', error)
+      log.error('Erro ao carregar normas', error)
       toast.error('Erro ao carregar normas')
     } finally {
       setLoading(false)
@@ -104,7 +107,7 @@ export default function NormasListPage() {
         setEstatisticas(data.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar estatisticas:', error)
+      log.error('Erro ao carregar estatisticas', error)
     }
   }
 

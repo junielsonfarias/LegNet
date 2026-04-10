@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Sessao, Presenca, PautaItem, VotacaoRegistro } from '../types'
 import { ordenarItensPauta, calcularVotacao } from '../types'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('painel-publico')
 
 interface UsePainelPublicoProps {
   sessaoIdParam: string | null
@@ -141,7 +144,7 @@ export function usePainelPublico({ sessaoIdParam }: UsePainelPublicoProps) {
       }
 
     } catch (err) {
-      console.error('Erro ao carregar dados:', err)
+      log.error('Erro ao carregar dados', err)
       if (!initialLoadDone) {
         setError('Erro ao carregar dados do painel')
       }

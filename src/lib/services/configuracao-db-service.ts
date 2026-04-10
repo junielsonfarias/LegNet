@@ -40,7 +40,7 @@ export interface ConfiguracaoInstitucionalData {
 
 export interface RestoreSistemaConfig {
   chave: string
-  valor: any
+  valor: unknown
   tipo?: SystemConfigType
   descricao?: string
   categoria?: string
@@ -154,9 +154,9 @@ export const configuracaoDbService = {
     sistema: RestoreSistemaConfig[] | undefined,
     coerceTipo: (value: unknown, tipo?: SystemConfigType) => SystemConfigType
   ) {
-    const resultados: { institucional?: any; sistema?: number } = {}
+    const resultados: { institucional?: Record<string, unknown>; sistema?: number } = {}
 
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx) => {
       if (institucional) {
         resultados.institucional = await tx.configuracaoInstitucional.upsert({
           where: { slug: CONFIG_SLUG },
@@ -177,7 +177,7 @@ export const configuracaoDbService = {
           await tx.configuracao.create({
             data: {
               chave: config.chave,
-              valor: serializeSystemConfigValue(config.valor, tipo),
+              valor: serializeSystemConfigValue(config.valor as string | number | boolean | Record<string, unknown> | (string | number | boolean)[], tipo),
               descricao: config.descricao,
               categoria: config.categoria ?? 'Geral',
               tipo,

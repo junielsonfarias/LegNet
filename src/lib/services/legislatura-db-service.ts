@@ -99,7 +99,7 @@ export const legislaturaDbService = {
   },
 
   async update(id: string, payload: Partial<LegislaturaPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.numero !== undefined) data.numero = payload.numero
     if (payload.anoInicio !== undefined) data.anoInicio = payload.anoInicio

@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/fluxos-tramitacao')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -94,7 +97,7 @@ export default function FluxosTramitacaoPage() {
         toast.error('Erro ao carregar fluxos')
       }
     } catch (error) {
-      console.error('Erro ao carregar fluxos:', error)
+      log.error('Erro ao carregar fluxos', error)
       toast.error('Erro ao carregar fluxos')
     } finally {
       setLoading(false)
@@ -109,7 +112,7 @@ export default function FluxosTramitacaoPage() {
         setUnidades(data.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar unidades:', error)
+      log.error('Erro ao carregar unidades', error)
     }
   }, [])
 
@@ -134,7 +137,7 @@ export default function FluxosTramitacaoPage() {
         toast.error(data.error || 'Erro ao criar fluxos padrao')
       }
     } catch (error) {
-      console.error('Erro ao criar fluxos padrao:', error)
+      log.error('Erro ao criar fluxos padrao', error)
       toast.error('Erro ao criar fluxos padrao')
     } finally {
       setLoading(false)
@@ -156,7 +159,7 @@ export default function FluxosTramitacaoPage() {
         toast.error(data.error || 'Erro ao atualizar fluxo')
       }
     } catch (error) {
-      console.error('Erro ao atualizar fluxo:', error)
+      log.error('Erro ao atualizar fluxo', error)
       toast.error('Erro ao atualizar fluxo')
     }
   }
@@ -209,7 +212,7 @@ export default function FluxosTramitacaoPage() {
         toast.error(data.error || 'Erro ao excluir etapa')
       }
     } catch (error) {
-      console.error('Erro ao excluir etapa:', error)
+      log.error('Erro ao excluir etapa', error)
       toast.error('Erro ao excluir etapa')
     }
   }
@@ -240,7 +243,7 @@ export default function FluxosTramitacaoPage() {
         toast.error(data.error || 'Erro ao salvar etapa')
       }
     } catch (error) {
-      console.error('Erro ao salvar etapa:', error)
+      log.error('Erro ao salvar etapa', error)
       toast.error('Erro ao salvar etapa')
     }
   }

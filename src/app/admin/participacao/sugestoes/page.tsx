@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/participacao/sugestoes')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -104,7 +107,7 @@ export default function SugestoesPage() {
         setSugestoes(data.data.sugestoes || [])
       }
     } catch (error) {
-      console.error('Erro ao carregar sugestoes:', error)
+      log.error('Erro ao carregar sugestoes', error)
     } finally {
       setLoading(false)
     }
@@ -119,7 +122,7 @@ export default function SugestoesPage() {
         setEstatisticas(data.data)
       }
     } catch (error) {
-      console.error('Erro ao carregar estatisticas:', error)
+      log.error('Erro ao carregar estatisticas', error)
     }
   }, [])
 
@@ -141,7 +144,7 @@ export default function SugestoesPage() {
         carregarEstatisticas()
       }
     } catch (error) {
-      console.error('Erro ao moderar sugestao:', error)
+      log.error('Erro ao moderar sugestao', error)
     }
   }
 

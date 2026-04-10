@@ -7,6 +7,9 @@ import { Users, FileText, UserCheck, Loader2, AlertCircle } from 'lucide-react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/comissoes')
 
 interface Membro {
   id: string
@@ -45,7 +48,7 @@ export default function ComissoesPage() {
           setComissoes(result.dados)
         }
       } catch (err) {
-        console.error('Erro ao buscar comissões:', err)
+        log.error('Erro ao buscar comissões', err)
         setError('Erro ao carregar comissões')
       } finally {
         setLoading(false)

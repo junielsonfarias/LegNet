@@ -88,7 +88,7 @@ export const noticiasDbService = {
   },
 
   async update(id: string, payload: Partial<NoticiaPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.titulo !== undefined) data.titulo = payload.titulo
     if (payload.conteudo !== undefined) data.conteudo = payload.conteudo

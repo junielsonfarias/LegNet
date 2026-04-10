@@ -199,7 +199,7 @@ export async function listarProtocolos(
   page: number = 1,
   limit: number = 20
 ) {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filtros.tipo) {
     where.tipo = filtros.tipo

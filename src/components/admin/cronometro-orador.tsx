@@ -22,6 +22,9 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('cronometro-orador')
 
 // Tipos de pronunciamento com tempos em segundos
 const TIPOS_PRONUNCIAMENTO = [
@@ -66,7 +69,7 @@ export function CronometroOrador({ parlamentares = [], onTempoEsgotado }: Cronom
     })
     audio.addEventListener('error', () => {
       // Se falhar, audioRef permanece null e usaremos beep sintético
-      console.warn('Arquivo de som não encontrado, usando beep sintético')
+      log.warn('Arquivo de som nao encontrado, usando beep sintetico')
     })
     audio.load()
 

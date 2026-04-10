@@ -117,7 +117,7 @@ export const autorDbService = {
   },
 
   async update(id: string, payload: Partial<AutorPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.tipoAutorId !== undefined) data.tipoAutorId = payload.tipoAutorId
     if (payload.nome !== undefined) data.nome = payload.nome

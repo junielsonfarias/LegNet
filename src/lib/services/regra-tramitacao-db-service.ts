@@ -7,8 +7,8 @@ export interface RegraEtapaData {
   descricao?: string
   tipoTramitacaoId?: string
   unidadeId?: string
-  notificacoes?: any
-  alertas?: any
+  notificacoes?: Record<string, unknown>
+  alertas?: Record<string, unknown>
   prazoDias?: number | null
 }
 
@@ -42,7 +42,7 @@ const defaultInclude = {
 
 export const regraTramitacaoDbService = {
   async list(filters: { ativo?: boolean } = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.ativo !== undefined) where.ativo = filters.ativo
 
     return prisma.regraTramitacao.findMany({
@@ -115,7 +115,7 @@ export const regraTramitacaoDbService = {
     const { etapas, ...fields } = payload
 
     // Build update data from defined fields
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
     if (fields.nome !== undefined) updateData.nome = fields.nome
     if (fields.descricao !== undefined) updateData.descricao = fields.descricao
     if (fields.condicoes !== undefined) updateData.condicoes = fields.condicoes

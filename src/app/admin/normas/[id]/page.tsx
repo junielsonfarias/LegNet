@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/normas')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -139,7 +142,7 @@ export default function EditarNormaPage() {
         router.push('/admin/normas')
       }
     } catch (error) {
-      console.error('Erro ao carregar norma:', error)
+      log.error('Erro ao carregar norma', error)
       toast.error('Erro ao carregar norma')
     } finally {
       setLoading(false)
@@ -180,7 +183,7 @@ export default function EditarNormaPage() {
         toast.error(data.error || 'Erro ao atualizar norma')
       }
     } catch (error) {
-      console.error('Erro ao atualizar norma:', error)
+      log.error('Erro ao atualizar norma', error)
       toast.error('Erro ao atualizar norma')
     } finally {
       setSaving(false)
@@ -202,7 +205,7 @@ export default function EditarNormaPage() {
         toast.error(data.error || 'Erro ao excluir norma')
       }
     } catch (error) {
-      console.error('Erro ao excluir norma:', error)
+      log.error('Erro ao excluir norma', error)
       toast.error('Erro ao excluir norma')
     }
   }
@@ -222,7 +225,7 @@ export default function EditarNormaPage() {
         toast.error(data.error || 'Erro ao compilar texto')
       }
     } catch (error) {
-      console.error('Erro ao compilar:', error)
+      log.error('Erro ao compilar', error)
       toast.error('Erro ao compilar texto')
     }
   }

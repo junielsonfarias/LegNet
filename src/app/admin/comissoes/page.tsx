@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/comissoes')
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -191,7 +194,7 @@ export default function ComissoesAdminPage() {
       setShowForm(false)
       setEditingId(null)
     } catch (error) {
-      console.error('Erro ao salvar comissão:', error)
+      log.error('Erro ao salvar comissão', error)
       toast.error('Erro ao salvar comissão. Tente novamente.')
     }
   }
@@ -243,7 +246,7 @@ export default function ComissoesAdminPage() {
       setSelectedComissao(null)
       setEditingMembro(null)
     } catch (error) {
-      console.error('Erro ao salvar membro:', error)
+      log.error('Erro ao salvar membro', error)
       toast.error(editingMembro ? 'Não foi possível atualizar o membro' : 'Não foi possível adicionar o membro')
     }
   }
@@ -295,7 +298,7 @@ export default function ComissoesAdminPage() {
         await refetch()
         toast.success('Comissão excluída com sucesso')
       } catch (error) {
-        console.error('Erro ao excluir comissão:', error)
+        log.error('Erro ao excluir comissão', error)
         toast.error('Erro ao excluir comissão. Verifique se não há dependências.')
       }
     }

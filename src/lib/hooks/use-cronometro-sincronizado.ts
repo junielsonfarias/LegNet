@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('use-cronometro-sincronizado')
 
 interface UseCronometroSincronizadoOptions {
   /** Tempo de inicio da sessao/item (ISO string ou null) */
@@ -56,7 +59,7 @@ async function calcularOffsetServidor(): Promise<number> {
     // Offset = hora servidor - hora local
     return horaServidorAjustada - Date.now()
   } catch (error) {
-    console.warn('Erro ao sincronizar com servidor, usando hora local:', error)
+    log.warn('Erro ao sincronizar com servidor, usando hora local', { errorDetails: String(error) })
     return 0
   }
 }

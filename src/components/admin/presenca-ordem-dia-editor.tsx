@@ -29,6 +29,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('presenca-ordem-dia-editor')
 
 interface Parlamentar {
   id: string
@@ -137,7 +140,7 @@ export function PresencaOrdemDiaEditor({ sessaoId, readOnly = false }: PresencaO
       setShowCopyConfirm(false)
       fetchPresencas()
     } catch (err) {
-      console.error('Erro ao copiar presenças:', err)
+      log.error('Erro ao copiar presencas', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao copiar presenças')
     } finally {
       setCopying(false)
@@ -169,7 +172,7 @@ export function PresencaOrdemDiaEditor({ sessaoId, readOnly = false }: PresencaO
       setHasChanges(false)
       fetchPresencas()
     } catch (err) {
-      console.error('Erro ao salvar presenças:', err)
+      log.error('Erro ao salvar presencas', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar presenças')
     } finally {
       setSaving(false)

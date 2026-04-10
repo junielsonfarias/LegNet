@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/autores')
+
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -149,7 +152,7 @@ export default function AutoresPage() {
       if (parlamentaresData.data) setParlamentares(parlamentaresData.data)
       if (comissoesData.data) setComissoes(comissoesData.data)
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados')
     } finally {
       setLoading(false)
@@ -185,7 +188,7 @@ export default function AutoresPage() {
         toast.info('Todos os tipos padrão já existem')
       }
     } catch (error) {
-      console.error('Erro ao criar tipos padrão:', error)
+      log.error('Erro ao criar tipos padrão', error)
       toast.error('Erro ao criar tipos padrão')
     } finally {
       setSaving(false)
@@ -217,7 +220,7 @@ export default function AutoresPage() {
         toast.error(data.error || 'Erro ao salvar tipo')
       }
     } catch (error) {
-      console.error('Erro ao salvar tipo:', error)
+      log.error('Erro ao salvar tipo', error)
       toast.error('Erro ao salvar tipo de autor')
     } finally {
       setSaving(false)
@@ -249,7 +252,7 @@ export default function AutoresPage() {
         toast.error(data.error || 'Erro ao excluir tipo')
       }
     } catch (error) {
-      console.error('Erro ao excluir tipo:', error)
+      log.error('Erro ao excluir tipo', error)
       toast.error('Erro ao excluir tipo')
     }
   }
@@ -301,7 +304,7 @@ export default function AutoresPage() {
         toast.error(data.error || 'Erro ao salvar autor')
       }
     } catch (error) {
-      console.error('Erro ao salvar autor:', error)
+      log.error('Erro ao salvar autor', error)
       toast.error('Erro ao salvar autor')
     } finally {
       setSaving(false)
@@ -338,7 +341,7 @@ export default function AutoresPage() {
         toast.error(data.error || 'Erro ao excluir autor')
       }
     } catch (error) {
-      console.error('Erro ao excluir autor:', error)
+      log.error('Erro ao excluir autor', error)
       toast.error('Erro ao excluir autor')
     }
   }

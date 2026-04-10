@@ -129,7 +129,7 @@ export const usuarioDbService = {
   },
 
   async update(id: string, payload: Partial<UsuarioPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.name !== undefined) data.name = payload.name
     if (payload.email !== undefined) data.email = payload.email

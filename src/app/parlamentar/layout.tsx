@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parlamentar/layout')
 import Image from 'next/image'
 import { ConsoleSuppressor } from '@/components/console-suppressor'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -97,7 +100,7 @@ export default function ParlamentarLayout({
           }
         }
       } catch (error) {
-        console.error('Erro ao buscar parlamentar:', error)
+        log.error('Erro ao buscar parlamentar', error)
       }
     }
 
@@ -144,7 +147,7 @@ export default function ParlamentarLayout({
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar acesso:', error)
+        log.error('Erro ao verificar acesso', error)
       } finally {
         setVerificando(false)
       }

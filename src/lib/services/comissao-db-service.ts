@@ -126,7 +126,7 @@ export const comissaoDbService = {
   },
 
   async update(id: string, payload: Partial<ComissaoPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.nome !== undefined) data.nome = payload.nome
     if (payload.sigla !== undefined) data.sigla = payload.sigla || null
@@ -529,7 +529,7 @@ export const comissaoDbService = {
     ativo?: boolean
     observacoes?: string | null
   }) {
-    const updateData: any = {}
+    const updateData: Record<string, unknown> = {}
 
     if (data.parlamentarId) updateData.parlamentarId = data.parlamentarId
     if (data.cargo) updateData.cargo = data.cargo

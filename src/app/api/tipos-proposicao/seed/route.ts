@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { apiLogger } from '@/lib/logging/logger'
 import { withAuth } from '@/lib/auth/permissions'
 
 export const dynamic = 'force-dynamic'
@@ -184,7 +185,7 @@ export const POST = withAuth(async (request: NextRequest) => {
       data: resultados
     })
   } catch (error) {
-    console.error('Erro ao popular tipos de proposição:', error)
+    apiLogger.error('Erro ao popular tipos de proposição', error)
     return NextResponse.json(
       { success: false, error: 'Erro ao popular tipos de proposição' },
       { status: 500 }

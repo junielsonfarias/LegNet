@@ -5,7 +5,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
+
+const log = createLogger('sessao-wizard')
 
 import { StepSessaoInfo, type SessaoFormData } from './StepSessaoInfo'
 import { StepMontarPauta, type PautaItem } from './StepMontarPauta'
@@ -121,7 +124,7 @@ export function SessaoWizard({ onComplete, onCancel }: SessaoWizardProps) {
         onComplete(slug)
       }
     } catch (error) {
-      console.error('Erro ao criar sessao:', error)
+      log.error('Erro ao criar sessao', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao criar sessao')
     } finally {
       setIsSubmitting(false)

@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/parlamentares/editar')
+
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -233,7 +236,7 @@ export default function EditarParlamentarPage() {
         toast.error('Erro ao atualizar parlamentar')
       }
     } catch (error) {
-      console.error('Erro ao atualizar parlamentar:', error)
+      log.error('Erro ao atualizar parlamentar', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao atualizar parlamentar')
     } finally {
       setLoading(false)
@@ -655,7 +658,7 @@ export default function EditarParlamentarPage() {
                           toast.error('Erro ao enviar foto')
                         }
                       } catch (error) {
-                        console.error('Erro ao enviar foto:', error)
+                        log.error('Erro ao enviar foto', error)
                         toast.error('Erro ao enviar foto')
                       }
                     }}

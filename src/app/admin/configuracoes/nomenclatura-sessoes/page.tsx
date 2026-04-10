@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/nomenclatura-sessoes')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -53,7 +56,7 @@ export default function NomenclaturaSessoesPage() {
       gerarPreview(config)
       setLoading(false)
     } catch (error) {
-      console.error('Erro ao carregar configuração:', error)
+      log.error('Erro ao carregar configuração', error)
       toast.error('Erro ao carregar configuração')
       setLoading(false)
     }
@@ -77,7 +80,7 @@ export default function NomenclaturaSessoesPage() {
       toast.success('Configuração salva com sucesso!')
       gerarPreview(configuracao)
     } catch (error) {
-      console.error('Erro ao salvar configuração:', error)
+      log.error('Erro ao salvar configuração', error)
       toast.error('Erro ao salvar configuração')
     }
   }, [configuracao, gerarPreview])

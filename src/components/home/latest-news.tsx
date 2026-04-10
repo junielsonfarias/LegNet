@@ -10,6 +10,9 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Calendar, ArrowRight, Newspaper, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('latest-news')
 
 interface Noticia {
   id: string
@@ -78,7 +81,7 @@ export function LatestNews() {
         setNoticias(items.sort((a: Noticia, b: Noticia) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         ).slice(0, 5))
-      } catch (e) { console.warn("Erro ao carregar dados:", e) } finally { setLoading(false) }
+      } catch (e) { log.warn("Erro ao carregar dados", { error: String(e) }) } finally { setLoading(false) }
     }
     fetch_()
   }, [])

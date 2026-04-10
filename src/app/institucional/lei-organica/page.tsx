@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input'
 import { FileText, Download, Calendar, Loader2, AlertCircle, RefreshCw, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('institucional/lei-organica')
 
 // Interface para documentos da API
 interface DocumentoLeiOrganica {
@@ -52,7 +55,7 @@ export default function LeiOrganicaPage() {
         setDocumentos([])
       }
     } catch (error) {
-      console.error('Erro ao carregar Lei Orgânica:', error)
+      log.error('Erro ao carregar Lei Orgânica', error)
       toast.error('Erro ao carregar documentos')
       setDocumentos([])
     } finally {

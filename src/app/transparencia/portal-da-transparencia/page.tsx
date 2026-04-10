@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { TransparenciaItem } from '@/lib/types/transparencia';
+import { createLogger } from '@/lib/logging/logger';
+
+const log = createLogger('transparencia/portal-da-transparencia');
 
 const categorias = [
   { id: 'portal-da-transparencia', nome: 'Portal da Transparência', icone: Shield },
@@ -93,7 +96,7 @@ export default function PortalTransparenciaPage() {
         setStats(categoriaStats);
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      log.error('Erro ao carregar dados', error);
     } finally {
       setLoading(false);
     }

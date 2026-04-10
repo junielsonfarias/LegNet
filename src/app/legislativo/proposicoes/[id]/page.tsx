@@ -15,6 +15,10 @@ import {
 } from 'lucide-react'
 import { TramitacaoStepper } from '@/components/legislativo/tramitacao-stepper'
 
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/proposicoes')
+
 const tipoConfig: Record<string, { label: string; sigla: string; color: string }> = {
   'PROJETO_LEI': { label: 'Projeto de Lei', sigla: 'PL', color: 'bg-blue-600 text-white' },
   'PROJETO_RESOLUCAO': { label: 'Projeto de Resolucao', sigla: 'PR', color: 'bg-purple-600 text-white' },
@@ -71,7 +75,7 @@ export default function ProposicaoDetalhePage() {
           setError(data.error || 'Proposicao nao encontrada')
         }
       } catch (err) {
-        console.error('Erro ao carregar proposicao:', err)
+        log.error('Erro ao carregar proposicao', err)
         setError('Erro ao carregar proposicao')
       } finally {
         setLoading(false)

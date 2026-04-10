@@ -43,6 +43,9 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('fluxo-tramitacao-editor')
 
 // Tipos
 interface TramitacaoUnidade {
@@ -146,7 +149,7 @@ export function FluxoTramitacaoEditor({ tipoProposicao, nomeTipo, onSave }: Flux
         setFluxo(null)
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados do fluxo')
     } finally {
       setLoading(false)
@@ -182,7 +185,7 @@ export function FluxoTramitacaoEditor({ tipoProposicao, nomeTipo, onSave }: Flux
         throw new Error(result.error || 'Erro ao criar fluxo')
       }
     } catch (error) {
-      console.error('Erro ao criar fluxo:', error)
+      log.error('Erro ao criar fluxo', error)
       toast.error('Erro ao criar fluxo de tramitacao')
       return null
     }
@@ -294,7 +297,7 @@ export function FluxoTramitacaoEditor({ tipoProposicao, nomeTipo, onSave }: Flux
       loadData()
       onSave?.()
     } catch (error) {
-      console.error('Erro ao salvar etapa:', error)
+      log.error('Erro ao salvar etapa', error)
       toast.error('Erro ao salvar etapa')
     } finally {
       setSaving(false)
@@ -323,7 +326,7 @@ export function FluxoTramitacaoEditor({ tipoProposicao, nomeTipo, onSave }: Flux
         throw new Error(result.error || 'Erro ao remover etapa')
       }
     } catch (error) {
-      console.error('Erro ao remover etapa:', error)
+      log.error('Erro ao remover etapa', error)
       toast.error('Erro ao remover etapa')
     } finally {
       setSaving(false)
@@ -366,7 +369,7 @@ export function FluxoTramitacaoEditor({ tipoProposicao, nomeTipo, onSave }: Flux
         throw new Error(result.error || 'Erro ao reordenar etapas')
       }
     } catch (error) {
-      console.error('Erro ao reordenar:', error)
+      log.error('Erro ao reordenar', error)
       toast.error('Erro ao reordenar etapas')
     } finally {
       setSaving(false)

@@ -15,7 +15,10 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { createLogger } from '@/lib/logging/logger'
 import Image from 'next/image'
+
+const log = createLogger('votacao-lancamento')
 
 interface Voto {
   id: string
@@ -98,7 +101,7 @@ export function VotacaoLancamento({ sessaoId, itemEmVotacao, onVotoRegistrado }:
         setPresentes(presencas.filter((p: Presenca) => p.presente))
       }
     } catch (error) {
-      console.error('Erro ao carregar dados de votação:', error)
+      log.error('Erro ao carregar dados de votacao', error)
     } finally {
       setLoading(false)
     }

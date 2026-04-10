@@ -11,6 +11,9 @@ import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('transparencia/decretos')
 
 // Interface para publicação da API
 interface PublicacaoDecreto {
@@ -71,11 +74,11 @@ export default function DecretosPage() {
       if (result.dados) {
         setDecretos(result.dados)
       } else {
-        console.error('Formato de resposta inesperado:', result)
+        log.warn('Formato de resposta inesperado', { action: 'carregar-decretos' })
         setDecretos([])
       }
     } catch (error) {
-      console.error('Erro ao carregar decretos:', error)
+      log.error('Erro ao carregar decretos', error)
       toast.error('Erro ao carregar decretos')
       setDecretos([])
     } finally {

@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/automacao')
+
 import { useState, useEffect } from 'react'
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,7 +64,7 @@ export default function AutomacaoPage() {
       setTemplates(automacaoService.getAllTemplatesEmail())
       setAgendamentos(automacaoService.getAllAgendamentosPauta())
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      log.error('Erro ao carregar dados', error)
       toast.error('Erro ao carregar dados de automação')
     } finally {
       setLoading(false)
@@ -91,7 +94,7 @@ export default function AutomacaoPage() {
       setModalRegraOpen(false)
       toast.success('Regra criada com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar regra:', error)
+      log.error('Erro ao criar regra', error)
       toast.error('Erro ao criar regra')
     } finally {
       setSaving(false)
@@ -119,7 +122,7 @@ export default function AutomacaoPage() {
       setModalTemplateOpen(false)
       toast.success('Template criado com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar template:', error)
+      log.error('Erro ao criar template', error)
       toast.error('Erro ao criar template')
     } finally {
       setSaving(false)
@@ -147,7 +150,7 @@ export default function AutomacaoPage() {
       setModalAgendamentoOpen(false)
       toast.success('Agendamento criado com sucesso!')
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error)
+      log.error('Erro ao criar agendamento', error)
       toast.error('Erro ao criar agendamento')
     } finally {
       setSaving(false)
@@ -163,7 +166,7 @@ export default function AutomacaoPage() {
         toast.success(`Regra ${regra.ativa ? 'desativada' : 'ativada'} com sucesso!`)
       }
     } catch (error) {
-      console.error('Erro ao alterar status da regra:', error)
+      log.error('Erro ao alterar status da regra', error)
       toast.error('Erro ao alterar status da regra')
     }
   }
@@ -176,7 +179,7 @@ export default function AutomacaoPage() {
         toast.success('Regra deletada com sucesso!')
       }
     } catch (error) {
-      console.error('Erro ao deletar regra:', error)
+      log.error('Erro ao deletar regra', error)
       toast.error('Erro ao deletar regra')
     }
   }
@@ -187,7 +190,7 @@ export default function AutomacaoPage() {
       setAgendamentos(automacaoService.getAllAgendamentosPauta())
       toast.success('Agendamentos executados com sucesso!')
     } catch (error) {
-      console.error('Erro ao executar agendamentos:', error)
+      log.error('Erro ao executar agendamentos', error)
       toast.error('Erro ao executar agendamentos')
     }
   }

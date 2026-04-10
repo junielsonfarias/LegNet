@@ -48,7 +48,10 @@ import {
 import { usePauta } from '@/lib/hooks/use-pauta'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { createLogger } from '@/lib/logging/logger'
 import type { PautaItemApi, PautaSugestaoApi } from '@/lib/api/pauta-api'
+
+const log = createLogger('pauta-editor')
 
 interface PautaEditorProps {
   sessaoId: string
@@ -351,7 +354,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
       }
       handleCancelEdit()
     } catch (error) {
-      console.error('Erro ao salvar item:', error)
+      log.error('Erro ao salvar item', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao salvar item da pauta')
     } finally {
       setSaving(false)
@@ -372,7 +375,7 @@ export function PautaEditor({ sessaoId, readOnly = false, onClose }: PautaEditor
       setShowDeleteConfirm(false)
       setItemToDelete(null)
     } catch (error) {
-      console.error('Erro ao remover item:', error)
+      log.error('Erro ao remover item', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao remover item da pauta')
     } finally {
       setDeletingItemId(null)

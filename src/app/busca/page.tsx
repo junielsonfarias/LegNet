@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sanitizeHtml } from '@/lib/utils/sanitize-html'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('busca')
 import {
   Search,
   FileText,
@@ -101,7 +104,7 @@ function BuscaContent() {
       const data = await res.json()
       setResultado(data)
     } catch (error) {
-      console.error('Erro na busca:', error)
+      log.error('Erro na busca', error)
     } finally {
       setLoading(false)
     }

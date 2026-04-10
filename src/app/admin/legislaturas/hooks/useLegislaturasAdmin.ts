@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/legislaturas/hooks/useLegislaturasAdmin')
+
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas'
@@ -100,7 +103,7 @@ export function useLegislaturasAdmin() {
       await new Promise(resolve => setTimeout(resolve, 300))
       await refetch()
     } catch (error) {
-      console.error('Erro ao salvar legislatura:', error)
+      log.error('Erro ao salvar legislatura', error)
       toast.error('Erro ao salvar legislatura')
     } finally {
       setLoadingSave(false)
@@ -263,7 +266,7 @@ export function useLegislaturasAdmin() {
         setPeriodos(periodosComCargos)
       }
     } catch (error) {
-      console.error('Erro ao carregar periodos:', error)
+      log.error('Erro ao carregar periodos', error)
     }
 
     setShowForm(true)
@@ -300,7 +303,7 @@ export function useLegislaturasAdmin() {
         periodos: periodosComCargos
       })
     } catch (error) {
-      console.error('Erro ao carregar detalhes:', error)
+      log.error('Erro ao carregar detalhes', error)
       toast.error('Erro ao carregar detalhes da legislatura')
     } finally {
       setLoadingDetalhes(false)

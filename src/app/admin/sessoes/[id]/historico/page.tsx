@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/sessoes/historico')
+
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
@@ -174,7 +177,7 @@ export default function HistoricoSessaoPage() {
           setError('Sessão não encontrada')
         }
       } catch (err) {
-        console.error('Erro ao carregar histórico:', err)
+        log.error('Erro ao carregar histórico', err)
         setError('Erro ao carregar dados da sessão')
       } finally {
         setLoading(false)

@@ -9,7 +9,7 @@ export interface VerbaFilters {
 }
 
 const buildWhereClause = (filters: VerbaFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.ano) where.ano = filters.ano
   if (filters.mes) where.mes = filters.mes
@@ -89,7 +89,7 @@ export const verbasIndenizatoriasService = {
     ano: number
     comprovante: string | null
   }>) {
-    const updateData: any = { ...data }
+    const updateData: Record<string, unknown> = { ...data }
     if (data.valor !== undefined) updateData.valor = new Decimal(data.valor)
 
     return prisma.verbaIndenizatoria.update({ where: { id }, data: updateData })

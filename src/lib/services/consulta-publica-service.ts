@@ -100,7 +100,7 @@ export async function listarConsultas(
   page: number = 1,
   limit: number = 20
 ) {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filtros.status) {
     where.status = filtros.status

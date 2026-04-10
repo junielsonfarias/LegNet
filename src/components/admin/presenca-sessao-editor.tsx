@@ -29,6 +29,9 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('presenca-sessao-editor')
 
 interface Parlamentar {
   id: string
@@ -106,7 +109,7 @@ export function PresencaSessaoEditor({
         setParlamentares(result.data || result || [])
       }
     } catch (err) {
-      console.error('Erro ao carregar parlamentares:', err)
+      log.error('Erro ao carregar parlamentares', err)
       toast.error('Erro ao carregar parlamentares')
     }
   }, [])
@@ -123,7 +126,7 @@ export function PresencaSessaoEditor({
         setPresencas(presencasMap)
       }
     } catch (err) {
-      console.error('Erro ao carregar presencas:', err)
+      log.error('Erro ao carregar presencas', err)
     }
   }, [sessaoId])
 

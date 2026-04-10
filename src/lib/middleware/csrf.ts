@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('csrf')
 
 /**
  * Middleware de proteção CSRF (Cross-Site Request Forgery)
@@ -144,12 +147,12 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
   if (!origin) {
     if (process.env.NODE_ENV === 'development') {
       // Permitir em desenvolvimento (para testes com Postman, curl, etc.)
-      console.warn('[CSRF] Requisição sem Origin/Referer permitida em desenvolvimento')
+      log.warn('Requisicao sem Origin/Referer permitida em desenvolvimento')
       return null
     }
 
     // Em produção, rejeitar requisições sem origem
-    console.warn('[CSRF] Requisição rejeitada: sem Origin ou Referer', {
+    log.warn('Requisicao rejeitada: sem Origin ou Referer', {
       method: request.method,
       path: new URL(request.url).pathname
     })
@@ -165,7 +168,7 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
 
   // Verificar se a origem está na lista de permitidos ou é Vercel
   if (!allowedOrigins.includes(origin) && !isVercelOrigin(origin)) {
-    console.warn('[CSRF] Requisição rejeitada: origem não permitida', {
+    log.warn('Requisicao rejeitada: origem nao permitida', {
       origin,
       method: request.method,
       path: new URL(request.url).pathname

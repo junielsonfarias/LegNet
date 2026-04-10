@@ -10,6 +10,9 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Users, ArrowRight, Crown, Star, Award } from 'lucide-react'
 import { slugify, cn } from '@/lib/utils'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('parliamentarians-section')
 
 interface Parlamentar {
   id: string
@@ -226,7 +229,7 @@ export function ParliamentariansSection() {
           }
         }
       } catch (err) {
-        console.warn('Erro ao carregar parlamentares:', err)
+        log.warn('Erro ao carregar parlamentares', { error: String(err) })
       } finally { setLoading(false) }
     }
     fetchAll()

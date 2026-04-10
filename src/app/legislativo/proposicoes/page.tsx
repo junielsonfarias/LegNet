@@ -12,6 +12,9 @@ import { toast } from 'sonner'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('legislativo/proposicoes')
 
 // Interface para proposição da API pública
 interface ProposicaoPublica {
@@ -65,7 +68,7 @@ export default function ProposicoesPage() {
 
       setProposicoes(todas)
     } catch (error) {
-      console.error('Erro ao carregar proposições:', error)
+      log.error('Erro ao carregar proposições', error)
       toast.error('Erro ao carregar proposições')
       setProposicoes([])
     } finally {

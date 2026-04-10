@@ -32,6 +32,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('expedientes-sessao-editor')
 
 interface TipoExpediente {
   id: string
@@ -169,7 +172,7 @@ export function ExpedientesSessaoEditor({ sessaoId, readOnly = false }: Expedien
         return next
       })
     } catch (err) {
-      console.error('Erro ao salvar expediente:', err)
+      log.error('Erro ao salvar expediente', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar expediente')
     } finally {
       setSavingId(null)
@@ -216,7 +219,7 @@ export function ExpedientesSessaoEditor({ sessaoId, readOnly = false }: Expedien
       toast.success('Expediente removido')
       setDeleteConfirm({ open: false, tipoId: '', expedienteId: '', nome: '' })
     } catch (err) {
-      console.error('Erro ao remover expediente:', err)
+      log.error('Erro ao remover expediente', err)
       toast.error(err instanceof Error ? err.message : 'Erro ao remover expediente')
     } finally {
       setSavingId(null)

@@ -73,7 +73,7 @@ export async function sincronizarStatusProposicao(
     const validacao = validarTransicaoStatus(proposicao.status, novoStatus)
     if (!validacao.valid) {
       // Log warning mas não bloqueia - operações de sessão são críticas
-      console.warn(`[sincronizarStatus] Transição ${proposicao.status} → ${novoStatus} não é padrão: ${validacao.error}`)
+      logger.warn(`[sincronizarStatus] Transição ${proposicao.status} → ${novoStatus} não é padrão: ${validacao.error}`)
     }
   }
 
@@ -438,7 +438,7 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
   try {
     const quorumCheck = await verificarQuorumInstalacao(sessaoId)
     if (!quorumCheck.temQuorum) {
-      console.warn(`[iniciarItemPauta] Quorum insuficiente ao iniciar item: ${quorumCheck.detalhes}`)
+      logger.warn(`[iniciarItemPauta] Quorum insuficiente ao iniciar item: ${quorumCheck.detalhes}`)
     }
   } catch {
     // Não bloqueia se verificação de quorum falhar
@@ -478,7 +478,7 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
   const agora = new Date()
 
   // Iniciar transação com atualização do item e pauta
-  const updates: any[] = [
+  const updates: unknown[] = [
     prisma.pautaItem.update({
       where: { id: itemId },
       data: {
@@ -651,7 +651,7 @@ async function verificarVotoMinerva(
     if (!presidenteId) return false
 
     // Verificar se o presidente votou SIM
-    const whereVoto: any = {
+    const whereVoto: Record<string, unknown> = {
       proposicaoId,
       parlamentarId: presidenteId,
       voto: 'SIM'
@@ -663,7 +663,7 @@ async function verificarVotoMinerva(
     const votoPresidente = await prisma.votacao.findFirst({ where: whereVoto })
     return !!votoPresidente
   } catch (error) {
-    console.error('Erro ao verificar voto de minerva:', error)
+    logger.error('Erro ao verificar voto de minerva', error)
     return false
   }
 }
@@ -693,7 +693,7 @@ export async function contabilizarVotos(
   detalhesQuorum?: string
   votoMinerva?: boolean
 }> {
-  const whereVotos: any = { proposicaoId }
+  const whereVotos: Record<string, unknown> = { proposicaoId }
   if (options?.turno) {
     whereVotos.turno = options.turno
   }
@@ -731,7 +731,7 @@ export async function contabilizarVotos(
           select: { legislaturaId: true }
         })
 
-        const whereClause: any = { ativo: true }
+        const whereClause: Record<string, unknown> = { ativo: true }
         if (sessao?.legislaturaId) {
           whereClause.mandatos = {
             some: {
@@ -788,7 +788,7 @@ export async function contabilizarVotos(
         votoMinerva: minervaAplicado
       }
     } catch (error) {
-      console.error('Erro ao calcular quórum configurável, usando regra padrão:', error)
+      logger.error('Erro ao calcular quórum configurável, usando regra padrão', error)
     }
   }
 
@@ -839,7 +839,7 @@ async function atualizarResultadoProposicao(
   if (proposicao) {
     const validacao = validarTransicaoStatus(proposicao.status, statusProposicao)
     if (!validacao.valid) {
-      console.warn(`[atualizarResultado] Transição ${proposicao.status} → ${statusProposicao}: ${validacao.error}`)
+      logger.warn(`[atualizarResultado] Transição ${proposicao.status} → ${statusProposicao}: ${validacao.error}`)
     }
   }
 
@@ -1079,7 +1079,7 @@ async function registrarRetiradaPauta(
   }) || await prisma.tramitacaoUnidade.findFirst()
 
   if (!unidadeSecretaria) {
-    console.warn('[RetiradaPauta] Nenhuma unidade de tramitação encontrada, pulando registro de tramitação')
+    logger.warn('[RetiradaPauta] Nenhuma unidade de tramitação encontrada, pulando registro de tramitação')
     return
   }
 
@@ -1089,7 +1089,7 @@ async function registrarRetiradaPauta(
   }) || await prisma.tramitacaoTipo.findFirst()
 
   if (!tipoTramitacao) {
-    console.warn('[RetiradaPauta] Nenhum tipo de tramitação encontrado, pulando registro de tramitação')
+    logger.warn('[RetiradaPauta] Nenhum tipo de tramitação encontrado, pulando registro de tramitação')
     return
   }
 
@@ -1174,7 +1174,7 @@ export async function finalizarItemPauta(
       }
     })
     if (totalVotosRegistrados < totalPresentes) {
-      console.warn(`[finalizarItemPauta] Votacao finalizada com ${totalPresentes - totalVotosRegistrados} voto(s) pendente(s) de ${totalPresentes} presentes`)
+      logger.warn(`[finalizarItemPauta] Votacao finalizada com ${totalPresentes - totalVotosRegistrados} voto(s) pendente(s) de ${totalPresentes} presentes`)
     }
 
     // Contabilizar votos do turno atual
@@ -1274,7 +1274,7 @@ export async function finalizarItemPauta(
         })
       }
     } catch (error) {
-      console.error('Erro ao criar VotacaoAgrupada:', error)
+      logger.error('Erro ao criar VotacaoAgrupada', error)
     }
   }
 
@@ -1379,7 +1379,7 @@ export async function iniciarTurnoItem(
   sessaoId: string,
   itemId: string
 ): Promise<{
-  item: any
+  item: Record<string, unknown>
   configuracao: {
     totalTurnos: number
     tipoQuorum: TipoQuorum
@@ -1455,7 +1455,7 @@ export async function finalizarTurnoItem(
   itemId: string,
   resultado: 'APROVADO' | 'REJEITADO'
 ): Promise<{
-  item: any
+  item: Record<string, unknown>
   resultado: {
     proximoTurno: boolean
     mensagem: string

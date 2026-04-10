@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/proposicoes')
+
 import { Suspense, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -223,7 +226,7 @@ function ProposicoesContent() {
         const proximoNumero = await buscarProximoNumero(formData.tipo.toUpperCase(), formData.ano)
         setFormData(prev => ({ ...prev, numeroAutomatico: true, numero: proximoNumero }))
       } catch (error) {
-        console.error('Erro ao gerar número automático:', error)
+        log.error('Erro ao gerar número automático', error)
         setFormData(prev => ({ ...prev, numeroAutomatico: true }))
       }
     } else {
@@ -403,7 +406,7 @@ function ProposicoesContent() {
               const proximoNumero = await buscarProximoNumero(formData.tipo.toUpperCase(), formData.ano)
               setFormData(prev => ({ ...prev, numeroAutomatico: true, numero: proximoNumero }))
             } catch (error) {
-              console.error('Erro ao gerar número automático:', error)
+              log.error('Erro ao gerar número automático', error)
               setFormData(prev => ({ ...prev, numeroAutomatico: true }))
             }
           } else {

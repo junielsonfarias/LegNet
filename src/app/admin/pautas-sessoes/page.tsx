@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/pautas-sessoes')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -119,7 +122,7 @@ export default function PautasSessoesAdminPage() {
         toast.error(result.error || 'Erro ao carregar pautas')
       }
     } catch (error) {
-      console.error('Erro ao carregar pautas:', error)
+      log.error('Erro ao carregar pautas', error)
       toast.error('Erro ao carregar pautas')
     } finally {
       setLoading(false)
@@ -139,7 +142,7 @@ export default function PautasSessoesAdminPage() {
         toast.error(result.error || 'Erro ao carregar sessoes')
       }
     } catch (error) {
-      console.error('Erro ao carregar sessoes:', error)
+      log.error('Erro ao carregar sessoes', error)
       toast.error('Erro ao carregar sessoes disponiveis')
     } finally {
       setLoadingSessoes(false)
@@ -203,7 +206,7 @@ export default function PautasSessoesAdminPage() {
         toast.error(result.error || 'Erro ao criar pauta')
       }
     } catch (error) {
-      console.error('Erro ao salvar pauta:', error)
+      log.error('Erro ao salvar pauta', error)
       toast.error('Erro ao salvar pauta')
     } finally {
       setSaving(false)
@@ -228,7 +231,7 @@ export default function PautasSessoesAdminPage() {
         toast.error(result.error || 'Erro ao excluir pauta')
       }
     } catch (error) {
-      console.error('Erro ao excluir pauta:', error)
+      log.error('Erro ao excluir pauta', error)
       toast.error('Erro ao excluir pauta')
     }
   }

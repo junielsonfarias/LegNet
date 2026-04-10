@@ -4,6 +4,9 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('busca-service')
 
 export type TipoResultado =
   | 'proposicao'
@@ -172,7 +175,7 @@ async function buscarProposicoes(termo: string, filtros: FiltrosBusca): Promise<
       },
     }))
   } catch (error) {
-    console.error('Erro ao buscar proposições:', error)
+    log.error('Erro ao buscar proposições', error)
     return []
   }
 }
@@ -206,7 +209,7 @@ async function buscarParlamentares(termo: string, filtros: FiltrosBusca): Promis
       },
     }))
   } catch (error) {
-    console.error('Erro ao buscar parlamentares:', error)
+    log.error('Erro ao buscar parlamentares', error)
     return []
   }
 }
@@ -245,7 +248,7 @@ async function buscarSessoes(termo: string, filtros: FiltrosBusca): Promise<Resu
       },
     }))
   } catch (error) {
-    console.error('Erro ao buscar sessões:', error)
+    log.error('Erro ao buscar sessões', error)
     return []
   }
 }
@@ -284,7 +287,7 @@ async function buscarPublicacoes(termo: string, filtros: FiltrosBusca): Promise<
       },
     }))
   } catch (error) {
-    console.error('Erro ao buscar publicações:', error)
+    log.error('Erro ao buscar publicações', error)
     return []
   }
 }
@@ -320,7 +323,7 @@ async function buscarNoticias(termo: string, filtros: FiltrosBusca): Promise<Res
       },
     }))
   } catch (error) {
-    console.error('Erro ao buscar notícias:', error)
+    log.error('Erro ao buscar notícias', error)
     return []
   }
 }
@@ -353,7 +356,7 @@ async function buscarComissoes(termo: string, filtros: FiltrosBusca): Promise<Re
       },
     }))
   } catch (error) {
-    console.error('Erro ao buscar comissões:', error)
+    log.error('Erro ao buscar comissões', error)
     return []
   }
 }
@@ -480,7 +483,7 @@ async function gerarSugestoes(termo: string): Promise<string[]> {
       }
     }
   } catch (error) {
-    console.error('Erro ao gerar sugestões:', error)
+    log.error('Erro ao gerar sugestões', error)
   }
 
   return sugestoes.slice(0, 5)

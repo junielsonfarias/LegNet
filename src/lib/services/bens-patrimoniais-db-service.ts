@@ -120,7 +120,7 @@ export const bensPatrimoniaisDbService = {
   },
 
   async update(id: string, payload: Partial<BemPatrimonialPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.tipo !== undefined) data.tipo = payload.tipo
     if (payload.tombamento !== undefined) data.tombamento = payload.tombamento

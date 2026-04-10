@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/tipos-expediente')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -66,7 +69,7 @@ export default function TiposExpedientePage() {
         toast.error(data.message || 'Erro ao carregar tipos de expediente')
       }
     } catch (error) {
-      console.error('Erro ao carregar tipos:', error)
+      log.error('Erro ao carregar tipos', error)
       toast.error('Erro ao carregar tipos de expediente')
     } finally {
       setLoading(false)
@@ -119,7 +122,7 @@ export default function TiposExpedientePage() {
         toast.error(data.message || 'Erro ao salvar tipo de expediente')
       }
     } catch (error) {
-      console.error('Erro ao salvar tipo de expediente:', error)
+      log.error('Erro ao salvar tipo de expediente', error)
       toast.error('Erro ao salvar tipo de expediente')
     } finally {
       setSaving(false)
@@ -157,7 +160,7 @@ export default function TiposExpedientePage() {
         toast.error(data.message || 'Erro ao excluir tipo de expediente')
       }
     } catch (error) {
-      console.error('Erro ao excluir tipo de expediente:', error)
+      log.error('Erro ao excluir tipo de expediente', error)
       toast.error('Erro ao excluir tipo de expediente')
     }
   }
@@ -179,7 +182,7 @@ export default function TiposExpedientePage() {
         toast.error(data.message || 'Erro ao atualizar status')
       }
     } catch (error) {
-      console.error('Erro ao atualizar status:', error)
+      log.error('Erro ao atualizar status', error)
       toast.error('Erro ao atualizar status')
     }
   }

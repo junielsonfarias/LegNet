@@ -15,6 +15,9 @@ import {
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('highlights-section')
 
 interface Proposicao {
   id: string
@@ -60,7 +63,7 @@ export function HighlightsSection() {
         const res = await fetch('/api/dados-abertos/proposicoes?limit=4')
         const data = await res.json()
         setDestaques(data.dados || [])
-      } catch (e) { console.warn("Erro ao carregar dados:", e) } finally {
+      } catch (e) { log.warn("Erro ao carregar dados", { error: String(e) }) } finally {
         setLoading(false)
       }
     }

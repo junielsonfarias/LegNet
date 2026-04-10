@@ -5,6 +5,9 @@ import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building, Users, Calendar, FileText, Shield, Heart, Loader2, AlertCircle, Landmark, Scale } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('institucional/sobre')
 
 interface MembroMesaDiretora {
   id: string
@@ -63,7 +66,7 @@ export default function SobrePage() {
           setDados(result.dados)
         }
       } catch (err) {
-        console.error('Erro ao buscar dados institucionais:', err)
+        log.error('Erro ao buscar dados institucionais', err)
         setError('Erro ao carregar dados institucionais')
       } finally {
         setLoading(false)

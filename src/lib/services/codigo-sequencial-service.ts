@@ -91,6 +91,7 @@ export async function gerarProximoNumero(
     let maiorNumero = 0
 
     if (entidade === 'proposicao') {
+      // Proposição usa número como string "NNN/YYYY", precisa parsear
       const rows = await tx.proposicao.findMany({
         where: {
           tipo,
@@ -98,6 +99,8 @@ export async function gerarProximoNumero(
           ...(tenantId ? { tenantId } : {}),
         },
         select: { numero: true },
+        orderBy: { numero: 'desc' },
+        take: 50, // Limita busca; suficiente para encontrar o maior
       })
 
       for (const row of rows) {
@@ -105,7 +108,7 @@ export async function gerarProximoNumero(
         if (!isNaN(num) && num > maiorNumero) maiorNumero = num
       }
     } else if (entidade === 'sessao') {
-      const rows = await tx.sessao.findMany({
+      const row = await tx.sessao.findFirst({
         where: {
           tipo: tipo as TipoSessao,
           ...(tenantId ? { tenantId } : {}),
@@ -115,36 +118,30 @@ export async function gerarProximoNumero(
           },
         },
         select: { numero: true },
+        orderBy: { numero: 'desc' },
       })
-
-      for (const row of rows) {
-        if (row.numero > maiorNumero) maiorNumero = row.numero
-      }
+      if (row) maiorNumero = row.numero
     } else if (entidade === 'protocolo') {
-      const rows = await tx.protocolo.findMany({
+      const row = await tx.protocolo.findFirst({
         where: {
           ano,
           ...(tenantId ? { tenantId } : {}),
         },
         select: { numero: true },
+        orderBy: { numero: 'desc' },
       })
-
-      for (const row of rows) {
-        if (row.numero > maiorNumero) maiorNumero = row.numero
-      }
+      if (row) maiorNumero = row.numero
     } else if (entidade === 'norma') {
-      const rows = await tx.normaJuridica.findMany({
+      const row = await tx.normaJuridica.findFirst({
         where: {
           tipo: tipo as TipoNormaJuridica,
           ano,
           ...(tenantId ? { tenantId } : {}),
         },
         select: { numero: true },
+        orderBy: { numero: 'desc' },
       })
-
-      for (const row of rows) {
-        if (row.numero > maiorNumero) maiorNumero = row.numero
-      }
+      if (row) maiorNumero = row.numero
     }
 
     return maiorNumero + 1

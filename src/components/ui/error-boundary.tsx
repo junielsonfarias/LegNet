@@ -4,6 +4,9 @@ import React, { Component, ReactNode } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('error-boundary')
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -59,10 +62,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.props.onError?.(error, errorInfo)
 
     // Log para monitoramento
-    console.error('ErrorBoundary caught an error:', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
+    log.error('ErrorBoundary caught an error', error, {
+      componentStack: errorInfo.componentStack || undefined
     })
   }
 
@@ -145,10 +146,8 @@ export class SSEErrorBoundary extends Component<
     this.setState({ errorInfo })
     this.props.onError?.(error, errorInfo)
 
-    console.error('SSEErrorBoundary caught an error:', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
+    log.error('SSEErrorBoundary caught an error', error, {
+      componentStack: errorInfo.componentStack || undefined
     })
   }
 

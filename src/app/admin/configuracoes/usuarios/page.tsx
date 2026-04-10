@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/usuarios')
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -71,7 +74,7 @@ export default function UsuariosPage() {
       const users = configuracoesService.getUsuarios()
       setUsuarios(users)
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
+      log.error('Erro ao carregar usuários', error)
       toast.error('Erro ao carregar usuários')
     } finally {
       setLoading(false)
@@ -107,7 +110,7 @@ export default function UsuariosPage() {
       
       resetForm()
     } catch (error) {
-      console.error('Erro ao salvar usuário:', error)
+      log.error('Erro ao salvar usuário', error)
       toast.error('Erro ao salvar usuário')
     }
   }
@@ -133,7 +136,7 @@ export default function UsuariosPage() {
           toast.success('Usuário excluído com sucesso!')
         }
       } catch (error) {
-        console.error('Erro ao excluir usuário:', error)
+        log.error('Erro ao excluir usuário', error)
         toast.error('Erro ao excluir usuário')
       }
     }

@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/configuracoes/tipos-orgaos')
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -73,7 +76,7 @@ export default function TiposOrgaosPage() {
         toast.error('Erro ao carregar unidades')
       }
     } catch (error) {
-      console.error('Erro ao carregar unidades', error)
+      log.error('Erro ao carregar unidades', error)
       toast.error('Erro ao carregar unidades')
     } finally {
       setLoading(false)

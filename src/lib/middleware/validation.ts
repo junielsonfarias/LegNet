@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { validateData, validateQuery, validateParams } from '../validation/schemas'
+import { apiLogger } from '@/lib/logging/logger'
 
 // Tipos para middleware
 export interface ValidationOptions {
@@ -100,7 +101,7 @@ export function withValidation(options: ValidationOptions) {
         // Executar handler com dados validados
         return await handler(request, context)
       } catch (error) {
-        console.error('Erro no middleware de validação:', error)
+        apiLogger.error('Erro no middleware de validacao', error)
         return createErrorResponse(
           'Erro interno do servidor',
           500,
@@ -152,7 +153,7 @@ export function withErrorHandling(
     try {
       return await handler(request)
     } catch (error) {
-      console.error('Erro na API:', error)
+      apiLogger.error('Erro na API', error)
       
       if (error instanceof Error) {
         // Erro de validação conhecido
@@ -223,7 +224,7 @@ export function withLogging(
       return response
     } catch (error) {
       const duration = Date.now() - start
-      console.error(`[${new Date().toISOString()}] ${method} ${url} - ERROR - ${duration}ms`, error)
+      apiLogger.error(`${method} ${url} - ERROR`, error, { duration, method, path: url })
       throw error
     }
   }

@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('auth/forgot-password')
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -44,7 +47,7 @@ export default function ForgotPasswordPage() {
         setError(data.error || 'Erro ao processar solicitação')
       }
     } catch (error) {
-      console.error('Erro na requisição de recuperação de senha:', error)
+      log.error('Erro na requisição de recuperação de senha', error)
       setError('Erro de conexão. Tente novamente.')
     } finally {
       setIsLoading(false)

@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/normas/nova')
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -86,7 +89,7 @@ export default function NovaNormaPage() {
         toast.error(data.error || 'Erro ao criar norma')
       }
     } catch (error) {
-      console.error('Erro ao criar norma:', error)
+      log.error('Erro ao criar norma', error)
       toast.error('Erro ao criar norma')
     } finally {
       setSaving(false)

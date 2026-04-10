@@ -2,6 +2,9 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('error')
 
 export default function Error({
   error,
@@ -11,7 +14,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('Erro na aplicação:', error)
+    log.error('Erro na aplicação', error)
   }, [error])
 
   return (

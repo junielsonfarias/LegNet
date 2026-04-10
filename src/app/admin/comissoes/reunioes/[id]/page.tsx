@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/comissoes/reunioes')
+
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -218,7 +221,7 @@ export default function ReuniaoDetalhesPage() {
         })
       }
     } catch (error) {
-      console.error('Erro ao carregar reuniao:', error)
+      log.error('Erro ao carregar reuniao', error)
       toast.error('Erro ao carregar reuniao')
     } finally {
       setLoading(false)
@@ -245,7 +248,7 @@ export default function ReuniaoDetalhesPage() {
         toast.error(data.error)
       }
     } catch (error) {
-      console.error('Erro ao executar acao:', error)
+      log.error('Erro ao executar acao', error)
       toast.error('Erro ao executar acao')
     }
   }
@@ -264,7 +267,7 @@ export default function ReuniaoDetalhesPage() {
         carregarReuniao()
       }
     } catch (error) {
-      console.error('Erro ao registrar presenca:', error)
+      log.error('Erro ao registrar presenca', error)
       toast.error('Erro ao registrar presenca')
     }
   }
@@ -292,7 +295,7 @@ export default function ReuniaoDetalhesPage() {
         toast.error(data.error)
       }
     } catch (error) {
-      console.error('Erro ao adicionar item:', error)
+      log.error('Erro ao adicionar item', error)
       toast.error('Erro ao adicionar item')
     }
   }
@@ -313,7 +316,7 @@ export default function ReuniaoDetalhesPage() {
         toast.error(data.error)
       }
     } catch (error) {
-      console.error('Erro ao atualizar item:', error)
+      log.error('Erro ao atualizar item', error)
       toast.error('Erro ao atualizar item')
     }
   }
@@ -332,7 +335,7 @@ export default function ReuniaoDetalhesPage() {
       setParecerVotacao(null)
       setVotosForm({ aFavor: 0, contra: 0, abstencao: 0 })
     } catch (error) {
-      console.error('Erro ao votar parecer:', error)
+      log.error('Erro ao votar parecer', error)
     }
   }
 

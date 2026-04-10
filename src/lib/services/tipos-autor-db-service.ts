@@ -13,7 +13,7 @@ export interface TipoAutorPayload {
 
 export const tiposAutorDbService = {
   async list(filters: TipoAutorFilters = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.ativo !== undefined) where.ativo = filters.ativo
 
     return prisma.tipoAutor.findMany({
@@ -31,7 +31,7 @@ export const tiposAutorDbService = {
   },
 
   async checkDuplicateName(nome: string, excludeId?: string) {
-    const where: any = { nome }
+    const where: Record<string, unknown> = { nome }
     if (excludeId) where.id = { not: excludeId }
     return prisma.tipoAutor.findFirst({ where })
   },
@@ -41,7 +41,7 @@ export const tiposAutorDbService = {
   },
 
   async update(id: string, payload: Partial<TipoAutorPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
     if (payload.nome !== undefined) data.nome = payload.nome
     if (payload.descricao !== undefined) data.descricao = payload.descricao || null
     if (payload.ativo !== undefined) data.ativo = payload.ativo

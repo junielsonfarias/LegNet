@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { Session } from 'next-auth'
+import { apiLogger } from '@/lib/logging/logger'
 import { createSuccessResponse, NotFoundError, ConflictError, ValidationError } from '@/lib/error-handler'
 import { logAudit } from '@/lib/audit'
 import { gerarAtaSessao } from '@/lib/utils/sessoes-utils'
@@ -53,7 +54,7 @@ export async function updateSessaoHandler(
       updateData.ata = ataGerada
       updateData.statusAta = 'PENDENTE'
     } catch (error) {
-      console.error('⚠️ Erro ao gerar ata (não crítico):', error)
+      apiLogger.error('Erro ao gerar ata (não crítico)', error)
     }
   }
 

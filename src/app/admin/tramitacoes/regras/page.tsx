@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/tramitacoes/regras')
+
 import { useEffect, useMemo, useState } from 'react'
 import {
   Card,
@@ -103,7 +106,7 @@ const parseJsonField = (value: string, fieldLabel: string) => {
   try {
     return JSON.parse(value)
   } catch (error) {
-    console.error(`Erro ao parsear JSON no campo "${fieldLabel}":`, error)
+    log.error(`Erro ao parsear JSON no campo "${fieldLabel}"`, error)
     throw new Error(`JSON inválido em "${fieldLabel}"`)
   }
 }
@@ -113,7 +116,7 @@ const stringify = (value: unknown, fallback = '{}') => {
     if (value === undefined || value === null) return fallback
     return JSON.stringify(value, null, 2)
   } catch (error) {
-    console.error('Erro ao serializar valor JSON:', error)
+    log.error('Erro ao serializar valor JSON', error)
     return fallback
   }
 }
@@ -157,7 +160,7 @@ export default function TramitationRulesPage() {
           setUnidades(data.data ?? [])
         }
       } catch (err) {
-        console.error('Erro ao carregar dados auxiliares', err)
+        log.error('Erro ao carregar dados auxiliares', err)
         toast.error('Não foi possível carregar dados auxiliares')
       }
     }

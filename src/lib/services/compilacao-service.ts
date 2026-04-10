@@ -141,9 +141,9 @@ export async function compilarNorma(normaId: string): Promise<TextoCompilado> {
  * Gera texto completo formatado
  */
 function gerarTextoCompleto(
-  norma: any,
+  norma: { tipo: string; numero: string | number; data: Date; ementa: string; preambulo?: string | null },
   dispositivos: DispositivoCompilado[],
-  alteracoes: any[]
+  alteracoes: { data: Date; tipoAlteracao: string; normaAlteradora: string; artigoAlterado?: string; descricao?: string | null }[]
 ): string {
   let texto = ''
 

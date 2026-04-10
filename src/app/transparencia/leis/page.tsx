@@ -11,6 +11,9 @@ import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('transparencia/leis')
 
 // Interface para publicação da API
 interface PublicacaoLei {
@@ -112,7 +115,7 @@ export default function LeisPage() {
 
       setLeis(items)
     } catch (error) {
-      console.error('Erro ao carregar leis:', error)
+      log.error('Erro ao carregar leis', error)
       toast.error('Erro ao carregar leis')
       setLeis([])
     } finally {

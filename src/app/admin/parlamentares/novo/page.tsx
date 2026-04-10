@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/parlamentares/novo')
+
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -109,7 +112,7 @@ export default function NovoParlamentarPage() {
         toast.error('Erro ao criar parlamentar')
       }
     } catch (error) {
-      console.error('Erro ao criar parlamentar:', error)
+      log.error('Erro ao criar parlamentar', error)
       toast.error(error instanceof Error ? error.message : 'Erro ao criar parlamentar')
     } finally {
       setLoading(false)
@@ -250,7 +253,7 @@ export default function NovoParlamentarPage() {
                           toast.error('Erro ao enviar foto')
                         }
                       } catch (error) {
-                        console.error('Erro ao enviar foto:', error)
+                        log.error('Erro ao enviar foto', error)
                         toast.error('Erro ao enviar foto')
                       }
                     }}

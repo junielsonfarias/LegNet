@@ -25,6 +25,9 @@ import {
   Users
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('quorum-config-form')
 
 // Tipos de quorum disponiveis
 const TIPOS_QUORUM = [
@@ -119,7 +122,7 @@ export function QuorumConfigForm({
         toast.error(result.error || 'Erro ao salvar configuracao de quorum')
       }
     } catch (error) {
-      console.error('Erro ao salvar configuracao:', error)
+      log.error('Erro ao salvar configuracao', error)
       toast.error('Erro ao salvar configuracao de quorum')
     } finally {
       setSaving(false)

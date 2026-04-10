@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/painel-eletronico/hooks/usePainelOperador')
+
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { sessoesApi, SessaoApi } from '@/lib/api/sessoes-api'
 import type { PautaItemApi } from '@/lib/api/pauta-api'
@@ -113,7 +116,7 @@ export function usePainelOperador(sessaoId: string) {
           null
       )
     } catch (error: any) {
-      console.error('Erro ao carregar sessao:', error)
+      log.error('Erro ao carregar sessao', error)
       toast.error(error?.message || 'Erro ao carregar sessao')
     } finally {
       if (mostrarLoader) {
@@ -151,7 +154,7 @@ export function usePainelOperador(sessaoId: string) {
             : 'Sessao cancelada'
       )
     } catch (error: any) {
-      console.error('Erro ao executar acao da sessao:', error)
+      log.error('Erro ao executar acao da sessao', error)
       toast.error(error?.message || 'Erro ao executar acao na sessao')
     } finally {
       setExecutando(false)
@@ -177,7 +180,7 @@ export function usePainelOperador(sessaoId: string) {
       await carregarSessao(false)
       toast.success(`Status alterado para ${getSessaoStatusLabel(novoStatus)}`)
     } catch (error: any) {
-      console.error('Erro ao alterar status da sessao:', error)
+      log.error('Erro ao alterar status da sessao', error)
       toast.error(error?.message || 'Erro ao alterar status da sessao')
     } finally {
       setExecutando(false)
@@ -224,7 +227,7 @@ export function usePainelOperador(sessaoId: string) {
           break
       }
     } catch (error: any) {
-      console.error('Erro ao controlar item da pauta:', error)
+      log.error('Erro ao controlar item da pauta', error)
       toast.error(error?.message || 'Erro ao controlar item da pauta')
     } finally {
       setExecutando(false)
@@ -251,7 +254,7 @@ export function usePainelOperador(sessaoId: string) {
       await carregarSessao(false)
       toast.success('Momento da materia atualizado')
     } catch (error: any) {
-      console.error('Erro ao atualizar tipo de acao:', error)
+      log.error('Erro ao atualizar tipo de acao', error)
       toast.error(error?.message || 'Erro ao atualizar momento da materia')
     } finally {
       setExecutando(false)
@@ -295,7 +298,7 @@ export function usePainelOperador(sessaoId: string) {
       toast.success('Item retirado da pauta com sucesso')
       fecharModalRetirada()
     } catch (error: any) {
-      console.error('Erro ao retirar item da pauta:', error)
+      log.error('Erro ao retirar item da pauta', error)
       toast.error(error?.message || 'Erro ao retirar item da pauta')
     } finally {
       setExecutando(false)

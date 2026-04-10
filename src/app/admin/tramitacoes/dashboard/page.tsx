@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/tramitacoes/dashboard')
+
 import { useMemo } from 'react'
 import {
   Card,
@@ -32,7 +35,7 @@ const formatDate = (value?: string | null) => {
       year: 'numeric'
     })
   } catch (error) {
-    console.error('Erro ao formatar data:', error)
+    log.error('Erro ao formatar data', error)
     return '—'
   }
 }

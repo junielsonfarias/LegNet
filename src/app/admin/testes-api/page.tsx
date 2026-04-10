@@ -1,5 +1,8 @@
 'use client'
 
+import { createLogger } from '@/lib/logging/logger'
+const log = createLogger('admin/testes-api')
+
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -61,7 +64,7 @@ export default function TestesApiPage() {
       setResults(testResults)
       setSummary(testSummary)
     } catch (error) {
-      console.error('Erro ao executar testes:', error)
+      log.error('Erro ao executar testes', error)
     } finally {
       setIsRunning(false)
     }
@@ -95,7 +98,7 @@ export default function TestesApiPage() {
         averageDuration
       })
     } catch (error) {
-      console.error('Erro ao executar testes:', error)
+      log.error('Erro ao executar testes', error)
     } finally {
       setIsRunning(false)
     }

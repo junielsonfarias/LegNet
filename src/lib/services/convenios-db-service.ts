@@ -129,7 +129,7 @@ export const conveniosDbService = {
   },
 
   async update(id: string, payload: Partial<ConvenioPayload>) {
-    const data: any = {}
+    const data: Record<string, unknown> = {}
 
     if (payload.numero !== undefined) data.numero = payload.numero.trim()
     if (payload.ano !== undefined) data.ano = payload.ano

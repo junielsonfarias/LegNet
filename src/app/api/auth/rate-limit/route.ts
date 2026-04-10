@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { apiLogger } from '@/lib/logging/logger'
 import {
   checkRateLimitAsync,
   resetRateLimit,
@@ -34,7 +35,7 @@ const INTERNAL_SECRET = process.env.INTERNAL_API_SECRET
 
 function validateInternalRequest(request: NextRequest): boolean {
   if (!INTERNAL_SECRET) {
-    console.error('[rate-limit] INTERNAL_API_SECRET não configurado')
+    apiLogger.error('INTERNAL_API_SECRET não configurado', undefined, { module: 'rate-limit' })
     return false
   }
 
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       message: result.allowed ? null : RATE_LIMIT_CONFIGS[type].message
     })
   } catch (error) {
-    console.error('[rate-limit] Erro ao verificar rate limit:', error)
+    apiLogger.error('Erro ao verificar rate limit', error, { module: 'rate-limit' })
     // Em caso de erro, permite a requisição (fail-open)
     return NextResponse.json({
       allowed: true,
@@ -135,7 +136,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[rate-limit] Erro ao resetar rate limit:', error)
+    apiLogger.error('Erro ao resetar rate limit', error, { module: 'rate-limit' })
     return NextResponse.json({ success: true }) // Não falha silenciosamente
   }
 }
