@@ -1,6 +1,104 @@
-import type { AudienciaPublica, ParticipanteAudiencia } from '@/lib/parlamentares-data'
+export interface ParticipanteAudiencia {
+  id: string
+  nome: string
+  cargo?: string
+  instituicao?: string
+  tipo: 'PARLAMENTAR' | 'CONVIDADO' | 'CIDADAO' | 'ORGAO_PUBLICO' | 'ENTIDADE' | 'ESPECIALISTA'
+  confirmado: boolean
+  presenca?: boolean
+  intervencoes?: {
+    id: string
+    horario: string
+    duracao: number
+    assunto: string
+    resumo?: string
+  }[]
+}
 
-export type { AudienciaPublica, ParticipanteAudiencia }
+export interface AudienciaPublica {
+  id: string
+  numero: string
+  titulo: string
+  descricao: string
+  tipo: 'ORDINARIA' | 'EXTRAORDINARIA' | 'ESPECIAL'
+  status: 'AGENDADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA' | 'ADIADA'
+  dataHora: string
+  local: string
+  endereco?: string
+  responsavel: string
+  parlamentarId?: string
+  comissaoId?: string
+  objetivo: string
+  publicoAlvo: string
+  materiaLegislativaId?: string
+  documentos?: {
+    nome: string
+    url: string
+    tipo: string
+    data: string
+    tamanho?: number
+    descricao?: string
+  }[]
+  participantes: ParticipanteAudiencia[]
+  atas?: {
+    id: string
+    titulo: string
+    conteudo: string
+    data: string
+    assinatura?: string
+  }[]
+  transcricoes?: {
+    id: string
+    titulo: string
+    conteudo: string
+    data: string
+  }[]
+  links?: {
+    nome: string
+    url: string
+    tipo: 'TRANSMISSAO' | 'DOCUMENTO' | 'OUTROS'
+  }[]
+  transmissaoAoVivo?: {
+    ativa: boolean
+    url?: string
+    plataforma?: string
+    status?: 'ATIVA' | 'INATIVA' | 'AGENDADA'
+  }
+  inscricoesPublicas?: {
+    ativa: boolean
+    dataLimite?: string
+    linkInscricao?: string
+    totalInscritos: number
+    formularioInscricao?: {
+      campos: Array<{
+        nome: string
+        tipo: 'TEXTO' | 'EMAIL' | 'TELEFONE' | 'SELECT' | 'TEXTAREA'
+        obrigatorio: boolean
+        opcoes?: string[]
+      }>
+    }
+  }
+  publicacaoPublica?: {
+    ativa: boolean
+    dataPublicacao?: string
+    visivelPortal: boolean
+    destaque?: boolean
+  }
+  cronograma?: {
+    inicio: string
+    fim: string
+    pausas?: { inicio: string; fim: string; descricao: string }[]
+    blocos?: Array<{
+      titulo: string
+      inicio: string
+      fim: string
+      descricao: string
+    }>
+  }
+  observacoes?: string
+  criadaEm: string
+  atualizadaEm: string
+}
 
 export interface ParlamentarApi {
   id: string

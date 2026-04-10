@@ -196,8 +196,8 @@ describe('Emenda Service', () => {
       const { prisma } = await import('@/lib/prisma')
 
       vi.mocked(prisma.emenda.findMany).mockResolvedValue([
-        { id: 'emenda-1', proposicaoId: 'prop-1', turnoApresentacao: 1 },
-        { id: 'emenda-2', proposicaoId: 'prop-1', turnoApresentacao: 1 }
+        { id: 'emenda-1', proposicaoId: 'prop-1', turnoApresentacao: 1, status: 'APRESENTADA' },
+        { id: 'emenda-2', proposicaoId: 'prop-1', turnoApresentacao: 1, status: 'APRESENTADA' }
       ] as any)
       vi.mocked(prisma.emenda.count).mockResolvedValue(2)
 

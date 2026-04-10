@@ -1,10 +1,40 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-07 (F7 melhorias globais)
-> **Versao**: 1.9.2
+> **Ultima Atualizacao**: 2026-04-10 (Refatoracao e acessibilidade)
+> **Versao**: 1.9.3
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Refatoracao e Limpeza de Codigo Morto (10/04/2026)
+
+### Remocao de Mocks Legados (~8000+ linhas removidas)
+- `src/lib/parlamentares-data.ts` (1865 linhas) — Mock completo de parlamentares, audiencias, removido
+- `src/lib/db.ts` — Reduzido de 4688 para 914 linhas (objeto `db` com 25 modelos CRUD era codigo morto)
+- `src/lib/tramitacao-mock-service.ts` (878 linhas) — Mock de tramitacoes removido
+- `src/lib/proposicoes-service.ts` (147 linhas) — Mock de proposicoes removido
+- `src/lib/pauta-proposicoes-service.ts` — Mock nao importado, removido
+- `src/lib/automacao-pautas-mock-service.ts` — Mock nao importado, removido
+- `src/lib/regras-regimentais-mock-service.ts` — Mock nao importado, removido
+- `src/lib/api/public-tramitacoes-api.ts` — Wrapper mock removido, hook migrado para fetch API real
+- `src/lib/api/tramitacoes-api.ts` — Reduzido de 1252 para ~350 linhas (fallbacks mock removidos)
+- 3 componentes admin nao importados removidos (validacao-regimental, selecao-proposicoes-pauta, automacao-pautas)
+- 2 testes baseados em mock removidos
+
+### Migracao de Mock para API Real
+- `src/lib/hooks/use-public-tramitacoes.ts` — Reescrito para usar fetch `/api/publico/tramitacoes`
+- `src/app/tramitacoes/page.tsx` — Migrado de mock para API real
+- `src/app/admin/audiencias-publicas/hooks/useAudienciasAdmin.ts` — Migrado de mock para API
+- `src/app/admin/audiencias-publicas/types.ts` — Tipos movidos inline (antes importados do mock)
+
+### Melhorias de Acessibilidade WCAG
+- `src/app/legislativo/proposicoes/[id]/page.tsx` — Alt text descritivo em fotos de autores
+- `src/app/admin/configuracoes/identidade-visual/page.tsx` — Alt text no brasao
+- `src/app/admin/conteudos-educativos/page.tsx` — htmlFor/id em labels de formulario
+- `src/components/ui/table.tsx` — Wrapper com role="region" e aria-label para scroll horizontal
+- `src/app/transparencia/page.tsx` — Sections com aria-label, nav com aria-label
 
 ---
 

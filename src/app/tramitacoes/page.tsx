@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { publicTramitacoesApi } from '@/lib/api/public-tramitacoes-api'
 import { usePublicTramitacoes } from '@/lib/hooks/use-public-tramitacoes'
 
 const STATUS_OPTIONS = [
@@ -53,14 +52,20 @@ export default function TramitaçõesPublicasPage() {
 
   useEffect(() => {
     const hydrateAutores = async () => {
-      const response = await publicTramitacoesApi.list({ limit: 500 })
-      const unique = new Map<string, { id: string; nome: string; partido?: string | null }>()
-      response.items.forEach(item => {
-        if (item.autor && !unique.has(item.autor.id)) {
-          unique.set(item.autor.id, item.autor)
-        }
-      })
-      setAutorOptions(Array.from(unique.values()))
+      try {
+        const res = await fetch('/api/publico/tramitacoes?limit=500')
+        const json = await res.json()
+        const items = json.data?.items ?? json.data ?? []
+        const unique = new Map<string, { id: string; nome: string; partido?: string | null }>()
+        items.forEach((item: any) => {
+          if (item.autor && !unique.has(item.autor.id)) {
+            unique.set(item.autor.id, item.autor)
+          }
+        })
+        setAutorOptions(Array.from(unique.values()))
+      } catch {
+        // Silently fail - autores filter will just be empty
+      }
     }
 
     void hydrateAutores()

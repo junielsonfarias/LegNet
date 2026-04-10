@@ -6,7 +6,7 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full">
+  <div className="relative w-full" role="region" aria-label="Tabela com rolagem horizontal" tabIndex={0}>
     <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
       <table
         ref={ref}

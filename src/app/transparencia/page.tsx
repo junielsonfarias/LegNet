@@ -201,7 +201,7 @@ export default function TransparenciaPage() {
       </div>
 
       {/* Acesso Rapido */}
-      <div className="container mx-auto px-4 -mt-6 md:-mt-8 relative z-10">
+      <nav aria-label="Acesso rapido" className="container mx-auto px-4 -mt-6 md:-mt-8 relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
             { nome: 'E-SIC', desc: 'Acesso a Informacao', href: '/institucional/e-sic', icon: FileSearch },
@@ -222,10 +222,10 @@ export default function TransparenciaPage() {
             </Link>
           ))}
         </div>
-      </div>
+      </nav>
 
       {/* Secoes Tematicas */}
-      <div className="container mx-auto px-4 py-10 md:py-14">
+      <section aria-label="Secoes tematicas de transparencia" className="container mx-auto px-4 py-10 md:py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
           {secoes.map((secao) => (
               <div
@@ -266,10 +266,10 @@ export default function TransparenciaPage() {
               </div>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Legislacao Vigente - Barra horizontal */}
-      <div className="bg-gray-50 border-y border-gray-200">
+      <section aria-label="Legislacao vigente" className="bg-gray-50 border-y border-gray-200">
         <div className="container mx-auto px-4 py-8 md:py-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 rounded-lg shadow-sm" style={themeStyles.iconBg}>
@@ -303,10 +303,10 @@ export default function TransparenciaPage() {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Boas Praticas */}
-      <div className="container mx-auto px-4 py-8 md:py-10">
+      <section aria-label="Boas praticas de transparencia" className="container mx-auto px-4 py-8 md:py-10">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2.5 rounded-lg shadow-sm" style={themeStyles.iconBg}>
             <CheckCircle2 className="h-5 w-5 text-white" />
@@ -336,10 +336,10 @@ export default function TransparenciaPage() {
             </Link>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Informacoes do Municipio e Ouvidoria */}
-      <div className="bg-gray-50 border-t border-gray-200">
+      <section aria-label="Informacoes do municipio e contato" className="bg-gray-50 border-t border-gray-200">
         <div className="container mx-auto px-4 py-8 md:py-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             {/* Info Municipio */}
@@ -396,7 +396,7 @@ export default function TransparenciaPage() {
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

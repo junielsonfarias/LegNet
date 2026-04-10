@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { audienciasPublicasService } from '@/lib/parlamentares-data'
 import type {
   AudienciaPublica,
   ParticipanteAudiencia,
@@ -24,9 +23,20 @@ export function useAudienciasAdmin() {
   const [formData, setFormData] = useState<AudienciaFormData>(INITIAL_FORM_DATA)
   const [participanteForm, setParticipanteForm] = useState<ParticipanteFormData>(INITIAL_PARTICIPANTE_FORM)
 
-  // Carregar dados
+  // Carregar dados via API
   useEffect(() => {
-    setAudiencias(audienciasPublicasService.getAll())
+    const carregarAudiencias = async () => {
+      try {
+        const response = await fetch('/api/publico/audiencias-publicas')
+        const data = await response.json()
+        if (data.success && data.data?.audiencias) {
+          setAudiencias(data.data.audiencias)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar audiencias:', error)
+      }
+    }
+    carregarAudiencias()
 
     const carregarParlamentares = async () => {
       try {
@@ -90,34 +100,10 @@ export function useAudienciasAdmin() {
     }))
   }
 
-  const handleSubmit = () => {
-    if (editingId) {
-      audienciasPublicasService.update(editingId, formData)
-    } else {
-      const audienciaCompleta = {
-        titulo: formData.titulo || '',
-        descricao: formData.descricao || '',
-        tipo: formData.tipo || 'ORDINARIA',
-        status: formData.status || 'AGENDADA',
-        dataHora: formData.dataHora || '',
-        local: formData.local || '',
-        endereco: formData.endereco || '',
-        responsavel: formData.responsavel || '',
-        parlamentarId: formData.parlamentarId || '',
-        comissaoId: formData.comissaoId || '',
-        objetivo: formData.objetivo || '',
-        publicoAlvo: formData.publicoAlvo || '',
-        observacoes: formData.observacoes || '',
-        participantes: formData.participantes || [],
-        materiaLegislativaId: formData.materiaLegislativaId || '',
-        transmissaoAoVivo: formData.transmissaoAoVivo || INITIAL_FORM_DATA.transmissaoAoVivo,
-        inscricoesPublicas: formData.inscricoesPublicas || INITIAL_FORM_DATA.inscricoesPublicas,
-        publicacaoPublica: formData.publicacaoPublica || INITIAL_FORM_DATA.publicacaoPublica,
-        cronograma: formData.cronograma || INITIAL_FORM_DATA.cronograma
-      }
-      audienciasPublicasService.add(audienciaCompleta as any)
-    }
-    setAudiencias(audienciasPublicasService.getAll())
+  const handleSubmit = async () => {
+    // TODO: Implementar quando modelo Prisma AudienciaPublica for criado
+    // Por enquanto apenas fecha o formulario
+    console.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
     handleClose()
   }
 
@@ -148,10 +134,8 @@ export function useAudienciasAdmin() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta audiencia?')) {
-      audienciasPublicasService.remove(id)
-      setAudiencias(audienciasPublicasService.getAll())
-    }
+    // TODO: Implementar quando modelo Prisma AudienciaPublica for criado
+    console.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
   }
 
   const handleClose = () => {
@@ -168,7 +152,13 @@ export function useAudienciasAdmin() {
     setFilterDataFim('')
   }
 
-  const stats = audienciasPublicasService.getStats()
+  const stats = {
+    total: audiencias.length,
+    agendadas: audiencias.filter(a => a.status === 'AGENDADA').length,
+    concluidas: audiencias.filter(a => a.status === 'CONCLUIDA').length,
+    canceladas: audiencias.filter(a => a.status === 'CANCELADA').length,
+    especiais: audiencias.filter(a => a.tipo === 'ESPECIAL').length
+  }
 
   return {
     // Data

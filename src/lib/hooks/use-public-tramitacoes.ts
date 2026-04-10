@@ -3,14 +3,60 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 
-import {
-  publicTramitacoesApi,
-  type PublicTramitacaoResumo,
-  type PublicTramitacaoDetalhe,
-  type PublicTramitacaoFilters
-} from '@/lib/api/public-tramitacoes-api'
 import { withRetry } from '@/lib/utils/retry'
 import { useStableFilters } from '@/lib/utils/use-stable-filters'
+
+export interface PublicTramitacaoResumo {
+  id: string
+  proposicaoId: string
+  proposicaoNumero?: string | null
+  proposicaoTitulo?: string | null
+  autor?: {
+    id: string
+    nome: string
+    partido?: string | null
+  } | null
+  status: string
+  resultado?: string | null
+  dataEntrada: string
+  dataSaida?: string | null
+  unidade?: {
+    id: string
+    nome: string
+    sigla?: string | null
+  } | null
+  tipo?: {
+    id: string
+    nome: string
+  } | null
+  observacoes?: string | null
+  parecer?: string | null
+  prazoVencimento?: string | null
+  diasVencidos?: number | null
+}
+
+export interface PublicTramitacaoDetalhe extends PublicTramitacaoResumo {
+  historicos: Array<{
+    id: string
+    data: string
+    acao: string
+    descricao?: string | null
+    usuarioId?: string | null
+    dadosAnteriores?: unknown
+    dadosNovos?: unknown
+  }>
+}
+
+export interface PublicTramitacaoFilters {
+  status?: string
+  resultado?: string
+  autorId?: string
+  search?: string
+  from?: string
+  to?: string
+  page?: number
+  limit?: number
+}
 
 interface PublicTramitacaoMeta {
   total?: number
@@ -19,15 +65,7 @@ interface PublicTramitacaoMeta {
   totalPages?: number
 }
 
-interface UsePublicTramitacoesReturn {
-  tramitacoes: PublicTramitacaoResumo[]
-  loading: boolean
-  error: string | null
-  meta: PublicTramitacaoMeta | null
-  refetch: () => Promise<void>
-}
-
-export function usePublicTramitacoes(filters?: PublicTramitacaoFilters): UsePublicTramitacoesReturn {
+export function usePublicTramitacoes(filters?: PublicTramitacaoFilters) {
   const [tramitacoes, setTramitacoes] = useState<PublicTramitacaoResumo[]>([])
   const [meta, setMeta] = useState<PublicTramitacaoMeta | null>(null)
   const [loading, setLoading] = useState(true)
@@ -40,14 +78,33 @@ export function usePublicTramitacoes(filters?: PublicTramitacaoFilters): UsePubl
       setLoading(true)
       setError(null)
 
+      const params = new URLSearchParams()
+      const f = stableFilters as PublicTramitacaoFilters | undefined
+      if (f?.status) params.set('status', f.status)
+      if (f?.resultado) params.set('resultado', f.resultado)
+      if (f?.autorId) params.set('autorId', f.autorId)
+      if (f?.search) params.set('search', f.search)
+      if (f?.from) params.set('from', f.from)
+      if (f?.to) params.set('to', f.to)
+      if (f?.page) params.set('page', String(f.page))
+      if (f?.limit) params.set('limit', String(f.limit))
+
       const response = await withRetry(
-        () => publicTramitacoesApi.list(stableFilters as PublicTramitacaoFilters),
+        async () => {
+          const res = await fetch(`/api/publico/tramitacoes?${params.toString()}`)
+          if (!res.ok) throw new Error('Erro ao carregar tramitações')
+          return res.json()
+        },
         2,
         500
       )
 
-      setTramitacoes(response.items)
-      setMeta(response.meta ?? null)
+      if (response.success) {
+        setTramitacoes(response.data?.items ?? response.data ?? [])
+        setMeta(response.data?.meta ?? null)
+      } else {
+        throw new Error(response.error || 'Erro ao carregar tramitações')
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Não foi possível carregar as tramitações.'
       setError(errorMessage)
@@ -86,8 +143,21 @@ export function usePublicTramitacao(id: string | null) {
       setLoading(true)
       setError(null)
 
-      const data = await withRetry(() => publicTramitacoesApi.getById(id), 2, 500)
-      setTramitacao(data)
+      const response = await withRetry(
+        async () => {
+          const res = await fetch(`/api/publico/tramitacoes/${id}`)
+          if (!res.ok) throw new Error('Erro ao carregar tramitação')
+          return res.json()
+        },
+        2,
+        500
+      )
+
+      if (response.success) {
+        setTramitacao(response.data)
+      } else {
+        throw new Error(response.error || 'Erro ao carregar tramitação')
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Não foi possível carregar a tramitação.'
       setError(errorMessage)
@@ -108,4 +178,3 @@ export function usePublicTramitacao(id: string | null) {
     refetch: fetchTramitacao
   }
 }
-

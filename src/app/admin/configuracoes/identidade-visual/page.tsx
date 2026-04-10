@@ -307,7 +307,7 @@ export default function IdentidadeVisualPage() {
                 >
                   <div className="flex items-center gap-2">
                     {config.brasaoUrl ? (
-                      <Image src={config.brasaoUrl} alt="" className="h-8 w-8 object-contain" width={32} height={32} unoptimized />
+                      <Image src={config.brasaoUrl} alt="Brasao institucional" className="h-8 w-8 object-contain" width={32} height={32} unoptimized />
                     ) : (
                       <div
                         className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold"

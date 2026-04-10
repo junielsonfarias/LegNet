@@ -288,27 +288,27 @@ export default function ConteudosEducativosAdminPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Categoria *</Label>
-                <select className="w-full border rounded-md p-2 text-sm" value={formData.categoria} onChange={e => setFormData(p => ({ ...p, categoria: e.target.value }))}>
+                <Label htmlFor="edu-categoria">Categoria *</Label>
+                <select id="edu-categoria" className="w-full border rounded-md p-2 text-sm" value={formData.categoria} onChange={e => setFormData(p => ({ ...p, categoria: e.target.value }))}>
                   {categoriaOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div>
-                <Label>Ordem</Label>
-                <Input type="number" value={formData.ordem} onChange={e => setFormData(p => ({ ...p, ordem: parseInt(e.target.value) || 0 }))} />
+                <Label htmlFor="edu-ordem">Ordem</Label>
+                <Input id="edu-ordem" type="number" value={formData.ordem} onChange={e => setFormData(p => ({ ...p, ordem: parseInt(e.target.value) || 0 }))} />
               </div>
             </div>
             <div>
-              <Label>Resumo</Label>
-              <textarea className="w-full border rounded-md p-2 text-sm min-h-[60px]" value={formData.resumo} onChange={e => setFormData(p => ({ ...p, resumo: e.target.value }))} placeholder="Breve descricao para listagem" />
+              <Label htmlFor="edu-resumo">Resumo</Label>
+              <textarea id="edu-resumo" className="w-full border rounded-md p-2 text-sm min-h-[60px]" value={formData.resumo} onChange={e => setFormData(p => ({ ...p, resumo: e.target.value }))} placeholder="Breve descricao para listagem" />
             </div>
             <div>
-              <Label>Conteudo *</Label>
-              <textarea className="w-full border rounded-md p-2 text-sm min-h-[200px] font-mono" value={formData.conteudo} onChange={e => setFormData(p => ({ ...p, conteudo: e.target.value }))} placeholder="Conteudo completo (suporta HTML)" />
+              <Label htmlFor="edu-conteudo">Conteudo *</Label>
+              <textarea id="edu-conteudo" className="w-full border rounded-md p-2 text-sm min-h-[200px] font-mono" value={formData.conteudo} onChange={e => setFormData(p => ({ ...p, conteudo: e.target.value }))} placeholder="Conteudo completo (suporta HTML)" />
             </div>
             <div>
-              <Label>URL da Imagem</Label>
-              <Input value={formData.imagem} onChange={e => setFormData(p => ({ ...p, imagem: e.target.value }))} placeholder="https://..." />
+              <Label htmlFor="edu-imagem">URL da Imagem</Label>
+              <Input id="edu-imagem" value={formData.imagem} onChange={e => setFormData(p => ({ ...p, imagem: e.target.value }))} placeholder="https://..." />
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="publicado" checked={formData.publicado} onChange={e => setFormData(p => ({ ...p, publicado: e.target.checked }))} className="h-4 w-4" />
