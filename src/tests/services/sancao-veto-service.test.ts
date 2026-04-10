@@ -24,7 +24,7 @@ describe('sancao-veto-service', () => {
   describe('verificarPrazoSancao', () => {
     beforeEach(() => {
       jest.useFakeTimers()
-      jest.setSystemTime(new Date('2026-04-10T12:00:00'))
+      jest.setSystemTime(new Date('2026-04-10T12:00:00').getTime())
     })
 
     afterEach(() => {
@@ -71,7 +71,7 @@ describe('sancao-veto-service', () => {
   describe('calcularPrazoApreciacaoVeto', () => {
     beforeEach(() => {
       jest.useFakeTimers()
-      jest.setSystemTime(new Date('2026-04-10T12:00:00'))
+      jest.setSystemTime(new Date('2026-04-10T12:00:00').getTime())
     })
 
     afterEach(() => {

@@ -162,12 +162,12 @@ describe('sessao-controle service', () => {
 
   describe('controle de pauta', () => {
     beforeEach(() => {
-      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:00:00Z'))
+      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:00:00Z').getTime())
     })
 
     it('pausa item acumulando tempo', async () => {
       const inicio = new Date('2025-01-01T12:00:00Z')
-      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:05:00Z'))
+      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:05:00Z').getTime())
 
       prisma.pautaItem.findUnique.mockResolvedValue({
         id: 'item-1',
@@ -193,7 +193,7 @@ describe('sessao-controle service', () => {
 
     it('finaliza item registrando tempo real', async () => {
       const inicio = new Date('2025-01-01T12:00:00Z')
-      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:15:00Z'))
+      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:15:00Z').getTime())
 
       prisma.pautaItem.findUnique.mockResolvedValue({
         id: 'item-1',

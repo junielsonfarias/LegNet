@@ -90,7 +90,7 @@ export const parlamentarDbService = {
     const skip = (page - 1) * limit
     const where = buildWhereClause(filters)
 
-    const [total, parlamentares] = await Promise.all([
+    const [total, parlamentares, legislaturaAtual] = await Promise.all([
       prisma.parlamentar.count({ where }),
       prisma.parlamentar.findMany({
         where,
@@ -99,23 +99,23 @@ export const parlamentarDbService = {
         take: limit,
         include: {
           mandatos: {
-            include: { legislatura: true },
+            select: { id: true, ativo: true, dataInicio: true, dataFim: true, legislaturaId: true, legislatura: { select: { id: true, numero: true, anoInicio: true, anoFim: true, ativa: true } } },
             orderBy: { dataInicio: 'desc' as const }
           },
           filiacoes: {
             where: { ativa: true },
+            select: { id: true, partido: true, dataInicio: true, ativa: true },
             orderBy: { dataInicio: 'desc' as const },
             take: 1
           }
         } as any
+      }),
+      prisma.legislatura.findFirst({
+        where: { ativa: true },
+        select: { id: true },
+        orderBy: { anoInicio: 'desc' }
       })
     ])
-
-    // Ordenar: parlamentares da legislatura atual primeiro
-    const legislaturaAtual = await prisma.legislatura.findFirst({
-      where: { ativa: true },
-      orderBy: { anoInicio: 'desc' }
-    })
 
     if (legislaturaAtual) {
       parlamentares.sort((a: any, b: any) => {

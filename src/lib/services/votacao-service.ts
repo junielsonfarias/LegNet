@@ -11,7 +11,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
-import type { TipoVoto } from '@prisma/client'
+import type { TipoVoto, Prisma } from '@prisma/client'
 import {
   getConfiguracaoTurno,
   requerDoisTurnos
@@ -822,7 +822,7 @@ export async function iniciarPrimeiroTurnoItem(itemId: string, totalTurnos: numb
  * Obtém totais de membros e presentes para cálculo de quórum
  */
 export async function getTotaisParaVotacao(sessaoId: string, legislaturaId?: string | null) {
-  const whereClause: any = { ativo: true }
+  const whereClause: Prisma.ParlamentarWhereInput = { ativo: true }
   if (legislaturaId) {
     whereClause.mandatos = {
       some: {

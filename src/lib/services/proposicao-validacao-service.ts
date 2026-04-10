@@ -5,7 +5,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
-import type { StatusProposicao } from '@prisma/client'
+import type { StatusProposicao, Prisma } from '@prisma/client'
 
 const logger = createLogger('proposicao-validacao')
 
@@ -243,7 +243,7 @@ export async function verificarMateriaAnaloga(
   const warnings: string[] = []
 
   // Busca proposições rejeitadas ou vetadas no mesmo ano/legislatura
-  const whereClause: any = {
+  const whereClause: Record<string, unknown> = {
     ano,
     status: {
       in: ['REJEITADA', 'VETADA', 'ARQUIVADA']

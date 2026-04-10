@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 import { createLogger } from '@/lib/logging/logger'
 
 const logger = createLogger('quorum')
@@ -166,7 +167,7 @@ export async function verificarQuorumInstalacao(
     select: { legislaturaId: true }
   })
 
-  const whereClause: any = { ativo: true }
+  const whereClause: Prisma.ParlamentarWhereInput = { ativo: true }
   if (sessao?.legislaturaId) {
     whereClause.mandatos = {
       some: {
@@ -546,9 +547,9 @@ export async function verificarVotacaoNominalObrigatoria(
  * Lista todas as configurações de quórum com filtros opcionais
  */
 export async function listarConfiguracoesQuorumFiltrado(filters: { ativo?: boolean; aplicacao?: string } = {}) {
-  const where: any = {}
+  const where: Prisma.ConfiguracaoQuorumWhereInput = {}
   if (filters.ativo !== undefined) where.ativo = filters.ativo
-  if (filters.aplicacao) where.aplicacao = filters.aplicacao
+  if (filters.aplicacao) where.aplicacao = filters.aplicacao as Prisma.EnumAplicacaoQuorumFilter
 
   return prisma.configuracaoQuorum.findMany({
     where,
@@ -573,14 +574,14 @@ export async function checkConfiguracaoQuorumExistente(aplicacao: string) {
 /**
  * Cria nova configuração de quórum
  */
-export async function criarConfiguracaoQuorum(data: any) {
+export async function criarConfiguracaoQuorum(data: Prisma.ConfiguracaoQuorumCreateInput) {
   return prisma.configuracaoQuorum.create({ data })
 }
 
 /**
  * Atualiza configuração de quórum
  */
-export async function atualizarConfiguracaoQuorum(id: string, data: any) {
+export async function atualizarConfiguracaoQuorum(id: string, data: Prisma.ConfiguracaoQuorumUpdateInput) {
   return prisma.configuracaoQuorum.update({ where: { id }, data })
 }
 
