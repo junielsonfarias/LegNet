@@ -1,36 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { licitacoesDbService } from '@/lib/services/licitacoes-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const licitacao = await licitacoesDbService.getById(id)
+) => {
+  const { id } = await params
+  const licitacao = await licitacoesDbService.getById(id)
 
-    if (!licitacao) {
-      return NextResponse.json(
-        { success: false, error: 'Licitacao nao encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: licitacao
-    })
-  } catch (error) {
-    console.error('Erro ao buscar licitacao:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!licitacao) {
+    throw new NotFoundError('Licitacao')
   }
-}
+
+  return createSuccessResponse(licitacao)
+})
 
 export const PUT = withAuth(async (
   request: NextRequest,
@@ -41,10 +28,7 @@ export const PUT = withAuth(async (
 
   const licitacaoExistente = await licitacoesDbService.getById(id)
   if (!licitacaoExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Licitacao nao encontrada' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Licitacao')
   }
 
   const licitacaoAtualizada = await licitacoesDbService.update(id, {
@@ -64,11 +48,7 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
-  return NextResponse.json({
-    success: true,
-    data: licitacaoAtualizada,
-    message: 'Licitacao atualizada com sucesso'
-  })
+  return createSuccessResponse(licitacaoAtualizada, 'Licitacao atualizada com sucesso')
 }, { permissions: 'financeiro.manage' })
 
 export const DELETE = withAuth(async (
@@ -79,16 +59,10 @@ export const DELETE = withAuth(async (
 
   const licitacaoExistente = await licitacoesDbService.getById(id)
   if (!licitacaoExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Licitacao nao encontrada' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Licitacao')
   }
 
   await licitacoesDbService.remove(id)
 
-  return NextResponse.json({
-    success: true,
-    message: 'Licitacao excluida com sucesso'
-  })
+  return createSuccessResponse(null, 'Licitacao excluida com sucesso')
 }, { permissions: 'financeiro.manage' })

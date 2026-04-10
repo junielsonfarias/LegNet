@@ -1,34 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { folhaPagamentoDbService } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-// SEGURANÇA: GET protegido pois dados financeiros sensíveis
+// SEGURANCA: GET protegido pois dados financeiros sensiveis
 export const GET = withAuth(
   async (
     request: NextRequest,
-    context: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> }
   ) => {
-    try {
-      const { id } = await context.params
-      const folha = await folhaPagamentoDbService.getById(id)
+    const { id } = await params
+    const folha = await folhaPagamentoDbService.getById(id)
 
-      if (!folha) {
-        return NextResponse.json(
-          { success: false, error: 'Folha de pagamento nao encontrada' },
-          { status: 404 }
-        )
-      }
-
-      return NextResponse.json({ success: true, data: folha })
-    } catch (error) {
-      console.error('Erro ao buscar folha de pagamento:', error)
-      return NextResponse.json(
-        { success: false, error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
+    if (!folha) {
+      throw new NotFoundError('Folha de pagamento')
     }
+
+    return createSuccessResponse(folha)
   },
   { permissions: 'financeiro.manage' }
 )
@@ -43,10 +33,7 @@ export const PUT = withAuth(
 
     const folhaExistente = await folhaPagamentoDbService.getById(id)
     if (!folhaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Folha de pagamento nao encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Folha de pagamento')
     }
 
     const folhaAtualizada = await folhaPagamentoDbService.update(id, {
@@ -62,11 +49,7 @@ export const PUT = withAuth(
       observacoes: body.observacoes
     })
 
-    return NextResponse.json({
-      success: true,
-      data: folhaAtualizada,
-      message: 'Folha de pagamento atualizada com sucesso'
-    })
+    return createSuccessResponse(folhaAtualizada, 'Folha de pagamento atualizada com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )
@@ -80,18 +63,12 @@ export const DELETE = withAuth(
 
     const folhaExistente = await folhaPagamentoDbService.getById(id)
     if (!folhaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Folha de pagamento nao encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Folha de pagamento')
     }
 
     await folhaPagamentoDbService.remove(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Folha de pagamento excluida com sucesso'
-    })
+    return createSuccessResponse(null, 'Folha de pagamento excluida com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )

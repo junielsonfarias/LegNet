@@ -1,71 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { verbasIndenizatoriasService } from '@/lib/services/verbas-indenizatorias-service'
+import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * GET - Buscar verba indenizatória por ID (admin)
+ * GET - Buscar verba indenizatoria por ID (admin)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const GET = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const verba = await verbasIndenizatoriasService.getById(id)
 
     if (!verba) {
-      return NextResponse.json(
-        { success: false, error: 'Verba indenizatória não encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Verba indenizatoria')
     }
 
-    return NextResponse.json({ success: true, data: verba })
-  } catch (error) {
-    console.error('Erro ao buscar verba indenizatória:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+    return createSuccessResponse(verba)
+  },
+  { permissions: 'financeiro.view' }
+)
 
 /**
- * PATCH - Atualizar verba indenizatória (admin)
+ * PATCH - Atualizar verba indenizatoria (admin)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const PATCH = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const body = await request.json()
 
     const verbaExistente = await verbasIndenizatoriasService.getById(id)
     if (!verbaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Verba indenizatória não encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Verba indenizatoria')
     }
 
     const verba = await verbasIndenizatoriasService.update(id, {
@@ -79,57 +52,29 @@ export async function PATCH(
       comprovante: body.comprovante
     })
 
-    return NextResponse.json({
-      success: true,
-      data: verba,
-      message: 'Verba indenizatória atualizada com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao atualizar verba indenizatória:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+    return createSuccessResponse(verba, 'Verba indenizatoria atualizada com sucesso')
+  },
+  { permissions: 'financeiro.manage' }
+)
 
 /**
- * DELETE - Excluir verba indenizatória (admin)
+ * DELETE - Excluir verba indenizatoria (admin)
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const DELETE = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
 
     const verbaExistente = await verbasIndenizatoriasService.getById(id)
     if (!verbaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Verba indenizatória não encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Verba indenizatoria')
     }
 
     await verbasIndenizatoriasService.delete(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Verba indenizatória excluída com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao excluir verba indenizatória:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+    return createSuccessResponse(null, 'Verba indenizatoria excluida com sucesso')
+  },
+  { permissions: 'financeiro.manage' }
+)

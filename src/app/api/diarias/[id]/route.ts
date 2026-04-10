@@ -1,71 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { diariasService } from '@/lib/services/diarias-service'
+import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * GET - Buscar diária por ID (admin)
+ * GET - Buscar diaria por ID (admin)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const GET = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const diaria = await diariasService.getById(id)
 
     if (!diaria) {
-      return NextResponse.json(
-        { success: false, error: 'Diária não encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Diaria')
     }
 
-    return NextResponse.json({ success: true, data: diaria })
-  } catch (error) {
-    console.error('Erro ao buscar diária:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+    return createSuccessResponse(diaria)
+  },
+  { permissions: 'financeiro.view' }
+)
 
 /**
- * PATCH - Atualizar diária (admin)
+ * PATCH - Atualizar diaria (admin)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const PATCH = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const body = await request.json()
 
     const diariaExistente = await diariasService.getById(id)
     if (!diariaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Diária não encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Diaria')
     }
 
     const diaria = await diariasService.update(id, {
@@ -80,57 +53,29 @@ export async function PATCH(
       cargo: body.cargo
     })
 
-    return NextResponse.json({
-      success: true,
-      data: diaria,
-      message: 'Diária atualizada com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao atualizar diária:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+    return createSuccessResponse(diaria, 'Diaria atualizada com sucesso')
+  },
+  { permissions: 'financeiro.manage' }
+)
 
 /**
- * DELETE - Excluir diária (admin)
+ * DELETE - Excluir diaria (admin)
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const DELETE = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
 
     const diariaExistente = await diariasService.getById(id)
     if (!diariaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Diária não encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Diaria')
     }
 
     await diariasService.delete(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Diária excluída com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao excluir diária:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+    return createSuccessResponse(null, 'Diaria excluida com sucesso')
+  },
+  { permissions: 'financeiro.manage' }
+)

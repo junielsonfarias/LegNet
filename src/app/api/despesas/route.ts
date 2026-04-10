@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { despesasDbService } from '@/lib/services/despesas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { safeParseQueryParams } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
@@ -28,71 +29,52 @@ const DespesaQuerySchema = z.object({
   { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
 )
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
 
-    // Validar query params com Zod
-    const validation = safeParseQueryParams(searchParams, DespesaQuerySchema)
-    if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: 'Parâmetros inválidos', details: validation.error.errors },
-        { status: 400 }
-      )
-    }
-
-    const {
-      page, limit, situacao, ano, mes, credor, elemento,
-      funcao, programa, licitacaoId, contratoId, convenioId,
-      valorMinimo, valorMaximo
-    } = validation.data
-
-    const result = await despesasDbService.paginate(
-      {
-        situacao,
-        ano,
-        mes,
-        credor,
-        elemento,
-        funcao,
-        programa,
-        licitacaoId,
-        contratoId,
-        convenioId,
-        valorMinimo,
-        valorMaximo
-      },
-      { page, limit }
-    )
-
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=300',
-        'X-Total-Count': result.pagination.total.toString()
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar despesas:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  const validation = safeParseQueryParams(searchParams, DespesaQuerySchema)
+  if (!validation.success) {
+    throw new ValidationError('Parâmetros inválidos', validation.error.errors)
   }
-}
+
+  const {
+    page, limit, situacao, ano, mes, credor, elemento,
+    funcao, programa, licitacaoId, contratoId, convenioId,
+    valorMinimo, valorMaximo
+  } = validation.data
+
+  const result = await despesasDbService.paginate(
+    {
+      situacao,
+      ano,
+      mes,
+      credor,
+      elemento,
+      funcao,
+      programa,
+      licitacaoId,
+      contratoId,
+      convenioId,
+      valorMinimo,
+      valorMaximo
+    },
+    { page, limit }
+  )
+
+  return createSuccessResponse(result.data, undefined, undefined, 200, {
+    total: result.pagination.total,
+    page: result.pagination.page,
+    limit: result.pagination.limit,
+    totalPages: result.pagination.totalPages
+  })
+})
 
 export const POST = withAuth(
   async (request: NextRequest) => {
     const body = await request.json()
 
     if (!body.numeroEmpenho || !body.credor || !body.valorEmpenhado) {
-      return NextResponse.json(
-        { success: false, error: 'Campos obrigatorios nao fornecidos (numeroEmpenho, credor, valorEmpenhado)' },
-        { status: 400 }
-      )
+      throw new ValidationError('Campos obrigatorios nao fornecidos (numeroEmpenho, credor, valorEmpenhado)')
     }
 
     const dataDespesa = body.data ? new Date(body.data) : new Date()
@@ -122,11 +104,7 @@ export const POST = withAuth(
       observacoes: body.observacoes
     })
 
-    return NextResponse.json({
-      success: true,
-      data: novaDespesa,
-      message: 'Despesa criada com sucesso'
-    }, { status: 201 })
+    return createSuccessResponse(novaDespesa, 'Despesa criada com sucesso', undefined, 201)
   },
   { permissions: 'financeiro.manage' }
 )

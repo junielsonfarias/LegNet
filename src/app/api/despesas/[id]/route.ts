@@ -1,33 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { despesasDbService } from '@/lib/services/despesas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const despesa = await despesasDbService.getById(id)
+) => {
+  const { id } = await params
+  const despesa = await despesasDbService.getById(id)
 
-    if (!despesa) {
-      return NextResponse.json(
-        { success: false, error: 'Despesa nao encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ success: true, data: despesa })
-  } catch (error) {
-    console.error('Erro ao buscar despesa:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!despesa) {
+    throw new NotFoundError('Despesa')
   }
-}
+
+  return createSuccessResponse(despesa)
+})
 
 export const PUT = withAuth(
   async (
@@ -39,10 +29,7 @@ export const PUT = withAuth(
 
     const despesaExistente = await despesasDbService.getById(id)
     if (!despesaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Despesa nao encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Despesa')
     }
 
     const despesaAtualizada = await despesasDbService.update(id, {
@@ -70,11 +57,7 @@ export const PUT = withAuth(
       observacoes: body.observacoes
     })
 
-    return NextResponse.json({
-      success: true,
-      data: despesaAtualizada,
-      message: 'Despesa atualizada com sucesso'
-    })
+    return createSuccessResponse(despesaAtualizada, 'Despesa atualizada com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )
@@ -88,18 +71,12 @@ export const DELETE = withAuth(
 
     const despesaExistente = await despesasDbService.getById(id)
     if (!despesaExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Despesa nao encontrada' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Despesa')
     }
 
     await despesasDbService.remove(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Despesa excluida com sucesso'
-    })
+    return createSuccessResponse(null, 'Despesa excluida com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )

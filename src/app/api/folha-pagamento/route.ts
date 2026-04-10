@@ -1,47 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { folhaPagamentoDbService } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-// SEGURANÇA: GET protegido pois dados financeiros devem ser acessados via /api/dados-abertos para transparência
+// SEGURANCA: GET protegido pois dados financeiros devem ser acessados via /api/dados-abertos para transparencia
 export const GET = withAuth(
   async (request: NextRequest) => {
-    try {
-      const { searchParams } = new URL(request.url)
-      const ano = searchParams.get('ano')
-      const mes = searchParams.get('mes')
-      const situacao = searchParams.get('situacao')
-      const page = parseInt(searchParams.get('page') || '1')
-      const limit = parseInt(searchParams.get('limit') || '10')
+    const { searchParams } = new URL(request.url)
+    const ano = searchParams.get('ano')
+    const mes = searchParams.get('mes')
+    const situacao = searchParams.get('situacao')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
 
-      const result = await folhaPagamentoDbService.paginate(
-        {
-          ano: ano ? parseInt(ano) : undefined,
-          mes: mes ? parseInt(mes) : undefined,
-          situacao: situacao || undefined
-        },
-        { page, limit }
-      )
+    const result = await folhaPagamentoDbService.paginate(
+      {
+        ano: ano ? parseInt(ano) : undefined,
+        mes: mes ? parseInt(mes) : undefined,
+        situacao: situacao || undefined
+      },
+      { page, limit }
+    )
 
-      return NextResponse.json({
-        success: true,
-        data: result.data,
-        pagination: result.pagination
-      }, {
-        headers: {
-          // SEGURANÇA: Cache privado para dados sensíveis
-          'Cache-Control': 'private, no-store',
-          'X-Total-Count': result.pagination.total.toString()
-        }
-      })
-    } catch (error) {
-      console.error('Erro ao buscar folhas de pagamento:', error)
-      return NextResponse.json(
-        { success: false, error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
-    }
+    return createSuccessResponse(result.data, undefined, undefined, 200, {
+      total: result.pagination.total,
+      page: result.pagination.page,
+      limit: result.pagination.limit,
+      totalPages: result.pagination.totalPages
+    })
   },
   { permissions: 'financeiro.manage' }
 )
@@ -51,10 +39,7 @@ export const POST = withAuth(
     const body = await request.json()
 
     if (!body.competencia || !body.mes || !body.ano) {
-      return NextResponse.json(
-        { success: false, error: 'Campos obrigatorios nao fornecidos (competencia, mes, ano)' },
-        { status: 400 }
-      )
+      throw new ValidationError('Campos obrigatorios nao fornecidos (competencia, mes, ano)')
     }
 
     const novaFolha = await folhaPagamentoDbService.create({
@@ -70,11 +55,7 @@ export const POST = withAuth(
       observacoes: body.observacoes
     })
 
-    return NextResponse.json({
-      success: true,
-      data: novaFolha,
-      message: 'Folha de pagamento criada com sucesso'
-    }, { status: 201 })
+    return createSuccessResponse(novaFolha, 'Folha de pagamento criada com sucesso', undefined, 201)
   },
   { permissions: 'financeiro.manage' }
 )

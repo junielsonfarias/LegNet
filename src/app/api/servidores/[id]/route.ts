@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { servidoresDbService } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * GET - Buscar servidor por ID
- * SEGURANÇA: Requer permissão financeiro.view (dados sensíveis como CPF e salário)
+ * SEGURANCA: Requer permissao financeiro.view (dados sensiveis como CPF e salario)
  */
 export const GET = withAuth(
   async (
@@ -17,13 +18,10 @@ export const GET = withAuth(
     const servidor = await servidoresDbService.getById(id)
 
     if (!servidor) {
-      return NextResponse.json(
-        { success: false, error: 'Servidor nao encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Servidor')
     }
 
-    return NextResponse.json({ success: true, data: servidor })
+    return createSuccessResponse(servidor)
   },
   { permissions: 'financeiro.view' }
 )
@@ -38,10 +36,7 @@ export const PUT = withAuth(
 
     const servidorExistente = await servidoresDbService.getById(id)
     if (!servidorExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Servidor nao encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Servidor')
     }
 
     const servidorAtualizado = await servidoresDbService.update(id, {
@@ -60,11 +55,7 @@ export const PUT = withAuth(
       observacoes: body.observacoes
     })
 
-    return NextResponse.json({
-      success: true,
-      data: servidorAtualizado,
-      message: 'Servidor atualizado com sucesso'
-    })
+    return createSuccessResponse(servidorAtualizado, 'Servidor atualizado com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )
@@ -78,18 +69,12 @@ export const DELETE = withAuth(
 
     const servidorExistente = await servidoresDbService.getById(id)
     if (!servidorExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Servidor nao encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Servidor')
     }
 
     await servidoresDbService.remove(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Servidor excluido com sucesso'
-    })
+    return createSuccessResponse(null, 'Servidor excluido com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )

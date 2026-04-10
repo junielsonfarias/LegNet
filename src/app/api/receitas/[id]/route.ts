@@ -1,33 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { receitasDbService } from '@/lib/services/receitas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const receita = await receitasDbService.getById(id)
+) => {
+  const { id } = await params
+  const receita = await receitasDbService.getById(id)
 
-    if (!receita) {
-      return NextResponse.json(
-        { success: false, error: 'Receita nao encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ success: true, data: receita })
-  } catch (error) {
-    console.error('Erro ao buscar receita:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!receita) {
+    throw new NotFoundError('Receita')
   }
-}
+
+  return createSuccessResponse(receita)
+})
 
 export const PUT = withAuth(async (
   request: NextRequest,
@@ -38,10 +28,7 @@ export const PUT = withAuth(async (
 
   const receitaExistente = await receitasDbService.getById(id)
   if (!receitaExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Receita nao encontrada' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Receita')
   }
 
   const receitaAtualizada = await receitasDbService.update(id, {
@@ -63,11 +50,7 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
-  return NextResponse.json({
-    success: true,
-    data: receitaAtualizada,
-    message: 'Receita atualizada com sucesso'
-  })
+  return createSuccessResponse(receitaAtualizada, 'Receita atualizada com sucesso')
 }, { permissions: 'financeiro.manage' })
 
 export const DELETE = withAuth(async (
@@ -78,16 +61,10 @@ export const DELETE = withAuth(async (
 
   const receitaExistente = await receitasDbService.getById(id)
   if (!receitaExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Receita nao encontrada' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Receita')
   }
 
   await receitasDbService.remove(id)
 
-  return NextResponse.json({
-    success: true,
-    message: 'Receita excluida com sucesso'
-  })
+  return createSuccessResponse(null, 'Receita excluida com sucesso')
 }, { permissions: 'financeiro.manage' })

@@ -1,52 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { servidoresDbService } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import type { SituacaoServidor, VinculoServidor } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
-// SEGURANÇA: GET protegido pois retorna dados sensíveis (CPF, salário)
+// SEGURANCA: GET protegido pois retorna dados sensiveis (CPF, salario)
 export const GET = withAuth(
   async (request: NextRequest) => {
-    try {
-      const { searchParams } = new URL(request.url)
-      const situacao = searchParams.get('situacao') as SituacaoServidor | null
-      const vinculo = searchParams.get('vinculo') as VinculoServidor | null
-      const cargo = searchParams.get('cargo')
-      const unidade = searchParams.get('unidade')
-      const nome = searchParams.get('nome')
-      const page = parseInt(searchParams.get('page') || '1')
-      const limit = parseInt(searchParams.get('limit') || '10')
+    const { searchParams } = new URL(request.url)
+    const situacao = searchParams.get('situacao') as SituacaoServidor | null
+    const vinculo = searchParams.get('vinculo') as VinculoServidor | null
+    const cargo = searchParams.get('cargo')
+    const unidade = searchParams.get('unidade')
+    const nome = searchParams.get('nome')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
 
-      const result = await servidoresDbService.paginate(
-        {
-          situacao: situacao || undefined,
-          vinculo: vinculo || undefined,
-          cargo: cargo || undefined,
-          unidade: unidade || undefined,
-          nome: nome || undefined
-        },
-        { page, limit }
-      )
+    const result = await servidoresDbService.paginate(
+      {
+        situacao: situacao || undefined,
+        vinculo: vinculo || undefined,
+        cargo: cargo || undefined,
+        unidade: unidade || undefined,
+        nome: nome || undefined
+      },
+      { page, limit }
+    )
 
-      return NextResponse.json({
-        success: true,
-        data: result.data,
-        pagination: result.pagination
-      }, {
-        headers: {
-          // SEGURANÇA: Removido cache público para dados sensíveis
-          'Cache-Control': 'private, no-store',
-          'X-Total-Count': result.pagination.total.toString()
-        }
-      })
-    } catch (error) {
-      console.error('Erro ao buscar servidores:', error)
-      return NextResponse.json(
-        { success: false, error: 'Erro interno do servidor' },
-        { status: 500 }
-      )
-    }
+    return createSuccessResponse(result.data, undefined, undefined, 200, {
+      total: result.pagination.total,
+      page: result.pagination.page,
+      limit: result.pagination.limit,
+      totalPages: result.pagination.totalPages
+    })
   },
   { permissions: 'financeiro.manage' }
 )
@@ -56,10 +44,7 @@ export const POST = withAuth(
     const body = await request.json()
 
     if (!body.nome || !body.vinculo) {
-      return NextResponse.json(
-        { success: false, error: 'Campos obrigatorios nao fornecidos (nome, vinculo)' },
-        { status: 400 }
-      )
+      throw new ValidationError('Campos obrigatorios nao fornecidos (nome, vinculo)')
     }
 
     const novoServidor = await servidoresDbService.create({
@@ -78,11 +63,7 @@ export const POST = withAuth(
       observacoes: body.observacoes
     })
 
-    return NextResponse.json({
-      success: true,
-      data: novoServidor,
-      message: 'Servidor criado com sucesso'
-    }, { status: 201 })
+    return createSuccessResponse(novoServidor, 'Servidor criado com sucesso', undefined, 201)
   },
   { permissions: 'financeiro.manage' }
 )
