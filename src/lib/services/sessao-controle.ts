@@ -1381,7 +1381,7 @@ export async function iniciarTurnoItem(
   sessaoId: string,
   itemId: string
 ): Promise<{
-  item: Record<string, unknown>
+  item: Record<string, unknown> | null
   configuracao: {
     totalTurnos: number
     tipoQuorum: TipoQuorum
@@ -1457,7 +1457,7 @@ export async function finalizarTurnoItem(
   itemId: string,
   resultado: 'APROVADO' | 'REJEITADO'
 ): Promise<{
-  item: Record<string, unknown>
+  item: Record<string, unknown> | null
   resultado: {
     proximoTurno: boolean
     mensagem: string
