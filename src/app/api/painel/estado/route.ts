@@ -3,42 +3,25 @@
  * GET: Retorna estado atual do painel para uma sessao
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { getEstadoPainel } from '@/lib/services/painel-tempo-real-service'
+import { withErrorHandler, createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const sessaoId = searchParams.get('sessaoId')
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const sessaoId = searchParams.get('sessaoId')
 
-    if (!sessaoId) {
-      return NextResponse.json(
-        { error: 'sessaoId e obrigatorio' },
-        { status: 400 }
-      )
-    }
-
-    const estado = await getEstadoPainel(sessaoId)
-
-    if (!estado) {
-      return NextResponse.json(
-        { error: 'Sessao nao encontrada' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: estado,
-      timestamp: new Date().toISOString()
-    })
-  } catch (error) {
-    console.error('Erro ao buscar estado do painel:', error)
-    return NextResponse.json(
-      { error: 'Erro ao buscar estado do painel' },
-      { status: 500 }
-    )
+  if (!sessaoId) {
+    throw new ValidationError('sessaoId e obrigatorio')
   }
-}
+
+  const estado = await getEstadoPainel(sessaoId)
+
+  if (!estado) {
+    throw new NotFoundError('Sessao')
+  }
+
+  return createSuccessResponse(estado)
+})

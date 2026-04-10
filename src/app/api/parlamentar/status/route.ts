@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
 import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
+import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, ForbiddenError } from '@/lib/error-handler'
 
 // Forcar rota dinamica (nao pode ser pre-renderizada)
 export const dynamic = 'force-dynamic'
@@ -16,38 +16,14 @@ export const dynamic = 'force-dynamic'
  * - podeAcessarVotacao: boolean - se pode acessar modulo de votacao
  * - podeAcessarDashboard: boolean - se pode acessar o dashboard
  */
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
+export const GET = withAuth(async (request: NextRequest, _ctx: unknown, session: any) => {
+  const parlamentarId = session?.user?.parlamentarId
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    const user = session.user as any
-    const parlamentarId = user.parlamentarId
-
-    if (!parlamentarId) {
-      return NextResponse.json(
-        { success: false, error: 'Usuário não vinculado a um parlamentar' },
-        { status: 403 }
-      )
-    }
-
-    const data = await parlamentarDbService.getStatus(parlamentarId)
-
-    return NextResponse.json({
-      success: true,
-      data
-    })
-  } catch (error) {
-    console.error('Erro ao verificar status do parlamentar:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!parlamentarId) {
+    throw new ForbiddenError('Usuário não vinculado a um parlamentar')
   }
-}
+
+  const data = await parlamentarDbService.getStatus(parlamentarId)
+
+  return createSuccessResponse(data)
+}, { skipCsrf: true })

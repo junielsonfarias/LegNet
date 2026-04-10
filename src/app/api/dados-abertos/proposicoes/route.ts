@@ -6,71 +6,58 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
+import { withErrorHandler } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-  try {
-    enforceRateLimit(request, 'PUBLIC')
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  enforceRateLimit(request, 'PUBLIC')
 
-    const info = await dadosAbertosService.getInfo()
+  const info = await dadosAbertosService.getInfo()
 
-    const { searchParams } = new URL(request.url)
-    const formato = searchParams.get('formato') || 'json'
-    const anoParam = searchParams.get('ano')
-    const ano = anoParam ? parseInt(anoParam, 10) : undefined
-    const tipo = searchParams.get('tipo') || undefined
-    const status = searchParams.get('status') || undefined
-    const autorId = searchParams.get('autor') || undefined
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
+  const { searchParams } = new URL(request.url)
+  const formato = searchParams.get('formato') || 'json'
+  const anoParam = searchParams.get('ano')
+  const ano = anoParam ? parseInt(anoParam, 10) : undefined
+  const tipo = searchParams.get('tipo') || undefined
+  const status = searchParams.get('status') || undefined
+  const autorId = searchParams.get('autor') || undefined
+  const page = parseInt(searchParams.get('page') || '1')
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-    const { dados, total } = await dadosAbertosService.getProposicoes(
-      { ano, tipo, status, autorId },
-      { page, limit }
-    )
+  const { dados, total } = await dadosAbertosService.getProposicoes(
+    { ano, tipo, status, autorId },
+    { page, limit }
+  )
 
-    if (formato === 'csv') {
-      const csv = convertToCSV(dados.map(p => ({
-        ...p,
-        autor_nome: p.autor?.nome || '',
-        autor_partido: p.autor?.partido || ''
-      })), [
-        'id', 'numero', 'ano', 'tipo', 'ementa', 'status', 'data_apresentacao', 'data_votacao', 'autor_nome', 'autor_partido'
-      ])
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': 'attachment; filename="proposicoes.csv"'
-        }
-      })
-    }
-
-    return NextResponse.json({
-      dados,
-      metadados: {
-        total,
-        pagina: page,
-        limite: limit,
-        paginas: Math.ceil(total / limit),
-        atualizacao: new Date().toISOString(),
-        fonte: info.nomeCasa
+  if (formato === 'csv') {
+    const csv = convertToCSV(dados.map(p => ({
+      ...p,
+      autor_nome: p.autor?.nome || '',
+      autor_partido: p.autor?.partido || ''
+    })), [
+      'id', 'numero', 'ano', 'tipo', 'ementa', 'status', 'data_apresentacao', 'data_votacao', 'autor_nome', 'autor_partido'
+    ])
+    return new NextResponse(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="proposicoes.csv"'
       }
     })
-  } catch (error) {
-    if (error instanceof Error && error.message?.includes('Rate limit')) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 429 }
-      )
-    }
-    console.error('Erro ao buscar proposicoes:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
   }
-}
+
+  return NextResponse.json({
+    dados,
+    metadados: {
+      total,
+      pagina: page,
+      limite: limit,
+      paginas: Math.ceil(total / limit),
+      atualizacao: new Date().toISOString(),
+      fonte: info.nomeCasa
+    }
+  })
+})
 
 function convertToCSV(data: Record<string, unknown>[], campos: string[]): string {
   const header = campos.join(';')

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { withErrorHandler } from '@/lib/error-handler'
 
 /**
  * API para retornar a hora atual do servidor
@@ -12,7 +13,7 @@ import { NextResponse } from 'next/server'
  *   unix: number (timestamp em ms)
  * }
  */
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const agora = new Date()
 
   return NextResponse.json({
@@ -26,4 +27,4 @@ export async function GET() {
       'Expires': '0'
     }
   })
-}
+})

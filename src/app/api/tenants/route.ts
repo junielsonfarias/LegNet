@@ -5,8 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import {
   listActiveTenants,
   createTenant,
@@ -15,6 +13,8 @@ import {
   subdomainExists
 } from '@/lib/tenant'
 import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, ValidationError, ConflictError } from '@/lib/error-handler'
 
 // Schema de validação para criar tenant
 const createTenantSchema = z.object({
@@ -41,113 +41,44 @@ const createTenantSchema = z.object({
  * GET /api/tenants
  * Lista todos os tenants ativos (apenas admin)
  */
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    // Apenas ADMIN pode listar tenants
-    if (session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Acesso negado' },
-        { status: 403 }
-      )
-    }
-
-    const tenants = await listActiveTenants()
-
-    return NextResponse.json({ tenants })
-  } catch (error) {
-    console.error('Erro ao listar tenants:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+export const GET = withAuth(async (_request: NextRequest) => {
+  const tenants = await listActiveTenants()
+  return NextResponse.json({ tenants })
+}, { roles: ['ADMIN'] })
 
 /**
  * POST /api/tenants
  * Cria um novo tenant (apenas admin)
  */
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
+export const POST = withAuth(async (request: NextRequest) => {
+  const body = await request.json()
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
+  // Valida dados de entrada
+  const validationResult = createTenantSchema.safeParse(body)
 
-    // Apenas ADMIN pode criar tenants
-    if (session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Acesso negado' },
-        { status: 403 }
-      )
-    }
-
-    const body = await request.json()
-
-    // Valida dados de entrada
-    const validationResult = createTenantSchema.safeParse(body)
-
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: validationResult.error.flatten().fieldErrors
-        },
-        { status: 400 }
-      )
-    }
-
-    const data = validationResult.data
-
-    // Verifica se slug já existe
-    if (await slugExists(data.slug)) {
-      return NextResponse.json(
-        { error: 'Este slug já está em uso' },
-        { status: 409 }
-      )
-    }
-
-    // Verifica se domínio já existe
-    if (data.dominio && await domainExists(data.dominio)) {
-      return NextResponse.json(
-        { error: 'Este domínio já está em uso' },
-        { status: 409 }
-      )
-    }
-
-    // Verifica se subdomínio já existe
-    if (data.subdominio && await subdomainExists(data.subdominio)) {
-      return NextResponse.json(
-        { error: 'Este subdomínio já está em uso' },
-        { status: 409 }
-      )
-    }
-
-    // Cria o tenant
-    const tenant = await createTenant(data)
-
-    return NextResponse.json(
-      { tenant, message: 'Tenant criado com sucesso' },
-      { status: 201 }
-    )
-  } catch (error) {
-    console.error('Erro ao criar tenant:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!validationResult.success) {
+    throw new ValidationError('Dados inválidos', validationResult.error.flatten().fieldErrors)
   }
-}
+
+  const data = validationResult.data
+
+  // Verifica se slug já existe
+  if (await slugExists(data.slug)) {
+    throw new ConflictError('Este slug já está em uso')
+  }
+
+  // Verifica se domínio já existe
+  if (data.dominio && await domainExists(data.dominio)) {
+    throw new ConflictError('Este domínio já está em uso')
+  }
+
+  // Verifica se subdomínio já existe
+  if (data.subdominio && await subdomainExists(data.subdominio)) {
+    throw new ConflictError('Este subdomínio já está em uso')
+  }
+
+  // Cria o tenant
+  const tenant = await createTenant(data)
+
+  return createSuccessResponse(tenant, 'Tenant criado com sucesso', undefined, 201)
+}, { roles: ['ADMIN'] })

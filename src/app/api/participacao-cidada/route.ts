@@ -1,67 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { participacaoCidadaService } from '@/lib/participacao-cidada-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler } from '@/lib/error-handler'
 
 // GET - Buscar dados de participação cidadã (público)
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const tipo = searchParams.get('tipo')
-    const termo = searchParams.get('termo')
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const tipo = searchParams.get('tipo')
+  const termo = searchParams.get('termo')
 
-    if (tipo === 'sugestoes') {
-      const sugestoes = termo
-        ? participacaoCidadaService.searchSugestoes(termo)
-        : participacaoCidadaService.getAllSugestoes()
-      return NextResponse.json(sugestoes)
-    }
-
-    if (tipo === 'consultas') {
-      const consultas = termo
-        ? participacaoCidadaService.searchConsultas(termo)
-        : participacaoCidadaService.getAllConsultas()
-      return NextResponse.json(consultas)
-    }
-
-    if (tipo === 'peticoes') {
-      const peticoes = termo
-        ? participacaoCidadaService.searchPeticoes(termo)
-        : participacaoCidadaService.getAllPeticoes()
-      return NextResponse.json(peticoes)
-    }
-
-    if (tipo === 'foruns') {
-      const foruns = participacaoCidadaService.getAllForuns()
-      return NextResponse.json(foruns)
-    }
-
-    if (tipo === 'estatisticas') {
-      const estatisticas = participacaoCidadaService.getEstatisticas()
-      return NextResponse.json(estatisticas)
-    }
-
-    // Retorna todos os dados
-    const sugestoes = participacaoCidadaService.getAllSugestoes()
-    const consultas = participacaoCidadaService.getAllConsultas()
-    const peticoes = participacaoCidadaService.getAllPeticoes()
-    const foruns = participacaoCidadaService.getAllForuns()
-    const estatisticas = participacaoCidadaService.getEstatisticas()
-
-    return NextResponse.json({
-      sugestoes,
-      consultas,
-      peticoes,
-      foruns,
-      estatisticas
-    })
-  } catch (error) {
-    console.error('Erro ao buscar dados de participação cidadã:', error)
-    return NextResponse.json(
-      { message: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (tipo === 'sugestoes') {
+    const sugestoes = termo
+      ? participacaoCidadaService.searchSugestoes(termo)
+      : participacaoCidadaService.getAllSugestoes()
+    return NextResponse.json(sugestoes)
   }
-}
+
+  if (tipo === 'consultas') {
+    const consultas = termo
+      ? participacaoCidadaService.searchConsultas(termo)
+      : participacaoCidadaService.getAllConsultas()
+    return NextResponse.json(consultas)
+  }
+
+  if (tipo === 'peticoes') {
+    const peticoes = termo
+      ? participacaoCidadaService.searchPeticoes(termo)
+      : participacaoCidadaService.getAllPeticoes()
+    return NextResponse.json(peticoes)
+  }
+
+  if (tipo === 'foruns') {
+    const foruns = participacaoCidadaService.getAllForuns()
+    return NextResponse.json(foruns)
+  }
+
+  if (tipo === 'estatisticas') {
+    const estatisticas = participacaoCidadaService.getEstatisticas()
+    return NextResponse.json(estatisticas)
+  }
+
+  // Retorna todos os dados
+  const sugestoes = participacaoCidadaService.getAllSugestoes()
+  const consultas = participacaoCidadaService.getAllConsultas()
+  const peticoes = participacaoCidadaService.getAllPeticoes()
+  const foruns = participacaoCidadaService.getAllForuns()
+  const estatisticas = participacaoCidadaService.getEstatisticas()
+
+  return NextResponse.json({
+    sugestoes,
+    consultas,
+    peticoes,
+    foruns,
+    estatisticas
+  })
+})
 
 // POST - Criar nova sugestão, consulta, petição ou forum
 export const POST = withAuth(

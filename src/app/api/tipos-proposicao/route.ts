@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withAuth } from '@/lib/auth/permissions'
 import { tiposProposicaoDbService } from '@/lib/services/tipos-proposicao-db-service'
+import { withErrorHandler, createSuccessResponse, ConflictError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,56 +36,27 @@ const TipoProposicaoSchema = z.object({
   intersticioDias: z.number().int().min(0).max(30).default(0)
 })
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const apenasAtivos = searchParams.get('ativo') === 'true'
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const apenasAtivos = searchParams.get('ativo') === 'true'
 
-    const tipos = await tiposProposicaoDbService.list({
-      ativo: apenasAtivos ? true : undefined
-    })
+  const tipos = await tiposProposicaoDbService.list({
+    ativo: apenasAtivos ? true : undefined
+  })
 
-    return NextResponse.json({ success: true, data: tipos })
-  } catch (error) {
-    console.error('Erro ao buscar tipos de proposição:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao buscar tipos de proposição' },
-      { status: 500 }
-    )
-  }
-}
+  return createSuccessResponse(tipos)
+})
 
 export const POST = withAuth(async (request: NextRequest) => {
-  try {
-    const body = await request.json()
-    const validatedData = TipoProposicaoSchema.parse(body)
+  const body = await request.json()
+  const validatedData = TipoProposicaoSchema.parse(body)
 
-    const existente = await tiposProposicaoDbService.getByCodigo(validatedData.codigo)
-    if (existente) {
-      return NextResponse.json(
-        { success: false, error: 'Já existe uma configuração para este tipo de proposição' },
-        { status: 400 }
-      )
-    }
-
-    const tipo = await tiposProposicaoDbService.create(validatedData)
-
-    return NextResponse.json({
-      success: true,
-      data: tipo,
-      message: 'Tipo de proposição criado com sucesso'
-    }, { status: 201 })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Dados inválidos', details: error.errors },
-        { status: 400 }
-      )
-    }
-    console.error('Erro ao criar tipo de proposição:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao criar tipo de proposição' },
-      { status: 500 }
-    )
+  const existente = await tiposProposicaoDbService.getByCodigo(validatedData.codigo)
+  if (existente) {
+    throw new ConflictError('Já existe uma configuração para este tipo de proposição')
   }
+
+  const tipo = await tiposProposicaoDbService.create(validatedData)
+
+  return createSuccessResponse(tipo, 'Tipo de proposição criado com sucesso', undefined, 201)
 }, { permissions: 'config.manage' })

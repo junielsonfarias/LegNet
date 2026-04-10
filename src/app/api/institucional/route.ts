@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/auth/permissions'
-import { createSuccessResponse } from '@/lib/error-handler'
+import { createSuccessResponse, withErrorHandler } from '@/lib/error-handler'
 import { institucionalDbService } from '@/lib/services/institucional-db-service'
 
 export const dynamic = 'force-dynamic'
@@ -35,144 +35,122 @@ const dadosPadrao = {
   descricao: null
 }
 
-export async function GET() {
+export const GET = withErrorHandler(async () => {
+  // Buscar configuracao institucional
+  let configuracao: Awaited<ReturnType<typeof institucionalDbService.getConfiguracao>> = null
   try {
-    // Buscar configuracao institucional
-    let configuracao: Awaited<ReturnType<typeof institucionalDbService.getConfiguracao>> = null
-    try {
-      configuracao = await institucionalDbService.getConfiguracao()
-    } catch (dbError) {
-      console.warn('Aviso: Nao foi possivel buscar ConfiguracaoInstitucional:', dbError)
-    }
-
-    // Buscar Mesa Diretora (parlamentares com cargos diferentes de VEREADOR)
-    let mesaDiretora: any[] = []
-    try {
-      mesaDiretora = await institucionalDbService.getMesaDiretora()
-    } catch (dbError) {
-      console.warn('Aviso: Nao foi possivel buscar Mesa Diretora:', dbError)
-    }
-
-    // Contar total de parlamentares ativos
-    let totalParlamentares = 0
-    try {
-      totalParlamentares = await institucionalDbService.countParlamentaresAtivos()
-    } catch (dbError) {
-      console.warn('Aviso: Nao foi possivel contar parlamentares:', dbError)
-    }
-
-    // Buscar legislatura ativa
-    let legislaturaAtiva: { numero: number; anoInicio: number; anoFim: number } | null = null
-    try {
-      legislaturaAtiva = await institucionalDbService.getLegislaturaAtiva()
-    } catch (dbError) {
-      console.warn('Aviso: Nao foi possivel buscar legislatura ativa:', dbError)
-    }
-
-    // Contar comissoes ativas
-    let totalComissoes = 0
-    try {
-      totalComissoes = await institucionalDbService.countComissoesAtivas()
-    } catch (dbError) {
-      console.warn('Aviso: Nao foi possivel contar comissoes:', dbError)
-    }
-
-    // Mapear cargos para labels
-    const cargoLabels: Record<string, string> = {
-      'PRESIDENTE': 'Presidente',
-      'VICE_PRESIDENTE': 'Vice-presidente',
-      'PRIMEIRO_SECRETARIO': '1º Secretário',
-      'SEGUNDO_SECRETARIO': '2º Secretário'
-    }
-
-    const mesaDiretoraFormatada = mesaDiretora.map(m => ({
-      id: m.id,
-      nome: m.nome,
-      apelido: m.apelido,
-      cargo: m.cargo,
-      cargoLabel: cargoLabels[m.cargo] || m.cargo,
-      partido: m.partido,
-      foto: m.foto
-    }))
-
-    // Ordenar mesa diretora na ordem correta
-    const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO']
-    mesaDiretoraFormatada.sort((a, b) => {
-      return ordemCargos.indexOf(a.cargo) - ordemCargos.indexOf(b.cargo)
-    })
-
-    // Usar dados do banco ou dados padrao
-    const configData = configuracao ? {
-      nome: configuracao.nomeCasa,
-      sigla: configuracao.sigla,
-      cnpj: configuracao.cnpj,
-      endereco: {
-        logradouro: configuracao.enderecoLogradouro,
-        numero: configuracao.enderecoNumero,
-        bairro: configuracao.enderecoBairro,
-        cidade: configuracao.enderecoCidade,
-        estado: configuracao.enderecoEstado,
-        cep: configuracao.enderecoCep
-      },
-      telefone: configuracao.telefone,
-      email: configuracao.email,
-      site: configuracao.site,
-      logoUrl: configuracao.logoUrl,
-      brasaoUrl: (configuracao as any).brasaoUrl || null,
-      corPrimaria: (configuracao as any).corPrimaria || '#1e40af',
-      corSecundaria: (configuracao as any).corSecundaria || '#3b82f6',
-      corAcento: (configuracao as any).corAcento || '#059669',
-      descricao: configuracao.descricao,
-      facebookUrl: (configuracao as any).facebookUrl || null,
-      instagramUrl: (configuracao as any).instagramUrl || null,
-      youtubeUrl: (configuracao as any).youtubeUrl || null
-    } : dadosPadrao
-
-    const dados = {
-      configuracao: configData,
-      mesaDiretora: mesaDiretoraFormatada,
-      estatisticas: {
-        totalParlamentares,
-        totalComissoes
-      },
-      legislatura: legislaturaAtiva ? {
-        numero: legislaturaAtiva.numero,
-        periodo: `${legislaturaAtiva.anoInicio}/${legislaturaAtiva.anoFim}`
-      } : null
-    }
-
-    // Fonte dinâmica via dados do banco ou variavel de ambiente
-    const fonteDados = configData.nome
-
-    return NextResponse.json({
-      dados,
-      metadados: {
-        atualizacao: new Date().toISOString(),
-        fonte: fonteDados
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar configuracao institucional:', error)
-
-    // Retornar dados padrao em caso de erro total
-    return NextResponse.json({
-      dados: {
-        configuracao: dadosPadrao,
-        mesaDiretora: [],
-        estatisticas: {
-          totalParlamentares: 0,
-          totalComissoes: 0
-        },
-        legislatura: null
-      },
-      metadados: {
-        atualizacao: new Date().toISOString(),
-        fonte: dadosPadrao.nome,
-        aviso: 'Dados parciais devido a erro temporario'
-      }
-    })
+    configuracao = await institucionalDbService.getConfiguracao()
+  } catch (_dbError) {
+    // Fallback silencioso - usa dados padrao
   }
-}
+
+  // Buscar Mesa Diretora (parlamentares com cargos diferentes de VEREADOR)
+  let mesaDiretora: any[] = []
+  try {
+    mesaDiretora = await institucionalDbService.getMesaDiretora()
+  } catch (_dbError) {
+    // Fallback silencioso
+  }
+
+  // Contar total de parlamentares ativos
+  let totalParlamentares = 0
+  try {
+    totalParlamentares = await institucionalDbService.countParlamentaresAtivos()
+  } catch (_dbError) {
+    // Fallback silencioso
+  }
+
+  // Buscar legislatura ativa
+  let legislaturaAtiva: { numero: number; anoInicio: number; anoFim: number } | null = null
+  try {
+    legislaturaAtiva = await institucionalDbService.getLegislaturaAtiva()
+  } catch (_dbError) {
+    // Fallback silencioso
+  }
+
+  // Contar comissoes ativas
+  let totalComissoes = 0
+  try {
+    totalComissoes = await institucionalDbService.countComissoesAtivas()
+  } catch (_dbError) {
+    // Fallback silencioso
+  }
+
+  // Mapear cargos para labels
+  const cargoLabels: Record<string, string> = {
+    'PRESIDENTE': 'Presidente',
+    'VICE_PRESIDENTE': 'Vice-presidente',
+    'PRIMEIRO_SECRETARIO': '1º Secretário',
+    'SEGUNDO_SECRETARIO': '2º Secretário'
+  }
+
+  const mesaDiretoraFormatada = mesaDiretora.map(m => ({
+    id: m.id,
+    nome: m.nome,
+    apelido: m.apelido,
+    cargo: m.cargo,
+    cargoLabel: cargoLabels[m.cargo] || m.cargo,
+    partido: m.partido,
+    foto: m.foto
+  }))
+
+  // Ordenar mesa diretora na ordem correta
+  const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO']
+  mesaDiretoraFormatada.sort((a, b) => {
+    return ordemCargos.indexOf(a.cargo) - ordemCargos.indexOf(b.cargo)
+  })
+
+  // Usar dados do banco ou dados padrao
+  const configData = configuracao ? {
+    nome: configuracao.nomeCasa,
+    sigla: configuracao.sigla,
+    cnpj: configuracao.cnpj,
+    endereco: {
+      logradouro: configuracao.enderecoLogradouro,
+      numero: configuracao.enderecoNumero,
+      bairro: configuracao.enderecoBairro,
+      cidade: configuracao.enderecoCidade,
+      estado: configuracao.enderecoEstado,
+      cep: configuracao.enderecoCep
+    },
+    telefone: configuracao.telefone,
+    email: configuracao.email,
+    site: configuracao.site,
+    logoUrl: configuracao.logoUrl,
+    brasaoUrl: (configuracao as any).brasaoUrl || null,
+    corPrimaria: (configuracao as any).corPrimaria || '#1e40af',
+    corSecundaria: (configuracao as any).corSecundaria || '#3b82f6',
+    corAcento: (configuracao as any).corAcento || '#059669',
+    descricao: configuracao.descricao,
+    facebookUrl: (configuracao as any).facebookUrl || null,
+    instagramUrl: (configuracao as any).instagramUrl || null,
+    youtubeUrl: (configuracao as any).youtubeUrl || null
+  } : dadosPadrao
+
+  const dados = {
+    configuracao: configData,
+    mesaDiretora: mesaDiretoraFormatada,
+    estatisticas: {
+      totalParlamentares,
+      totalComissoes
+    },
+    legislatura: legislaturaAtiva ? {
+      numero: legislaturaAtiva.numero,
+      periodo: `${legislaturaAtiva.anoInicio}/${legislaturaAtiva.anoFim}`
+    } : null
+  }
+
+  // Fonte dinâmica via dados do banco ou variavel de ambiente
+  const fonteDados = configData.nome
+
+  return NextResponse.json({
+    dados,
+    metadados: {
+      atualizacao: new Date().toISOString(),
+      fonte: fonteDados
+    }
+  })
+})
 
 // PUT - Atualizar configuracao institucional (ADMIN)
 export const PUT = withAuth(async (request: NextRequest) => {

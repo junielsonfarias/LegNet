@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { findTenantByIdentifier } from '@/lib/tenant'
+import { withErrorHandler, ValidationError, NotFoundError } from '@/lib/error-handler'
 
 interface RouteParams {
   params: Promise<{
@@ -13,35 +14,21 @@ interface RouteParams {
   }>
 }
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: RouteParams
-) {
-  try {
-    const { slug } = await params
+) => {
+  const { slug } = await params
 
-    if (!slug) {
-      return NextResponse.json(
-        { error: 'Slug do tenant é obrigatório' },
-        { status: 400 }
-      )
-    }
-
-    const tenant = await findTenantByIdentifier('slug', slug)
-
-    if (!tenant) {
-      return NextResponse.json(
-        { error: 'Tenant não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ tenant })
-  } catch (error) {
-    console.error('Erro ao buscar tenant:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!slug) {
+    throw new ValidationError('Slug do tenant é obrigatório')
   }
-}
+
+  const tenant = await findTenantByIdentifier('slug', slug)
+
+  if (!tenant) {
+    throw new NotFoundError('Tenant')
+  }
+
+  return NextResponse.json({ tenant })
+})

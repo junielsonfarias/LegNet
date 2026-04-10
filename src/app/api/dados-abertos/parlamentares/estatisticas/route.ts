@@ -6,31 +6,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
+import { withErrorHandler } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-  try {
-    enforceRateLimit(request, 'PUBLIC')
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  enforceRateLimit(request, 'PUBLIC')
 
-    const [info, { dados, total }] = await Promise.all([
-      dadosAbertosService.getInfo(),
-      dadosAbertosService.getEstatisticasParlamentares()
-    ])
+  const [info, { dados, total }] = await Promise.all([
+    dadosAbertosService.getInfo(),
+    dadosAbertosService.getEstatisticasParlamentares()
+  ])
 
-    return NextResponse.json({
-      dados,
-      metadados: {
-        total,
-        atualizacao: new Date().toISOString(),
-        fonte: info.nomeCasa
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar estatísticas dos parlamentares:', error)
-    return NextResponse.json(
-      { error: 'Erro ao buscar estatísticas' },
-      { status: 500 }
-    )
-  }
-}
+  return NextResponse.json({
+    dados,
+    metadados: {
+      total,
+      atualizacao: new Date().toISOString(),
+      fonte: info.nomeCasa
+    }
+  })
+})

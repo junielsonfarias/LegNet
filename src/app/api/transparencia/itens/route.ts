@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server'
-import { createSuccessResponse } from '@/lib/error-handler'
+import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { transparenciaService } from '@/lib/transparencia-dados-service'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
 
   const categoria = searchParams.get('categoria')
@@ -81,4 +81,4 @@ export async function GET(request: NextRequest) {
     anos: resultado.anos,
     stats: resultado.stats
   })
-}
+})

@@ -8,11 +8,11 @@
  */
 
 import { NextRequest } from 'next/server'
-import { createSuccessResponse } from '@/lib/error-handler'
+import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (_request: NextRequest) => {
   // Retornar estrutura vazia ate que o modelo Prisma seja criado
   return createSuccessResponse({
     audiencias: [],
@@ -24,4 +24,4 @@ export async function GET(request: NextRequest) {
       canceladas: 0
     }
   })
-}
+})

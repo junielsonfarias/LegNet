@@ -4,12 +4,12 @@
  */
 
 import { NextRequest } from 'next/server'
-import { createSuccessResponse } from '@/lib/error-handler'
+import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const search = searchParams.get('search')
   const id = searchParams.get('id')
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       pendentes: totalPautas - publicadas
     }
   })
-}
+})
 
 function mapPauta(pauta: any) {
   const sessao = pauta.sessao

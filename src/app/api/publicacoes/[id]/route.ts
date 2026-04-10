@@ -2,28 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { publicacoesService } from '@/lib/publicacoes-service'
 import { withAuth } from '@/lib/auth/permissions'
+import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const publicacao = await publicacoesService.getById(id)
-    if (!publicacao) {
-      return NextResponse.json(
-        { success: false, error: 'Publicação não encontrada.' },
-        { status: 404 }
-      )
-    }
-    return NextResponse.json({ success: true, data: publicacao })
-  } catch (error) {
-    console.error('Erro ao buscar publicação:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro ao buscar publicação.' },
-      { status: 500 }
-    )
+export const GET = withErrorHandler(async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params
+  const publicacao = await publicacoesService.getById(id)
+  if (!publicacao) {
+    throw new NotFoundError('Publicação')
   }
-}
+  return createSuccessResponse(publicacao)
+})
 
 export const PUT = withAuth(
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

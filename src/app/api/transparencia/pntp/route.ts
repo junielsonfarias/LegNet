@@ -5,26 +5,19 @@
 
 import { NextResponse } from 'next/server'
 import { verificarConformidadePNTP, gerarAlertasDesatualizacao } from '@/lib/services/transparencia-service'
+import { withErrorHandler } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  try {
-    const [relatorio, alertas] = await Promise.all([
-      verificarConformidadePNTP(),
-      gerarAlertasDesatualizacao()
-    ])
+export const GET = withErrorHandler(async () => {
+  const [relatorio, alertas] = await Promise.all([
+    verificarConformidadePNTP(),
+    gerarAlertasDesatualizacao()
+  ])
 
-    return NextResponse.json({
-      relatorio,
-      alertas: alertas.alertas,
-      geradoEm: new Date().toISOString()
-    })
-  } catch (error) {
-    console.error('Erro ao gerar relatorio PNTP:', error)
-    return NextResponse.json(
-      { error: 'Erro ao gerar relatorio de conformidade PNTP' },
-      { status: 500 }
-    )
-  }
-}
+  return NextResponse.json({
+    relatorio,
+    alertas: alertas.alertas,
+    geradoEm: new Date().toISOString()
+  })
+})

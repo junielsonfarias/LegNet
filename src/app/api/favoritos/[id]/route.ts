@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
 import { favoritoDbService } from '@/lib/services/favorito-db-service'
+import { createSuccessResponse, NotFoundError, ForbiddenError, ValidationError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,108 +17,78 @@ const updateSchema = z.object({
 /**
  * GET /api/favoritos/[id] - Busca um favorito específico
  */
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
+  { params }: { params: Promise<{ id: string }> },
+  session: any
+) => {
+  const { id } = await params
 
-    const { id } = await params
+  const favorito = await favoritoDbService.getById(id)
 
-    const favorito = await favoritoDbService.getById(id)
-
-    if (!favorito) {
-      return NextResponse.json({ error: 'Favorito não encontrado' }, { status: 404 })
-    }
-
-    if (favorito.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
-    }
-
-    return NextResponse.json({ favorito })
-  } catch (error) {
-    console.error('Erro ao buscar favorito:', error)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  if (!favorito) {
+    throw new NotFoundError('Favorito')
   }
-}
+
+  if (favorito.userId !== session?.user?.id) {
+    throw new ForbiddenError('Acesso negado')
+  }
+
+  return NextResponse.json({ favorito })
+}, { skipCsrf: true })
 
 /**
  * PATCH /api/favoritos/[id] - Atualiza configurações do favorito
  */
-export async function PATCH(
+export const PATCH = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
+  { params }: { params: Promise<{ id: string }> },
+  session: any
+) => {
+  const { id } = await params
+  const body = await request.json()
+  const validacao = updateSchema.safeParse(body)
 
-    const { id } = await params
-    const body = await request.json()
-    const validacao = updateSchema.safeParse(body)
-
-    if (!validacao.success) {
-      return NextResponse.json(
-        { error: 'Dados inválidos', detalhes: validacao.error.errors },
-        { status: 400 }
-      )
-    }
-
-    const favorito = await favoritoDbService.getById(id)
-
-    if (!favorito) {
-      return NextResponse.json({ error: 'Favorito não encontrado' }, { status: 404 })
-    }
-
-    if (favorito.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
-    }
-
-    const atualizado = await favoritoDbService.updateById(id, validacao.data)
-
-    return NextResponse.json({ favorito: atualizado })
-  } catch (error) {
-    console.error('Erro ao atualizar favorito:', error)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  if (!validacao.success) {
+    throw new ValidationError('Dados inválidos', validacao.error.errors)
   }
-}
+
+  const favorito = await favoritoDbService.getById(id)
+
+  if (!favorito) {
+    throw new NotFoundError('Favorito')
+  }
+
+  if (favorito.userId !== session?.user?.id) {
+    throw new ForbiddenError('Acesso negado')
+  }
+
+  const atualizado = await favoritoDbService.updateById(id, validacao.data)
+
+  return NextResponse.json({ favorito: atualizado })
+})
 
 /**
  * DELETE /api/favoritos/[id] - Remove um favorito
  */
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-    }
+  { params }: { params: Promise<{ id: string }> },
+  session: any
+) => {
+  const { id } = await params
 
-    const { id } = await params
+  const favorito = await favoritoDbService.getById(id)
 
-    const favorito = await favoritoDbService.getById(id)
-
-    if (!favorito) {
-      return NextResponse.json({ error: 'Favorito não encontrado' }, { status: 404 })
-    }
-
-    if (favorito.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
-    }
-
-    await favoritoDbService.deleteById(id)
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Erro ao remover favorito:', error)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  if (!favorito) {
+    throw new NotFoundError('Favorito')
   }
-}
+
+  if (favorito.userId !== session?.user?.id) {
+    throw new ForbiddenError('Acesso negado')
+  }
+
+  await favoritoDbService.deleteById(id)
+
+  return createSuccessResponse({ removed: true })
+})

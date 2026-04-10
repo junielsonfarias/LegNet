@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { checkProductionReadiness } from '@/lib/config/production'
+import { withErrorHandler } from '@/lib/error-handler'
 
 interface ReadinessCheck {
   name: string
@@ -15,7 +16,7 @@ interface ReadinessCheck {
   latency?: number
 }
 
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const checks: ReadinessCheck[] = []
   const startTime = Date.now()
 
@@ -50,7 +51,7 @@ export async function GET() {
         message: check.message
       })
     }
-  } catch (error) {
+  } catch (_error) {
     checks.push({
       name: 'config',
       status: 'warning',
@@ -94,4 +95,4 @@ export async function GET() {
   const httpStatus = hasErrors ? 503 : 200
 
   return NextResponse.json(response, { status: httpStatus })
-}
+})

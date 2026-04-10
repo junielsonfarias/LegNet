@@ -5,17 +5,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import {
   findTenantById,
   updateTenant,
   deactivateTenant,
-  slugExists,
   domainExists,
   subdomainExists
 } from '@/lib/tenant'
 import { z } from 'zod'
+import { withAuth } from '@/lib/auth/permissions'
+import { createSuccessResponse, NotFoundError, ValidationError, ConflictError, AppError } from '@/lib/error-handler'
 
 interface RouteParams {
   params: Promise<{
@@ -47,197 +46,95 @@ const updateTenantSchema = z.object({
  * GET /api/tenants/[id]
  * Busca um tenant específico (apenas admin)
  */
-export async function GET(
+export const GET = withAuth(async (
   request: NextRequest,
   { params }: RouteParams
-) {
-  try {
-    const session = await getServerSession(authOptions)
+) => {
+  const { id } = await params
+  const tenant = await findTenantById(id)
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
-    if (session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Acesso negado' },
-        { status: 403 }
-      )
-    }
-
-    const { id } = await params
-    const tenant = await findTenantById(id)
-
-    if (!tenant) {
-      return NextResponse.json(
-        { error: 'Tenant não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ tenant })
-  } catch (error) {
-    console.error('Erro ao buscar tenant:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!tenant) {
+    throw new NotFoundError('Tenant')
   }
-}
+
+  return NextResponse.json({ tenant })
+}, { roles: ['ADMIN'] })
 
 /**
  * PUT /api/tenants/[id]
  * Atualiza um tenant (apenas admin)
  */
-export async function PUT(
+export const PUT = withAuth(async (
   request: NextRequest,
   { params }: RouteParams
-) {
-  try {
-    const session = await getServerSession(authOptions)
+) => {
+  const { id } = await params
+  const body = await request.json()
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
+  // Verifica se tenant existe
+  const existingTenant = await findTenantById(id)
 
-    if (session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Acesso negado' },
-        { status: 403 }
-      )
-    }
-
-    const { id } = await params
-    const body = await request.json()
-
-    // Verifica se tenant existe
-    const existingTenant = await findTenantById(id)
-
-    if (!existingTenant) {
-      return NextResponse.json(
-        { error: 'Tenant não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    // Valida dados de entrada
-    const validationResult = updateTenantSchema.safeParse(body)
-
-    if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Dados inválidos',
-          details: validationResult.error.flatten().fieldErrors
-        },
-        { status: 400 }
-      )
-    }
-
-    const data = validationResult.data
-
-    // Verifica se domínio já existe (excluindo o tenant atual)
-    if (data.dominio && await domainExists(data.dominio, id)) {
-      return NextResponse.json(
-        { error: 'Este domínio já está em uso por outro tenant' },
-        { status: 409 }
-      )
-    }
-
-    // Verifica se subdomínio já existe (excluindo o tenant atual)
-    if (data.subdominio && await subdomainExists(data.subdominio, id)) {
-      return NextResponse.json(
-        { error: 'Este subdomínio já está em uso por outro tenant' },
-        { status: 409 }
-      )
-    }
-
-    // Atualiza o tenant
-    const tenant = await updateTenant(id, data)
-
-    if (!tenant) {
-      return NextResponse.json(
-        { error: 'Erro ao atualizar tenant' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ tenant, message: 'Tenant atualizado com sucesso' })
-  } catch (error) {
-    console.error('Erro ao atualizar tenant:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!existingTenant) {
+    throw new NotFoundError('Tenant')
   }
-}
+
+  // Valida dados de entrada
+  const validationResult = updateTenantSchema.safeParse(body)
+
+  if (!validationResult.success) {
+    throw new ValidationError('Dados inválidos', validationResult.error.flatten().fieldErrors)
+  }
+
+  const data = validationResult.data
+
+  // Verifica se domínio já existe (excluindo o tenant atual)
+  if (data.dominio && await domainExists(data.dominio, id)) {
+    throw new ConflictError('Este domínio já está em uso por outro tenant')
+  }
+
+  // Verifica se subdomínio já existe (excluindo o tenant atual)
+  if (data.subdominio && await subdomainExists(data.subdominio, id)) {
+    throw new ConflictError('Este subdomínio já está em uso por outro tenant')
+  }
+
+  // Atualiza o tenant
+  const tenant = await updateTenant(id, data)
+
+  if (!tenant) {
+    throw new AppError('Erro ao atualizar tenant', 500)
+  }
+
+  return createSuccessResponse(tenant, 'Tenant atualizado com sucesso')
+}, { roles: ['ADMIN'] })
 
 /**
  * DELETE /api/tenants/[id]
  * Desativa um tenant (soft delete, apenas admin)
  */
-export async function DELETE(
+export const DELETE = withAuth(async (
   request: NextRequest,
   { params }: RouteParams
-) {
-  try {
-    const session = await getServerSession(authOptions)
+) => {
+  const { id } = await params
 
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
+  // Verifica se tenant existe
+  const existingTenant = await findTenantById(id)
 
-    if (session.user?.role !== 'ADMIN') {
-      return NextResponse.json(
-        { error: 'Acesso negado' },
-        { status: 403 }
-      )
-    }
-
-    const { id } = await params
-
-    // Verifica se tenant existe
-    const existingTenant = await findTenantById(id)
-
-    if (!existingTenant) {
-      return NextResponse.json(
-        { error: 'Tenant não encontrado' },
-        { status: 404 }
-      )
-    }
-
-    // Não permite desativar tenant padrão
-    if (existingTenant.slug === 'default') {
-      return NextResponse.json(
-        { error: 'Não é possível desativar o tenant padrão' },
-        { status: 400 }
-      )
-    }
-
-    // Desativa o tenant (soft delete)
-    const success = await deactivateTenant(id)
-
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Erro ao desativar tenant' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ message: 'Tenant desativado com sucesso' })
-  } catch (error) {
-    console.error('Erro ao desativar tenant:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!existingTenant) {
+    throw new NotFoundError('Tenant')
   }
-}
+
+  // Não permite desativar tenant padrão
+  if (existingTenant.slug === 'default') {
+    throw new ValidationError('Não é possível desativar o tenant padrão')
+  }
+
+  // Desativa o tenant (soft delete)
+  const success = await deactivateTenant(id)
+
+  if (!success) {
+    throw new AppError('Erro ao desativar tenant', 500)
+  }
+
+  return createSuccessResponse({ deactivated: true }, 'Tenant desativado com sucesso')
+}, { roles: ['ADMIN'] })

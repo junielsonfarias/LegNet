@@ -5,10 +5,11 @@
 
 import { NextResponse } from 'next/server'
 import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
+import { withErrorHandler } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export const GET = withErrorHandler(async () => {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
   const info = await dadosAbertosService.getInfo()
@@ -76,4 +77,4 @@ export async function GET() {
     },
     atualizacao: new Date().toISOString()
   })
-}
+})
