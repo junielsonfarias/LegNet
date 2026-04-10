@@ -225,10 +225,11 @@ export default function ParlamentaresPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Buscar</label>
+              <label htmlFor="filtro-busca-parlamentar" className="text-sm font-medium text-gray-700 mb-2 block">Buscar</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
+                  id="filtro-busca-parlamentar"
                   placeholder="Nome ou apelido..."
                   value={filtros.busca}
                   onChange={(e) => setFiltros(prev => ({ ...prev, busca: e.target.value }))}
@@ -238,8 +239,9 @@ export default function ParlamentaresPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Partido</label>
+              <label htmlFor="filtro-partido" className="text-sm font-medium text-gray-700 mb-2 block">Partido</label>
               <select
+                id="filtro-partido"
                 value={filtros.partido}
                 onChange={(e) => setFiltros(prev => ({ ...prev, partido: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-camara-primary focus:border-transparent"
@@ -252,8 +254,9 @@ export default function ParlamentaresPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Cargo</label>
+              <label htmlFor="filtro-cargo" className="text-sm font-medium text-gray-700 mb-2 block">Cargo</label>
               <select
+                id="filtro-cargo"
                 value={filtros.cargo}
                 onChange={(e) => setFiltros(prev => ({ ...prev, cargo: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-camara-primary focus:border-transparent"
@@ -268,8 +271,9 @@ export default function ParlamentaresPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+              <label htmlFor="filtro-status" className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
               <select
+                id="filtro-status"
                 value={filtros.status}
                 onChange={(e) => setFiltros(prev => ({ ...prev, status: e.target.value as 'ativos' | 'inativos' | 'todos' }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-camara-primary focus:border-transparent"

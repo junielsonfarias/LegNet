@@ -19,7 +19,7 @@ export interface AutorPayload {
 }
 
 const buildWhereClause = (filters: AutorFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.ativo !== undefined) where.ativo = filters.ativo
   if (filters.tipoAutorId) where.tipoAutorId = filters.tipoAutorId
@@ -90,7 +90,7 @@ export const autorDbService = {
   },
 
   async checkParlamentarVinculado(parlamentarId: string, excludeId?: string) {
-    const where: any = { parlamentarId }
+    const where: Record<string, unknown> = { parlamentarId }
     if (excludeId) where.id = { not: excludeId }
     return prisma.autor.findFirst({ where })
   },

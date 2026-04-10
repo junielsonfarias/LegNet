@@ -26,7 +26,7 @@ export interface TipoProposicaoPayload {
 
 export const tiposProposicaoDbService = {
   async list(filters: TipoProposicaoFilters = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.ativo !== undefined) where.ativo = filters.ativo
 
     return prisma.tipoProposicaoConfig.findMany({

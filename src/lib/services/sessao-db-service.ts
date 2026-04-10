@@ -256,7 +256,7 @@ export const sessaoDbService = {
     const limit = Math.min(100, Math.max(1, options.limit ?? 50))
     const skip = (page - 1) * limit
 
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
@@ -305,13 +305,14 @@ export const sessaoDbService = {
     to?: Date
     limit?: number
   }) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
     if (filters.from || filters.to) {
-      where.data = {}
-      if (filters.from) where.data.gte = filters.from
-      if (filters.to) where.data.lte = filters.to
+      const dataFilter: Record<string, Date> = {}
+      if (filters.from) dataFilter.gte = filters.from
+      if (filters.to) dataFilter.lte = filters.to
+      if (Object.keys(dataFilter).length > 0) where.data = dataFilter
     }
 
     return prisma.sessao.findMany({

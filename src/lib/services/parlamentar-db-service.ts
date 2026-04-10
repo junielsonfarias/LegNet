@@ -44,7 +44,7 @@ export interface ParlamentarPayload {
 }
 
 const buildWhereClause = (filters: ParlamentarFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.ativo !== undefined) where.ativo = filters.ativo
   if (filters.cargo) where.cargo = filters.cargo
@@ -151,7 +151,7 @@ export const parlamentarDbService = {
   },
 
   async checkDuplicate(nome: string, apelido: string, excludeId?: string) {
-    const where: any = {
+    const where: Record<string, unknown> = {
       OR: [{ nome }, { apelido }]
     }
     if (excludeId) {

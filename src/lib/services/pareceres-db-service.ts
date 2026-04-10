@@ -42,7 +42,7 @@ const defaultInclude = {
 }
 
 const buildWhereClause = (filters: ParecerFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
   if (filters.comissaoId) where.comissaoId = filters.comissaoId
   if (filters.proposicaoId) where.proposicaoId = filters.proposicaoId
   if (filters.relatorId) where.relatorId = filters.relatorId

@@ -22,7 +22,7 @@ const defaultInclude = {
 }
 
 const buildWhereClause = (filters: TipoTramitacaoFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
   if (filters.ativo !== undefined) where.ativo = filters.ativo
   if (filters.search) {
     where.OR = [
@@ -57,7 +57,7 @@ export const tiposTramitacaoDbService = {
   },
 
   async checkDuplicateName(nome: string, excludeId?: string) {
-    const where: any = { nome }
+    const where: Record<string, unknown> = { nome }
     if (excludeId) where.id = { not: excludeId }
     return prisma.tramitacaoTipo.findFirst({ where })
   },

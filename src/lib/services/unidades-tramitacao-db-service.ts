@@ -15,7 +15,7 @@ export interface UnidadeTramitacaoPayload {
 }
 
 const buildWhereClause = (filters: UnidadeTramitacaoFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
   if (filters.ativo !== undefined) where.ativo = filters.ativo
   if (filters.tipo) where.tipo = filters.tipo
   if (filters.search) {
@@ -59,13 +59,13 @@ export const unidadesTramitacaoDbService = {
   },
 
   async checkDuplicateName(nome: string, excludeId?: string) {
-    const where: any = { nome }
+    const where: Record<string, unknown> = { nome }
     if (excludeId) where.id = { not: excludeId }
     return prisma.tramitacaoUnidade.findFirst({ where })
   },
 
   async checkDuplicateSigla(sigla: string, excludeId?: string) {
-    const where: any = { sigla }
+    const where: Record<string, unknown> = { sigla }
     if (excludeId) where.id = { not: excludeId }
     return prisma.tramitacaoUnidade.findFirst({ where })
   },
@@ -100,7 +100,7 @@ export const unidadesTramitacaoDbService = {
   // --- Admin route helpers ---
 
   async listAdmin(filters: { ativo?: boolean; tipo?: string } = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.ativo !== undefined) where.ativo = filters.ativo
     if (filters.tipo) where.tipo = filters.tipo
 

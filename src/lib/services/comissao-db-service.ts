@@ -18,7 +18,7 @@ export interface ComissaoPayload {
 }
 
 const buildWhereClause = (filters: ComissaoFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.tipo) where.tipo = filters.tipo
   if (filters.ativa !== undefined) where.ativa = filters.ativa
@@ -103,7 +103,7 @@ export const comissaoDbService = {
   },
 
   async checkDuplicateName(nome: string, excludeId?: string) {
-    const where: any = {
+    const where: Record<string, unknown> = {
       nome: { equals: nome, mode: 'insensitive' }
     }
     if (excludeId) {

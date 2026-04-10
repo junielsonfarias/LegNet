@@ -17,7 +17,7 @@ const defaultInclude = {
 
 export const cargosMesaDbService = {
   async list(filters: CargosMesaFilters = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.periodoId) where.periodoId = filters.periodoId
 
     return prisma.cargoMesaDiretora.findMany({
@@ -35,16 +35,14 @@ export const cargosMesaDbService = {
   },
 
   async checkDuplicate(periodoId: string, nome: string, excludeId?: string) {
-    const where: any = {
-      periodoId_nome: { periodoId, nome }
-    }
-    // findUnique doesn't support excludeId, use findFirst
     if (excludeId) {
       return prisma.cargoMesaDiretora.findFirst({
         where: { periodoId, nome, id: { not: excludeId } }
       })
     }
-    return prisma.cargoMesaDiretora.findUnique({ where })
+    return prisma.cargoMesaDiretora.findUnique({
+      where: { periodoId_nome: { periodoId, nome } }
+    })
   },
 
   async create(payload: CargoMesaPayload) {

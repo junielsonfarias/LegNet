@@ -111,14 +111,16 @@ export default function SessaoDetailPage() {
   const [salvandoLinks, setSalvandoLinks] = useState(false)
 
   // Sincronizar URLs quando sessão carrega
+  const sessaoArquivoAta = sessao?.arquivoAta
+  const sessaoUrlTransmissao = sessao?.urlTransmissao
+  const sessaoUrlVideo = sessao?.urlVideo
+  const sessaoUrlAudio = sessao?.urlAudio
   useEffect(() => {
-    if (sessao) {
-      setArquivoAtaUrl(sessao.arquivoAta || '')
-      setUrlTransmissao(sessao.urlTransmissao || '')
-      setUrlVideo(sessao.urlVideo || '')
-      setUrlAudio(sessao.urlAudio || '')
-    }
-  }, [sessao?.arquivoAta, sessao?.urlTransmissao, sessao?.urlVideo, sessao?.urlAudio])
+    setArquivoAtaUrl(sessaoArquivoAta || '')
+    setUrlTransmissao(sessaoUrlTransmissao || '')
+    setUrlVideo(sessaoUrlVideo || '')
+    setUrlAudio(sessaoUrlAudio || '')
+  }, [sessaoArquivoAta, sessaoUrlTransmissao, sessaoUrlVideo, sessaoUrlAudio])
 
   const salvarArquivoAta = async () => {
     if (!sessao?.id) return

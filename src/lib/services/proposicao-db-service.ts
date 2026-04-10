@@ -91,7 +91,7 @@ export const proposicaoDbService = {
   ) {
     const page = Math.max(1, options.page ?? 1)
     const limit = Math.min(500, Math.max(1, options.limit ?? 50))
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
@@ -358,7 +358,7 @@ export const proposicaoDbService = {
     ano?: number
     limit?: number
   }) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
     if (filters.autorId) where.autorId = filters.autorId

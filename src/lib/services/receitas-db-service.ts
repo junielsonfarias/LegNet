@@ -32,7 +32,7 @@ export interface ReceitaFilters {
 }
 
 const buildWhereClause = (filters: ReceitaFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.categoria) where.categoria = filters.categoria
   if (filters.origem) where.origem = filters.origem
@@ -42,9 +42,10 @@ const buildWhereClause = (filters: ReceitaFilters = {}) => {
   if (filters.contribuinte) where.contribuinte = { contains: filters.contribuinte, mode: 'insensitive' }
 
   if (filters.valorMinimo !== undefined || filters.valorMaximo !== undefined) {
-    where.valorArrecadado = {}
-    if (filters.valorMinimo !== undefined) where.valorArrecadado.gte = filters.valorMinimo
-    if (filters.valorMaximo !== undefined) where.valorArrecadado.lte = filters.valorMaximo
+    const valorFilter: Record<string, number> = {}
+    if (filters.valorMinimo !== undefined) valorFilter.gte = filters.valorMinimo
+    if (filters.valorMaximo !== undefined) valorFilter.lte = filters.valorMaximo
+    if (Object.keys(valorFilter).length > 0) where.valorArrecadado = valorFilter
   }
 
   return where

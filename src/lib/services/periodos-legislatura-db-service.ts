@@ -19,7 +19,7 @@ const defaultInclude = {
 
 export const periodosLegislaturaDbService = {
   async list(filters: PeriodoLegislaturaFilters = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.legislaturaId) where.legislaturaId = filters.legislaturaId
 
     return prisma.periodoLegislatura.findMany({
@@ -48,7 +48,7 @@ export const periodosLegislaturaDbService = {
   },
 
   async checkOverlap(legislaturaId: string, dataInicio: Date, dataFim: Date | null, excludeId?: string) {
-    const where: any = {
+    const where: Record<string, unknown> = {
       legislaturaId,
       AND: [
         { dataInicio: { lte: dataFim ?? dataInicio } },

@@ -10,70 +10,40 @@ import { addBusinessDays, differenceInDays } from '@/lib/utils/date'
 import { ValidationError, NotFoundError } from '@/lib/error-handler'
 import type { Prisma } from '@prisma/client'
 
+// Re-exportar tipos e constantes do módulo de tipos
+export type {
+  TramitacaoListFilters,
+  PaginationParams,
+  TramitacaoCreateData,
+  TramitacaoUpdateData,
+  TramitacaoActionReopen,
+  TramitacaoActionFinalize,
+  TipoParecer,
+  RegimeTramitacao,
+  ValidationResult,
+  TramitacaoData,
+  TramitacaoResultado,
+  AvancarEtapaResult,
+} from './tramitacao-types'
+
+export { PRAZOS_PARECER_DIAS, REGRAS_TRAMITACAO } from './tramitacao-types'
+
+import type {
+  TramitacaoListFilters,
+  PaginationParams,
+  TramitacaoCreateData,
+  TramitacaoUpdateData,
+  RegimeTramitacao,
+  ValidationResult,
+  TramitacaoData,
+  TipoParecer,
+  TramitacaoResultado,
+  AvancarEtapaResult,
+} from './tramitacao-types'
+
+import { PRAZOS_PARECER_DIAS } from './tramitacao-types'
+
 const logger = createLogger('tramitacao')
-
-// ======================================================================
-// Interfaces para CRUD
-// ======================================================================
-
-export interface TramitacaoListFilters {
-  proposicaoId?: string
-  tipoTramitacaoId?: string
-  unidadeId?: string
-  status?: string
-  resultado?: string
-  automatica?: boolean | null
-  from?: string
-  to?: string
-  search?: string
-}
-
-export interface PaginationParams {
-  page: number
-  limit: number
-}
-
-export interface TramitacaoCreateData {
-  proposicaoId: string
-  tipoTramitacaoId: string
-  unidadeId?: string
-  dataEntrada?: string
-  dataSaida?: string
-  status?: 'RECEBIDA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
-  observacoes?: string
-  parecer?: string
-  resultado?: 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO'
-  responsavelId?: string
-  prazoVencimento?: string
-  diasVencidos?: number
-  automatica?: boolean
-}
-
-export interface TramitacaoUpdateData {
-  tipoTramitacaoId?: string
-  unidadeId?: string
-  dataEntrada?: string
-  dataSaida?: string | null
-  status?: 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'
-  observacoes?: string | null
-  parecer?: string | null
-  resultado?: 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO' | null
-  responsavelId?: string | null
-  prazoVencimento?: string | null
-  diasVencidos?: number | null
-  automatica?: boolean
-}
-
-export interface TramitacaoActionReopen {
-  action: 'reopen'
-  observacoes?: string | null
-}
-
-export interface TramitacaoActionFinalize {
-  action: 'finalize'
-  observacoes?: string | null
-  resultado?: 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO' | null
-}
 
 // ======================================================================
 // CRUD Methods
@@ -802,36 +772,7 @@ export async function getDashboard() {
   }
 }
 
-// Tipos de parecer (RN-034)
-export type TipoParecer = 'FAVORAVEL' | 'CONTRARIO' | 'FAVORAVEL_COM_EMENDAS' | 'PELA_INCONSTITUCIONALIDADE' | 'INCOMPETENCIA'
-
-// Regime de tramitação
-export type RegimeTramitacao = 'NORMAL' | 'PRIORIDADE' | 'URGENCIA' | 'URGENCIA_URGENTISSIMA'
-
-// Resultado de validação
-export interface ValidationResult {
-  valid: boolean
-  errors: string[]
-  warnings: string[]
-  rule?: string
-}
-
-// Dados de tramitação
-export interface TramitacaoData {
-  proposicaoId: string
-  tipoTramitacaoId: string
-  unidadeId: string
-  observacoes?: string
-  responsavelId?: string
-}
-
-// Prazos por regime de tramitação (RN-032)
-const PRAZOS_PARECER_DIAS: Record<RegimeTramitacao, number> = {
-  NORMAL: 15,
-  PRIORIDADE: 10,
-  URGENCIA: 5,
-  URGENCIA_URGENTISSIMA: 0 // Imediato
-}
+// Tipos e constantes importados de ./tramitacao-types
 
 /**
  * RN-030: Valida se proposição deve passar pela CLJ
@@ -1417,39 +1358,6 @@ export async function iniciarTramitacaoComUnidade(
 /**
  * Resumo das regras de tramitação
  */
-export const REGRAS_TRAMITACAO = {
-  'RN-030': 'Toda proposição deve passar pela CLJ (exceto moções, votos, requerimentos)',
-  'RN-031': 'Proposições podem ser distribuídas a múltiplas comissões conforme matéria',
-  'RN-032': 'Prazos: Normal=15d, Prioridade=10d, Urgência=5d, Urgência Urgentíssima=imediato',
-  'RN-033': 'Proposição só pode ser votada após parecer das comissões',
-  'RN-034': 'Pareceres: favorável, contrário, favorável com emendas, pela inconstitucionalidade',
-  'RN-035': 'Toda movimentação deve ser registrada com data, responsável e despacho',
-  'RN-036': 'Sistema deve notificar interessados sobre tramitação',
-  'RN-037': 'Alertar sobre prazos vencidos ou próximos de vencer'
-}
-
-// Resultado do avanço de etapa
-export type TramitacaoResultado = 'APROVADO' | 'REJEITADO' | 'APROVADO_COM_EMENDAS' | 'ARQUIVADO'
-
-// Interface para resultado de avanço de etapa
-export interface AvancarEtapaResult {
-  success: boolean
-  errors: string[]
-  warnings: string[]
-  tramitacaoAnterior?: {
-    id: string
-    etapa: string
-    status: string
-  }
-  tramitacaoNova?: {
-    id: string
-    etapa: string
-    prazoVencimento?: Date
-  }
-  etapaFinal: boolean
-  proposicaoStatus?: string
-}
-
 /**
  * Avança a proposição para a próxima etapa do fluxo de tramitação
  * RN-035: Toda movimentação deve ser registrada

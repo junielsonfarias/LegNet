@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import dynamic from 'next/dynamic'
 
 // Recharts components loaded dynamically to avoid SSR issues with window dependency

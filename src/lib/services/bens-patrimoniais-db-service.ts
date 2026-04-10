@@ -29,7 +29,7 @@ export interface BemPatrimonialFilters {
 }
 
 const buildWhereClause = (filters: BemPatrimonialFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.tipo) where.tipo = filters.tipo
   if (filters.situacao) where.situacao = filters.situacao
@@ -38,9 +38,10 @@ const buildWhereClause = (filters: BemPatrimonialFilters = {}) => {
   if (filters.responsavel) where.responsavel = { contains: filters.responsavel, mode: 'insensitive' }
 
   if (filters.valorMinimo !== undefined || filters.valorMaximo !== undefined) {
-    where.valorAtual = {}
-    if (filters.valorMinimo !== undefined) where.valorAtual.gte = filters.valorMinimo
-    if (filters.valorMaximo !== undefined) where.valorAtual.lte = filters.valorMaximo
+    const valorFilter: Record<string, number> = {}
+    if (filters.valorMinimo !== undefined) valorFilter.gte = filters.valorMinimo
+    if (filters.valorMaximo !== undefined) valorFilter.lte = filters.valorMaximo
+    where.valorAtual = valorFilter
   }
 
   return where

@@ -22,7 +22,7 @@ export const integracaoTokenDbService = {
   },
 
   async checkDuplicateName(nome: string, excludeId?: string) {
-    const where: any = { nome }
+    const where: Record<string, unknown> = { nome }
     if (excludeId) where.id = { not: excludeId }
     return prisma.apiToken.findFirst({ where })
   },

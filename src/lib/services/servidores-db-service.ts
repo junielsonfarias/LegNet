@@ -26,7 +26,7 @@ export interface ServidorFilters {
 }
 
 const buildWhereClause = (filters: ServidorFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.situacao) where.situacao = filters.situacao
   if (filters.vinculo) where.vinculo = filters.vinculo
@@ -171,7 +171,7 @@ export interface FolhaPagamentoFilters {
 }
 
 const buildFolhaWhereClause = (filters: FolhaPagamentoFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.ano) where.ano = filters.ano
   if (filters.mes) where.mes = filters.mes

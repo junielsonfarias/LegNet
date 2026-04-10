@@ -36,7 +36,7 @@ export interface ConvenioFilters {
 }
 
 const buildWhereClause = (filters: ConvenioFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.situacao) where.situacao = filters.situacao
   if (filters.ano) where.ano = filters.ano
@@ -45,15 +45,17 @@ const buildWhereClause = (filters: ConvenioFilters = {}) => {
   if (filters.objeto) where.objeto = { contains: filters.objeto, mode: 'insensitive' }
 
   if (filters.dataInicio || filters.dataFim) {
-    where.dataCelebracao = {}
-    if (filters.dataInicio) where.dataCelebracao.gte = new Date(filters.dataInicio)
-    if (filters.dataFim) where.dataCelebracao.lte = new Date(filters.dataFim)
+    const dataFilter: Record<string, Date> = {}
+    if (filters.dataInicio) dataFilter.gte = new Date(filters.dataInicio)
+    if (filters.dataFim) dataFilter.lte = new Date(filters.dataFim)
+    if (Object.keys(dataFilter).length > 0) where.dataCelebracao = dataFilter
   }
 
   if (filters.valorMinimo !== undefined || filters.valorMaximo !== undefined) {
-    where.valorTotal = {}
-    if (filters.valorMinimo !== undefined) where.valorTotal.gte = filters.valorMinimo
-    if (filters.valorMaximo !== undefined) where.valorTotal.lte = filters.valorMaximo
+    const valorFilter: Record<string, number> = {}
+    if (filters.valorMinimo !== undefined) valorFilter.gte = filters.valorMinimo
+    if (filters.valorMaximo !== undefined) valorFilter.lte = filters.valorMaximo
+    if (Object.keys(valorFilter).length > 0) where.valorTotal = valorFilter
   }
 
   return where

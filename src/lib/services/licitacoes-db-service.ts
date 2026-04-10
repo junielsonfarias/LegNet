@@ -30,7 +30,7 @@ export interface LicitacaoFilters {
 }
 
 const buildWhereClause = (filters: LicitacaoFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.modalidade) {
     where.modalidade = filters.modalidade
@@ -49,23 +49,17 @@ const buildWhereClause = (filters: LicitacaoFilters = {}) => {
   }
 
   if (filters.dataInicio || filters.dataFim) {
-    where.dataAbertura = {}
-    if (filters.dataInicio) {
-      where.dataAbertura.gte = new Date(filters.dataInicio)
-    }
-    if (filters.dataFim) {
-      where.dataAbertura.lte = new Date(filters.dataFim)
-    }
+    const dataFilter: Record<string, Date> = {}
+    if (filters.dataInicio) dataFilter.gte = new Date(filters.dataInicio)
+    if (filters.dataFim) dataFilter.lte = new Date(filters.dataFim)
+    if (Object.keys(dataFilter).length > 0) where.dataAbertura = dataFilter
   }
 
   if (filters.valorMinimo !== undefined || filters.valorMaximo !== undefined) {
-    where.valorEstimado = {}
-    if (filters.valorMinimo !== undefined) {
-      where.valorEstimado.gte = filters.valorMinimo
-    }
-    if (filters.valorMaximo !== undefined) {
-      where.valorEstimado.lte = filters.valorMaximo
-    }
+    const valorFilter: Record<string, number> = {}
+    if (filters.valorMinimo !== undefined) valorFilter.gte = filters.valorMinimo
+    if (filters.valorMaximo !== undefined) valorFilter.lte = filters.valorMaximo
+    if (Object.keys(valorFilter).length > 0) where.valorEstimado = valorFilter
   }
 
   return where

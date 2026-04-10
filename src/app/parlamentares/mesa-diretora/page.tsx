@@ -49,8 +49,8 @@ export default function MesaDiretoraPage() {
   }, [parlamentares]);
 
   // Dados enriquecidos com estatísticas (ordenados por hierarquia)
-  const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', '1º_VICE-PRESIDENTE', '1_VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', '1º_SECRETARIO', '1_SECRETARIO', 'SEGUNDO_SECRETARIO', '2º_SECRETARIO', '2_SECRETARIO', '2º_VICE-PRESIDENTE', '2_VICE_PRESIDENTE']
   const mesaEnriquecida = useMemo(() => {
+    const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', '1º_VICE-PRESIDENTE', '1_VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', '1º_SECRETARIO', '1_SECRETARIO', 'SEGUNDO_SECRETARIO', '2º_SECRETARIO', '2_SECRETARIO', '2º_VICE-PRESIDENTE', '2_VICE_PRESIDENTE']
     const ordenada = [...mesaDiretora].sort((a, b) => {
       const ia = ordemCargos.indexOf(a.cargo || '')
       const ib = ordemCargos.indexOf(b.cargo || '')

@@ -42,7 +42,7 @@ export interface DespesaFilters {
 }
 
 const buildWhereClause = (filters: DespesaFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.situacao) where.situacao = filters.situacao
   if (filters.ano) where.ano = filters.ano
@@ -56,9 +56,10 @@ const buildWhereClause = (filters: DespesaFilters = {}) => {
   if (filters.convenioId) where.convenioId = filters.convenioId
 
   if (filters.valorMinimo !== undefined || filters.valorMaximo !== undefined) {
-    where.valorEmpenhado = {}
-    if (filters.valorMinimo !== undefined) where.valorEmpenhado.gte = filters.valorMinimo
-    if (filters.valorMaximo !== undefined) where.valorEmpenhado.lte = filters.valorMaximo
+    const valorFilter: Record<string, number> = {}
+    if (filters.valorMinimo !== undefined) valorFilter.gte = filters.valorMinimo
+    if (filters.valorMaximo !== undefined) valorFilter.lte = filters.valorMaximo
+    if (Object.keys(valorFilter).length > 0) where.valorEmpenhado = valorFilter
   }
 
   return where

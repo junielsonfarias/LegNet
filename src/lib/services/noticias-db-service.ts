@@ -18,7 +18,7 @@ export interface NoticiaPayload {
 }
 
 const buildWhereClause = (filters: NoticiaFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.categoria) where.categoria = { contains: filters.categoria, mode: 'insensitive' }
   if (filters.publicada !== undefined) where.publicada = filters.publicada

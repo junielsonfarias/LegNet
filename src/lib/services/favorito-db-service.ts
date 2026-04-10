@@ -21,7 +21,7 @@ export const favoritoDbService = {
     const limit = Math.min(100, Math.max(1, options.limit ?? 20))
     const skip = (page - 1) * limit
 
-    const where: any = { userId: filters.userId }
+    const where: Record<string, unknown> = { userId: filters.userId }
     if (filters.tipoItem) where.tipoItem = filters.tipoItem
 
     const [total, favoritos] = await Promise.all([

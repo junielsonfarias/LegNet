@@ -18,7 +18,7 @@ export interface UsuarioPayload {
 }
 
 const buildWhereClause = (filters: UsuarioFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.role) where.role = filters.role
   if (filters.ativo !== undefined) where.ativo = filters.ativo
@@ -99,13 +99,13 @@ export const usuarioDbService = {
   },
 
   async checkEmailExists(email: string, excludeId?: string) {
-    const where: any = { email }
+    const where: Record<string, unknown> = { email }
     if (excludeId) where.id = { not: excludeId }
     return prisma.user.findFirst({ where, select: { id: true, email: true } })
   },
 
   async checkParlamentarVinculado(parlamentarId: string, excludeId?: string) {
-    const where: any = { parlamentarId }
+    const where: Record<string, unknown> = { parlamentarId }
     if (excludeId) where.id = { not: excludeId }
     return prisma.user.findFirst({ where, select: { id: true, parlamentarId: true } })
   },

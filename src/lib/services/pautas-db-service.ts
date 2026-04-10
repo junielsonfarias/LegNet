@@ -228,7 +228,7 @@ const prioridadePorTipo = (tipo: string): 'ALTA' | 'MEDIA' | 'BAIXA' => {
 
 export const pautasDbService = {
   async list(filters: PautaFilters = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
     if (filters.sessaoId) where.sessaoId = filters.sessaoId
 
@@ -243,7 +243,7 @@ export const pautasDbService = {
     const page = Math.max(1, options.page ?? 1)
     const limit = Math.min(100, Math.max(1, options.limit ?? 20))
     const skip = (page - 1) * limit
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
 
     const [total, pautas] = await Promise.all([

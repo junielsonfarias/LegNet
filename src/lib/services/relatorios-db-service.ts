@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 
 export const relatoriosDbService = {
   async getParlamentaresData(filters: { ativo?: boolean }) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.ativo !== undefined) {
       where.ativo = filters.ativo
     }
@@ -28,11 +28,13 @@ export const relatoriosDbService = {
     dataFim?: string
     legislaturaId?: string
   }) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
-    if (filters.dataInicio) where.data = { gte: new Date(filters.dataInicio) }
-    if (filters.dataFim) where.data = { ...where.data, lte: new Date(filters.dataFim) }
+    const dataFilter: Record<string, Date> = {}
+    if (filters.dataInicio) dataFilter.gte = new Date(filters.dataInicio)
+    if (filters.dataFim) dataFilter.lte = new Date(filters.dataFim)
+    if (Object.keys(dataFilter).length > 0) where.data = dataFilter
     if (filters.legislaturaId) where.legislaturaId = filters.legislaturaId
 
     return prisma.sessao.findMany({
@@ -59,7 +61,7 @@ export const relatoriosDbService = {
   },
 
   async getProposicoesData(filters: { status?: string; ano?: number }) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.status) where.status = filters.status
     if (filters.ano) where.ano = filters.ano
 

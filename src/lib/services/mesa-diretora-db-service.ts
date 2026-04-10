@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 import { parseDateOnlyToUTC } from '@/lib/utils/date'
 
 export interface MesaDiretoraFilters {
@@ -25,7 +26,7 @@ export interface MesaDiretoraPayload {
 }
 
 const buildWhereClause = (filters: MesaDiretoraFilters = {}) => {
-  const where: any = {}
+  const where: Prisma.MesaDiretoraWhereInput = {}
 
   if (filters.periodoId) where.periodoId = filters.periodoId
   if (filters.legislaturaId) where.periodo = { legislaturaId: filters.legislaturaId }
@@ -97,7 +98,7 @@ export const mesaDiretoraDbService = {
   },
 
   async checkAtivaExiste(periodoId: string, excludeId?: string) {
-    const where: any = { periodoId, ativa: true }
+    const where: Record<string, unknown> = { periodoId, ativa: true }
     if (excludeId) where.id = { not: excludeId }
     return prisma.mesaDiretora.findFirst({ where })
   },

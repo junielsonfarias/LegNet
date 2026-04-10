@@ -16,7 +16,7 @@ const defaultInclude = {
 
 export const oradorSessaoDbService = {
   async listBySessao(sessaoId: string, filters: { tipo?: string; status?: string } = {}) {
-    const where: any = { sessaoId }
+    const where: Record<string, unknown> = { sessaoId }
     if (filters.tipo) where.tipo = filters.tipo
     if (filters.status) where.status = filters.status
 

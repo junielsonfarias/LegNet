@@ -16,7 +16,7 @@ export interface LegislaturaPayload {
 }
 
 const buildWhereClause = (filters: LegislaturaFilters = {}) => {
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (filters.ativa !== undefined) where.ativa = filters.ativa
   if (filters.search) {
@@ -73,13 +73,13 @@ export const legislaturaDbService = {
   },
 
   async checkDuplicateNumero(numero: number, excludeId?: string) {
-    const where: any = { numero }
+    const where: Record<string, unknown> = { numero }
     if (excludeId) where.id = { not: excludeId }
     return prisma.legislatura.findFirst({ where })
   },
 
   async checkAtivaExiste(excludeId?: string) {
-    const where: any = { ativa: true }
+    const where: Record<string, unknown> = { ativa: true }
     if (excludeId) where.id = { not: excludeId }
     return prisma.legislatura.findFirst({ where })
   },

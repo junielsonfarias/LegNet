@@ -28,7 +28,7 @@ export interface TemplateSessaoPayload {
 
 export const templatesSessaoDbService = {
   async list(filters: TemplateSessaoFilters = {}) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
     if (filters.tipo) where.tipo = filters.tipo
     if (filters.ativo !== undefined) where.ativo = filters.ativo
 
@@ -47,7 +47,7 @@ export const templatesSessaoDbService = {
   },
 
   async checkDuplicate(nome: string, tipo: TipoSessao, excludeId?: string) {
-    const where: any = { nome, tipo }
+    const where: Record<string, unknown> = { nome, tipo }
     if (excludeId) where.id = { not: excludeId }
     return prisma.sessaoTemplate.findFirst({ where })
   },
