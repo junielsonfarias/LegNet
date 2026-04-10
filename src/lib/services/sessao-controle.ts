@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 import { createLogger } from '@/lib/logging/logger'
 import { NotFoundError, ValidationError } from '@/lib/error-handler'
 
@@ -478,7 +479,8 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
   const agora = new Date()
 
   // Iniciar transação com atualização do item e pauta
-  const updates: unknown[] = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updates: Prisma.PrismaPromise<any>[] = [
     prisma.pautaItem.update({
       where: { id: itemId },
       data: {
