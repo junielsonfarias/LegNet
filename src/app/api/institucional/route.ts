@@ -159,7 +159,7 @@ export const PUT = withAuth(async (request: NextRequest) => {
   // Buscar configuracao existente
   let config = await institucionalDbService.getConfiguracao()
 
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
 
   // Campos de identidade visual
   if (body.corPrimaria !== undefined) updateData.corPrimaria = body.corPrimaria

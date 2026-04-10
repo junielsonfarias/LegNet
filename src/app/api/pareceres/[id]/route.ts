@@ -83,7 +83,7 @@ export const PUT = withAuth(async (
     }
   }
 
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
   if (validatedData.tipo !== undefined) updateData.tipo = validatedData.tipo
   if (validatedData.status !== undefined) updateData.status = validatedData.status
   if (validatedData.fundamentacao !== undefined) updateData.fundamentacao = validatedData.fundamentacao

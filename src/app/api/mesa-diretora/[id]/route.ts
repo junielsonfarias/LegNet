@@ -120,7 +120,7 @@ export const PUT = withAuth(async (
   }
 
   // Build update payload for service
-  const updatePayload: any = {}
+  const updatePayload: Record<string, unknown> = {}
   if (validatedData.periodoId !== undefined) updatePayload.periodoId = validatedData.periodoId
   if (validatedData.ativa !== undefined) updatePayload.ativa = validatedData.ativa
   if (validatedData.descricao !== undefined) updatePayload.descricao = validatedData.descricao || null

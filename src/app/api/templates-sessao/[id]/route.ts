@@ -64,7 +64,7 @@ export const PUT = withAuth(async (
   const duplicado = await templatesSessaoDbService.checkDuplicate(nomeFinal, tipoFinal, templateId)
   if (duplicado) throw new ConflictError('Já existe um template com este nome para o tipo selecionado')
 
-  const updatePayload: any = {}
+  const updatePayload: Record<string, unknown> = {}
   if (payload.nome !== undefined) updatePayload.nome = payload.nome
   if (payload.descricao !== undefined) updatePayload.descricao = payload.descricao
   if (payload.tipo !== undefined) updatePayload.tipo = payload.tipo

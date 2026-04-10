@@ -67,66 +67,16 @@ interface TipoOrgao {
 }
 import { formatDateOnly } from '@/lib/utils/date'
 
-const STATUS_CONFIG: Record<
-  TramitacaoStatus | 'PENDENTE',
-  { label: string; className: string }
-> = {
-  PENDENTE: { label: 'Pendente', className: 'bg-gray-100 text-gray-700' },
-  RECEBIDA: { label: 'Recebida', className: 'bg-purple-100 text-purple-700' },
-  EM_ANDAMENTO: { label: 'Em andamento', className: 'bg-blue-100 text-blue-700' },
-  CONCLUIDA: { label: 'Concluída', className: 'bg-green-100 text-green-700' },
-  CANCELADA: { label: 'Cancelada', className: 'bg-red-100 text-red-700' }
-}
-
-const RESULTADO_LABEL: Record<TramitacaoResultado, string> = {
-  APROVADO: 'Aprovado',
-  REJEITADO: 'Rejeitado',
-  APROVADO_COM_EMENDAS: 'Aprovado com emendas',
-  ARQUIVADO: 'Arquivado'
-}
-
-const SELECT_ALL = '__all__'
-const SELECT_NONE = '__none__'
-const SELECT_AUTO = '__auto__'
-
-const formatDateTime = (value?: string | null) => {
-  if (!value) return '—'
-  try {
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return '—'
-    return date.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  } catch (error) {
-    console.error('Erro ao formatar data/hora:', error)
-    return '—'
-  }
-}
-
-const formatDate = (value?: string | null) => {
-  if (!value) return '—'
-  try {
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return '—'
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  } catch (error) {
-    console.error('Erro ao formatar data:', error)
-    return '—'
-  }
-}
-
-const getStatusBadge = (status?: TramitacaoStatus | null) => {
-  if (!status) return STATUS_CONFIG.PENDENTE
-  return STATUS_CONFIG[status] || STATUS_CONFIG.PENDENTE
-}
+import {
+  STATUS_CONFIG,
+  RESULTADO_LABEL,
+  SELECT_ALL,
+  SELECT_NONE,
+  SELECT_AUTO,
+  formatDateTime,
+  formatDate,
+  getStatusBadge
+} from './_helpers'
 
 const defaultFilters: TramitacaoFilters = {
   page: 1,

@@ -22,7 +22,7 @@ export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
   const page = parseInt(searchParams.get('page') || '1')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-  const where: any = {}
+  const where: Record<string, boolean> = {}
   if (lido === 'true') where.lido = true
   if (lido === 'false') where.lido = false
 

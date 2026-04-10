@@ -43,7 +43,7 @@ export const PUT = withAuth(withErrorHandler(async (
   const existing = await prisma.oficio.findUnique({ where: { id: oficioId } })
   if (!existing) throw new NotFoundError('Ofício')
 
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
   if (data.numero !== undefined) updateData.numero = data.numero
   if (data.data !== undefined) updateData.data = new Date(data.data)
   if (data.remetente !== undefined) updateData.remetente = data.remetente

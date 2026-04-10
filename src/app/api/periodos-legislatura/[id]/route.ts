@@ -39,7 +39,7 @@ export const PUT = withAuth(async (
   const existing = await periodosLegislaturaDbService.getById(id)
   if (!existing) throw new NotFoundError('Período não encontrado')
 
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
   if (validatedData.numero !== undefined) updateData.numero = validatedData.numero
   if (validatedData.dataInicio !== undefined) {
     const d = new Date(validatedData.dataInicio)

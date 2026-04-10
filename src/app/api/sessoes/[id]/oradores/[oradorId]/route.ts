@@ -54,7 +54,7 @@ export const PUT = withAuth(withErrorHandler(async (
     throw new NotFoundError('Orador')
   }
 
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
 
   // Atualizar status com regras de negócio
   if (payload.status) {

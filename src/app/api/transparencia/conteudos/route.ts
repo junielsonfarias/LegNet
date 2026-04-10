@@ -27,7 +27,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const isAdmin = !!session
 
   // Montar filtros
-  const where: any = {}
+  const where: Record<string, unknown> = {}
 
   if (!isAdmin) {
     where.status = 'publicado'

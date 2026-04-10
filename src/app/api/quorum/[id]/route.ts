@@ -75,7 +75,7 @@ export const PUT = withAuth(async (
   }
 
   // Preparar dados para atualizacao
-  const updateData: any = {}
+  const updateData: Record<string, unknown> = {}
 
   if (validatedData.nome !== undefined) updateData.nome = validatedData.nome
   if (validatedData.descricao !== undefined) updateData.descricao = validatedData.descricao

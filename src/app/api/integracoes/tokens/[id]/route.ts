@@ -68,7 +68,7 @@ const putHandler = withAuth(
 
       // Also update other fields if provided
       if (payload.nome || payload.descricao !== undefined || payload.permissoes || payload.ativo !== undefined) {
-        const updateData: any = {}
+        const updateData: Record<string, unknown> = {}
         if (payload.nome !== undefined) updateData.nome = payload.nome
         if (payload.descricao !== undefined) updateData.descricao = payload.descricao
         if (payload.permissoes !== undefined) updateData.permissoes = payload.permissoes
@@ -79,7 +79,7 @@ const putHandler = withAuth(
         result = regenerated
       }
     } else {
-      const updateData: any = {}
+      const updateData: Record<string, unknown> = {}
       if (payload.nome !== undefined) updateData.nome = payload.nome
       if (payload.descricao !== undefined) updateData.descricao = payload.descricao
       if (payload.permissoes !== undefined) updateData.permissoes = payload.permissoes
