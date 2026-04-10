@@ -47,6 +47,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 import { toast } from 'sonner'
+import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 
 // Lazy loading de componentes pesados para melhor performance
 const EditorSkeleton = () => (
@@ -857,7 +858,7 @@ export default function SessaoDetailPage() {
                       <div className="bg-white p-6 rounded-lg border shadow-sm overflow-x-auto max-w-full">
                         <div
                           className="prose prose-sm max-w-none text-gray-900 break-words [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:p-2 [&_img]:max-w-full"
-                          dangerouslySetInnerHTML={{ __html: sessao.ata || '' }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(sessao.ata) }}
                         />
                       </div>
                     </div>

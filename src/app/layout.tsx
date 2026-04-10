@@ -85,6 +85,11 @@ async function getThemeColors() {
   return null
 }
 
+// Valida que o valor é um hex color válido (previne CSS injection)
+function isValidHexColor(value: string): boolean {
+  return /^#[a-f\d]{6}$/i.test(value)
+}
+
 function hexToRgb(hex: string): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   if (!result) return '55 65 81'
@@ -117,9 +122,10 @@ export default async function RootLayout({
   const colors = await getThemeColors()
 
   // CSS injetado server-side para cores corretas no primeiro paint
-  const pri = colors?.corPrimaria || '#374151'
-  const sec = colors?.corSecundaria || '#6b7280'
-  const acc = colors?.corAcento || '#059669'
+  // Validação de hex color para prevenir CSS injection
+  const pri = (colors?.corPrimaria && isValidHexColor(colors.corPrimaria)) ? colors.corPrimaria : '#374151'
+  const sec = (colors?.corSecundaria && isValidHexColor(colors.corSecundaria)) ? colors.corSecundaria : '#6b7280'
+  const acc = (colors?.corAcento && isValidHexColor(colors.corAcento)) ? colors.corAcento : '#059669'
 
   const themeCSS = colors ? `:root {
     --tenant-primary: ${pri};

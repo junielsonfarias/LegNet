@@ -1,0 +1,60 @@
+# Workflow de Testes Automatizados
+# Executa testes unitarios e lint em PRs e pushes para main
+
+name: CI Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Lint & Testes
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "postgresql://test:test@localhost:5432/test"
+      DIRECT_URL: "postgresql://test:test@localhost:5432/test"
+      NEXTAUTH_SECRET: "ci-test-secret-key-not-for-production-use"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_SITE_NAME: "Camara Test"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Gerar cliente Prisma
+        run: npx prisma generate
+
+      - name: Executar ESLint
+        run: npm run lint
+
+      - name: Verificar tipos TypeScript
+        run: npx tsc --noEmit --pretty
+
+      - name: Executar testes unitarios
+        run: npm test -- --runInBand --forceExit
+
+      - name: Resumo dos testes
+        if: always()
+        run: |
+          echo "## Resultado dos Testes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ $? -eq 0 ]; then
+            echo "Todos os testes passaram!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Alguns testes falharam. Verifique os logs acima." >> $GITHUB_STEP_SUMMARY
+          fi
