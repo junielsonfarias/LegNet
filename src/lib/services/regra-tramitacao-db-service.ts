@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 export interface RegraEtapaData {
   id?: string
@@ -7,8 +8,8 @@ export interface RegraEtapaData {
   descricao?: string
   tipoTramitacaoId?: string
   unidadeId?: string
-  notificacoes?: Record<string, unknown>
-  alertas?: Record<string, unknown>
+  notificacoes?: Prisma.InputJsonValue
+  alertas?: Prisma.InputJsonValue
   prazoDias?: number | null
 }
 
