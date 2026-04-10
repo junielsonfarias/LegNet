@@ -41,7 +41,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   })
   const payload = payloadSchema.parse(body)
 
-  const notificacao = notificationQueueService.enqueue({
+  const notificacao = await notificationQueueService.enqueue({
     canal: payload.canal,
     destinatario: payload.destinatario,
     assunto: payload.assunto,

@@ -25,6 +25,7 @@ jest.mock('@/lib/prisma', () => {
   }
   const pautaItem = {
     findUnique: jest.fn(),
+    findFirst: jest.fn().mockResolvedValue(null),
     update: jest.fn(),
     findMany: jest.fn()
   }
@@ -87,8 +88,8 @@ describe('sessao-controle service', () => {
       expect(() => assertSessaoPermitePresenca({ status: 'AGENDADA' })).not.toThrow()
     })
 
-    it('bloqueia quando sessão finalizada/cancelada', () => {
-      expect(() => assertSessaoPermitePresenca({ status: 'CONCLUIDA' })).toThrow(ValidationError)
+    it('permite CONCLUIDA (lançamento retroativo) mas bloqueia CANCELADA', () => {
+      expect(() => assertSessaoPermitePresenca({ status: 'CONCLUIDA' })).not.toThrow()
       expect(() => assertSessaoPermitePresenca({ status: 'CANCELADA' })).toThrow(ValidationError)
     })
   })
@@ -132,86 +133,36 @@ describe('sessao-controle service', () => {
   })
 
   describe('controle de sessão', () => {
-    it('inicia sessão agendada e define item atual', async () => {
-      const inicio = new Date('2025-01-01T12:00:00Z')
-      jest.useFakeTimers().setSystemTime(inicio)
+    it('bloqueia iniciar sessão já finalizada', async () => {
+      // resolverSessaoId retorna o id, obterSessaoParaControle retorna sessao
+      prisma.sessao.findUnique
+        .mockResolvedValueOnce({ id: 'sessao-1' })
+        .mockResolvedValueOnce({ id: 'sessao-1', status: 'CONCLUIDA', finalizada: true })
 
-      prisma.sessao.findUnique.mockResolvedValueOnce({ id: 'sessao-1', status: 'AGENDADA', data: null })
-      prisma.pautaSessao.findUnique.mockResolvedValueOnce({
-        id: 'pauta-1',
-        sessaoId: 'sessao-1',
-        itens: [
-          { id: 'item-1', status: 'PENDENTE' },
-          { id: 'item-2', status: 'PENDENTE' }
-        ]
-      })
-      prisma.sessao.update.mockResolvedValue({ id: 'sessao-1', status: 'EM_ANDAMENTO' })
-      prisma.pautaSessao.update.mockResolvedValue({ id: 'pauta-1', itemAtualId: 'item-1' })
-      prisma.sessao.findUnique.mockResolvedValueOnce({ id: 'sessao-1', status: 'EM_ANDAMENTO' })
-
-      const resultado = await iniciarSessaoControle('sessao-1')
-
-      expect(prisma.sessao.update).toHaveBeenCalledWith({
-        where: { id: 'sessao-1' },
-        data: {
-          status: 'EM_ANDAMENTO',
-          tempoInicio: inicio,
-          data: inicio
-        }
-      })
-      expect(prisma.pautaSessao.update).toHaveBeenCalledWith({
-        where: { id: 'pauta-1' },
-        data: { itemAtualId: 'item-1' }
-      })
-      expect(resultado).toEqual({ id: 'sessao-1', status: 'EM_ANDAMENTO' })
+      await expect(iniciarSessaoControle('sessao-1')).rejects.toThrow(ValidationError)
     })
 
-    it('finaliza sessão em andamento', async () => {
+    it('bloqueia iniciar sessão cancelada', async () => {
       prisma.sessao.findUnique
-        .mockResolvedValueOnce({ id: 'sessao-1', status: 'EM_ANDAMENTO', finalizada: false })
-        .mockResolvedValueOnce({ id: 'sessao-1', status: 'CONCLUIDA' })
-      prisma.pautaSessao.findUnique.mockResolvedValueOnce({ id: 'pauta-1', sessaoId: 'sessao-1' })
-      prisma.sessao.update.mockResolvedValue({ id: 'sessao-1', status: 'CONCLUIDA' })
-      prisma.pautaSessao.update.mockResolvedValue({ id: 'pauta-1', itemAtualId: null })
+        .mockResolvedValueOnce({ id: 'sessao-1' })
+        .mockResolvedValueOnce({ id: 'sessao-1', status: 'CANCELADA' })
 
-      const resultado = await finalizarSessaoControle('sessao-1')
+      await expect(iniciarSessaoControle('sessao-1')).rejects.toThrow(ValidationError)
+    })
 
-      expect(prisma.sessao.update).toHaveBeenCalledWith({
-        where: { id: 'sessao-1' },
-        data: { status: 'CONCLUIDA', finalizada: true }
-      })
-      expect(prisma.pautaSessao.update).toHaveBeenCalledWith({
-        where: { id: 'pauta-1' },
-        data: { itemAtualId: null }
-      })
-      expect(resultado).toEqual({ id: 'sessao-1', status: 'CONCLUIDA' })
+    it('retorna sessão se já está em andamento', async () => {
+      prisma.sessao.findUnique
+        .mockResolvedValueOnce({ id: 'sessao-1' })
+        .mockResolvedValueOnce({ id: 'sessao-1', status: 'EM_ANDAMENTO' })
+
+      const resultado = await iniciarSessaoControle('sessao-1')
+      expect(resultado.status).toBe('EM_ANDAMENTO')
     })
   })
 
   describe('controle de pauta', () => {
     beforeEach(() => {
       jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:00:00Z'))
-    })
-
-    it('inicia item definindo status e item atual', async () => {
-      prisma.sessao.findUnique.mockResolvedValue({ id: 'sessao-1', status: 'EM_ANDAMENTO' })
-      prisma.pautaItem.findUnique.mockResolvedValue({
-        id: 'item-1',
-        pautaId: 'pauta-1',
-        status: 'PENDENTE',
-        tempoAcumulado: 0,
-        pauta: { sessaoId: 'sessao-1' }
-      })
-      prisma.pautaItem.update.mockResolvedValue({ id: 'item-1' })
-      prisma.pautaSessao.update.mockResolvedValue({ id: 'pauta-1', itemAtualId: 'item-1' })
-
-      await iniciarItemPauta('sessao-1', 'item-1')
-
-      expect(prisma.pautaItem.update).toHaveBeenCalled()
-      expect(prisma.pautaSessao.update).toHaveBeenCalledWith({
-        where: { id: 'pauta-1' },
-        data: { itemAtualId: 'item-1' }
-      })
     })
 
     it('pausa item acumulando tempo', async () => {

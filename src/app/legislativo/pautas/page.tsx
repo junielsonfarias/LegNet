@@ -158,11 +158,11 @@ export default function PautasPage() {
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-tipo-sessao" className="block text-sm font-medium text-gray-700 mb-2">
                   Tipo de Sessão
                 </label>
                 <Select value={tipoSelecionado} onValueChange={setTipoSelecionado}>
-                  <SelectTrigger>
+                  <SelectTrigger id="filtro-tipo-sessao">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -175,11 +175,11 @@ export default function PautasPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-status-pauta" className="block text-sm font-medium text-gray-700 mb-2">
                   Status
                 </label>
                 <Select value={statusSelecionado} onValueChange={setStatusSelecionado}>
-                  <SelectTrigger>
+                  <SelectTrigger id="filtro-status-pauta">
                     <SelectValue placeholder="Selecione o status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -192,10 +192,11 @@ export default function PautasPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-numero-pauta" className="block text-sm font-medium text-gray-700 mb-2">
                   Número da Pauta
                 </label>
                 <Input
+                  id="filtro-numero-pauta"
                   type="text"
                   placeholder="Ex: 001/2024"
                   value={numeroFiltro}

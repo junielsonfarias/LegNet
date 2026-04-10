@@ -72,10 +72,13 @@ export function VotacaoHeader({
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             {logoUrl ? (
-              <img
+              <Image
                 src={logoUrl}
-                alt="Logo"
+                alt="Brasão da Câmara Municipal"
+                width={40}
+                height={40}
                 className={`${sizeClass.logo} object-contain bg-white rounded-md p-0.5`}
+                unoptimized
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ) : (

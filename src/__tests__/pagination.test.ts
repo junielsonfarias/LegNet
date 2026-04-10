@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+// Jest globals (describe, it, expect) are available automatically
 import {
   calculateOffset,
   createPaginationMeta,

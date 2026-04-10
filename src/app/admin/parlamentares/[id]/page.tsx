@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -103,10 +104,13 @@ export default function VisualizarParlamentarPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-4">
             {parlamentar.foto ? (
-              <img
+              <Image
                 src={parlamentar.foto}
-                alt={parlamentar.nome}
+                alt={`Foto de ${parlamentar.nome}`}
+                width={80}
+                height={80}
                 className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                unoptimized
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">

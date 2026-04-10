@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -403,13 +404,16 @@ export function PresencaControl({ sessaoId, sessaoStatus, sessaoData, sessaoHora
             >
               <div className="flex items-center gap-3">
                 {parlamentar.foto ? (
-                  <img
+                  <Image
                     src={parlamentar.foto}
-                    alt={parlamentar.apelido || parlamentar.nome}
+                    alt={`Foto de ${parlamentar.apelido || parlamentar.nome}`}
+                    width={40}
+                    height={40}
                     className={`w-10 h-10 rounded-full object-cover ring-2 ${
                       parlamentar.status === 'PRESENTE' ? 'ring-green-400' :
                       parlamentar.status === 'FALTA_JUSTIFICADA' ? 'ring-yellow-400' : 'ring-gray-300'
                     }`}
+                    unoptimized
                   />
                 ) : (
                   <div

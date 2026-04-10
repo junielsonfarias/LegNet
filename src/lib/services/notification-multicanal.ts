@@ -1,5 +1,4 @@
-import { mockData } from '@/lib/db'
-import { generateSecureId } from '@/lib/utils/secure-id'
+import { prisma } from '@/lib/prisma'
 
 export type CanalNotificacao = 'email' | 'push' | 'sms'
 
@@ -18,65 +17,93 @@ export interface NotificacaoMulticanalPayload {
   updatedAt: string
 }
 
-const ensureQueue = () => {
-  if (!mockData.notificacoesMulticanal) {
-    mockData.notificacoesMulticanal = []
+function toPayload(row: {
+  id: string
+  canal: string
+  destinatario: string
+  assunto: string | null
+  mensagem: string
+  metadata: any
+  tentativas: number
+  status: string
+  erro: string | null
+  integration: boolean
+  createdAt: Date
+  updatedAt: Date
+}): NotificacaoMulticanalPayload {
+  return {
+    id: row.id,
+    canal: row.canal as CanalNotificacao,
+    destinatario: row.destinatario,
+    assunto: row.assunto ?? undefined,
+    mensagem: row.mensagem,
+    metadata: row.metadata as Record<string, unknown> | undefined,
+    tentativas: row.tentativas,
+    status: row.status as NotificacaoMulticanalPayload['status'],
+    erro: row.erro,
+    integration: row.integration,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   }
-  return mockData.notificacoesMulticanal as NotificacaoMulticanalPayload[]
 }
-
-const nowISO = () => new Date().toISOString()
 
 export const notificationQueueService = {
-  enqueue: (
-    data: Omit<
-      NotificacaoMulticanalPayload,
-      'id' | 'status' | 'createdAt' | 'updatedAt'
-    >
-  ) => {
-    const queue = ensureQueue()
-    const payload: NotificacaoMulticanalPayload = {
-      ...data,
-      id: generateSecureId('notif'),
-      status: 'pendente',
-      tentativas: data.tentativas ?? 0,
-      integration: data.integration ?? false,
-      createdAt: nowISO(),
-      updatedAt: nowISO()
-    }
-    queue.push(payload)
-    return payload
+  async enqueue(
+    data: Omit<NotificacaoMulticanalPayload, 'id' | 'status' | 'createdAt' | 'updatedAt'>
+  ): Promise<NotificacaoMulticanalPayload> {
+    const row = await prisma.notificacaoMulticanal.create({
+      data: {
+        canal: data.canal,
+        destinatario: data.destinatario,
+        assunto: data.assunto ?? null,
+        mensagem: data.mensagem,
+        metadata: (data.metadata as any) ?? undefined,
+        tentativas: data.tentativas ?? 0,
+        integration: data.integration ?? false,
+        status: 'pendente',
+      },
+    })
+    return toPayload(row)
   },
-  markSent: (id: string) => {
-    const queue = ensureQueue()
-    const index = queue.findIndex(item => item.id === id)
-    if (index !== -1) {
-      queue[index] = {
-        ...queue[index],
-        status: 'enviado',
-        erro: null,
-        updatedAt: nowISO()
-      }
-      return queue[index]
-    }
-    return null
-  },
-  markError: (id: string, errorMessage: string) => {
-    const queue = ensureQueue()
-    const index = queue.findIndex(item => item.id === id)
-    if (index !== -1) {
-      queue[index] = {
-        ...queue[index],
-        status: 'erro',
-        erro: errorMessage,
-        tentativas: (queue[index].tentativas ?? 0) + 1,
-        updatedAt: nowISO()
-      }
-      return queue[index]
-    }
-    return null
-  },
-  list: () => ensureQueue(),
-  byStatus: (status: NotificacaoMulticanalPayload['status']) => ensureQueue().filter(item => item.status === status)
-}
 
+  async markSent(id: string): Promise<NotificacaoMulticanalPayload | null> {
+    try {
+      const row = await prisma.notificacaoMulticanal.update({
+        where: { id },
+        data: { status: 'enviado', erro: null },
+      })
+      return toPayload(row)
+    } catch {
+      return null
+    }
+  },
+
+  async markError(id: string, errorMessage: string): Promise<NotificacaoMulticanalPayload | null> {
+    try {
+      const row = await prisma.notificacaoMulticanal.update({
+        where: { id },
+        data: {
+          status: 'erro',
+          erro: errorMessage,
+          tentativas: { increment: 1 },
+        },
+      })
+      return toPayload(row)
+    } catch {
+      return null
+    }
+  },
+
+  async list(): Promise<NotificacaoMulticanalPayload[]> {
+    const rows = await prisma.notificacaoMulticanal.findMany({ orderBy: { createdAt: 'desc' } })
+    return rows.map(toPayload)
+  },
+
+  async byStatus(status: NotificacaoMulticanalPayload['status']): Promise<NotificacaoMulticanalPayload[]> {
+    const rows = await prisma.notificacaoMulticanal.findMany({
+      where: { status },
+      orderBy: { createdAt: 'desc' },
+    })
+    return rows.map(toPayload)
+  },
+}

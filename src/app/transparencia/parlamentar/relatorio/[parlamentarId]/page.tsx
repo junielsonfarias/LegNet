@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -104,10 +105,13 @@ export default function RelatorioParlamentarPage() {
           <Card className="w-full md:w-80">
             <CardContent className="p-6 text-center">
               {parlamentar.foto ? (
-                <img
+                <Image
                   src={parlamentar.foto}
-                  alt={parlamentar.nome}
+                  alt={`Foto de ${parlamentar.nome}`}
+                  width={96}
+                  height={96}
                   className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
+                  unoptimized
                 />
               ) : (
                 <div className="w-24 h-24 rounded-full bg-camara-primary/10 flex items-center justify-center mx-auto mb-4">

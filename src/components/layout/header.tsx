@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Menu, X, Search, User, ChevronDown, Home, Users, FileText, Eye, Newspaper, MessageSquare, Heart, Accessibility } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -234,10 +235,13 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
             {logoUrl ? (
-              <img
+              <Image
                 src={logoUrl}
-                alt={nomeCasa}
+                alt={`Brasão de ${nomeCasa}`}
+                width={48}
+                height={48}
                 className="h-12 w-auto max-w-[60px] object-contain"
+                unoptimized
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             ) : (

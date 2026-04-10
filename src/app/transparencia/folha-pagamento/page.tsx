@@ -197,17 +197,18 @@ export default function FolhaPagamentoPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Buscar</label>
+                  <label htmlFor="filtro-busca-folha" className="text-sm font-medium mb-2 block">Buscar</label>
                   <Input
+                    id="filtro-busca-folha"
                     placeholder="Nome, cargo ou matricula..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Vinculo</label>
+                  <label htmlFor="filtro-vinculo" className="text-sm font-medium mb-2 block">Vinculo</label>
                   <Select value={filtroVinculo} onValueChange={setFiltroVinculo}>
-                    <SelectTrigger><SelectValue placeholder="Todos os vinculos" /></SelectTrigger>
+                    <SelectTrigger id="filtro-vinculo"><SelectValue placeholder="Todos os vinculos" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos os vinculos</SelectItem>
                       {vinculos.map(v => (
@@ -217,9 +218,9 @@ export default function FolhaPagamentoPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Situacao</label>
+                  <label htmlFor="filtro-situacao" className="text-sm font-medium mb-2 block">Situacao</label>
                   <Select value={filtroSituacao} onValueChange={setFiltroSituacao}>
-                    <SelectTrigger><SelectValue placeholder="Todas as situacoes" /></SelectTrigger>
+                    <SelectTrigger id="filtro-situacao"><SelectValue placeholder="Todas as situacoes" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas as situacoes</SelectItem>
                       <SelectItem value="ATIVO">Ativo</SelectItem>

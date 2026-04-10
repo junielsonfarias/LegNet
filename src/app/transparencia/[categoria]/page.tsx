@@ -223,12 +223,13 @@ export default function CategoriaTransparenciaPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               {/* Busca */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-busca-transparencia" className="block text-sm font-medium text-gray-700 mb-2">
                   Buscar
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
+                    id="filtro-busca-transparencia"
                     placeholder="Título, descrição ou tags"
                     value={busca}
                     onChange={(e) => handleBuscaChange(e.target.value)}
@@ -239,11 +240,11 @@ export default function CategoriaTransparenciaPage() {
 
               {/* Subcategoria */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-subcategoria" className="block text-sm font-medium text-gray-700 mb-2">
                   Subcategoria
                 </label>
                 <Select value={subcategoriaSelecionada} onValueChange={handleSubcategoriaChange}>
-                  <SelectTrigger>
+                  <SelectTrigger id="filtro-subcategoria">
                     <SelectValue placeholder="Todas as subcategorias" />
                   </SelectTrigger>
                   <SelectContent>
@@ -259,10 +260,11 @@ export default function CategoriaTransparenciaPage() {
 
               {/* Data Início */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-data-inicio" className="block text-sm font-medium text-gray-700 mb-2">
                   Data Início
                 </label>
                 <Input
+                  id="filtro-data-inicio"
                   type="date"
                   value={dataInicio}
                   onChange={(e) => handleDataInicioChange(e.target.value)}
@@ -271,10 +273,11 @@ export default function CategoriaTransparenciaPage() {
 
               {/* Data Fim */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-data-fim" className="block text-sm font-medium text-gray-700 mb-2">
                   Data Fim
                 </label>
                 <Input
+                  id="filtro-data-fim"
                   type="date"
                   value={dataFim}
                   onChange={(e) => handleDataFimChange(e.target.value)}
@@ -283,11 +286,11 @@ export default function CategoriaTransparenciaPage() {
 
               {/* Status */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="filtro-status-transparencia" className="block text-sm font-medium text-gray-700 mb-2">
                   Status
                 </label>
                 <Select value={statusSelecionado} onValueChange={handleStatusChange}>
-                  <SelectTrigger>
+                  <SelectTrigger id="filtro-status-transparencia">
                     <SelectValue placeholder="Todos os status" />
                   </SelectTrigger>
                   <SelectContent>

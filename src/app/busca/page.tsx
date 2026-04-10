@@ -185,7 +185,7 @@ function BuscaContent() {
               <div className="flex flex-wrap gap-4">
                 {/* Filtro por tipo */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label id="filtro-tipo-label" className="text-sm font-medium text-gray-700 mb-2 block">
                     Tipo de conteudo
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -209,7 +209,7 @@ function BuscaContent() {
 
                 {/* Filtro por ano */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label htmlFor="filtro-ano" className="text-sm font-medium text-gray-700 mb-2 block">
                     Ano
                   </label>
                   <Select value={anoSelecionado} onValueChange={(v) => { setAnoSelecionado(v); setPagina(1); }}>

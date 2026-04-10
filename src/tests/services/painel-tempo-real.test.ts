@@ -7,20 +7,38 @@ jest.mock('@/lib/prisma', () => ({
   prisma: {
     sessao: {
       findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
       update: jest.fn()
     },
     presencaSessao: {
-      upsert: jest.fn()
+      upsert: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([])
     },
     votacao: {
-      upsert: jest.fn()
+      upsert: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([])
+    },
+    voto: {
+      findMany: jest.fn().mockResolvedValue([])
     },
     proposicao: {
       findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
       update: jest.fn()
     },
     pautaItem: {
-      update: jest.fn()
+      update: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([])
+    },
+    pautaSessao: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      findMany: jest.fn().mockResolvedValue([])
+    },
+    mandato: {
+      findMany: jest.fn().mockResolvedValue([])
+    },
+    parlamentar: {
+      findMany: jest.fn().mockResolvedValue([])
     }
   }
 }))

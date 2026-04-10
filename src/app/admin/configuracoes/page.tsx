@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { Save, Download, Upload, RefreshCcw, Building2, Settings, Shield, SlidersHorizontal, AlertCircle, ArrowRight, FileText, Workflow, Vote, Database, Layers, Key, ImageIcon, X } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 import { configuracoesApi, ConfiguracaoInstitucionalApi } from '@/lib/api/configuracoes-api'
@@ -753,10 +754,13 @@ export default function ConfiguracoesPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                 {institutional.logoUrl && (
                   <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-                    <img
+                    <Image
                       src={institutional.logoUrl}
-                      alt="Logo atual"
+                      alt="Logo atual da instituição"
+                      width={80}
+                      height={80}
                       className="h-full w-full object-contain p-1"
+                      unoptimized
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                     <button

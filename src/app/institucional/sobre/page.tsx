@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building, Users, Calendar, FileText, Shield, Heart, Loader2, AlertCircle, Landmark, Scale } from 'lucide-react'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
@@ -297,10 +298,13 @@ export default function SobrePage() {
                           </span>
                         </div>
                         {presidente.foto ? (
-                          <img
+                          <Image
                             src={presidente.foto}
-                            alt={presidente.apelido || presidente.nome}
+                            alt={`Foto de ${presidente.apelido || presidente.nome}`}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 rounded-full mx-auto mt-2 mb-2 object-cover border-2 border-camara-gold/30"
+                            unoptimized
                           />
                         ) : (
                           <div className="w-16 h-16 rounded-full mx-auto mt-2 mb-2 bg-camara-gold/10 flex items-center justify-center">
@@ -349,10 +353,13 @@ export default function SobrePage() {
                               </span>
                             </div>
                             {membro.foto ? (
-                              <img
+                              <Image
                                 src={membro.foto}
-                                alt={membro.apelido || membro.nome}
+                                alt={`Foto de ${membro.apelido || membro.nome}`}
+                                width={48}
+                                height={48}
                                 className={`w-12 h-12 rounded-full mx-auto mt-2 mb-2 object-cover border-2 ${colors.border} opacity-80`}
+                                unoptimized
                               />
                             ) : (
                               <div className={`w-12 h-12 rounded-full mx-auto mt-2 mb-2 bg-white/60 flex items-center justify-center`}>

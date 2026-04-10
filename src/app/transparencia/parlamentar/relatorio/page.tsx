@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -60,10 +61,13 @@ export default function RelatorioListaPage() {
               <Card key={p.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6 text-center">
                   {p.foto ? (
-                    <img
+                    <Image
                       src={p.foto}
-                      alt={p.nome}
+                      alt={`Foto de ${p.nome}`}
+                      width={80}
+                      height={80}
                       className="w-20 h-20 rounded-full mx-auto mb-4 object-cover"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-camara-primary/10 flex items-center justify-center mx-auto mb-4">

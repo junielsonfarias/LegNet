@@ -206,10 +206,13 @@ export default function ParlamentarLayout({
               {/* Logo e Nome da Câmara */}
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 {configuracao.logoUrl ? (
-                  <img
+                  <Image
                     src={configuracao.logoUrl}
-                    alt="Logo"
+                    alt="Brasão da Câmara Municipal"
+                    width={40}
+                    height={40}
                     className="h-8 sm:h-10 w-auto max-w-[48px] object-contain bg-white rounded-md p-0.5"
+                    unoptimized
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
                 ) : (

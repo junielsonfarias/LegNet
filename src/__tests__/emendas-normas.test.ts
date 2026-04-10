@@ -2,66 +2,64 @@
  * Testes para os servicos de Emendas e Normas Juridicas
  */
 
-import { describe, it, expect, vi } from 'vitest'
-
 // Mock do prisma
-vi.mock('@/lib/prisma', () => ({
+jest.mock('@/lib/prisma', () => ({
   prisma: {
     emenda: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-      delete: vi.fn(),
-      count: vi.fn(),
-      groupBy: vi.fn()
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+      groupBy: jest.fn()
     },
     votoEmenda: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn()
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn()
     },
     proposicao: {
-      findUnique: vi.fn()
+      findUnique: jest.fn()
     },
     parlamentar: {
-      findUnique: vi.fn()
+      findUnique: jest.fn()
     },
     normaJuridica: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      count: vi.fn()
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      count: jest.fn()
     },
     artigoNorma: {
-      create: vi.fn(),
-      findMany: vi.fn()
+      create: jest.fn(),
+      findMany: jest.fn()
     },
     paragrafooNorma: {
-      create: vi.fn()
+      create: jest.fn()
     },
     alteracaoNorma: {
-      create: vi.fn()
+      create: jest.fn()
     },
     versaoNorma: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn()
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn()
     },
-    $transaction: vi.fn()
+    $transaction: jest.fn()
   }
 }))
 
 // Mock do logger
-vi.mock('@/lib/logging/logger', () => ({
+jest.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn()
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn()
   })
 }))
 
@@ -83,8 +81,8 @@ describe('Emenda Service', () => {
         votos: []
       }
 
-      vi.mocked(prisma.emenda.count).mockResolvedValue(0)
-      vi.mocked(prisma.emenda.create).mockResolvedValue(mockEmenda as any)
+      jest.mocked(prisma.emenda.count).mockResolvedValue(0)
+      jest.mocked(prisma.emenda.create).mockResolvedValue(mockEmenda as any)
 
       const { criarEmenda } = await import('@/lib/services/emenda-service')
 
@@ -106,8 +104,8 @@ describe('Emenda Service', () => {
     it('deve registrar novo voto', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.votoEmenda.findUnique).mockResolvedValue(null)
-      vi.mocked(prisma.votoEmenda.create).mockResolvedValue({
+      jest.mocked(prisma.votoEmenda.findUnique).mockResolvedValue(null)
+      jest.mocked(prisma.votoEmenda.create).mockResolvedValue({
         id: 'voto-1',
         emendaId: 'emenda-1',
         parlamentarId: 'parlamentar-1',
@@ -128,11 +126,11 @@ describe('Emenda Service', () => {
     it('deve atualizar voto existente', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.votoEmenda.findUnique).mockResolvedValue({
+      jest.mocked(prisma.votoEmenda.findUnique).mockResolvedValue({
         id: 'voto-existente',
         voto: 'NAO'
       } as any)
-      vi.mocked(prisma.votoEmenda.update).mockResolvedValue({
+      jest.mocked(prisma.votoEmenda.update).mockResolvedValue({
         id: 'voto-existente',
         voto: 'SIM'
       } as any)
@@ -153,7 +151,7 @@ describe('Emenda Service', () => {
     it('deve calcular resultado corretamente', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.votoEmenda.findMany).mockResolvedValue([
+      jest.mocked(prisma.votoEmenda.findMany).mockResolvedValue([
         { voto: 'SIM' },
         { voto: 'SIM' },
         { voto: 'SIM' },
@@ -175,7 +173,7 @@ describe('Emenda Service', () => {
     it('deve rejeitar quando NAO > SIM', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.votoEmenda.findMany).mockResolvedValue([
+      jest.mocked(prisma.votoEmenda.findMany).mockResolvedValue([
         { voto: 'SIM' },
         { voto: 'NAO' },
         { voto: 'NAO' },
@@ -195,11 +193,11 @@ describe('Emenda Service', () => {
     it('deve aglutinar emendas da mesma proposicao', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.emenda.findMany).mockResolvedValue([
+      jest.mocked(prisma.emenda.findMany).mockResolvedValue([
         { id: 'emenda-1', proposicaoId: 'prop-1', turnoApresentacao: 1, status: 'APRESENTADA' },
         { id: 'emenda-2', proposicaoId: 'prop-1', turnoApresentacao: 1, status: 'APRESENTADA' }
       ] as any)
-      vi.mocked(prisma.emenda.count).mockResolvedValue(2)
+      jest.mocked(prisma.emenda.count).mockResolvedValue(2)
 
       const mockNovaEmenda = {
         id: 'emenda-aglutinada',
@@ -208,11 +206,11 @@ describe('Emenda Service', () => {
         status: 'APRESENTADA'
       }
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      jest.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
         return fn({
           emenda: {
-            create: vi.fn().mockResolvedValue(mockNovaEmenda),
-            updateMany: vi.fn().mockResolvedValue({ count: 2 })
+            create: jest.fn().mockResolvedValue(mockNovaEmenda),
+            updateMany: jest.fn().mockResolvedValue({ count: 2 })
           }
         })
       })
@@ -237,10 +235,10 @@ describe('Norma Juridica Service', () => {
     it('deve listar normas com paginacao', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.normaJuridica.findMany).mockResolvedValue([
+      jest.mocked(prisma.normaJuridica.findMany).mockResolvedValue([
         { id: 'norma-1', tipo: 'LEI_ORDINARIA', numero: 1, ano: 2024 }
       ] as any)
-      vi.mocked(prisma.normaJuridica.count).mockResolvedValue(1)
+      jest.mocked(prisma.normaJuridica.count).mockResolvedValue(1)
 
       // O servico de norma-juridica tem muitos erros de tipo, entao vamos testar apenas a estrutura
       expect(prisma.normaJuridica.findMany).toBeDefined()

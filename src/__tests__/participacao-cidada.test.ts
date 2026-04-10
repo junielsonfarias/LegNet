@@ -3,61 +3,59 @@
  * Consultas Publicas e Sugestoes Legislativas
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
-
 // Mock do prisma
-vi.mock('@/lib/prisma', () => ({
+jest.mock('@/lib/prisma', () => ({
   prisma: {
     consultaPublica: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      count: vi.fn()
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      count: jest.fn()
     },
     perguntaConsulta: {
-      create: vi.fn(),
-      delete: vi.fn()
+      create: jest.fn(),
+      delete: jest.fn()
     },
     participacaoConsulta: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      count: vi.fn(),
-      groupBy: vi.fn()
+      create: jest.fn(),
+      findFirst: jest.fn(),
+      count: jest.fn(),
+      groupBy: jest.fn()
     },
     respostaConsulta: {
-      findMany: vi.fn()
+      findMany: jest.fn()
     },
     sugestaoLegislativa: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-      count: vi.fn(),
-      groupBy: vi.fn()
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      count: jest.fn(),
+      groupBy: jest.fn()
     },
     apoioSugestao: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      delete: vi.fn()
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn()
     },
     parlamentar: {
-      findUnique: vi.fn()
+      findUnique: jest.fn()
     },
     proposicao: {
-      findUnique: vi.fn(),
-      findFirst: vi.fn(),
-      create: vi.fn()
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn()
     }
   }
 }))
 
 // Mock do logger
-vi.mock('@/lib/logging/logger', () => ({
+jest.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn()
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn()
   })
 }))
 
@@ -77,7 +75,7 @@ describe('Consulta Publica Service', () => {
         moderacao: false
       }
 
-      vi.mocked(prisma.consultaPublica.create).mockResolvedValue(mockConsulta as any)
+      jest.mocked(prisma.consultaPublica.create).mockResolvedValue(mockConsulta as any)
 
       const { criarConsulta } = await import('@/lib/services/consulta-publica-service')
 
@@ -104,7 +102,7 @@ describe('Consulta Publica Service', () => {
         _count: { participacoes: 5 }
       }
 
-      vi.mocked(prisma.consultaPublica.findUnique).mockResolvedValue(mockConsulta as any)
+      jest.mocked(prisma.consultaPublica.findUnique).mockResolvedValue(mockConsulta as any)
 
       const { buscarConsultaPorId } = await import('@/lib/services/consulta-publica-service')
 
@@ -116,7 +114,7 @@ describe('Consulta Publica Service', () => {
 
     it('deve retornar null para consulta inexistente', async () => {
       const { prisma } = await import('@/lib/prisma')
-      vi.mocked(prisma.consultaPublica.findUnique).mockResolvedValue(null)
+      jest.mocked(prisma.consultaPublica.findUnique).mockResolvedValue(null)
 
       const { buscarConsultaPorId } = await import('@/lib/services/consulta-publica-service')
 
@@ -138,7 +136,7 @@ describe('Consulta Publica Service', () => {
         }
       ]
 
-      vi.mocked(prisma.consultaPublica.findMany).mockResolvedValue(mockConsultas as any)
+      jest.mocked(prisma.consultaPublica.findMany).mockResolvedValue(mockConsultas as any)
 
       const { listarConsultasAbertas } = await import('@/lib/services/consulta-publica-service')
 
@@ -166,7 +164,7 @@ describe('Sugestao Legislativa Service', () => {
         totalApoios: 0
       }
 
-      vi.mocked(prisma.sugestaoLegislativa.create).mockResolvedValue(mockSugestao as any)
+      jest.mocked(prisma.sugestaoLegislativa.create).mockResolvedValue(mockSugestao as any)
 
       const { criarSugestao } = await import('@/lib/services/sugestao-legislativa-service')
 
@@ -189,15 +187,15 @@ describe('Sugestao Legislativa Service', () => {
     it('deve registrar apoio de novo usuario', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.apoioSugestao.findUnique).mockResolvedValue(null)
-      vi.mocked(prisma.apoioSugestao.create).mockResolvedValue({
+      jest.mocked(prisma.apoioSugestao.findUnique).mockResolvedValue(null)
+      jest.mocked(prisma.apoioSugestao.create).mockResolvedValue({
         id: 'apoio-1',
         sugestaoId: 'sugestao-1',
         nome: 'Apoiador',
         email: 'apoiador@teste.com',
         cpfHash: 'CPF_HASH'
       } as any)
-      vi.mocked(prisma.sugestaoLegislativa.update).mockResolvedValue({} as any)
+      jest.mocked(prisma.sugestaoLegislativa.update).mockResolvedValue({} as any)
 
       const { apoiarSugestao } = await import('@/lib/services/sugestao-legislativa-service')
 
@@ -216,7 +214,7 @@ describe('Sugestao Legislativa Service', () => {
     it('deve lancar erro se usuario ja apoiou', async () => {
       const { prisma } = await import('@/lib/prisma')
 
-      vi.mocked(prisma.apoioSugestao.findUnique).mockResolvedValue({
+      jest.mocked(prisma.apoioSugestao.findUnique).mockResolvedValue({
         id: 'apoio-existente'
       } as any)
 
@@ -236,7 +234,7 @@ describe('Sugestao Legislativa Service', () => {
         status: 'EM_ANALISE'
       }
 
-      vi.mocked(prisma.sugestaoLegislativa.update).mockResolvedValue(mockSugestao as any)
+      jest.mocked(prisma.sugestaoLegislativa.update).mockResolvedValue(mockSugestao as any)
 
       const { moderarSugestao } = await import('@/lib/services/sugestao-legislativa-service')
 
@@ -253,7 +251,7 @@ describe('Validacoes', () => {
   it('deve rejeitar consulta com datas invalidas', async () => {
     const { prisma } = await import('@/lib/prisma')
 
-    vi.mocked(prisma.consultaPublica.create).mockRejectedValue(
+    jest.mocked(prisma.consultaPublica.create).mockRejectedValue(
       new Error('Data de fim deve ser maior que data de inicio')
     )
 
@@ -273,13 +271,13 @@ describe('Validacoes', () => {
     const { prisma } = await import('@/lib/prisma')
 
     // CPF invalido nao deve criar apoio
-    vi.mocked(prisma.apoioSugestao.findUnique).mockResolvedValue(null)
+    jest.mocked(prisma.apoioSugestao.findUnique).mockResolvedValue(null)
 
     const { apoiarSugestao } = await import('@/lib/services/sugestao-legislativa-service')
 
     // Com CPF valido deve funcionar
-    vi.mocked(prisma.apoioSugestao.create).mockResolvedValue({ id: 'apoio-1' } as any)
-    vi.mocked(prisma.sugestaoLegislativa.update).mockResolvedValue({} as any)
+    jest.mocked(prisma.apoioSugestao.create).mockResolvedValue({ id: 'apoio-1' } as any)
+    jest.mocked(prisma.sugestaoLegislativa.update).mockResolvedValue({} as any)
 
     const resultado = await apoiarSugestao(
       'sugestao-1',
