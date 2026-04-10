@@ -86,19 +86,20 @@ export async function list(
   }
 
   if (filters.from || filters.to) {
-    where.dataEntrada = {}
+    const dateFilter: Record<string, unknown> = {}
     if (filters.from) {
       const fromDate = new Date(filters.from)
       if (!Number.isNaN(fromDate.getTime())) {
-        where.dataEntrada.gte = fromDate
+        dateFilter.gte = fromDate
       }
     }
     if (filters.to) {
       const toDate = new Date(filters.to)
       if (!Number.isNaN(toDate.getTime())) {
-        where.dataEntrada.lte = toDate
+        dateFilter.lte = toDate
       }
     }
+    where.dataEntrada = dateFilter
   }
 
   if (filters.search) {
@@ -2141,19 +2142,20 @@ export async function publicList(
   }
 
   if (filters.from || filters.to) {
-    where.dataEntrada = {}
+    const dateFilter: Record<string, unknown> = {}
     if (filters.from) {
       const fromDate = new Date(filters.from)
       if (!Number.isNaN(fromDate.getTime())) {
-        where.dataEntrada.gte = fromDate
+        dateFilter.gte = fromDate
       }
     }
     if (filters.to) {
       const toDate = new Date(filters.to)
       if (!Number.isNaN(toDate.getTime())) {
-        where.dataEntrada.lte = toDate
+        dateFilter.lte = toDate
       }
     }
+    where.dataEntrada = dateFilter
   }
 
   if (filters.search) {

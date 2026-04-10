@@ -78,9 +78,10 @@ export class ReuniaoComissaoService {
     if (filtros?.status) where.status = filtros.status
     if (filtros?.ano) where.ano = filtros.ano
     if (filtros?.dataInicio || filtros?.dataFim) {
-      where.data = {}
-      if (filtros.dataInicio) where.data.gte = filtros.dataInicio
-      if (filtros.dataFim) where.data.lte = filtros.dataFim
+      const dateFilter: Record<string, unknown> = {}
+      if (filtros.dataInicio) dateFilter.gte = filtros.dataInicio
+      if (filtros.dataFim) dateFilter.lte = filtros.dataFim
+      where.data = dateFilter
     }
 
     const [reunioes, total] = await Promise.all([

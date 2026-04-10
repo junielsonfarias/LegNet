@@ -218,13 +218,14 @@ export async function listarProtocolos(
   }
 
   if (filtros.dataInicio || filtros.dataFim) {
-    where.dataRecebimento = {}
+    const dateFilter: Record<string, unknown> = {}
     if (filtros.dataInicio) {
-      where.dataRecebimento.gte = filtros.dataInicio
+      dateFilter.gte = filtros.dataInicio
     }
     if (filtros.dataFim) {
-      where.dataRecebimento.lte = filtros.dataFim
+      dateFilter.lte = filtros.dataFim
     }
+    where.dataRecebimento = dateFilter
   }
 
   if (filtros.busca) {
