@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Parlamentares',
+  title: {
+    template: '%s | Parlamentares',
+    default: 'Parlamentares',
+  },
   description: 'Conheça os vereadores da Câmara Municipal. Informações sobre mandatos, partidos, presença em sessões e votações.',
   openGraph: {
     title: 'Parlamentares | Câmara Municipal',
