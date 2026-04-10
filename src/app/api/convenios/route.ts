@@ -1,67 +1,53 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { conveniosDbService } from '@/lib/services/convenios-db-service'
+import { NextRequest } from 'next/server'
+import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { conveniosDbService } from '@/lib/services/convenios-db-service'
 import type { SituacaoConvenio } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const situacao = searchParams.get('situacao') as SituacaoConvenio | null
-    const ano = searchParams.get('ano')
-    const convenente = searchParams.get('convenente')
-    const orgaoConcedente = searchParams.get('orgaoConcedente')
-    const objeto = searchParams.get('objeto')
-    const dataInicio = searchParams.get('dataInicio')
-    const dataFim = searchParams.get('dataFim')
-    const valorMinimo = searchParams.get('valorMinimo')
-    const valorMaximo = searchParams.get('valorMaximo')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
+  const situacao = searchParams.get('situacao') as SituacaoConvenio | null
+  const ano = searchParams.get('ano')
+  const convenente = searchParams.get('convenente')
+  const orgaoConcedente = searchParams.get('orgaoConcedente')
+  const objeto = searchParams.get('objeto')
+  const dataInicio = searchParams.get('dataInicio')
+  const dataFim = searchParams.get('dataFim')
+  const valorMinimo = searchParams.get('valorMinimo')
+  const valorMaximo = searchParams.get('valorMaximo')
+  const page = parseInt(searchParams.get('page') || '1')
+  const limit = parseInt(searchParams.get('limit') || '10')
 
-    const result = await conveniosDbService.paginate(
-      {
-        situacao: situacao || undefined,
-        ano: ano ? parseInt(ano) : undefined,
-        convenente: convenente || undefined,
-        orgaoConcedente: orgaoConcedente || undefined,
-        objeto: objeto || undefined,
-        dataInicio: dataInicio || undefined,
-        dataFim: dataFim || undefined,
-        valorMinimo: valorMinimo ? parseFloat(valorMinimo) : undefined,
-        valorMaximo: valorMaximo ? parseFloat(valorMaximo) : undefined
-      },
-      { page, limit }
-    )
+  const result = await conveniosDbService.paginate(
+    {
+      situacao: situacao || undefined,
+      ano: ano ? parseInt(ano) : undefined,
+      convenente: convenente || undefined,
+      orgaoConcedente: orgaoConcedente || undefined,
+      objeto: objeto || undefined,
+      dataInicio: dataInicio || undefined,
+      dataFim: dataFim || undefined,
+      valorMinimo: valorMinimo ? parseFloat(valorMinimo) : undefined,
+      valorMaximo: valorMaximo ? parseFloat(valorMaximo) : undefined
+    },
+    { page, limit }
+  )
 
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=300',
-        'X-Total-Count': result.pagination.total.toString()
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar convenios:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
-  }
-}
+  return createSuccessResponse(result.data, undefined, undefined, 200, {
+    total: result.pagination.total,
+    page: result.pagination.page,
+    limit: result.pagination.limit,
+    totalPages: result.pagination.totalPages
+  })
+})
 
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
   if (!body.numero || !body.convenente || !body.orgaoConcedente || !body.objeto || !body.valorTotal) {
-    return NextResponse.json(
-      { success: false, error: 'Campos obrigatorios nao fornecidos' },
-      { status: 400 }
-    )
+    throw new ValidationError('Campos obrigatorios nao fornecidos')
   }
 
   const novoConvenio = await conveniosDbService.create({
@@ -86,9 +72,5 @@ export const POST = withAuth(async (request: NextRequest) => {
     observacoes: body.observacoes
   })
 
-  return NextResponse.json({
-    success: true,
-    data: novoConvenio,
-    message: 'Convenio criado com sucesso'
-  }, { status: 201 })
+  return createSuccessResponse(novoConvenio, 'Convenio criado com sucesso', undefined, 201)
 }, { permissions: 'financeiro.manage' })

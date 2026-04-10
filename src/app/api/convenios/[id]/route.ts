@@ -1,33 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { conveniosDbService } from '@/lib/services/convenios-db-service'
+import { NextRequest } from 'next/server'
+import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { conveniosDbService } from '@/lib/services/convenios-db-service'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const convenio = await conveniosDbService.getById(id)
+) => {
+  const { id } = await params
+  const convenio = await conveniosDbService.getById(id)
 
-    if (!convenio) {
-      return NextResponse.json(
-        { success: false, error: 'Convenio nao encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ success: true, data: convenio })
-  } catch (error) {
-    console.error('Erro ao buscar convenio:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!convenio) {
+    throw new NotFoundError('Convenio')
   }
-}
+
+  return createSuccessResponse(convenio)
+})
 
 export const PUT = withAuth(async (
   request: NextRequest,
@@ -38,10 +28,7 @@ export const PUT = withAuth(async (
 
   const convenioExistente = await conveniosDbService.getById(id)
   if (!convenioExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Convenio nao encontrado' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Convenio')
   }
 
   const convenioAtualizado = await conveniosDbService.update(id, {
@@ -66,11 +53,7 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
-  return NextResponse.json({
-    success: true,
-    data: convenioAtualizado,
-    message: 'Convenio atualizado com sucesso'
-  })
+  return createSuccessResponse(convenioAtualizado, 'Convenio atualizado com sucesso')
 }, { permissions: 'financeiro.manage' })
 
 export const DELETE = withAuth(async (
@@ -81,16 +64,10 @@ export const DELETE = withAuth(async (
 
   const convenioExistente = await conveniosDbService.getById(id)
   if (!convenioExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Convenio nao encontrado' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Convenio')
   }
 
   await conveniosDbService.remove(id)
 
-  return NextResponse.json({
-    success: true,
-    message: 'Convenio excluido com sucesso'
-  })
+  return createSuccessResponse(null, 'Convenio excluido com sucesso')
 }, { permissions: 'financeiro.manage' })

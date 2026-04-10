@@ -1,33 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { contratosDbService } from '@/lib/services/contratos-db-service'
+import { NextRequest } from 'next/server'
+import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { contratosDbService } from '@/lib/services/contratos-db-service'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const contrato = await contratosDbService.getById(id)
+) => {
+  const { id } = await params
+  const contrato = await contratosDbService.getById(id)
 
-    if (!contrato) {
-      return NextResponse.json(
-        { success: false, error: 'Contrato nao encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ success: true, data: contrato })
-  } catch (error) {
-    console.error('Erro ao buscar contrato:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!contrato) {
+    throw new NotFoundError('Contrato')
   }
-}
+
+  return createSuccessResponse(contrato)
+})
 
 export const PUT = withAuth(async (
   request: NextRequest,
@@ -38,10 +28,7 @@ export const PUT = withAuth(async (
 
   const contratoExistente = await contratosDbService.getById(id)
   if (!contratoExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Contrato nao encontrado' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Contrato')
   }
 
   const contratoAtualizado = await contratosDbService.update(id, {
@@ -62,11 +49,7 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
-  return NextResponse.json({
-    success: true,
-    data: contratoAtualizado,
-    message: 'Contrato atualizado com sucesso'
-  })
+  return createSuccessResponse(contratoAtualizado, 'Contrato atualizado com sucesso')
 }, { permissions: 'financeiro.manage' })
 
 export const DELETE = withAuth(async (
@@ -77,16 +60,10 @@ export const DELETE = withAuth(async (
 
   const contratoExistente = await contratosDbService.getById(id)
   if (!contratoExistente) {
-    return NextResponse.json(
-      { success: false, error: 'Contrato nao encontrado' },
-      { status: 404 }
-    )
+    throw new NotFoundError('Contrato')
   }
 
   await contratosDbService.remove(id)
 
-  return NextResponse.json({
-    success: true,
-    message: 'Contrato excluido com sucesso'
-  })
+  return createSuccessResponse(null, 'Contrato excluido com sucesso')
 }, { permissions: 'financeiro.manage' })

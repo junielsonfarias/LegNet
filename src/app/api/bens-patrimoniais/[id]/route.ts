@@ -1,33 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { bensPatrimoniaisDbService } from '@/lib/services/bens-patrimoniais-db-service'
+import { NextRequest } from 'next/server'
+import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { bensPatrimoniaisDbService } from '@/lib/services/bens-patrimoniais-db-service'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(
+export const GET = withErrorHandler(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const bem = await bensPatrimoniaisDbService.getById(id)
+) => {
+  const { id } = await params
+  const bem = await bensPatrimoniaisDbService.getById(id)
 
-    if (!bem) {
-      return NextResponse.json(
-        { success: false, error: 'Bem patrimonial nao encontrado' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json({ success: true, data: bem })
-  } catch (error) {
-    console.error('Erro ao buscar bem patrimonial:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  if (!bem) {
+    throw new NotFoundError('Bem patrimonial')
   }
-}
+
+  return createSuccessResponse(bem)
+})
 
 export const PUT = withAuth(
   async (
@@ -39,10 +29,7 @@ export const PUT = withAuth(
 
     const bemExistente = await bensPatrimoniaisDbService.getById(id)
     if (!bemExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Bem patrimonial nao encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Bem patrimonial')
     }
 
     const bemAtualizado = await bensPatrimoniaisDbService.update(id, {
@@ -62,11 +49,7 @@ export const PUT = withAuth(
       observacoes: body.observacoes
     })
 
-    return NextResponse.json({
-      success: true,
-      data: bemAtualizado,
-      message: 'Bem patrimonial atualizado com sucesso'
-    })
+    return createSuccessResponse(bemAtualizado, 'Bem patrimonial atualizado com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )
@@ -80,18 +63,12 @@ export const DELETE = withAuth(
 
     const bemExistente = await bensPatrimoniaisDbService.getById(id)
     if (!bemExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Bem patrimonial nao encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Bem patrimonial')
     }
 
     await bensPatrimoniaisDbService.remove(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Bem patrimonial excluido com sucesso'
-    })
+    return createSuccessResponse(null, 'Bem patrimonial excluido com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )

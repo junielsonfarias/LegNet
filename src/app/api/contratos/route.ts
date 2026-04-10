@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { contratosDbService } from '@/lib/services/contratos-db-service'
+import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
+import { contratosDbService } from '@/lib/services/contratos-db-service'
 import { safeParseQueryParams } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
@@ -26,67 +27,49 @@ const ContratoQuerySchema = z.object({
   { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
 )
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
 
-    // Validar query params com Zod
-    const validation = safeParseQueryParams(searchParams, ContratoQuerySchema)
-    if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: 'Parâmetros inválidos', details: validation.error.errors },
-        { status: 400 }
-      )
-    }
-
-    const {
-      page, limit, modalidade, situacao, ano, contratado,
-      objeto, licitacaoId, dataInicio, dataFim, valorMinimo, valorMaximo
-    } = validation.data
-
-    const result = await contratosDbService.paginate(
-      {
-        modalidade,
-        situacao,
-        ano,
-        contratado,
-        objeto,
-        licitacaoId,
-        dataInicio,
-        dataFim,
-        valorMinimo,
-        valorMaximo
-      },
-      { page, limit }
-    )
-
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      pagination: result.pagination
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=300',
-        'X-Total-Count': result.pagination.total.toString()
-      }
-    })
-  } catch (error) {
-    console.error('Erro ao buscar contratos:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+  // Validar query params com Zod
+  const validation = safeParseQueryParams(searchParams, ContratoQuerySchema)
+  if (!validation.success) {
+    throw new ValidationError('Parâmetros inválidos', validation.error.errors)
   }
-}
+
+  const {
+    page, limit, modalidade, situacao, ano, contratado,
+    objeto, licitacaoId, dataInicio, dataFim, valorMinimo, valorMaximo
+  } = validation.data
+
+  const result = await contratosDbService.paginate(
+    {
+      modalidade,
+      situacao,
+      ano,
+      contratado,
+      objeto,
+      licitacaoId,
+      dataInicio,
+      dataFim,
+      valorMinimo,
+      valorMaximo
+    },
+    { page, limit }
+  )
+
+  return createSuccessResponse(result.data, undefined, undefined, 200, {
+    total: result.pagination.total,
+    page: result.pagination.page,
+    limit: result.pagination.limit,
+    totalPages: result.pagination.totalPages
+  })
+})
 
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
   if (!body.numero || !body.objeto || !body.contratado || !body.valorTotal || !body.dataAssinatura) {
-    return NextResponse.json(
-      { success: false, error: 'Campos obrigatorios nao fornecidos' },
-      { status: 400 }
-    )
+    throw new ValidationError('Campos obrigatorios nao fornecidos')
   }
 
   const novoContrato = await contratosDbService.create({
@@ -107,9 +90,5 @@ export const POST = withAuth(async (request: NextRequest) => {
     observacoes: body.observacoes
   })
 
-  return NextResponse.json({
-    success: true,
-    data: novoContrato,
-    message: 'Contrato criado com sucesso'
-  }, { status: 201 })
+  return createSuccessResponse(novoContrato, 'Contrato criado com sucesso', undefined, 201)
 }, { permissions: 'financeiro.manage' })

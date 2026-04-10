@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextRequest } from 'next/server'
+import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { withAuth } from '@/lib/auth/permissions'
 import { conteudoEducativoService } from '@/lib/services/conteudo-educativo-service'
 
 export const dynamic = 'force-dynamic'
@@ -8,64 +8,36 @@ export const dynamic = 'force-dynamic'
 /**
  * GET - Buscar conteúdo educativo por ID (admin)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const GET = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const conteudo = await conteudoEducativoService.getById(id)
 
     if (!conteudo) {
-      return NextResponse.json(
-        { success: false, error: 'Conteúdo não encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Conteúdo educativo')
     }
 
-    return NextResponse.json({ success: true, data: conteudo })
-  } catch (error) {
-    console.error('Erro ao buscar conteúdo educativo:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return createSuccessResponse(conteudo)
   }
-}
+)
 
 /**
  * PATCH - Atualizar conteúdo educativo (admin)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const PATCH = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
     const body = await request.json()
 
     const conteudoExistente = await conteudoEducativoService.getById(id)
     if (!conteudoExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Conteúdo não encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Conteúdo educativo')
     }
 
     const conteudo = await conteudoEducativoService.update(id, {
@@ -79,57 +51,27 @@ export async function PATCH(
       ordem: body.ordem
     })
 
-    return NextResponse.json({
-      success: true,
-      data: conteudo,
-      message: 'Conteúdo educativo atualizado com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao atualizar conteúdo educativo:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return createSuccessResponse(conteudo, 'Conteúdo educativo atualizado com sucesso')
   }
-}
+)
 
 /**
  * DELETE - Excluir conteúdo educativo (admin)
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: 'Não autorizado' },
-        { status: 401 }
-      )
-    }
-
+export const DELETE = withAuth(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
     const { id } = await params
 
     const conteudoExistente = await conteudoEducativoService.getById(id)
     if (!conteudoExistente) {
-      return NextResponse.json(
-        { success: false, error: 'Conteúdo não encontrado' },
-        { status: 404 }
-      )
+      throw new NotFoundError('Conteúdo educativo')
     }
 
     await conteudoEducativoService.delete(id)
 
-    return NextResponse.json({
-      success: true,
-      message: 'Conteúdo educativo excluído com sucesso'
-    })
-  } catch (error) {
-    console.error('Erro ao excluir conteúdo educativo:', error)
-    return NextResponse.json(
-      { success: false, error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return createSuccessResponse(null, 'Conteúdo educativo excluído com sucesso')
   }
-}
+)

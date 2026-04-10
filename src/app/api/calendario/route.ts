@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import {
   buscarEventos,
   buscarEventosDoMes,
@@ -25,99 +26,81 @@ export const dynamic = 'force-dynamic'
  * - limite: número máximo de eventos (para periodo=proximos)
  * - formato: 'json' | 'ical' (default: json)
  */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url)
 
-    const periodo = searchParams.get('periodo') || 'mes'
-    const formato = searchParams.get('formato') || 'json'
-    const tiposParam = searchParams.get('tipos')
-    const tipos = tiposParam ? (tiposParam.split(',') as TipoEvento[]) : undefined
+  const periodo = searchParams.get('periodo') || 'mes'
+  const formato = searchParams.get('formato') || 'json'
+  const tiposParam = searchParams.get('tipos')
+  const tipos = tiposParam ? (tiposParam.split(',') as TipoEvento[]) : undefined
 
-    let eventos
+  let eventos
 
-    switch (periodo) {
-      case 'mes': {
-        const ano = parseInt(searchParams.get('ano') || String(new Date().getFullYear()))
-        const mes = parseInt(searchParams.get('mes') || String(new Date().getMonth() + 1))
-        eventos = await buscarEventosDoMes(ano, mes)
-        break
-      }
-
-      case 'semana': {
-        const dataRef = searchParams.get('data')
-        eventos = await buscarEventosDaSemana(dataRef ? new Date(dataRef) : undefined)
-        break
-      }
-
-      case 'dia': {
-        const data = searchParams.get('data')
-        if (!data) {
-          return NextResponse.json(
-            { error: 'Parâmetro "data" é obrigatório para periodo=dia' },
-            { status: 400 }
-          )
-        }
-        eventos = await buscarEventosDoDia(new Date(data))
-        break
-      }
-
-      case 'proximos': {
-        const limite = parseInt(searchParams.get('limite') || '5')
-        eventos = await buscarProximosEventos(limite)
-        break
-      }
-
-      case 'intervalo': {
-        const inicio = searchParams.get('inicio')
-        const fim = searchParams.get('fim')
-        if (!inicio || !fim) {
-          return NextResponse.json(
-            { error: 'Parâmetros "inicio" e "fim" são obrigatórios para periodo=intervalo' },
-            { status: 400 }
-          )
-        }
-        eventos = await buscarEventos({
-          inicio: new Date(inicio),
-          fim: new Date(fim),
-          tipos,
-        })
-        break
-      }
-
-      default:
-        eventos = await buscarEventosDoMes(
-          new Date().getFullYear(),
-          new Date().getMonth() + 1
-        )
+  switch (periodo) {
+    case 'mes': {
+      const ano = parseInt(searchParams.get('ano') || String(new Date().getFullYear()))
+      const mes = parseInt(searchParams.get('mes') || String(new Date().getMonth() + 1))
+      eventos = await buscarEventosDoMes(ano, mes)
+      break
     }
 
-    // Filtrar por tipos se especificado
-    if (tipos && tipos.length > 0) {
-      eventos = eventos.filter(e => tipos.includes(e.tipo))
+    case 'semana': {
+      const dataRef = searchParams.get('data')
+      eventos = await buscarEventosDaSemana(dataRef ? new Date(dataRef) : undefined)
+      break
     }
 
-    // Retornar em formato iCal se solicitado
-    if (formato === 'ical' && eventos.length > 0) {
-      const icalContent = eventos.map(e => gerarICalEvento(e)).join('\n')
-      return new NextResponse(icalContent, {
-        headers: {
-          'Content-Type': 'text/calendar',
-          'Content-Disposition': 'attachment; filename="calendario-legislativo.ics"',
-        },
+    case 'dia': {
+      const data = searchParams.get('data')
+      if (!data) {
+        throw new ValidationError('Parâmetro "data" é obrigatório para periodo=dia')
+      }
+      eventos = await buscarEventosDoDia(new Date(data))
+      break
+    }
+
+    case 'proximos': {
+      const limite = parseInt(searchParams.get('limite') || '5')
+      eventos = await buscarProximosEventos(limite)
+      break
+    }
+
+    case 'intervalo': {
+      const inicio = searchParams.get('inicio')
+      const fim = searchParams.get('fim')
+      if (!inicio || !fim) {
+        throw new ValidationError('Parâmetros "inicio" e "fim" são obrigatórios para periodo=intervalo')
+      }
+      eventos = await buscarEventos({
+        inicio: new Date(inicio),
+        fim: new Date(fim),
+        tipos,
       })
+      break
     }
 
-    return NextResponse.json({
-      eventos,
-      total: eventos.length,
-      periodo,
-    })
-  } catch (error) {
-    console.error('Erro ao buscar calendário:', error)
-    return NextResponse.json(
-      { error: 'Erro interno ao buscar calendário' },
-      { status: 500 }
-    )
+    default:
+      eventos = await buscarEventosDoMes(
+        new Date().getFullYear(),
+        new Date().getMonth() + 1
+      )
   }
-}
+
+  // Filtrar por tipos se especificado
+  if (tipos && tipos.length > 0) {
+    eventos = eventos.filter(e => tipos.includes(e.tipo))
+  }
+
+  // Retornar em formato iCal se solicitado
+  if (formato === 'ical' && eventos.length > 0) {
+    const icalContent = eventos.map(e => gerarICalEvento(e)).join('\n')
+    return new NextResponse(icalContent, {
+      headers: {
+        'Content-Type': 'text/calendar',
+        'Content-Disposition': 'attachment; filename="calendario-legislativo.ics"',
+      },
+    })
+  }
+
+  return createSuccessResponse({ eventos, total: eventos.length, periodo })
+})
