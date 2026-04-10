@@ -247,10 +247,13 @@ export default function IdentidadeVisualPage() {
                   </p>
                   {config.brasaoUrl && (
                     <div className="mt-2 p-3 bg-gray-50 rounded-lg flex items-center justify-center">
-                      <img
+                      <Image
                         src={config.brasaoUrl}
                         alt="Preview brasao"
                         className="h-20 object-contain"
+                        width={200}
+                        height={200}
+                        unoptimized
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />
                     </div>
@@ -269,10 +272,13 @@ export default function IdentidadeVisualPage() {
                   </p>
                   {config.logoUrl && (
                     <div className="mt-2 p-3 bg-gray-50 rounded-lg flex items-center justify-center">
-                      <img
+                      <Image
                         src={config.logoUrl}
                         alt="Preview logo"
                         className="h-20 object-contain"
+                        width={200}
+                        height={200}
+                        unoptimized
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />
                     </div>
@@ -301,7 +307,7 @@ export default function IdentidadeVisualPage() {
                 >
                   <div className="flex items-center gap-2">
                     {config.brasaoUrl ? (
-                      <img src={config.brasaoUrl} alt="" className="h-8 w-8 object-contain" />
+                      <Image src={config.brasaoUrl} alt="" className="h-8 w-8 object-contain" width={32} height={32} unoptimized />
                     ) : (
                       <div
                         className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold"

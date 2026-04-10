@@ -23,6 +23,7 @@ import {
   Award,
   Clock
 } from 'lucide-react';
+import Image from 'next/image';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
@@ -315,7 +316,7 @@ export default function VereadoresPage() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     {vereador.foto ? (
-                      <img src={vereador.foto} alt={vereador.nome} className="w-12 h-12 rounded-lg object-cover" />
+                      <Image src={vereador.foto} alt={vereador.nome} className="w-12 h-12 rounded-lg object-cover" width={48} height={48} unoptimized />
                     ) : (
                       <div className="p-3 bg-camara-primary/10 rounded-lg">
                         <User className="h-6 w-6 text-camara-primary" />

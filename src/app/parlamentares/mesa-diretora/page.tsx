@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Crown, Shield, Award, User, Mail, Phone, Calendar, Filter, BarChart3, Eye } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 import { slugify } from '@/lib/utils';
@@ -318,7 +319,7 @@ export default function MesaDiretoraPage() {
                           <div className="flex flex-col sm:flex-row items-center gap-6">
                             <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-amber-400 ring-4 ring-amber-100 flex-shrink-0`}>
                               {presidente.foto ? (
-                                <img src={presidente.foto} alt={presidente.apelido || presidente.nome} className="w-full h-full object-cover" />
+                                <Image src={presidente.foto} alt={presidente.apelido || presidente.nome} className="w-full h-full object-cover" width={112} height={112} unoptimized />
                               ) : (
                                 <div className="w-full h-full bg-amber-100 flex items-center justify-center text-amber-600 text-3xl font-bold">
                                   {presidente.nome.charAt(0)}
@@ -360,7 +361,7 @@ export default function MesaDiretoraPage() {
                             <CardContent className="p-5 text-center">
                               <div className={`w-18 h-18 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full overflow-hidden border-3 ${getBorderColor(membro.cargo || '')} ring-2`}>
                                 {membro.foto ? (
-                                  <img src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" />
+                                  <Image src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" width={80} height={80} unoptimized />
                                 ) : (
                                   <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 text-xl font-bold">
                                     {membro.nome.charAt(0)}
@@ -429,7 +430,7 @@ export default function MesaDiretoraPage() {
                   <CardHeader className="text-center">
                     <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
                       {vereador.foto ? (
-                        <img src={vereador.foto} alt={vereador.apelido || vereador.nome} className="w-full h-full object-cover" />
+                        <Image src={vereador.foto} alt={vereador.apelido || vereador.nome} className="w-full h-full object-cover" width={64} height={64} unoptimized />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold">
                           {vereador.nome.charAt(0)}

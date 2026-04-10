@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -319,7 +320,7 @@ export default function ParlamentarPerfilPage() {
             <div className="relative flex-shrink-0">
               {perfil.foto ? (
                 <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-white/30 shadow-xl ring-4 ring-white/10">
-                  <img src={perfil.foto} alt={perfil.nome} className="w-full h-full object-cover" />
+                  <Image src={perfil.foto} alt={perfil.nome} className="w-full h-full object-cover" width={144} height={144} unoptimized />
                 </div>
               ) : (
                 <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -188,7 +189,7 @@ export default function ProposicaoDetalhePage() {
             {proposicao.autor && (
               <Link href={`/parlamentares/${proposicao.autor.id}`} className="flex items-center gap-1.5 hover:text-camara-primary transition-colors">
                 {proposicao.autor.foto ? (
-                  <img src={proposicao.autor.foto} alt="" className="w-5 h-5 rounded-full object-cover" />
+                  <Image src={proposicao.autor.foto} alt="" className="w-5 h-5 rounded-full object-cover" width={20} height={20} unoptimized />
                 ) : (
                   <User className="h-4 w-4" />
                 )}
@@ -729,7 +730,7 @@ export default function ProposicaoDetalhePage() {
                       className="flex items-center gap-2.5 p-2 -mx-2 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       {proposicao.autor.foto ? (
-                        <img src={proposicao.autor.foto} alt="" className="w-9 h-9 rounded-full object-cover" />
+                        <Image src={proposicao.autor.foto} alt="" className="w-9 h-9 rounded-full object-cover" width={36} height={36} unoptimized />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-camara-primary/10 flex items-center justify-center">
                           <User className="h-4 w-4 text-camara-primary" />

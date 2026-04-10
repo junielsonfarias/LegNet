@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { BookOpen, Loader2, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface ConteudoEducativo {
   id: string
@@ -88,7 +89,7 @@ export default function CamaraExplicaPage() {
                       <Card key={c.id} className="hover:shadow-lg transition-shadow">
                         {c.imagem && (
                           <div className="aspect-video overflow-hidden rounded-t-lg">
-                            <img src={c.imagem} alt={c.titulo} className="w-full h-full object-cover" />
+                            <Image src={c.imagem} alt={c.titulo} className="w-full h-full object-cover" width={400} height={225} unoptimized />
                           </div>
                         )}
                         <CardHeader>
@@ -117,7 +118,7 @@ export default function CamaraExplicaPage() {
               <Card key={c.id} className="hover:shadow-lg transition-shadow">
                 {c.imagem && (
                   <div className="aspect-video overflow-hidden rounded-t-lg">
-                    <img src={c.imagem} alt={c.titulo} className="w-full h-full object-cover" />
+                    <Image src={c.imagem} alt={c.titulo} className="w-full h-full object-cover" width={400} height={225} unoptimized />
                   </div>
                 )}
                 <CardHeader>

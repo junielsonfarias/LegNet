@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Crown, Shield, Award, User, Mail, Phone, Calendar, Filter, BarChart3, Eye, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
@@ -338,7 +339,7 @@ export default function MesaDiretoraTransparenciaPage() {
                       <CardHeader className="text-center">
                         <div className={`relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 rounded-full overflow-hidden border-4 ${borderColors[membro.cargo || ''] || 'border-camara-primary'}`}>
                           {membro.foto ? (
-                            <img src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" />
+                            <Image src={membro.foto} alt={membro.apelido || membro.nome} className="w-full h-full object-cover" width={80} height={80} unoptimized />
                           ) : (
                             <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl font-bold">
                               {membro.nome.charAt(0)}
@@ -396,7 +397,7 @@ export default function MesaDiretoraTransparenciaPage() {
                   <CardHeader className="text-center">
                     <div className="relative w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full overflow-hidden border-4 border-camara-primary">
                       {vereador.foto ? (
-                        <img src={vereador.foto} alt={vereador.apelido || vereador.nome} className="w-full h-full object-cover" />
+                        <Image src={vereador.foto} alt={vereador.apelido || vereador.nome} className="w-full h-full object-cover" width={64} height={64} unoptimized />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-bold">
                           {vereador.nome.charAt(0)}

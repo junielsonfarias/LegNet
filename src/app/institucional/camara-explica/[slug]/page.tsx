@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { BookOpen, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 
 interface ConteudoEducativo {
@@ -84,7 +85,7 @@ export default function ConteudoEducativoPage() {
         <article>
           {conteudo.imagem && (
             <div className="aspect-video overflow-hidden rounded-lg mb-8">
-              <img src={conteudo.imagem} alt={conteudo.titulo} className="w-full h-full object-cover" />
+              <Image src={conteudo.imagem} alt={conteudo.titulo} className="w-full h-full object-cover" width={800} height={450} unoptimized />
             </div>
           )}
 
