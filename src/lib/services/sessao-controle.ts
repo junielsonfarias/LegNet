@@ -479,8 +479,8 @@ export async function iniciarItemPauta(sessaoId: string, itemId: string) {
   const agora = new Date()
 
   // Iniciar transação com atualização do item e pauta
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updates: Prisma.PrismaPromise<any>[] = [
+  // Prisma.$transaction exige PrismaPromise<any>[]
+  const updates: Prisma.PrismaPromise<any>[] = [ // eslint-disable-line
     prisma.pautaItem.update({
       where: { id: itemId },
       data: {

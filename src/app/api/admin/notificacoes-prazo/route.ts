@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,7 +54,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     const usuarioPorParlamentar = new Map(usuarios.map(u => [u.parlamentarId, u]))
 
     // Criar notificações em batch
-    const notificacoesParaCriar = []
+    const notificacoesParaCriar: Prisma.NotificacaoMulticanalCreateManyInput[] = []
     for (const p of pareceresPendentes) {
       if (!p.relatorId || idsNotificados.has(p.id)) continue
       const dias = Math.ceil(((p.prazoEmissao?.getTime() || 0) - agora.getTime()) / (1000 * 60 * 60 * 24))
@@ -120,7 +121,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       select: { id: true, email: true }
     })
 
-    const notificacoesVetoCriar = []
+    const notificacoesVetoCriar: Prisma.NotificacaoMulticanalCreateManyInput[] = []
     for (const v of vetosComPrazo) {
       if (idsVetoNotificados.has(v.id)) continue
       const prazoVeto = new Date(v.updatedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
