@@ -1,40 +1,48 @@
 import { registerApiMetric } from '@/lib/monitoring/metrics'
 
+// Mock do logger para capturar chamadas
+const mockInfo = jest.fn()
+const mockWarn = jest.fn()
+jest.mock('@/lib/logging/logger', () => ({
+  createLogger: () => ({
+    info: (...args: unknown[]) => mockInfo(...args),
+    warn: (...args: unknown[]) => mockWarn(...args),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }),
+}))
+
 describe('registerApiMetric', () => {
   const originalEnv = process.env
-  const originalInfo = console.info
-  const originalWarn = console.warn
 
   beforeEach(() => {
     process.env = { ...originalEnv }
-    console.info = jest.fn()
-    console.warn = jest.fn()
+    mockInfo.mockClear()
+    mockWarn.mockClear()
     global.fetch = jest.fn().mockResolvedValue({ ok: true }) as any
   })
 
   afterEach(() => {
     process.env = originalEnv
-    console.info = originalInfo
-    console.warn = originalWarn
     global.fetch = undefined as any
   })
 
   it('ignora quando métricas desativadas', () => {
     delete process.env.NEXT_PUBLIC_ENABLE_METRICS
     registerApiMetric('test_metric', 10, 200)
-    expect(console.info).not.toHaveBeenCalled()
+    expect(mockInfo).not.toHaveBeenCalled()
   })
 
   it('registra métrica quando habilitado', async () => {
     process.env.NEXT_PUBLIC_ENABLE_METRICS = 'true'
     registerApiMetric('test_metric', 120.6, 201, { foo: 'bar' })
     await new Promise(resolve => setTimeout(resolve, 0))
-    expect(console.info).toHaveBeenCalledTimes(1)
-    const payload = JSON.parse((console.info as jest.Mock).mock.calls[0][1])
-    expect(payload.metric).toBe('test_metric')
-    expect(payload.durationMs).toBe(121)
-    expect(payload.statusCode).toBe(201)
-    expect(payload.metadata).toEqual({ foo: 'bar' })
+    expect(mockInfo).toHaveBeenCalledTimes(1)
+    const context = mockInfo.mock.calls[0][1] as Record<string, unknown>
+    expect(context.metric).toBe('test_metric')
+    expect(context.durationMs).toBe(121)
+    expect(context.statusCode).toBe(201)
+    expect(context.metadata).toEqual({ foo: 'bar' })
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
@@ -54,11 +62,12 @@ describe('registerApiMetric', () => {
 
   it('não interrompe fluxo se serialização falhar', async () => {
     process.env.NEXT_PUBLIC_ENABLE_METRICS = 'true'
-    const cyclic: any = {}
+    const cyclic: Record<string, unknown> = {}
     cyclic.ref = cyclic
     registerApiMetric('cyclic', 50, 200, { cyclic })
     await new Promise(resolve => setTimeout(resolve, 0))
-    expect(console.warn).toHaveBeenCalled()
+    // O logger estruturado lida internamente com erros de serialização
+    // Verifica que não lançou exceção (função completou sem erro)
+    expect(mockInfo).toHaveBeenCalled()
   })
 })
-
