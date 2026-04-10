@@ -30,9 +30,9 @@ const cleanupExpired = (limiter: RateLimiter) => {
   const now = Date.now()
   if (now - lastCleanup < CLEANUP_INTERVAL) return
   lastCleanup = now
-  for (const [key, entry] of limiter) {
+  limiter.forEach((entry, key) => {
     if (entry.expires < now) limiter.delete(key)
-  }
+  })
 }
 
 const allowRequest = (key: string, limit: number, windowMs: number) => {
