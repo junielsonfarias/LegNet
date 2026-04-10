@@ -105,7 +105,7 @@ export default function LancamentoRetroativoPage() {
   const [nomesSecao, setNomesSecao] = useState<Record<string, string>>({})
 
   // Alterar status diretamente (sem votos individuais)
-  const alterarStatusItem = async (itemId: string, novoStatus: 'APROVADO' | 'REJEITADO' | 'ADIADO' | 'RETIRADO') => {
+  const alterarStatusItem = async (itemId: string, novoStatus: 'APROVADO' | 'REJEITADO' | 'ADIADO' | 'RETIRADO' | 'CONCLUIDO') => {
     setAlterandoStatus(itemId)
     try {
       const response = await fetch(`/api/pauta/${itemId}`, {
@@ -122,7 +122,8 @@ export default function LancamentoRetroativoPage() {
         throw new Error(data.error || 'Erro ao alterar status')
       }
 
-      toast.success(`Item marcado como ${novoStatus}`)
+      const mensagemStatus = novoStatus === 'CONCLUIDO' ? 'Matéria lida com sucesso' : `Item marcado como ${novoStatus}`
+      toast.success(mensagemStatus)
       router.refresh()
     } catch (err) {
       console.error('Erro ao alterar status:', err)
@@ -521,13 +522,19 @@ export default function LancamentoRetroativoPage() {
                                     'text-xs',
                                     item.status === 'APROVADO' && 'bg-green-50 text-green-700 border-green-200',
                                     item.status === 'REJEITADO' && 'bg-red-50 text-red-700 border-red-200',
-                                    item.status === 'CONCLUIDO' && 'bg-green-50 text-green-700 border-green-200',
+                                    item.status === 'CONCLUIDO' && 'bg-sky-50 text-sky-700 border-sky-200',
                                     item.status === 'ADIADO' && 'bg-orange-50 text-orange-700 border-orange-200',
                                     item.status === 'RETIRADO' && 'bg-purple-50 text-purple-700 border-purple-200',
                                     item.status === 'PENDENTE' && 'bg-gray-50 text-gray-700'
                                   )}
                                 >
-                                  {item.status === 'CONCLUIDO' ? 'Concluído' : item.status}
+                                  {item.status === 'CONCLUIDO' && ehLeitura(item.tipoAcao)
+                                    ? 'Matéria Lida'
+                                    : item.status === 'CONCLUIDO'
+                                      ? 'Concluído'
+                                      : item.status === 'APROVADO' && ehLeitura(item.tipoAcao)
+                                        ? 'Matéria Lida'
+                                        : item.status}
                                 </Badge>
                               </div>
                               {item.proposicao && (
@@ -550,7 +557,7 @@ export default function LancamentoRetroativoPage() {
                                   size="sm" variant="outline"
                                   className="h-7 text-xs text-blue-600 hover:bg-blue-50"
                                   disabled={alterandoStatus === item.id}
-                                  onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'APROVADO') }}
+                                  onClick={(e) => { e.stopPropagation(); alterarStatusItem(item.id, 'CONCLUIDO') }}
                                 >
                                   {alterandoStatus === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><CheckCircle2 className="h-3 w-3 mr-1" />Leitura Concluída</>}
                                 </Button>
