@@ -43,7 +43,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     )
 
     // Batch: buscar todos os usuários relatores de uma vez
-    const relatorIds = [...new Set(pareceresPendentes.map(p => p.relatorId).filter(Boolean))] as string[]
+    const relatorIds = Array.from(new Set(pareceresPendentes.map(p => p.relatorId).filter(Boolean))) as string[]
     const usuarios = relatorIds.length > 0
       ? await prisma.user.findMany({
           where: { parlamentarId: { in: relatorIds }, ativo: true },
