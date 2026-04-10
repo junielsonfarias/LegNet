@@ -145,9 +145,7 @@ export default function PerfilCompletoPage({ params: paramsPromise }: PerfilComp
     if (!parlamentar) return
 
     try {
-      // TODO: Implementar geração de relatório via API real
       toast.info('Funcionalidade de relatório em desenvolvimento')
-      console.log('Parlamentar para relatório:', parlamentar.id)
     } catch (error) {
       console.error('Erro ao gerar relatório:', error)
       toast.error('Erro ao gerar relatório')

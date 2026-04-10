@@ -216,13 +216,9 @@ export function withLogging(
                request.headers.get('x-real-ip') || 
                'Unknown'
 
-    console.log(`[${new Date().toISOString()}] ${method} ${url} - IP: ${ip} - UA: ${userAgent}`)
-
     try {
       const response = await handler(request)
       const duration = Date.now() - start
-      
-      console.log(`[${new Date().toISOString()}] ${method} ${url} - ${response.status} - ${duration}ms`)
       
       return response
     } catch (error) {

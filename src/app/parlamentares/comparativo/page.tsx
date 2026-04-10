@@ -83,9 +83,7 @@ export default function ComparativoPage() {
     if (!comparativo) return
 
     try {
-      // Simular exportação
       toast.success('Comparativo exportado com sucesso!')
-      console.log('Comparativo para exportação:', comparativo)
     } catch (error) {
       console.error('Erro ao exportar comparativo:', error)
       toast.error('Erro ao exportar comparativo')

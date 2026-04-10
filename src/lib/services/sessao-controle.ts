@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/prisma'
+import { createLogger } from '@/lib/logging/logger'
 import { NotFoundError, ValidationError } from '@/lib/error-handler'
+
+const logger = createLogger('sessao-controle')
 import {
   calcularResultadoVotacao as calcularResultadoComQuorum,
   determinarAplicacaoQuorum,
@@ -1124,7 +1127,7 @@ async function registrarRetiradaPauta(
     }
   })
 
-  console.log(`[RetiradaPauta] Proposição ${proposicaoId} retirada de pauta, tramitação ${tramitacao.id} registrada`)
+  logger.info(`Proposição ${proposicaoId} retirada de pauta, tramitação ${tramitacao.id} registrada`)
 }
 
 export async function finalizarItemPauta(

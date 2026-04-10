@@ -343,7 +343,7 @@ export function usePainelTempoReal(
   // Fallback para polling se SSE falhar
   useEffect(() => {
     if (erroSSE && pollingFallback && !usandoPolling) {
-      console.log('SSE falhou, usando polling como fallback')
+      // SSE falhou, usando polling como fallback
       setUsandoPolling(true)
     }
   }, [erroSSE, pollingFallback, usandoPolling])

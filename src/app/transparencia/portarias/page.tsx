@@ -48,7 +48,6 @@ export default function PortariasPage() {
       const result = await response.json()
 
       if (result.dados) {
-        console.log('Portarias carregadas:', result.dados.length)
         setPortarias(result.dados)
       } else {
         console.error('Formato de resposta inesperado:', result)

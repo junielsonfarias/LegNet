@@ -83,7 +83,6 @@ export default function PesquisasPublicasPage() {
         ...(planejamento.dados || [])
       ].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
 
-      console.log('Documentos LRF carregados:', todosDocumentos.length)
       setDocumentos(todosDocumentos)
     } catch (error) {
       console.error('Erro ao carregar documentos:', error)

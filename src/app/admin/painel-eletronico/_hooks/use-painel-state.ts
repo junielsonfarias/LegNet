@@ -427,7 +427,6 @@ export function usePainelState(): UsePainelStateReturn {
 
     try {
       toast.success('Relatório gerado com sucesso!')
-      console.log('Gerando relatório da sessão:', sessaoAtiva.id)
     } catch (error) {
       console.error('Erro ao gerar relatório:', error)
       toast.error('Erro ao gerar relatório')

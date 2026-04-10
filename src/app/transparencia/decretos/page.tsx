@@ -69,7 +69,6 @@ export default function DecretosPage() {
       const result = await response.json()
 
       if (result.dados) {
-        console.log('Decretos carregados:', result.dados.length)
         setDecretos(result.dados)
       } else {
         console.error('Formato de resposta inesperado:', result)

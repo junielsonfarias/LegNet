@@ -47,7 +47,6 @@ export default function LeiOrganicaPage() {
       const result = await response.json()
 
       if (result.dados) {
-        console.log('Lei Orgânica carregada:', result.dados.length)
         setDocumentos(result.dados)
       } else {
         setDocumentos([])

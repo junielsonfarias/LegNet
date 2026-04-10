@@ -42,9 +42,6 @@ export default function RelatoriosAdminPage() {
     // Simular geração de relatório
     await new Promise(resolve => setTimeout(resolve, 2000))
     
-    // Aqui você implementaria a lógica real de geração de relatório
-    console.log(`Gerando relatório: ${tipo}`)
-    
     setLoading(false)
   }
 

@@ -9,7 +9,12 @@ export const dynamic = 'force-dynamic'
 
 const ChangePasswordSchema = z.object({
   senhaAtual: z.string().min(1, 'Senha atual e obrigatoria'),
-  novaSenha: z.string().min(8, 'Nova senha deve ter no minimo 8 caracteres'),
+  novaSenha: z
+    .string()
+    .min(8, 'Nova senha deve ter no minimo 8 caracteres')
+    .regex(/[A-Z]/, 'Deve conter pelo menos uma letra maiuscula')
+    .regex(/[a-z]/, 'Deve conter pelo menos uma letra minuscula')
+    .regex(/[0-9]/, 'Deve conter pelo menos um numero'),
 })
 
 // PUT - Alterar senha do usuario logado

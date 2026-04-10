@@ -599,12 +599,6 @@ export default function MesaDiretoraAdminPage() {
                                   {/* Membros */}
                                   <div className="space-y-2 mb-3">
                                     {mesa.membros?.filter(m => m.ativo).map(membro => {
-                                      console.log('🔍 Exibindo membro:', {
-                                        membroId: membro.id,
-                                        parlamentarId: membro.parlamentarId,
-                                        parlamentar: membro.parlamentar,
-                                        cargo: membro.cargo
-                                      })
                                       return (
                                         <div key={membro.id} className="text-sm">
                                           <span className="font-medium text-gray-700">
