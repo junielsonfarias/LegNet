@@ -44,7 +44,15 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 // POST - admin, salva config de periodos
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
-  const data = ConfigPeriodosSchema.parse(body)
+  console.log('[periodos POST] body recebido:', JSON.stringify(body))
+  let data
+  try {
+    data = ConfigPeriodosSchema.parse(body)
+  } catch (e: any) {
+    console.error('[periodos POST] Zod falhou:', e?.errors || e?.message)
+    throw e
+  }
+  console.log('[periodos POST] validado, salvando slug=', data.slug)
 
   const result = await transparenciaRedirectService.setPeriodos(data.slug, {
     enabled: data.enabled,
@@ -53,6 +61,7 @@ export const POST = withAuth(async (request: NextRequest) => {
     periodos: data.periodos
   })
 
+  console.log('[periodos POST] salvo com sucesso:', data.slug)
   return createSuccessResponse(result, 'Periodos salvos com sucesso')
 }, { permissions: 'config.manage' })
 
