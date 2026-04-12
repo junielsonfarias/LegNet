@@ -4,6 +4,131 @@
 
 O modulo de Transparencia implementa os requisitos do Programa Nacional de Transparencia Publica (PNTP) nivel Diamante. Gerencia a publicacao de dados obrigatorios, APIs de dados abertos, acessibilidade WCAG 2.1 AA e conformidade com a Lei de Acesso a Informacao (LAI).
 
+A partir de 12/04/2026 o modulo foi expandido para cobrir 100% dos itens estruturados do portal CR2 (Bubble.io) e ficar pronto para receber backup do sistema antigo. Foram adicionados 10 novos models, sistema de periodos por categoria, 21 novas rotas API, 11 paginas admin com CRUD completo (create + edit + delete) e 12 paginas publicas.
+
+---
+
+## Adaptacao CR2 (12/04/2026)
+
+### Novos Models Prisma
+
+| Model | Proposito | Indices/Unique |
+|-------|-----------|----------------|
+| `DocumentoTransparencia` | Documentos institucionais (Balancete, Balanco Anual, Parecer TCM, Julgamento Contas, Planejamento Estrategico, Carta Servicos, LGPD, PAC, Relatorio Gestao). Discriminado por enum `TipoDocumentoTransparencia` (9 tipos). | `[tipo, ano]`, `dataPublicacao`, `status` |
+| `NotaFiscal` | Notas fiscais emitidas/liquidadas/pagas. FK opcional para Despesa. | `chaveAcesso` unique, `[ano, mes]`, `fornecedor`, `situacao`, `despesaId` |
+| `OrdemPagamento` | Ordem cronologica de pagamentos (LRF/Lei 8.666 art. 5). FK opcional para Despesa. | `[ano, mes]`, `credor`, `ordemCronologica` |
+| `Veiculo` | Frota oficial. | `placa` unique, `chassi` unique, `situacao` |
+| `Obra` | Obras publicas (planejadas, em andamento, paralisadas, concluidas, canceladas). FK opcional para Contrato. | `situacao` |
+| `Repasse` | Recursos recebidos de outras esferas (Uniao, Estado). | `[ano, mes]`, `orgaoOrigem` |
+| `CartaoCorporativo` | Gastos com cartao de credito corporativo. | `[ano, mes]`, `portador` |
+| `ProgramaAcao` | Programas e acoes orcamentarias. Tipo enum (PROGRAMA / ACAO). | `[codigo, ano]` unique, `[tipo, ano]` |
+| `ServicoOnline` | Carta de servicos digitais com URL e categoria. | `[categoria, ativo]`, `ordem` |
+| `FornecedorSancionado` | Empresas/pessoas com sancoes administrativas (5 tipos). | `cnpjCpf`, `[tipoSancao, ativo]`, `dataInicio` |
+
+### Novos Enums
+
+- `TipoDocumentoTransparencia` (9): BALANCETE_FINANCEIRO, BALANCO_ANUAL, PARECER_TCM, JULGAMENTO_CONTAS_EXECUTIVO, PLANEJAMENTO_ESTRATEGICO, CARTA_SERVICOS, LGPD_GOVERNO_DIGITAL, PLANO_ANUAL_CONTRATACOES, RELATORIO_GESTAO
+- `SituacaoVeiculo` (5): ATIVO, INATIVO, ALIENADO, EM_MANUTENCAO, SINISTRADO
+- `SituacaoObra` (5): PLANEJADA, EM_ANDAMENTO, PARALISADA, CONCLUIDA, CANCELADA
+- `SituacaoNotaFiscal` (4): EMITIDA, LIQUIDADA, PAGA, CANCELADA
+- `TipoProgramaAcao` (2): PROGRAMA, ACAO
+- `TipoSancao` (5): ADVERTENCIA, MULTA, SUSPENSAO_TEMPORARIA, IMPEDIMENTO, DECLARACAO_INIDONEIDADE
+
+Migrations SQL: `prisma/migrations/20260412_add_transparencia_models_cr2/` e `prisma/migrations/20260412_add_cr2_complementar_models/`. NUNCA aplicar via `prisma db push` em producao - usar `prisma migrate deploy` ou psql direto.
+
+### Sistema de Periodos por Categoria
+
+Novo recurso para categorias com dados em multiplos sistemas (ex: Despesas ate 2021 / ate 2023 / 2024+). Quando configurado, ao clicar na categoria o usuario ve uma tela de selecao com cards por periodo (cada um interno OU externo).
+
+**Armazenamento**: tabela `Configuracao` com chave `transparencia.periodos.<slug>` (JSON serializado). Coexiste com o sistema legacy `transparencia.redirect.<slug>`.
+
+**Estrutura**:
+```typescript
+interface ConfiguracaoPeriodos {
+  enabled: boolean
+  titulo?: string
+  descricao?: string
+  periodos: PeriodoTransparencia[]
+}
+
+interface PeriodoTransparencia {
+  id: string             // ex: "ate-2021", "2024"
+  label: string          // "Informacoes ate 2021"
+  url?: string           // link externo
+  hrefInterno?: string   // rota interna
+  ano?: number | null
+  ordem: number
+  ativo: boolean
+}
+```
+
+**Arquivos**:
+- `src/lib/services/transparencia-redirect-service.ts` - funcoes `getPeriodos`, `setPeriodos`, `getAllPeriodos`, `removePeriodos`
+- `src/app/api/transparencia/periodos/route.ts` - GET/POST/DELETE
+- `src/lib/hooks/use-transparencia-periodos.ts` - hook client
+- `src/components/transparencia/period-selector-screen.tsx` - tela de selecao
+- `src/components/transparencia/transparencia-page-wrapper.tsx` - integracao (3 modos: redirect legacy, period selector, conteudo interno)
+- `src/app/admin/configuracoes/transparencia-periodos/page.tsx` - admin
+
+### Novas Paginas Publicas
+
+| Rota | Recurso | Wrapper slug |
+|------|---------|--------------|
+| `/transparencia/notas-fiscais` | NotaFiscal | `notas-fiscais` |
+| `/transparencia/ordem-pagamentos` | OrdemPagamento | `ordem-pagamentos` |
+| `/transparencia/veiculos` | Veiculo | `veiculos` |
+| `/transparencia/obras` | Obra (filtro `?situacao=PARALISADA`) | `obras` |
+| `/transparencia/documentos/[tipo]` | DocumentoTransparencia (rota dinamica para 9 tipos) | `documentos-<tipo>` |
+| `/transparencia/repasses` | Repasse | `repasses` |
+| `/transparencia/cartoes-corporativos` | CartaoCorporativo | `cartao-credito` |
+| `/transparencia/programas-acoes` | ProgramaAcao | `programas-acoes` |
+| `/transparencia/servicos-online` | ServicoOnline | `servicos-online` |
+| `/transparencia/fornecedores-sancionados` | FornecedorSancionado | `fornecedores-sancionados` |
+| `/transparencia/pessoal/estagiarios` | Servidor (filtra `vinculo=ESTAGIARIO`) | `estagiarios` |
+| `/transparencia/pessoal/terceirizados` | Servidor (filtra `vinculo=TERCEIRIZADO`) | `terceirizados` |
+
+Todas envolvidas em `<TransparenciaPageWrapper>` para suportar tela de periodos.
+
+### Novas Paginas Admin (CRUD completo)
+
+11 paginas em `/admin/transparencia/<recurso>/page.tsx` com **create + edit + delete inline**:
+- notas-fiscais, ordem-pagamentos, veiculos, obras, documentos
+- repasses, cartoes-corporativos, programas-acoes, servicos-online, fornecedores-sancionados
+
+Padrao: lista + form inline com `editingId` state. Helper `closeForm()` reseta. `handleEdit(item)` carrega dados e seta editingId. `handleSave()` faz POST ou PUT conforme `editingId`.
+
+Permissions: `transparencia.manage`.
+
+### Novas APIs CRUD (21 rotas)
+
+| Recurso | Endpoint base |
+|---------|---------------|
+| Periodos | `/api/transparencia/periodos` (GET/POST/DELETE) |
+| Documentos Transparencia | `/api/documentos-transparencia` + `/[id]` |
+| Notas Fiscais | `/api/notas-fiscais` + `/[id]` |
+| Ordem Pagamentos | `/api/ordem-pagamentos` + `/[id]` |
+| Veiculos | `/api/veiculos` + `/[id]` |
+| Obras | `/api/obras` + `/[id]` |
+| Repasses | `/api/repasses` + `/[id]` |
+| Cartoes Corporativos | `/api/cartoes-corporativos` + `/[id]` |
+| Programas e Acoes | `/api/programas-acoes` + `/[id]` |
+| Servicos Online | `/api/servicos-online` + `/[id]` |
+| Fornecedores Sancionados | `/api/fornecedores-sancionados` + `/[id]` |
+
+Padrao: Zod validation, `withErrorHandler`/`withAuth`, prisma direto (sem service layer separado), params async (`Promise<{id:string}>`), permissions `transparencia.manage` em mutacoes.
+
+### Sidebar Admin
+
+`src/components/admin/admin-sidebar.tsx`: categoria **Transparencia** com 18 itens (era 8 → +10), categoria **Configuracoes** com +3 entradas (Transparencia - Links, Periodos, Conteudo).
+
+### Hub `/transparencia/page.tsx`
+
+Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 14 itens migrados de `externalUrl: CR2_BASE` para rotas internas. Apenas itens institucionais (Legislaturas, Comissoes, Agenda Externa, Documentos Administrativos, Legislacao Tributaria) ainda apontam para CR2 ate serem migrados.
+
+### Importer CR2
+
+`scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.
+
 ---
 
 ## Arquivos Principais

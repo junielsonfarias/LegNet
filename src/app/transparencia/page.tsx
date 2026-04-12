@@ -4,18 +4,191 @@ import { useState, useEffect } from 'react';
 import {
   FileText, Users, Building2, DollarSign, Shield, BookOpen, Scale,
   CheckCircle2, FileCheck, FolderOpen, MessageSquare, HelpCircle,
-  Mail, Phone, MapPin, Award, TrendingUp, BarChart3, Activity,
+  Mail, Phone, MapPin, TrendingUp, BarChart3, Activity,
   Globe, Briefcase, ChevronRight, Loader2, Landmark, Receipt,
   Gavel, UserCheck, Clock, Search, Vote, Handshake, ScrollText,
-  FileSearch, CreditCard, CalendarDays,
-  GraduationCap, ClipboardList, PieChart, Wallet
+  FileSearch, CreditCard, CalendarDays, ExternalLink, Car, HardHat,
+  GraduationCap, ClipboardList, PieChart, Wallet, Banknote, FileBarChart,
+  Lock, Database, Megaphone, Calendar, FileSignature, UserPlus, FileQuestion,
+  Truck
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs';
 import { createLogger } from '@/lib/logging/logger';
 
 const log = createLogger('transparencia');
+
+// URL do portal externo legado (CR2). E um app Bubble.io com roteamento client-side,
+// entao deep links nao funcionam de forma confiavel - todos os itens nao migrados
+// apontam para a raiz da entidade e o usuario navega no menu de la.
+const CR2_BASE = 'https://www.portalcr2.com.br/entidade/cm-chaves';
+
+type TransparenciaSubItem = {
+  nome: string;
+  href?: string;
+  externalUrl?: string;
+};
+
+type TransparenciaItem = {
+  nome: string;
+  icon: LucideIcon;
+  href?: string;
+  externalUrl?: string;
+  subItens?: TransparenciaSubItem[];
+};
+
+type TransparenciaSecao = {
+  titulo: string;
+  subtitulo: string;
+  icon: LucideIcon;
+  itens: TransparenciaItem[];
+};
+
+// Estrutura espelhada do portal antigo (CR2) - 9 secoes, todos os itens e subitens.
+// Itens com `href` usam rota interna; itens com `externalUrl` abrem o portal CR2 em nova aba.
+const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
+  {
+    titulo: 'Informacoes Institucionais',
+    subtitulo: 'Estrutura, parlamentares e funcionamento',
+    icon: Building2,
+    itens: [
+      { nome: 'Estrutura Organizacional', icon: Activity, href: '/transparencia/institucional/organograma' },
+      { nome: 'Legislaturas', icon: Calendar, externalUrl: CR2_BASE },
+      { nome: 'Parlamentares', icon: Users, href: '/parlamentares' },
+      { nome: 'Mesa Diretora', icon: UserCheck, href: '/transparencia/mesa-diretora' },
+      { nome: 'Agenda Externa', icon: CalendarDays, externalUrl: CR2_BASE },
+      { nome: 'Comissoes', icon: Briefcase, externalUrl: CR2_BASE },
+      { nome: 'Perguntas Frequentes', icon: HelpCircle, href: '/institucional/sobre' },
+      { nome: 'Legislacao Tributaria e Codigos de Postura', icon: Scale, externalUrl: CR2_BASE },
+    ],
+  },
+  {
+    titulo: 'Atividades do Legislativo',
+    subtitulo: 'Documentos, materias e sessoes',
+    icon: FolderOpen,
+    itens: [
+      { nome: 'Documentos Administrativos', icon: FileText, externalUrl: CR2_BASE },
+      { nome: 'Materias Legislativas', icon: ScrollText, href: '/legislativo' },
+      { nome: 'Sessoes', icon: ClipboardList, href: '/legislativo/pautas-sessoes' },
+      { nome: 'Normas Juridicas', icon: Gavel, href: '/legislativo/normas' },
+    ],
+  },
+  {
+    titulo: 'Receitas e Despesas',
+    subtitulo: 'Execucao orcamentaria e financeira',
+    icon: DollarSign,
+    itens: [
+      { nome: 'Receitas', icon: TrendingUp, href: '/transparencia/receitas' },
+      {
+        nome: 'Despesas',
+        icon: CreditCard,
+        href: '/transparencia/despesas',
+        subItens: [
+          { nome: 'Informacoes ate 2021', externalUrl: CR2_BASE },
+          { nome: 'Informacoes ate 2023', externalUrl: CR2_BASE },
+          { nome: 'Informacoes a partir de 2024', href: '/transparencia/despesas' },
+        ],
+      },
+      { nome: 'Repasses', icon: Banknote, href: '/transparencia/repasses' },
+      { nome: 'Programas e Acoes', icon: ClipboardList, href: '/transparencia/programas-acoes' },
+      { nome: 'Gastos com Cartao de Credito', icon: CreditCard, href: '/transparencia/cartoes-corporativos' },
+      { nome: 'Notas Fiscais Liquidadas', icon: Receipt, href: '/transparencia/notas-fiscais' },
+      { nome: 'Cotas para Exercicio da Atividade Parlamentar', icon: Wallet, href: '/transparencia/parlamentar/indenizatoria' },
+      { nome: 'Ordem Cronologica de Pagamentos', icon: Clock, href: '/transparencia/ordem-pagamentos' },
+    ],
+  },
+  {
+    titulo: 'Recursos Humanos',
+    subtitulo: 'Servidores, cargos e diarias',
+    icon: UserCheck,
+    itens: [
+      { nome: 'Relacao Nominal de Remuneracao', icon: Users, externalUrl: CR2_BASE },
+      { nome: 'Relacao de Cargos e Remuneracao', icon: Briefcase, externalUrl: CR2_BASE },
+      { nome: 'Relacao de Estagiarios', icon: GraduationCap, href: '/transparencia/pessoal/estagiarios' },
+      { nome: 'Relacao de Prestadores de Servicos Terceirizados', icon: UserPlus, href: '/transparencia/pessoal/terceirizados' },
+      { nome: 'Concursos e Processos Seletivos', icon: FileCheck, href: '/transparencia/pessoal/concursos' },
+      { nome: 'Diarias', icon: CalendarDays, href: '/transparencia/pessoal/diarias' },
+      { nome: 'Tabela com os Valores das Diarias', icon: FileBarChart, externalUrl: CR2_BASE },
+      { nome: 'Folha de Pagamento', icon: Wallet, href: '/transparencia/folha-pagamento' },
+    ],
+  },
+  {
+    titulo: 'Licitacoes, Contratos, Convenios e Obras',
+    subtitulo: 'Contratacoes publicas e transferencias',
+    icon: Search,
+    itens: [
+      { nome: 'Licitacoes', icon: Search, href: '/transparencia/licitacoes' },
+      { nome: 'Aviso de Licitacao', icon: Megaphone, externalUrl: CR2_BASE },
+      { nome: 'Contratos', icon: FileSignature, href: '/transparencia/contratos' },
+      { nome: 'Plano Anual de Contratacoes', icon: ClipboardList, href: '/transparencia/documentos/plano-anual-contratacoes' },
+      { nome: 'Licitantes/Contratados Sancionados Administrativamente', icon: Shield, href: '/transparencia/fornecedores-sancionados' },
+      { nome: 'Cadastro de Fornecedores', icon: Database, externalUrl: CR2_BASE },
+      { nome: 'Convenios / Transferencias Voluntarias', icon: Handshake, href: '/transparencia/convenios' },
+      { nome: 'Obras', icon: HardHat, href: '/transparencia/obras' },
+      { nome: 'Obras Paralisadas', icon: HardHat, href: '/transparencia/obras?situacao=PARALISADA' },
+    ],
+  },
+  {
+    titulo: 'Patrimonio',
+    subtitulo: 'Bens moveis, imoveis e veiculos',
+    icon: Landmark,
+    itens: [
+      { nome: 'Bens Moveis', icon: Briefcase, href: '/transparencia/bens-moveis' },
+      { nome: 'Bens Imoveis', icon: Building2, href: '/transparencia/bens-imoveis' },
+      { nome: 'Veiculos', icon: Truck, href: '/transparencia/veiculos' },
+    ],
+  },
+  {
+    titulo: 'Planejamento e Prestacao de Contas',
+    subtitulo: 'Orcamento, balancos e gestao fiscal',
+    icon: PieChart,
+    itens: [
+      { nome: 'Balancete Financeiro', icon: FileBarChart, href: '/transparencia/documentos/balancete-financeiro' },
+      { nome: 'Balanco e Relatorios Anuais', icon: BarChart3, href: '/transparencia/documentos/balanco-anual' },
+      {
+        nome: 'LDO, LOA e PPA',
+        icon: FileText,
+        subItens: [
+          { nome: 'LDO - Lei de Diretrizes Orcamentarias', href: '/transparencia/ldo' },
+          { nome: 'LOA - Lei Orcamentaria Anual', href: '/transparencia/loa' },
+          { nome: 'PPA - Plano Plurianual', href: '/transparencia/ppa' },
+        ],
+      },
+      { nome: 'Parecer do Tribunal de Contas', icon: Gavel, href: '/transparencia/documentos/parecer-tcm' },
+      { nome: 'Julgamento das Contas do Executivo pelo Legislativo', icon: Scale, href: '/transparencia/documentos/julgamento-contas' },
+      { nome: 'Relatorio de Gestao Fiscal - RGF', icon: BarChart3, href: '/transparencia/rgf' },
+      { nome: 'Planejamento Estrategico', icon: TrendingUp, href: '/transparencia/documentos/planejamento-estrategico' },
+    ],
+  },
+  {
+    titulo: 'Ouvidoria / Servico de Informacao ao Cidadao',
+    subtitulo: 'Canais de atendimento e manifestacoes',
+    icon: MessageSquare,
+    itens: [
+      { nome: 'Ouvidoria', icon: MessageSquare, href: '/institucional/ouvidoria' },
+      { nome: 'Servico de Informacao ao Cidadao (e-SIC)', icon: FileSearch, href: '/institucional/e-sic' },
+      { nome: 'Consultar Manifestacoes', icon: Search, externalUrl: CR2_BASE },
+      { nome: 'Manifestacoes Realizadas', icon: FileQuestion, externalUrl: CR2_BASE },
+      { nome: 'Relatorios Estatisticos', icon: BarChart3, externalUrl: CR2_BASE },
+      { nome: 'Regulamentacao', icon: BookOpen, externalUrl: CR2_BASE },
+      { nome: 'Documentos e Informacoes Sigilosas', icon: Lock, externalUrl: CR2_BASE },
+    ],
+  },
+  {
+    titulo: 'LGPD e Governo Digital',
+    subtitulo: 'Protecao de dados e servicos digitais',
+    icon: Shield,
+    itens: [
+      { nome: 'LGPD e Governo Digital', icon: Shield, href: '/transparencia/documentos/lgpd' },
+      { nome: 'Dados Abertos', icon: Database, href: '/transparencia/dados-abertos' },
+      { nome: 'Servico Online', icon: Globe, href: '/transparencia/servicos-online' },
+      { nome: 'Carta de Servicos ao Usuario', icon: ScrollText, href: '/transparencia/documentos/carta-servicos' },
+      { nome: 'Pesquisas de Satisfacao', icon: CheckCircle2, href: '/transparencia/pesquisas' },
+    ],
+  },
+];
 
 interface ConfiguracaoInstitucional {
   nome: string;
@@ -61,102 +234,7 @@ export default function TransparenciaPage() {
     ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', s/no'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`
     : 'Rua Deputado Jose Macedo, s/no - Centro';
 
-  // Secoes tematicas organizadas
-  const secoes = [
-    {
-      titulo: 'Portal Institucional',
-      subtitulo: '§1o. Do portal da transparencia',
-      icon: Building2,
-      itens: [
-        { nome: 'Mesa Diretora e Vereadores', href: '/transparencia/mesa-diretora', icon: Users },
-        { nome: 'Organograma', href: '/transparencia/institucional/organograma', icon: Activity },
-        { nome: 'Competencias', href: '/transparencia/institucional/competencias', icon: Briefcase },
-        { nome: 'Horario de Atendimento', href: '/transparencia/institucional/horario-funcionamento', icon: Clock },
-        { nome: 'Estrutura Organizacional', href: '/institucional/sobre', icon: FileCheck },
-      ]
-    },
-    {
-      titulo: 'Gestao Fiscal',
-      subtitulo: '§2o. Planejamento e gestao fiscal',
-      icon: PieChart,
-      itens: [
-        { nome: 'LOA - Lei Orcamentaria Anual', href: '/transparencia/loa', icon: FileText },
-        { nome: 'LDO - Diretrizes Orcamentarias', href: '/transparencia/ldo', icon: FileText },
-        { nome: 'PPA - Plano Plurianual', href: '/transparencia/ppa', icon: FileText },
-        { nome: 'RGF - Relatorio de Gestao Fiscal', href: '/transparencia/rgf', icon: BarChart3 },
-        { nome: 'Gestao Fiscal', href: '/transparencia/gestao-fiscal', icon: TrendingUp },
-      ]
-    },
-    {
-      titulo: 'Financas Publicas',
-      subtitulo: '§3o. Receitas, despesas, contratos',
-      icon: DollarSign,
-      itens: [
-        { nome: 'Receitas', href: '/transparencia/receitas', icon: TrendingUp },
-        { nome: 'Despesas', href: '/transparencia/despesas', icon: CreditCard },
-        { nome: 'Licitacoes', href: '/transparencia/licitacoes', icon: Search },
-        { nome: 'Contratos', href: '/transparencia/contratos', icon: FileCheck },
-        { nome: 'Convenios', href: '/transparencia/convenios', icon: Handshake },
-      ]
-    },
-    {
-      titulo: 'Atendimento ao Cidadao',
-      subtitulo: '§4o. Servico de atendimento',
-      icon: MessageSquare,
-      itens: [
-        { nome: 'E-SIC - Acesso a Informacao', href: '/institucional/e-sic', icon: FileSearch },
-        { nome: 'Ouvidoria', href: '/institucional/ouvidoria', icon: MessageSquare },
-        { nome: 'Perguntas Frequentes', href: '/institucional/sobre', icon: HelpCircle },
-        { nome: 'Fale Conosco', href: '/institucional/ouvidoria', icon: Mail },
-      ]
-    },
-    {
-      titulo: 'Publicacoes Oficiais',
-      subtitulo: '§5o. Atos e normativos legais',
-      icon: FolderOpen,
-      itens: [
-        { nome: 'Leis Municipais', href: '/transparencia/leis', icon: ScrollText },
-        { nome: 'Decretos Legislativos', href: '/transparencia/decretos', icon: Gavel },
-        { nome: 'Portarias', href: '/transparencia/portarias', icon: FileText },
-        { nome: 'Pautas das Sessoes', href: '/legislativo/pautas-sessoes', icon: ClipboardList },
-        { nome: 'Atas das Sessoes', href: '/legislativo/atas', icon: BookOpen },
-        { nome: 'Normas Juridicas', href: '/legislativo/normas', icon: Scale },
-      ]
-    },
-    {
-      titulo: 'Pessoal e RH',
-      subtitulo: 'Gestao de pessoal e remuneracao',
-      icon: UserCheck,
-      itens: [
-        { nome: 'Folha de Pagamento', href: '/transparencia/folha-pagamento', icon: Wallet },
-        { nome: 'Quadro de Pessoal', href: '/transparencia/pessoal/quadro-pessoal', icon: Users },
-        { nome: 'Diarias', href: '/transparencia/pessoal/diarias', icon: CalendarDays },
-        { nome: 'Concursos', href: '/transparencia/pessoal/concursos', icon: GraduationCap },
-        { nome: 'Servidores', href: '/transparencia/pessoal', icon: UserCheck },
-      ]
-    },
-    {
-      titulo: 'Transparencia Parlamentar',
-      subtitulo: 'Atuacao e gastos dos vereadores',
-      icon: Vote,
-      itens: [
-        { nome: 'Presencas em Sessoes', href: '/transparencia/parlamentar/presencas', icon: CheckCircle2 },
-        { nome: 'Votacoes Nominais', href: '/transparencia/legislativo/votacoes-nominais', icon: Vote },
-        { nome: 'Verbas Indenizatorias', href: '/transparencia/parlamentar/indenizatoria', icon: Receipt },
-        { nome: 'Producao Legislativa', href: '/transparencia/parlamentar/producao', icon: FileText },
-        { nome: 'Relatorio por Parlamentar', href: '/transparencia/parlamentar/relatorio', icon: BarChart3 },
-      ]
-    },
-    {
-      titulo: 'Patrimonio Publico',
-      subtitulo: 'Bens moveis e imoveis',
-      icon: Landmark,
-      itens: [
-        { nome: 'Bens Imoveis', href: '/transparencia/bens-imoveis', icon: Building2 },
-        { nome: 'Bens Moveis', href: '/transparencia/bens-moveis', icon: Briefcase },
-      ]
-    },
-  ];
+  const secoes = SECOES_TRANSPARENCIA;
 
   // Estilos baseados no tema municipal (CSS variables da instalacao)
   const themeStyles = {
@@ -251,19 +329,7 @@ export default function TransparenciaPage() {
                 {/* Itens do card */}
                 <div className="p-3">
                   {secao.itens.map((item) => (
-                    <Link
-                      key={item.nome}
-                      href={item.href}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors group/item"
-                    >
-                      <div className="p-1.5 rounded-md flex-shrink-0" style={themeStyles.iconBgLight}>
-                        <item.icon className="h-4 w-4" style={themeStyles.iconColor} />
-                      </div>
-                      <span className="text-sm text-gray-700 group-hover/item:text-gray-900 flex-1">
-                        {item.nome}
-                      </span>
-                      <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 group-hover/item:translate-x-0.5 transition-all flex-shrink-0" />
-                    </Link>
+                    <TransparenciaItemRow key={item.nome} item={item} themeStyles={themeStyles} />
                   ))}
                 </div>
               </div>
@@ -404,8 +470,91 @@ export default function TransparenciaPage() {
   );
 }
 
+// Linha de item do menu: suporta link interno, externo e subitens (details/summary).
+type ThemeStyles = {
+  iconBgLight: React.CSSProperties;
+  iconColor: React.CSSProperties;
+};
+
+function TransparenciaItemRow({ item, themeStyles }: { item: TransparenciaItem; themeStyles: ThemeStyles }) {
+  const Icon = item.icon;
+
+  const content = (
+    <>
+      <div className="p-1.5 rounded-md flex-shrink-0" style={themeStyles.iconBgLight}>
+        <Icon className="h-4 w-4" style={themeStyles.iconColor} />
+      </div>
+      <span className="text-sm text-gray-700 group-hover/item:text-gray-900 flex-1">
+        {item.nome}
+      </span>
+    </>
+  );
+
+  const baseRow = 'flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors group/item';
+
+  // Caso 1: itens com subitens (periodos ou sub-links) → <details> nativo
+  if (item.subItens && item.subItens.length > 0) {
+    return (
+      <details className="group/details">
+        <summary className={`${baseRow} cursor-pointer list-none`}>
+          {content}
+          <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 transition-transform group-open/details:rotate-90 flex-shrink-0" />
+        </summary>
+        <div className="ml-9 mt-1 mb-1 border-l-2 border-gray-100 pl-2 space-y-0.5">
+          {item.subItens.map((sub) => {
+            const subClass = 'flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-50 text-xs text-gray-600 hover:text-gray-900 transition-colors';
+            if (sub.externalUrl) {
+              return (
+                <a
+                  key={sub.nome}
+                  href={sub.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={subClass}
+                >
+                  <span className="flex-1">{sub.nome}</span>
+                  <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                </a>
+              );
+            }
+            return (
+              <Link key={sub.nome} href={sub.href || '#'} className={subClass}>
+                <span className="flex-1">{sub.nome}</span>
+                <ChevronRight className="h-3 w-3 text-gray-300 flex-shrink-0" />
+              </Link>
+            );
+          })}
+        </div>
+      </details>
+    );
+  }
+
+  // Caso 2: link externo → abre em nova aba
+  if (item.externalUrl) {
+    return (
+      <a
+        href={item.externalUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={baseRow}
+      >
+        {content}
+        <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 flex-shrink-0" />
+      </a>
+    );
+  }
+
+  // Caso 3: link interno
+  return (
+    <Link href={item.href || '#'} className={baseRow}>
+      {content}
+      <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 group-hover/item:translate-x-0.5 transition-all flex-shrink-0" />
+    </Link>
+  );
+}
+
 // Componente auxiliar para linhas de informacao
-function InfoRow({ icon: Icon, label, color, bold }: { icon: any; label: string; color: string; bold?: boolean }) {
+function InfoRow({ icon: Icon, label, color, bold }: { icon: LucideIcon; label: string; color: string; bold?: boolean }) {
   const iconStyle = color === 'secondary'
     ? { color: 'var(--municipal-secondary)' }
     : { color: 'var(--municipal-primary)' }

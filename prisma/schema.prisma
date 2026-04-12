@@ -2122,6 +2122,7 @@ model Contrato {
   contratoOrigem  Contrato?  @relation("ContratoAditivos", fields: [contratoOrigemId], references: [id], onDelete: SetNull)
   aditivos        Contrato[] @relation("ContratoAditivos")
   despesas        Despesa[]
+  obras           Obra[]
 
   @@unique([numero, ano])
   @@index([situacao])
@@ -2226,6 +2227,8 @@ model Despesa {
   licitacao Licitacao? @relation(fields: [licitacaoId], references: [id], onDelete: SetNull)
   contrato  Contrato?  @relation(fields: [contratoId], references: [id], onDelete: SetNull)
   convenio  Convenio?  @relation(fields: [convenioId], references: [id], onDelete: SetNull)
+  notasFiscais     NotaFiscal[]
+  ordensPagamento  OrdemPagamento[]
 
   @@unique([numeroEmpenho, ano])
   @@index([ano, mes])
@@ -2307,6 +2310,308 @@ model BemPatrimonial {
   @@index([tipo])
   @@index([situacao])
   @@map("bens_patrimoniais")
+}
+
+// ============================================
+// MODELS DE TRANSPARENCIA - COMPATIBILIDADE CR2
+// Adicionados para receber backup do portal antigo
+// e cobrir lacunas PNTP (Notas Fiscais, Veiculos,
+// Obras, Ordem Cronologica, documentos institucionais)
+// ============================================
+
+enum TipoDocumentoTransparencia {
+  BALANCETE_FINANCEIRO
+  BALANCO_ANUAL
+  PARECER_TCM
+  JULGAMENTO_CONTAS_EXECUTIVO
+  PLANEJAMENTO_ESTRATEGICO
+  CARTA_SERVICOS
+  LGPD_GOVERNO_DIGITAL
+  PLANO_ANUAL_CONTRATACOES
+  RELATORIO_GESTAO
+}
+
+enum SituacaoVeiculo {
+  ATIVO
+  INATIVO
+  ALIENADO
+  EM_MANUTENCAO
+  SINISTRADO
+}
+
+enum SituacaoObra {
+  PLANEJADA
+  EM_ANDAMENTO
+  PARALISADA
+  CONCLUIDA
+  CANCELADA
+}
+
+enum SituacaoNotaFiscal {
+  EMITIDA
+  LIQUIDADA
+  PAGA
+  CANCELADA
+}
+
+// Documentos institucionais (Balancete, Balanco, Parecer TCM, etc.)
+// Model unico generico - o tipo discrimina o uso.
+model DocumentoTransparencia {
+  id              String                     @id @default(cuid())
+  tipo            TipoDocumentoTransparencia
+  titulo          String
+  descricao       String?                    @db.Text
+  ano             Int
+  mes             Int?                       // null = anual
+  dataPublicacao  DateTime
+  arquivo         String?                    // URL/path do PDF
+  url             String?                    // link externo
+  tamanho         Int?
+  responsavel     String?
+  observacoes     String?                    @db.Text
+  status          String                     @default("publicado")
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  @@index([tipo, ano])
+  @@index([dataPublicacao])
+  @@index([status])
+  @@map("documentos_transparencia")
+}
+
+// Notas fiscais emitidas/liquidadas/pagas. Vincula a Despesa quando possivel.
+model NotaFiscal {
+  id              String              @id @default(cuid())
+  numero          String
+  serie           String?
+  chaveAcesso     String?             @unique // chave 44 digitos NFe
+  fornecedor      String
+  cnpjCpf         String
+  dataEmissao     DateTime
+  dataLiquidacao  DateTime?
+  dataPagamento   DateTime?
+  valor           Decimal             @db.Decimal(15, 2)
+  situacao        SituacaoNotaFiscal  @default(EMITIDA)
+  ano             Int
+  mes             Int
+  despesaId       String?
+  arquivo         String?             // PDF/XML
+  observacoes     String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  despesa Despesa? @relation(fields: [despesaId], references: [id], onDelete: SetNull)
+
+  @@index([ano, mes])
+  @@index([fornecedor])
+  @@index([situacao])
+  @@index([despesaId])
+  @@map("notas_fiscais")
+}
+
+// Ordem cronologica de pagamentos (LRF - Lei 8.666 art. 5)
+model OrdemPagamento {
+  id               String    @id @default(cuid())
+  numero           String
+  ano              Int
+  mes              Int
+  data             DateTime
+  credor           String
+  cnpjCpf          String
+  valor            Decimal   @db.Decimal(15, 2)
+  dataVencimento   DateTime?
+  dataPagamento    DateTime?
+  ordemCronologica Int?      // posicao na fila
+  fonteRecurso     String?
+  despesaId        String?
+  observacoes      String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  despesa Despesa? @relation(fields: [despesaId], references: [id], onDelete: SetNull)
+
+  @@index([ano, mes])
+  @@index([credor])
+  @@index([ordemCronologica])
+  @@map("ordens_pagamento")
+}
+
+// Veiculos da frota
+model Veiculo {
+  id              String          @id @default(cuid())
+  placa           String          @unique
+  marca           String
+  modelo          String
+  anoFabricacao   Int
+  anoModelo       Int
+  chassi          String?         @unique
+  renavam         String?
+  cor             String?
+  combustivel     String?
+  dataAquisicao   DateTime
+  valorAquisicao  Decimal         @db.Decimal(15, 2)
+  valorAtual      Decimal?        @db.Decimal(15, 2)
+  responsavel     String?
+  lotacao         String?
+  situacao        SituacaoVeiculo @default(ATIVO)
+  observacoes     String?         @db.Text
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([situacao])
+  @@map("veiculos")
+}
+
+// Obras publicas (incluindo paralisadas)
+model Obra {
+  id                  String       @id @default(cuid())
+  descricao           String
+  endereco            String?
+  bairro              String?
+  cidade              String?
+  valorEstimado       Decimal?     @db.Decimal(15, 2)
+  valorContratado     Decimal?     @db.Decimal(15, 2)
+  valorExecutado      Decimal?     @db.Decimal(15, 2)
+  dataInicio          DateTime?
+  dataPrevistaFim     DateTime?
+  dataConclusao       DateTime?
+  percentualExecucao  Int?         @default(0)
+  situacao            SituacaoObra @default(PLANEJADA)
+  motivoParalisacao   String?      @db.Text
+  contratoId          String?
+  arquivo             String?
+  observacoes         String?      @db.Text
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  contrato Contrato? @relation(fields: [contratoId], references: [id], onDelete: SetNull)
+
+  @@index([situacao])
+  @@map("obras")
+}
+
+// ============================================
+// MODELS COMPLEMENTARES CR2 (segunda leva)
+// Repasses, Cartao Corporativo, Programas/Acoes,
+// Servico Online, Fornecedores Sancionados
+// ============================================
+
+enum TipoProgramaAcao {
+  PROGRAMA
+  ACAO
+}
+
+enum TipoSancao {
+  ADVERTENCIA
+  MULTA
+  SUSPENSAO_TEMPORARIA
+  IMPEDIMENTO
+  DECLARACAO_INIDONEIDADE
+}
+
+model Repasse {
+  id              String   @id @default(cuid())
+  orgaoOrigem     String              // Quem repassou (ex: Uniao, Estado)
+  programa        String?             // Programa orcamentario
+  acao            String?
+  valor           Decimal  @db.Decimal(15, 2)
+  data            DateTime
+  ano             Int
+  mes             Int
+  fonteRecurso    String?
+  observacoes     String?  @db.Text
+  arquivo         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ano, mes])
+  @@index([orgaoOrigem])
+  @@map("repasses")
+}
+
+model CartaoCorporativo {
+  id              String   @id @default(cuid())
+  portador        String              // Servidor responsavel
+  cnpjCpfPortador String?
+  estabelecimento String              // Onde foi gasto
+  cnpjEstabelecimento String?
+  dataCompra      DateTime
+  valor           Decimal  @db.Decimal(15, 2)
+  descricao       String              // O que foi comprado
+  numeroFatura    String?
+  numeroParcela   Int?
+  ano             Int
+  mes             Int
+  observacoes     String?  @db.Text
+  arquivo         String?  // comprovante
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ano, mes])
+  @@index([portador])
+  @@map("cartoes_corporativos")
+}
+
+model ProgramaAcao {
+  id              String           @id @default(cuid())
+  codigo          String           // Codigo orcamentario (ex: 0001)
+  nome            String
+  descricao       String?          @db.Text
+  tipo            TipoProgramaAcao @default(PROGRAMA)
+  ano             Int
+  valorPrevisto   Decimal?         @db.Decimal(15, 2)
+  valorExecutado  Decimal?         @db.Decimal(15, 2)
+  unidadeResponsavel String?
+  metaFisica      String?          // Ex: "Atender 1000 alunos"
+  ativo           Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([codigo, ano])
+  @@index([tipo, ano])
+  @@map("programas_acoes")
+}
+
+model ServicoOnline {
+  id              String   @id @default(cuid())
+  nome            String
+  descricao       String?  @db.Text
+  url             String              // Link do servico
+  categoria       String?             // Ex: "Cidadao", "Empresa", "Servidor"
+  icone           String?             // Nome do icone Lucide ou path
+  publicoAlvo     String?
+  requisitos      String?  @db.Text
+  ordem           Int      @default(0)
+  ativo           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([categoria, ativo])
+  @@index([ordem])
+  @@map("servicos_online")
+}
+
+model FornecedorSancionado {
+  id                  String     @id @default(cuid())
+  nome                String
+  cnpjCpf             String
+  tipoSancao          TipoSancao
+  motivo              String     @db.Text
+  numeroProcesso      String?
+  orgaoSancionador    String              // Quem aplicou (TCM, CGU, etc)
+  dataInicio          DateTime
+  dataFim             DateTime?           // Null = indeterminado
+  ativo               Boolean    @default(true)
+  fundamentoLegal     String?
+  observacoes         String?    @db.Text
+  arquivo             String?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@index([cnpjCpf])
+  @@index([tipoSancao, ativo])
+  @@index([dataInicio])
+  @@map("fornecedores_sancionados")
 }
 
 // ============================================

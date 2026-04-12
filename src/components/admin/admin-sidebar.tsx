@@ -55,7 +55,13 @@ import {
   ExternalLink,
   Globe,
   Tv,
-  Mail
+  Mail,
+  Receipt,
+  Truck,
+  HardHat,
+  Clock,
+  CalendarDays,
+  Banknote
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -125,9 +131,19 @@ const navigationCategories: NavCategory[] = [
       { name: 'Gestao Fiscal', href: '/admin/gestao-fiscal', icon: DollarSign, permissions: ['transparencia.manage'] },
       { name: 'Receitas', href: '/admin/receitas', icon: TrendingUp, permissions: ['transparencia.manage'] },
       { name: 'Despesas', href: '/admin/despesas', icon: TrendingDown, permissions: ['transparencia.manage'] },
+      { name: 'Notas Fiscais', href: '/admin/transparencia/notas-fiscais', icon: Receipt, permissions: ['transparencia.manage'] },
+      { name: 'Ordem Pagamentos', href: '/admin/transparencia/ordem-pagamentos', icon: Clock, permissions: ['transparencia.manage'] },
+      { name: 'Repasses', href: '/admin/transparencia/repasses', icon: Banknote, permissions: ['transparencia.manage'] },
+      { name: 'Cartao Corporativo', href: '/admin/transparencia/cartoes-corporativos', icon: CreditCard, permissions: ['transparencia.manage'] },
+      { name: 'Programas e Acoes', href: '/admin/transparencia/programas-acoes', icon: ClipboardList, permissions: ['transparencia.manage'] },
       { name: 'Licitacoes', href: '/admin/licitacoes', icon: Gavel, permissions: ['transparencia.view'] },
       { name: 'Contratos', href: '/admin/contratos', icon: FileSpreadsheet, permissions: ['transparencia.manage'] },
       { name: 'Convenios', href: '/admin/convenios', icon: Handshake, permissions: ['transparencia.manage'] },
+      { name: 'Fornecedores Sancionados', href: '/admin/transparencia/fornecedores-sancionados', icon: Shield, permissions: ['transparencia.manage'] },
+      { name: 'Obras', href: '/admin/transparencia/obras', icon: HardHat, permissions: ['transparencia.manage'] },
+      { name: 'Veiculos', href: '/admin/transparencia/veiculos', icon: Truck, permissions: ['transparencia.manage'] },
+      { name: 'Documentos Oficiais', href: '/admin/transparencia/documentos', icon: FileText, permissions: ['transparencia.manage'] },
+      { name: 'Servicos Online', href: '/admin/transparencia/servicos-online', icon: Globe, permissions: ['transparencia.manage'] },
       { name: 'Organograma', href: '/admin/organograma', icon: Building2, permissions: ['transparencia.manage'] },
     ]
   },
@@ -173,6 +189,9 @@ const navigationCategories: NavCategory[] = [
     items: [
       { name: 'Geral', href: '/admin/configuracoes', icon: Settings, permissions: ['config.view'] },
       { name: 'Identidade Visual', href: '/admin/configuracoes/identidade-visual', icon: Palette, permissions: ['config.manage'] },
+      { name: 'Transparencia - Links', href: '/admin/configuracoes/transparencia-links', icon: ExternalLink, permissions: ['config.manage'] },
+      { name: 'Transparencia - Periodos', href: '/admin/configuracoes/transparencia-periodos', icon: CalendarDays, permissions: ['config.manage'] },
+      { name: 'Transparencia - Conteudo', href: '/admin/configuracoes/transparencia-conteudo', icon: Layers, permissions: ['config.manage'] },
       { name: 'Usuarios', href: '/admin/usuarios', icon: Shield, permissions: ['user.manage'] },
       { name: 'Templates Sessao', href: '/admin/templates-sessao', icon: Layers, permissions: ['sessao.manage'] },
       { name: 'Quorum', href: '/admin/configuracoes/quorum', icon: Vote, permissions: ['config.manage'] },

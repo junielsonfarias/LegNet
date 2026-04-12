@@ -16,6 +16,24 @@ export interface TransparenciaRedirect {
 }
 
 const CONFIG_PREFIX = 'transparencia.redirect.'
+const PERIODOS_PREFIX = 'transparencia.periodos.'
+
+export interface PeriodoTransparencia {
+  id: string             // ex: "ate-2021", "2024", "interno-2025"
+  label: string          // "Informacoes ate 2021"
+  url?: string           // link externo (se nao for interno)
+  hrefInterno?: string   // rota interna ex: "/transparencia/despesas?ano=2024"
+  ano?: number | null    // null para "ate X" agregado
+  ordem: number
+  ativo: boolean
+}
+
+export interface ConfiguracaoPeriodos {
+  enabled: boolean              // se true, mostra tela de selecao em vez do conteudo direto
+  titulo?: string               // ex: "Selecione o periodo"
+  descricao?: string
+  periodos: PeriodoTransparencia[]
+}
 
 // Todas as categorias de transparência disponíveis
 export const TRANSPARENCIA_CATEGORIAS = [
@@ -110,6 +128,73 @@ export const transparenciaRedirectService = {
   async remove(slug: string): Promise<void> {
     await prisma.configuracao.deleteMany({
       where: { chave: `${CONFIG_PREFIX}${slug}` }
+    })
+  },
+
+  /**
+   * Buscar configuracao de periodos de uma categoria
+   */
+  async getPeriodos(slug: string): Promise<ConfiguracaoPeriodos | null> {
+    const config = await prisma.configuracao.findUnique({
+      where: { chave: `${PERIODOS_PREFIX}${slug}` }
+    })
+    if (!config) return null
+    try {
+      const data = JSON.parse(config.valor) as ConfiguracaoPeriodos
+      return data
+    } catch {
+      return null
+    }
+  },
+
+  /**
+   * Salvar configuracao de periodos
+   */
+  async setPeriodos(slug: string, data: ConfiguracaoPeriodos): Promise<ConfiguracaoPeriodos> {
+    const chave = `${PERIODOS_PREFIX}${slug}`
+    const categoria = TRANSPARENCIA_CATEGORIAS.find(c => c.slug === slug)
+    const valor = JSON.stringify(data)
+
+    await prisma.configuracao.upsert({
+      where: { chave },
+      update: { valor },
+      create: {
+        chave,
+        valor,
+        descricao: `Periodos: ${categoria?.nome || slug}`,
+        categoria: 'Transparência',
+        tipo: 'json',
+        editavel: true
+      }
+    })
+    return data
+  },
+
+  /**
+   * Listar todas as configuracoes de periodos
+   */
+  async getAllPeriodos(): Promise<Record<string, ConfiguracaoPeriodos>> {
+    const configs = await prisma.configuracao.findMany({
+      where: { chave: { startsWith: PERIODOS_PREFIX } }
+    })
+    const result: Record<string, ConfiguracaoPeriodos> = {}
+    for (const c of configs) {
+      const slug = c.chave.replace(PERIODOS_PREFIX, '')
+      try {
+        result[slug] = JSON.parse(c.valor) as ConfiguracaoPeriodos
+      } catch {
+        // skip invalido
+      }
+    }
+    return result
+  },
+
+  /**
+   * Remover configuracao de periodos
+   */
+  async removePeriodos(slug: string): Promise<void> {
+    await prisma.configuracao.deleteMany({
+      where: { chave: `${PERIODOS_PREFIX}${slug}` }
     })
   },
 

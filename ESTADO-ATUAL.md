@@ -1,10 +1,197 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-10 (Refatoracao e acessibilidade)
-> **Versao**: 1.9.3
+> **Ultima Atualizacao**: 2026-04-10 (Analise ponta a ponta + correcoes seguranca/performance)
+> **Versao**: 1.9.4
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Adaptacao ao Portal CR2 + Preparacao para Backup (12/04/2026 - tarde)
+
+Implementacao em 7 fases para receber backup do portal antigo CR2 e cobrir lacunas PNTP.
+
+### Fase 1: Schema Prisma (`prisma/schema.prisma`)
+5 novos models + 4 enums adicionados:
+
+- `DocumentoTransparencia` - model generico para Balancete, Balanco Anual, Parecer TCM, Julgamento Contas, Planejamento Estrategico, Carta Servicos, LGPD, PAC, Relatorio Gestao (discriminado por enum `TipoDocumentoTransparencia`)
+- `NotaFiscal` - notas emitidas/liquidadas/pagas com chave NFe, FK opcional para Despesa
+- `OrdemPagamento` - ordem cronologica de pagamentos (LRF / Lei 8.666 art. 5), FK opcional para Despesa
+- `Veiculo` - frota oficial (placa, modelo, chassi, RENAVAM, situacao)
+- `Obra` - obras publicas com situacao (PLANEJADA, EM_ANDAMENTO, PARALISADA, CONCLUIDA, CANCELADA), FK opcional para Contrato
+
+Relations inversas adicionadas em `Despesa` (notasFiscais, ordensPagamento) e `Contrato` (obras).
+
+Migration SQL manual em `prisma/migrations/20260412_add_transparencia_models_cr2/migration.sql` (NUNCA usar `prisma db push` em producao - aplicar via `prisma migrate deploy` ou psql direto).
+
+### Fase 2: Sistema de Periodos por Categoria
+Estende `transparenciaRedirectService` para suportar LISTA de periodos por categoria (ex: Despesas ate 2021 / ate 2023 / 2024+).
+
+Novos arquivos:
+- `src/lib/services/transparencia-redirect-service.ts` - novas funcoes `getPeriodos`, `setPeriodos`, `getAllPeriodos`, `removePeriodos` + interfaces `PeriodoTransparencia` e `ConfiguracaoPeriodos`
+- `src/app/api/transparencia/periodos/route.ts` - GET/POST/DELETE com Zod
+- `src/lib/hooks/use-transparencia-periodos.ts` - hook client
+- `src/components/transparencia/period-selector-screen.tsx` - tela de selecao em grid de cards (interno/externo)
+- `src/app/admin/configuracoes/transparencia-periodos/page.tsx` - admin CRUD com drag-and-drop de ordem, toggle ativo, link interno OU externo por periodo
+
+`src/components/transparencia/transparencia-page-wrapper.tsx` atualizado: agora 3 modos de exibicao (redirect legacy / tela de selecao de periodo / conteudo interno).
+
+Armazenamento: `Configuracao` com chave `transparencia.periodos.<slug>` (JSON serializado), em paralelo ao `transparencia.redirect.<slug>` legacy.
+
+### Fase 3-5: APIs e Paginas Publicas dos Novos Recursos
+APIs CRUD criadas (10 arquivos):
+- `/api/documentos-transparencia/route.ts` + `/[id]/route.ts`
+- `/api/notas-fiscais/route.ts` + `/[id]/route.ts`
+- `/api/ordem-pagamentos/route.ts` + `/[id]/route.ts`
+- `/api/veiculos/route.ts` + `/[id]/route.ts`
+- `/api/obras/route.ts` + `/[id]/route.ts`
+
+Padrao: Zod validation, withErrorHandler/withAuth, prisma direto (sem service layer separado para reduzir boilerplate), permissions `transparencia.manage`, params com `Promise<{id:string}>` (Next 15 async).
+
+Paginas publicas (7 novas):
+- `/transparencia/notas-fiscais` - tabela com busca por fornecedor/numero/CNPJ
+- `/transparencia/ordem-pagamentos` - tabela com ordem cronologica
+- `/transparencia/veiculos` - grid de cards com busca por placa/marca/modelo
+- `/transparencia/obras` - lista expandida com filtro `?situacao=PARALISADA` (suporta Obras + Obras Paralisadas)
+- `/transparencia/documentos/[tipo]` - rota dinamica para os 9 tipos de DocumentoTransparencia
+- `/transparencia/pessoal/estagiarios` - filtra Servidor por `vinculo=ESTAGIARIO`
+- `/transparencia/pessoal/terceirizados` - filtra Servidor por `vinculo=TERCEIRIZADO`
+
+Todas envolvidas em `<TransparenciaPageWrapper>` para suportar tela de periodos por categoria.
+
+Admin CRUD criado para os 5 novos models (lista + form inline + delete):
+- `/admin/transparencia/notas-fiscais`
+- `/admin/transparencia/ordem-pagamentos`
+- `/admin/transparencia/veiculos`
+- `/admin/transparencia/obras`
+- `/admin/transparencia/documentos` (filtro por tipo, suporta arquivo OU url externa)
+
+Sidebar admin (`src/components/admin/admin-sidebar.tsx`) atualizado:
+- Categoria "Transparencia": +5 itens (Notas Fiscais, Ordem Pagamentos, Obras, Veiculos, Documentos Oficiais)
+- Categoria "Configuracoes": +3 itens (Transparencia - Links, Transparencia - Periodos, Transparencia - Conteudo)
+
+### Fase 6: Atualizacao do Hub `/transparencia/page.tsx`
+12 itens migrados de `externalUrl: CR2_BASE` para `href` interno apontando para as novas rotas:
+- Notas Fiscais Liquidadas, Ordem Cronologica, Estagiarios, Terceirizados, Veiculos, Obras, Obras Paralisadas, Balancete, Balanco, Parecer TCM, Julgamento, Planejamento Estrategico, Carta Servicos, LGPD, PAC.
+
+Permanecem como `externalUrl: CR2_BASE` (5 itens, sem model dedicado): Repasses, Programas e Acoes, Cartao de Credito, Servico Online, e itens institucionais (Legislaturas, Comissoes etc).
+
+### Fase 7: Esqueleto do Importador
+`scripts/import-cr2-backup.ts` - script CLI esqueleto (`tsx`) para importar backup quando chegar. Suporta `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado (provavelmente JSON ou CSV - portal CR2 e Bubble.io).
+
+### Validacao
+- `npx prisma validate` ✓
+- `npx tsc --noEmit` ✓ limpo apos cada fase
+
+### Resolucao das pendencias (12/04/2026 - noite)
+
+**Edit form em todas as paginas admin existentes**
+As 5 paginas admin do bloco anterior (notas-fiscais, ordem-pagamentos, veiculos, obras, documentos) ganharam suporte completo a edicao: botao Pencil por linha, handler `handleEdit()` que carrega os dados no form, `editingId` state, e `handleSave()` que faz POST ou PUT conforme o caso. Helper `closeForm()` resetando estado.
+
+**5 novos models criados** (`prisma/schema.prisma`)
+- `Repasse` - recursos recebidos de outras esferas (orgaoOrigem, programa, valor, ano/mes)
+- `CartaoCorporativo` - gastos com cartao de credito (portador, estabelecimento, dataCompra, descricao)
+- `ProgramaAcao` - programas e acoes orcamentarias (codigo, nome, tipo enum, valorPrevisto/Executado, metaFisica)
+- `ServicoOnline` - carta de servicos digitais (nome, url, categoria, ordem, ativo)
+- `FornecedorSancionado` - sancoes administrativas (nome, cnpjCpf, tipoSancao enum, motivo, dataInicio/Fim)
+
+2 novos enums: `TipoProgramaAcao` (PROGRAMA, ACAO), `TipoSancao` (5 niveis). Migration SQL em `prisma/migrations/20260412_add_cr2_complementar_models/migration.sql`.
+
+**APIs CRUD** (10 arquivos)
+- `/api/repasses/route.ts` + `/[id]/route.ts`
+- `/api/cartoes-corporativos/route.ts` + `/[id]/route.ts`
+- `/api/programas-acoes/route.ts` + `/[id]/route.ts`
+- `/api/servicos-online/route.ts` + `/[id]/route.ts`
+- `/api/fornecedores-sancionados/route.ts` + `/[id]/route.ts`
+
+Mesmo padrao das anteriores: Zod, withErrorHandler/withAuth, prisma direto, params async, permissions `transparencia.manage`.
+
+**Paginas admin** (5 novas, ja com edit support desde o inicio)
+- `/admin/transparencia/repasses`
+- `/admin/transparencia/cartoes-corporativos`
+- `/admin/transparencia/programas-acoes`
+- `/admin/transparencia/servicos-online`
+- `/admin/transparencia/fornecedores-sancionados`
+
+**Paginas publicas** (5 novas)
+- `/transparencia/repasses` - tabela com total agregado
+- `/transparencia/cartoes-corporativos` - lancamentos com busca
+- `/transparencia/programas-acoes` - cards agrupados por tipo
+- `/transparencia/servicos-online` - cards agrupados por categoria, links externos
+- `/transparencia/fornecedores-sancionados` - lista com badge de vigencia
+
+Todas envolvidas em `<TransparenciaPageWrapper>` com slugs reservados (ja existentes na config admin de periodos).
+
+**Sidebar admin atualizado**
+Categoria Transparencia agora tem 18 itens (5 novos: Repasses, Cartao Corporativo, Programas e Acoes, Fornecedores Sancionados, Servicos Online). Imports adicionados: `Banknote`.
+
+**Hub publico atualizado**
+Os 5 itens que antes apontavam para `CR2_BASE` agora vao para rotas internas:
+- Repasses → `/transparencia/repasses`
+- Programas e Acoes → `/transparencia/programas-acoes`
+- Cartao de Credito → `/transparencia/cartoes-corporativos`
+- Sancionados → `/transparencia/fornecedores-sancionados`
+- Servico Online → `/transparencia/servicos-online`
+
+**Status final**: Cobertura 100% dos itens do portal CR2 com models proprios, exceto os puramente institucionais que ja apontam para paginas existentes (Legislaturas, Comissoes, Agenda Externa, Documentos Administrativos). Todos os recursos estruturados tem CRUD admin completo (create + edit + delete) e pagina publica.
+
+### Para receber o backup CR2
+1. Aplicar migration em producao via `prisma migrate deploy` (ou aplicar SQL manualmente)
+2. Receber arquivo do CR2 e identificar formato
+3. Atualizar `parseBackup()` e cada `mapXxx()` em `scripts/import-cr2-backup.ts`
+4. Rodar `npx tsx scripts/import-cr2-backup.ts <arquivo> --dry-run` e validar contagens
+5. Rodar sem `--dry-run` para gravar
+6. Configurar periodos no admin para manter links do sistema antigo durante a transicao
+
+---
+
+## Restruturacao do Hub de Transparencia (12/04/2026)
+
+Hub `/transparencia/page.tsx` reorganizado para espelhar a estrutura completa do portal antigo (CR2/cm-chaves), agora com 9 secoes e 52 itens:
+
+1. Informacoes Institucionais (8 itens)
+2. Atividades do Legislativo (4 itens)
+3. Receitas e Despesas (9 itens, com Despesas expandindo em sub-periodos ate 2021/2023/2024+)
+4. Recursos Humanos (8 itens)
+5. Licitacoes, Contratos, Convenios e Obras (9 itens)
+6. Patrimonio (3 itens, incluindo Veiculos)
+7. Planejamento e Prestacao de Contas (7 itens, LDO/LOA/PPA agrupados)
+8. Ouvidoria / SIC (7 itens)
+9. LGPD e Governo Digital (5 itens)
+
+Itens com rota interna ja implementada continuam apontando para as paginas do sistema (21 itens); itens ainda nao migrados (~31) apontam para a raiz da entidade no portal CR2 (`https://www.portalcr2.com.br/entidade/cm-chaves`) e abrem em nova aba com icone `ExternalLink`. Decisao: como o CR2 e um app Bubble.io com roteamento 100% client-side e sem sitemap publico, deep links com slugs nao sao confiaveis - melhor levar o usuario a raiz da entidade e deixa-lo navegar no menu nativo.
+
+Novo componente `TransparenciaItemRow` suporta 3 tipos de linha: interna (`Link`), externa (`<a target="_blank">`) e agrupada (`<details>` nativo) para sub-itens periodicos. Constante `SECOES_TRANSPARENCIA` extraida para fora do componente para evitar recriacao a cada render.
+
+Arquivos alterados: `src/app/transparencia/page.tsx`.
+
+---
+
+## Analise Ponta a Ponta e Correcoes (10/04/2026)
+
+### Analise Completa (6 agentes paralelos)
+- 981 arquivos TS/TSX, 107 modelos Prisma, 234 endpoints API
+- 140 componentes, 90 services, 45 hooks, 76 enums
+- 32 arquivos de teste, 479 casos, 67 E2E
+- Score geral: 6.95/10
+
+### Fase 1 - Seguranca Urgente (commit 045b0eb)
+- XSS corrigido em admin/sessoes/[id] (sanitizeRichHtml)
+- CSS injection prevenido no layout.tsx (validacao hex color)
+- CI workflow ci-tests.yml (lint + typecheck + testes em PRs)
+
+### Fase 2 - Performance e Validacao (commit 94115bf)
+- 5 indexes criticos: Votacao(parlamentarId), MembroComissao(parlamentarId, ativo), Mandato(ativo+legislaturaId, dataInicio)
+- Migration SQL 20260410_add_critical_indexes (PENDENTE EM PRODUCAO)
+- N+1 eliminado em notificacoes-prazo (~220 queries -> ~6)
+- Zod nas 3 APIs publicas e-SIC
+- ALLOW_HTTP_COOKIES removido (secure deriva de NEXTAUTH_URL)
+- CORS fallback seguro (rejeita em vez de '*')
+
+### Fases Pendentes (proximas sessoes)
+- Fase 3: Server Components, ISR, dividir sessao-controle.ts, noImplicitAny, PWA, createdBy/updatedBy
+- Fase 4: Redis obrigatorio, Parlamentar.legislatura FK, soft delete, CSRF tokens, CSP nonce
 
 ---
 
