@@ -37,6 +37,27 @@ type TransparenciaItem = {
   href?: string;
   externalUrl?: string;
   subItens?: TransparenciaSubItem[];
+  // Slug que liga este item a uma categoria configuravel em
+  // /admin/configuracoes/transparencia-periodos. Quando houver config ativa
+  // no DB, os subItens hardcoded sao substituidos pelos periodos configurados.
+  slug?: string;
+};
+
+type PeriodoDb = {
+  id: string;
+  label: string;
+  url?: string;
+  hrefInterno?: string;
+  ano?: number | null;
+  ordem: number;
+  ativo: boolean;
+};
+
+type ConfigPeriodosDb = {
+  enabled: boolean;
+  titulo?: string;
+  descricao?: string;
+  periodos: PeriodoDb[];
 };
 
 type TransparenciaSecao = {
@@ -80,23 +101,24 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     subtitulo: 'Execucao orcamentaria e financeira',
     icon: DollarSign,
     itens: [
-      { nome: 'Receitas', icon: TrendingUp, href: '/transparencia/receitas' },
+      { nome: 'Receitas', icon: TrendingUp, href: '/transparencia/receitas', slug: 'receitas' },
       {
         nome: 'Despesas',
         icon: CreditCard,
         href: '/transparencia/despesas',
+        slug: 'despesas',
         subItens: [
           { nome: 'Informacoes ate 2021', externalUrl: CR2_BASE },
           { nome: 'Informacoes ate 2023', externalUrl: CR2_BASE },
           { nome: 'Informacoes a partir de 2024', href: '/transparencia/despesas' },
         ],
       },
-      { nome: 'Repasses', icon: Banknote, href: '/transparencia/repasses' },
-      { nome: 'Programas e Acoes', icon: ClipboardList, href: '/transparencia/programas-acoes' },
-      { nome: 'Gastos com Cartao de Credito', icon: CreditCard, href: '/transparencia/cartoes-corporativos' },
-      { nome: 'Notas Fiscais Liquidadas', icon: Receipt, href: '/transparencia/notas-fiscais' },
+      { nome: 'Repasses', icon: Banknote, href: '/transparencia/repasses', slug: 'repasses' },
+      { nome: 'Programas e Acoes', icon: ClipboardList, href: '/transparencia/programas-acoes', slug: 'programas-acoes' },
+      { nome: 'Gastos com Cartao de Credito', icon: CreditCard, href: '/transparencia/cartoes-corporativos', slug: 'cartao-credito' },
+      { nome: 'Notas Fiscais Liquidadas', icon: Receipt, href: '/transparencia/notas-fiscais', slug: 'notas-fiscais' },
       { nome: 'Cotas para Exercicio da Atividade Parlamentar', icon: Wallet, href: '/transparencia/parlamentar/indenizatoria' },
-      { nome: 'Ordem Cronologica de Pagamentos', icon: Clock, href: '/transparencia/ordem-pagamentos' },
+      { nome: 'Ordem Cronologica de Pagamentos', icon: Clock, href: '/transparencia/ordem-pagamentos', slug: 'ordem-pagamentos' },
     ],
   },
   {
@@ -109,9 +131,9 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Relacao de Estagiarios', icon: GraduationCap, href: '/transparencia/pessoal/estagiarios' },
       { nome: 'Relacao de Prestadores de Servicos Terceirizados', icon: UserPlus, href: '/transparencia/pessoal/terceirizados' },
       { nome: 'Concursos e Processos Seletivos', icon: FileCheck, href: '/transparencia/pessoal/concursos' },
-      { nome: 'Diarias', icon: CalendarDays, href: '/transparencia/pessoal/diarias' },
+      { nome: 'Diarias', icon: CalendarDays, href: '/transparencia/pessoal/diarias', slug: 'diarias' },
       { nome: 'Tabela com os Valores das Diarias', icon: FileBarChart, externalUrl: CR2_BASE },
-      { nome: 'Folha de Pagamento', icon: Wallet, href: '/transparencia/folha-pagamento' },
+      { nome: 'Folha de Pagamento', icon: Wallet, href: '/transparencia/folha-pagamento', slug: 'folha-pagamento' },
     ],
   },
   {
@@ -119,14 +141,14 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     subtitulo: 'Contratacoes publicas e transferencias',
     icon: Search,
     itens: [
-      { nome: 'Licitacoes', icon: Search, href: '/transparencia/licitacoes' },
+      { nome: 'Licitacoes', icon: Search, href: '/transparencia/licitacoes', slug: 'licitacoes' },
       { nome: 'Aviso de Licitacao', icon: Megaphone, externalUrl: CR2_BASE },
-      { nome: 'Contratos', icon: FileSignature, href: '/transparencia/contratos' },
+      { nome: 'Contratos', icon: FileSignature, href: '/transparencia/contratos', slug: 'contratos' },
       { nome: 'Plano Anual de Contratacoes', icon: ClipboardList, href: '/transparencia/documentos/plano-anual-contratacoes' },
       { nome: 'Licitantes/Contratados Sancionados Administrativamente', icon: Shield, href: '/transparencia/fornecedores-sancionados' },
       { nome: 'Cadastro de Fornecedores', icon: Database, externalUrl: CR2_BASE },
-      { nome: 'Convenios / Transferencias Voluntarias', icon: Handshake, href: '/transparencia/convenios' },
-      { nome: 'Obras', icon: HardHat, href: '/transparencia/obras' },
+      { nome: 'Convenios / Transferencias Voluntarias', icon: Handshake, href: '/transparencia/convenios', slug: 'convenios' },
+      { nome: 'Obras', icon: HardHat, href: '/transparencia/obras', slug: 'obras' },
       { nome: 'Obras Paralisadas', icon: HardHat, href: '/transparencia/obras?situacao=PARALISADA' },
     ],
   },
@@ -137,7 +159,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     itens: [
       { nome: 'Bens Moveis', icon: Briefcase, href: '/transparencia/bens-moveis' },
       { nome: 'Bens Imoveis', icon: Building2, href: '/transparencia/bens-imoveis' },
-      { nome: 'Veiculos', icon: Truck, href: '/transparencia/veiculos' },
+      { nome: 'Veiculos', icon: Truck, href: '/transparencia/veiculos', slug: 'veiculos' },
     ],
   },
   {
@@ -210,14 +232,22 @@ interface ConfiguracaoInstitucional {
 export default function TransparenciaPage() {
   const [dados, setDados] = useState<{ configuracao: ConfiguracaoInstitucional | null } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [periodosConfig, setPeriodosConfig] = useState<Record<string, ConfigPeriodosDb>>({});
   const breadcrumbs = useBreadcrumbs();
 
   useEffect(() => {
     const fetchDados = async () => {
       try {
-        const response = await fetch('/api/institucional');
-        const result = await response.json();
-        if (result.dados) setDados(result.dados);
+        const [institRes, periodosRes] = await Promise.all([
+          fetch('/api/institucional'),
+          fetch('/api/transparencia/periodos')
+        ]);
+        const institResult = await institRes.json();
+        if (institResult.dados) setDados(institResult.dados);
+        if (periodosRes.ok) {
+          const periodosJson = await periodosRes.json();
+          if (periodosJson?.data) setPeriodosConfig(periodosJson.data);
+        }
       } catch (err) {
         log.error('Erro ao buscar dados institucionais', err);
       } finally {
@@ -234,7 +264,32 @@ export default function TransparenciaPage() {
     ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', s/no'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`
     : 'Rua Deputado Jose Macedo, s/no - Centro';
 
-  const secoes = SECOES_TRANSPARENCIA;
+  // Aplica periodos configurados no admin sobre os subItens hardcoded.
+  // Se o item tem slug e a config do DB esta enabled, os subItens sao
+  // substituidos pelos periodos ativos ordenados. Caso contrario mantem
+  // o fallback hardcoded (ou nenhum).
+  const resolveSubItens = (item: TransparenciaItem): TransparenciaSubItem[] | undefined => {
+    if (!item.slug) return item.subItens;
+    const cfg = periodosConfig[item.slug];
+    if (!cfg || !cfg.enabled) return item.subItens;
+    const periodosAtivos = cfg.periodos
+      .filter((p) => p.ativo)
+      .sort((a, b) => a.ordem - b.ordem);
+    if (periodosAtivos.length === 0) return item.subItens;
+    return periodosAtivos.map((p) => ({
+      nome: p.label,
+      href: p.hrefInterno || undefined,
+      externalUrl: p.url || undefined,
+    }));
+  };
+
+  const secoes = SECOES_TRANSPARENCIA.map((secao) => ({
+    ...secao,
+    itens: secao.itens.map((item) => ({
+      ...item,
+      subItens: resolveSubItens(item),
+    })),
+  }));
 
   // Estilos baseados no tema municipal (CSS variables da instalacao)
   const themeStyles = {

@@ -1,10 +1,38 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-10 (Analise ponta a ponta + correcoes seguranca/performance)
+> **Ultima Atualizacao**: 2026-04-12 (Migrations pendentes aplicadas no Supabase)
 > **Versao**: 1.9.4
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Fix: Portal de transparencia lendo periodos do DB (12/04/2026)
+
+`src/app/transparencia/page.tsx` tinha `SECOES_TRANSPARENCIA` 100% hardcoded e ignorava a config gravada em `/admin/configuracoes/transparencia-periodos`. Admin gravava em `transparencia.periodos.<slug>` mas portal nunca consultava.
+
+Mudancas em `src/app/transparencia/page.tsx`:
+- Adicionado campo `slug?: string` em `TransparenciaItem`
+- Marcados 14 itens com slug correspondente ao `CATEGORIAS_DISPONIVEIS` da admin (despesas, receitas, repasses, programas-acoes, cartao-credito, notas-fiscais, ordem-pagamentos, folha-pagamento, diarias, licitacoes, contratos, convenios, obras, veiculos)
+- `useEffect` agora faz fetch paralelo de `/api/institucional` e `/api/transparencia/periodos`
+- Nova funcao `resolveSubItens` substitui `subItens` hardcoded pelos periodos do DB quando `cfg.enabled` e ha periodos ativos; caso contrario mantem fallback hardcoded
+
+Fluxo atual: admin cadastra periodo com label + URL externa OU hrefInterno + toggle ativo → DB → portal renderiza automaticamente como sub-accordion do item.
+
+---
+
+## Fix: 500 em /api/sessoes - Migrations pendentes aplicadas (12/04/2026)
+
+`LiveSessionBanner` na home quebrava com 500 por coluna `sessoes.statusAta` inexistente. Causa: 4 migrations versionadas nunca aplicadas no Supabase.
+
+Aplicadas via `npx prisma migrate deploy`:
+- `20260409_ata_approval_oficios` (adiciona `statusAta`, `sessaoAprovacaoAtaId`, `arquivoAtaAssinada` + enum StatusAta)
+- `20260410_add_critical_indexes`
+- `20260412_add_cr2_complementar_models`
+- `20260412_add_transparencia_models_cr2`
+
+Endpoint `/api/sessoes?status=EM_ANDAMENTO` validado retornando 200. **VPS (cmchaves.pa.gov.br) ainda precisa receber as mesmas migrations** - banco Postgres interno e separado do Supabase.
 
 ---
 
