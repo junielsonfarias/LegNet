@@ -1,23 +1,59 @@
 /**
  * Serviço de Email
- * Implementa envio de emails via Resend
+ * Transport pluggavel: Gmail SMTP (nodemailer) OU Resend. Detecta automaticamente
+ * qual usar pelas env vars, permitindo trocar sem mudar codigo.
  *
- * Funcionalidades:
- * - Envio de emails transacionais
- * - Recuperação de senha
- * - Notificações legislativas
- * - Templates HTML responsivos
+ * Prioridade:
+ *   1. SMTP_HOST definido        -> nodemailer (Gmail ou qualquer SMTP)
+ *   2. RESEND_API_KEY definida   -> Resend (legado)
+ *   3. Nenhum                    -> dev mode (loga e retorna sucesso)
+ *
+ * Templates HTML ficam nesta lib (nao dependem do transport).
  */
 
 import { Resend } from 'resend'
+import nodemailer, { type Transporter } from 'nodemailer'
 import { createLogger } from '@/lib/logging/logger'
 
 const logger = createLogger('email')
 
-// Inicializa Resend (será undefined se API key não estiver configurada)
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null
+// ============================================
+// Transport detection
+// ============================================
+
+type EmailTransport = 'smtp' | 'resend' | 'dev'
+
+function detectTransport(): EmailTransport {
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) return 'smtp'
+  if (process.env.RESEND_API_KEY) return 'resend'
+  return 'dev'
+}
+
+// Singletons — inicializados lazy para evitar erro em build time
+let smtpTransporter: Transporter | null = null
+let resendClient: Resend | null = null
+
+function getSmtpTransporter(): Transporter {
+  if (!smtpTransporter) {
+    smtpTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true', // true para 465, false para 587 (STARTTLS)
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    })
+  }
+  return smtpTransporter
+}
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendClient
+}
 
 // Configurações padrão
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Câmara Municipal <noreply@camara.gov.br>'
@@ -42,61 +78,82 @@ export interface EmailData {
 }
 
 /**
- * Envia um email usando Resend
+ * Envia um email pelo transport configurado (SMTP/Resend/dev).
  */
 export async function sendEmail(data: EmailData): Promise<EmailResult> {
-  if (!resend) {
-    logger.warn('Resend não configurado - email não enviado', {
+  const transport = detectTransport()
+  const from = data.from || EMAIL_FROM
+  const toList = Array.isArray(data.to) ? data.to : [data.to]
+
+  if (transport === 'dev') {
+    logger.warn('Email transport nao configurado - email nao enviado', {
       action: 'send_email_skip',
       to: data.to,
-      subject: data.subject
+      subject: data.subject,
     })
-
-    // Em desenvolvimento, loga o email
     if (process.env.NODE_ENV === 'development') {
       logger.info('Email (DEV MODE):', {
         to: data.to,
         subject: data.subject,
-        preview: data.text?.substring(0, 200) || 'HTML email'
+        preview: data.text?.substring(0, 200) || 'HTML email',
       })
     }
-
     return { success: true, messageId: 'dev-mode' }
   }
 
   try {
-    const result = await resend.emails.send({
-      from: data.from || EMAIL_FROM,
-      to: Array.isArray(data.to) ? data.to : [data.to],
+    if (transport === 'smtp') {
+      const info = await getSmtpTransporter().sendMail({
+        from,
+        to: toList,
+        subject: data.subject,
+        html: data.html,
+        text: data.text,
+        replyTo: data.replyTo,
+      })
+      logger.info('Email enviado com sucesso via SMTP', {
+        action: 'send_email_success',
+        transport: 'smtp',
+        messageId: info.messageId,
+        to: data.to,
+        subject: data.subject,
+      })
+      return { success: true, messageId: info.messageId }
+    }
+
+    // transport === 'resend'
+    const result = await getResendClient().emails.send({
+      from,
+      to: toList,
       subject: data.subject,
       html: data.html,
       text: data.text,
-      replyTo: data.replyTo
+      replyTo: data.replyTo,
     })
-
     if (result.error) {
       logger.error('Erro ao enviar email via Resend', {
         action: 'send_email_error',
+        transport: 'resend',
         error: result.error.message,
-        to: data.to
+        to: data.to,
       })
       return { success: false, error: result.error.message }
     }
-
-    logger.info('Email enviado com sucesso', {
+    logger.info('Email enviado com sucesso via Resend', {
       action: 'send_email_success',
+      transport: 'resend',
       messageId: result.data?.id,
       to: data.to,
-      subject: data.subject
+      subject: data.subject,
     })
-
     return { success: true, messageId: result.data?.id }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-    logger.error('Exceção ao enviar email', {
+    logger.error('Excecao ao enviar email', {
       action: 'send_email_exception',
+      transport,
       error: errorMessage,
-      to: data.to
+      to: data.to,
     })
     return { success: false, error: errorMessage }
   }
@@ -582,10 +639,17 @@ ${SITE_NAME}
 }
 
 /**
- * Verifica se o serviço de email está configurado
+ * Verifica se o servico de email esta configurado
  */
 export function isEmailConfigured(): boolean {
-  return !!resend
+  return detectTransport() !== 'dev'
+}
+
+/**
+ * Retorna qual transport esta ativo (util para diagnostico)
+ */
+export function getActiveEmailTransport(): EmailTransport {
+  return detectTransport()
 }
 
 /**
