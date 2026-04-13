@@ -10,6 +10,7 @@
  * - Cálculo de tempo estimado
  */
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { addBusinessDays, differenceInDays } from '@/lib/utils/date'
@@ -94,36 +95,33 @@ const TEMPOS_MEDIOS: Record<string, number> = {
 /**
  * Verifica se proposição está elegível para pauta
  */
-export async function verificarElegibilidade(
-  proposicaoId: string
-): Promise<ElegibilidadeResult> {
+// Include usado pelas queries de elegibilidade. Mantido como constante para
+// reuso entre verificarElegibilidade e verificarElegibilidadeBatch.
+const ELEGIBILIDADE_INCLUDE = Prisma.validator<Prisma.ProposicaoInclude>()({
+  tramitacoes: {
+    orderBy: { createdAt: 'desc' },
+    include: {
+      unidade: { select: { tipo: true, nome: true } },
+    },
+  },
+  autor: {
+    select: { nome: true },
+  },
+})
+
+type ProposicaoParaElegibilidade = Prisma.ProposicaoGetPayload<{
+  include: typeof ELEGIBILIDADE_INCLUDE
+}>
+
+/**
+ * Calcula elegibilidade a partir de uma proposicao ja carregada (funcao pura,
+ * sem queries). Usada por verificarElegibilidade (single) e
+ * verificarElegibilidadeBatch (batch). Extraida para eliminar N+1.
+ */
+function calcularElegibilidade(proposicao: ProposicaoParaElegibilidade): ElegibilidadeResult {
   const motivos: string[] = []
   const avisos: string[] = []
   let prioridade: number = PRIORIDADE_ORDENACAO.ORDEM_CRONOLOGICA
-
-  const proposicao = await prisma.proposicao.findUnique({
-    where: { id: proposicaoId },
-    include: {
-      tramitacoes: {
-        orderBy: { createdAt: 'desc' },
-        include: {
-          unidade: { select: { tipo: true, nome: true } }
-        }
-      },
-      autor: {
-        select: { nome: true }
-      }
-    }
-  })
-
-  if (!proposicao) {
-    return {
-      elegivel: false,
-      motivos: ['Proposição não encontrada'],
-      avisos: [],
-      prioridade: 999
-    }
-  }
 
   // Verifica status
   if (proposicao.status !== 'EM_TRAMITACAO') {
@@ -131,16 +129,11 @@ export async function verificarElegibilidade(
   }
 
   // Verifica se passou pela CLJ (para projetos de lei e resolução)
-  const tiposQuePrecisamCLJ = [
-    'PROJETO_LEI',
-    'PROJETO_RESOLUCAO',
-    'PROJETO_DECRETO'
-  ]
+  const tiposQuePrecisamCLJ = ['PROJETO_LEI', 'PROJETO_RESOLUCAO', 'PROJETO_DECRETO']
 
   if (tiposQuePrecisamCLJ.includes(proposicao.tipo)) {
-    const passouCLJ = proposicao.tramitacoes.some(t =>
-      t.unidade?.tipo === 'COMISSAO' &&
-      t.parecer !== null
+    const passouCLJ = proposicao.tramitacoes.some(
+      (t) => t.unidade?.tipo === 'COMISSAO' && t.parecer !== null,
     )
 
     if (!passouCLJ) {
@@ -161,8 +154,57 @@ export async function verificarElegibilidade(
     elegivel: motivos.length === 0,
     motivos,
     avisos,
-    prioridade
+    prioridade,
   }
+}
+
+export async function verificarElegibilidade(
+  proposicaoId: string,
+): Promise<ElegibilidadeResult> {
+  const proposicao = await prisma.proposicao.findUnique({
+    where: { id: proposicaoId },
+    include: ELEGIBILIDADE_INCLUDE,
+  })
+
+  if (!proposicao) {
+    return {
+      elegivel: false,
+      motivos: ['Proposição não encontrada'],
+      avisos: [],
+      prioridade: 999,
+    }
+  }
+
+  return calcularElegibilidade(proposicao)
+}
+
+/**
+ * Verifica elegibilidade de varias proposicoes numa unica query (evita N+1).
+ * Retorna um Map proposicaoId -> ElegibilidadeResult.
+ */
+export async function verificarElegibilidadeBatch(
+  proposicaoIds: string[],
+): Promise<Map<string, ElegibilidadeResult>> {
+  const map = new Map<string, ElegibilidadeResult>()
+  if (proposicaoIds.length === 0) return map
+
+  const proposicoes = await prisma.proposicao.findMany({
+    where: { id: { in: proposicaoIds } },
+    include: ELEGIBILIDADE_INCLUDE,
+  })
+
+  for (const p of proposicoes) {
+    map.set(p.id, calcularElegibilidade(p))
+  }
+
+  // Ids nao encontrados ficam com resultado "nao encontrado"
+  for (const id of proposicaoIds) {
+    if (!map.has(id)) {
+      map.set(id, { elegivel: false, motivos: ['Proposição não encontrada'], avisos: [], prioridade: 999 })
+    }
+  }
+
+  return map
 }
 
 /**
@@ -199,8 +241,11 @@ export async function buscarProposicoesElegiveis(
 
   const itensSugeridos: ItemSugeridoPauta[] = []
 
+  // Elegibilidade em batch: 1 query ao inves de N (antes era N+1)
+  const elegibilidadeMap = await verificarElegibilidadeBatch(proposicoes.map((p) => p.id))
+
   for (const prop of proposicoes) {
-    const elegibilidade = await verificarElegibilidade(prop.id)
+    const elegibilidade = elegibilidadeMap.get(prop.id)!
 
     if (elegibilidade.elegivel) {
       itensSugeridos.push({
@@ -446,16 +491,19 @@ export async function reordenarPautaPorPrioridade(
     return { sucesso: false, novaOrdem: [] }
   }
 
-  // Calcula prioridade de cada item
-  const itensComPrioridade = await Promise.all(
-    pauta.itens.map(async item => {
-      if (item.proposicaoId) {
-        const elegibilidade = await verificarElegibilidade(item.proposicaoId)
-        return { item, prioridade: elegibilidade.prioridade }
-      }
-      return { item, prioridade: PRIORIDADE_ORDENACAO.ORDEM_CRONOLOGICA }
-    })
-  )
+  // Calcula prioridade em batch (antes era N+1: 1 query por item)
+  const proposicaoIds = pauta.itens
+    .map((item) => item.proposicaoId)
+    .filter((id): id is string => !!id)
+  const elegibilidadeMap = await verificarElegibilidadeBatch(proposicaoIds)
+
+  const itensComPrioridade = pauta.itens.map((item) => {
+    if (item.proposicaoId) {
+      const elegibilidade = elegibilidadeMap.get(item.proposicaoId)
+      return { item, prioridade: elegibilidade?.prioridade ?? PRIORIDADE_ORDENACAO.ORDEM_CRONOLOGICA }
+    }
+    return { item, prioridade: PRIORIDADE_ORDENACAO.ORDEM_CRONOLOGICA }
+  })
 
   // Ordena por prioridade
   itensComPrioridade.sort((a, b) => a.prioridade - b.prioridade)
@@ -523,15 +571,21 @@ export async function validarPautaParaPublicacao(
     erros.push('Pauta não possui itens')
   }
 
-  // Verifica elegibilidade de cada item
+  // Verifica elegibilidade em batch (antes era N+1: 1 query por item)
+  const proposicaoIdsValidacao = pauta.itens
+    .map((item) => item.proposicaoId)
+    .filter((id): id is string => !!id)
+  const elegibilidadeMapValidacao = await verificarElegibilidadeBatch(proposicaoIdsValidacao)
+
   for (const item of pauta.itens) {
     if (item.proposicaoId) {
-      const elegibilidade = await verificarElegibilidade(item.proposicaoId)
+      const elegibilidade = elegibilidadeMapValidacao.get(item.proposicaoId)
+      if (!elegibilidade) continue
       if (!elegibilidade.elegivel) {
         erros.push(`Item "${item.titulo}": ${elegibilidade.motivos.join(', ')}`)
       }
       if (elegibilidade.avisos.length > 0) {
-        avisos.push(...elegibilidade.avisos.map(a => `${item.titulo}: ${a}`))
+        avisos.push(...elegibilidade.avisos.map((a) => `${item.titulo}: ${a}`))
       }
     }
   }

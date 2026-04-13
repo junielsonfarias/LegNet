@@ -317,36 +317,42 @@ export async function buscarResultadosConsulta(consultaId: string) {
     where: { consultaId }
   })
 
-  // Resultados por pergunta
-  const resultadosPorPergunta = await Promise.all(
-    consulta.perguntas.map(async (pergunta) => {
-      const respostas = await prisma.respostaConsulta.findMany({
-        where: { perguntaId: pergunta.id }
-      })
+  // Resultados por pergunta — single query + agrupamento em memoria (antes era N+1)
+  const perguntaIds = consulta.perguntas.map((p) => p.id)
+  const todasRespostas = await prisma.respostaConsulta.findMany({
+    where: { perguntaId: { in: perguntaIds } },
+    select: { perguntaId: true, resposta: true },
+  })
 
-      // Contar respostas
-      const contagem: Record<string, number> = {}
-      respostas.forEach(r => {
-        contagem[r.resposta] = (contagem[r.resposta] || 0) + 1
-      })
+  const respostasPorPerguntaId = new Map<string, typeof todasRespostas>()
+  for (const r of todasRespostas) {
+    const existing = respostasPorPerguntaId.get(r.perguntaId) ?? []
+    existing.push(r)
+    respostasPorPerguntaId.set(r.perguntaId, existing)
+  }
 
-      return {
-        perguntaId: pergunta.id,
-        texto: pergunta.texto,
-        tipo: pergunta.tipo,
-        totalRespostas: respostas.length,
-        contagem: Object.entries(contagem)
-          .map(([resposta, quantidade]) => ({
-            resposta,
-            quantidade,
-            percentual: respostas.length > 0
-              ? Math.round((quantidade / respostas.length) * 100)
-              : 0
-          }))
-          .sort((a, b) => b.quantidade - a.quantidade)
-      }
+  const resultadosPorPergunta = consulta.perguntas.map((pergunta) => {
+    const respostas = respostasPorPerguntaId.get(pergunta.id) ?? []
+
+    const contagem: Record<string, number> = {}
+    respostas.forEach((r) => {
+      contagem[r.resposta] = (contagem[r.resposta] || 0) + 1
     })
-  )
+
+    return {
+      perguntaId: pergunta.id,
+      texto: pergunta.texto,
+      tipo: pergunta.tipo,
+      totalRespostas: respostas.length,
+      contagem: Object.entries(contagem)
+        .map(([resposta, quantidade]) => ({
+          resposta,
+          quantidade,
+          percentual: respostas.length > 0 ? Math.round((quantidade / respostas.length) * 100) : 0,
+        }))
+        .sort((a, b) => b.quantidade - a.quantidade),
+    }
+  })
 
   // Participações por bairro
   const participacoesPorBairro = await prisma.participacaoConsulta.groupBy({
