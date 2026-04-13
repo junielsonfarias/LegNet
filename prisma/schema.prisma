@@ -223,6 +223,7 @@ model Parlamentar {
   questoesOrdem          QuestaoOrdem[]
   bancadaLider           Bancada[]          @relation("BancadaLider")
   bancadaViceLider       Bancada[]          @relation("BancadaViceLider")
+  audienciasResponsavel  AudienciaPublica[]
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -3794,4 +3795,65 @@ model ConteudoEducativo {
   @@index([categoria, publicado])
   @@index([slug])
   @@map("conteudos_educativos")
+}
+
+// ============================================
+// AUDIENCIAS PUBLICAS
+// Sessoes abertas a sociedade civil. Estrutura central
+// + dados ricos (participantes, cronograma, transmissao)
+// armazenados em campos JSON para evitar explosao de tabelas.
+// ============================================
+
+enum TipoAudienciaPublica {
+  ORDINARIA
+  EXTRAORDINARIA
+  ESPECIAL
+}
+
+enum StatusAudienciaPublica {
+  AGENDADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+  ADIADA
+}
+
+model AudienciaPublica {
+  id                    String                  @id @default(cuid())
+  numero                String                  @unique
+  titulo                String
+  descricao             String                  @db.Text
+  tipo                  TipoAudienciaPublica    @default(ORDINARIA)
+  status                StatusAudienciaPublica  @default(AGENDADA)
+  dataHora              DateTime
+  local                 String
+  endereco              String?
+  responsavel           String
+  parlamentarId         String?
+  comissaoId            String?
+  materiaLegislativaId  String?
+  objetivo              String                  @db.Text
+  publicoAlvo           String                  @db.Text
+  observacoes           String?                 @db.Text
+
+  // Estruturas ricas em JSON (participantes, documentos, atas, etc.)
+  participantes         Json                    @default("[]")
+  documentos            Json                    @default("[]")
+  atas                  Json                    @default("[]")
+  transcricoes          Json                    @default("[]")
+  links                 Json                    @default("[]")
+  transmissaoAoVivo     Json?
+  inscricoesPublicas    Json?
+  publicacaoPublica     Json?
+  cronograma            Json?
+
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  parlamentar Parlamentar? @relation(fields: [parlamentarId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([dataHora])
+  @@index([tipo])
+  @@map("audiencias_publicas")
 }

@@ -26,19 +26,20 @@ export function useAudienciasAdmin() {
   const [formData, setFormData] = useState<AudienciaFormData>(INITIAL_FORM_DATA)
   const [participanteForm, setParticipanteForm] = useState<ParticipanteFormData>(INITIAL_PARTICIPANTE_FORM)
 
-  // Carregar dados via API
-  useEffect(() => {
-    const carregarAudiencias = async () => {
-      try {
-        const response = await fetch('/api/publico/audiencias-publicas')
-        const data = await response.json()
-        if (data.success && data.data?.audiencias) {
-          setAudiencias(data.data.audiencias)
-        }
-      } catch (error) {
-        log.error('Erro ao carregar audiencias', error)
+  // Carregar dados via API admin (lista completa, nao filtrada por publicacaoPublica)
+  const carregarAudiencias = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/audiencias-publicas')
+      const data = await response.json()
+      if (data.success && Array.isArray(data.data)) {
+        setAudiencias(data.data)
       }
+    } catch (error) {
+      log.error('Erro ao carregar audiencias', error)
     }
+  }, [])
+
+  useEffect(() => {
     carregarAudiencias()
 
     const carregarParlamentares = async () => {
@@ -104,10 +105,25 @@ export function useAudienciasAdmin() {
   }
 
   const handleSubmit = async () => {
-    // TODO: Implementar quando modelo Prisma AudienciaPublica for criado
-    // Por enquanto apenas fecha o formulario
-    log.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
-    handleClose()
+    try {
+      const url = editingId
+        ? `/api/admin/audiencias-publicas/${editingId}`
+        : '/api/admin/audiencias-publicas'
+      const method = editingId ? 'PUT' : 'POST'
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data?.error?.message || 'Erro ao salvar audiencia')
+      }
+      await carregarAudiencias()
+      handleClose()
+    } catch (error) {
+      log.error('Erro ao salvar audiencia', error)
+    }
   }
 
   const handleEdit = (audiencia: AudienciaPublica) => {
@@ -136,9 +152,20 @@ export function useAudienciasAdmin() {
     setShowForm(true)
   }
 
-  const handleDelete = (id: string) => {
-    // TODO: Implementar quando modelo Prisma AudienciaPublica for criado
-    log.warn('Audiencias publicas ainda nao tem modelo no banco de dados')
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta audiencia?')) return
+    try {
+      const response = await fetch(`/api/admin/audiencias-publicas/${id}`, {
+        method: 'DELETE',
+      })
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data?.error?.message || 'Erro ao excluir')
+      }
+      await carregarAudiencias()
+    } catch (error) {
+      log.error('Erro ao excluir audiencia', error)
+    }
   }
 
   const handleClose = () => {

@@ -21,7 +21,8 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  Monitor
+  Monitor,
+  Database
 } from 'lucide-react'
 import { openApiSpec, generateApiDocs } from '@/lib/api-docs/openapi'
 
@@ -98,6 +99,25 @@ export default function ApiDocsPage() {
       endpoints: [
         { method: 'GET', path: '/configuracoes', description: 'Obter configurações' },
         { method: 'PUT', path: '/configuracoes', description: 'Atualizar configurações' }
+      ]
+    },
+    {
+      id: 'dados-abertos',
+      name: 'Dados Abertos (APIs Públicas)',
+      description: 'Endpoints públicos sem autenticação — formato JSON ou CSV via ?formato=csv. Licença CC-BY 4.0. Conforme LAI 12.527/2011 e PNTP nível Diamante.',
+      icon: Database,
+      color: 'bg-teal-600',
+      endpoints: [
+        { method: 'GET', path: '/dados-abertos', description: 'Índice com metadados e lista de endpoints' },
+        { method: 'GET', path: '/dados-abertos/parlamentares', description: 'Parlamentares ativos (params: formato, legislatura)' },
+        { method: 'GET', path: '/dados-abertos/parlamentares/estatisticas', description: 'Estatísticas agregadas de parlamentares' },
+        { method: 'GET', path: '/dados-abertos/sessoes', description: 'Sessões legislativas (params: formato, ano, tipo, status, page, limit)' },
+        { method: 'GET', path: '/dados-abertos/proposicoes', description: 'Proposições (params: formato, ano, tipo, status, autor, page, limit)' },
+        { method: 'GET', path: '/dados-abertos/votacoes', description: 'Votações nominais (params: formato, ano, proposicao, parlamentar, page, limit)' },
+        { method: 'GET', path: '/dados-abertos/presencas', description: 'Registro de presenças em sessões (params: formato, ano, parlamentar, sessao, page, limit)' },
+        { method: 'GET', path: '/dados-abertos/comissoes', description: 'Comissões e seus membros (params: formato, tipo, ativa)' },
+        { method: 'GET', path: '/dados-abertos/publicacoes', description: 'Leis, decretos, portarias (params: formato, tipo, ano, page, limit)' },
+        { method: 'GET', path: '/dados-abertos/estatisticas', description: 'Estatísticas agregadas do legislativo' }
       ]
     }
   ]

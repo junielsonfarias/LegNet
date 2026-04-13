@@ -68,6 +68,20 @@ export const GET = withErrorHandler(async () => {
         descricao: 'Leis, decretos, portarias e outros documentos',
         formatos: ['json', 'csv'],
         parametros: ['formato', 'tipo', 'ano', 'page', 'limit']
+      },
+      {
+        path: '/api/dados-abertos/estatisticas',
+        metodo: 'GET',
+        descricao: 'Estatisticas agregadas do legislativo',
+        formatos: ['json'],
+        parametros: []
+      },
+      {
+        path: '/api/dados-abertos/parlamentares/estatisticas',
+        metodo: 'GET',
+        descricao: 'Estatisticas agregadas de parlamentares',
+        formatos: ['json'],
+        parametros: []
       }
     ],
     licenca: 'Creative Commons CC-BY 4.0',

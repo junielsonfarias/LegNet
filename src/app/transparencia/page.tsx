@@ -102,17 +102,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     icon: DollarSign,
     itens: [
       { nome: 'Receitas', icon: TrendingUp, href: '/transparencia/receitas', slug: 'receitas' },
-      {
-        nome: 'Despesas',
-        icon: CreditCard,
-        href: '/transparencia/despesas',
-        slug: 'despesas',
-        subItens: [
-          { nome: 'Informacoes ate 2021', externalUrl: CR2_BASE },
-          { nome: 'Informacoes ate 2023', externalUrl: CR2_BASE },
-          { nome: 'Informacoes a partir de 2024', href: '/transparencia/despesas' },
-        ],
-      },
+      { nome: 'Despesas', icon: CreditCard, href: '/transparencia/despesas', slug: 'despesas' },
       { nome: 'Repasses', icon: Banknote, href: '/transparencia/repasses', slug: 'repasses' },
       { nome: 'Programas e Acoes', icon: ClipboardList, href: '/transparencia/programas-acoes', slug: 'programas-acoes' },
       { nome: 'Gastos com Cartao de Credito', icon: CreditCard, href: '/transparencia/cartoes-corporativos', slug: 'cartao-credito' },

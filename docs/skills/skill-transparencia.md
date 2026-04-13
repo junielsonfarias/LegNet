@@ -8,6 +8,69 @@ A partir de 12/04/2026 o modulo foi expandido para cobrir 100% dos itens estrutu
 
 ---
 
+## Atualizacoes 13/04/2026
+
+### Despesas unificada no sistema de periodos
+Removidos `subItens` hardcoded de `src/app/transparencia/page.tsx` (linhas ~105-115) que misturavam links CR2 ("Informacoes ate 2021/2023") com rota interna ("a partir de 2024"). Agora Despesas tem apenas `slug: 'despesas'`, identico a Receitas — quando o admin configurar periodos, eles aparecem; sem config, vai direto a `/transparencia/despesas`.
+
+### Dados Abertos documentados em `/api-docs`
+Adicionada secao "Dados Abertos (APIs Publicas)" em `src/app/api-docs/page.tsx` com os 10 endpoints publicos, formatos JSON/CSV, licenca CC-BY 4.0, conformidade LAI/PNTP. O indice em `src/app/api/dados-abertos/route.ts` tambem foi atualizado (estava listando apenas 7 dos 10 endpoints).
+
+Endpoints:
+1. `GET /api/dados-abertos` (indice)
+2. `GET /api/dados-abertos/parlamentares`
+3. `GET /api/dados-abertos/parlamentares/estatisticas`
+4. `GET /api/dados-abertos/sessoes`
+5. `GET /api/dados-abertos/proposicoes`
+6. `GET /api/dados-abertos/votacoes`
+7. `GET /api/dados-abertos/presencas`
+8. `GET /api/dados-abertos/comissoes`
+9. `GET /api/dados-abertos/publicacoes`
+10. `GET /api/dados-abertos/estatisticas`
+
+Todos suportam `?formato=csv|json`, sem autenticacao, licenca CC-BY 4.0.
+
+### AudienciaPublica — modelo criado
+Substitui o sistema mock anterior em `/admin/audiencias-publicas`. Migration: `prisma/migrations/20260413_add_audiencias_publicas/migration.sql`.
+
+**Model AudienciaPublica:**
+- Campos centrais: numero (unique, formato `AP-YYYY-NNNN`), titulo, descricao, tipo, status, dataHora, local, endereco, responsavel, FKs opcionais (parlamentarId, comissaoId, materiaLegislativaId), objetivo, publicoAlvo, observacoes
+- Campos JSONB para estruturas ricas (evita explosao de tabelas): participantes, documentos, atas, transcricoes, links, transmissaoAoVivo, inscricoesPublicas, publicacaoPublica, cronograma
+- Enums: `TipoAudienciaPublica` (ORDINARIA/EXTRAORDINARIA/ESPECIAL), `StatusAudienciaPublica` (AGENDADA/EM_ANDAMENTO/CONCLUIDA/CANCELADA/ADIADA)
+- Indices: status, dataHora, tipo
+
+**Rotas API:**
+- `GET /api/admin/audiencias-publicas` — lista (admin, sessao.view)
+- `POST /api/admin/audiencias-publicas` — cria (admin, sessao.manage), gera numero auto
+- `GET /api/admin/audiencias-publicas/[id]` — detalhe (admin)
+- `PUT /api/admin/audiencias-publicas/[id]` — edita (admin)
+- `DELETE /api/admin/audiencias-publicas/[id]` — remove (admin)
+- `GET /api/publico/audiencias-publicas` — publico, retorna lista + stats agregadas
+
+Hook `src/app/admin/audiencias-publicas/hooks/useAudienciasAdmin.ts` agora chama o backend real (handleSubmit/handleDelete substituidos, antes eram TODO).
+
+### Importer CR2 com anti-duplicacao
+`scripts/import-cr2-backup.ts` reescrito com:
+- Registry de chaves naturais por recurso (12 mapeamentos documentados)
+- Helper `dedupeInBatch()` filtra duplicatas dentro do proprio JSON
+- Helper `upsertByNaturalKey()` usa findFirst + update/create (funciona com e sem `@@unique`)
+- Modo padrao SKIP, flag `--update-existing` para atualizar
+- Idempotente: rodar 2x com mesmo arquivo nunca duplica
+
+### Limpeza de paginas legado
+Removidos: `/admin/dashboard` (duplicata de `/admin`) e `/admin/modulos` (mock com dados fake). Mantido `/admin/sessoes/**` (nao e legado, e detalhe individual de sessao referenciado por 15 arquivos).
+
+### Pendente — AGUARDANDO BACKUP CR2
+Ver memoria `project_pendente_cr2_backup.md`. Trigger para retomar: usuario dira `"ja estou com o backup do sistema antigo"`.
+
+Itens travados ate o backup chegar:
+- Lista de tipos de documentos do CR2 (vai expandir `TipoDocumentoTransparencia`)
+- Campo `fonte` em `DocumentoTransparencia` (wordpress/google_drive/upload_local/cr2_import)
+- Aba "Documentos publicados" nas paginas do portal (modelo hibrido aprovado)
+- Validador URL Google Drive
+
+---
+
 ## Adaptacao CR2 (12/04/2026)
 
 ### Novos Models Prisma
