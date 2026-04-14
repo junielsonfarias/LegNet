@@ -234,8 +234,11 @@ export function createErrorResponse(
 export function getErrorMessage(e: unknown): string {
   if (e instanceof Error) return e.message
   if (typeof e === 'string') return e
+  if (e === undefined) return 'undefined'
+  if (e === null) return 'null'
   try {
-    return JSON.stringify(e)
+    const s = JSON.stringify(e)
+    return typeof s === 'string' ? s : String(e)
   } catch {
     return String(e)
   }
