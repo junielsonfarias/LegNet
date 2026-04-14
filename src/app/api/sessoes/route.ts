@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
+import { withErrorHandler, createSuccessResponse, ValidationError, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { sessaoDbService } from '@/lib/services/sessao-db-service'
@@ -92,8 +92,9 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     if (validatedData.finalizada && isNaN(dataSessao.getTime())) {
       throw new ValidationError('Data inválida')
     }
-  } catch (error: any) {
-    throw new ValidationError(error.errors?.[0]?.message || error.message || 'Dados inválidos')
+  } catch (error) {
+    const zerr = (error as { errors?: Array<{ message?: string }> }).errors
+    throw new ValidationError(zerr?.[0]?.message || getErrorMessage(error) || 'Dados inválidos')
   }
 
   // Delegar criação ao serviço

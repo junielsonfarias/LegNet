@@ -226,6 +226,21 @@ export function createErrorResponse(
   )
 }
 
+/**
+ * Extrai mensagem de erro de um valor desconhecido (erro em catch).
+ * Use em `catch (e) { throw new Foo(getErrorMessage(e)) }` quando
+ * `useUnknownInCatchVariables` (strict mode) estreita `e` para `unknown`.
+ */
+export function getErrorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message
+  if (typeof e === 'string') return e
+  try {
+    return JSON.stringify(e)
+  } catch {
+    return String(e)
+  }
+}
+
 // Função para criar resposta de sucesso
 export function createSuccessResponse<T>(
   data: T,

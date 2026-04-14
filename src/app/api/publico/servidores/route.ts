@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,5 +45,5 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     orderBy: { nome: 'asc' },
   })
 
-  return createSuccessResponse(servidores, undefined, servidores.length)
+  return withPublicCache(createSuccessResponse(servidores, undefined, servidores.length), { maxAge: 60, swr: 300 })
 })

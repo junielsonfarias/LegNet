@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -145,12 +146,12 @@ export const GET = withErrorHandler(async () => {
   else if (percentualGeral >= 55) nivel = 'PRATA'
   else nivel = 'BRONZE'
 
-  return createSuccessResponse({
+  return withPublicCache(createSuccessResponse({
     nivel,
     pontuacaoTotal,
     pontuacaoMaxima,
     percentualGeral,
     categorias,
     dataGeracao: new Date().toISOString(),
-  })
+  }), { maxAge: 60, swr: 300 })
 })

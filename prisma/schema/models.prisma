@@ -1,15 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
+// ==================== MODELS ====================
 
 model User {
   id                   String    @id @default(cuid())
@@ -77,20 +66,6 @@ model VerificationToken {
   @@map("verificationtokens")
 }
 
-enum UserRole {
-  ADMIN
-  EDITOR
-  USER
-  PARLAMENTAR
-  OPERADOR
-  SECRETARIA
-  AUXILIAR_LEGISLATIVO
-}
-
-// =============================================================================
-// Modelo de Tenant (Multi-Tenant)
-// =============================================================================
-
 model Tenant {
   id          String       @id @default(cuid())
   slug        String       @unique // Identificador único (ex: "santarem", "ruropolis")
@@ -137,12 +112,6 @@ model Tenant {
   @@map("tenants")
 }
 
-enum PlanoTenant {
-  BASICO // Funcionalidades básicas
-  PROFISSIONAL // Funcionalidades avançadas
-  ENTERPRISE // Todas as funcionalidades + suporte prioritário
-}
-
 model ConfiguracaoInstitucional {
   id                 String   @id @default(cuid())
   slug               String   @unique
@@ -179,8 +148,6 @@ model ConfiguracaoInstitucional {
 
   @@map("configuracoes_institucionais")
 }
-
-// Modelos específicos da Câmara
 
 model Parlamentar {
   id          String           @id @default(cuid())
@@ -229,14 +196,6 @@ model Parlamentar {
   @@index([partido])
   @@index([nome])
   @@map("parlamentares")
-}
-
-enum CargoParlamentar {
-  PRESIDENTE
-  VICE_PRESIDENTE
-  PRIMEIRO_SECRETARIO
-  SEGUNDO_SECRETARIO
-  VEREADOR
 }
 
 model Sessao {
@@ -296,8 +255,6 @@ model Sessao {
   @@map("sessoes")
 }
 
-// Mesa da Sessão - Composição da mesa que presidiu uma sessão específica
-// Permite registrar substituições temporárias quando um membro da Mesa Diretora está ausente
 model MesaSessao {
   id            String   @id @default(cuid())
   sessaoId      String   @unique
@@ -313,7 +270,6 @@ model MesaSessao {
   @@map("mesas_sessao")
 }
 
-// Membros que compõem a Mesa de uma Sessão específica
 model MembroMesaSessao {
   id           String  @id @default(cuid())
   mesaSessaoId String
@@ -331,11 +287,6 @@ model MembroMesaSessao {
   @@map("membros_mesa_sessao")
 }
 
-// =============================================================================
-// ORADORES DA SESSÃO (SAPL)
-// =============================================================================
-
-// Oradores inscritos para falar na sessão
 model OradorSessao {
   id            String        @id @default(cuid())
   sessaoId      String
@@ -360,7 +311,6 @@ model OradorSessao {
   @@map("oradores_sessao")
 }
 
-// Questao de Ordem - Intervenção regimental durante sessão
 model QuestaoOrdem {
   id              String   @id @default(cuid())
   sessaoId        String
@@ -382,30 +332,6 @@ model QuestaoOrdem {
   @@map("questoes_ordem")
 }
 
-enum TipoOrador {
-  PEQUENO_EXPEDIENTE    // Pequeno expediente (tempo menor)
-  GRANDE_EXPEDIENTE     // Grande expediente (tempo maior)
-  LIDERANCA             // Pronunciamento de líder de bancada
-  ORDEM_DO_DIA          // Durante discussão da ordem do dia
-  EXPLICACAO_PESSOAL    // Explicação pessoal
-  APARTE                // Aparte durante discurso de outro
-  TRIBUNA_LIVRE         // Tribuna livre/popular
-  COMUNICACAO           // Comunicação breve
-}
-
-enum StatusOrador {
-  INSCRITO              // Inscrito, aguardando vez
-  FALANDO               // Em uso da palavra
-  CONCLUIDO             // Terminou o pronunciamento
-  DESISTIU              // Desistiu da inscrição
-  TEMPO_ESGOTADO        // Tempo esgotado
-}
-
-// =============================================================================
-// TIPOS DE EXPEDIENTE (SAPL)
-// =============================================================================
-
-// Tipos de expediente configuráveis
 model TipoExpediente {
   id          String   @id @default(cuid())
   nome        String   // Ex: "Pequeno Expediente", "Grande Expediente"
@@ -422,7 +348,6 @@ model TipoExpediente {
   @@map("tipos_expediente")
 }
 
-// Conteúdo do expediente por sessão
 model ExpedienteSessao {
   id               String   @id @default(cuid())
   sessaoId         String
@@ -439,10 +364,6 @@ model ExpedienteSessao {
   @@index([sessaoId])
   @@map("expedientes_sessao")
 }
-
-// =============================================================================
-// OFÍCIOS RECEBIDOS
-// =============================================================================
 
 model Oficio {
   id          String    @id @default(cuid())
@@ -464,12 +385,6 @@ model Oficio {
   @@map("oficios")
 }
 
-// =============================================================================
-// PRESENÇA NA ORDEM DO DIA (SAPL)
-// =============================================================================
-
-// Presença específica para votação na ordem do dia
-// Pode diferir da presença geral da sessão (parlamentar pode sair e voltar)
 model PresencaOrdemDia {
   id            String   @id @default(cuid())
   sessaoId      String
@@ -484,53 +399,6 @@ model PresencaOrdemDia {
   @@unique([sessaoId, parlamentarId])
   @@index([sessaoId, presente])
   @@map("presencas_ordem_dia")
-}
-
-enum TipoSessao {
-  ORDINARIA
-  EXTRAORDINARIA
-  SOLENE
-  ESPECIAL
-}
-
-enum StatusSessao {
-  AGENDADA
-  EM_ANDAMENTO
-  SUSPENSA
-  CONCLUIDA
-  CANCELADA
-}
-
-enum StatusAta {
-  PENDENTE            // Ata gerada, aguardando aprovação na próxima sessão
-  APROVADA            // Ata lida e aprovada em sessão
-  REJEITADA           // Ata rejeitada (deve ser refeita)
-}
-
-enum PautaStatus {
-  RASCUNHO
-  APROVADA
-  EM_ANDAMENTO
-  CONCLUIDA
-}
-
-enum PautaItemStatus {
-  PENDENTE
-  EM_DISCUSSAO
-  EM_VOTACAO
-  APROVADO
-  REJEITADO
-  RETIRADO
-  ADIADO
-  CONCLUIDO
-  VISTA             // Pedido de vista - matéria retirada para análise
-}
-
-enum TipoVotacao {
-  NOMINAL           // Votação nominal - votos individuais são registrados
-  SECRETA           // Votação secreta - apenas totais são registrados
-  SIMBOLICA         // Votação simbólica - mão levantada, sem registro individual
-  LEITURA           // Apenas leitura, sem votação efetiva
 }
 
 model ApiToken {
@@ -672,18 +540,6 @@ model Proposicao {
   @@map("proposicoes")
 }
 
-enum TipoProposicao {
-  PROJETO_LEI
-  PROJETO_RESOLUCAO
-  PROJETO_DECRETO
-  INDICACAO
-  REQUERIMENTO
-  MOCAO
-  VOTO_PESAR
-  VOTO_APLAUSO
-}
-
-// Configurações de tipos de proposição (gerenciável pelo admin)
 model TipoProposicaoConfig {
   id              String          @id @default(cuid())
   codigo          String          @unique  // Codigo unico do tipo (ex: PROJETO_LEI, INDICACAO, HOMENAGEM_ESPECIAL)
@@ -712,11 +568,6 @@ model TipoProposicaoConfig {
   @@map("tipos_proposicao_config")
 }
 
-// ============================================================
-// SISTEMA DE AUTORES (baseado no SAPL)
-// ============================================================
-
-// Tipos de autor - categorias de quem pode ser autor de proposições
 model TipoAutor {
   id          String   @id @default(cuid())
   nome        String   @unique // Ex: "Parlamentar", "Poder Executivo", "Comissão"
@@ -732,8 +583,6 @@ model TipoAutor {
   @@map("tipos_autor")
 }
 
-// Autor - entidade que pode ser autor de proposições
-// Pode ser vinculado a Parlamentar, Comissão, ou ser um autor externo
 model Autor {
   id              String    @id @default(cuid())
   tipoAutorId     String
@@ -766,7 +615,6 @@ model Autor {
   @@map("autores")
 }
 
-// Protocolo de proposicao - numeracao sequencial separada do numero da proposicao
 model ProtocoloProposicao {
   id              String    @id @default(cuid())
   numero          Int       // Numero sequencial do ano
@@ -783,42 +631,6 @@ model ProtocoloProposicao {
   @@index([ano])
   @@index([dataProtocolo])
   @@map("protocolos_proposicao")
-}
-
-enum StatusProposicao {
-  APRESENTADA
-  EM_TRAMITACAO
-  AGUARDANDO_PAUTA  // Com pareceres, pronta para inclusão na pauta
-  EM_PAUTA          // Incluída na ordem do dia de uma sessão
-  EM_DISCUSSAO      // Em discussão no plenário
-  EM_VOTACAO        // Em processo de votação
-  APROVADA
-  REJEITADA
-  RETIRADA          // Retirada pelo autor antes da votação
-  ADIADA            // Adiada para sessão futura
-  ARQUIVADA
-  VETADA
-  SANCIONADA        // Sancionada pelo Executivo
-  PROMULGADA        // Promulgada e publicada
-}
-
-// Tipo de ação do item na pauta (LEITURA vs VOTAÇÃO)
-enum TipoAcaoPauta {
-  LEITURA             // Apenas leitura no Expediente (primeira apresentação)
-  DISCUSSAO           // Discussão sem votação
-  VOTACAO             // Discussão e votação na Ordem do Dia
-  LEITURA_VOTACAO     // Leitura seguida de votação
-  DISCUSSAO_VOTACAO   // Discussão seguida de votação
-  COMUNICADO          // Informes e comunicações
-  HOMENAGEM           // Votos de pesar, aplauso, moções
-  LEITURA_ATA         // Leitura e votação da ata da sessão anterior
-  LEITURA_OFICIO      // Leitura de ofício recebido
-}
-
-enum ResultadoVotacao {
-  APROVADA
-  REJEITADA
-  EMPATE
 }
 
 model Votacao {
@@ -839,10 +651,6 @@ model Votacao {
   @@index([sessaoId])
   @@map("votacoes")
 }
-
-// =============================================================================
-// VOTAÇÃO AGRUPADA - Consolida resultado de votação por turno
-// =============================================================================
 
 model VotacaoAgrupada {
   id              String              @id @default(cuid())
@@ -886,26 +694,6 @@ model VotacaoAgrupada {
   @@index([resultado])
   @@map("votacoes_agrupadas")
 }
-
-enum ResultadoVotacaoAgrupada {
-  APROVADA
-  REJEITADA
-  EMPATE
-  SEM_QUORUM
-  ADIADA
-  PREJUDICADA
-}
-
-enum TipoVoto {
-  SIM
-  NAO
-  ABSTENCAO
-  AUSENTE
-}
-
-// =============================================================================
-// SISTEMA DE EMENDAS
-// =============================================================================
 
 model Emenda {
   id              String          @id @default(cuid())
@@ -981,43 +769,6 @@ model Emenda {
   @@map("emendas")
 }
 
-enum TipoEmenda {
-  ADITIVA           // Acrescenta texto novo
-  MODIFICATIVA      // Altera texto existente
-  SUPRESSIVA        // Remove texto existente
-  SUBSTITUTIVA      // Substitui integralmente o texto
-  EMENDA_DE_REDACAO // Corrige redacao sem alterar conteudo
-  AGLUTINATIVA      // Une varias emendas em uma
-}
-
-enum StatusEmenda {
-  APRESENTADA       // Emenda apresentada
-  EM_ANALISE        // Em analise pela comissao
-  PARECER_EMITIDO   // Parecer da comissao emitido
-  EM_VOTACAO        // Em votacao no plenario
-  APROVADA          // Aprovada
-  REJEITADA         // Rejeitada
-  PREJUDICADA       // Prejudicada por aprovacao de outra
-  RETIRADA          // Retirada pelo autor
-  INCORPORADA       // Incorporada ao texto (apos aprovacao)
-}
-
-enum ResultadoEmenda {
-  APROVADA
-  REJEITADA
-  PREJUDICADA
-  RETIRADA
-}
-
-enum TipoParecerEmenda {
-  FAVORAVEL
-  FAVORAVEL_COM_RESSALVAS
-  CONTRARIO
-  PELA_REJEICAO
-  PELA_APROVACAO_PARCIAL
-}
-
-// Votos individuais em emendas
 model VotoEmenda {
   id            String      @id @default(cuid())
   emendaId      String
@@ -1056,13 +807,6 @@ model Comissao {
   @@map("comissoes")
 }
 
-enum TipoComissao {
-  PERMANENTE
-  TEMPORARIA
-  ESPECIAL
-  INQUERITO
-}
-
 model MembroComissao {
   id            String        @id @default(cuid())
   comissaoId    String
@@ -1083,17 +827,6 @@ model MembroComissao {
   @@index([ativo])
   @@map("membros_comissao")
 }
-
-enum CargoComissao {
-  PRESIDENTE
-  VICE_PRESIDENTE
-  RELATOR
-  MEMBRO
-}
-
-// ==========================================
-// REUNIOES DE COMISSAO
-// ==========================================
 
 model ReuniaoComissao {
   id            String              @id @default(cuid())
@@ -1145,22 +878,6 @@ model ReuniaoComissao {
   @@map("reunioes_comissao")
 }
 
-enum TipoReuniaoComissao {
-  ORDINARIA
-  EXTRAORDINARIA
-  ESPECIAL
-}
-
-enum StatusReuniaoComissao {
-  AGENDADA
-  CONVOCADA
-  EM_ANDAMENTO
-  SUSPENSA
-  CONCLUIDA
-  CANCELADA
-}
-
-// Itens da pauta da reuniao de comissao
 model PautaReuniaoComissao {
   id            String                    @id @default(cuid())
   reuniaoId     String
@@ -1196,25 +913,6 @@ model PautaReuniaoComissao {
   @@map("pauta_reuniao_comissao")
 }
 
-enum TipoItemPautaReuniao {
-  ANALISE_PROPOSICAO      // Analise de proposicao
-  VOTACAO_PARECER         // Votacao de parecer
-  DESIGNACAO_RELATOR      // Designar relator
-  COMUNICACAO             // Comunicado/informe
-  OUTROS                  // Outros assuntos
-}
-
-enum StatusItemPautaReuniao {
-  PENDENTE
-  EM_DISCUSSAO
-  EM_VOTACAO
-  APROVADO
-  REJEITADO
-  ADIADO
-  RETIRADO
-}
-
-// Presenca em reuniao de comissao
 model PresencaReuniaoComissao {
   id                String          @id @default(cuid())
   reuniaoId         String
@@ -1241,11 +939,6 @@ model PresencaReuniaoComissao {
   @@map("presenca_reuniao_comissao")
 }
 
-// ==========================================
-// BANCADAS PARLAMENTARES
-// ==========================================
-
-// Bancada parlamentar (agrupamento por partido/bloco)
 model Bancada {
   id              String      @id @default(cuid())
   nome            String
@@ -1264,18 +957,6 @@ model Bancada {
   @@index([partido])
   @@index([ativa])
   @@map("bancadas")
-}
-
-enum TipoBancada {
-  PARTIDARIA        // Bancada de partido único
-  BLOCO             // Bloco parlamentar (coalizão)
-  GOVERNO           // Base do governo
-  OPOSICAO          // Oposição
-}
-
-enum ParticipacaoTipo {
-  MESA_DIRETORA
-  COMISSAO
 }
 
 model HistoricoParticipacao {
@@ -1348,27 +1029,6 @@ model CategoriaPublicacao {
 
   @@unique([nome])
   @@map("categorias_publicacao")
-}
-
-enum TipoPublicacao {
-  LEI
-  DECRETO
-  PORTARIA
-  RESOLUCAO
-  NOTICIA
-  INFORMATIVO
-  RELATORIO
-  PLANEJAMENTO
-  MANUAL
-  CODIGO
-  OUTRO
-}
-
-enum AutorPublicacaoTipo {
-  PARLAMENTAR
-  COMISSAO
-  ORGAO
-  OUTRO
 }
 
 model Noticia {
@@ -1602,7 +1262,6 @@ model PautaItem {
   @@map("pauta_itens")
 }
 
-// Destaque para votação em separado de parte de uma proposição
 model DestaquePautaItem {
   id              String   @id @default(cuid())
   pautaItemId     String
@@ -1640,11 +1299,6 @@ model Configuracao {
   @@map("configuracoes")
 }
 
-enum AuditStatus {
-  SUCCESS
-  FAILURE
-}
-
 model AuditLog {
   id           String      @id @default(cuid())
   userId       String?
@@ -1664,33 +1318,6 @@ model AuditLog {
   @@index([entity, createdAt])
   @@index([userId, createdAt])
   @@map("audit_logs")
-}
-
-enum TramitacaoStatus {
-  RECEBIDA      // Proposição recebida na unidade, aguardando análise
-  EM_ANDAMENTO  // Em análise/tramitação
-  CONCLUIDA     // Finalizada na unidade
-  CANCELADA     // Cancelada
-}
-
-enum TramitacaoResultado {
-  APROVADO
-  REJEITADO
-  APROVADO_COM_EMENDAS
-  ARQUIVADO
-}
-
-enum TramitacaoUnidadeTipo {
-  COMISSAO          // Comissões permanentes e temporárias
-  MESA_DIRETORA     // Mesa Diretora
-  PLENARIO          // Plenário
-  PREFEITURA        // Órgãos do Executivo
-  SECRETARIA        // Secretarias internas (ex: Secretaria Geral)
-  GABINETE          // Gabinetes (Presidente, Vereadores)
-  ARQUIVO           // Setor de Arquivo
-  PROTOCOLO         // Setor de Protocolo
-  ASSESSORIA        // Assessorias (Jurídica, Comunicação, etc.)
-  OUTROS            // Outros órgãos não classificados
 }
 
 model TramitacaoTipoProposicao {
@@ -1873,10 +1500,6 @@ model ConfiguracaoTramitacao {
   @@map("configuracoes_tramitacao")
 }
 
-// =============================================================================
-// SISTEMA DE FLUXOS DE TRAMITACAO CONFIGURAVEIS
-// =============================================================================
-
 model FluxoTramitacao {
   id              String          @id @default(cuid())
   tipoProposicao  String          @unique  // Codigo do tipo de proposicao (flexivel)
@@ -1919,136 +1542,6 @@ model FluxoTramitacaoEtapa {
   @@map("fluxo_tramitacao_etapas")
 }
 
-// Tipos de condicao para etapas de fluxo de tramitacao
-enum TipoCondicaoEtapa {
-  SEMPRE                    // Etapa obrigatoria (padrao)
-  IMPACTO_FINANCEIRO        // Executar se proposicao tiver impacto financeiro
-  REGIME_URGENCIA           // Executar se proposicao estiver em regime de urgencia
-  REGIME_NORMAL             // Executar apenas em regime normal
-  CAMPO_PERSONALIZADO       // Condicao baseada em campo especifico da proposicao
-}
-
-// ============================================
-// MODELOS DE TRANSPARENCIA PUBLICA
-// ============================================
-
-// Enums para Transparencia
-enum ModalidadeLicitacao {
-  PREGAO_ELETRONICO
-  PREGAO_PRESENCIAL
-  CONCORRENCIA
-  TOMADA_DE_PRECOS
-  CONVITE
-  CONCURSO
-  LEILAO
-  DISPENSA
-  INEXIGIBILIDADE
-  ADESAO_ATA
-}
-
-enum TipoLicitacao {
-  MENOR_PRECO
-  MELHOR_TECNICA
-  TECNICA_E_PRECO
-  MAIOR_LANCE
-}
-
-enum SituacaoLicitacao {
-  EM_ANDAMENTO
-  HOMOLOGADA
-  ADJUDICADA
-  REVOGADA
-  ANULADA
-  DESERTA
-  FRACASSADA
-  SUSPENSA
-}
-
-enum ModalidadeContrato {
-  CONTRATO_ORIGINAL
-  ADITIVO
-  APOSTILAMENTO
-  RESCISAO
-}
-
-enum SituacaoContrato {
-  VIGENTE
-  ENCERRADO
-  RESCINDIDO
-  SUSPENSO
-}
-
-enum SituacaoConvenio {
-  EM_EXECUCAO
-  CONCLUIDO
-  RESCINDIDO
-  SUSPENSO
-  PRESTACAO_CONTAS
-}
-
-enum CategoriaReceita {
-  RECEITA_CORRENTE
-  RECEITA_CAPITAL
-  RECEITA_INTRAORCAMENTARIA
-}
-
-enum OrigemReceita {
-  TRIBUTARIA
-  CONTRIBUICOES
-  PATRIMONIAL
-  SERVICOS
-  TRANSFERENCIAS
-  OUTRAS
-}
-
-enum SituacaoReceita {
-  PREVISTA
-  ARRECADADA
-  PARCIALMENTE_ARRECADADA
-  CANCELADA
-}
-
-enum SituacaoDespesa {
-  EMPENHADA
-  LIQUIDADA
-  PAGA
-  ANULADA
-  PARCIALMENTE_PAGA
-}
-
-enum SituacaoServidor {
-  ATIVO
-  APOSENTADO
-  AFASTADO
-  CEDIDO
-  LICENCIADO
-  EXONERADO
-  FALECIDO
-}
-
-enum VinculoServidor {
-  EFETIVO
-  COMISSIONADO
-  TEMPORARIO
-  ESTAGIARIO
-  TERCEIRIZADO
-}
-
-enum TipoBem {
-  MOVEL
-  IMOVEL
-}
-
-enum SituacaoBem {
-  EM_USO
-  OCIOSO
-  INSERVIVEL
-  BAIXADO
-  CEDIDO
-  EM_MANUTENCAO
-}
-
-// Modelo de Licitacao
 model Licitacao {
   id                    String             @id @default(cuid())
   numero                String
@@ -2097,7 +1590,6 @@ model LicitacaoDocumento {
   @@map("licitacoes_documentos")
 }
 
-// Modelo de Contrato
 model Contrato {
   id                String            @id @default(cuid())
   numero            String
@@ -2132,7 +1624,6 @@ model Contrato {
   @@map("contratos")
 }
 
-// Modelo de Convenio
 model Convenio {
   id                  String           @id @default(cuid())
   numero              String
@@ -2166,7 +1657,6 @@ model Convenio {
   @@map("convenios")
 }
 
-// Modelo de Receita
 model Receita {
   id               String          @id @default(cuid())
   numero           String?
@@ -2197,7 +1687,6 @@ model Receita {
   @@map("receitas")
 }
 
-// Modelo de Despesa
 model Despesa {
   id              String          @id @default(cuid())
   numeroEmpenho   String
@@ -2238,7 +1727,6 @@ model Despesa {
   @@map("despesas")
 }
 
-// Modelo de Servidor
 model Servidor {
   id              String          @id @default(cuid())
   nome            String
@@ -2264,7 +1752,6 @@ model Servidor {
   @@map("servidores")
 }
 
-// Modelo de Folha de Pagamento
 model FolhaPagamento {
   id                String   @id @default(cuid())
   competencia       String   // Ex: "2025/01"
@@ -2286,7 +1773,6 @@ model FolhaPagamento {
   @@map("folhas_pagamento")
 }
 
-// Modelo de Bem Patrimonial (Moveis e Imoveis)
 model BemPatrimonial {
   id               String       @id @default(cuid())
   tipo             TipoBem
@@ -2313,50 +1799,6 @@ model BemPatrimonial {
   @@map("bens_patrimoniais")
 }
 
-// ============================================
-// MODELS DE TRANSPARENCIA - COMPATIBILIDADE CR2
-// Adicionados para receber backup do portal antigo
-// e cobrir lacunas PNTP (Notas Fiscais, Veiculos,
-// Obras, Ordem Cronologica, documentos institucionais)
-// ============================================
-
-enum TipoDocumentoTransparencia {
-  BALANCETE_FINANCEIRO
-  BALANCO_ANUAL
-  PARECER_TCM
-  JULGAMENTO_CONTAS_EXECUTIVO
-  PLANEJAMENTO_ESTRATEGICO
-  CARTA_SERVICOS
-  LGPD_GOVERNO_DIGITAL
-  PLANO_ANUAL_CONTRATACOES
-  RELATORIO_GESTAO
-}
-
-enum SituacaoVeiculo {
-  ATIVO
-  INATIVO
-  ALIENADO
-  EM_MANUTENCAO
-  SINISTRADO
-}
-
-enum SituacaoObra {
-  PLANEJADA
-  EM_ANDAMENTO
-  PARALISADA
-  CONCLUIDA
-  CANCELADA
-}
-
-enum SituacaoNotaFiscal {
-  EMITIDA
-  LIQUIDADA
-  PAGA
-  CANCELADA
-}
-
-// Documentos institucionais (Balancete, Balanco, Parecer TCM, etc.)
-// Model unico generico - o tipo discrimina o uso.
 model DocumentoTransparencia {
   id              String                     @id @default(cuid())
   tipo            TipoDocumentoTransparencia
@@ -2380,7 +1822,6 @@ model DocumentoTransparencia {
   @@map("documentos_transparencia")
 }
 
-// Notas fiscais emitidas/liquidadas/pagas. Vincula a Despesa quando possivel.
 model NotaFiscal {
   id              String              @id @default(cuid())
   numero          String
@@ -2410,7 +1851,6 @@ model NotaFiscal {
   @@map("notas_fiscais")
 }
 
-// Ordem cronologica de pagamentos (LRF - Lei 8.666 art. 5)
 model OrdemPagamento {
   id               String    @id @default(cuid())
   numero           String
@@ -2437,7 +1877,6 @@ model OrdemPagamento {
   @@map("ordens_pagamento")
 }
 
-// Veiculos da frota
 model Veiculo {
   id              String          @id @default(cuid())
   placa           String          @unique
@@ -2463,7 +1902,6 @@ model Veiculo {
   @@map("veiculos")
 }
 
-// Obras publicas (incluindo paralisadas)
 model Obra {
   id                  String       @id @default(cuid())
   descricao           String
@@ -2489,25 +1927,6 @@ model Obra {
 
   @@index([situacao])
   @@map("obras")
-}
-
-// ============================================
-// MODELS COMPLEMENTARES CR2 (segunda leva)
-// Repasses, Cartao Corporativo, Programas/Acoes,
-// Servico Online, Fornecedores Sancionados
-// ============================================
-
-enum TipoProgramaAcao {
-  PROGRAMA
-  ACAO
-}
-
-enum TipoSancao {
-  ADVERTENCIA
-  MULTA
-  SUSPENSAO_TEMPORARIA
-  IMPEDIMENTO
-  DECLARACAO_INIDONEIDADE
 }
 
 model Repasse {
@@ -2615,30 +2034,6 @@ model FornecedorSancionado {
   @@map("fornecedores_sancionados")
 }
 
-// ============================================
-// SISTEMA DE PARECERES DAS COMISSOES
-// ============================================
-
-enum TipoParecer {
-  FAVORAVEL
-  FAVORAVEL_COM_EMENDAS
-  CONTRARIO
-  PELA_INCONSTITUCIONALIDADE
-  PELA_ILEGALIDADE
-  PELA_PREJUDICIALIDADE
-  PELA_RETIRADA
-}
-
-enum StatusParecer {
-  RASCUNHO                 // Relator esta elaborando
-  AGUARDANDO_PAUTA         // Concluido, aguardando inclusao em pauta de reuniao
-  AGUARDANDO_VOTACAO       // Incluido na pauta, aguardando votacao na comissao
-  APROVADO_COMISSAO        // Aprovado pela comissao
-  REJEITADO_COMISSAO       // Rejeitado pela comissao (volta ao relator)
-  EMITIDO                  // Parecer final emitido
-  ARQUIVADO                // Arquivado (materia arquivada)
-}
-
 model Parecer {
   id                String        @id @default(cuid())
   // Relacionamentos principais
@@ -2707,7 +2102,6 @@ model Parecer {
   @@map("pareceres")
 }
 
-// Registro individual de votos na comissao sobre o parecer
 model VotoParecerComissao {
   id            String      @id @default(cuid())
   parecerId     String
@@ -2721,28 +2115,6 @@ model VotoParecerComissao {
 
   @@unique([parecerId, parlamentarId]) // Um parlamentar so vota uma vez por parecer
   @@map("votos_parecer_comissao")
-}
-
-// ============================================
-// SISTEMA DE QUORUM CONFIGURAVEL
-// ============================================
-
-enum TipoQuorum {
-  MAIORIA_SIMPLES        // Mais SIMs que NAOs dos presentes
-  MAIORIA_ABSOLUTA       // Mais de 50% do total de membros
-  DOIS_TERCOS            // 2/3 do total de membros
-  TRES_QUINTOS           // 3/5 do total de membros
-  UNANIMIDADE            // 100% dos presentes
-}
-
-enum AplicacaoQuorum {
-  INSTALACAO_SESSAO      // Quorum para iniciar sessao
-  VOTACAO_SIMPLES        // Votacao de materias simples
-  VOTACAO_ABSOLUTA       // PLCs, Regimento Interno
-  VOTACAO_QUALIFICADA    // Emendas a Lei Organica, vetos
-  VOTACAO_URGENCIA       // Regime de urgencia
-  VOTACAO_COMISSAO       // Votacao em comissoes
-  DERRUBADA_VETO         // Derrubar veto do Executivo
 }
 
 model ConfiguracaoQuorum {
@@ -2791,10 +2163,6 @@ model ConfiguracaoQuorum {
   @@map("configuracoes_quorum")
 }
 
-// =============================================================================
-// Sistema de Favoritos e Acompanhamento
-// =============================================================================
-
 model Favorito {
   id              String          @id @default(cuid())
 
@@ -2829,48 +2197,6 @@ model Favorito {
   @@index([itemId])
   @@index([tenantId])
   @@map("favoritos")
-}
-
-enum TipoFavorito {
-  PROPOSICAO
-  SESSAO
-  PARLAMENTAR
-  COMISSAO
-  PUBLICACAO
-}
-
-// =============================================================================
-// FASE 2: MÓDULO DE PROTOCOLO ADMINISTRATIVO
-// =============================================================================
-
-enum TipoProtocolo {
-  ENTRADA
-  SAIDA
-  INTERNO
-}
-
-enum SituacaoProtocolo {
-  ABERTO
-  EM_TRAMITACAO
-  RESPONDIDO
-  ARQUIVADO
-  DEVOLVIDO
-  CANCELADO
-}
-
-enum PrioridadeProtocolo {
-  BAIXA
-  NORMAL
-  ALTA
-  URGENTE
-}
-
-enum TipoRemetente {
-  PESSOA_FISICA
-  PESSOA_JURIDICA
-  ORGAO_PUBLICO
-  PARLAMENTAR
-  EXECUTIVO
 }
 
 model Protocolo {
@@ -2953,28 +2279,6 @@ model ProtocoloTramitacao {
   @@map("protocolo_tramitacoes")
 }
 
-// =============================================================================
-// FASE 4: COMPILAÇÃO DE TEXTOS LEGISLATIVOS (NORMAS JURÍDICAS)
-// =============================================================================
-
-enum TipoNormaJuridica {
-  LEI_ORDINARIA
-  LEI_COMPLEMENTAR
-  DECRETO_LEGISLATIVO
-  RESOLUCAO
-  EMENDA_LEI_ORGANICA
-  LEI_ORGANICA
-  REGIMENTO_INTERNO
-}
-
-enum SituacaoNorma {
-  VIGENTE
-  REVOGADA
-  REVOGADA_PARCIALMENTE
-  COM_ALTERACOES
-  SUSPENSA
-}
-
 model NormaJuridica {
   id              String            @id @default(cuid())
   tipo            TipoNormaJuridica
@@ -3038,13 +2342,6 @@ model ArtigoNorma {
   @@map("artigos_norma")
 }
 
-enum TipoParagrafoNorma {
-  PARAGRAFO_UNICO
-  PARAGRAFO
-  INCISO
-  ALINEA
-}
-
 model ParagrafoNorma {
   id        String             @id @default(cuid())
   artigoId  String
@@ -3060,14 +2357,6 @@ model ParagrafoNorma {
 
   @@index([artigoId])
   @@map("paragrafos_norma")
-}
-
-enum TipoAlteracaoNorma {
-  ALTERACAO
-  REVOGACAO
-  REVOGACAO_PARCIAL
-  ACRESCIMO
-  NOVA_REDACAO
 }
 
 model AlteracaoNorma {
@@ -3104,26 +2393,6 @@ model VersaoNorma {
   @@unique([normaId, versao])
   @@index([normaId])
   @@map("versoes_norma")
-}
-
-// =============================================================================
-// FASE 5: PARTICIPAÇÃO CIDADÃ EXPANDIDA
-// =============================================================================
-
-enum StatusConsultaPublica {
-  RASCUNHO
-  ABERTA
-  ENCERRADA
-  EM_ANALISE
-  PUBLICADA
-}
-
-enum TipoPerguntaConsulta {
-  MULTIPLA_ESCOLHA
-  ESCOLHA_UNICA
-  TEXTO_LIVRE
-  ESCALA           // 1-5, 1-10
-  SIM_NAO
 }
 
 model ConsultaPublica {
@@ -3208,28 +2477,6 @@ model RespostaConsulta {
   @@map("respostas_consulta")
 }
 
-enum StatusSugestaoLegislativa {
-  PENDENTE
-  EM_ANALISE
-  ACEITA
-  RECUSADA
-  CONVERTIDA_PROPOSICAO
-}
-
-enum CategoriaSugestao {
-  INFRAESTRUTURA
-  SAUDE
-  EDUCACAO
-  SEGURANCA
-  MEIO_AMBIENTE
-  TRANSPORTE
-  CULTURA
-  ESPORTE
-  ASSISTENCIA_SOCIAL
-  ECONOMIA
-  OUTROS
-}
-
 model SugestaoLegislativa {
   id                String                    @id @default(cuid())
 
@@ -3280,37 +2527,6 @@ model ApoioSugestao {
   @@unique([sugestaoId, cpfHash])
   @@index([sugestaoId])
   @@map("apoios_sugestao")
-}
-
-// =============================================================================
-// FASE 6: ANALYTICS E BUSINESS INTELLIGENCE
-// =============================================================================
-
-enum FrequenciaRelatorio {
-  DIARIO
-  SEMANAL
-  QUINZENAL
-  MENSAL
-  TRIMESTRAL
-  SEMESTRAL
-  ANUAL
-}
-
-enum FormatoRelatorio {
-  PDF
-  EXCEL
-  CSV
-  JSON
-}
-
-enum TipoRelatorioAgendado {
-  PRODUCAO_LEGISLATIVA
-  PRESENCA_SESSOES
-  VOTACOES
-  TRAMITACAO
-  COMISSOES
-  TRANSPARENCIA
-  PERSONALIZADO
 }
 
 model RelatorioAgendado {
@@ -3376,39 +2592,6 @@ model DashboardPersonalizado {
   @@map("dashboards_personalizados")
 }
 
-// =============================================================================
-// Alertas de Segurança
-// =============================================================================
-
-enum AlertSeverity {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum AlertStatus {
-  NEW
-  ACKNOWLEDGED
-  RESOLVED
-  FALSE_POSITIVE
-}
-
-enum AlertType {
-  BRUTE_FORCE_ATTEMPT
-  UNUSUAL_ACCESS_PATTERN
-  PRIVILEGE_ESCALATION
-  DATA_EXFILTRATION
-  SUSPICIOUS_IP
-  ACCOUNT_COMPROMISE
-  RATE_LIMIT_EXCEEDED
-  SQL_INJECTION_ATTEMPT
-  XSS_ATTEMPT
-  UNAUTHORIZED_ACCESS
-  CONFIGURATION_CHANGE
-  MASS_DELETE
-}
-
 model SecurityAlert {
   id              String         @id @default(cuid())
   type            AlertType
@@ -3436,20 +2619,6 @@ model SecurityAlert {
   @@index([sourceIp])
   @@index([userId])
   @@map("security_alerts")
-}
-
-// ==========================================
-// e-SIC (Sistema Eletronico do Servico de Informacao ao Cidadao)
-// ==========================================
-
-enum StatusESIC {
-  ABERTO
-  EM_ANALISE
-  RESPONDIDO
-  PRORROGADO
-  RECURSO
-  ARQUIVADO
-  NEGADO
 }
 
 model SolicitacaoESIC {
@@ -3546,27 +2715,6 @@ model HistoricoESIC {
   @@map("historico_esic")
 }
 
-// ==========================================
-// Ouvidoria
-// ==========================================
-
-enum TipoManifestacao {
-  RECLAMACAO
-  SUGESTAO
-  ELOGIO
-  DENUNCIA
-  SOLICITACAO
-}
-
-enum StatusManifestacao {
-  REGISTRADA
-  EM_ANALISE
-  ENCAMINHADA
-  RESPONDIDA
-  CONCLUIDA
-  ARQUIVADA
-}
-
 model ManifestacaoOuvidoria {
   id              String              @id @default(cuid())
   protocolo       String              @unique
@@ -3640,10 +2788,6 @@ model HistoricoOuvidoria {
   @@map("historico_ouvidoria")
 }
 
-// ==========================================
-// Organograma
-// ==========================================
-
 model UnidadeOrganizacional {
   id              String   @id @default(cuid())
   nome            String
@@ -3666,10 +2810,6 @@ model UnidadeOrganizacional {
   @@index([ativo])
   @@map("unidades_organizacionais")
 }
-
-// ==========================================
-// Pessoal - Diarias e Verbas Indenizatorias
-// ==========================================
 
 model Diaria {
   id              String   @id @default(cuid())
@@ -3717,10 +2857,6 @@ model VerbaIndenizatoria {
   @@map("verbas_indenizatorias")
 }
 
-// ==========================================
-// Concursos Publicos
-// ==========================================
-
 model Concurso {
   id                  String    @id @default(cuid())
   titulo              String
@@ -3741,10 +2877,6 @@ model Concurso {
   @@index([dataPublicacao])
   @@map("concursos")
 }
-
-// ==========================================
-// Transparencia - Conteudo Generico
-// ==========================================
 
 model TransparenciaConteudo {
   id                String    @id @default(cuid())
@@ -3775,10 +2907,6 @@ model TransparenciaConteudo {
   @@map("transparencia_conteudos")
 }
 
-// ==========================================
-// Conteudo Educativo ("Camara Explica")
-// ==========================================
-
 model ConteudoEducativo {
   id              String   @id @default(cuid())
   titulo          String
@@ -3795,27 +2923,6 @@ model ConteudoEducativo {
   @@index([categoria, publicado])
   @@index([slug])
   @@map("conteudos_educativos")
-}
-
-// ============================================
-// AUDIENCIAS PUBLICAS
-// Sessoes abertas a sociedade civil. Estrutura central
-// + dados ricos (participantes, cronograma, transmissao)
-// armazenados em campos JSON para evitar explosao de tabelas.
-// ============================================
-
-enum TipoAudienciaPublica {
-  ORDINARIA
-  EXTRAORDINARIA
-  ESPECIAL
-}
-
-enum StatusAudienciaPublica {
-  AGENDADA
-  EM_ANDAMENTO
-  CONCLUIDA
-  CANCELADA
-  ADIADA
 }
 
 model AudienciaPublica {

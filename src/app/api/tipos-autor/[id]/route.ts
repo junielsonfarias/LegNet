@@ -1,11 +1,9 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import {
-  withErrorHandler,
+import { withErrorHandler,
   createSuccessResponse,
   NotFoundError,
-  ConflictError
-} from '@/lib/error-handler'
+  ConflictError, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { tiposAutorDbService } from '@/lib/services/tipos-autor-db-service'
 
@@ -58,8 +56,8 @@ export const DELETE = withAuth(async (
 
   try {
     await tiposAutorDbService.remove(id)
-  } catch (e: any) {
-    throw new ConflictError(e.message)
+  } catch (e) {
+    throw new ConflictError(getErrorMessage(e))
   }
 
   return createSuccessResponse(null, 'Tipo de autor excluído com sucesso')

@@ -9,6 +9,7 @@
 import { NextRequest } from 'next/server'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { prisma } from '@/lib/prisma'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,9 +34,9 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     canceladas: audiencias.filter((a) => a.status === 'CANCELADA').length,
   }
 
-  return createSuccessResponse({
+  return withPublicCache(createSuccessResponse({
     audiencias,
     total: audiencias.length,
     stats,
-  })
+  }), { maxAge: 60, swr: 300 })
 })

@@ -1,12 +1,10 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import {
-  withErrorHandler,
+import { withErrorHandler,
   createSuccessResponse,
   ValidationError,
   NotFoundError,
-  validateId
-} from '@/lib/error-handler'
+  validateId, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
@@ -46,8 +44,8 @@ export const POST = withAuth(async (
         parecerAtualizado,
         `Votação encerrada. Parecer ${validatedData.resultado === 'APROVADO_COMISSAO' ? 'aprovado' : 'rejeitado'} pela comissão.`
       )
-    } catch (error: any) {
-      throw new ValidationError(error.message)
+    } catch (error) {
+      throw new ValidationError(getErrorMessage(error))
     }
   }
 
@@ -61,11 +59,11 @@ export const POST = withAuth(async (
       validatedData.observacoes
     )
     return createSuccessResponse(resultado, 'Voto registrado com sucesso')
-  } catch (error: any) {
-    if (error.message === 'Parecer não encontrado') {
+  } catch (error) {
+    if (getErrorMessage(error) === 'Parecer não encontrado') {
       throw new NotFoundError('Parecer')
     }
-    throw new ValidationError(error.message)
+    throw new ValidationError(getErrorMessage(error))
   }
 }, { permissions: 'comissao.manage' })
 
@@ -80,8 +78,8 @@ export const GET = withErrorHandler(async (
   try {
     const votingStatus = await pareceresDbService.getVotingStatus(parecerId)
     return createSuccessResponse(votingStatus, 'Votos obtidos com sucesso')
-  } catch (error: any) {
-    if (error.message === 'Parecer não encontrado') {
+  } catch (error) {
+    if (getErrorMessage(error) === 'Parecer não encontrado') {
       throw new NotFoundError('Parecer')
     }
     throw error

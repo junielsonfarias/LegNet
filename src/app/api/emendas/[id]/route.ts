@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import {
-  createSuccessResponse,
+import { createSuccessResponse,
   ValidationError,
   NotFoundError,
-  validateId
-} from '@/lib/error-handler'
+  validateId, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import {
   buscarEmendaPorId,
@@ -169,11 +167,11 @@ export const DELETE = withAuth(async (
 
   try {
     await excluirEmenda(id)
-  } catch (e: any) {
-    if (e.message === 'Emenda não encontrada') {
+  } catch (e) {
+    if (getErrorMessage(e) === 'Emenda não encontrada') {
       throw new NotFoundError('Emenda')
     }
-    throw new ValidationError(e.message)
+    throw new ValidationError(getErrorMessage(e))
   }
 
   return createSuccessResponse({ id }, 'Emenda excluída')

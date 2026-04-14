@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { withErrorHandler } from '@/lib/error-handler'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,7 +71,8 @@ export const GET = withErrorHandler(async (_request: NextRequest) => {
     sessoesMap[s.status] = s._count
   })
 
-  return NextResponse.json({
+  return withPublicCache(
+    NextResponse.json({
     success: true,
     data: {
       ano: anoAtual,
@@ -88,5 +90,7 @@ export const GET = withErrorHandler(async (_request: NextRequest) => {
       },
       parlamentares: totalParlamentares
     }
-  })
+  }),
+    { maxAge: 60, swr: 300 }
+  )
 })

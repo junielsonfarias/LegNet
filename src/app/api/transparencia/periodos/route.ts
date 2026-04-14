@@ -1,9 +1,7 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import {
-  withErrorHandler,
-  createSuccessResponse
-} from '@/lib/error-handler'
+import { withErrorHandler,
+  createSuccessResponse, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { transparenciaRedirectService } from '@/lib/services/transparencia-redirect-service'
 
@@ -48,8 +46,9 @@ export const POST = withAuth(async (request: NextRequest) => {
   let data
   try {
     data = ConfigPeriodosSchema.parse(body)
-  } catch (e: any) {
-    console.error('[periodos POST] Zod falhou:', e?.errors || e?.message)
+  } catch (e) {
+    const zerr = (e as { errors?: unknown }).errors
+    console.error('[periodos POST] Zod falhou:', zerr ?? getErrorMessage(e))
     throw e
   }
   console.log('[periodos POST] validado, salvando slug=', data.slug)

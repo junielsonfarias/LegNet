@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 import { withErrorHandler } from '@/lib/error-handler'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,7 +42,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     })
   }
 
-  return NextResponse.json({
+  return withPublicCache(
+    NextResponse.json({
     dados,
     metadados: {
       total,
@@ -51,7 +53,9 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       atualizacao: new Date().toISOString(),
       fonte: info.nomeCasa
     }
-  })
+  }),
+    { maxAge: 60, swr: 300 }
+  )
 })
 
 function convertToCSV(data: Record<string, unknown>[], campos: string[]): string {

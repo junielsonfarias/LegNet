@@ -1,0 +1,13 @@
+// Prisma schema folder — dividido em base.prisma, enums.prisma e models.prisma.
+// Preview feature prismaSchemaFolder permite múltiplos arquivos sob prisma/schema/.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}

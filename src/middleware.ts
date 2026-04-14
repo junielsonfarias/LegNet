@@ -6,49 +6,11 @@ import {
   TENANT_HEADERS,
   DEFAULT_TENANT_SLUG,
 } from '@/lib/tenant/tenant-resolver'
+import { allowRequest } from '@/lib/rate-limit'
 
 // =========================================================================
-// Rate Limiter em memória (substituindo middleware.ts da raiz)
+// Rate Limiter — backend em @/lib/rate-limit (Upstash REST ou memória)
 // =========================================================================
-
-type RateLimitEntry = { count: number; expires: number }
-type RateLimiter = Map<string, RateLimitEntry>
-
-const getLimiter = (): RateLimiter => {
-  const g = globalThis as any
-  if (!g.__CAMARA_RATE_LIMITER__) {
-    g.__CAMARA_RATE_LIMITER__ = new Map<string, RateLimitEntry>()
-  }
-  return g.__CAMARA_RATE_LIMITER__
-}
-
-// Limpa entradas expiradas a cada 60s para evitar memory leak
-const CLEANUP_INTERVAL = 60_000
-let lastCleanup = Date.now()
-
-const cleanupExpired = (limiter: RateLimiter) => {
-  const now = Date.now()
-  if (now - lastCleanup < CLEANUP_INTERVAL) return
-  lastCleanup = now
-  limiter.forEach((entry, key) => {
-    if (entry.expires < now) limiter.delete(key)
-  })
-}
-
-const allowRequest = (key: string, limit: number, windowMs: number) => {
-  const limiter = getLimiter()
-  cleanupExpired(limiter)
-  const current = limiter.get(key)
-  const now = Date.now()
-
-  if (!current || current.expires < now) {
-    limiter.set(key, { count: 1, expires: now + windowMs })
-    return true
-  }
-  if (current.count >= limit) return false
-  current.count += 1
-  return true
-}
 
 const buildRateLimitKey = (request: NextRequest) => {
   const ip =
@@ -87,7 +49,7 @@ export async function middleware(request: NextRequest) {
 
     if (!isNextAuthInternal) {
       const rlKey = `${buildRateLimitKey(request)}:${pathname}`
-      if (!allowRequest(rlKey, API_RATE_LIMIT.limit, API_RATE_LIMIT.windowMs)) {
+      if (!(await allowRequest(rlKey, API_RATE_LIMIT.limit, API_RATE_LIMIT.windowMs))) {
         return NextResponse.json(
           { success: false, error: 'Muitas requisições. Aguarde e tente novamente.' },
           { status: 429 }
@@ -98,7 +60,7 @@ export async function middleware(request: NextRequest) {
     // Rate limit apenas para login/signin (não para session, csrf, _log, etc.)
     if (pathname === '/api/auth/callback/credentials' || pathname === '/api/auth/signin') {
       const authKey = `${buildRateLimitKey(request)}:auth-login`
-      if (!allowRequest(authKey, LOGIN_RATE_LIMIT.limit, LOGIN_RATE_LIMIT.windowMs)) {
+      if (!(await allowRequest(authKey, LOGIN_RATE_LIMIT.limit, LOGIN_RATE_LIMIT.windowMs))) {
         return NextResponse.json(
           { success: false, error: 'Muitas tentativas de login. Aguarde 5 minutos.' },
           { status: 429 }

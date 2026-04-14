@@ -38,7 +38,7 @@ export const GET = withAuth(withErrorHandler(async (
   const mesasAtivas = membrosMesa.filter(m => m.ativo)
   const mesasHistorico = membrosMesa.filter(m => !m.ativo)
 
-  const mandatoAtual = parlamentar.mandatos.find((m: any) => m.ativo) || parlamentar.mandatos[0] || null
+  const mandatoAtual = parlamentar.mandatos.find((m) => m.ativo) || parlamentar.mandatos[0] || null
 
   const resposta = {
     parlamentar: {
@@ -71,7 +71,7 @@ export const GET = withAuth(withErrorHandler(async (
     },
     presenca: presencaResumo,
     votacoes: votacaoResumo,
-    mandatos: parlamentar.mandatos.map((m: any) => ({
+    mandatos: parlamentar.mandatos.map((m) => ({
       id: m.id,
       legislatura: m.legislatura
         ? {
@@ -88,7 +88,7 @@ export const GET = withAuth(withErrorHandler(async (
       dataFim: toISO(m.dataFim),
       ativo: m.ativo
     })),
-    filiacoes: parlamentar.filiacoes.map((f: any) => ({
+    filiacoes: parlamentar.filiacoes.map((f) => ({
       id: f.id,
       partido: f.partido,
       dataInicio: toISO(f.dataInicio),
@@ -96,7 +96,7 @@ export const GET = withAuth(withErrorHandler(async (
       ativa: f.ativa
     })),
     comissoes: {
-      ativas: comissoesAtivas.map((m: any) => ({
+      ativas: comissoesAtivas.map((m) => ({
         id: m.id,
         cargo: m.cargo,
         comissao: m.comissao
@@ -110,7 +110,7 @@ export const GET = withAuth(withErrorHandler(async (
         dataFim: toISO(m.dataFim),
         observacoes: m.observacoes
       })),
-      historico: comissoesHistorico.map((m: any) => ({
+      historico: comissoesHistorico.map((m) => ({
         id: m.id,
         cargo: m.cargo,
         comissao: m.comissao
@@ -126,7 +126,7 @@ export const GET = withAuth(withErrorHandler(async (
       }))
     },
     mesas: {
-      ativas: mesasAtivas.map((m: any) => ({
+      ativas: mesasAtivas.map((m) => ({
         id: m.id,
         cargo: m.cargo?.nome || null,
         mesaId: m.mesaDiretoraId,
@@ -134,8 +134,8 @@ export const GET = withAuth(withErrorHandler(async (
           ? {
               id: m.mesaDiretora.periodo.id,
               numero: m.mesaDiretora.periodo.numero,
-              dataInicio: toISO(m.mesaDiretora.periodo.dataInicio as any),
-              dataFim: toISO(m.mesaDiretora.periodo.dataFim as any),
+              dataInicio: toISO(m.mesaDiretora.periodo.dataInicio),
+              dataFim: toISO(m.mesaDiretora.periodo.dataFim),
               legislatura: m.mesaDiretora.periodo.legislatura
                 ? {
                     id: m.mesaDiretora.periodo.legislatura.id,
@@ -149,7 +149,7 @@ export const GET = withAuth(withErrorHandler(async (
         dataFim: toISO(m.dataFim),
         observacoes: m.observacoes
       })),
-      historico: mesasHistorico.map((m: any) => ({
+      historico: mesasHistorico.map((m) => ({
         id: m.id,
         cargo: m.cargo?.nome || null,
         mesaId: m.mesaDiretoraId,
@@ -157,8 +157,8 @@ export const GET = withAuth(withErrorHandler(async (
           ? {
               id: m.mesaDiretora.periodo.id,
               numero: m.mesaDiretora.periodo.numero,
-              dataInicio: toISO(m.mesaDiretora.periodo.dataInicio as any),
-              dataFim: toISO(m.mesaDiretora.periodo.dataFim as any),
+              dataInicio: toISO(m.mesaDiretora.periodo.dataInicio),
+              dataFim: toISO(m.mesaDiretora.periodo.dataFim),
               legislatura: m.mesaDiretora.periodo.legislatura
                 ? {
                     id: m.mesaDiretora.periodo.legislatura.id,
@@ -173,12 +173,12 @@ export const GET = withAuth(withErrorHandler(async (
         observacoes: m.observacoes
       }))
     },
-    agenda: sessoesAgendadas.map((sessao: any) => ({
+    agenda: sessoesAgendadas.map((sessao) => ({
       id: sessao.id,
       numero: sessao.numero,
       tipo: sessao.tipo,
       status: sessao.status,
-      data: toISO(sessao.data as any),
+      data: toISO(sessao.data),
       horario: sessao.horario,
       local: sessao.local,
       legislatura: sessao.legislatura

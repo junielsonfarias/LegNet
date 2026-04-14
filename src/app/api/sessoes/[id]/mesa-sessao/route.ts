@@ -1,11 +1,9 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import {
-  withErrorHandler,
+import { withErrorHandler,
   createSuccessResponse,
   NotFoundError,
-  ValidationError
-} from '@/lib/error-handler'
+  ValidationError, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { resolverSessaoId } from '@/lib/services/sessao-controle'
 import { mesaSessaoDbService } from '@/lib/services/mesa-sessao-db-service'
@@ -85,11 +83,11 @@ export const POST = withAuth(async (
   try {
     const mesa = await mesaSessaoDbService.createOrUpdate(id, membros, observacoes, session.user.id)
     return createSuccessResponse(mesa, 'Mesa da sessão salva com sucesso')
-  } catch (error: any) {
-    if (error.message === 'Sessão não encontrada') {
+  } catch (error) {
+    if (getErrorMessage(error) === 'Sessão não encontrada') {
       throw new NotFoundError('Sessão')
     }
-    throw new ValidationError(error.message)
+    throw new ValidationError(getErrorMessage(error))
   }
 }, { roles: ['ADMIN', 'SECRETARIA', 'OPERADOR'] })
 
@@ -105,10 +103,10 @@ export const DELETE = withAuth(async (
   try {
     await mesaSessaoDbService.remove(id)
     return createSuccessResponse(null, 'Mesa da sessão removida. A sessão usará a mesa diretora do período.')
-  } catch (error: any) {
-    if (error.message === 'Sessão não encontrada') {
+  } catch (error) {
+    if (getErrorMessage(error) === 'Sessão não encontrada') {
       throw new NotFoundError('Sessão')
     }
-    throw new ValidationError(error.message)
+    throw new ValidationError(getErrorMessage(error))
   }
 }, { roles: ['ADMIN', 'SECRETARIA'] })

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { createSuccessResponse, NotFoundError, createErrorResponse } from '@/lib/error-handler'
 import { publicGetById } from '@/lib/services/tramitacao-service'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,7 @@ export const GET = async (_request: NextRequest, { params }: { params: Promise<{
       throw new NotFoundError('Tramitação')
     }
 
-    return createSuccessResponse({
+    return withPublicCache(createSuccessResponse({
       id: tramitacao.id,
       proposicao: {
         id: tramitacao.proposicao.id,
@@ -63,7 +64,7 @@ export const GET = async (_request: NextRequest, { params }: { params: Promise<{
         dadosAnteriores: h.dadosAnteriores,
         dadosNovos: h.dadosNovos
       }))
-    })
+    }), { maxAge: 60, swr: 300 })
   } catch (error) {
     const { id } = await params
     return createErrorResponse(error, `/api/publico/tramitacoes/${id}`)

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 
 import { createSuccessResponse } from '@/lib/error-handler'
 import { publicList } from '@/lib/services/tramitacao-service'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,7 +65,7 @@ export const GET = async (request: NextRequest) => {
     diasVencidos: t.diasVencidos
   }))
 
-  return createSuccessResponse(
+  return withPublicCache(createSuccessResponse(
     { items },
     undefined,
     result.total,
@@ -75,5 +76,5 @@ export const GET = async (request: NextRequest) => {
       limit: result.limit,
       totalPages: result.totalPages
     }
-  )
+  ), { maxAge: 60, swr: 300 })
 }

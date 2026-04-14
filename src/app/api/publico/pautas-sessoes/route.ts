@@ -6,6 +6,7 @@
 import { NextRequest } from 'next/server'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { prisma } from '@/lib/prisma'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,9 +28,9 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       }
     })
     if (!pauta) {
-      return createSuccessResponse(null, 'Pauta nao encontrada')
+      return withPublicCache(createSuccessResponse(null, 'Pauta nao encontrada'), { maxAge: 60, swr: 300 })
     }
-    return createSuccessResponse(mapPauta(pauta))
+    return withPublicCache(createSuccessResponse(mapPauta(pauta)), { maxAge: 60, swr: 300 })
   }
 
   // Buscar pautas publicadas
@@ -63,7 +64,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const totalPautas = await prisma.pautaSessao.count()
   const publicadas = await prisma.pautaSessao.count({ where: { status: { in: ['APROVADA', 'EM_ANDAMENTO', 'CONCLUIDA'] } } })
 
-  return createSuccessResponse({
+  return withPublicCache(createSuccessResponse({
     pautas: resultado,
     total: resultado.length,
     stats: {
@@ -71,7 +72,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       publicadas,
       pendentes: totalPautas - publicadas
     }
-  })
+  }), { maxAge: 60, swr: 300 })
 })
 
 function mapPauta(pauta: any) {

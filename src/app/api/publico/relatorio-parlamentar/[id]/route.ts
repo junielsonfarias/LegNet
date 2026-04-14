@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,7 +67,7 @@ export const GET = withErrorHandler(async (
     include: { comissao: { select: { id: true, nome: true, sigla: true, tipo: true } } },
   })
 
-  return createSuccessResponse({
+  return withPublicCache(createSuccessResponse({
     parlamentar: {
       id: parlamentar.id,
       nome: parlamentar.nome,
@@ -89,5 +90,5 @@ export const GET = withErrorHandler(async (
     },
     proposicoes: { total: proposicoes.length, lista: proposicoes },
     comissoes: comissoes.map((mc) => ({ comissao: mc.comissao, cargo: mc.cargo })),
-  })
+  }), { maxAge: 60, swr: 300 })
 })

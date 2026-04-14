@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@/lib/error-handler'
 /**
  * Serviço de Relatórios Agendados
  * Implementa geração e agendamento de relatórios
@@ -182,13 +183,13 @@ export async function executarRelatorio(
       execucao,
       dados
     }
-  } catch (error: any) {
+  } catch (error) {
     // Registrar falha
     await prisma.execucaoRelatorio.create({
       data: {
         relatorioId,
         status: 'ERRO',
-        erro: error.message,
+        erro: getErrorMessage(error),
         tempoExecucao: Date.now() - inicio
       }
     })
@@ -196,7 +197,7 @@ export async function executarRelatorio(
     logger.error('Erro ao executar relatório', {
       action: 'executar_relatorio_erro',
       relatorioId,
-      erro: error.message
+      erro: getErrorMessage(error)
     })
 
     throw error

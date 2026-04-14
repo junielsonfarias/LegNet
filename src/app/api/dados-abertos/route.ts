@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server'
 import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { withErrorHandler } from '@/lib/error-handler'
+import { withPublicCache } from '@/lib/http-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +15,8 @@ export const GET = withErrorHandler(async () => {
 
   const info = await dadosAbertosService.getInfo()
 
-  return NextResponse.json({
+  return withPublicCache(
+    NextResponse.json({
     titulo: `API de Dados Abertos - ${info.nomeCasa}`,
     versao: '1.0.0',
     descricao: `API publica para acesso a dados abertos da ${info.nomeCasa}`,
@@ -90,5 +92,7 @@ export const GET = withErrorHandler(async () => {
       telefone: info.telefone
     },
     atualizacao: new Date().toISOString()
-  })
+  }),
+    { maxAge: 60, swr: 300 }
+  )
 })

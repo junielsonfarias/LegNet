@@ -1,10 +1,8 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import {
-  withErrorHandler,
+import { withErrorHandler,
   createSuccessResponse,
-  ValidationError
-} from '@/lib/error-handler'
+  ValidationError, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
@@ -59,7 +57,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   try {
     const parecer = await pareceresDbService.createWithValidation(validatedData)
     return createSuccessResponse(parecer, 'Parecer criado com sucesso')
-  } catch (error: any) {
-    throw new ValidationError(error.message)
+  } catch (error) {
+    throw new ValidationError(getErrorMessage(error))
   }
 }, { permissions: 'comissao.manage' })

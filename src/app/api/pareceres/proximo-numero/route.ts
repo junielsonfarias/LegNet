@@ -1,9 +1,7 @@
 import { NextRequest } from 'next/server'
-import {
-  withErrorHandler,
+import { withErrorHandler,
   createSuccessResponse,
-  ValidationError
-} from '@/lib/error-handler'
+  ValidationError, getErrorMessage } from '@/lib/error-handler'
 import { pareceresDbService } from '@/lib/services/pareceres-db-service'
 
 export const dynamic = 'force-dynamic'
@@ -20,7 +18,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   try {
     const resultado = await pareceresDbService.getNextNumeroFormatado(comissaoId)
     return createSuccessResponse(resultado, 'Próximo número obtido com sucesso')
-  } catch (error: any) {
-    throw new ValidationError(error.message)
+  } catch (error) {
+    throw new ValidationError(getErrorMessage(error))
   }
 })
