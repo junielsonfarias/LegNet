@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 /**
  * Testes do Servico de Streaming
  */
@@ -14,20 +15,20 @@ import {
 } from '@/lib/services/streaming-service'
 
 // Mock do Prisma
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
     sessao: {
-      findMany: jest.fn()
+      findMany: vi.fn()
     }
   }
 }))
 
 // Mock do logger
-jest.mock('@/lib/logging/logger', () => ({
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   })
 }))
 

@@ -1,32 +1,32 @@
 import { publicacoesService } from '@/lib/publicacoes-service'
 
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
     publicacao: {
-      findMany: jest.fn().mockResolvedValue([]),
-      findUnique: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation((args: any) => Promise.resolve({
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn().mockResolvedValue(null),
+      create: vi.fn().mockImplementation((args: any) => Promise.resolve({
         id: 'pub-test-1',
         ...args.data,
         createdAt: new Date(),
         updatedAt: new Date(),
         visualizacoes: 0,
       })),
-      update: jest.fn().mockImplementation((args: any) => Promise.resolve({
+      update: vi.fn().mockImplementation((args: any) => Promise.resolve({
         id: args.where.id,
         titulo: 'Publicacao Teste',
         ...args.data,
         createdAt: new Date(),
         updatedAt: new Date(),
       })),
-      delete: jest.fn().mockResolvedValue({}),
-      count: jest.fn().mockResolvedValue(0),
-      aggregate: jest.fn().mockResolvedValue({ _sum: { visualizacoes: 0 } }),
-      groupBy: jest.fn().mockResolvedValue([]),
+      delete: vi.fn().mockResolvedValue({}),
+      count: vi.fn().mockResolvedValue(0),
+      aggregate: vi.fn().mockResolvedValue({ _sum: { visualizacoes: 0 } }),
+      groupBy: vi.fn().mockResolvedValue([]),
     },
     categoriaPublicacao: {
-      findMany: jest.fn().mockResolvedValue([]),
-      count: jest.fn().mockResolvedValue(0),
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
     },
   }
 }))

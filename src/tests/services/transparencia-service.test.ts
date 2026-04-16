@@ -1,52 +1,53 @@
+import { vi } from "vitest"
 /**
  * Testes do Servico de Transparencia PNTP
  */
 
 // Mocks devem vir ANTES dos imports
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
     votacao: {
-      count: jest.fn(),
-      findMany: jest.fn()
+      count: vi.fn(),
+      findMany: vi.fn()
     },
     presencaSessao: {
-      count: jest.fn(),
-      findMany: jest.fn()
+      count: vi.fn(),
+      findMany: vi.fn()
     },
     sessao: {
-      findMany: jest.fn(),
-      count: jest.fn()
+      findMany: vi.fn(),
+      count: vi.fn()
     },
     parlamentar: {
-      findMany: jest.fn(),
-      count: jest.fn()
+      findMany: vi.fn(),
+      count: vi.fn()
     },
     publicacao: {
-      findMany: jest.fn(),
-      count: jest.fn()
+      findMany: vi.fn(),
+      count: vi.fn()
     },
     proposicao: {
-      findMany: jest.fn(),
-      count: jest.fn()
+      findMany: vi.fn(),
+      count: vi.fn()
     },
     tramitacao: {
-      findMany: jest.fn(),
-      count: jest.fn()
+      findMany: vi.fn(),
+      count: vi.fn()
     },
     configuracao: {
-      findFirst: jest.fn()
+      findFirst: vi.fn()
     },
     historicoParticipacao: {
-      count: jest.fn()
+      count: vi.fn()
     }
   }
 }))
 
-jest.mock('@/lib/logging/logger', () => ({
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   })
 }))
 

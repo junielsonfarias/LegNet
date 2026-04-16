@@ -1,13 +1,14 @@
+import { vi } from "vitest"
 import { runReadinessCheck } from '@/lib/monitoring/readiness-check'
 
-jest.mock('@/lib/prisma', () => {
-  const countMock = jest.fn().mockResolvedValue(5)
+vi.mock('@/lib/prisma', () => {
+  const countMock = vi.fn().mockResolvedValue(5)
   return {
     prisma: {
-      $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
+      $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
       user: { count: countMock },
-      parlamentar: { count: jest.fn().mockResolvedValue(10) },
-      proposicao: { count: jest.fn().mockResolvedValue(4) }
+      parlamentar: { count: vi.fn().mockResolvedValue(10) },
+      proposicao: { count: vi.fn().mockResolvedValue(4) }
     }
   }
 })
@@ -16,7 +17,7 @@ const ORIGINAL_ENV = process.env
 
 describe('runReadinessCheck', () => {
   beforeEach(() => {
-    jest.resetModules()
+    vi.resetModules()
     process.env = { ...ORIGINAL_ENV }
   })
 

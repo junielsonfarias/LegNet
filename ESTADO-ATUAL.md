@@ -1,10 +1,56 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-12 (Migrations pendentes aplicadas no Supabase)
-> **Versao**: 1.9.4
+> **Ultima Atualizacao**: 2026-04-16 (465 testes + noImplicitAny + audit N+1 + VPS atualizada)
+> **Versao**: 1.9.5
 > **Status Geral**: EM PRODUCAO
-> **URL Producao**: https://cmchaves.transparencialeg.com (Camara Municipal de Ruropolis)
+> **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Testes: 465 testes passando, 30 arquivos (16/04/2026)
+
+Suite de testes unificada no Vitest com 465 testes em 30 arquivos (antes: 38 testes em 4 arquivos).
+
+Mudancas:
+- `vitest.config.ts` — include expandido para `src/tests/**/*.test.ts`
+- 17 arquivos de teste convertidos de jest → vitest (`jest.mock` → `vi.mock`, `jest.fn` → `vi.fn`, etc.)
+- `src/tests/utils/date.test.ts` — `@jest/globals` → `vitest`
+- 3 novos arquivos de teste criados:
+  - `src/tests/utils/pagination.test.ts` (34 testes) — extractPaginationParams, sortArray, paginateArray, generatePaginationLinks, validatePaginationParams
+  - `src/tests/utils/format-ptbr.test.ts` (56 testes) — formatCurrency, formatCPF, formatCNPJ, formatTelefone, formatNomeProprio, masks, unmask
+  - `src/tests/utils/texto-consolidado.test.ts` (25 testes) — gerarReferenciaDispositivo, converterNumeroParaRomano, gerarTextoConsolidadoComEmendas, ordenarEmendasPorDispositivo
+
+---
+
+## Fix: noImplicitAny ativado permanentemente (16/04/2026)
+
+`tsconfig.json` tinha `noImplicitAny: false` como workaround temporario. Corrigidos 9 erros em 4 arquivos:
+
+- `src/app/admin/analytics/page.tsx` — tipagem das labels Recharts (Pie)
+- `src/app/api/parlamentares/[id]/dashboard/route.ts` — tipagem dos callbacks `.map()` e `.find()`
+- `src/lib/services/dashboard-service.ts` — statusMap incompleto (faltava SUSPENSA) + tipagem `Record<string, ...>`
+- `src/tests/accessibility/components.test.tsx` — instalado `@types/jest-axe`
+
+`noImplicitAny: true` agora ativo — qualquer `any` implicito sera erro de compilacao.
+
+---
+
+## Perf: Auditoria N+1 — 2 fixes (16/04/2026)
+
+Auditoria completa das rotas em `src/app/api/` para problemas N+1. Encontrados 2 problemas, ambos corrigidos:
+
+1. **`src/app/api/proposicoes/sancao-tacita/route.ts`** — loop com `prisma.proposicao.update()` individual por proposicao. Substituido por `updateMany()` unico (N queries → 1 query).
+2. **`src/app/api/tipos-proposicao/seed/route.ts`** — `findUnique()` redundante apos cada `upsert()`. Removido, usando retorno do proprio `upsert()` (2N queries → N queries).
+
+Demais rotas auditadas estao otimizadas (uso de `include`, `Promise.all`, Maps para lookup).
+
+---
+
+## VPS atualizada (16/04/2026)
+
+Migration `20260413_add_audiencias_publicas` aplicada na VPS + npm install + build 209 paginas OK.
+Todas as migrations agora sincronizadas entre Supabase e VPS.
 
 ---
 

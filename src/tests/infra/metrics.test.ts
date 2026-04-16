@@ -1,14 +1,15 @@
+import { vi } from "vitest"
 import { registerApiMetric } from '@/lib/monitoring/metrics'
 
 // Mock do logger para capturar chamadas
-const mockInfo = jest.fn()
-const mockWarn = jest.fn()
-jest.mock('@/lib/logging/logger', () => ({
+const mockInfo = vi.fn()
+const mockWarn = vi.fn()
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
     info: (...args: unknown[]) => mockInfo(...args),
     warn: (...args: unknown[]) => mockWarn(...args),
-    error: jest.fn(),
-    debug: jest.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
   }),
 }))
 
@@ -19,7 +20,7 @@ describe('registerApiMetric', () => {
     process.env = { ...originalEnv }
     mockInfo.mockClear()
     mockWarn.mockClear()
-    global.fetch = jest.fn().mockResolvedValue({ ok: true }) as any
+    global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any
   })
 
   afterEach(() => {

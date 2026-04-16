@@ -313,11 +313,12 @@ export const dashboardService = {
       })
 
       sessoesRecentes.forEach(s => {
-        const statusMap = {
-          'CONCLUIDA': 'success' as const,
-          'CANCELADA': 'warning' as const,
-          'AGENDADA': 'pending' as const,
-          'EM_ANDAMENTO': 'pending' as const
+        const statusMap: Record<string, 'success' | 'warning' | 'pending'> = {
+          'CONCLUIDA': 'success',
+          'CANCELADA': 'warning',
+          'AGENDADA': 'pending',
+          'EM_ANDAMENTO': 'pending',
+          'SUSPENSA': 'warning'
         }
         atividades.push({
           id: `sessao-${s.id}`,

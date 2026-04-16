@@ -1,26 +1,27 @@
+import { vi } from "vitest"
 /**
  * Testes unitarios para quorum-service
  * Testa funcoes puras: calcularVotosNecessarios, determinarAplicacaoQuorum, mapAplicacaoToTipoQuorum
  */
 
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
     configuracaoQuorum: {
-      findFirst: jest.fn(),
-      findMany: jest.fn().mockResolvedValue([]),
-      count: jest.fn().mockResolvedValue(0),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn()
+      findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn()
     }
   }
 }))
 
-jest.mock('@/lib/logging/logger', () => ({
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   })
 }))
 

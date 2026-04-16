@@ -1,13 +1,14 @@
-jest.mock('@/lib/logging/logger', () => ({
-  createLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() })
+import { vi } from "vitest"
+vi.mock('@/lib/logging/logger', () => ({
+  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {}
 }))
 
-jest.mock('@/lib/services/turno-service', () => ({
-  getConfiguracaoTurno: jest.fn((tipo: string) => {
+vi.mock('@/lib/services/turno-service', () => ({
+  getConfiguracaoTurno: vi.fn((tipo: string) => {
     const configs: Record<string, { totalTurnos: number; intersticioDias: number; tipoQuorum: string; descricao: string }> = {
       'PROJETO_EMENDA_LEI_ORGANICA': {
         totalTurnos: 2,
@@ -30,7 +31,7 @@ jest.mock('@/lib/services/turno-service', () => ({
     }
     return configs[tipo] || configs['DEFAULT']
   }),
-  requerDoisTurnos: jest.fn((tipo: string) => {
+  requerDoisTurnos: vi.fn((tipo: string) => {
     return tipo === 'PROJETO_EMENDA_LEI_ORGANICA'
   })
 }))

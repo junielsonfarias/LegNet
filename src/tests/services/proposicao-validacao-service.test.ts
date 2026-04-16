@@ -1,22 +1,23 @@
+import { vi } from "vitest"
 /**
  * Testes unitarios para proposicao-validacao-service
  * Testa funcoes puras: validarRequisitosMinimos, validarTransicaoStatus, determinarTipoAcaoPauta
  */
 
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
     proposicao: {
-      findMany: jest.fn().mockResolvedValue([]),
-      count: jest.fn().mockResolvedValue(0)
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0)
     }
   }
 }))
 
-jest.mock('@/lib/logging/logger', () => ({
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   })
 }))
 

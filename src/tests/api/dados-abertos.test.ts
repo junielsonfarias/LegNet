@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 /**
  * Testes da API de Dados Abertos
  */
@@ -5,42 +6,42 @@
 // Mock do Prisma
 const mockPrisma = {
   parlamentar: {
-    findMany: jest.fn(),
-    count: jest.fn()
+    findMany: vi.fn(),
+    count: vi.fn()
   },
   sessao: {
-    findMany: jest.fn(),
-    count: jest.fn()
+    findMany: vi.fn(),
+    count: vi.fn()
   },
   proposicao: {
-    findMany: jest.fn(),
-    count: jest.fn()
+    findMany: vi.fn(),
+    count: vi.fn()
   },
   votacao: {
-    findMany: jest.fn(),
-    count: jest.fn()
+    findMany: vi.fn(),
+    count: vi.fn()
   },
   presencaSessao: {
-    findMany: jest.fn(),
-    count: jest.fn()
+    findMany: vi.fn(),
+    count: vi.fn()
   },
   comissao: {
-    findMany: jest.fn(),
-    count: jest.fn()
+    findMany: vi.fn(),
+    count: vi.fn()
   },
   publicacao: {
-    findMany: jest.fn(),
-    count: jest.fn()
+    findMany: vi.fn(),
+    count: vi.fn()
   }
 }
 
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: mockPrisma
 }))
 
 describe('API de Dados Abertos', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('Formato de Resposta', () => {

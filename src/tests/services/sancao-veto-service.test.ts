@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 /**
  * Testes do Servico de Sancao, Veto e Promulgacao
  * Testa funcoes puras: verificarPrazoSancao, calcularPrazoApreciacaoVeto,
@@ -5,9 +6,9 @@
  */
 
 // Mocks devem vir ANTES dos imports
-jest.mock('@/lib/prisma', () => ({ prisma: {} }))
-jest.mock('@/lib/logging/logger', () => ({
-  createLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() })
+vi.mock('@/lib/prisma', () => ({ prisma: {} }))
+vi.mock('@/lib/logging/logger', () => ({
+  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 
 import {
@@ -23,12 +24,12 @@ describe('sancao-veto-service', () => {
   // =========================================================
   describe('verificarPrazoSancao', () => {
     beforeEach(() => {
-      jest.useFakeTimers()
-      jest.setSystemTime(new Date('2026-04-10T12:00:00').getTime())
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-04-10T12:00:00').getTime())
     })
 
     afterEach(() => {
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
 
     it('deve retornar expirado=true quando a data de envio e muito antiga', () => {
@@ -70,12 +71,12 @@ describe('sancao-veto-service', () => {
   // =========================================================
   describe('calcularPrazoApreciacaoVeto', () => {
     beforeEach(() => {
-      jest.useFakeTimers()
-      jest.setSystemTime(new Date('2026-04-10T12:00:00').getTime())
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-04-10T12:00:00').getTime())
     })
 
     afterEach(() => {
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
 
     it('deve retornar vencido=true quando o veto foi ha mais de 30 dias', () => {

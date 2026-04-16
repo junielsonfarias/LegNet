@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 /**
  * Testes para publicParticipacaoApi
  * Verifica que o cliente API faz fetch corretamente
@@ -5,16 +6,16 @@
 
 describe('publicParticipacaoApi', () => {
   beforeEach(() => {
-    (global as any).fetch = jest.fn()
+    (global as any).fetch = vi.fn()
   })
 
   afterEach(() => {
-    jest.restoreAllMocks()
+    vi.restoreAllMocks()
   })
 
   it('chama fetch para buscar sugestões', async () => {
     const mockResponse = { items: [{ id: '1', titulo: 'Sugestão teste' }] }
-    ;(global.fetch as jest.Mock).mockResolvedValue({
+    ;(global.fetch as vi.Mock).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockResponse),
     })
@@ -27,7 +28,7 @@ describe('publicParticipacaoApi', () => {
   })
 
   it('trata erro de rede graciosamente', async () => {
-    ;(global.fetch as jest.Mock).mockRejectedValue(new Error('network error'))
+    ;(global.fetch as vi.Mock).mockRejectedValue(new Error('network error'))
 
     const { publicParticipacaoApi } = await import('@/lib/api/public-participacao-api')
 

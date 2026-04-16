@@ -25,20 +25,19 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   })
 
   const agora = new Date()
-  const sancionadas: string[] = []
-
-  for (const prop of proposicoes) {
+  const elegíveis = proposicoes.filter(prop => {
     const dataBase = prop.dataVotacao || prop.updatedAt
-    const dias = diasUteis(dataBase, agora)
+    return diasUteis(dataBase, agora) >= 15
+  })
 
-    if (dias >= 15) {
-      await prisma.proposicao.update({
-        where: { id: prop.id },
-        data: { status: 'SANCIONADA' }
-      })
-      sancionadas.push(`${prop.tipo} ${prop.numero}/${prop.ano}`)
-    }
+  if (elegíveis.length > 0) {
+    await prisma.proposicao.updateMany({
+      where: { id: { in: elegíveis.map(p => p.id) } },
+      data: { status: 'SANCIONADA' }
+    })
   }
+
+  const sancionadas = elegíveis.map(p => `${p.tipo} ${p.numero}/${p.ano}`)
 
   return createSuccessResponse(
     { sancionadas, total: sancionadas.length },

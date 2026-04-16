@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 /**
  * Testes unitários para regras-regimentais-service.
  *
@@ -10,19 +11,19 @@
  * - verificarElegibilidadePauta (divisão bloqueios × avisos)
  */
 
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
-    sessao: { findUnique: jest.fn() },
-    parlamentar: { count: jest.fn() },
-    proposicao: { findUnique: jest.fn() },
+    sessao: { findUnique: vi.fn() },
+    parlamentar: { count: vi.fn() },
+    proposicao: { findUnique: vi.fn() },
   },
 }))
 
-jest.mock('@/lib/logging/logger', () => ({
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   }),
 }))
 
@@ -34,13 +35,13 @@ import {
 import { prisma } from '@/lib/prisma'
 
 const mockedPrisma = prisma as unknown as {
-  sessao: { findUnique: jest.Mock }
-  parlamentar: { count: jest.Mock }
-  proposicao: { findUnique: jest.Mock }
+  sessao: { findUnique: vi.Mock }
+  parlamentar: { count: vi.Mock }
+  proposicao: { findUnique: vi.Mock }
 }
 
 beforeEach(() => {
-  jest.clearAllMocks()
+  vi.clearAllMocks()
 })
 
 // ============================================================

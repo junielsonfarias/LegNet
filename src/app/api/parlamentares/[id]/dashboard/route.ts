@@ -38,7 +38,7 @@ export const GET = withAuth(withErrorHandler(async (
   const mesasAtivas = membrosMesa.filter(m => m.ativo)
   const mesasHistorico = membrosMesa.filter(m => !m.ativo)
 
-  const mandatoAtual = parlamentar.mandatos.find((m) => m.ativo) || parlamentar.mandatos[0] || null
+  const mandatoAtual = parlamentar.mandatos.find((m: { ativo: boolean }) => m.ativo) || parlamentar.mandatos[0] || null
 
   const resposta = {
     parlamentar: {
@@ -71,28 +71,28 @@ export const GET = withAuth(withErrorHandler(async (
     },
     presenca: presencaResumo,
     votacoes: votacaoResumo,
-    mandatos: parlamentar.mandatos.map((m) => ({
+    mandatos: parlamentar.mandatos.map((m: Record<string, unknown>) => ({
       id: m.id,
       legislatura: m.legislatura
         ? {
-            id: m.legislatura.id,
-            numero: m.legislatura.numero,
-            anoInicio: m.legislatura.anoInicio,
-            anoFim: m.legislatura.anoFim,
-            descricao: m.legislatura.descricao
+            id: (m.legislatura as Record<string, unknown>).id,
+            numero: (m.legislatura as Record<string, unknown>).numero,
+            anoInicio: (m.legislatura as Record<string, unknown>).anoInicio,
+            anoFim: (m.legislatura as Record<string, unknown>).anoFim,
+            descricao: (m.legislatura as Record<string, unknown>).descricao
           }
         : null,
       numeroVotos: m.numeroVotos,
       cargo: m.cargo,
-      dataInicio: toISO(m.dataInicio),
-      dataFim: toISO(m.dataFim),
+      dataInicio: toISO(m.dataInicio as Date | null),
+      dataFim: toISO(m.dataFim as Date | null),
       ativo: m.ativo
     })),
-    filiacoes: parlamentar.filiacoes.map((f) => ({
+    filiacoes: parlamentar.filiacoes.map((f: Record<string, unknown>) => ({
       id: f.id,
       partido: f.partido,
-      dataInicio: toISO(f.dataInicio),
-      dataFim: toISO(f.dataFim),
+      dataInicio: toISO(f.dataInicio as Date | null),
+      dataFim: toISO(f.dataFim as Date | null),
       ativa: f.ativa
     })),
     comissoes: {

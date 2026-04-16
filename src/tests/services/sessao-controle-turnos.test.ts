@@ -1,54 +1,55 @@
+import { vi } from "vitest"
 /**
  * Testes unitários para sessao-controle/turnos.ts (módulo extraído na Fase 3).
  *
  * Cobertura focada nas validações e caminhos de erro (estado inconsistente)
- * das 5 funções exportadas. Operações de DB são mockadas via jest.mock.
+ * das 5 funções exportadas. Operações de DB são mockadas via vi.mock.
  */
 
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
     pautaItem: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
     },
     pautaSessao: {
-      update: jest.fn(),
+      update: vi.fn(),
     },
-    parlamentar: { count: jest.fn().mockResolvedValue(10) },
-    presencaSessao: { count: jest.fn().mockResolvedValue(8) },
-    $transaction: jest.fn((ops: unknown[]) => Promise.all(ops)),
+    parlamentar: { count: vi.fn().mockResolvedValue(10) },
+    presencaSessao: { count: vi.fn().mockResolvedValue(8) },
+    $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
   },
 }))
 
-jest.mock('@/lib/logging/logger', () => ({
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   }),
 }))
 
-jest.mock('@/lib/services/turno-service', () => ({
-  getConfiguracaoTurno: jest.fn(() => ({
+vi.mock('@/lib/services/turno-service', () => ({
+  getConfiguracaoTurno: vi.fn(() => ({
     totalTurnos: 2,
     tipoQuorum: 'ABSOLUTA',
     descricao: 'Lei Ordinária - dois turnos',
   })),
-  inicializarTurnoPautaItem: jest.fn().mockResolvedValue(undefined),
-  registrarResultadoTurno: jest.fn().mockResolvedValue({
+  inicializarTurnoPautaItem: vi.fn().mockResolvedValue(undefined),
+  registrarResultadoTurno: vi.fn().mockResolvedValue({
     proximoTurno: false,
     mensagem: 'Matéria aprovada definitivamente',
   }),
-  podeIniciarSegundoTurno: jest.fn(),
-  iniciarSegundoTurno: jest.fn().mockResolvedValue(undefined),
-  registrarVotacaoAgrupada: jest.fn().mockResolvedValue(undefined),
-  listarItensEmIntersticio: jest.fn().mockResolvedValue([]),
+  podeIniciarSegundoTurno: vi.fn(),
+  iniciarSegundoTurno: vi.fn().mockResolvedValue(undefined),
+  registrarVotacaoAgrupada: vi.fn().mockResolvedValue(undefined),
+  listarItensEmIntersticio: vi.fn().mockResolvedValue([]),
 }))
 
 // Mock do barrel '../sessao-controle' para isolar turnos.ts
-jest.mock('@/lib/services/sessao-controle', () => ({
-  obterSessaoParaControle: jest.fn(),
-  contabilizarVotos: jest.fn().mockResolvedValue({
+vi.mock('@/lib/services/sessao-controle', () => ({
+  obterSessaoParaControle: vi.fn(),
+  contabilizarVotos: vi.fn().mockResolvedValue({
     sim: 6,
     nao: 2,
     abstencao: 0,
@@ -56,9 +57,9 @@ jest.mock('@/lib/services/sessao-controle', () => ({
     resultado: 'APROVADA',
     votoMinerva: false,
   }),
-  atualizarResultadoProposicao: jest.fn().mockResolvedValue(undefined),
-  calcularTempoAcumulado: jest.fn(() => 120),
-  atualizarTempoTotalReal: jest.fn().mockResolvedValue(undefined),
+  atualizarResultadoProposicao: vi.fn().mockResolvedValue(undefined),
+  calcularTempoAcumulado: vi.fn(() => 120),
+  atualizarTempoTotalReal: vi.fn().mockResolvedValue(undefined),
 }))
 
 import {
@@ -73,22 +74,22 @@ import * as turnoService from '@/lib/services/turno-service'
 import * as sessaoControle from '@/lib/services/sessao-controle'
 
 const mp = prisma as unknown as {
-  pautaItem: { findUnique: jest.Mock; update: jest.Mock }
-  pautaSessao: { update: jest.Mock }
-  $transaction: jest.Mock
+  pautaItem: { findUnique: vi.Mock; update: vi.Mock }
+  pautaSessao: { update: vi.Mock }
+  $transaction: vi.Mock
 }
 const tsMock = turnoService as unknown as {
-  getConfiguracaoTurno: jest.Mock
-  registrarResultadoTurno: jest.Mock
-  podeIniciarSegundoTurno: jest.Mock
-  listarItensEmIntersticio: jest.Mock
+  getConfiguracaoTurno: vi.Mock
+  registrarResultadoTurno: vi.Mock
+  podeIniciarSegundoTurno: vi.Mock
+  listarItensEmIntersticio: vi.Mock
 }
 const scMock = sessaoControle as unknown as {
-  obterSessaoParaControle: jest.Mock
+  obterSessaoParaControle: vi.Mock
 }
 
 beforeEach(() => {
-  jest.clearAllMocks()
+  vi.clearAllMocks()
 })
 
 // ============================================================

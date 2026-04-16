@@ -145,7 +145,7 @@ export const POST = withAuth(async (request: NextRequest) => {
 
     for (const tipo of tiposPadrao) {
       try {
-        await prisma.tipoProposicaoConfig.upsert({
+        const result = await prisma.tipoProposicaoConfig.upsert({
           where: { codigo: tipo.codigo },
           update: {
             nome: tipo.nome,
@@ -164,12 +164,8 @@ export const POST = withAuth(async (request: NextRequest) => {
           create: tipo
         })
 
-        // Verificar se foi criado ou atualizado
-        const existente = await prisma.tipoProposicaoConfig.findUnique({
-          where: { codigo: tipo.codigo }
-        })
-
-        if (existente?.createdAt.getTime() === existente?.updatedAt.getTime()) {
+        // upsert já retorna o registro — não precisa de findUnique extra
+        if (result.createdAt.getTime() === result.updatedAt.getTime()) {
           resultados.criados++
         } else {
           resultados.atualizados++

@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 /**
  * Testes de acessibilidade automatizados com jest-axe
  * Verifica conformidade WCAG 2.1 AA em componentes criticos
@@ -18,7 +19,7 @@ declare global {
 expect.extend(toHaveNoViolations)
 
 // Mock next/image
-jest.mock('next/image', () => ({
+vi.mock('next/image', () => ({
   __esModule: true,
   default: (props: any) => {
     const { fill, priority, unoptimized, ...rest } = props
@@ -27,14 +28,14 @@ jest.mock('next/image', () => ({
 }))
 
 // Mock next/link
-jest.mock('next/link', () => ({
+vi.mock('next/link', () => ({
   __esModule: true,
   default: ({ children, href, ...props }: any) =>
     React.createElement('a', { href, ...props }, children),
 }))
 
 // Mock hooks
-jest.mock('@/lib/hooks/use-configuracao-institucional', () => ({
+vi.mock('@/lib/hooks/use-configuracao-institucional', () => ({
   useConfiguracaoInstitucional: () => ({
     nomeCasa: 'Câmara Municipal',
     sigla: 'CM',
@@ -42,7 +43,7 @@ jest.mock('@/lib/hooks/use-configuracao-institucional', () => ({
   }),
 }))
 
-jest.mock('@/lib/utils', () => ({
+vi.mock('@/lib/utils', () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(' '),
 }))
 

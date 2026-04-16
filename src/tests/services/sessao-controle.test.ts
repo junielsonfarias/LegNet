@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 import { NotFoundError, ValidationError } from '@/lib/error-handler'
 import {
   assertSessaoPermitePresenca,
@@ -11,23 +12,23 @@ import {
   finalizarItemPauta
 } from '@/lib/services/sessao-controle'
 
-jest.mock('@/lib/prisma', () => {
+vi.mock('@/lib/prisma', () => {
   const sessao = {
-    findUnique: jest.fn(),
-    update: jest.fn()
+    findUnique: vi.fn(),
+    update: vi.fn()
   }
   const presencaSessao = {
-    findUnique: jest.fn()
+    findUnique: vi.fn()
   }
   const pautaSessao = {
-    findUnique: jest.fn(),
-    update: jest.fn()
+    findUnique: vi.fn(),
+    update: vi.fn()
   }
   const pautaItem = {
-    findUnique: jest.fn(),
-    findFirst: jest.fn().mockResolvedValue(null),
-    update: jest.fn(),
-    findMany: jest.fn()
+    findUnique: vi.fn(),
+    findFirst: vi.fn().mockResolvedValue(null),
+    update: vi.fn(),
+    findMany: vi.fn()
   }
 
   return {
@@ -36,7 +37,7 @@ jest.mock('@/lib/prisma', () => {
       presencaSessao,
       pautaSessao,
       pautaItem,
-      $transaction: jest.fn(async (operations: any) => {
+      $transaction: vi.fn(async (operations: any) => {
         if (Array.isArray(operations)) {
           return Promise.all(operations)
         }
@@ -49,20 +50,13 @@ jest.mock('@/lib/prisma', () => {
   }
 })
 
-const { prisma } = jest.requireMock('@/lib/prisma') as {
-  prisma: {
-    sessao: { findUnique: jest.Mock; update: jest.Mock }
-    presencaSessao: { findUnique: jest.Mock }
-    pautaSessao: { findUnique: jest.Mock; update: jest.Mock }
-    pautaItem: { findUnique: jest.Mock; update: jest.Mock; findMany: jest.Mock }
-    $transaction: jest.Mock
-  }
-}
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { prisma } = await import('@/lib/prisma') as any
 
 describe('sessao-controle service', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    jest.useRealTimers()
+    vi.clearAllMocks()
+    vi.useRealTimers()
   })
 
   describe('obterSessaoParaControle', () => {
@@ -162,12 +156,12 @@ describe('sessao-controle service', () => {
 
   describe('controle de pauta', () => {
     beforeEach(() => {
-      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:00:00Z').getTime())
+      vi.useFakeTimers().setSystemTime(new Date('2025-01-01T12:00:00Z').getTime())
     })
 
     it('pausa item acumulando tempo', async () => {
       const inicio = new Date('2025-01-01T12:00:00Z')
-      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:05:00Z').getTime())
+      vi.useFakeTimers().setSystemTime(new Date('2025-01-01T12:05:00Z').getTime())
 
       prisma.pautaItem.findUnique.mockResolvedValue({
         id: 'item-1',
@@ -193,7 +187,7 @@ describe('sessao-controle service', () => {
 
     it('finaliza item registrando tempo real', async () => {
       const inicio = new Date('2025-01-01T12:00:00Z')
-      jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:15:00Z').getTime())
+      vi.useFakeTimers().setSystemTime(new Date('2025-01-01T12:15:00Z').getTime())
 
       prisma.pautaItem.findUnique.mockResolvedValue({
         id: 'item-1',

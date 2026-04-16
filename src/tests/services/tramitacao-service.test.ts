@@ -1,6 +1,6 @@
-jest.mock('@/lib/prisma', () => ({ prisma: {} }))
-jest.mock('@/lib/logging/logger', () => ({
-  createLogger: () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() })
+vi.mock('@/lib/prisma', () => ({ prisma: {} }))
+vi.mock('@/lib/logging/logger', () => ({
+  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 
 import { calcularPrazoParecer, REGRAS_TRAMITACAO } from '@/lib/services/tramitacao-service'

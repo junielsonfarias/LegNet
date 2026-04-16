@@ -1,54 +1,55 @@
+import { vi } from "vitest"
 /**
  * Testes do Servico de Painel em Tempo Real
  */
 
 // Mock do Prisma - deve vir ANTES do import
-jest.mock('@/lib/prisma', () => ({
+vi.mock('@/lib/prisma', () => ({
   prisma: {
     sessao: {
-      findUnique: jest.fn(),
-      findMany: jest.fn().mockResolvedValue([]),
-      update: jest.fn()
+      findUnique: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      update: vi.fn()
     },
     presencaSessao: {
-      upsert: jest.fn(),
-      findMany: jest.fn().mockResolvedValue([])
+      upsert: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([])
     },
     votacao: {
-      upsert: jest.fn(),
-      findMany: jest.fn().mockResolvedValue([])
+      upsert: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([])
     },
     voto: {
-      findMany: jest.fn().mockResolvedValue([])
+      findMany: vi.fn().mockResolvedValue([])
     },
     proposicao: {
-      findUnique: jest.fn(),
-      findMany: jest.fn().mockResolvedValue([]),
-      update: jest.fn()
+      findUnique: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      update: vi.fn()
     },
     pautaItem: {
-      update: jest.fn(),
-      findMany: jest.fn().mockResolvedValue([])
+      update: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([])
     },
     pautaSessao: {
-      findUnique: jest.fn().mockResolvedValue(null),
-      findMany: jest.fn().mockResolvedValue([])
+      findUnique: vi.fn().mockResolvedValue(null),
+      findMany: vi.fn().mockResolvedValue([])
     },
     mandato: {
-      findMany: jest.fn().mockResolvedValue([])
+      findMany: vi.fn().mockResolvedValue([])
     },
     parlamentar: {
-      findMany: jest.fn().mockResolvedValue([])
+      findMany: vi.fn().mockResolvedValue([])
     }
   }
 }))
 
 // Mock do logger
-jest.mock('@/lib/logging/logger', () => ({
+vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
   })
 }))
 
@@ -62,17 +63,17 @@ import {
   limparTodosEstados
 } from '@/lib/services/painel-tempo-real-service'
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
+const mockPrisma = prisma as vi.Mocked<typeof prisma>
 
 describe('Painel Tempo Real Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     limparTodosEstados()
   })
 
   describe('getEstadoPainel', () => {
     it('deve retornar null para sessao inexistente', async () => {
-      (mockPrisma.sessao.findUnique as jest.Mock).mockResolvedValue(null)
+      (mockPrisma.sessao.findUnique as vi.Mock).mockResolvedValue(null)
 
       const estado = await getEstadoPainel('sessao-inexistente')
 
@@ -96,7 +97,7 @@ describe('Painel Tempo Real Service', () => {
         }
       };
 
-      (mockPrisma.sessao.findUnique as jest.Mock).mockResolvedValue(mockSessao)
+      (mockPrisma.sessao.findUnique as vi.Mock).mockResolvedValue(mockSessao)
 
       const estado = await getEstadoPainel('sessao-1')
 
@@ -123,8 +124,8 @@ describe('Painel Tempo Real Service', () => {
         legislatura: { mandatos: [] }
       };
 
-      (mockPrisma.sessao.update as jest.Mock).mockResolvedValue(mockSessao);
-      (mockPrisma.sessao.findUnique as jest.Mock).mockResolvedValue(mockSessao)
+      (mockPrisma.sessao.update as vi.Mock).mockResolvedValue(mockSessao);
+      (mockPrisma.sessao.findUnique as vi.Mock).mockResolvedValue(mockSessao)
 
       const estado = await iniciarSessao('sessao-1')
 
@@ -138,7 +139,7 @@ describe('Painel Tempo Real Service', () => {
 
   describe('finalizarSessao', () => {
     it('deve atualizar status da sessao para CONCLUIDA', async () => {
-      (mockPrisma.sessao.update as jest.Mock).mockResolvedValue({ id: 'sessao-1', status: 'CONCLUIDA' })
+      (mockPrisma.sessao.update as vi.Mock).mockResolvedValue({ id: 'sessao-1', status: 'CONCLUIDA' })
 
       await finalizarSessao('sessao-1')
 
