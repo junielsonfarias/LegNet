@@ -2,7 +2,7 @@
 if (typeof window !== 'undefined') {
   const originalConsole = { ...console };
   
-  const shouldSuppress = (message: any): boolean => {
+  const shouldSuppress = (message: unknown): boolean => {
     if (typeof message === 'string') {
       return (
         message.includes('Extra attributes from the server') ||
@@ -35,7 +35,7 @@ if (typeof window !== 'undefined') {
   };
 
   const createSuppressedMethod = (originalMethod: Function) => {
-    return (...args: any[]) => {
+    return (...args: unknown[]) => {
       if (shouldSuppress(args[0])) {
         return;
       }
@@ -52,7 +52,8 @@ if (typeof window !== 'undefined') {
 
   // Interceptar também mensagens específicas do React
   const originalError = Error;
-  (window as any).Error = function(message: string, ...args: any[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).Error = function(message: string, ...args: unknown[]) {
     if (shouldSuppress(message)) {
       return new originalError('Suppressed error');
     }
@@ -61,7 +62,7 @@ if (typeof window !== 'undefined') {
 
   // Suprimir warnings de hidratação
   const originalWarn = console.warn;
-  console.warn = (...args: any[]) => {
+  console.warn = (...args: unknown[]) => {
     const message = args[0];
     if (
       typeof message === 'string' &&
