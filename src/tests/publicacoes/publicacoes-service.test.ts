@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { publicacoesService } from '@/lib/publicacoes-service'
 
 vi.mock('@/lib/prisma', () => ({

@@ -50,8 +50,9 @@ vi.mock('@/lib/prisma', () => {
   }
 })
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { prisma } = await import('@/lib/prisma') as any
+// Importa o mock do prisma (cast para any pois vi.mock substitui os metodos)
+import { prisma as _prisma } from '@/lib/prisma'
+const prisma = _prisma as any
 
 describe('sessao-controle service', () => {
   beforeEach(() => {

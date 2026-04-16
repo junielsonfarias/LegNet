@@ -8,6 +8,37 @@
 
 ---
 
+## Infra: CI/CD + backup + health check + CDN (16/04/2026)
+
+4 melhorias de infraestrutura implementadas:
+
+### MEL-025: CI/CD completo
+`.github/workflows/ci-tests.yml` reescrito com 3 jobs paralelos:
+- `lint-and-typecheck` — ESLint + `tsc --noEmit` (com noImplicitAny)
+- `test` — Vitest (antes usava jest `--runInBand --forceExit`)
+- `build` — build de producao Next.js
+
+Workflows existentes mantidos: `security-audit.yml`, `go-no-go.yml`, `deploy-multi-tenant.yml`.
+
+### MEL-026: Monitoramento
+`scripts/health-check.sh` — verifica `/api/health` a cada 5 min via cron. Se falhar 3x, reinicia PM2 e envia alerta via webhook. Endpoints existentes: `/api/health`, `/api/readiness`.
+
+### MEL-027: Backup automatizado
+`scripts/backup-cron.sh` — backup diario as 3h via cron. Retencao: 7 diarios, 4 semanais, 3 mensais. Backup: pg_dump + uploads tar.gz. Limpeza automatica por retencao.
+
+### MEL-028: CDN / Cache de assets
+Ja implementado via `next.config.js`:
+- `/_next/static/*` com `Cache-Control: public, max-age=31536000, immutable`
+- `compress: true` (gzip)
+- `images.formats: ['image/webp', 'image/avif']`
+- Nginx na VPS faz proxy cache. Para CDN externo, basta colocar Cloudflare na frente.
+
+### Outros fixes
+- `scripts/update.sh` — corrigido diretorio padrao (`/opt/camara`), removido fallback perigoso `db push --accept-data-loss`
+- `scripts/install.sh` — adicionado `configure_cron_jobs()` para instalar backup + health check automaticamente
+
+---
+
 ## Testes: 465 testes passando, 30 arquivos (16/04/2026)
 
 Suite de testes unificada no Vitest com 465 testes em 30 arquivos (antes: 38 testes em 4 arquivos).

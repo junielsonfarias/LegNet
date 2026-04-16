@@ -17,7 +17,7 @@ set -e
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_DIR="${APP_DIR:-/var/www/camara}"
+APP_DIR="${APP_DIR:-/opt/camara}"
 BRANCH="${BRANCH:-main}"
 BACKUP_DIR="/var/backups/camara"
 SKIP_BACKUP=false
@@ -164,10 +164,11 @@ run_migrations() {
     # Gera cliente Prisma
     npx prisma generate
 
-    # Executa migrations
+    # Executa migrations (NUNCA usar db push em producao)
     if ! npx prisma migrate deploy 2>/dev/null; then
-        warning "Migrations falharam. Tentando db push..."
-        npx prisma db push --accept-data-loss
+        warning "Migrations falharam. Verifique manualmente com: npx prisma migrate status"
+        warning "NUNCA use prisma db push em producao - pode causar perda de dados"
+        return 1
     fi
 
     success "Migrations executadas"

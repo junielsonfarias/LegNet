@@ -1,7 +1,7 @@
-# Workflow de Testes Automatizados
-# Executa testes unitarios e lint em PRs e pushes para main
+# Workflow de CI Completo
+# Lint, type-check, testes (Vitest) e build em PRs e pushes para main
 
-name: CI Tests
+name: CI
 
 on:
   push:
@@ -10,8 +10,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    name: Lint & Testes
+  lint-and-typecheck:
+    name: Lint & Types
     runs-on: ubuntu-latest
 
     env:
@@ -20,41 +20,95 @@ jobs:
       NEXTAUTH_SECRET: "ci-test-secret-key-not-for-production-use"
       NEXTAUTH_URL: "http://localhost:3000"
       NEXT_PUBLIC_APP_URL: "http://localhost:3000"
-      NEXT_PUBLIC_SITE_NAME: "Camara Test"
+      NEXT_PUBLIC_SITE_NAME: "Camara CI"
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
 
     steps:
-      - name: Checkout codigo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Instalar dependencias
-        run: npm ci
+      - run: npm ci
 
       - name: Gerar cliente Prisma
         run: npx prisma generate
 
-      - name: Executar ESLint
+      - name: ESLint
         run: npm run lint
 
-      - name: Verificar tipos TypeScript
+      - name: TypeScript (noImplicitAny)
         run: npx tsc --noEmit --pretty
 
-      - name: Executar testes unitarios
-        run: npm test -- --runInBand --forceExit
+  test:
+    name: Testes (Vitest)
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
 
-      - name: Resumo dos testes
+    env:
+      DATABASE_URL: "postgresql://test:test@localhost:5432/test"
+      DIRECT_URL: "postgresql://test:test@localhost:5432/test"
+      NEXTAUTH_SECRET: "ci-test-secret-key-not-for-production-use"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_SITE_NAME: "Camara CI"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Gerar cliente Prisma
+        run: npx prisma generate
+
+      - name: Executar testes (Vitest)
+        run: npx vitest run --reporter=verbose
+
+  build:
+    name: Build de producao
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+
+    env:
+      DATABASE_URL: "postgresql://test:test@localhost:5432/test"
+      DIRECT_URL: "postgresql://test:test@localhost:5432/test"
+      NEXTAUTH_SECRET: "ci-test-secret-key-not-for-production-use"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NEXT_PUBLIC_SITE_NAME: "Camara CI"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Gerar cliente Prisma
+        run: npx prisma generate
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Resumo
         if: always()
         run: |
-          echo "## Resultado dos Testes" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ $? -eq 0 ]; then
-            echo "Todos os testes passaram!" >> $GITHUB_STEP_SUMMARY
+            echo "Build de producao concluido com sucesso." >> $GITHUB_STEP_SUMMARY
           else
-            echo "Alguns testes falharam. Verifique os logs acima." >> $GITHUB_STEP_SUMMARY
+            echo "Build falhou. Verifique os logs." >> $GITHUB_STEP_SUMMARY
           fi

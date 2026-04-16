@@ -620,10 +620,44 @@ main() {
     configure_webserver
     start_application
     create_admin
+    configure_cron_jobs
     verify_installation_complete
 
     # Conclusão
     show_completion
+}
+
+# =============================================================================
+# Cron Jobs (backup + health check)
+# =============================================================================
+
+configure_cron_jobs() {
+    info "Configurando backup automatizado e health check..."
+
+    local app_dir="${APP_DIR:-/opt/camara}"
+
+    # Torna scripts executaveis
+    chmod +x "${app_dir}/scripts/backup-cron.sh" 2>/dev/null || true
+    chmod +x "${app_dir}/scripts/health-check.sh" 2>/dev/null || true
+
+    # Cria diretorios de backup e log
+    mkdir -p /var/backups/camara/{daily,weekly,monthly}
+    touch /var/log/camara-backup.log /var/log/camara-health.log
+
+    # Adiciona crons (se nao existirem)
+    local crontab_content
+    crontab_content=$(crontab -l 2>/dev/null || true)
+
+    if ! echo "$crontab_content" | grep -q "backup-cron.sh"; then
+        (echo "$crontab_content"; echo "0 3 * * * ${app_dir}/scripts/backup-cron.sh >> /var/log/camara-backup.log 2>&1") | crontab -
+        success "Cron de backup: todo dia as 3h"
+    fi
+
+    crontab_content=$(crontab -l 2>/dev/null || true)
+    if ! echo "$crontab_content" | grep -q "health-check.sh"; then
+        (echo "$crontab_content"; echo "*/5 * * * * ${app_dir}/scripts/health-check.sh >> /var/log/camara-health.log 2>&1") | crontab -
+        success "Cron de health check: a cada 5 minutos"
+    fi
 }
 
 # =============================================================================

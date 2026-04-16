@@ -74,18 +74,18 @@ import * as turnoService from '@/lib/services/turno-service'
 import * as sessaoControle from '@/lib/services/sessao-controle'
 
 const mp = prisma as unknown as {
-  pautaItem: { findUnique: vi.Mock; update: vi.Mock }
-  pautaSessao: { update: vi.Mock }
-  $transaction: vi.Mock
+  pautaItem: { findUnique: any; update: any }
+  pautaSessao: { update: any }
+  $transaction: any
 }
 const tsMock = turnoService as unknown as {
-  getConfiguracaoTurno: vi.Mock
-  registrarResultadoTurno: vi.Mock
-  podeIniciarSegundoTurno: vi.Mock
-  listarItensEmIntersticio: vi.Mock
+  getConfiguracaoTurno: any
+  registrarResultadoTurno: any
+  podeIniciarSegundoTurno: any
+  listarItensEmIntersticio: any
 }
 const scMock = sessaoControle as unknown as {
-  obterSessaoParaControle: vi.Mock
+  obterSessaoParaControle: any
 }
 
 beforeEach(() => {

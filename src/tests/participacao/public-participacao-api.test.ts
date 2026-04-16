@@ -15,7 +15,7 @@ describe('publicParticipacaoApi', () => {
 
   it('chama fetch para buscar sugestões', async () => {
     const mockResponse = { items: [{ id: '1', titulo: 'Sugestão teste' }] }
-    ;(global.fetch as vi.Mock).mockResolvedValue({
+    ;(global.fetch as any).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockResponse),
     })
@@ -28,7 +28,7 @@ describe('publicParticipacaoApi', () => {
   })
 
   it('trata erro de rede graciosamente', async () => {
-    ;(global.fetch as vi.Mock).mockRejectedValue(new Error('network error'))
+    ;(global.fetch as any).mockRejectedValue(new Error('network error'))
 
     const { publicParticipacaoApi } = await import('@/lib/api/public-participacao-api')
 

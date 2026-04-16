@@ -63,7 +63,7 @@ import {
   limparTodosEstados
 } from '@/lib/services/painel-tempo-real-service'
 
-const mockPrisma = prisma as vi.Mocked<typeof prisma>
+const mockPrisma = prisma as any
 
 describe('Painel Tempo Real Service', () => {
   beforeEach(() => {
@@ -73,7 +73,7 @@ describe('Painel Tempo Real Service', () => {
 
   describe('getEstadoPainel', () => {
     it('deve retornar null para sessao inexistente', async () => {
-      (mockPrisma.sessao.findUnique as vi.Mock).mockResolvedValue(null)
+      (mockPrisma.sessao.findUnique as any).mockResolvedValue(null)
 
       const estado = await getEstadoPainel('sessao-inexistente')
 
@@ -97,7 +97,7 @@ describe('Painel Tempo Real Service', () => {
         }
       };
 
-      (mockPrisma.sessao.findUnique as vi.Mock).mockResolvedValue(mockSessao)
+      (mockPrisma.sessao.findUnique as any).mockResolvedValue(mockSessao)
 
       const estado = await getEstadoPainel('sessao-1')
 
@@ -124,8 +124,8 @@ describe('Painel Tempo Real Service', () => {
         legislatura: { mandatos: [] }
       };
 
-      (mockPrisma.sessao.update as vi.Mock).mockResolvedValue(mockSessao);
-      (mockPrisma.sessao.findUnique as vi.Mock).mockResolvedValue(mockSessao)
+      (mockPrisma.sessao.update as any).mockResolvedValue(mockSessao);
+      (mockPrisma.sessao.findUnique as any).mockResolvedValue(mockSessao)
 
       const estado = await iniciarSessao('sessao-1')
 
@@ -139,7 +139,7 @@ describe('Painel Tempo Real Service', () => {
 
   describe('finalizarSessao', () => {
     it('deve atualizar status da sessao para CONCLUIDA', async () => {
-      (mockPrisma.sessao.update as vi.Mock).mockResolvedValue({ id: 'sessao-1', status: 'CONCLUIDA' })
+      (mockPrisma.sessao.update as any).mockResolvedValue({ id: 'sessao-1', status: 'CONCLUIDA' })
 
       await finalizarSessao('sessao-1')
 

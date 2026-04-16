@@ -35,9 +35,9 @@ import {
 import { prisma } from '@/lib/prisma'
 
 const mockedPrisma = prisma as unknown as {
-  sessao: { findUnique: vi.Mock }
-  parlamentar: { count: vi.Mock }
-  proposicao: { findUnique: vi.Mock }
+  sessao: { findUnique: any }
+  parlamentar: { count: any }
+  proposicao: { findUnique: any }
 }
 
 beforeEach(() => {

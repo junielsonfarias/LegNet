@@ -1,3 +1,5 @@
+import { vi } from 'vitest'
+
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })

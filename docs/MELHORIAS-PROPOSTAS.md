@@ -660,35 +660,57 @@ export class StreamingService {
 
 ## Melhorias de Infraestrutura
 
-### MEL-025: CI/CD Completo
+### MEL-025: CI/CD Completo - **IMPLEMENTADO**
 
 **Descricao**: Pipeline automatizado com testes.
 
-**Estimativa**: 1 semana
+**Status**: IMPLEMENTADO (16/04/2026)
+
+**Implementacao**:
+- `.github/workflows/ci-tests.yml` com 3 jobs: lint+types, testes Vitest, build
+- `.github/workflows/security-audit.yml` com npm audit semanal + criacao automatica de issues
+- `.github/workflows/go-no-go.yml` com readiness check + load test k6
+- `.github/workflows/deploy-multi-tenant.yml` para deploy Vercel
 
 ---
 
-### MEL-026: Monitoramento APM
+### MEL-026: Monitoramento APM - **IMPLEMENTADO**
 
-**Descricao**: New Relic, Datadog ou similar.
+**Descricao**: Health check + uptime monitor.
 
-**Estimativa**: 3-5 dias
+**Status**: IMPLEMENTADO (16/04/2026)
+
+**Implementacao**:
+- `scripts/health-check.sh` — cron a cada 5 min, 3 retries, auto-restart PM2, alertas webhook
+- `/api/health` — endpoint de saude (banco, memoria, uptime)
+- `/api/readiness` — endpoint de prontidao (dependencias)
 
 ---
 
-### MEL-027: Backup Automatizado
+### MEL-027: Backup Automatizado - **IMPLEMENTADO**
 
 **Descricao**: Backup diario com retencao.
 
-**Estimativa**: 2-3 dias
+**Status**: IMPLEMENTADO (16/04/2026)
+
+**Implementacao**:
+- `scripts/backup-cron.sh` — cron diario 3h, pg_dump + uploads tar.gz
+- Retencao: 7 diarios, 4 semanais, 3 mensais com limpeza automatica
+- Integrado ao `install.sh` (configure_cron_jobs)
 
 ---
 
-### MEL-028: CDN para Assets
+### MEL-028: CDN para Assets - **IMPLEMENTADO**
 
-**Descricao**: Servir estaticos via CDN.
+**Descricao**: Cache otimizado de assets estaticos.
 
-**Estimativa**: 1-2 dias
+**Status**: IMPLEMENTADO (ja existia via next.config.js)
+
+**Implementacao**:
+- `/_next/static/*` com `Cache-Control: immutable, max-age=31536000`
+- Compressao gzip habilitada (`compress: true`)
+- Imagens WebP/AVIF automaticas
+- Nginx reverse proxy na VPS. Para CDN externo, basta adicionar Cloudflare
 
 ---
 
