@@ -8,6 +8,27 @@
 
 ---
 
+## Seguranca: sessoes seguras + criptografia AES-256 (16/04/2026)
+
+### MEL-023: Sessoes seguras
+- `src/lib/hooks/use-session-timeout.ts` — hook de inatividade com timeout configuravel (padrao: 30 min)
+- Detecta mousedown, keydown, scroll, touchstart; reseta timer a cada interacao
+- Sincroniza entre abas via localStorage (storage event)
+- Aviso 5 min antes do logout com countdown
+- `src/components/admin/session-timeout-guard.tsx` — modal de aviso integrado no admin layout
+- Combinado com: sessao JWT 1h (NextAuth), cookies httpOnly/secure, rate limiting, 2FA TOTP
+
+### MEL-024: Criptografia de dados sensiveis
+- `src/lib/security/encryption.ts` — AES-256-GCM com IV aleatorio
+- Funcoes: `encrypt()`, `decrypt()`, `isEncrypted()`, `ensureEncrypted()`, `safeDecrypt()`, `hashForSearch()`
+- Formato: `iv:authTag:ciphertext` (hex)
+- Chave via `ENCRYPTION_KEY` (.env, 32 bytes hex)
+- `safeDecrypt()` trata dados legados nao criptografados
+- `hashForSearch()` — SHA-256 deterministico para indexacao
+- 10 testes cobrindo encrypt/decrypt, formato, idempotencia, corrupcao
+
+---
+
 ## Feat: Onboarding interativo no admin (16/04/2026)
 
 `src/components/admin/onboarding-tour.tsx` — Tour guiado para novos usuarios do painel admin.

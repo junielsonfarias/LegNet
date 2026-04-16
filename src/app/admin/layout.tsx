@@ -12,6 +12,7 @@ import { Building } from 'lucide-react'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { OnboardingTour } from '@/components/admin/onboarding-tour'
+import { SessionTimeoutGuard } from '@/components/admin/session-timeout-guard'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -203,6 +204,9 @@ export default async function AdminLayout({
           <main className="flex-1 p-4 lg:p-6 overflow-auto">
             {children}
           </main>
+
+          {/* Sessao segura: auto-logout por inatividade */}
+          <SessionTimeoutGuard />
 
           {/* Onboarding Tour (primeira visita) */}
           <OnboardingTour />

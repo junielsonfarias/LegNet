@@ -648,19 +648,31 @@ export class StreamingService {
 
 ---
 
-### MEL-023: Sessoes Seguras
+### MEL-023: Sessoes Seguras - **IMPLEMENTADO**
 
-**Descricao**: Timeout, bloqueio, fingerprint.
+**Descricao**: Timeout por inatividade, sincronizacao entre abas.
 
-**Estimativa**: 3-5 dias
+**Status**: IMPLEMENTADO (16/04/2026)
+
+**Implementacao**:
+- Hook `use-session-timeout.ts` com timeout 30 min + aviso 5 min antes
+- `SessionTimeoutGuard` integrado no admin layout
+- Sincroniza entre abas via localStorage
+- Sessao JWT 1h + cookies httpOnly/secure + rate limiting + 2FA
 
 ---
 
-### MEL-024: Criptografia de Dados Sensiveis
+### MEL-024: Criptografia de Dados Sensiveis - **IMPLEMENTADO**
 
-**Descricao**: Criptografar dados em repouso.
+**Descricao**: Criptografar dados em repouso com AES-256-GCM.
 
-**Estimativa**: 1 semana
+**Status**: IMPLEMENTADO (16/04/2026)
+
+**Implementacao**:
+- `src/lib/security/encryption.ts` — AES-256-GCM com IV aleatorio
+- encrypt/decrypt, safeDecrypt (backwards-compatible), hashForSearch (SHA-256)
+- Chave via ENCRYPTION_KEY no .env (32 bytes hex)
+- 10 testes unitarios cobrindo todos os cenarios
 
 ---
 
