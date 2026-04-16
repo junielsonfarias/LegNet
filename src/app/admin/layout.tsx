@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { Building } from 'lucide-react'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { OnboardingTour } from '@/components/admin/onboarding-tour'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -202,6 +203,9 @@ export default async function AdminLayout({
           <main className="flex-1 p-4 lg:p-6 overflow-auto">
             {children}
           </main>
+
+          {/* Onboarding Tour (primeira visita) */}
+          <OnboardingTour />
 
           {/* Footer do admin */}
           <footer className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 px-4 lg:px-6 py-3">

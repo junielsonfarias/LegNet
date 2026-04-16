@@ -8,6 +8,27 @@
 
 ---
 
+## Feat: Onboarding interativo no admin (16/04/2026)
+
+`src/components/admin/onboarding-tour.tsx` — Tour guiado para novos usuarios do painel admin.
+
+- 8 passos com progresso visual (barra + dots)
+- Aparece automaticamente na primeira visita (localStorage)
+- Navegacao: proximo, anterior, pular, clicar nos dots
+- Cobre: menu lateral, sessoes, proposicoes, transparencia, busca rapida, tema
+- `ResetOnboardingButton` para reabrir o guia (usar em configuracoes/ajuda)
+- Integrado no `src/app/admin/layout.tsx`
+- Dark mode, acessivel (aria-modal, focus ring, keyboard)
+
+### MEL-008, 009, 013 — ja implementados
+
+Verificacao confirmou que os 3 ja existiam:
+- **MEL-008** Templates de sessao: CRUD completo em `/admin/templates-sessao`
+- **MEL-009** Calendario legislativo: visao mes/semana/lista em `/calendario`
+- **MEL-013** Acessibilidade: toolbar com font scale, alto contraste, line height, reduced motion
+
+---
+
 ## Infra: CI/CD + backup + health check + CDN (16/04/2026)
 
 4 melhorias de infraestrutura implementadas:

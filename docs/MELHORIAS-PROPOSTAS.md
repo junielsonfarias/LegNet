@@ -565,11 +565,17 @@ export class StreamingService {
 
 ---
 
-### MEL-015: Onboarding Interativo
+### MEL-015: Onboarding Interativo - **IMPLEMENTADO**
 
 **Descricao**: Tutorial guiado para novos usuarios.
 
-**Estimativa**: 1 semana
+**Status**: IMPLEMENTADO (16/04/2026)
+
+**Implementacao**:
+- `src/components/admin/onboarding-tour.tsx` com 8 passos guiados
+- Aparece automaticamente na primeira visita ao admin
+- Progresso visual, dark mode, acessivel (ARIA)
+- `ResetOnboardingButton` para reabrir em configuracoes
 
 ---
 
