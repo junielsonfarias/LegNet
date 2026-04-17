@@ -1,0 +1,211 @@
+/* Estilo para PDF do Manual do Servidor */
+
+@page {
+  size: A4;
+  margin: 2cm 1.8cm;
+  @bottom-center {
+    content: counter(page);
+    font-size: 9pt;
+    color: #666;
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.55;
+  color: #1f2937;
+  max-width: none;
+  margin: 0;
+}
+
+/* Capa e títulos */
+h1 {
+  font-size: 22pt;
+  color: #1e3a8a;
+  border-bottom: 3px solid #3b82f6;
+  padding-bottom: 8pt;
+  margin-top: 24pt;
+  margin-bottom: 14pt;
+  page-break-before: always;
+}
+
+h1:first-of-type {
+  page-break-before: avoid;
+}
+
+h2 {
+  font-size: 16pt;
+  color: #1e40af;
+  border-bottom: 1px solid #dbeafe;
+  padding-bottom: 4pt;
+  margin-top: 20pt;
+  margin-bottom: 10pt;
+}
+
+h3 {
+  font-size: 13pt;
+  color: #2563eb;
+  margin-top: 16pt;
+  margin-bottom: 8pt;
+}
+
+h4 {
+  font-size: 11.5pt;
+  color: #1f2937;
+  margin-top: 12pt;
+  margin-bottom: 6pt;
+  font-weight: 700;
+}
+
+/* Parágrafos e listas */
+p, li {
+  margin: 6pt 0;
+}
+
+ul, ol {
+  padding-left: 24pt;
+}
+
+/* Tabelas */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12pt 0;
+  font-size: 10pt;
+  page-break-inside: avoid;
+}
+
+th {
+  background-color: #1e40af;
+  color: white;
+  padding: 8pt 10pt;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #1e40af;
+}
+
+td {
+  padding: 7pt 10pt;
+  border: 1px solid #d1d5db;
+  vertical-align: top;
+}
+
+tr:nth-child(even) td {
+  background-color: #f9fafb;
+}
+
+/* Código inline */
+code {
+  background: #f3f4f6;
+  color: #dc2626;
+  padding: 1pt 5pt;
+  border-radius: 3pt;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 9.5pt;
+}
+
+/* Blocos de código */
+pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 12pt;
+  border-radius: 6pt;
+  overflow-x: auto;
+  font-size: 9pt;
+  line-height: 1.4;
+  page-break-inside: avoid;
+  margin: 10pt 0;
+}
+
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Blockquotes / Callouts */
+blockquote {
+  border-left: 4px solid #3b82f6;
+  background: #eff6ff;
+  margin: 10pt 0;
+  padding: 8pt 14pt;
+  color: #1e3a8a;
+  page-break-inside: avoid;
+}
+
+blockquote p {
+  margin: 4pt 0;
+}
+
+/* Callouts específicos — detectados via conteúdo */
+blockquote p:has-text("💡") {
+  color: #1e40af;
+}
+
+blockquote p:has-text("⚠️") {
+  color: #92400e;
+}
+
+blockquote p:has-text("🔒") {
+  color: #991b1b;
+}
+
+/* Callouts por classe (quando o MD tem markers) */
+blockquote:has(> p:first-child:contains("⚠️")) {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+/* Links */
+a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+a:visited {
+  color: #7c3aed;
+}
+
+/* Imagens */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 14pt auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 4pt;
+  page-break-inside: avoid;
+}
+
+/* Separadores */
+hr {
+  border: none;
+  border-top: 1px solid #d1d5db;
+  margin: 20pt 0;
+}
+
+/* Badges e destaques em tabelas */
+td strong, th strong {
+  color: #1e40af;
+}
+
+/* Quebra de página em seções principais */
+h1 {
+  page-break-before: always;
+}
+
+/* Evitar quebra em elementos coesos */
+h1, h2, h3, h4 {
+  page-break-after: avoid;
+}
+
+table, pre, blockquote, figure {
+  page-break-inside: avoid;
+}
+
+/* Rodapé profissional */
+.page-break {
+  page-break-before: always;
+}

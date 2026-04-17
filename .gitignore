@@ -21,6 +21,11 @@ dist/
 *.pem
 Thumbs.db
 
+# Manual gerado (PDF e markdown consolidado sao build artefatos)
+docs/manual/manual-servidor.pdf
+docs/manual/manual-consolidado.md
+docs/manual/.consolidado.md
+
 # Debug
 npm-debug.log*
 yarn-debug.log*
