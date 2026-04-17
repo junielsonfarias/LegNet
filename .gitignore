@@ -26,11 +26,12 @@ docs/manual/manual-servidor.pdf
 docs/manual/manual-consolidado.md
 docs/manual/.consolidado.md
 
-# Placeholders PNG gerados automaticamente. Quando user capturar print
-# real (>50KB), a regeneracao preserva o real e substitui so os placeholders.
-# Por isso nao queremos commitar nenhum desses arquivos — que user inclua
-# apenas os prints reais manualmente.
+# Placeholders PNG gerados automaticamente pelo script.
+# Prints reais (capturados pelo user) devem ser commitados manualmente
+# com git add -f docs/manual/images/NOME.png (forcando).
+# O manifest rastreia quais arquivos sao placeholders vs reais.
 docs/manual/images/*.png
+docs/manual/images/.placeholders-manifest.json
 !docs/manual/images/.gitkeep
 
 # Debug

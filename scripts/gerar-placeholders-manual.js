@@ -147,7 +147,18 @@ async function main() {
   if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
   const placeholders = listarPlaceholders();
-  console.log(`Encontrados ${placeholders.length} placeholders únicos.\n`);
+  const force = process.argv.includes('--force');
+  console.log(`Encontrados ${placeholders.length} placeholders únicos.`);
+  if (force) console.log('Modo --force: regerando TODOS (mesmo existentes).\n');
+  else console.log('Preservando arquivos existentes. Use --force para regerar todos.\n');
+
+  // Manifest identifica placeholders gerados por este script (vs prints reais
+  // que o usuário colocou). Placeholders "nossos" são listados aqui; outros
+  // arquivos são preservados sempre.
+  const manifestPath = path.join(IMAGES_DIR, '.placeholders-manifest.json');
+  const manifest = fs.existsSync(manifestPath)
+    ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+    : { geradoEm: null, arquivos: [] };
 
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -155,20 +166,23 @@ async function main() {
 
   let gerados = 0;
   let pulados = 0;
+  const arquivosGerados = [];
 
   for (const [nomeArquivo, altTexto] of placeholders) {
     const destino = path.join(IMAGES_DIR, nomeArquivo);
+    const existe = fs.existsSync(destino);
+    const ehPlaceholderNosso = manifest.arquivos.includes(nomeArquivo);
 
-    // Só gera se não existir ou for placeholder antigo (<50KB tipicamente)
-    if (fs.existsSync(destino)) {
-      const size = fs.statSync(destino).size;
-      // Screenshot real costuma ser >50KB. Placeholder antigo era menor.
-      // Se existir PNG >50KB, user já capturou — pular.
-      if (size > 50000) {
-        console.log(`  ⊘ ${nomeArquivo} (${Math.round(size / 1024)}KB — print real, mantido)`);
+    if (existe && !force) {
+      if (!ehPlaceholderNosso) {
+        // Arquivo existe e NÃO é placeholder nosso — é um print real do user.
+        console.log(`  ⊘ ${nomeArquivo} (print real, preservado)`);
         pulados++;
         continue;
       }
+      // É placeholder nosso; só regera se --force for usado
+      pulados++;
+      continue;
     }
 
     const page = await browser.newPage();
@@ -180,13 +194,25 @@ async function main() {
     await page.close();
 
     gerados++;
+    arquivosGerados.push(nomeArquivo);
     if (gerados % 10 === 0) console.log(`  ✓ ${gerados}/${placeholders.length - pulados}...`);
   }
 
   await browser.close();
 
+  // Atualiza manifest com os arquivos gerados (consolida com os anteriores)
+  const arquivosPreservados = manifest.arquivos.filter((a) =>
+    placeholders.some(([nome]) => nome === a) && fs.existsSync(path.join(IMAGES_DIR, a))
+  );
+  const novoManifest = {
+    geradoEm: new Date().toISOString(),
+    arquivos: [...new Set([...arquivosPreservados, ...arquivosGerados])].sort(),
+  };
+  fs.writeFileSync(manifestPath, JSON.stringify(novoManifest, null, 2), 'utf8');
+
   console.log(`\n✓ ${gerados} placeholders gerados em ${IMAGES_DIR}`);
-  if (pulados > 0) console.log(`⊘ ${pulados} ignorados (screenshots reais já existem)`);
+  if (pulados > 0) console.log(`⊘ ${pulados} ignorados (ja existiam)`);
+  console.log(`  Manifest atualizado: ${manifestPath}`);
 }
 
 main().catch((err) => {
