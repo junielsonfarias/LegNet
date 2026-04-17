@@ -146,8 +146,11 @@ update_dependencies() {
 
     cd "$APP_DIR" || exit 1
 
-    # Instala dependências
-    npm ci --only=production 2>/dev/null || npm install
+    # IMPORTANTE: instala TODAS as deps (inclui devDeps).
+    # next build precisa de typescript, tailwindcss, @next/bundle-analyzer,
+    # postcss, autoprefixer e @types/* — todos em devDependencies.
+    # Usar --only=production quebra o build.
+    npm ci 2>/dev/null || npm install
 
     success "Dependências atualizadas"
 }

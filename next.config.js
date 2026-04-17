@@ -1,6 +1,13 @@
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
+// @next/bundle-analyzer é devDependency — se ausente (ex: npm ci --only=production
+// com versão antiga do update.sh), o build seguia falhando. Torna opcional.
+let withBundleAnalyzer = (config) => config;
+try {
+  withBundleAnalyzer = require('@next/bundle-analyzer')({
+    enabled: process.env.ANALYZE === 'true',
+  });
+} catch {
+  // bundle-analyzer não instalado — OK, só afeta `npm run analyze`
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
