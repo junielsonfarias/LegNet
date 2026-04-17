@@ -2,6 +2,7 @@
  * Testes para os servicos de Emendas e Normas Juridicas
  */
 import { vi, describe, it, expect, beforeEach } from 'vitest'
+import type { Emenda, VotoEmenda, NormaJuridica, Prisma } from '@prisma/client'
 
 // Mock do prisma
 vi.mock('@/lib/prisma', () => ({
@@ -87,14 +88,14 @@ describe('Emenda Service', () => {
       }
 
       vi.mocked(prisma.emenda.count).mockResolvedValue(0)
-      vi.mocked(prisma.emenda.create).mockResolvedValue(mockEmenda as any)
+      vi.mocked(prisma.emenda.create).mockResolvedValue(mockEmenda as unknown as Emenda)
 
       const { criarEmenda } = await import('@/lib/services/emenda-service')
 
       const resultado = await criarEmenda({
         proposicaoId: 'prop-1',
         autorId: 'parlamentar-1',
-        tipo: 'ADITIVA' as any,
+        tipo: 'ADITIVA',
         textoNovo: 'Texto da emenda',
         justificativa: 'Justificativa'
       })
@@ -115,13 +116,13 @@ describe('Emenda Service', () => {
         emendaId: 'emenda-1',
         parlamentarId: 'parlamentar-1',
         voto: 'SIM'
-      } as any)
+      } as unknown as VotoEmenda)
 
       const { votarEmenda } = await import('@/lib/services/emenda-service')
 
       const resultado = await votarEmenda('emenda-1', {
         parlamentarId: 'parlamentar-1',
-        voto: 'SIM' as any
+        voto: 'SIM'
       })
 
       expect(resultado).toBeDefined()
@@ -134,17 +135,17 @@ describe('Emenda Service', () => {
       vi.mocked(prisma.votoEmenda.findUnique).mockResolvedValue({
         id: 'voto-existente',
         voto: 'NAO'
-      } as any)
+      } as unknown as VotoEmenda)
       vi.mocked(prisma.votoEmenda.update).mockResolvedValue({
         id: 'voto-existente',
         voto: 'SIM'
-      } as any)
+      } as unknown as VotoEmenda)
 
       const { votarEmenda } = await import('@/lib/services/emenda-service')
 
       const resultado = await votarEmenda('emenda-1', {
         parlamentarId: 'parlamentar-1',
-        voto: 'SIM' as any
+        voto: 'SIM'
       })
 
       expect(resultado.voto).toBe('SIM')
@@ -162,7 +163,7 @@ describe('Emenda Service', () => {
         { voto: 'SIM' },
         { voto: 'NAO' },
         { voto: 'ABSTENCAO' }
-      ] as any)
+      ] as unknown as VotoEmenda[])
 
       const { apurarVotacaoEmenda } = await import('@/lib/services/emenda-service')
 
@@ -183,7 +184,7 @@ describe('Emenda Service', () => {
         { voto: 'NAO' },
         { voto: 'NAO' },
         { voto: 'NAO' }
-      ] as any)
+      ] as unknown as VotoEmenda[])
 
       const { apurarVotacaoEmenda } = await import('@/lib/services/emenda-service')
 
@@ -201,7 +202,7 @@ describe('Emenda Service', () => {
       vi.mocked(prisma.emenda.findMany).mockResolvedValue([
         { id: 'emenda-1', proposicaoId: 'prop-1', turnoApresentacao: 1, status: 'APRESENTADA' },
         { id: 'emenda-2', proposicaoId: 'prop-1', turnoApresentacao: 1, status: 'APRESENTADA' }
-      ] as any)
+      ] as unknown as Emenda[])
       vi.mocked(prisma.emenda.count).mockResolvedValue(2)
 
       const mockNovaEmenda = {
@@ -211,14 +212,16 @@ describe('Emenda Service', () => {
         status: 'APRESENTADA'
       }
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(prisma.$transaction).mockImplementation((async (
+        fn: (tx: Prisma.TransactionClient) => Promise<unknown>
+      ) => {
         return fn({
           emenda: {
             create: vi.fn().mockResolvedValue(mockNovaEmenda),
             updateMany: vi.fn().mockResolvedValue({ count: 2 })
           }
-        })
-      })
+        } as unknown as Prisma.TransactionClient)
+      }) as unknown as typeof prisma.$transaction)
 
       const { aglutinarEmendas } = await import('@/lib/services/emenda-service')
 
@@ -242,7 +245,7 @@ describe('Norma Juridica Service', () => {
 
       vi.mocked(prisma.normaJuridica.findMany).mockResolvedValue([
         { id: 'norma-1', tipo: 'LEI_ORDINARIA', numero: 1, ano: 2024 }
-      ] as any)
+      ] as unknown as NormaJuridica[])
       vi.mocked(prisma.normaJuridica.count).mockResolvedValue(1)
 
       expect(prisma.normaJuridica.findMany).toBeDefined()

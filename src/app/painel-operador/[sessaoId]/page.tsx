@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import { getErrorMessage } from '@/lib/error-handler'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -87,7 +88,7 @@ export default function PainelOperadorPage() {
       .then(data => {
         if (data.success && Array.isArray(data.data)) {
           const map: Record<string, string> = {}
-          data.data.forEach((t: any) => { map[t.id] = t.nome })
+          data.data.forEach((t: { id: string; nome: string }) => { map[t.id] = t.nome })
           setTiposExpedienteMap(map)
         }
       })
@@ -132,7 +133,7 @@ export default function PainelOperadorPage() {
 
   const iniciarSessaoTimer = useCallback((dadosSessao: SessaoApi) => {
     if (sessaoIntervalRef.current) clearInterval(sessaoIntervalRef.current)
-    const tempoAcumulado = (dadosSessao as any).tempoAcumulado || 0
+    const tempoAcumulado = dadosSessao.tempoAcumulado || 0
 
     if (dadosSessao.status === 'EM_ANDAMENTO' && dadosSessao.tempoInicio) {
       const calcularTempo = () => {
@@ -186,9 +187,9 @@ export default function PainelOperadorPage() {
         dados.pautaSessao?.itens.find(item => ['EM_DISCUSSAO', 'EM_VOTACAO'].includes(item.status)) ??
         null
       )
-    } catch (error: any) {
+    } catch (error) {
       log.error('Erro ao carregar sessão', error)
-      toast.error(error?.message || 'Erro ao carregar sessão')
+      toast.error(getErrorMessage(error) || 'Erro ao carregar sessão')
     } finally {
       if (mostrarLoader) setLoading(false)
     }
@@ -251,8 +252,8 @@ export default function PainelOperadorPage() {
       }
 
       await carregarSessao(false)
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao alterar status da sessão')
+    } catch (error) {
+      toast.error(getErrorMessage(error) || 'Erro ao alterar status da sessão')
     } finally {
       setExecutando(false)
     }
@@ -282,8 +283,8 @@ export default function PainelOperadorPage() {
       if (acao === 'votacao') {
         setModalVotacaoAberto(true)
       }
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao executar ação no item')
+    } catch (error) {
+      toast.error(getErrorMessage(error) || 'Erro ao executar ação no item')
     } finally {
       setExecutando(false)
     }
@@ -299,7 +300,11 @@ export default function PainelOperadorPage() {
       toast.error('Selecione um resultado')
       return
     }
-    await executarAcaoItem(modalFinalizar.itemId, 'finalizar', resultadoSelecionado as any)
+    await executarAcaoItem(
+      modalFinalizar.itemId,
+      'finalizar',
+      resultadoSelecionado as 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
+    )
     setModalFinalizar({ open: false, itemId: '', titulo: '' })
   }
 
@@ -323,8 +328,8 @@ export default function PainelOperadorPage() {
       await carregarSessao(false)
       toast.success('Item retirado de pauta com sucesso. A proposicao esta disponivel para inclusao em sessoes futuras.')
       setModalRetiradaPauta({ open: false, itemId: '', titulo: '' })
-    } catch (error: any) {
-      toast.error(error?.message || 'Erro ao retirar item de pauta')
+    } catch (error) {
+      toast.error(getErrorMessage(error) || 'Erro ao retirar item de pauta')
     } finally {
       setExecutando(false)
     }
@@ -383,10 +388,14 @@ export default function PainelOperadorPage() {
     : '--/--/----'
 
   // Total de parlamentares = mandatos ativos com parlamentar ativo
-  const totalMandatos = (sessao.legislatura as any)?.mandatos?.filter((m: any) => m.ativo && m.parlamentar?.ativo)?.length || 0
+  // `legislatura` pode trazer `mandatos` em algumas respostas (não faz parte do tipo base SessaoApi)
+  const legislaturaComMandatos = sessao.legislatura as
+    | { mandatos?: Array<{ ativo: boolean; parlamentar?: { ativo: boolean } }> }
+    | undefined
+  const totalMandatos = legislaturaComMandatos?.mandatos?.filter((m) => m.ativo && m.parlamentar?.ativo)?.length || 0
   const totalPresencasRegistradas = sessao.presencas?.length || 0
   const totalParlamentares = Math.max(totalMandatos, totalPresencasRegistradas) || totalPresencasRegistradas
-  const presentes = sessao.presencas?.filter((p: any) => p.presente).length || 0
+  const presentes = sessao.presencas?.filter((p) => p.presente).length || 0
   const ausentes = totalParlamentares - presentes
   const percentualPresenca = totalParlamentares > 0 ? Math.round((presentes / totalParlamentares) * 100) : 0
 
@@ -439,10 +448,10 @@ export default function PainelOperadorPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
-                {['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA'].map(s => (
+                {(['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA'] as const).map(s => (
                   <DropdownMenuItem
                     key={s}
-                    onClick={() => alterarStatusSessao(s as any)}
+                    onClick={() => alterarStatusSessao(s)}
                     disabled={sessao.status === s}
                     className="text-xs"
                   >
@@ -689,10 +698,8 @@ export default function PainelOperadorPage() {
                                     {(sessao.status === 'EM_ANDAMENTO' || sessao.status === 'SUSPENSA') && (
                                       <>
                                         {(() => {
-                                          const acoes = getAcoesDisponiveis(item)
+                                          const a = getAcoesDisponiveis(item)
                                           {
-                                            // Cast para any para evitar erros de tipo com propriedades opcionais
-                                            const a = acoes as any
                                             return (
                                               <>
                                                 {a.iniciar && (
@@ -739,18 +746,19 @@ export default function PainelOperadorPage() {
                                                     variant="ghost"
                                                     className={cn("h-7 px-2 gap-1", a.finalizar.color)}
                                                     onClick={() => {
-                                                      // Se tem resultado direto (ex: CONCLUIDO para leituras), executa direto
-                                                      if (a.finalizar.resultado) {
-                                                        executarAcaoItem(item.id, 'finalizar', a.finalizar.resultado)
+                                                      const resultado = a.finalizar?.resultado as
+                                                        | 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
+                                                        | undefined
+                                                      if (resultado) {
+                                                        executarAcaoItem(item.id, 'finalizar', resultado)
                                                       } else {
-                                                        // Senão abre modal para escolher resultado
                                                         abrirModalFinalizar(item.id, item.titulo)
                                                       }
                                                     }}
                                                     disabled={executando}
                                                     title={a.finalizar.label}
                                                   >
-                                                    <a.finalizar.icon className="h-3.5 w-3.5" />
+                                                    {(() => { const Icon = a.finalizar!.icon; return <Icon className="h-3.5 w-3.5" /> })()}
                                                     <span className="text-xs hidden xl:inline">{a.finalizar.label}</span>
                                                   </Button>
                                                 )}

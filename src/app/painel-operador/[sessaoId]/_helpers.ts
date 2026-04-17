@@ -13,6 +13,7 @@ import {
   Vote,
 } from 'lucide-react'
 import type { PautaItemApi } from '@/lib/api/pauta-api'
+import type React from 'react'
 
 export const formatSeconds = (seconds: number) => {
   const horas = Math.floor(seconds / 3600)
@@ -79,7 +80,17 @@ export const getTipoAcaoConfig = (tipoAcao: string) => {
   }
 }
 
-export const getAcoesDisponiveis = (item: PautaItemApi) => {
+type AcaoBtn = { label: string; icon: React.ElementType; color: string; resultado?: string }
+export type AcoesDisponiveis = Partial<{
+  iniciar: AcaoBtn
+  pausar: AcaoBtn
+  retomar: AcaoBtn
+  votacao: AcaoBtn
+  finalizar: AcaoBtn
+  retirarPauta: AcaoBtn
+}>
+
+export const getAcoesDisponiveis = (item: PautaItemApi): AcoesDisponiveis => {
   const tipoAcao = (item.tipoAcao || 'LEITURA') as string
   const status = item.status
   const temProposicao = !!item.proposicao

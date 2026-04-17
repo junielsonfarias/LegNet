@@ -6,8 +6,23 @@ const log = createLogger('admin/legislaturas/hooks/useLegislaturasAdmin')
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas'
-import type { Legislatura, Periodo, LegislaturaFormData } from '../types'
+import type { Legislatura, Periodo, Cargo, LegislaturaFormData } from '../types'
 import { INITIAL_FORM_DATA, formatDateToInput } from '../types'
+
+// Shapes de response da API (DTOs)
+interface PeriodoApiResponse {
+  id: string
+  numero: number
+  dataInicio: string
+  dataFim: string | null
+  descricao: string | null
+}
+interface CargoApiResponse {
+  id: string
+  nome: string
+  ordem: number
+  obrigatorio: boolean
+}
 
 export function useLegislaturasAdmin() {
   const { legislaturas, loading, create, update, remove, refetch } = useLegislaturas()
@@ -117,7 +132,7 @@ export function useLegislaturasAdmin() {
     let erros = 0
 
     for (const periodo of periodos) {
-      const periodoExistente = periodosExistentes.find((p: any) => p.numero === periodo.numero)
+      const periodoExistente = (periodosExistentes as PeriodoApiResponse[]).find((p) => p.numero === periodo.numero)
       let periodoId: string
 
       if (periodoExistente) {
@@ -155,7 +170,7 @@ export function useLegislaturasAdmin() {
             // Período já existe - buscar ID do existente para salvar cargos
             const existentes = await fetch(`/api/periodos-legislatura?legislaturaId=${legislaturaId}`)
             const existentesData = await existentes.json()
-            const encontrado = existentesData.success && existentesData.data?.find((p: any) => p.numero === periodo.numero)
+            const encontrado: PeriodoApiResponse | undefined = existentesData.success && existentesData.data?.find((p: PeriodoApiResponse) => p.numero === periodo.numero)
             if (encontrado && periodo.cargos.length > 0) {
               await salvarCargosPeriodo(encontrado.id, periodo.cargos)
             }
@@ -189,7 +204,7 @@ export function useLegislaturasAdmin() {
     for (const cargo of cargos) {
       if (!cargo.nome || cargo.nome.trim() === '') continue
 
-      const cargoExistente = cargosExistentes.find((c: any) => c.ordem === cargo.ordem)
+      const cargoExistente = (cargosExistentes as CargoApiResponse[]).find((c) => c.ordem === cargo.ordem)
 
       if (cargoExistente) {
         await fetch(`/api/cargos-mesa-diretora/${cargoExistente.id}`, {
@@ -220,15 +235,15 @@ export function useLegislaturasAdmin() {
     }
 
     // Remover cargos excluidos
-    for (const cargoExistente of cargosExistentes) {
-      const cargoAindaExiste = cargos.some((c: any) => c.ordem === cargoExistente.ordem)
+    for (const cargoExistente of cargosExistentes as CargoApiResponse[]) {
+      const cargoAindaExiste = cargos.some((c: Cargo) => c.ordem === cargoExistente.ordem)
       if (!cargoAindaExiste) {
         await fetch(`/api/cargos-mesa-diretora/${cargoExistente.id}`, { method: 'DELETE' })
       }
     }
   }
 
-  const handleEdit = async (legislatura: any) => {
+  const handleEdit = async (legislatura: Legislatura) => {
     setFormData({
       numero: legislatura.numero.toString(),
       anoInicio: legislatura.anoInicio.toString(),
@@ -246,7 +261,7 @@ export function useLegislaturasAdmin() {
       const data = await response.json()
       if (data.success && data.data) {
         const periodosComCargos = await Promise.all(
-          data.data.map(async (periodo: any) => {
+          (data.data as PeriodoApiResponse[]).map(async (periodo) => {
             const cargosResponse = await fetch(`/api/cargos-mesa-diretora?periodoId=${periodo.id}`)
             const cargosData = await cargosResponse.json()
 
@@ -255,7 +270,7 @@ export function useLegislaturasAdmin() {
               dataInicio: formatDateToInput(periodo.dataInicio),
               dataFim: periodo.dataFim ? formatDateToInput(periodo.dataFim) : undefined,
               descricao: periodo.descricao || undefined,
-              cargos: cargosData.success ? cargosData.data.map((c: any) => ({
+              cargos: cargosData.success ? (cargosData.data as CargoApiResponse[]).map((c) => ({
                 nome: c.nome,
                 ordem: c.ordem,
                 obrigatorio: c.obrigatorio
@@ -278,21 +293,25 @@ export function useLegislaturasAdmin() {
     }
   }
 
-  const handleView = async (legislatura: any) => {
+  const handleView = async (legislatura: Legislatura) => {
     setLoadingDetalhes(true)
     try {
       const response = await fetch(`/api/periodos-legislatura?legislaturaId=${legislatura.id}`)
       const data = await response.json()
 
-      let periodosComCargos: any[] = []
+      let periodosComCargos: Periodo[] = []
       if (data.success && data.data) {
         periodosComCargos = await Promise.all(
-          data.data.map(async (periodo: any) => {
+          (data.data as PeriodoApiResponse[]).map(async (periodo): Promise<Periodo> => {
             const cargosResponse = await fetch(`/api/cargos-mesa-diretora?periodoId=${periodo.id}`)
             const cargosData = await cargosResponse.json()
             return {
-              ...periodo,
-              cargos: cargosData.success ? cargosData.data : []
+              id: periodo.id,
+              numero: periodo.numero,
+              dataInicio: periodo.dataInicio,
+              dataFim: periodo.dataFim ?? undefined,
+              descricao: periodo.descricao ?? undefined,
+              cargos: cargosData.success ? (cargosData.data as CargoApiResponse[]) : []
             }
           })
         )
@@ -324,7 +343,7 @@ export function useLegislaturasAdmin() {
     setPeriodos(periodos.filter((_, i) => i !== index))
   }
 
-  const atualizarPeriodo = (index: number, campo: string, valor: any) => {
+  const atualizarPeriodo = (index: number, campo: keyof Periodo, valor: Periodo[keyof Periodo]) => {
     const novosPeriodos = [...periodos]
     novosPeriodos[index] = { ...novosPeriodos[index], [campo]: valor }
     setPeriodos(novosPeriodos)
@@ -350,7 +369,7 @@ export function useLegislaturasAdmin() {
     setPeriodos(novosPeriodos)
   }
 
-  const atualizarCargo = (periodoIndex: number, cargoIndex: number, campo: string, valor: any) => {
+  const atualizarCargo = (periodoIndex: number, cargoIndex: number, campo: keyof Cargo, valor: Cargo[keyof Cargo]) => {
     const novosPeriodos = [...periodos]
     novosPeriodos[periodoIndex].cargos[cargoIndex] = {
       ...novosPeriodos[periodoIndex].cargos[cargoIndex],

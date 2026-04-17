@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { X, Save, Loader2, Plus } from 'lucide-react'
-import type { LegislaturaFormData, Periodo } from '../types'
+import type { LegislaturaFormData, Periodo, Cargo } from '../types'
 
 interface LegislaturaFormModalProps {
   open: boolean
@@ -18,10 +18,10 @@ interface LegislaturaFormModalProps {
   onFormChange: (data: LegislaturaFormData) => void
   onAdicionarPeriodo: () => void
   onRemoverPeriodo: (index: number) => void
-  onAtualizarPeriodo: (index: number, campo: string, valor: any) => void
+  onAtualizarPeriodo: (index: number, campo: keyof Periodo, valor: Periodo[keyof Periodo]) => void
   onAdicionarCargo: (periodoIndex: number) => void
   onRemoverCargo: (periodoIndex: number, cargoIndex: number) => void
-  onAtualizarCargo: (periodoIndex: number, cargoIndex: number, campo: string, valor: any) => void
+  onAtualizarCargo: (periodoIndex: number, cargoIndex: number, campo: keyof Cargo, valor: Cargo[keyof Cargo]) => void
 }
 
 export function LegislaturaFormModal({

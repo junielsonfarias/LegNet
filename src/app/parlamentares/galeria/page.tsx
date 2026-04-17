@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, type ComponentType } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,10 +8,11 @@ import Image from 'next/image'
 import {
   Users, Loader2, Search, Crown, Star, Award,
   ArrowRight, Calendar, LayoutGrid, List,
-  ChevronRight, UserX
+  ChevronRight, UserX, type LucideProps
 } from 'lucide-react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
+import type { ParlamentarApi } from '@/lib/api/parlamentares-api'
 import Link from 'next/link'
 import { slugify, cn } from '@/lib/utils'
 
@@ -31,7 +32,8 @@ const cargoLabels: Record<string, string> = {
   'VEREADOR': 'Vereador(a)'
 }
 
-const cargoStyle: Record<string, { gradient: string; bg: string; text: string; icon: any }> = {
+type LucideIcon = ComponentType<LucideProps>
+const cargoStyle: Record<string, { gradient: string; bg: string; text: string; icon: LucideIcon }> = {
   'PRESIDENTE': { gradient: 'from-amber-500 to-yellow-600', bg: 'bg-amber-50', text: 'text-amber-700', icon: Crown },
   'VICE_PRESIDENTE': { gradient: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50', text: 'text-blue-700', icon: Star },
   'PRIMEIRO_SECRETARIO': { gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-700', icon: Award },
@@ -40,17 +42,17 @@ const cargoStyle: Record<string, { gradient: string; bg: string; text: string; i
 
 const ordemCargos = ['PRESIDENTE', 'VICE_PRESIDENTE', 'PRIMEIRO_SECRETARIO', 'SEGUNDO_SECRETARIO', 'VEREADOR']
 
-function getPerfilUrl(p: any) {
+function getPerfilUrl(p: ParlamentarApi) {
   const slug = slugify(p.apelido || p.nome)
   return `/parlamentares/${slug || p.id}`
 }
 
-function getInitials(p: any) {
+function getInitials(p: ParlamentarApi) {
   return (p.apelido || p.nome).split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase()
 }
 
 /* ============ Card do Vereador (Grid) ============ */
-function VereadorGridCard({ p, inactive }: { p: any; inactive?: boolean }) {
+function VereadorGridCard({ p, inactive }: { p: ParlamentarApi; inactive?: boolean }) {
   const isMesa = p.cargo && p.cargo !== 'VEREADOR'
   const style = cargoStyle[p.cargo] || null
   const Icon = style?.icon || Users
@@ -145,7 +147,7 @@ function VereadorGridCard({ p, inactive }: { p: any; inactive?: boolean }) {
 }
 
 /* ============ Card do Vereador (Lista) ============ */
-function VereadorListCard({ p, inactive }: { p: any; inactive?: boolean }) {
+function VereadorListCard({ p, inactive }: { p: ParlamentarApi; inactive?: boolean }) {
   const isMesa = p.cargo && p.cargo !== 'VEREADOR'
   const style = cargoStyle[p.cargo] || null
   const Icon = style?.icon || Users
@@ -239,27 +241,27 @@ export default function GaleriaParlamentaresPage() {
 
   // Separar ativos e inativos
   const { ativos, inativos } = useMemo(() => {
-    const sorted = [...parlamentares].sort((a: any, b: any) => {
+    const sorted = [...parlamentares].sort((a: ParlamentarApi, b: ParlamentarApi) => {
       const ordemA = ordemCargos.indexOf(a.cargo || 'VEREADOR')
       const ordemB = ordemCargos.indexOf(b.cargo || 'VEREADOR')
       if (ordemA !== ordemB) return ordemA - ordemB
       return (a.apelido || a.nome).localeCompare(b.apelido || b.nome)
     })
     return {
-      ativos: sorted.filter((p: any) => p.ativo),
-      inativos: sorted.filter((p: any) => !p.ativo),
+      ativos: sorted.filter((p: ParlamentarApi) => p.ativo),
+      inativos: sorted.filter((p: ParlamentarApi) => !p.ativo),
     }
   }, [parlamentares])
 
   // Partidos
   const partidos = useMemo(() => {
     const set = new Set<string>()
-    parlamentares.forEach((p: any) => { if (p.partido) set.add(p.partido) })
+    parlamentares.forEach((p: ParlamentarApi) => { if (p.partido) set.add(p.partido) })
     return Array.from(set).sort()
   }, [parlamentares])
 
   // Filtrar por busca e partido
-  const filterFn = (list: any[]) => list.filter((p: any) => {
+  const filterFn = (list: ParlamentarApi[]) => list.filter((p: ParlamentarApi) => {
     if (busca) {
       const termo = busca.toLowerCase()
       const match = (p.apelido || '').toLowerCase().includes(termo) ||
@@ -447,13 +449,13 @@ export default function GaleriaParlamentaresPage() {
 
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-                    {ativosFiltrados.map((p: any) => (
+                    {ativosFiltrados.map((p: ParlamentarApi) => (
                       <VereadorGridCard key={p.id} p={p} />
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {ativosFiltrados.map((p: any) => (
+                    {ativosFiltrados.map((p: ParlamentarApi) => (
                       <VereadorListCard key={p.id} p={p} />
                     ))}
                   </div>
@@ -475,13 +477,13 @@ export default function GaleriaParlamentaresPage() {
 
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-                    {inativosFiltrados.map((p: any) => (
+                    {inativosFiltrados.map((p: ParlamentarApi) => (
                       <VereadorGridCard key={p.id} p={p} inactive />
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {inativosFiltrados.map((p: any) => (
+                    {inativosFiltrados.map((p: ParlamentarApi) => (
                       <VereadorListCard key={p.id} p={p} inactive />
                     ))}
                   </div>
