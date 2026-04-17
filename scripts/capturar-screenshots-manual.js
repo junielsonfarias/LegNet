@@ -87,9 +87,16 @@ async function executarAcao(page, acao) {
   }
 }
 
-async function capturarUma(contexto, config) {
-  const { arquivo, url, login, viewport, waitFor, esperar, acoes, clip } = config;
+async function capturarUma(contexto, config, ids = {}) {
+  const { arquivo, login, viewport, waitFor, esperar, acoes, clip } = config;
+  const url = interpolar(config.url, ids);
   const destino = path.join(IMAGES_DIR, arquivo);
+
+  // Se url tem placeholder não resolvido, pula
+  if (/\{[a-zA-Z]+\}/.test(url)) {
+    log(`  ⏭ ${arquivo}: placeholder nao resolvido em url "${url}"`);
+    return { arquivo, sucesso: false, erro: 'id nao resolvido' };
+  }
 
   const page = await contexto.newPage();
   try {
@@ -117,7 +124,13 @@ async function capturarUma(contexto, config) {
 
     if (acoes) {
       for (const acao of acoes) {
-        await executarAcao(page, acao);
+        // Interpola seletores com IDs (ex: 'text=Sessão {sessaoId}')
+        const acaoInterp = {
+          ...acao,
+          seletor: interpolar(acao.seletor, ids),
+          valor: acao.valor ? interpolar(acao.valor, ids) : acao.valor,
+        };
+        await executarAcao(page, acaoInterp);
       }
     }
 
@@ -167,6 +180,52 @@ async function verificarServidorAtivo() {
   } catch {
     return false;
   }
+}
+
+/**
+ * Busca IDs de entidades reais para substituir em rotas dinâmicas.
+ * Suporta placeholders: {proposicaoId}, {proposicaoSlug}, {sessaoId},
+ * {comissaoId}, {parlamentarId}.
+ */
+async function resolverIds() {
+  const ids = {};
+
+  async function tryFetch(path, extractor) {
+    try {
+      const r = await fetch(`${BASE_URL}${path}`);
+      if (!r.ok) return null;
+      const json = await r.json();
+      return extractor(json);
+    } catch {
+      return null;
+    }
+  }
+
+  const prop = await tryFetch('/api/proposicoes?limit=1', (j) => j?.data?.[0]);
+  if (prop) {
+    ids.proposicaoId = prop.id;
+    ids.proposicaoSlug = prop.slug;
+  }
+
+  const sess = await tryFetch('/api/dados-abertos/sessoes?limit=1', (j) => j?.dados?.[0]);
+  if (sess) ids.sessaoId = sess.id;
+
+  const com = await tryFetch('/api/comissoes?limit=1', (j) => j?.data?.[0]);
+  if (com) ids.comissaoId = com.id;
+
+  const parl = await tryFetch('/api/parlamentares?limit=1', (j) => j?.data?.[0]);
+  if (parl) ids.parlamentarId = parl.id;
+
+  return ids;
+}
+
+function interpolar(texto, ids) {
+  if (!texto || typeof texto !== 'string') return texto;
+  let res = texto;
+  for (const [key, val] of Object.entries(ids)) {
+    if (val) res = res.split(`{${key}}`).join(val);
+  }
+  return res;
 }
 
 async function main() {
@@ -223,10 +282,14 @@ async function main() {
     viewport: { width: 1280, height: 720 },
   });
 
+  // Resolve IDs dinâmicos (proposicao, sessao, comissao) para interpolar em URLs
+  const ids = await resolverIds();
+  log(`IDs resolvidos: ${Object.entries(ids).filter(([, v]) => v).map(([k]) => k).join(', ')}`);
+
   const resultados = [];
   for (const cfg of lista) {
     const ctx = cfg.login ? authContext : anonContext;
-    const r = await capturarUma(ctx, cfg);
+    const r = await capturarUma(ctx, cfg, ids);
     resultados.push(r);
   }
 
