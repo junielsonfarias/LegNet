@@ -65,10 +65,20 @@ async function fazerLogin(page) {
 }
 
 async function executarAcao(page, acao) {
-  const { tipo, seletor, valor } = acao;
+  const { tipo, seletor, valor, role, nome } = acao;
   switch (tipo) {
     case 'click':
       await page.click(seletor);
+      break;
+    case 'clickRole':
+      // Forma robusta para Radix Tabs, dialogs, menus
+      await page.getByRole(role, { name: nome }).click();
+      break;
+    case 'clickText':
+      await page.getByText(nome, { exact: false }).first().click();
+      break;
+    case 'scrollInto':
+      await page.locator(seletor).scrollIntoViewIfNeeded();
       break;
     case 'fill':
       await page.fill(seletor, valor);

@@ -73,7 +73,7 @@ const capturas = [
   {
     arquivo: '01-14-2fa-qrcode.png', url: '/admin/perfil', login: true, waitFor: 'main', esperar: 2500,
     acoes: [
-      { tipo: 'click', seletor: 'button:has-text("Gerar"), button:has-text("Ativar 2FA"), button:has-text("2FA")' },
+      { tipo: 'clickText', nome: 'Ativar autenticação' },
       { tipo: 'wait', valor: 2000 },
     ],
     clip: 'viewport',
@@ -87,12 +87,8 @@ const capturas = [
   // 02 — PROTOCOLO
   // =========================================================================
   {
-    arquivo: '02-01-menu-protocolo.png', url: '/admin', login: true, waitFor: 'aside', esperar: 2500,
-    acoes: [
-      // Expande a categoria Legislativo no menu
-      { tipo: 'click', seletor: 'aside button:has-text("LEGISLATIVO"), aside :has-text("Legislativo"):not(:has([class*="active"]))' },
-      { tipo: 'wait', valor: 600 },
-    ],
+    arquivo: '02-01-menu-protocolo.png', url: '/admin/protocolo', login: true, waitFor: 'aside', esperar: 3000,
+    // Navega para protocolo — sidebar ja mostra LEGISLATIVO expandido e Protocolo ativo
     clip: { seletor: 'aside' },
   },
   { arquivo: '02-02-lista-protocolos.png', url: '/admin/protocolo', login: true, waitFor: 'main', esperar: 3000, clip: 'viewport' },
@@ -113,16 +109,18 @@ const capturas = [
   },
   {
     arquivo: '02-07-botao-registrar.png', url: '/admin/protocolo/novo', login: true, waitFor: 'form', esperar: 2500,
-    acoes: [{ tipo: 'press', valor: 'End' }, { tipo: 'wait', valor: 500 }],
-    clip: { seletor: 'form button[type="submit"], button:has-text("Registrar"), button:has-text("Salvar")' },
+    acoes: [
+      { tipo: 'scrollInto', seletor: 'form button[type="submit"]' },
+      { tipo: 'wait', valor: 800 },
+    ],
+    clip: 'viewport',
   },
 
   // =========================================================================
   // 03 — PROPOSICOES
   // =========================================================================
   {
-    arquivo: '03-01-menu-proposicoes.png', url: '/admin', login: true, waitFor: 'aside', esperar: 2500,
-    acoes: [{ tipo: 'click', seletor: 'aside button:has-text("LEGISLATIVO")' }, { tipo: 'wait', valor: 600 }],
+    arquivo: '03-01-menu-proposicoes.png', url: '/admin/proposicoes', login: true, waitFor: 'aside', esperar: 3000,
     clip: { seletor: 'aside' },
   },
   { arquivo: '03-02-lista-proposicoes.png', url: '/admin/proposicoes', login: true, waitFor: 'main', esperar: 3000, clip: 'viewport' },
@@ -142,7 +140,7 @@ const capturas = [
   {
     arquivo: '03-06-timeline-tramitacao.png', url: '/admin/proposicoes/{proposicaoSlug}', login: true, waitFor: 'main', esperar: 3000,
     acoes: [
-      { tipo: 'click', seletor: `${TAB_WITH_TEXT('Histórico')}, ${TAB_WITH_TEXT('Tramitação')}, ${TAB_WITH_TEXT('Timeline')}` },
+      { tipo: 'clickRole', role: 'tab', nome: 'Tramitação' },
       { tipo: 'wait', valor: 1500 },
     ],
     clip: 'viewport',
@@ -179,7 +177,7 @@ const capturas = [
   {
     arquivo: '05-03-adicionar-membro.png', url: '/admin/comissoes/{comissaoId}', login: true, waitFor: 'main', esperar: 3000,
     acoes: [
-      { tipo: 'click', seletor: 'button:has-text("Adicionar Membro"), button:has-text("Novo Membro"), button:has-text("+ Membro")' },
+      { tipo: 'clickText', nome: 'Adicionar Membro' },
       { tipo: 'wait', valor: 1500 },
     ],
     clip: 'viewport',
@@ -201,22 +199,22 @@ const capturas = [
   { arquivo: '06-04-ficha-sessao.png', url: '/admin/sessoes/{sessaoId}', login: true, waitFor: 'main', esperar: 3500, clip: 'viewport' },
   {
     arquivo: '06-05-editor-pauta.png', url: '/admin/sessoes/{sessaoId}', login: true, waitFor: 'main', esperar: 3500,
-    acoes: [{ tipo: 'click', seletor: TAB_WITH_TEXT('Pauta') }, { tipo: 'wait', valor: 1500 }],
+    acoes: [{ tipo: 'clickRole', role: 'tab', nome: 'Pauta' }, { tipo: 'wait', valor: 1500 }],
     clip: 'viewport',
   },
   {
     arquivo: '06-06-presencas.png', url: '/admin/sessoes/{sessaoId}', login: true, waitFor: 'main', esperar: 3500,
-    acoes: [{ tipo: 'click', seletor: TAB_WITH_TEXT('Presença') }, { tipo: 'wait', valor: 1500 }],
+    acoes: [{ tipo: 'clickRole', role: 'tab', nome: 'Presença' }, { tipo: 'wait', valor: 1500 }],
     clip: 'viewport',
   },
   {
     arquivo: '06-07-mesa.png', url: '/admin/sessoes/{sessaoId}', login: true, waitFor: 'main', esperar: 3500,
-    acoes: [{ tipo: 'click', seletor: TAB_WITH_TEXT('Mesa') }, { tipo: 'wait', valor: 1500 }],
+    acoes: [{ tipo: 'clickRole', role: 'tab', nome: 'Mesa' }, { tipo: 'wait', valor: 1500 }],
     clip: 'viewport',
   },
   {
     arquivo: '06-08-preview-ata.png', url: '/admin/sessoes/{sessaoId}', login: true, waitFor: 'main', esperar: 3500,
-    acoes: [{ tipo: 'click', seletor: TAB_WITH_TEXT('Info') }, { tipo: 'wait', valor: 1500 }],
+    acoes: [{ tipo: 'clickRole', role: 'tab', nome: 'Info' }, { tipo: 'wait', valor: 1500 }],
     clip: 'viewport',
   },
   { arquivo: '06-09-calendario.png', url: '/calendario', waitFor: 'main', esperar: 3000, clip: 'viewport' },
