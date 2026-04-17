@@ -14,16 +14,16 @@
 | 01 | [Primeiros Passos — Login, navegação e perfil](./01-primeiros-passos.md) | ✅ | Todos |
 | 02 | [Protocolo de Documentos](./02-protocolo.md) | ✅ | Secretaria, Admin |
 | 03 | [Proposições — criação, edição, tramitação, emendas](./03-proposicoes.md) | ✅ | Secretaria, Auxiliar, Editor |
-| 04 | Pareceres de Comissão | 🔜 | Secretaria, Auxiliar |
-| 05 | Comissões e Reuniões | 🔜 | Secretaria, Auxiliar |
+| 04 | [Pareceres de Comissão](./04-pareceres.md) | ✅ | Secretaria, Auxiliar |
+| 05 | [Comissões e Reuniões](./05-comissoes.md) | ✅ | Secretaria, Auxiliar |
 | 06 | [Sessões Legislativas — agendamento, pauta, ata](./06-sessoes.md) | ✅ | Secretaria, Operador |
 | 07 | [Painel Operador e Votações — tempo real](./07-painel-operador.md) | ✅ | Operador, Secretaria |
 | 08 | Publicações, Normas Jurídicas e Notícias | 🔜 | Editor |
-| 09 | Transparência (PNTP) — despesas, contratos, folha, etc. | 🔜 | Editor, Admin |
+| 09 | [Transparência (PNTP) — despesas, contratos, folha, etc.](./09-transparencia.md) | ✅ | Editor, Admin |
 | 10 | E-SIC e Ouvidoria | 🔜 | Editor, Secretaria |
 | 11 | Participação Cidadã — consultas e sugestões | 🔜 | Editor |
 | 12 | Relatórios e Analytics | 🔜 | Admin |
-| 13 | Configurações Administrativas (ADMIN) | 🔜 | Admin |
+| 13 | [Configurações Administrativas (ADMIN)](./13-configuracoes.md) | ✅ | Admin |
 | 14 | Glossário e FAQ | 🔜 | Todos |
 
 > **Legenda:** ✅ Capítulo completo · 🔜 Em produção · 📝 Precisa revisão
