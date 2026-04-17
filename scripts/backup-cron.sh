@@ -18,12 +18,26 @@ set -euo pipefail
 
 # Configuracao
 DB_NAME="${DB_NAME:-camara_legislativo}"
-DB_USER="${DB_USER:-camara_app}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/camara}"
 APP_DIR="${APP_DIR:-/opt/camara}"
 RETENTION_DAILY=7
 RETENTION_WEEKLY=4
 RETENTION_MONTHLY=3
+
+# Le DATABASE_URL do .env (user + senha + host + db do Prisma)
+# Permite rodar como root sem depender do peer-auth do user postgres (que
+# nao tem permissao de escrita em ${BACKUP_DIR}).
+if [ -f "${APP_DIR}/.env" ]; then
+    DATABASE_URL=$(grep "^DATABASE_URL=" "${APP_DIR}/.env" | cut -d= -f2- | tr -d '"' | tr -d "'")
+fi
+DB_USER=$(echo "$DATABASE_URL" | sed -E 's|.*//([^:]+):.*|\1|')
+DB_PASS=$(echo "$DATABASE_URL" | sed -E 's|.*//[^:]+:([^@]+)@.*|\1|')
+DB_HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:/]+).*|\1|')
+
+if [ -z "${DB_USER:-}" ] || [ -z "${DB_PASS:-}" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERRO: DATABASE_URL nao encontrado em ${APP_DIR}/.env"
+    exit 1
+fi
 
 # Timestamp
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -46,15 +60,25 @@ log() {
 # Backup do banco
 # =============================================================================
 
-log "Iniciando backup do banco ${DB_NAME}..."
+log "Iniciando backup do banco ${DB_NAME} (user=${DB_USER}, host=${DB_HOST})..."
 
 DUMP_FILE="${DAILY_DIR}/db_${TIMESTAMP}.dump"
+DUMP_ERR="${DAILY_DIR}/db_${TIMESTAMP}.err"
 
-if sudo -u postgres pg_dump -d "$DB_NAME" -F c -f "$DUMP_FILE" 2>/dev/null; then
+# Roda como root (escreve no diretorio) + autentica como camara_app via PGPASSWORD.
+# Erros nao sao silenciados: vao para .err e para o log se pg_dump falhar.
+if PGPASSWORD="$DB_PASS" pg_dump -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -F c -f "$DUMP_FILE" 2>"$DUMP_ERR"; then
     DUMP_SIZE=$(du -h "$DUMP_FILE" | cut -f1)
     log "Banco: OK (${DUMP_SIZE})"
+    # Remove .err vazio em caso de sucesso
+    [ -s "$DUMP_ERR" ] || rm -f "$DUMP_ERR"
 else
-    log "ERRO: falha no pg_dump"
+    log "ERRO: falha no pg_dump (exit=$?)"
+    if [ -f "$DUMP_ERR" ]; then
+        log "stderr do pg_dump:"
+        sed 's/^/  /' "$DUMP_ERR" | while read -r line; do log "$line"; done
+    fi
+    rm -f "$DUMP_FILE"
     exit 1
 fi
 
