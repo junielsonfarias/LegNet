@@ -10,15 +10,34 @@ O processo legislativo e o conjunto de atos ordenados para a criacao de normas j
 
 | Arquivo | Funcao |
 |---------|--------|
-| `prisma/schema.prisma` | Modelos: Proposicao, Tramitacao, Emenda, Parecer, PautaSessao |
-| `src/lib/services/proposicao-validacao-service.ts` | Validacoes de iniciativa, requisitos, emendas |
+| `prisma/schema/models.prisma` | Modelos: Proposicao, Tramitacao, Emenda, Parecer, PautaSessao |
+| `src/lib/services/proposicao-validacao-service.ts` | Validacoes de iniciativa (RN-020), requisitos (RN-022), materia analoga (RN-023) |
 | `src/lib/services/tramitacao-service.ts` | Gerenciamento de tramitacao entre orgaos |
 | `src/lib/services/automacao-pautas-service.ts` | Sugestao automatica de itens de pauta |
 | `src/lib/services/votacao-service.ts` | Calculo de quorum e apuracao de votos |
+| `src/lib/services/sancao-veto-service.ts` | Validacoes RN-080 a RN-087 (sancao, veto, promulgacao) |
+| `src/lib/jobs/prazos-legais.ts` | **NOVO**: sancao tacita (RN-081) + notificacoes de veto (RN-084) |
+| `src/app/api/cron/daily/route.ts` | **NOVO**: cron diario protegido por CRON_SECRET |
 | `src/app/admin/proposicoes/` | CRUD de proposicoes |
 | `src/app/admin/emendas/` | Gestao de emendas |
 | `src/app/admin/tramitacoes/` | Acompanhamento de tramitacao |
-| `src/app/api/proposicoes/` | API REST de proposicoes |
+| `src/app/api/proposicoes/` | API REST de proposicoes (POST valida RN-020/022/023) |
+
+---
+
+## Safeguards Legais (Sprint 1 - 17/04/2026)
+
+### Validacao regimental obrigatoria no POST /api/proposicoes
+Todo POST agora chama `validarProposicaoCompleta()` antes de criar. Bloqueio 400 em:
+- RN-020: iniciativa privativa do Executivo (palavras-chave em ementa/texto)
+- RN-022: requisitos minimos (ementa, titulo, etc)
+- RN-023: materia analoga no mesmo ano
+
+### Cron de prazos legais (diario as 03:00)
+- `processarSancaoTacita()`: aplica SANCIONADA apos 15 dias uteis (RN-081)
+- `gerarNotificacoesPrazo()`: alerta vetos <= 7d dos 30d (RN-084) + pareceres <= 3d
+- Endpoint `/api/cron/daily` valida `Authorization: Bearer $CRON_SECRET`
+- Vercel: agendado em `vercel.json` / VPS: `scripts/cron-daily.sh` no crontab
 
 ---
 

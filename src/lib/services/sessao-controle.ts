@@ -55,7 +55,8 @@ const MAPEAMENTO_STATUS_PAUTA_PROPOSICAO: Record<string, StatusProposicao | null
 export async function sincronizarStatusProposicao(
   proposicaoId: string,
   pautaItemStatus: string,
-  sessaoId?: string
+  sessaoId?: string,
+  tx: Prisma.TransactionClient | typeof prisma = prisma
 ): Promise<void> {
   const novoStatus = MAPEAMENTO_STATUS_PAUTA_PROPOSICAO[pautaItemStatus]
 
@@ -65,7 +66,7 @@ export async function sincronizarStatusProposicao(
   }
 
   // Validar transição antes de aplicar
-  const proposicao = await prisma.proposicao.findUnique({
+  const proposicao = await tx.proposicao.findUnique({
     where: { id: proposicaoId },
     select: { status: true }
   })
@@ -87,7 +88,7 @@ export async function sincronizarStatusProposicao(
     data.sessaoVotacaoId = sessaoId
   }
 
-  await prisma.proposicao.update({
+  await tx.proposicao.update({
     where: { id: proposicaoId },
     data
   })
@@ -606,26 +607,26 @@ export async function iniciarVotacaoItem(sessaoId: string, itemId: string) {
     )
   }
 
-  // Atualizar status do item para EM_VOTACAO
-  await prisma.pautaItem.update({
-    where: { id: itemId },
-    data: {
-      status: 'EM_VOTACAO'
-    }
-  })
+  // Atomicidade: atualiza pautaItem e proposicao na mesma transação
+  // (evita estado inconsistente se uma operação falhar entre as duas)
+  const deveSincronizarProposicao =
+    !!(item.proposicaoId && item.proposicao) &&
+    validarTransicaoStatus(item.proposicao!.status, 'EM_VOTACAO').valid
 
-  // Sincronizar status da proposição (usa proposicao já carregada, sem query extra)
-  if (item.proposicaoId && item.proposicao) {
-    const validacao = validarTransicaoStatus(item.proposicao.status, 'EM_VOTACAO')
-    if (validacao.valid) {
-      await prisma.proposicao.update({
-        where: { id: item.proposicaoId },
+  await prisma.$transaction(async (tx) => {
+    await tx.pautaItem.update({
+      where: { id: itemId },
+      data: { status: 'EM_VOTACAO' }
+    })
+
+    if (deveSincronizarProposicao) {
+      await tx.proposicao.update({
+        where: { id: item.proposicaoId! },
         data: { status: 'EM_VOTACAO' }
       })
     }
-  }
+  })
 
-  // Retornar item atualizado (sem query extra - atualizar em memória)
   return { ...item, status: 'EM_VOTACAO' }
 }
 
@@ -829,12 +830,13 @@ export async function atualizarResultadoProposicao(
   proposicaoId: string,
   resultadoVotacao: 'APROVADA' | 'REJEITADA' | 'EMPATE',
   statusItem: 'APROVADO' | 'REJEITADO',
-  sessaoVotacaoId?: string
+  sessaoVotacaoId?: string,
+  tx: Prisma.TransactionClient | typeof prisma = prisma
 ) {
   const statusProposicao = statusItem === 'APROVADO' ? 'APROVADA' : 'REJEITADA'
 
   // Validar transição de status
-  const proposicao = await prisma.proposicao.findUnique({
+  const proposicao = await tx.proposicao.findUnique({
     where: { id: proposicaoId },
     select: { status: true }
   })
@@ -845,7 +847,7 @@ export async function atualizarResultadoProposicao(
     }
   }
 
-  await prisma.proposicao.update({
+  await tx.proposicao.update({
     where: { id: proposicaoId },
     data: {
       resultado: resultadoVotacao,
@@ -1194,37 +1196,51 @@ export async function finalizarItemPauta(
   // A diferença está no status da proposição: RETIRADO -> ARQUIVADA, RETIRADA_PAUTA -> AGUARDANDO_PAUTA
   const statusItem = (resultado === 'RETIRADA_PAUTA' ? 'RETIRADO' : resultadoCalculado) as 'CONCLUIDO' | 'APROVADO' | 'REJEITADO' | 'RETIRADO' | 'ADIADO'
 
-  // Atualizar o item da pauta
-  const atualizado = await prisma.pautaItem.update({
-    where: { id: itemId },
-    data: {
-      status: statusItem,
-      tempoAcumulado: acumulado,
-      tempoReal: acumulado,
-      iniciadoEm: null,
-      finalizadoEm: new Date(),
-      ...(observacoes && { observacoes }) // Registrar observações (motivo de retirada, etc.)
-    }
-  })
+  const votacaoComResultadoFinal = eraVotacao && (resultado === 'APROVADO' || resultado === 'REJEITADO')
+  const turno = item.turnoAtual || 1
 
-  // Se teve votação com proposição, atualizar a proposição e criar registro consolidado
-  if (eraVotacao && temProposicao && contagemVotos && (resultado === 'APROVADO' || resultado === 'REJEITADO')) {
-    await atualizarResultadoProposicao(
-      item.proposicaoId!,
-      contagemVotos.resultado,
-      resultado,
-      sessaoId
-    )
+  // Atomicidade: todos os updates relacionados ao fechamento do item
+  // (pautaItem, proposicao, sessao, oficio, navegação) ocorrem na mesma transação.
+  // Se qualquer etapa falhar, nada é persistido — evita estados inconsistentes
+  // como "pautaItem APROVADO mas proposição EM_VOTACAO".
+  const { atualizado, proximoItemId } = await prisma.$transaction(async (tx) => {
+    // 1. pautaItem: status + tempo + resultado do turno (se houver votação)
+    const atualizado = await tx.pautaItem.update({
+      where: { id: itemId },
+      data: {
+        status: statusItem,
+        tempoAcumulado: acumulado,
+        tempoReal: acumulado,
+        iniciadoEm: null,
+        finalizadoEm: new Date(),
+        ...(observacoes && { observacoes }),
+        ...(votacaoComResultadoFinal && contagemVotos && turno === 1 && {
+          resultadoTurno1: contagemVotos.resultado as any,
+          dataVotacaoTurno1: new Date()
+        }),
+        ...(votacaoComResultadoFinal && contagemVotos && turno === 2 && {
+          resultadoTurno2: contagemVotos.resultado as any,
+          dataVotacaoTurno2: new Date()
+        })
+      }
+    })
 
-    // Criar/atualizar VotacaoAgrupada (registro consolidado para auditoria)
-    try {
-      const totalPresentes = await prisma.presencaSessao.count({
+    // 2. Votação finalizada: atualizar proposição + registrar VotacaoAgrupada
+    if (votacaoComResultadoFinal && temProposicao && contagemVotos) {
+      await atualizarResultadoProposicao(
+        item.proposicaoId!,
+        contagemVotos.resultado,
+        resultado as 'APROVADO' | 'REJEITADO',
+        sessaoId,
+        tx
+      )
+
+      const totalPresentes = await tx.presencaSessao.count({
         where: { sessaoId, presente: true }
       })
-      const totalMembros = await prisma.parlamentar.count({ where: { ativo: true } })
-      const turno = item.turnoAtual || 1
+      const totalMembros = await tx.parlamentar.count({ where: { ativo: true } })
 
-      await prisma.votacaoAgrupada.upsert({
+      await tx.votacaoAgrupada.upsert({
         where: {
           proposicaoId_sessaoId_turno: {
             proposicaoId: item.proposicaoId!,
@@ -1262,112 +1278,88 @@ export async function finalizarItemPauta(
           observacoes: contagemVotos.votoMinerva ? 'Voto de minerva do presidente aplicado (desempate)' : undefined
         }
       })
-
-      // Atualizar resultado do turno no PautaItem
-      if (turno === 1) {
-        await prisma.pautaItem.update({
-          where: { id: itemId },
-          data: { resultadoTurno1: contagemVotos.resultado as any, dataVotacaoTurno1: new Date() }
-        })
-      } else if (turno === 2) {
-        await prisma.pautaItem.update({
-          where: { id: itemId },
-          data: { resultadoTurno2: contagemVotos.resultado as any, dataVotacaoTurno2: new Date() }
-        })
-      }
-    } catch (error) {
-      logger.error('Erro ao criar VotacaoAgrupada', error)
     }
-  }
 
-  // Sincronizar status da proposição para casos sem votação efetiva
-  // OU para votações que terminaram em ADIADO (proposição deve voltar para EM_PAUTA)
-  const votacaoComResultadoFinal = eraVotacao && (resultado === 'APROVADO' || resultado === 'REJEITADO')
-  if (temProposicao && !votacaoComResultadoFinal) {
-    await sincronizarStatusProposicao(
-      item.proposicaoId!,
-      resultado,
-      sessaoId
-    )
-  }
+    // 3. Sem votação final → sincronizar status pelo mapeamento
+    if (temProposicao && !votacaoComResultadoFinal) {
+      await sincronizarStatusProposicao(item.proposicaoId!, resultado, sessaoId, tx)
+    }
 
-  // RETIRADA DE PAUTA: Registrar tramitação e atualizar proposição para AGUARDANDO_PAUTA
+    // 4. RETIRADA_PAUTA: forçar AGUARDANDO_PAUTA (override do mapeamento, já aplicado acima)
+    if (resultado === 'RETIRADA_PAUTA' && temProposicao) {
+      await tx.proposicao.update({
+        where: { id: item.proposicaoId! },
+        data: { status: 'AGUARDANDO_PAUTA' }
+      })
+    }
+
+    // 5. LEITURA: registrar sessão e data
+    if (temProposicao && item.tipoAcao === 'LEITURA' && resultado === 'CONCLUIDO') {
+      await tx.proposicao.update({
+        where: { id: item.proposicaoId! },
+        data: { sessaoId, dataLeitura: new Date() }
+      })
+    }
+
+    // 6. LEITURA_ATA: aprovar/rejeitar ata da sessão anterior
+    if (item.tipoAcao === 'LEITURA_ATA' && item.sessaoAtaOrigemId) {
+      const novoStatusAta = (resultado === 'APROVADO' || resultado === 'CONCLUIDO') ? 'APROVADA' : 'REJEITADA'
+      await tx.sessao.update({
+        where: { id: item.sessaoAtaOrigemId },
+        data: {
+          statusAta: novoStatusAta as any,
+          sessaoAprovacaoAtaId: sessaoId
+        }
+      })
+    }
+
+    // 7. LEITURA_OFICIO: marcar ofício como lido
+    if (item.tipoAcao === 'LEITURA_OFICIO' && item.oficioId && (resultado === 'CONCLUIDO' || resultado === 'APROVADO')) {
+      await tx.oficio.update({
+        where: { id: item.oficioId },
+        data: { lido: true }
+      })
+    }
+
+    // 8. Navegação: próximo item (primeiro na frente, senão qualquer pendente/adiado)
+    const proximoItem = await tx.pautaItem.findFirst({
+      where: {
+        pautaId: item.pautaId,
+        status: { in: ['PENDENTE', 'ADIADO'] },
+        ordem: { gt: item.ordem }
+      },
+      orderBy: { ordem: 'asc' },
+      select: { id: true }
+    })
+
+    const itemSeguinte = proximoItem || await tx.pautaItem.findFirst({
+      where: {
+        pautaId: item.pautaId,
+        status: { in: ['PENDENTE', 'ADIADO'] },
+        id: { not: itemId }
+      },
+      orderBy: { ordem: 'asc' },
+      select: { id: true }
+    })
+
+    await tx.pautaSessao.update({
+      where: { id: item.pautaId },
+      data: { itemAtualId: itemSeguinte?.id || null }
+    })
+
+    return { atualizado, proximoItemId: itemSeguinte?.id || null }
+  })
+
+  // Fora da transação: side-effects que criam tramitação (múltiplas queries independentes)
   if (resultado === 'RETIRADA_PAUTA' && temProposicao) {
     await registrarRetiradaPauta(item.proposicaoId!, sessaoId, observacoes, usuarioId)
-    // Forçar atualização do status da proposição para AGUARDANDO_PAUTA
-    // (a função sincronizarStatusProposicao já fez isso pelo mapeamento, mas garantimos aqui)
-    await prisma.proposicao.update({
-      where: { id: item.proposicaoId! },
-      data: { status: 'AGUARDANDO_PAUTA' }
-    })
   }
-
-  // Registrar leitura da proposição quando item de LEITURA é finalizado com sucesso
-  // Atualiza sessaoId (sessão onde foi lida) e dataLeitura (timestamp da leitura)
-  if (temProposicao && item.tipoAcao === 'LEITURA' && resultado === 'CONCLUIDO') {
-    await prisma.proposicao.update({
-      where: { id: item.proposicaoId! },
-      data: {
-        sessaoId: sessaoId,       // Registra a sessão onde foi lida
-        dataLeitura: new Date()   // Registra data/hora da leitura
-      }
-    })
-  }
-
-  // Aprovar/rejeitar ata da sessão anterior quando item LEITURA_ATA é finalizado
-  if (item.tipoAcao === 'LEITURA_ATA' && item.sessaoAtaOrigemId) {
-    const novoStatusAta = (resultado === 'APROVADO' || resultado === 'CONCLUIDO') ? 'APROVADA' : 'REJEITADA'
-    await prisma.sessao.update({
-      where: { id: item.sessaoAtaOrigemId },
-      data: {
-        statusAta: novoStatusAta as any,
-        sessaoAprovacaoAtaId: sessaoId
-      }
-    })
-  }
-
-  // Marcar ofício como lido quando item LEITURA_OFICIO é finalizado
-  if (item.tipoAcao === 'LEITURA_OFICIO' && item.oficioId && (resultado === 'CONCLUIDO' || resultado === 'APROVADO')) {
-    await prisma.oficio.update({
-      where: { id: item.oficioId },
-      data: { lido: true }
-    })
-  }
-
-  // Auto-avanço: encontrar próximo item PENDENTE ou ADIADO na ordem da pauta
-  const proximoItem = await prisma.pautaItem.findFirst({
-    where: {
-      pautaId: item.pautaId,
-      status: { in: ['PENDENTE', 'ADIADO'] },
-      ordem: { gt: item.ordem }
-    },
-    orderBy: { ordem: 'asc' },
-    select: { id: true }
-  })
-
-  // Se não encontrou na frente, buscar qualquer pendente (pode ter sido adiado antes)
-  const itemSeguinte = proximoItem || await prisma.pautaItem.findFirst({
-    where: {
-      pautaId: item.pautaId,
-      status: { in: ['PENDENTE', 'ADIADO'] },
-      id: { not: itemId }
-    },
-    orderBy: { ordem: 'asc' },
-    select: { id: true }
-  })
-
-  await prisma.pautaSessao.update({
-    where: { id: item.pautaId },
-    data: {
-      itemAtualId: itemSeguinte?.id || null
-    }
-  })
 
   await atualizarTempoTotalReal(item.pautaId)
 
   return {
     ...atualizado,
-    proximoItemId: itemSeguinte?.id || null
+    proximoItemId
   }
 }
 

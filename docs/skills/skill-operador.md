@@ -16,7 +16,8 @@ O Painel do Operador e a interface central para controle de sessoes legislativas
 | `src/app/admin/painel-eletronico/_components/painel-header.tsx` | Header com info da sessao e estatisticas |
 | `src/app/admin/painel-eletronico/_components/painel-controles.tsx` | Controles de sessao (iniciar/finalizar) |
 | `src/app/admin/painel-eletronico/_hooks/use-painel-state.ts` | Hook de estado do painel admin |
-| `src/lib/services/sessao-controle.ts` | Controle de estado da sessao |
+| `src/lib/services/sessao-controle.ts` | Controle de estado da sessao (updates atomicos em transacao) |
+| `src/lib/services/sessao-controle/turnos.ts` | Controle de turnos de votacao (atomicos) |
 | `src/lib/services/sessao-db-service.ts` | CRUD de sessoes (list com filtros/paginacao, create com auto legislatura/periodo/numero/pauta) |
 | `src/lib/services/sessao-validacao-service.ts` | Validacao de quorum, convocacao, ordem dos trabalhos |
 | `src/lib/services/presenca-db-service.ts` | CRUD de presenca (listBySessao, registrar upsert, stats, lote) |
@@ -27,6 +28,17 @@ O Painel do Operador e a interface central para controle de sessoes legislativas
 | `src/components/painel/` | 16 componentes do painel |
 | `src/app/api/painel/` | APIs do painel |
 | `src/app/api/sessoes/[id]/votacao/` | APIs de votacao |
+
+---
+
+## Atomicidade de Votacao (Sprint 1 - 17/04/2026)
+
+Todas as mudancas de estado durante uma sessao agora sao **atomicas via `prisma.$transaction`** para evitar dessincronia entre `pautaItem.status` e `proposicao.status`:
+
+- **`iniciarVotacaoItem`**: valida quorum + atualiza `pautaItem` e `proposicao` em mesma transacao
+- **`finalizarItemPauta`**: 7 operacoes em transacao unica (pautaItem, proposicao, VotacaoAgrupada, sessao ata, oficio, navegacao)
+- **`finalizarTurnoItem` (turnos.ts)**: `atualizarResultadoProposicao` + `pautaItem` + `pautaSessao` em transacao
+- Funcoes helpers (`sincronizarStatusProposicao`, `atualizarResultadoProposicao`) aceitam `tx?` opcional para composicao em transacoes do chamador
 
 ---
 

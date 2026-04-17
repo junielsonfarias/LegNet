@@ -18,7 +18,8 @@ vi.mock('@/lib/prisma', () => {
     update: vi.fn()
   }
   const presencaSessao = {
-    findUnique: vi.fn()
+    findUnique: vi.fn(),
+    count: vi.fn().mockResolvedValue(0)
   }
   const pautaSessao = {
     findUnique: vi.fn(),
@@ -30,24 +31,40 @@ vi.mock('@/lib/prisma', () => {
     update: vi.fn(),
     findMany: vi.fn()
   }
-
-  return {
-    prisma: {
-      sessao,
-      presencaSessao,
-      pautaSessao,
-      pautaItem,
-      $transaction: vi.fn(async (operations: any) => {
-        if (Array.isArray(operations)) {
-          return Promise.all(operations)
-        }
-        if (typeof operations === 'function') {
-          return operations()
-        }
-        return operations
-      })
-    }
+  const proposicao = {
+    findUnique: vi.fn(),
+    update: vi.fn()
   }
+  const parlamentar = {
+    count: vi.fn().mockResolvedValue(10)
+  }
+  const votacaoAgrupada = {
+    upsert: vi.fn()
+  }
+  const sessaoAta = {
+    update: vi.fn()
+  }
+  const oficio = {
+    update: vi.fn()
+  }
+
+  const prismaMock: Record<string, unknown> = {
+    sessao,
+    presencaSessao,
+    pautaSessao,
+    pautaItem,
+    proposicao,
+    parlamentar,
+    votacaoAgrupada,
+    sessaoAta,
+    oficio
+  }
+  prismaMock.$transaction = vi.fn(async (operations: any) => {
+    if (Array.isArray(operations)) return Promise.all(operations)
+    if (typeof operations === 'function') return operations(prismaMock)
+    return operations
+  })
+  return { prisma: prismaMock }
 })
 
 // Importa o mock do prisma (cast para any pois vi.mock substitui os metodos)

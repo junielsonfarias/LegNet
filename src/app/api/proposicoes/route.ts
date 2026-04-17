@@ -4,13 +4,15 @@ import {
   withErrorHandler,
   createSuccessResponse,
   ConflictError,
-  NotFoundError
+  NotFoundError,
+  ValidationError
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 import { getFluxoByTipoProposicao, getEtapaInicial } from '@/lib/services/fluxo-tramitacao-service'
 import { iniciarTramitacaoComFluxo, iniciarTramitacaoPadrao, iniciarTramitacaoComUnidade } from '@/lib/services/tramitacao-service'
 import { proposicaoDbService } from '@/lib/services/proposicao-db-service'
+import { validarProposicaoCompleta } from '@/lib/services/proposicao-validacao-service'
 import { createLogger } from '@/lib/logging/logger'
 
 const logger = createLogger('proposicoes-api')
@@ -97,6 +99,29 @@ export const POST = withAuth(async (request: NextRequest, _context, session) => 
 
   if (!autor) {
     throw new NotFoundError('Autor')
+  }
+
+  // RN-020 / RN-022 / RN-023: Validação regimental (iniciativa privativa, requisitos mínimos, matéria análoga)
+  // autorId aponta para Parlamentar no schema legado — autorTipo = PARLAMENTAR
+  const validacao = await validarProposicaoCompleta({
+    tipo: validatedData.tipo,
+    ementa: validatedData.ementa,
+    texto: validatedData.texto,
+    autorId: validatedData.autorId,
+    autorTipo: 'PARLAMENTAR'
+  })
+
+  if (!validacao.valid) {
+    logger.warn('Proposição bloqueada por validação regimental', {
+      action: 'validacao_regimental_bloqueio',
+      autorId: validatedData.autorId,
+      tipo: validatedData.tipo,
+      errors: validacao.errors
+    })
+    throw new ValidationError(
+      `Proposição viola regras regimentais: ${validacao.errors.join(' | ')}`,
+      { errors: validacao.errors, warnings: validacao.warnings }
+    )
   }
 
   // Gerar slug amigavel

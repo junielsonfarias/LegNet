@@ -190,26 +190,31 @@ export async function finalizarTurnoItem(
   )
 
   if (!resultadoTurno.proximoTurno) {
-    await atualizarResultadoProposicao(
-      item.proposicaoId,
-      contagem.resultado,
-      resultado,
-      sessaoId
-    )
-
     const acumulado = calcularTempoAcumulado(item.iniciadoEm, item.tempoAcumulado)
-    await prisma.pautaItem.update({
-      where: { id: itemId },
-      data: {
-        tempoAcumulado: acumulado,
-        tempoReal: acumulado,
-        iniciadoEm: null,
-      },
-    })
 
-    await prisma.pautaSessao.update({
-      where: { id: item.pautaId },
-      data: { itemAtualId: null },
+    // Atomicidade: sincroniza proposicao, pautaItem e pautaSessao na mesma transação
+    await prisma.$transaction(async (tx) => {
+      await atualizarResultadoProposicao(
+        item.proposicaoId!,
+        contagem.resultado,
+        resultado,
+        sessaoId,
+        tx
+      )
+
+      await tx.pautaItem.update({
+        where: { id: itemId },
+        data: {
+          tempoAcumulado: acumulado,
+          tempoReal: acumulado,
+          iniciadoEm: null,
+        },
+      })
+
+      await tx.pautaSessao.update({
+        where: { id: item.pautaId },
+        data: { itemAtualId: null },
+      })
     })
 
     await atualizarTempoTotalReal(item.pautaId)

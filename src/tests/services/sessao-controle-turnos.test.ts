@@ -6,8 +6,8 @@ import { vi } from "vitest"
  * das 5 funções exportadas. Operações de DB são mockadas via vi.mock.
  */
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
+vi.mock('@/lib/prisma', () => {
+  const prismaMock: Record<string, unknown> = {
     pautaItem: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -17,9 +17,18 @@ vi.mock('@/lib/prisma', () => ({
     },
     parlamentar: { count: vi.fn().mockResolvedValue(10) },
     presencaSessao: { count: vi.fn().mockResolvedValue(8) },
-    $transaction: vi.fn((ops: unknown[]) => Promise.all(ops)),
-  },
-}))
+    proposicao: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+  }
+  prismaMock.$transaction = vi.fn((opsOrFn: unknown) => {
+    if (Array.isArray(opsOrFn)) return Promise.all(opsOrFn)
+    if (typeof opsOrFn === 'function') return (opsOrFn as (tx: unknown) => unknown)(prismaMock)
+    return opsOrFn
+  })
+  return { prisma: prismaMock }
+})
 
 vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({
