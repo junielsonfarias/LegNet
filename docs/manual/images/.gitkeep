@@ -1,0 +1,12 @@
+# Pasta de imagens do Manual
+
+Os placeholders de imagens nos arquivos `.md` referenciam arquivos nesta pasta.
+
+Nomenclatura: `<capitulo>-<secao>-<descricao>.png`
+
+Exemplos:
+- `01-01-tela-login.png`
+- `02-04-novo-classificacao.png`
+
+Resolução mínima: 1366x768 no navegador em 100% de zoom.
+Evite dados reais sensíveis nos prints — use dados de seed.
