@@ -200,7 +200,14 @@ restart_application() {
 
     case "$install_type" in
         pm2)
-            pm2 reload camara
+            # Nome oficial do processo em ecosystem.config.js
+            if pm2 list 2>/dev/null | grep -q camara-legislativo; then
+                pm2 reload camara-legislativo --update-env
+            else
+                # Fallback: inicia pela primeira vez
+                (cd "$APP_DIR" && pm2 start ecosystem.config.js --env production)
+                pm2 save
+            fi
             success "Aplicação reiniciada (PM2)"
             ;;
         docker)

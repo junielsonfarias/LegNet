@@ -85,12 +85,20 @@ fi
 # ---------------------------------------------------------------------------
 # 4. Restart PM2
 # ---------------------------------------------------------------------------
-if command -v pm2 >/dev/null 2>&1 && pm2 list 2>/dev/null | grep -q camara; then
-  info "Reiniciando PM2 para carregar novo .env..."
-  pm2 restart camara --update-env
-  success "PM2 reiniciado"
+PM2_APP="${PM2_APP:-camara-legislativo}"
+if command -v pm2 >/dev/null 2>&1; then
+  if pm2 list 2>/dev/null | grep -q "$PM2_APP"; then
+    info "Reiniciando PM2 ($PM2_APP) para carregar novo .env..."
+    pm2 restart "$PM2_APP" --update-env
+    success "PM2 reiniciado"
+  else
+    info "Processo $PM2_APP não encontrado — iniciando pela primeira vez..."
+    (cd "$APP_DIR" && pm2 start ecosystem.config.js --env production)
+    pm2 save
+    success "PM2 iniciado"
+  fi
 else
-  warn "PM2 não encontrado — reinicie a aplicação manualmente"
+  warn "PM2 não instalado — reinicie a aplicação manualmente"
 fi
 
 # ---------------------------------------------------------------------------
@@ -103,7 +111,7 @@ info "Testando /api/health..."
 if curl -sf "${APP_URL}/api/health" >/dev/null; then
   success "/api/health OK"
 else
-  warn "/api/health não respondeu — verifique pm2 logs camara"
+  warn "/api/health não respondeu — verifique pm2 logs $PM2_APP"
 fi
 
 info "Testando /api/cron/daily sem auth (deve retornar 401)..."
@@ -129,4 +137,4 @@ echo ""
 echo "Próximos passos manuais:"
 echo "  1. Adicionar CRON_SECRET em Vercel env vars (Production + Preview)"
 echo "  2. Verificar logs em: /var/log/camara-cron.log (após primeira execução às 03:00)"
-echo "  3. Monitorar pm2 logs camara por 24h"
+echo "  3. Monitorar pm2 logs $PM2_APP por 24h"
