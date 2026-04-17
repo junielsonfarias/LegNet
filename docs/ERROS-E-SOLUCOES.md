@@ -1,7 +1,7 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-04-10
+> **Ultima Atualizacao**: 2026-04-17
 > **Versao Analisada**: 1.9.3
 
 ---
@@ -10,10 +10,16 @@
 
 | Severidade | Quantidade | Status |
 |------------|------------|--------|
-| Critica | 15 | 15 Corrigidos |
+| Critica | 16 | 16 Corrigidos |
 | Alta | 5 | 5 Corrigidos |
 | Media | 10 | 10 Corrigidos |
 | Baixa | 6 | Pendente (melhorias opcionais) |
+
+### Correções Aplicadas em 2026-04-17 (GET /api/sessoes 500 em produção)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-041 | `GET /api/sessoes` devolvia 500 em prod (Vercel) e dev — `Error converting field "secao" of expected non-nullable type "String", found incompatible value of "COMUNICACOES"` | Colunas `pauta_itens.secao` e `template_itens.secao` ainda estavam com tipo enum Postgres `PautaSecao`, mas o schema Prisma (`models.prisma:461,1202`) declara `secao String` ("ID do TipoExpediente ou valor legado"). Convertidas via SQL idempotente: `ALTER TABLE ... ALTER COLUMN "secao" TYPE text USING "secao"::text;` + `DROP TYPE "PautaSecao"`. Análise de todos os 96 campos enum do DB vs 84 enums do Prisma: nenhum outro mismatch existe. |
 
 ### Correções Aplicadas em 2026-04-07 (Configurações Institucionais 400)
 

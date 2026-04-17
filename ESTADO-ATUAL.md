@@ -1,10 +1,28 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-17 (Sprint 3 consolidacao: reactStrictMode on + N+1 tracker + docs archive)
+> **Ultima Atualizacao**: 2026-04-17 (Hotfix ERR-041: `pauta_itens.secao` / `template_itens.secao` convertidas de enum `PautaSecao` para `text` — GET /api/sessoes voltou a 200 em prod)
 > **Versao**: 1.9.8
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Hotfix 2026-04-17: divergencia enum x String em PautaSecao (ERR-041)
+
+Sintoma: `GET /api/sessoes` retornava 500 em prod (camara-leg.vercel.app) e quebrava `/admin/legislativo/sessoes-legislativas`. Prisma lancava `Error converting field "secao" of expected non-nullable type "String", found incompatible value of "COMUNICACOES"` ao carregar `listInclude.pautaSessao.itens`.
+
+Causa: schema Prisma (`prisma/schema/models.prisma:461,1202`) declara `secao String`, mas o Postgres/Supabase ainda tinha `pauta_itens.secao` e `template_itens.secao` com tipo enum `PautaSecao` (legado de um `db push` anterior). O Prisma engine nao faz conversao enum->String.
+
+Fix aplicada no Supabase via SQL Editor:
+
+```sql
+ALTER TABLE "pauta_itens"   ALTER COLUMN "secao" TYPE text USING "secao"::text;
+ALTER TABLE "template_itens" ALTER COLUMN "secao" TYPE text USING "secao"::text;
+DROP TYPE IF EXISTS "PautaSecao";
+```
+
+Verificacao: cruzamento de 96 colunas enum (information_schema) com 84 enums declarados em `enums.prisma` + parser de cada field dos 50+ models — nenhum outro mismatch existe. Ver `docs/ERROS-E-SOLUCOES.md#ERR-041`.
 
 ---
 
