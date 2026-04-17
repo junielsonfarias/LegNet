@@ -10,7 +10,16 @@ module.exports = {
       script: 'npm',
       args: 'start',
       cwd: process.cwd(),
-      instances: 'max',
+      // IMPORTANTE: next start faz bind em uma unica porta (PORT).
+      // Cluster mode com `instances: 'max'` leva ao conflito EADDRINUSE,
+      // onde apenas 1 instancia permanece online e as outras entram em
+      // loop de restart silencioso. Para rodar N instancias de verdade,
+      // e necessario:
+      //   instances: N,
+      //   increment_var: 'PORT'
+      // + configurar Nginx upstream com as portas 3000..300N-1.
+      // Por ora: 1 instancia em cluster_mode (mantem zero-downtime reload).
+      instances: 1,
       exec_mode: 'cluster',
       autorestart: true,
       watch: false,
