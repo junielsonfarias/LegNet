@@ -128,74 +128,198 @@ Se nenhum resultado corresponder aos filtros: mensagem "Nenhuma proposição enc
 
 ## 3.4 — Cadastrar nova proposição
 
-### Passo 1: clicar em **+ Nova Proposição**
+O formulário de cadastro é um **modal largo** (4XL) com 6 seções em scroll interno. Cada campo é detalhado abaixo — **quando houver dúvida, use esta referência como fonte da verdade**.
 
-Abre um modal (4XL de largura, 90% de altura, com scroll interno).
+### Passo 1: abrir o formulário
 
-### Passo 2: Identificação
+Na lista de proposições, clique em **+ Nova Proposição** (botão azul, canto superior direito). O modal abre sobre a tela.
+
+Para **fechar sem salvar**: clique no X do modal, em **Cancelar** (rodapé) ou pressione `Esc`.
 
 ![Modal nova proposição — identificação](./images/03-04-nova-identificacao.png)
 
-| Campo | Obrigatório? | Como preencher |
+### Passo 2: Seção 1 — Identificação
+
+| Campo | Label exato | Tipo | Obrig. | Placeholder / Opções | Validação |
+|---|---|---|---|---|---|
+| 1 | **Tipo de Proposição** | select | ✅ | "Selecione o tipo" | Mín. 1 caractere, máx. 50 |
+| 2 | **Número** | text | ✅ | "001" (auto) | **Desabilitado se "Numeração automática" marcada** |
+| 3 | **Ano** | number | ✅ | Padrão: ano atual | Mín. 1900 |
+| 4 | **Data de Apresentação** | date | ✅ | Padrão: hoje | ISO `dd/mm/aaaa` |
+| 5 | **Numeração automática sequencial** | checkbox | — | Padrão: ✅ marcado | — |
+| 6 | **Identificador** (preview) | badge read-only | — | Ex: `PL 001/2026` | Atualiza automaticamente |
+
+**Detalhes importantes:**
+
+- O select de **Tipo** é populado com os tipos ativos cadastrados em *Configurações → Tipos de Proposição* (capítulo 13). Cada opção mostra o nome completo + badge colorido com a sigla.
+- Quando **Numeração automática** está marcada (recomendado), o campo **Número** fica desabilitado e o sistema calcula o próximo número disponível para o tipo+ano escolhidos. O preview aparece como badge azul logo abaixo: `PL 001/2026`.
+- Se você **desmarcar** a numeração automática e digitar um número já usado, o campo fica com borda vermelha e mensagem:
+
+  > *"Este número já existe para este tipo no ano selecionado."*
+
+  O erro HTTP retornado pela API é `409 Conflict`: *"Já existe uma proposição deste tipo com este número e ano"*.
+
+> 💡 **Dica**: deixe **Numeração automática** sempre marcada. Evita gaps na sequência e duplicatas. Use número manual **apenas** para importar proposições históricas de sistemas antigos.
+
+### Passo 3: Seção 2 — Conteúdo
+
+| Campo | Label exato | Tipo | Obrig. | Placeholder | Validação |
+|---|---|---|---|---|---|
+| 1 | **Título** | text | ✅ | "Título da proposição" | Mín. **5 caracteres** |
+| 2 | **Ementa** | textarea (2 linhas) | ✅ | "Resumo da proposição..." | Mín. **10 caracteres** |
+| 3 | **Texto Completo** | textarea (4 linhas) | — | "Texto integral..." | Recomendado mín. 100 caracteres para projetos (contém "art." ou "artigo") |
+| 4 | **URL do Documento** | url | — | "https://drive.google.com/..." | Deve ser URL válida (ou vazio) |
+
+**Detalhes:**
+
+- O **Título** é apresentação curta. Use linguagem clara: "Denomina 'Rua João Silva' o logradouro do Bairro Centro" — melhor que "Sobre nomes de ruas".
+- A **Ementa** é o resumo oficial que aparece em atas, pautas e no portal público. Seja direto: começa com verbo imperativo ("Denomina", "Autoriza", "Dispõe").
+- O **Texto Completo** é o articulado. Para PL/PR/PDL é **fortemente recomendado** preencher porque a validação RN-022 bloqueia projetos sem conteúdo articulado (texto deve ter pelo menos 100 caracteres e conter "art." ou "artigo").
+- A **URL do Documento** é alternativa quando o texto é muito longo para colar. Use Google Drive, OneDrive ou o Diário Oficial. Precisa começar com `https://` e passar validação de URL (`z.string().url()`).
+
+### Passo 4: Seção 3 — Autoria
+
+| Campo | Label exato | Tipo | Obrig. | Observações |
+|---|---|---|---|---|
+| 1 | **Autor Principal** | select com busca | ✅ | Carrega parlamentares ativos |
+| 2 | **Coautores** | select + chips | — | Sem limite; remove individual com X |
+
+**Detalhes:**
+
+- O **Autor Principal** é um select com autocomplete dos parlamentares ativos da legislatura atual. Valida `z.string().min(1, 'ID do autor é obrigatório')`.
+- Ao adicionar **Coautor**, o select oculta o autor principal já escolhido (não pode ser coautor de si mesmo). Cada coautor aparece como chip cinza com o nome + botão X para remover.
+- Para matérias de **iniciativa privativa do Executivo** (ver §3.4.7), o autor parlamentar é bloqueado automaticamente com mensagem RN-020.
+
+### Passo 5: Seção 4 — Tramitação inicial (só em novo cadastro)
+
+| Campo | Label exato | Tipo | Obrig. | Padrão |
+|---|---|---|---|---|
+| 1 | **Unidade Responsável** | select | — | "Secretaria Legislativa (padrão)" |
+| 2 | **Regime** (se visível) | select | — | NORMAL |
+
+**Unidade Responsável** tem estas opções:
+
+- `__auto__` → "Secretaria Legislativa (padrão)" — **recomendado**, deixa o sistema escolher via fluxo configurado
+- Demais unidades cadastradas em *Configurações → Unidades de Tramitação* (CLJ, Comissões, Plenário etc.)
+
+**Regime de tramitação** (quando configurado como opção no form):
+
+| Valor | Significado | Uso típico |
 |---|---|---|
-| **Tipo de Proposição** * | Sim | Select — cada tipo tem badge colorido e sigla entre parênteses, ex: "Projeto de Lei (PL)" |
-| **Número** * | Sim (ou automático) | Input de 3 caracteres. Se "Numeração automática" estiver ativo, fica **desabilitado** |
-| **Ano** * | Sim | Input numérico. Padrão: ano atual |
-| **Data de Apresentação** * | Sim | Calendário `dd/mm/aaaa`. Padrão: hoje |
-| **Numeração automática sequencial** | ✅ Recomendado | Checkbox — se marcado, sistema atribui o próximo número disponível. Preview aparece em badge azul abaixo |
+| **NORMAL** | Prazo padrão | Maioria dos casos |
+| **PRIORIDADE** | Tramitação acelerada | Matérias do Executivo em regime de prioridade |
+| **URGENCIA** | Prazo reduzido significativamente | Com aprovação de maioria para regime |
+| **URGENCIA_URGENTISSIMA** | Prazo mínimo, votação imediata | Requer 2/3 dos parlamentares |
 
-> 💡 **Dica**: deixe **Numeração automática** sempre marcado. Evita gaps e duplicatas. Use número manual apenas para importação de proposições históricas.
+> ℹ️ **Fluxo automático (RN-038)** — ao salvar, o sistema decide onde enviar nesta ordem:
+>
+> 1. Se você preencheu **Unidade Responsável** → vai para ela imediatamente
+> 2. Se existe **Fluxo configurado** para o tipo → segue a primeira etapa do fluxo (ver capítulo 13)
+> 3. **Fallback**: envia para a Secretaria Legislativa
 
-> ⚠️ **Atenção**: se o número já existir para o tipo+ano, o sistema exibe erro em vermelho no campo: "Já existe proposição PL 045/2026".
+### Passo 6: Seção 5 — Anexos
 
-### Passo 3: Conteúdo
+A zona de upload é uma área tracejada abaixo do formulário.
 
-| Campo | Obrigatório? | Como preencher |
-|---|---|---|
-| **Título** * | Sim | Título descritivo. Ex: "Denomina 'Rua João Silva' o logradouro público atual" |
-| **Ementa** * | Sim | Mín. 10 caracteres. Resumo oficial. Textarea 2 linhas |
-| **Texto Completo** | Recomendado | Textarea 4 linhas. Cole o texto integral da proposição (artigos, incisos) |
-| **URL do Documento** | Opcional | Link externo (Google Drive, etc.) se o texto for muito longo |
-
-### Passo 4: Autoria
-
-| Campo | Obrigatório? | Como preencher |
-|---|---|---|
-| **Autor Principal** * | Sim | Select com busca — parlamentares ativos |
-| **Coautores** | Opcional | Botão **+ Adicionar coautor**. Aparecem como chips cinzas com X para remover |
-
-### Passo 5: Tramitação inicial
-
-| Campo | Obrigatório? | Como preencher |
-|---|---|---|
-| **Unidade Responsável** | Opcional | Select — padrão "Secretaria Legislativa". Outras opções: CLJ, Comissões |
-
-> ℹ️ **Nota**: se deixar em branco, sistema envia automaticamente para a unidade configurada no **Fluxo de Tramitação** do tipo escolhido. Ver capítulo 13 (Administrador) para configurar fluxos.
-
-### Passo 6: Anexos e Leis Referenciadas
-
-**Anexos** (coluna esquerda):
-- Zona de upload pontilhada. Clique ou arraste arquivos
-- Formatos: PDF, DOC, DOCX
-- Tamanho máx: **10 MB por arquivo**
-- Lista mostra nome + tamanho + botão X para remover
-
-**Leis Referenciadas** (coluna direita):
-- Botão **+ Adicionar**. Abre sub-modal.
-- Selecione a lei e o tipo de relação:
-
-| Tipo de relação | Significado |
+| Item | Detalhe |
 |---|---|
-| Altera | Muda texto da lei existente |
-| Revoga | Torna lei existente sem efeito |
-| Inclui | Acrescenta artigo/dispositivo |
-| Exclui | Remove artigo/dispositivo |
-| Regulamenta | Detalha aplicação de lei superior |
-| Complementa | Adiciona ao texto existente |
+| **Formatos aceitos** | PDF, DOC, DOCX |
+| **Tamanho máximo por arquivo** | **10 MB** |
+| **Quantidade máxima** | Sem limite na UI |
+| **Como adicionar** | Clique na área ou arraste arquivos |
+| **Texto da área** | "Clique para anexar arquivos" + "PDF, DOC, DOCX (max. 10MB)" |
+| **Lista após upload** | Badge com nome do arquivo + tamanho formatado (ex: `edital.pdf · 2,3 MB`) + botão X para remover |
 
-### Passo 7: Salvar
+> ⚠️ **Atenção**: se o arquivo tiver dados sensíveis (CPF, assinatura, chave PIX), **borre antes** de anexar. Anexos de proposição são públicos no portal.
 
-Clique em **Criar Proposição** (azul, rodapé).
+### Passo 7: Seção 6 — Leis Referenciadas
+
+Clique em **+ Adicionar Lei** para abrir o sub-modal.
+
+![Sub-modal Lei Referenciada](./images/03-09-lei-referenciada.png)
+
+| Campo do sub-modal | Obrigatório | Opções / Placeholder |
+|---|---|---|
+| **Lei** | ✅ | Select "Selecione uma lei" — formato `Nº/ANO - Título` |
+| **Tipo de Relação** | ✅ | Select "Selecione o tipo de relação" — ver tabela abaixo |
+| **Dispositivo Específico** | — | Text "Ex: Art. 15, § 2º" |
+| **Justificativa** | — | Textarea (3 linhas) |
+
+**Tipos de relação (enum):**
+
+| Valor | Significado | Quando usar |
+|---|---|---|
+| **altera** | Muda texto de dispositivo existente | "Art. 2º fica com a seguinte redação..." |
+| **revoga** | Retira dispositivo do ordenamento | "Revoga-se o Art. 5º da Lei 100/2020" |
+| **inclui** | Acrescenta dispositivo novo | "Acrescenta §3º ao Art. 8º" |
+| **exclui** | Remove item de lista existente | "Exclui o inciso III do Art. 10" |
+| **regulamenta** | Detalha aplicação de lei superior | Decreto regulamentando Lei Ordinária |
+| **complementa** | Adiciona ao texto existente sem alterar | Adiciona parágrafo complementar |
+
+Leis adicionadas aparecem como chips: `Lei 150/2024 - altera (Art. 3º)` com botão X para remover. Sem limite de leis referenciadas.
+
+### Passo 8: Salvar
+
+Role até o rodapé e clique em **Criar Proposição** (azul, largura total em mobile).
+
+**Se tudo válido:**
+
+1. Toast verde: *"Proposição PL 046/2026 criada com sucesso"*
+2. Modal fecha
+3. Lista é atualizada
+4. Auto-tramitação é iniciada (ver §3.4.Passo 5)
+
+**Se houver erro:** o campo em falha recebe borda vermelha com mensagem específica. A lista completa de validações está em §3.4.9.
+
+### 3.4.9 — Referência completa das validações (schema Zod)
+
+A API `POST /api/proposicoes/route.ts` valida o payload com este schema:
+
+```typescript
+const ProposicaoSchema = z.object({
+  numero: z.string().min(1, 'Número da proposição é obrigatório'),
+  ano: z.number().min(1900, 'Ano deve ser válido'),
+  tipo: z.string()
+    .min(1, 'Tipo da proposição é obrigatório')
+    .max(50, 'Código do tipo deve ter no máximo 50 caracteres'),
+  titulo: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
+  ementa: z.string().min(10, 'Ementa deve ter pelo menos 10 caracteres'),
+  texto: z.string().nullish().transform(v => v ?? undefined),
+  urlDocumento: z.string().url('URL deve ser válida')
+    .optional().or(z.literal('')),
+  status: z.enum([
+    'APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA',
+    'EM_DISCUSSAO', 'EM_VOTACAO', 'APROVADA', 'REJEITADA',
+    'ARQUIVADA', 'VETADA', 'SANCIONADA', 'PROMULGADA'
+  ]).default('APRESENTADA'),
+  dataApresentacao: z.string().min(1, 'Data de apresentação é obrigatória'),
+  dataVotacao: z.string().nullish().transform(v => v ?? undefined),
+  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE'])
+    .nullish().transform(v => v ?? undefined),
+  sessaoId: z.string().nullish().transform(v => v ?? undefined),
+  autorId: z.string().min(1, 'ID do autor é obrigatório'),
+  regime: z.enum(['NORMAL', 'PRIORIDADE', 'URGENCIA', 'URGENCIA_URGENTISSIMA'])
+    .nullish().transform(v => v ?? undefined),
+  unidadeInicialId: z.string().nullish().transform(v => v ?? undefined)
+})
+```
+
+**Além disso**, o endpoint aplica as validações regimentais RN-020, RN-022 e RN-023 via `validarProposicaoCompleta()`. Se alguma falhar, retorna HTTP 400 com mensagem detalhada (ver §3.4.10).
+
+### 3.4.10 — Validações regimentais que podem bloquear o salvar
+
+Se o sistema detectar violação regimental, o cadastro é **bloqueado** com HTTP 400 e mensagem específica no topo do modal:
+
+| Regra | Situação que bloqueia | Mensagem exibida | O que fazer |
+|---|---|---|---|
+| **RN-020** | Tipo é PL/PLC/PDL **e** ementa/texto contém termos como "criação de cargo", "aumento salarial", "estrutura administrativa", "orçamento anual", "subsídio", "benefício tributário" | *"RN-020: Matéria de iniciativa privativa do Executivo detectada: 'criação de cargo'. Projetos sobre criação de cargos, aumento de remuneração, organização administrativa, orçamento e benefícios fiscais são de iniciativa exclusiva do Prefeito."* | Se é realmente iniciativa parlamentar → reescreva ementa/texto. Se é Executivo → pedir para Executivo protocolar |
+| **RN-022 (ementa)** | Ementa com menos de 10 caracteres | *"Ementa deve ter pelo menos 10 caracteres"* | Expandir a ementa |
+| **RN-022 (justificativa)** | Projeto sem justificativa mín. 50 chars | *"Justificativa obrigatória com pelo menos 50 caracteres para PROJETO_LEI"* | Adicionar justificativa |
+| **RN-022 (articulado)** | Projeto sem texto articulado mín. 100 chars ou sem "art."/"artigo" | *"Texto articulado obrigatório: mín. 100 caracteres, contendo 'Art.' ou 'Artigo'"* | Preencher o campo Texto Completo |
+| **RN-023** | Matéria similar (similaridade >70%) já rejeitada/vetada/arquivada no mesmo ano | *"Já existe proposição similar (PL 020/2026) REJEITADA este ano"* | Reescrever reformulando o escopo ou aglutinar como emenda |
+| **Duplicata** | Mesmo tipo+número+ano já cadastrado | HTTP 409: *"Já existe uma proposição deste tipo com este número e ano"* | Marcar numeração automática ou escolher outro número |
+
+> 💡 **Dica para driblar RN-023**: se o tema é o mesmo mas a solução é diferente, **escreva a ementa destacando a distinção**. Ex: em vez de "Dispõe sobre denominação de vias", use "Denomina a Rua João Silva — novo trecho entre Av. X e Y, não abrangido pelo PL 020/2026".
 
 Resultado se tudo OK:
 - Toast verde: "Proposição PL 046/2026 criada com sucesso"
