@@ -136,9 +136,13 @@ Na lista de proposições, clique em **+ Nova Proposição** (botão azul, canto
 
 Para **fechar sem salvar**: clique no X do modal, em **Cancelar** (rodapé) ou pressione `Esc`.
 
-![Modal nova proposição — identificação](./images/03-04-nova-identificacao.png)
+![Formulário completo de nova proposição (panorama)](./images/03-04-form-completo.png)
+
+> ℹ️ A imagem acima mostra **todas as 6 seções** do formulário expandidas. Abaixo, detalhamos cada seção separadamente.
 
 ### Passo 2: Seção 1 — Identificação
+
+![Seção Identificação com numeração automática](./images/03-04-nova-identificacao.png)
 
 | Campo | Label exato | Tipo | Obrig. | Placeholder / Opções | Validação |
 |---|---|---|---|---|---|
@@ -234,7 +238,7 @@ A zona de upload é uma área tracejada abaixo do formulário.
 
 ### Passo 7: Seção 6 — Leis Referenciadas
 
-Clique em **+ Adicionar Lei** para abrir o sub-modal.
+Clique em **+ Adicionar Lei** para abrir o sub-modal:
 
 ![Sub-modal Lei Referenciada](./images/03-09-lei-referenciada.png)
 

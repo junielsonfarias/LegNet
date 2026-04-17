@@ -78,7 +78,27 @@ async function executarAcao(page, acao) {
       await page.getByText(nome, { exact: false }).first().click();
       break;
     case 'scrollInto':
-      await page.locator(seletor).scrollIntoViewIfNeeded();
+      await page.locator(seletor).first().scrollIntoViewIfNeeded();
+      break;
+    case 'scrollToText':
+      await page.getByText(nome, { exact: false }).first().scrollIntoViewIfNeeded();
+      break;
+    case 'expandirDialog':
+      // Remove scroll interno de modais Radix para capturar tudo
+      await page.evaluate(() => {
+        document.querySelectorAll('[role="dialog"]').forEach((el) => {
+          el.style.maxHeight = 'none';
+          el.style.height = 'auto';
+          el.style.overflow = 'visible';
+          el.querySelectorAll('*').forEach((child) => {
+            const cs = getComputedStyle(child);
+            if (cs.overflowY === 'auto' || cs.overflowY === 'scroll') {
+              child.style.overflow = 'visible';
+              child.style.maxHeight = 'none';
+            }
+          });
+        });
+      });
       break;
     case 'fill':
       await page.fill(seletor, valor);

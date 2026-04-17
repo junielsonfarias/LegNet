@@ -132,7 +132,34 @@ const capturas = [
     arquivo: '03-04-nova-identificacao.png', url: '/admin/proposicoes', login: true, waitFor: 'main', esperar: 2500,
     acoes: [
       { tipo: 'click', seletor: 'button:has-text("Nova Proposição"), a:has-text("Nova Proposição")' },
-      { tipo: 'wait', valor: 1500 },
+      { tipo: 'wait', valor: 1800 },
+    ],
+    clip: 'viewport',
+  },
+  // --- Captura PANORAMICA do formulario de cadastro ---
+  // Expande o modal removendo scroll interno, usa viewport alto, fullpage
+  {
+    arquivo: '03-04-form-completo.png', url: '/admin/proposicoes', login: true, waitFor: 'main', esperar: 2500,
+    viewport: { width: 1280, height: 2400 },
+    acoes: [
+      { tipo: 'click', seletor: 'button:has-text("Nova Proposição"), a:has-text("Nova Proposição")' },
+      { tipo: 'wait', valor: 2000 },
+      { tipo: 'expandirDialog' },
+      { tipo: 'wait', valor: 800 },
+    ],
+    clip: 'fullpage',
+  },
+  {
+    arquivo: '03-09-lei-referenciada.png', url: '/admin/proposicoes', login: true, waitFor: 'main', esperar: 2500,
+    viewport: { width: 1280, height: 1100 },
+    acoes: [
+      { tipo: 'click', seletor: 'button:has-text("Nova Proposição")' },
+      { tipo: 'wait', valor: 1800 },
+      { tipo: 'expandirDialog' },
+      { tipo: 'wait', valor: 500 },
+      // O botao ao lado de "LEIS REFERENCIADAS" e apenas "+ Adicionar"
+      { tipo: 'click', seletor: '[role="dialog"] button:has-text("Adicionar"):near(:text("LEIS REFERENCIADAS"))' },
+      { tipo: 'wait', valor: 1200 },
     ],
     clip: 'viewport',
   },
