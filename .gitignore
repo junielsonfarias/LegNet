@@ -71,6 +71,16 @@ prisma/*.db-journal
 *.swp
 *.swo
 
+# Configuracoes locais do Claude Code (pessoais do dev)
+.claude/settings.local.json
+.claude/settings.json
+.mcp.json
+
+# Arquivos pessoais/locais do dev (nao relacionados ao projeto)
+Untitled
+image.png
+docs/ata modelo*.pdf
+
 # OS
 .DS_Store
 Thumbs.db
