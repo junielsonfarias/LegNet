@@ -1,10 +1,138 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-16 (465 testes + noImplicitAny + audit N+1 + VPS atualizada)
-> **Versao**: 1.9.5
+> **Ultima Atualizacao**: 2026-04-17 (Sprint 3 consolidacao: reactStrictMode on + N+1 tracker + docs archive)
+> **Versao**: 1.9.8
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Sprint 3: Consolidacao (17/04/2026)
+
+Foco: estabilizar versionamento, ativar safeguards de desenvolvimento, consolidar documentacao.
+
+### reactStrictMode ativado
+`next.config.js:169`: `reactStrictMode: false` -> `true`. Em dev, efeitos rodam 2x para detectar side-effects impuros. Nao afeta producao.
+
+### Next travado em 15.5.x
+`package.json`: `next` e `eslint-config-next` de `^15.5.14` -> `~15.5.14`. Agora so aceita patches, bloqueia salto inadvertido para 15.6.x.
+
+### N+1 Query Tracker (novo)
+`src/lib/prisma-query-tracker.ts` — middleware Prisma idempotente que:
+- Contabiliza queries por `model.action` em janela de 500ms
+- Loga warning via logger estruturado quando > 10 queries da mesma operacao (indicativo de N+1)
+- Inclui stack sample dos 3 primeiros frames de app para diagnosticar
+- Ativacao via `PRISMA_QUERY_TRACKING=true` (dev/staging apenas — no-op em producao)
+- `PRISMA_QUERY_N1_THRESHOLD` configuravel
+- Integrado em `src/lib/prisma.ts` via `attachQueryTracker(prisma)`
+
+### Rotas de sessao — nao ha duplicacao real
+Auditoria confirmou:
+- `/api/sessoes/` — rotas principais autenticadas
+- `/api/painel/sessao/` — painel eletronico (namespace especifico)
+- `/api/dados-abertos/sessoes/` — API publica de dados abertos
+- `/api/integracoes/public/sessoes/` — webhooks/integracoes
+
+Cada um atende finalidade distinta. Nenhuma acao de codigo necessaria.
+
+### Consolidacao de documentacao (44 -> 26 arquivos)
+Criado `docs/archive/` com 16 documentos historicos movidos:
+
+**Arquivados (raiz):**
+- ANALISE-SISTEMA.md, PLANO-EXECUCAO.md, PLANO-TRANSPARENCIA.md, cronograma-producao.md
+
+**Arquivados (docs/):**
+- 6 analises SAPL (ANALISE-SAPL-*, analise-*-sapl.md, ANALISE-SESSAO-PAUTA.md)
+- PLANO_EXECUCAO_COMPLETO.md, PLANO-REFATORACAO.md
+- APRESENTACAO-SISTEMA-LEGISLATIVO.md, rollout-checklist.md
+- arquitetura-atual.md, INSTALACAO-VPS.md (substituido por -DETALHADA)
+
+**Vivos (5 raiz + 12 docs/ + 9 skills):**
+- Raiz: README, CLAUDE, REGRAS-DE-NEGOCIO, ESTADO-ATUAL, INSTALACAO
+- docs/: API-DOCUMENTACAO, FLUXO-LEGISLATIVO, PADROES-CODIGO, MODELOS-DADOS, ERROS-E-SOLUCOES, MELHORIAS-PROPOSTAS, GUIA-DEPLOY, GUIA-MULTI-TENANT, INSTALACAO-VPS-DETALHADA, DEPLOY-VERCEL-SUPABASE, ambiente-e-pipeline, NOVA-CAMARA
+- docs/skills/ (9 skills vivas)
+
+`docs/archive/README.md` explica a estrutura.
+
+### Tests
+- 481 testes ainda passando (sem regressao)
+- `npx tsc --noEmit` limpo (exit 0)
+
+---
+
+## Sprint 2: Debito Tecnico (17/04/2026)
+
+Foco: reducao de `any` nos arquivos de pior qualidade + split inicial de tramitacao-service.
+
+### Split parcial de tramitacao-service.ts (2434 -> 2287 linhas)
+- Extraido `src/lib/services/tramitacao/publica.ts` (167 linhas) com:
+  - `publicList`, `publicGetById`, `findProposicaoBasic`, `updateProposicaoStatus`
+- tramitacao-service.ts reexporta para manter compat com 10 consumidores
+- Split completo (fluxos, validacao, movimentacao, crud) fica para Sprint 3 — refactor grande em sessao unica tem risco
+
+### Reducao de `any` (607 -> 542, -65 ocorrencias, -11%)
+
+| Arquivo | Antes | Depois | Padrao corrigido |
+|---------|-------|--------|------------------|
+| `src/app/admin/analytics/page.tsx` | 15 | 0 | Dynamic imports Recharts: `asChart<T>()` helper tipado |
+| `src/app/parlamentares/galeria/page.tsx` | 14 | 0 | `ParlamentarApi` tipo + `ComponentType<LucideProps>` |
+| `src/app/admin/legislaturas/hooks/useLegislaturasAdmin.ts` | 12 | 0 | Interfaces `PeriodoApiResponse`/`CargoApiResponse` |
+| `src/app/admin/legislaturas/components/LegislaturaFormModal.tsx` | 2 | 0 | `keyof Periodo`/`keyof Cargo` em callbacks |
+| `src/app/painel-operador/[sessaoId]/page.tsx` | 11 | 0 | `getErrorMessage(error)` + tipos estruturais |
+| `src/app/painel-operador/[sessaoId]/_helpers.ts` | 0 | 0 | Novo tipo exportado `AcoesDisponiveis` |
+| `src/__tests__/emendas-normas.test.ts` | 12 | 0 | `as unknown as Emenda` com tipos Prisma |
+
+### Tests
+- 481 testes ainda passando (sem regressao)
+- `npx tsc --noEmit` limpo (exit 0)
+
+---
+
+## Sprint 1: Safeguards Legais (17/04/2026)
+
+Safeguards criticos identificados na analise de ponta a ponta foram implementados.
+
+### Transacoes atomicas (sincronizacao Proposicao <-> PautaItem)
+
+**Problema**: updates isolados podiam deixar `proposicao.status` dessincronizado de `pautaItem.status` se ocorresse crash entre operacoes.
+
+- `sessao-controle.ts::iniciarVotacaoItem` agora envolve updates de `pautaItem` + `proposicao` em `prisma.$transaction`
+- `sessao-controle.ts::finalizarItemPauta` reescrita: 7 operacoes relacionadas (pautaItem, proposicao, votacaoAgrupada, sessao ata, oficio, navegacao) agora sao atomicas. Chamadas externas (`registrarRetiradaPauta`, `atualizarTempoTotalReal`) mantidas fora
+- `sessao-controle/turnos.ts::finalizarTurnoItem` atomiza `atualizarResultadoProposicao` + `pautaItem.update` + `pautaSessao.update`
+- Funcoes `sincronizarStatusProposicao` e `atualizarResultadoProposicao` em `sessao-controle.ts` agora aceitam `tx?: Prisma.TransactionClient` opcional para uso dentro de transacoes
+
+### Cron de prazos legais (RN-081, RN-084)
+
+Novo job `src/lib/jobs/prazos-legais.ts`:
+- `processarSancaoTacita()`: aplica status `SANCIONADA` apos 15 dias uteis sem acao do Executivo
+- `gerarNotificacoesPrazo()`: cria `NotificacaoMulticanal` para pareceres (prazo <= 3d) e vetos (prazo <= 7d dos 30d), com dedup de 24h
+
+Endpoint `/api/cron/daily` (GET/POST):
+- Protegido por `Authorization: Bearer $CRON_SECRET`
+- Agendado as 03:00 UTC no `vercel.json`
+- Script `scripts/cron-daily.sh` para VPS (adicionar no crontab manualmente)
+- Endpoints `/api/proposicoes/sancao-tacita` e `/api/admin/notificacoes-prazo` refatorados para reutilizar os jobs (disparo manual com auth de usuario)
+- Nova env `CRON_SECRET` em `env.example`
+
+### Validacao regimental em POST /api/proposicoes
+
+- `proposicao-validacao-service.ts::validarProposicaoCompleta` integrado ao POST
+- Bloqueia com `ValidationError` 400 quando:
+  - RN-020: matéria de iniciativa privativa do Executivo (palavras-chave em ementa/texto)
+  - RN-022: requisitos minimos
+  - RN-023: materia analoga no mesmo ano
+- Logs via `logger.warn` em bloqueios para auditoria
+
+### Validacao de quorum antes de abrir votacao (RN-040)
+
+- `iniciarVotacaoItem` ja chamava `verificarQuorumInstalacao` (GAP #3 marcado); confirmado e atomizado
+
+### Testes
+
+- 481 testes passando (antes 465; +16 novos)
+- `src/tests/jobs/prazos-legais.test.ts` cobre sancao tacita e dedup de notificacoes
+- Mocks de `$transaction` atualizados em `sessao-controle.test.ts` e `sessao-controle-turnos.test.ts` para aceitar callback + array
 
 ---
 

@@ -165,8 +165,10 @@ const nextConfig = {
     return config
   },
   
-  // Suprimir warnings de React
-  reactStrictMode: false,
+  // Strict Mode do React: ativado para detectar efeitos inseguros e APIs deprecadas.
+  // Impacto em dev: efeitos/useState rodam 2x para detectar side-effects impuros.
+  // Não afeta produção.
+  reactStrictMode: true,
   
   // Configurações de logging
   logging: {
