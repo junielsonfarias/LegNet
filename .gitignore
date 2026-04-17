@@ -25,6 +25,7 @@ Thumbs.db
 docs/manual/manual-servidor.pdf
 docs/manual/manual-consolidado.md
 docs/manual/.consolidado.md
+docs/manual/dist/
 
 # Placeholders PNG gerados automaticamente pelo script.
 # Prints reais (capturados pelo user) devem ser commitados manualmente
