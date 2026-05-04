@@ -21,6 +21,8 @@ export const GET = withErrorHandler(async () => {
     versao: '1.0.0',
     descricao: `API publica para acesso a dados abertos da ${info.nomeCasa}`,
     documentacao: `${baseUrl}/api-docs`,
+    // Fase 4 / M8: dicionario de dados (JSONSchema por recurso)
+    dicionarioDados: `${baseUrl}/api/dados-abertos/schema`,
     endpoints: [
       {
         path: '/api/dados-abertos/parlamentares',
