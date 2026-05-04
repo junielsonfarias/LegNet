@@ -52,9 +52,20 @@ export const PATCH = withAuth(withErrorHandler(async (request: NextRequest, cont
     }
   }
 
+  // RN-122 / Fase 3 A6: ao publicar (APROVADA), grava dataPublicacao;
+  // ao despublicar (RASCUNHO), limpa dataPublicacao para reusar timestamp em
+  // caso de re-publicacao.
+  const dataPublicacaoUpdate =
+    payload.status === 'APROVADA' && pauta.status !== 'APROVADA'
+      ? { dataPublicacao: new Date() }
+      : payload.status === 'RASCUNHO' && pauta.status === 'APROVADA'
+      ? { dataPublicacao: null }
+      : {}
+
   const pautaAtualizada = await pautasDbService.update(pautaId, {
     ...(payload.observacoes !== undefined && { observacoes: payload.observacoes }),
-    ...(payload.status && { status: payload.status })
+    ...(payload.status && { status: payload.status }),
+    ...dataPublicacaoUpdate
   })
 
   await logAudit({

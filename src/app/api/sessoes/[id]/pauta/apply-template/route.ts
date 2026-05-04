@@ -29,6 +29,10 @@ export const POST = withAuth(async (
 
   await sessaoDbService.assertExists(sessaoId)
 
+  // RN-053 / Fase 3 A5: aplicar template em pauta APROVADA substituiria/adicionaria
+  // itens, descumprindo a publicacao oficial.
+  await pautasDbService.assertPautaEditavel(sessaoId)
+
   const result = await pautasDbService.applyTemplate(sessaoId, templateId, mode)
 
   if (!result.pauta) {

@@ -26,7 +26,8 @@ const TipoProposicaoUpdateSchema = z.object({
   quorumAplicacao: z.enum(APLICACOES_QUORUM).nullish().transform(v => v ?? undefined),
   quorumAplicacao2Turno: z.enum(APLICACOES_QUORUM).nullish().transform(v => v ?? undefined),
   totalTurnos: z.number().int().min(1).max(2).optional(),
-  intersticioDias: z.number().int().min(0).max(30).optional()
+  intersticioDias: z.number().int().min(0).max(30).optional(),
+  requerParecerCLJ: z.boolean().nullish().transform(v => v ?? undefined)
 })
 
 interface RouteParams {

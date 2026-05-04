@@ -9,7 +9,7 @@ export const UpdateSessaoSchema = z.object({
   data: z.string().nullish().transform(v => v ?? undefined),
   horario: z.string().nullish().transform(v => v ?? undefined),
   local: z.string().nullish().transform(v => v ?? undefined),
-  status: z.enum(['AGENDADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA']).nullish().transform(v => v ?? undefined),
+  status: z.enum(['AGENDADA', 'CONVOCADA', 'EM_ANDAMENTO', 'SUSPENSA', 'CONCLUIDA', 'CANCELADA']).nullish().transform(v => v ?? undefined),
   descricao: z.string().nullish().transform(v => v ?? undefined),
   ata: z.string().nullish().transform(v => v ?? undefined),
   arquivoAta: z.string().nullable().optional(),

@@ -13,11 +13,11 @@ export const GET = withAuth(async (request: NextRequest, context: { params: Prom
     where: { id },
     select: {
       id: true, numero: true, ano: true, tipo: true, titulo: true,
-      ementa: true, texto: true, status: true,
+      ementa: true, texto: true, textoFinal: true, dataRedacaoFinal: true, status: true,
       emendas: {
-        where: { status: 'APROVADA' },
+        where: { status: { in: ['APROVADA', 'INCORPORADA'] } },
         orderBy: { numero: 'asc' },
-        select: { id: true, numero: true, tipo: true, textoNovo: true, artigo: true, dispositivo: true }
+        select: { id: true, numero: true, tipo: true, textoNovo: true, artigo: true, dispositivo: true, status: true }
       }
     }
   })
@@ -25,7 +25,10 @@ export const GET = withAuth(async (request: NextRequest, context: { params: Prom
   if (!proposicao) throw new NotFoundError('Proposição')
 
   const emendasAprovadas = proposicao.emendas
-  const textoFinal = proposicao.texto || proposicao.ementa || ''
+
+  // RN-008 / Fase 3 M2: se ja existe textoFinal salvo, usa-o; caso contrario,
+  // sugere o texto original como ponto de partida para consolidacao.
+  const textoFinalSugerido = proposicao.textoFinal || proposicao.texto || proposicao.ementa || ''
 
   // Se há emendas aprovadas, adicionar nota sobre incorporação
   const notasEmendas = emendasAprovadas.map(e =>
@@ -42,7 +45,9 @@ export const GET = withAuth(async (request: NextRequest, context: { params: Prom
       ementa: proposicao.ementa
     },
     textoOriginal: proposicao.texto || proposicao.ementa || '',
-    textoFinal,
+    textoFinal: textoFinalSugerido,
+    textoFinalSalvo: proposicao.textoFinal, // null se ainda nao foi consolidado
+    dataRedacaoFinal: proposicao.dataRedacaoFinal,
     emendasIncorporadas: emendasAprovadas,
     notasEmendas,
     totalEmendas: emendasAprovadas.length,
@@ -70,10 +75,14 @@ export const POST = withAuth(async (request: NextRequest, context: { params: Pro
     throw new ValidationError('Redação final só pode ser salva para proposições APROVADAS ou SANCIONADAS')
   }
 
-  // Atualizar texto da proposição com redação final
+  // RN-008 / Fase 3 M2: salva em campo separado, preservando o texto original
+  // (que documenta a versao protocolada antes de emendas).
   const updated = await prisma.proposicao.update({
     where: { id },
-    data: { texto: textoFinal }
+    data: {
+      textoFinal,
+      dataRedacaoFinal: new Date()
+    }
   })
 
   // Marcar emendas aprovadas como incorporadas

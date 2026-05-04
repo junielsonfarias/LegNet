@@ -60,6 +60,23 @@ export const PUT = withAuth(async (
   const data = payload.data
   const updateData: Record<string, unknown> = {}
 
+  // RN-053 / Fase 3 A5: pauta APROVADA so aceita atualizacoes operacionais
+  // (status, tempoReal, observacoes). Mudanca estrutural (secao, titulo,
+  // proposicaoId, ordem, tipoAcao, tipoVotacao, etapa, parecerId,
+  // leituraNumero, relatorId, sessaoAtaOrigemId, oficioId) e bloqueada.
+  const camposEstruturais = [
+    'secao', 'titulo', 'descricao', 'proposicaoId', 'ordem',
+    'tipoAcao', 'tipoVotacao', 'autor', 'tempoEstimado',
+    'sessaoAtaOrigemId', 'oficioId', 'etapa', 'parecerId',
+    'leituraNumero', 'relatorId'
+  ] as const
+  const tentaMudarEstrutura = camposEstruturais.some(
+    (k) => (data as Record<string, unknown>)[k] !== undefined
+  )
+  if (tentaMudarEstrutura && existingItem.pauta?.sessaoId) {
+    await pautasDbService.assertPautaEditavel(existingItem.pauta.sessaoId)
+  }
+
   // Determinar seção e tipoAcao finais para validações
   const secaoFinal = data.secao || existingItem.secao
   const tipoAcaoFinal = data.tipoAcao || existingItem.tipoAcao
@@ -178,6 +195,11 @@ export const DELETE = withAuth(async (
   const existingItem = await pautasDbService.getItem(validatedItemId)
   if (!existingItem) {
     throw new NotFoundError('Item da pauta')
+  }
+
+  // RN-053 / Fase 3 A5: nao remover itens de pauta APROVADA (publicada).
+  if (existingItem.pauta?.sessaoId) {
+    await pautasDbService.assertPautaEditavel(existingItem.pauta.sessaoId)
   }
 
   // Reverter status da proposição vinculada (EM_PAUTA → AGUARDANDO_PAUTA)

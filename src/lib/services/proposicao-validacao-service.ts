@@ -589,14 +589,16 @@ export async function validarInclusaoOrdemDoDia(
     }
   }
 
-  // Tipos que PRECISAM de parecer da CLJ
-  const tiposComParecerCLJ = [
-    'PROJETO_LEI',
-    'PROJETO_RESOLUCAO',
-    'PROJETO_DECRETO'
-  ]
+  // RN-030 / Fase 3 A4: parecer CLJ obrigatorio determinado pelo flag
+  // `requerParecerCLJ` em TipoProposicaoConfig (substitui lista hardcoded).
+  // Tipos legados sem config explicita: assume false (default do schema).
+  const tipoConfig = await prisma.tipoProposicaoConfig.findUnique({
+    where: { codigo: proposicao.tipo },
+    select: { requerParecerCLJ: true }
+  })
+  const requerCLJ = tipoConfig?.requerParecerCLJ ?? false
 
-  if (tiposComParecerCLJ.includes(proposicao.tipo)) {
+  if (requerCLJ) {
     // Verifica parecer da CLJ
     const parecerCLJ = proposicao.pareceres.find(
       p => p.comissao?.sigla === 'CLJ' || p.comissao?.nome?.includes('Legislação')

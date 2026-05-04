@@ -51,9 +51,10 @@ enum TipoSessao {
 }
 
 enum StatusSessao {
-  AGENDADA
-  EM_ANDAMENTO
-  SUSPENSA
+  AGENDADA       // Sessao criada, aguardando convocacao oficial
+  CONVOCADA      // Pauta publicada (>= 48h antes da sessao). RN-043/RN-122.
+  EM_ANDAMENTO   // Sessao iniciada, em curso
+  SUSPENSA       // Suspensa temporariamente
   CONCLUIDA
   CANCELADA
 }

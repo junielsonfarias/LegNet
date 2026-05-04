@@ -510,6 +510,8 @@ model Proposicao {
   titulo           String
   ementa           String            @db.Text
   texto            String?           @db.Text
+  textoFinal       String?           @db.Text  // RN-008 / Fase 3 M2: texto consolidado apos redacao final (preserva original)
+  dataRedacaoFinal DateTime?                   // RN-008 / Fase 3 M2: timestamp da consolidacao
   urlDocumento     String?           // URL externa do documento (Google Drive, etc)
   status           StatusProposicao  @default(APRESENTADA)
   regime           String    @default("NORMAL")  // NORMAL, PRIORIDADE, URGENCIA, URGENCIA_URGENTISSIMA
@@ -573,6 +575,9 @@ model TipoProposicaoConfig {
   quorumAplicacao2Turno String?                                 // Aplicação para 2º turno (se diferente do 1º)
   totalTurnos           Int       @default(1)                   // Número de turnos: 1 ou 2
   intersticioDias       Int       @default(0)                   // Dias úteis de interstício entre turnos
+
+  // Configuração de Pareceres (Fase 3 / A4 / RN-030)
+  requerParecerCLJ      Boolean   @default(false) // Exige parecer da CLJ antes de pautar (PL, PR, PD, etc)
 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt

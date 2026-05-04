@@ -97,11 +97,13 @@ const TEMPOS_MEDIOS: Record<string, number> = {
  */
 // Include usado pelas queries de elegibilidade. Mantido como constante para
 // reuso entre verificarElegibilidade e verificarElegibilidadeBatch.
+// fluxoEtapa.habilitaPauta e usado por RN-058 (Fase 3 / C6).
 const ELEGIBILIDADE_INCLUDE = Prisma.validator<Prisma.ProposicaoInclude>()({
   tramitacoes: {
     orderBy: { createdAt: 'desc' },
     include: {
       unidade: { select: { tipo: true, nome: true } },
+      fluxoEtapa: { select: { id: true, nome: true, habilitaPauta: true, requerParecer: true } },
     },
   },
   autor: {
@@ -117,8 +119,14 @@ type ProposicaoParaElegibilidade = Prisma.ProposicaoGetPayload<{
  * Calcula elegibilidade a partir de uma proposicao ja carregada (funcao pura,
  * sem queries). Usada por verificarElegibilidade (single) e
  * verificarElegibilidadeBatch (batch). Extraida para eliminar N+1.
+ *
+ * `tipoConfig` (Fase 3 / A4) traz a flag `requerParecerCLJ` do banco e substitui
+ * a lista hardcoded antiga. Se nao for fornecido, assume false (sem exigir CLJ).
  */
-function calcularElegibilidade(proposicao: ProposicaoParaElegibilidade): ElegibilidadeResult {
+function calcularElegibilidade(
+  proposicao: ProposicaoParaElegibilidade,
+  tipoConfig?: { requerParecerCLJ: boolean } | null
+): ElegibilidadeResult {
   const motivos: string[] = []
   const avisos: string[] = []
   let prioridade: number = PRIORIDADE_ORDENACAO.ORDEM_CRONOLOGICA
@@ -128,16 +136,27 @@ function calcularElegibilidade(proposicao: ProposicaoParaElegibilidade): Elegibi
     motivos.push(`Status atual (${proposicao.status}) não permite inclusão em pauta`)
   }
 
-  // Verifica se passou pela CLJ (para projetos de lei e resolução)
-  const tiposQuePrecisamCLJ = ['PROJETO_LEI', 'PROJETO_RESOLUCAO', 'PROJETO_DECRETO']
+  // RN-058 / Fase 3 C6: valida etapa atual do fluxo de tramitacao.
+  // Se proposicao esta em uma etapa cujo `habilitaPauta=false`, bloqueia.
+  // Proposicoes legadas (sem `fluxoEtapaId`) sao toleradas (comportamento
+  // anterior preservado).
+  const tramitacaoAtual = proposicao.tramitacoes.find((t) => t.status === 'EM_ANDAMENTO')
+  if (tramitacaoAtual?.fluxoEtapa && tramitacaoAtual.fluxoEtapa.habilitaPauta === false) {
+    motivos.push(
+      `RN-058: Etapa atual da tramitacao ("${tramitacaoAtual.fluxoEtapa.nome}") nao habilita inclusao em pauta. ` +
+      `Conclua a etapa antes de pautar.`
+    )
+  }
 
-  if (tiposQuePrecisamCLJ.includes(proposicao.tipo)) {
+  // RN-030 / Fase 3 A4: parecer CLJ obrigatorio para tipos configurados.
+  // Substitui lista hardcoded por consulta a TipoProposicaoConfig.requerParecerCLJ.
+  if (tipoConfig?.requerParecerCLJ) {
     const passouCLJ = proposicao.tramitacoes.some(
       (t) => t.unidade?.tipo === 'COMISSAO' && t.parecer !== null,
     )
 
     if (!passouCLJ) {
-      motivos.push('Proposição não passou pela Comissão de Legislação e Justiça')
+      motivos.push('RN-030: Proposicao nao passou pela Comissao de Legislacao e Justica (CLJ)')
     }
   }
 
@@ -158,6 +177,23 @@ function calcularElegibilidade(proposicao: ProposicaoParaElegibilidade): Elegibi
   }
 }
 
+/**
+ * Carrega TipoProposicaoConfig para varios codigos de tipo de uma vez (evita N+1).
+ */
+async function carregarTipoConfigsBatch(
+  tipos: string[]
+): Promise<Map<string, { requerParecerCLJ: boolean }>> {
+  const map = new Map<string, { requerParecerCLJ: boolean }>()
+  const codigosUnicos = Array.from(new Set(tipos.filter(Boolean)))
+  if (codigosUnicos.length === 0) return map
+  const configs = await prisma.tipoProposicaoConfig.findMany({
+    where: { codigo: { in: codigosUnicos } },
+    select: { codigo: true, requerParecerCLJ: true }
+  })
+  for (const c of configs) map.set(c.codigo, { requerParecerCLJ: c.requerParecerCLJ })
+  return map
+}
+
 export async function verificarElegibilidade(
   proposicaoId: string,
 ): Promise<ElegibilidadeResult> {
@@ -175,7 +211,12 @@ export async function verificarElegibilidade(
     }
   }
 
-  return calcularElegibilidade(proposicao)
+  const tipoConfig = await prisma.tipoProposicaoConfig.findUnique({
+    where: { codigo: proposicao.tipo },
+    select: { requerParecerCLJ: true }
+  })
+
+  return calcularElegibilidade(proposicao, tipoConfig)
 }
 
 /**
@@ -193,8 +234,11 @@ export async function verificarElegibilidadeBatch(
     include: ELEGIBILIDADE_INCLUDE,
   })
 
+  // Carrega TipoProposicaoConfig de todos os tipos numa unica query (Fase 3 A4/C6)
+  const tipoConfigs = await carregarTipoConfigsBatch(proposicoes.map((p) => p.tipo))
+
   for (const p of proposicoes) {
-    map.set(p.id, calcularElegibilidade(p))
+    map.set(p.id, calcularElegibilidade(p, tipoConfigs.get(p.tipo) ?? null))
   }
 
   // Ids nao encontrados ficam com resultado "nao encontrado"
@@ -626,12 +670,29 @@ export async function publicarPauta(
     }
   }
 
-  await prisma.pautaSessao.update({
-    where: { id: pautaId },
-    data: {
-      status: 'APROVADA'
-    }
-  })
+  // RN-122 / Fase 3 A6: registra timestamp de publicacao oficial.
+  // Cron `verificarPautasAtrasadas` usa esse campo para validar a antecedencia
+  // de 48h. Se nao gravar aqui, pauta APROVADA sem dataPublicacao continua
+  // gerando alerta indevidamente.
+  // RN-043 / Fase 3 C5: ao publicar a pauta, sessao AGENDADA passa para CONVOCADA
+  // (estado oficial pos-publicacao). Mantem AGENDADA se sessao nao existe ou
+  // ja esta em outro estado (EM_ANDAMENTO, etc).
+  await prisma.$transaction([
+    prisma.pautaSessao.update({
+      where: { id: pautaId },
+      data: {
+        status: 'APROVADA',
+        dataPublicacao: new Date()
+      }
+    }),
+    prisma.sessao.updateMany({
+      where: {
+        pautaSessao: { id: pautaId },
+        status: 'AGENDADA'
+      },
+      data: { status: 'CONVOCADA' }
+    })
+  ])
 
   logger.info('Pauta publicada', {
     action: 'publicar_pauta',

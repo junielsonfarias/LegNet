@@ -314,10 +314,38 @@ export const pautasDbService = {
     })
   },
 
+  /**
+   * RN-053 / Fase 3 A5: bloqueia adicao/remocao de itens em pauta APROVADA.
+   *
+   * Quando a pauta esta APROVADA (publicada), nao pode receber mais itens novos
+   * nem ter itens removidos — isso preservaria a versao publicada para o cidadao.
+   * Itens existentes podem ter STATUS atualizado durante a sessao (operador
+   * controla via PUT /api/pauta/[itemId]).
+   *
+   * Lanca erro se pauta esta APROVADA. Pauta nao encontrada NAO lanca aqui
+   * (deixa o handler retornar NotFoundError no fluxo principal).
+   */
+  async assertPautaEditavel(sessaoId: string): Promise<void> {
+    const pauta = await prisma.pautaSessao.findUnique({
+      where: { sessaoId },
+      select: { status: true }
+    })
+    if (!pauta) return
+    if (pauta.status === 'APROVADA') {
+      const err = new Error(
+        'RN-053: Pauta ja publicada (APROVADA) — nao e possivel adicionar/remover itens. ' +
+        'Reverta para RASCUNHO em /admin/sessoes/[id] antes de editar (com no minimo 48h de antecedencia da sessao).'
+      )
+      ;(err as any).code = 'PAUTA_LOCKED'
+      throw err
+    }
+  },
+
   async publish(id: string) {
     return prisma.pautaSessao.update({
       where: { id },
-      data: { status: 'APROVADA' },
+      // RN-122 / Fase 3 A6: timestamp de publicacao oficial
+      data: { status: 'APROVADA', dataPublicacao: new Date() },
       include: defaultInclude
     })
   },
@@ -607,6 +635,8 @@ export const pautasDbService = {
     return prisma.pautaItem.findUnique({
       where: { id: itemId },
       include: {
+        // pauta.sessaoId e usado por assertPautaEditavel (Fase 3 A5)
+        pauta: { select: { id: true, sessaoId: true, status: true } },
         proposicao: {
           select: { id: true, numero: true, ano: true, titulo: true, tipo: true, status: true }
         },

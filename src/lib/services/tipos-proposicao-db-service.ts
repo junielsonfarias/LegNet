@@ -22,6 +22,7 @@ export interface TipoProposicaoPayload {
   quorumAplicacao2Turno?: string | null
   totalTurnos?: number
   intersticioDias?: number
+  requerParecerCLJ?: boolean
 }
 
 export const tiposProposicaoDbService = {
@@ -66,6 +67,7 @@ export const tiposProposicaoDbService = {
     if (payload.quorumAplicacao2Turno !== undefined) data.quorumAplicacao2Turno = payload.quorumAplicacao2Turno
     if (payload.totalTurnos !== undefined) data.totalTurnos = payload.totalTurnos
     if (payload.intersticioDias !== undefined) data.intersticioDias = payload.intersticioDias
+    if (payload.requerParecerCLJ !== undefined) data.requerParecerCLJ = payload.requerParecerCLJ
     return prisma.tipoProposicaoConfig.update({ where: { id }, data })
   },
 

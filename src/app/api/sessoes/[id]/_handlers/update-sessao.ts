@@ -167,9 +167,13 @@ function processStatusTransition(
     return
   }
 
-  // Validar transições de status permitidas
+  // RN-043 / Fase 3 C5: maquina de estados ampliada com CONVOCADA.
+  // CONVOCADA e o estado oficial apos publicacao de pauta (RN-122 — 48h antes).
+  // Mantemos transicao direta AGENDADA -> EM_ANDAMENTO para suportar retroativos
+  // e casos onde a publicacao da pauta e simultanea ao inicio da sessao.
   const allowedTransitions: Record<string, string[]> = {
-    AGENDADA: ['EM_ANDAMENTO', 'CANCELADA'],
+    AGENDADA: ['CONVOCADA', 'EM_ANDAMENTO', 'CANCELADA'],
+    CONVOCADA: ['EM_ANDAMENTO', 'AGENDADA', 'CANCELADA'],
     EM_ANDAMENTO: ['SUSPENSA', 'CONCLUIDA'],
     SUSPENSA: ['EM_ANDAMENTO', 'CANCELADA'],
     CONCLUIDA: [],
@@ -190,6 +194,11 @@ function processStatusTransition(
       updateData.finalizada = false
       updateData.tempoInicio = null
       updateData.tempoAcumulado = 0
+      break
+
+    case 'CONVOCADA':
+      // Apenas confirma a convocacao oficial. Nao mexe em tempos.
+      // Nao deve setar finalizada=false aqui pois sessao ainda nao iniciou.
       break
 
     case 'EM_ANDAMENTO':

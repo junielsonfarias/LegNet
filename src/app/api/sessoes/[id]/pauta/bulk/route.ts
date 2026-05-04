@@ -27,6 +27,12 @@ export const POST = withAuth(async (
 
   const isRetroativo = sessao_db.status === 'CONCLUIDA'
 
+  // RN-053 / Fase 3 A5: pauta APROVADA nao aceita inclusao em massa.
+  // Excecao: lancamento retroativo (sessao CONCLUIDA).
+  if (!isRetroativo) {
+    await pautasDbService.assertPautaEditavel(sessaoId)
+  }
+
   // Buscar proposicoes
   const proposicoes = await prisma.proposicao.findMany({
     where: { id: { in: proposicaoIds } },

@@ -33,7 +33,8 @@ const TipoProposicaoSchema = z.object({
   quorumAplicacao: z.enum(APLICACOES_QUORUM).nullish().transform(v => v ?? undefined),
   quorumAplicacao2Turno: z.enum(APLICACOES_QUORUM).nullish().transform(v => v ?? undefined),
   totalTurnos: z.number().int().min(1).max(2).default(1),
-  intersticioDias: z.number().int().min(0).max(30).default(0)
+  intersticioDias: z.number().int().min(0).max(30).default(0),
+  requerParecerCLJ: z.boolean().default(false)
 })
 
 export const GET = withErrorHandler(async (request: NextRequest) => {

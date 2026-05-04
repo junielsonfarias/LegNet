@@ -64,6 +64,13 @@ export const POST = withAuth(async (
   const sessaoDb = await prisma.sessao.findUnique({ where: { id: sessaoId }, select: { status: true } })
   const isRetroativo = sessaoDb?.status === 'CONCLUIDA'
 
+  // RN-053 / Fase 3 A5: pauta APROVADA nao aceita novos itens.
+  // Excecao: lancamento retroativo (sessao CONCLUIDA), pois operador esta
+  // registrando dados pretericos.
+  if (!isRetroativo) {
+    await pautasDbService.assertPautaEditavel(sessaoId)
+  }
+
   if (!isRetroativo) {
     // Valida elegibilidade da proposicao para pauta (apenas quando vinculada a uma proposicao)
     if (payload.data.proposicaoId) {
