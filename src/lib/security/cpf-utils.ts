@@ -30,10 +30,10 @@ export function formatCpf(cpf: string): string {
 }
 
 /**
- * Mascara CPF para exibicao publica/listagem.
- * Mostra os 6 primeiros digitos e oculta os ultimos 5 com '*'.
- *   "12345678909" -> "123.456.78*-**"
- *   "123.456.789-09" -> "123.456.78*-**"
+ * Mascara CPF para exibicao publica/listagem (padrao Portal da Transparencia).
+ * Mostra os 3 primeiros e os 2 ultimos digitos:
+ *   "12345678909" -> "123.***.***-09"
+ *   "123.456.789-09" -> "123.***.***-09"
  *
  * RN-156 (LGPD): toda exibicao publica/listagem deve usar esta funcao.
  * Decriptografar e exibir o CPF completo apenas em formularios de edicao
@@ -43,7 +43,20 @@ export function maskCpf(cpf: string | null | undefined): string {
   if (!cpf) return ''
   const digits = normalizeCpf(cpf)
   if (digits.length !== 11) return cpf
-  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 8)}*-**`
+  return `${digits.slice(0, 3)}.***.***-${digits.slice(9, 11)}`
+}
+
+/**
+ * Mascara CPF mas mantem CNPJ visivel (CNPJ e publico, CPF e LGPD-protected).
+ * Util para campos polimorficos como `cnpjCpf` em despesas/contratos.
+ *   CPF (11 digitos)  -> "123.***.***-09"
+ *   CNPJ (14 digitos) -> retorna inalterado
+ */
+export function maskCpfOrCnpj(value: string | null | undefined): string | null {
+  if (!value) return null
+  const digits = normalizeCpf(value)
+  if (digits.length === 11) return maskCpf(value)
+  return value
 }
 
 /**

@@ -15,6 +15,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { maskCpfOrCnpj as mascararCpfCnpj } from '@/lib/security/cpf-utils'
 
 // ==================== Tipos ====================
 
@@ -88,16 +89,6 @@ export interface DespesasFilters {
   ano?: number
   mes?: number
   situacao?: string
-}
-
-// Mascara CPF de pessoa fisica (11 digitos). CNPJ (14 digitos) e publico.
-function mascararCpfCnpj(valor: string | null | undefined): string | null {
-  if (!valor) return null
-  const somenteDigitos = valor.replace(/\D/g, '')
-  if (somenteDigitos.length === 11) {
-    return `${somenteDigitos.slice(0, 3)}.***.***-${somenteDigitos.slice(9, 11)}`
-  }
-  return valor
 }
 
 // ==================== Servico ====================
