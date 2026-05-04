@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { servidoresDbService } from '@/lib/services/servidores-db-service'
+import { servidoresDbService, serializeServidor, serializeServidores } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import type { SituacaoServidor, VinculoServidor } from '@prisma/client'
@@ -29,7 +29,7 @@ export const GET = withAuth(
       { page, limit }
     )
 
-    return createSuccessResponse(result.data, undefined, undefined, 200, {
+    return createSuccessResponse(serializeServidores(result.data), undefined, undefined, 200, {
       total: result.pagination.total,
       page: result.pagination.page,
       limit: result.pagination.limit,
@@ -63,7 +63,7 @@ export const POST = withAuth(
       observacoes: body.observacoes
     })
 
-    return createSuccessResponse(novoServidor, 'Servidor criado com sucesso', undefined, 201)
+    return createSuccessResponse(serializeServidor(novoServidor), 'Servidor criado com sucesso', undefined, 201)
   },
   { permissions: 'financeiro.manage' }
 )

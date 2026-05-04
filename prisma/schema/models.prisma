@@ -1746,7 +1746,8 @@ model Despesa {
 model Servidor {
   id              String          @id @default(cuid())
   nome            String
-  cpf             String          @unique
+  cpf             String          // Criptografado via AES-256-GCM (Fase 1 / C2). Use src/lib/security/cpf-utils.ts.
+  cpfHash         String?         @unique // Hash SHA-256 deterministico para busca/uniqueness. Backfill via scripts/backfill-cpf-encryption.ts.
   matricula       String          @unique
   cargo           String
   funcao          String?

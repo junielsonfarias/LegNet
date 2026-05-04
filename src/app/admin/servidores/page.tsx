@@ -44,10 +44,17 @@ export default function ServidoresAdminPage() {
       toast.error('Preencha os campos obrigatorios')
       return
     }
-    const data = {
-      ...formData,
+    // C2/LGPD: na edicao, se o CPF estiver vazio (operador nao quer mudar),
+    // remove do payload para que o backend nao sobrescreva. Em criacao,
+    // mantem o CPF (mesmo que vazio — schema permite, backend trata).
+    const { cpf, ...rest } = formData
+    const data: any = {
+      ...rest,
       salarioBruto: formData.salarioBruto ? parseFloat(formData.salarioBruto) : null,
       cargaHoraria: formData.cargaHoraria ? parseInt(formData.cargaHoraria) : null
+    }
+    if (!editingId || cpf.trim() !== '') {
+      data.cpf = cpf
     }
     try {
       if (editingId) { await update(editingId, data) } else { await create(data) }
@@ -59,8 +66,13 @@ export default function ServidoresAdminPage() {
   }
 
   const handleEdit = (servidor: Servidor) => {
+    // C2/LGPD: API retorna CPF mascarado (XXX.XXX.XX*-**). Para edicao,
+    // o operador re-digita o CPF se quiser alterar. Se deixar vazio, o servico
+    // entende que nao havera mudanca (porque payload.cpf === undefined). Aqui
+    // passamos string vazia para o input ficar limpo, e tratamos no submit
+    // ignorando cpf vazio.
     setFormData({
-      nome: servidor.nome, cpf: servidor.cpf || '', matricula: servidor.matricula || '',
+      nome: servidor.nome, cpf: '', matricula: servidor.matricula || '',
       cargo: servidor.cargo || '', funcao: servidor.funcao || '',
       unidade: servidor.unidade || '', lotacao: servidor.lotacao || '',
       vinculo: servidor.vinculo, dataAdmissao: servidor.dataAdmissao ? servidor.dataAdmissao.split('T')[0] : '',
@@ -123,7 +135,14 @@ export default function ServidoresAdminPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div><Label>Nome *</Label><Input value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })} /></div>
-                <div><Label>CPF</Label><Input value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} /></div>
+                <div>
+                  <Label>CPF{editingId ? ' (deixe vazio para manter)' : ''}</Label>
+                  <Input
+                    value={formData.cpf}
+                    onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                    placeholder={editingId ? 'Re-digite para alterar' : '000.000.000-00'}
+                  />
+                </div>
                 <div><Label>Matricula</Label><Input value={formData.matricula} onChange={e => setFormData({ ...formData, matricula: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

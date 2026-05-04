@@ -1374,6 +1374,16 @@ Implementacao: trigger PostgreSQL `audit_logs_block_modifications` em audit_logs
 (migration 20260504_audit_log_immutable) bloqueia UPDATE/DELETE em runtime.
 Excecao: restore de backup ou reset de DEV exige dropar trigger temporariamente.
 
+REGRA RN-156: PROTECAO DE DADOS PESSOAIS (LGPD)
+CPFs e dados pessoais sensiveis DEVEM ser:
+- Armazenados criptografados em repouso (AES-256-GCM via src/lib/security/encryption.ts)
+- Indexados via hash deterministico (SHA-256) para uniqueness/busca, nao por valor puro
+- Mascarados na exibicao publica e em listagens administrativas (XXX.XXX.XX*-**)
+- Decriptografados apenas para roles com permissao explicita
+Implementacao: helpers em src/lib/security/cpf-utils.ts (encryptCpf, hashCpf,
+maskCpf, maskEncryptedCpf). Migration 20260504_servidor_cpf_hash adiciona
+coluna cpfHash em Servidor. Backfill via scripts/backfill-cpf-encryption.ts.
+
 REGRA RN-155: ACESSO DO PARLAMENTAR DURANTE SESSAO
 Quando existe sessao EM_ANDAMENTO:
 - Parlamentar COM presenca confirmada: acessa APENAS modulo de votacao

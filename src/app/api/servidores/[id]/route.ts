@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { servidoresDbService } from '@/lib/services/servidores-db-service'
+import { servidoresDbService, serializeServidor } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
@@ -21,7 +21,7 @@ export const GET = withAuth(
       throw new NotFoundError('Servidor')
     }
 
-    return createSuccessResponse(servidor)
+    return createSuccessResponse(serializeServidor(servidor))
   },
   { permissions: 'financeiro.view' }
 )
@@ -55,7 +55,7 @@ export const PUT = withAuth(
       observacoes: body.observacoes
     })
 
-    return createSuccessResponse(servidorAtualizado, 'Servidor atualizado com sucesso')
+    return createSuccessResponse(serializeServidor(servidorAtualizado), 'Servidor atualizado com sucesso')
   },
   { permissions: 'financeiro.manage' }
 )

@@ -1,5 +1,35 @@
 import { prisma } from '@/lib/prisma'
 import type { SituacaoServidor, VinculoServidor } from '@prisma/client'
+import { encryptCpf, hashCpf, normalizeCpf, isValidCpfFormat, maskEncryptedCpf } from '@/lib/security/cpf-utils'
+
+/**
+ * Serializa um Servidor mascarando o CPF para qualquer resposta. Use em
+ * todos os endpoints (admin e publicos) por padrao. Quando precisar do CPF
+ * completo (ex: gerar contracheque), buscar via servidoresDbService.getById
+ * e decriptar explicitamente com role autorizada.
+ */
+export const serializeServidor = <T extends { cpf?: string | null }>(servidor: T): T => ({
+  ...servidor,
+  cpf: maskEncryptedCpf(servidor.cpf)
+})
+
+/** Aplica serializeServidor em uma lista. */
+export const serializeServidores = <T extends { cpf?: string | null }>(list: T[]): T[] =>
+  list.map(serializeServidor)
+
+/**
+ * Helper: prepara campos cpf+cpfHash para gravacao quando o payload traz CPF.
+ * Retorna {} quando o cpf esta vazio/null/undefined (nao altera campos no DB).
+ */
+const buildCpfFields = (cpf: string | null | undefined): { cpf?: string; cpfHash?: string } => {
+  if (!cpf) return {}
+  const digits = normalizeCpf(cpf)
+  if (!digits) return {}
+  if (!isValidCpfFormat(cpf)) {
+    throw new Error('CPF invalido (formato esperado: 11 digitos)')
+  }
+  return { cpf: encryptCpf(digits), cpfHash: hashCpf(digits) }
+}
 
 export interface ServidorPayload {
   nome: string
@@ -77,10 +107,14 @@ export const servidoresDbService = {
     // Gera matricula automatica se nao fornecida
     const matricula = payload.matricula || await this.generateMatricula()
 
+    // C2: criptografa CPF e gera cpfHash para uniqueness
+    const cpfFields = buildCpfFields(payload.cpf)
+
     return prisma.servidor.create({
       data: {
         nome: payload.nome.trim(),
-        cpf: payload.cpf || '',
+        cpf: cpfFields.cpf ?? '',
+        cpfHash: cpfFields.cpfHash ?? null,
         matricula,
         cargo: payload.cargo || 'A DEFINIR',
         funcao: payload.funcao ?? null,
@@ -96,6 +130,15 @@ export const servidoresDbService = {
     })
   },
 
+  /**
+   * Busca servidor por CPF (recebe CPF puro ou formatado).
+   * Usa cpfHash para lookup eficiente sem expor o valor.
+   */
+  async findByCpf(cpf: string) {
+    const hash = hashCpf(cpf)
+    return prisma.servidor.findUnique({ where: { cpfHash: hash } })
+  },
+
   async generateMatricula() {
     const year = new Date().getFullYear()
     const count = await prisma.servidor.count()
@@ -106,7 +149,17 @@ export const servidoresDbService = {
     const data: Record<string, unknown> = {}
 
     if (payload.nome !== undefined) data.nome = payload.nome.trim()
-    if (payload.cpf !== undefined) data.cpf = payload.cpf
+    if (payload.cpf !== undefined) {
+      const cpfFields = buildCpfFields(payload.cpf)
+      if (cpfFields.cpf) {
+        data.cpf = cpfFields.cpf
+        data.cpfHash = cpfFields.cpfHash
+      } else {
+        // CPF vazio: limpa ambos
+        data.cpf = ''
+        data.cpfHash = null
+      }
+    }
     if (payload.matricula !== undefined) data.matricula = payload.matricula
     if (payload.cargo !== undefined) data.cargo = payload.cargo
     if (payload.funcao !== undefined) data.funcao = payload.funcao
