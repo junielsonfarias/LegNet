@@ -12,6 +12,10 @@ export interface SessaoApi {
   descricao: string | null
   ata: string | null
   arquivoAta?: string | null
+  arquivoAtaAssinada?: string | null
+  statusAta?: 'PENDENTE' | 'APROVADA' | 'REJEITADA' | null
+  dataPublicacaoAta?: string | null
+  sessaoAprovacaoAtaId?: string | null
   urlTransmissao?: string | null
   urlVideo?: string | null
   urlAudio?: string | null

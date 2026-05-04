@@ -105,23 +105,32 @@ export default function SessaoDetailPage() {
   const [previewAta, setPreviewAta] = useState(false)
   const [gerandoAta, setGerandoAta] = useState(false)
   const [arquivoAtaUrl, setArquivoAtaUrl] = useState('')
+  const [arquivoAtaAssinadaUrl, setArquivoAtaAssinadaUrl] = useState('')
+  const [dataPublicacaoAta, setDataPublicacaoAta] = useState('')
   const [urlTransmissao, setUrlTransmissao] = useState('')
   const [urlVideo, setUrlVideo] = useState('')
   const [urlAudio, setUrlAudio] = useState('')
   const [salvandoUrl, setSalvandoUrl] = useState(false)
+  const [salvandoAtaAssinada, setSalvandoAtaAssinada] = useState(false)
   const [salvandoLinks, setSalvandoLinks] = useState(false)
 
   // Sincronizar URLs quando sessão carrega
   const sessaoArquivoAta = sessao?.arquivoAta
+  const sessaoArquivoAtaAssinada = sessao?.arquivoAtaAssinada
+  const sessaoDataPublicacaoAta = sessao?.dataPublicacaoAta
   const sessaoUrlTransmissao = sessao?.urlTransmissao
   const sessaoUrlVideo = sessao?.urlVideo
   const sessaoUrlAudio = sessao?.urlAudio
   useEffect(() => {
     setArquivoAtaUrl(sessaoArquivoAta || '')
+    setArquivoAtaAssinadaUrl(sessaoArquivoAtaAssinada || '')
+    setDataPublicacaoAta(
+      sessaoDataPublicacaoAta ? new Date(sessaoDataPublicacaoAta).toISOString().split('T')[0] : ''
+    )
     setUrlTransmissao(sessaoUrlTransmissao || '')
     setUrlVideo(sessaoUrlVideo || '')
     setUrlAudio(sessaoUrlAudio || '')
-  }, [sessaoArquivoAta, sessaoUrlTransmissao, sessaoUrlVideo, sessaoUrlAudio])
+  }, [sessaoArquivoAta, sessaoArquivoAtaAssinada, sessaoDataPublicacaoAta, sessaoUrlTransmissao, sessaoUrlVideo, sessaoUrlAudio])
 
   const salvarArquivoAta = async () => {
     if (!sessao?.id) return
@@ -143,6 +152,33 @@ export default function SessaoDetailPage() {
       toast.error('Erro ao salvar URL da ata')
     } finally {
       setSalvandoUrl(false)
+    }
+  }
+
+  const salvarAtaAssinada = async () => {
+    if (!sessao?.id) return
+    setSalvandoAtaAssinada(true)
+    try {
+      const response = await fetch(`/api/sessoes/${sessao.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          arquivoAtaAssinada: arquivoAtaAssinadaUrl.trim() || null,
+          dataPublicacaoAta: dataPublicacaoAta || null,
+          statusAta: arquivoAtaAssinadaUrl.trim() ? 'APROVADA' : (sessao.statusAta ?? null)
+        })
+      })
+      if (response.ok) {
+        toast.success('Ata assinada e aprovada salva com sucesso')
+        mutate()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Erro ao salvar ata assinada')
+      }
+    } catch {
+      toast.error('Erro ao salvar ata assinada')
+    } finally {
+      setSalvandoAtaAssinada(false)
     }
   }
 
@@ -893,6 +929,84 @@ export default function SessaoDetailPage() {
                         <CheckCircle2 className="h-3 w-3" />
                         URL salva: <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer" className="underline">{sessao.arquivoAta}</a>
                       </p>
+                    )}
+                  </div>
+
+                  {/* Campo URL da Ata ASSINADA e APROVADA */}
+                  <div className="border rounded-lg p-4 bg-emerald-50/50 border-emerald-200 space-y-3">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <Label htmlFor="arquivoAtaAssinada" className="flex items-center gap-2 text-sm font-medium text-emerald-900">
+                        <CheckCircle2 className="h-4 w-4" />
+                        URL da Ata Assinada e Aprovada (PDF oficial)
+                      </Label>
+                      {sessao.statusAta && (
+                        <Badge
+                          className={cn(
+                            'text-xs',
+                            sessao.statusAta === 'APROVADA' && 'bg-green-100 text-green-800',
+                            sessao.statusAta === 'PENDENTE' && 'bg-amber-100 text-amber-800',
+                            sessao.statusAta === 'REJEITADA' && 'bg-red-100 text-red-800'
+                          )}
+                        >
+                          Status: {sessao.statusAta}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-emerald-800">
+                      Anexe o link do PDF da ata após assinatura e aprovação em sessão. RN-123 PNTP: prazo de 15 dias para publicação.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        id="arquivoAtaAssinada"
+                        type="url"
+                        placeholder="https://exemplo.com/ata-sessao-assinada.pdf"
+                        value={arquivoAtaAssinadaUrl}
+                        onChange={(e) => setArquivoAtaAssinadaUrl(e.target.value)}
+                        className="flex-1"
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-end gap-2">
+                      <div className="flex-1 min-w-[200px]">
+                        <Label htmlFor="dataPublicacaoAta" className="text-xs text-emerald-900">
+                          Data de publicação oficial
+                        </Label>
+                        <Input
+                          id="dataPublicacaoAta"
+                          type="date"
+                          value={dataPublicacaoAta}
+                          onChange={(e) => setDataPublicacaoAta(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={salvarAtaAssinada}
+                        disabled={salvandoAtaAssinada}
+                      >
+                        {salvandoAtaAssinada ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+                        Salvar
+                      </Button>
+                    </div>
+                    {sessao.arquivoAtaAssinada && (
+                      <div className="text-xs text-emerald-700 space-y-1">
+                        <p className="flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Ata assinada:{' '}
+                          <a
+                            href={sessao.arquivoAtaAssinada}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline break-all"
+                          >
+                            {sessao.arquivoAtaAssinada}
+                          </a>
+                        </p>
+                        {sessao.dataPublicacaoAta && (
+                          <p className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Publicada em {new Date(sessao.dataPublicacaoAta).toLocaleDateString('pt-BR')}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
 

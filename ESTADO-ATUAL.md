@@ -1,10 +1,26 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-18 (Sprint 6 PNTP 2026: NormaJuridica estruturada com CODIGO_ETICA + API publica /api/publico/normas-juridicas + 495 testes)
+> **Ultima Atualizacao**: 2026-05-04 (UI Sessao: anexo da Ata Assinada e Aprovada)
 > **Versao**: 1.12.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Hotfix UI 2026-05-04: anexar URL da Ata Assinada e Aprovada na Sessao
+
+**Problema**: a tela de detalhes da sessao expunha apenas `arquivoAta` (URL da ata gerada). Os campos `arquivoAtaAssinada`, `dataPublicacaoAta` e `statusAta` ja existiam no schema (Sprint 4 PNTP) mas nao tinham UI de cadastro. Sessoes ja concluidas / finalizadas (entradas retroativas) nao tinham como anexar o PDF oficial assinado.
+
+**Mudancas**:
+- `src/app/api/sessoes/[id]/_validators/sessao-validators.ts`: aceita `arquivoAtaAssinada`, `dataPublicacaoAta`, `statusAta` (PENDENTE | APROVADA | REJEITADA).
+- `src/app/api/sessoes/[id]/_handlers/update-sessao.ts`: persiste os 3 campos via PUT `/api/sessoes/[id]`.
+- `src/lib/api/sessoes-api.ts`: tipo `SessaoApi` ganhou `arquivoAtaAssinada`, `statusAta`, `dataPublicacaoAta`, `sessaoAprovacaoAtaId`.
+- `src/app/admin/sessoes/[id]/page.tsx`: novo bloco verde "URL da Ata Assinada e Aprovada (PDF oficial)" com URL + data de publicacao + badge de status; ao salvar com URL, marca `statusAta = APROVADA` automaticamente.
+
+**Conformidade**: alinhado com RN-123 PNTP (publicacao em 15 dias apos aprovacao).
+
+**Sem migration**: campos ja existiam no banco.
 
 ---
 
