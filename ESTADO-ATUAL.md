@@ -1,10 +1,68 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-04 (UI Sessao: anexo da Ata Assinada e Aprovada)
-> **Versao**: 1.12.0
+> **Ultima Atualizacao**: 2026-05-04 (Fase 1 do Plano de Correcoes Q2 — Seguranca e LGPD)
+> **Versao**: 1.13.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Fase 1 / 2026-Q2: Seguranca e LGPD (2026-05-04)
+
+7 itens criticos do PLANO-CORRECOES-2026-Q2 entregues em 1 sessao.
+
+### C1 + A8 — Secrets 2FA criptografados + fora do React state (commit 3b676ff)
+- `twoFactorSecret` e `twoFactorBackupCodes` cifrados com AES-256-GCM via `src/lib/security/encryption.ts`
+- Endpoint `/api/auth/2fa` nunca retorna o secret no JSON; cliente le apenas `otpauth` URI
+- Backup codes baixados como `.txt` e removidos do estado React 5s apos download
+- Migracao graceful: `safeDecrypt` aceita secrets antigos em texto plano
+
+### C2 — Hash de CPF de Servidor + mascaramento UI (commit 229507a)
+- `Servidor.cpf` armazena valor cifrado; nova coluna `Servidor.cpfHash` (SHA-256) com UNIQUE
+- Migration `20260504_servidor_cpf_hash` idempotente
+- `serializeServidor` mascara CPF (XXX.***.***-XX) em toda resposta admin
+- Form de edicao limpa o CPF (operador re-digita se quiser alterar)
+- Helper completo em `src/lib/security/cpf-utils.ts` com 15 testes
+- Script de backfill: `scripts/backfill-cpf-encryption.ts` (idempotente, suporta --dry-run)
+
+### C3 — AuditLog imutavel (commit 0d12fa0)
+- Trigger PostgreSQL `audit_logs_block_modifications` bloqueia UPDATE/DELETE em runtime
+- Migration `20260504_audit_log_immutable` idempotente
+- INSERT preservado (logAudit em runtime nao afetado)
+- RN-154 documentada
+
+### C4 — 2FA obrigatorio para ADMIN e SECRETARIA (commit a80049a)
+- Middleware redireciona usuarios privilegiados sem 2FA para `/admin/configuracoes/seguranca?enroll=1`
+- JWT atualizado via `session.update()` apos habilitar/desabilitar (sem precisar logout)
+- Banner de obrigatoriedade visivel na pagina de seguranca
+- Outros roles (OPERADOR, EDITOR, AUXILIAR_LEGISLATIVO) seguem com 2FA opcional
+
+### A1 — Uniformizacao LGPD em /api/publico (commit d076055)
+- `mascararCpfCnpj` centralizada em `cpf-utils.ts` (single source)
+- Padrao Portal da Transparencia: `123.***.***-09` (mantem 3 primeiros e 2 ultimos)
+- CNPJ permanece visivel (publico por transparencia)
+- 15 testes cobrindo normalize/format/mask/hash/encrypt round-trip
+
+### A7 — Permissoes granulares financeiro (commit a08b0d1)
+- `financeiro-resumo.view`: listas mascaradas, agregados
+- `financeiro-detalhe.view`: CPF puro, salario individual (LGPD)
+- `financeiro.view` legado mantido para compatibilidade
+- Endpoints atuais (servidores, diarias, verbas-indenizatorias) migrados para `financeiro-resumo.view`
+
+### Variavel obrigatoria
+
+`ENCRYPTION_KEY` (32 bytes hex / 64 chars) deve estar em `.env` de todos os ambientes
+(local, VPS, Vercel). MESMO valor em todos — secrets cifrados em um ambiente nao
+decriptam no outro com chave diferente. Instrucao em `.env.example`.
+
+### Pos-deploy obrigatorio (VPS)
+
+1. `cd /opt/camara && sudo bash scripts/update.sh` aplica 2 migrations novas
+2. `sudo -u postgres psql camara_legislativo -c "DELETE FROM audit_logs WHERE id IN (SELECT id FROM audit_logs LIMIT 1);"` deve falhar com erro de trigger
+3. `npx tsx scripts/backfill-cpf-encryption.ts --dry-run` para auditar CPFs em texto plano
+4. Sem `--dry-run` para aplicar criptografia
+5. ADMIN/SECRETARIA existentes serao redirecionados para enrollment de 2FA no proximo acesso
 
 ---
 
