@@ -204,17 +204,18 @@ export async function middleware(request: NextRequest) {
   const cspDirectives = [
     "default-src 'self'",
     // Scripts: self + inline (necessário para Next.js hydration) + unsafe-eval apenas em dev (React Refresh)
-    `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+    // VLibras (Lei 13.146/2015 art. 63 §I): vlibras.gov.br/app
+    `script-src 'self' 'unsafe-inline' https://vlibras.gov.br${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
     // Estilos: self + inline (necessário para Tailwind e componentes)
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://vlibras.gov.br",
     // Imagens: self + data URIs + HTTPS (para imagens externas)
     "img-src 'self' data: https: blob:",
     // Fonts: self + data URIs
-    "font-src 'self' data:",
-    // Conexões: self + Supabase + WebSockets
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.resend.com",
-    // Frames: apenas self (para PDFs embarcados)
-    "frame-src 'self' blob:",
+    "font-src 'self' data: https://vlibras.gov.br",
+    // Conexões: self + Supabase + WebSockets + VLibras
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.resend.com https://vlibras.gov.br",
+    // Frames: self + YouTube/Vimeo (transmissoes) + VLibras
+    "frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://vlibras.gov.br",
     // Base URI: apenas self
     "base-uri 'self'",
     // Form actions: apenas self

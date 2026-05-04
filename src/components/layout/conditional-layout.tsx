@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/footer'
 import { BottomNavigation } from '@/components/layout/bottom-navigation'
 import { AccessibilityToolbar } from '@/components/accessibility'
 import { MainContent } from '@/components/ui/skip-link'
+import { VLibrasWidget } from '@/components/vlibras-widget'
 
 interface ConditionalLayoutProps {
   children: React.ReactNode
@@ -38,6 +39,8 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
       <BottomNavigation />
       {/* Toolbar de acessibilidade - fixo no canto */}
       <AccessibilityToolbar position="top-right" />
+      {/* Fase 4 / A3: VLibras (Lei 13.146/2015 art. 63 §I) — apenas em rotas publicas */}
+      <VLibrasWidget />
     </div>
   )
 }

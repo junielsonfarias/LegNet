@@ -50,12 +50,17 @@ export function VideoPlayer({
       const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/
       const match = url.match(regex)
       if (match) {
+        // Fase 4 / M7: cc_load_policy=1 forca exibicao das legendas; hl/cc_lang_pref
+        // priorizam pt-BR. Acessibilidade WCAG 2.1 (1.2.4 Captions Live).
         const params = new URLSearchParams({
           autoplay: autoplay ? '1' : '0',
           mute: isMuted ? '1' : '0',
           controls: '1',
           modestbranding: '1',
-          rel: '0'
+          rel: '0',
+          cc_load_policy: '1',
+          cc_lang_pref: 'pt-BR',
+          hl: 'pt-BR'
         })
         return `https://www.youtube.com/embed/${match[1]}?${params.toString()}`
       }
@@ -65,9 +70,11 @@ export function VideoPlayer({
       const regex = /vimeo\.com\/(?:video\/)?(\d+)/
       const match = url.match(regex)
       if (match) {
+        // texttrack=pt-BR ativa legendas em portugues (Vimeo Pro)
         const params = new URLSearchParams({
           autoplay: autoplay ? '1' : '0',
-          muted: isMuted ? '1' : '0'
+          muted: isMuted ? '1' : '0',
+          texttrack: 'pt-BR'
         })
         return `https://player.vimeo.com/video/${match[1]}?${params.toString()}`
       }
@@ -183,6 +190,7 @@ export function VideoPlayer({
                 size="sm"
                 className="text-white hover:bg-white/20"
                 onClick={() => setIsMuted(!isMuted)}
+                aria-label={isMuted ? 'Ativar som' : 'Silenciar'}
               >
                 {isMuted ? (
                   <VolumeX className="h-4 w-4" />
@@ -198,6 +206,13 @@ export function VideoPlayer({
           </div>
         </div>
       )}
+
+      {/* Fase 4 / M7: dica de acessibilidade para legendas (WCAG 1.2.4) */}
+      <p className="text-xs text-gray-500 mt-2 px-1">
+        <span className="font-medium">Acessibilidade:</span> as legendas vêm pré-ativadas. Caso não apareçam, clique no botão{' '}
+        <kbd className="px-1 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">CC</kbd>{' '}
+        no player para ativar legendas em português.
+      </p>
     </div>
   )
 }

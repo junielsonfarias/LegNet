@@ -8,6 +8,58 @@
 
 ---
 
+## Fase 4 / 2026-Q2: Acessibilidade e Cidadao (2026-05-04)
+
+5 itens entregues. A10 e parte de A3 ja estavam implementados em sprints
+anteriores (auditoria revelou). Real residual desta fase:
+
+### A9 — PWA completo (sem nova dependencia)
+- `src/app/manifest.ts`: manifest dinamico (multi-tenant) com 4 shortcuts
+- `src/app/icon.tsx` e `apple-icon.tsx`: icones gerados pela Metadata API
+- `public/sw.js`: service worker manual com 3 estrategias (cache-first
+  estaticos, stale-while-revalidate publico, network-only admin)
+- `src/components/pwa-register.tsx`: registra SW + prompt de instalacao
+- `layout.tsx`: metadata.manifest + viewport.themeColor
+
+### M8 — Dicionario de dados em /api/dados-abertos/schema
+- `src/lib/services/dados-abertos-schemas.ts`: 12 ResourceSchema
+- GET `/api/dados-abertos/schema`: indice
+- GET `/api/dados-abertos/schema/[recurso]`: JSONSchema Draft 2020-12
+- Cada campo com type, description, format (cpf-mascarado, monetario-brl,
+  iso-date), nullable, enum, x-extensions (periodicidade, fonteLegal)
+
+### A10 — Pagina /busca publica (auditoria: ja implementado)
+- `src/app/busca/page.tsx` ja existe (publica, sem auth)
+- Reutiliza `busca-service.ts` (busca admin)
+- Link em header (Command Palette) + bottom navigation
+
+### M7 — Legendas em transmissoes
+- `video-player.tsx`: parametros `cc_load_policy=1`, `cc_lang_pref=pt-BR`,
+  `hl=pt-BR` (YouTube) e `texttrack=pt-BR` (Vimeo) forcam legendas em PT
+- Aviso visivel "Acessibilidade: legendas pre-ativadas, clique CC" abaixo
+  do player (WCAG 2.1.4 Captions Live)
+- aria-label nos botoes de mute/fullscreen
+
+### A3 — VLibras (Lei 13.146/2015)
+- `src/components/vlibras-widget.tsx`: integra script oficial gov.br
+- Carregado apenas em rotas publicas (nao em /admin, /parlamentar, /login)
+- CSP do middleware atualizado para permitir vlibras.gov.br
+- Skip links, ARIA labels, jest-axe ja existentes em sprints anteriores
+- Fica como work futuro: auditoria sistematica Lighthouse de cada pagina
+
+### Pos-deploy
+
+`update.sh` aplica build novo (sem migration). Funcionalidades disponiveis
+imediatamente:
+- Manifest acessivel em `/manifest.webmanifest`
+- Service worker registrado em produção
+- Botao VLibras flutuante nas paginas publicas
+- Dicionario de dados em `/api/dados-abertos/schema`
+
+511 testes passando.
+
+---
+
 ## Fase 3 / 2026-Q2: Governanca do Processo Legislativo (2026-05-04)
 
 8 itens entregues em 1 sessao. M1 ja estava implementado em sprints anteriores.
