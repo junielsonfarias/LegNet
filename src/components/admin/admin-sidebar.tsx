@@ -145,6 +145,7 @@ const navigationCategories: NavCategory[] = [
       { name: 'Documentos Oficiais', href: '/admin/transparencia/documentos', icon: FileText, permissions: ['transparencia.manage'] },
       { name: 'Servicos Online', href: '/admin/transparencia/servicos-online', icon: Globe, permissions: ['transparencia.manage'] },
       { name: 'Organograma', href: '/admin/organograma', icon: Building2, permissions: ['transparencia.manage'] },
+      { name: 'Conformidade PNTP', href: '/admin/conformidade-pntp', icon: Shield, permissions: ['dashboard.view'] },
     ]
   },
   {

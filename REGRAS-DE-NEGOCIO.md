@@ -1487,20 +1487,28 @@ a qualquer momento antes do encerramento da sessao.
 
 ### C.1 Checklist PNTP Legislativo
 
-- [ ] Votacoes nominais atualizadas (30 dias)
-- [ ] Presenca em sessoes atualizada (30 dias)
-- [ ] Pautas publicadas com 48h antecedencia
-- [ ] Atas publicadas em ate 15 dias
-- [ ] Lista de vereadores com partido e contatos
-- [ ] Remuneracao de parlamentares disponivel
-- [ ] Diarias e verbas indenizatorias publicadas
-- [ ] Ouvidoria funcionando com protocolo
-- [ ] e-SIC disponivel e respondendo prazos
-- [ ] API de dados abertos funcionando
-- [ ] Contratos publicados em 24h
-- [ ] Licitacoes com editais completos
-- [ ] Folha de pagamento mensal
-- [ ] Leis e decretos com texto integral
+- [x] Votacoes nominais atualizadas (30 dias) — `/api/dados-abertos/votacoes`
+- [x] Presenca em sessoes atualizada (30 dias) — `/api/dados-abertos/presencas`
+- [~] Pautas publicadas com 48h antecedencia — campo `PautaSessao.dataPublicacao` (Sprint 4); cron de validacao pendente (Sprint 5)
+- [~] Atas publicadas em ate 15 dias — campo `Sessao.dataPublicacaoAta` (Sprint 4); cron pendente (Sprint 5)
+- [x] Lista de vereadores com partido e contatos — `/api/dados-abertos/parlamentares`
+- [x] Remuneracao de parlamentares disponivel — `/transparencia/parlamentar/verbas`
+- [x] Diarias e verbas indenizatorias publicadas — `/api/diarias` e `/api/verbas-indenizatorias`
+- [x] Ouvidoria funcionando com protocolo — `ManifestacaoOuvidoria`
+- [x] e-SIC disponivel e respondendo prazos — `SolicitacaoESIC`
+- [x] API de dados abertos funcionando — 15 endpoints publicos (Sprint 4 incluiu +5)
+- [~] Contratos publicados em 24h — campo `Contrato.dataPublicacao` + `/api/dados-abertos/contratos` (Sprint 4); cron pendente (Sprint 5)
+- [x] Licitacoes com editais completos — `/api/dados-abertos/licitacoes` (Sprint 4)
+- [x] Folha de pagamento mensal — `FolhaPagamento`
+- [x] Leis e decretos com texto integral — `Publicacao` + `/api/dados-abertos/publicacoes`
+- [x] Quadro de pessoal (efetivos/comissionados/estagiarios/terceirizados) — `/api/dados-abertos/servidores` (Sprint 4)
+- [x] Ordem cronologica de pagamentos (Lei 8.666 art. 5) — `/api/dados-abertos/ordem-pagamentos` (Sprint 4)
+- [x] Registro de suplencia de parlamentares — `Parlamentar.suplenteDeId` (Sprint 4)
+- [x] Declaracao de bens de parlamentares — `Parlamentar.bensDeclarados` (Sprint 4)
+- [x] Lei Organica Municipal estruturada — `NormaJuridica (tipo=LEI_ORGANICA)` + `/api/publico/normas-juridicas` (Sprint 6)
+- [x] Regimento Interno estruturado — `NormaJuridica (tipo=REGIMENTO_INTERNO)` (Sprint 6)
+- [x] Codigo de Etica estruturado — `NormaJuridica (tipo=CODIGO_ETICA, aplicavelA=...)` (Sprint 6)
+- [x] Historico de alteracoes de normas — `AlteracaoNorma` + `VersaoNorma` (pre-existente, validado Sprint 6)
 
 ### C.2 Checklist Processo Legislativo
 

@@ -11,7 +11,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { processarSancaoTacita, gerarNotificacoesPrazo } from '@/lib/jobs/prazos-legais'
+import {
+  processarSancaoTacita,
+  gerarNotificacoesPrazo,
+  verificarPautasAtrasadas,
+  verificarAtasAtrasadas,
+  verificarContratosAtrasados,
+  verificarPrazosESIC
+} from '@/lib/jobs/prazos-legais'
 import { createLogger } from '@/lib/logging/logger'
 
 export const dynamic = 'force-dynamic'
@@ -58,6 +65,25 @@ async function handler(request: NextRequest) {
     logger.error('Erro em gerarNotificacoesPrazo', error)
     ;(resultado.jobs as Record<string, unknown>).notificacoesPrazo = {
       erro: error instanceof Error ? error.message : 'erro desconhecido'
+    }
+  }
+
+  const verificacoesPNTP: Array<[string, () => Promise<unknown>]> = [
+    ['pautasAtrasadas', verificarPautasAtrasadas],
+    ['atasAtrasadas', verificarAtasAtrasadas],
+    ['contratosAtrasados', verificarContratosAtrasados],
+    ['prazosESIC', verificarPrazosESIC]
+  ]
+
+  for (const [nome, fn] of verificacoesPNTP) {
+    try {
+      const saida = await fn()
+      ;(resultado.jobs as Record<string, unknown>)[nome] = saida
+    } catch (error) {
+      logger.error(`Erro em ${nome}`, error)
+      ;(resultado.jobs as Record<string, unknown>)[nome] = {
+        erro: error instanceof Error ? error.message : 'erro desconhecido'
+      }
     }
   }
 

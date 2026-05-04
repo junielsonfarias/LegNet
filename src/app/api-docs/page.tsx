@@ -117,7 +117,12 @@ export default function ApiDocsPage() {
         { method: 'GET', path: '/dados-abertos/presencas', description: 'Registro de presenças em sessões (params: formato, ano, parlamentar, sessao, page, limit)' },
         { method: 'GET', path: '/dados-abertos/comissoes', description: 'Comissões e seus membros (params: formato, tipo, ativa)' },
         { method: 'GET', path: '/dados-abertos/publicacoes', description: 'Leis, decretos, portarias (params: formato, tipo, ano, page, limit)' },
-        { method: 'GET', path: '/dados-abertos/estatisticas', description: 'Estatísticas agregadas do legislativo' }
+        { method: 'GET', path: '/dados-abertos/estatisticas', description: 'Estatísticas agregadas do legislativo' },
+        { method: 'GET', path: '/dados-abertos/servidores', description: 'Quadro de pessoal — efetivos, comissionados, estagiários, terceirizados (params: formato, vinculo, unidade, situacao, page, limit). CPF omitido por LGPD.' },
+        { method: 'GET', path: '/dados-abertos/contratos', description: 'Contratos vigentes (params: formato, ano, situacao, page, limit). RN-124: publicação em 24h após assinatura.' },
+        { method: 'GET', path: '/dados-abertos/licitacoes', description: 'Licitações e dispensas (params: formato, ano, modalidade, situacao, page, limit)' },
+        { method: 'GET', path: '/dados-abertos/despesas', description: 'Despesas empenhadas/liquidadas/pagas (params: formato, ano, mes, situacao, page, limit)' },
+        { method: 'GET', path: '/dados-abertos/ordem-pagamentos', description: 'Ordem cronológica de pagamentos (params: formato, ano, mes, page, limit). Lei 8.666/93 art. 5.' }
       ]
     }
   ]

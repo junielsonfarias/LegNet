@@ -80,6 +80,11 @@ model Parlamentar {
   userId              String?             @unique
   user                User?               @relation(fields: [userId])
 
+  // === CAMPOS PNTP 2026 (Sprint 4 - 18/04/2026) ===
+  suplenteDeId        String?             // FK para Parlamentar titular quando este e suplente
+  bensDeclarados      Json?               // Declaracao de bens/patrimonio (PNTP Diamante)
+  incompatibilidades  Json?               // Registro de impedimentos/incompatibilidades legais
+
   mandatos            Mandato[]
   proposicoes         Proposicao[]        @relation("ProposicoesAutoria")
   emendas             Emenda[]
@@ -88,6 +93,10 @@ model Parlamentar {
   presencas           PresencaSessao[]
   membrosComissao     MembroComissao[]
   membrosMesa         MembroMesaDiretora[]
+
+  // Suplencia (auto-referencial)
+  suplenteDe          Parlamentar?        @relation("ParlamentarSuplente", fields: [suplenteDeId], references: [id])
+  suplentes           Parlamentar[]       @relation("ParlamentarSuplente")
 }
 ```
 

@@ -555,6 +555,19 @@ enum TipoNormaJuridica {
   EMENDA_LEI_ORGANICA
   LEI_ORGANICA
   REGIMENTO_INTERNO
+  CODIGO_ETICA
+}
+
+enum OrgaoEmissorNorma {
+  LEGISLATIVO
+  EXECUTIVO
+  MISTO
+}
+
+enum AplicavelA {
+  PARLAMENTARES
+  SERVIDORES
+  AMBOS
 }
 
 enum SituacaoNorma {

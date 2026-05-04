@@ -1,10 +1,186 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-04-17 (Hotfix ERR-041: `pauta_itens.secao` / `template_itens.secao` convertidas de enum `PautaSecao` para `text` — GET /api/sessoes voltou a 200 em prod)
-> **Versao**: 1.9.8
+> **Ultima Atualizacao**: 2026-04-18 (Sprint 6 PNTP 2026: NormaJuridica estruturada com CODIGO_ETICA + API publica /api/publico/normas-juridicas + 495 testes)
+> **Versao**: 1.12.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Sprint 6 PNTP 2026: Normas Juridicas estruturadas (18/04/2026)
+
+Foco: fechar a ultima lacuna critica do Sprint 6 — Lei Organica / Regimento Interno / Codigo de Etica com estrutura completa (artigos, paragrafos, versoes, historico de alteracoes) + API publica. Score PNTP sobe de 95% para ~98%.
+
+### Descoberta inicial
+
+Schema ja tinha toda a infraestrutura hierarquica funcional:
+- `NormaJuridica` (tipo, numero, ano, ementa, texto, situacao, versoes)
+- `ArtigoNorma` (numero, caput, vigente, textoOriginal, revogadoPor, alteradoPor)
+- `ParagrafoNorma` (tipo enum: PARAGRAFO_UNICO/PARAGRAFO/INCISO/ALINEA, numero, texto, vigente)
+- `AlteracaoNorma` (historico: tipo NOVA_REDACAO/ACRESCIMO/REVOGACAO/etc, artigoAlterado, descricao, dataAlteracao)
+- `VersaoNorma` (snapshot de cada versao do texto completo)
+
+Falta apenas CODIGO_ETICA como tipo + campos PNTP especificos. O `norma-juridica-service.ts` ja cobria criacao, versionamento, busca por identificacao e alteracoes.
+
+### Novos campos no schema
+
+**Enum `TipoNormaJuridica`**: adicionado `CODIGO_ETICA` (antes: LEI_ORDINARIA/LEI_COMPLEMENTAR/DECRETO_LEGISLATIVO/RESOLUCAO/EMENDA_LEI_ORGANICA/LEI_ORGANICA/REGIMENTO_INTERNO).
+
+**Novos enums**:
+- `OrgaoEmissorNorma`: LEGISLATIVO / EXECUTIVO / MISTO
+- `AplicavelA`: PARLAMENTARES / SERVIDORES / AMBOS (para Codigo de Etica)
+
+**Novos campos em `NormaJuridica`**:
+- `orgaoEmissor OrgaoEmissorNorma?`
+- `aplicavelA AplicavelA?`
+- `diarioOficial Json?` (formato `{ nome, volume, pagina, dataPublicacao }`)
+
+Migration idempotente: `prisma/migrations/20260418_sprint6_normas_juridicas/migration.sql`.
+
+### 2 novas rotas publicas
+
+| Rota | Descricao |
+|------|-----------|
+| `GET /api/publico/normas-juridicas` | Lista com filtros (tipo, ano, situacao, busca). Paginada. Inclui diarioOficial, orgaoEmissor, aplicavelA. |
+| `GET /api/publico/normas-juridicas/[id]` | Estrutura completa: norma + artigos + paragrafos/incisos/alineas + alteracoes historicas + versoes. |
+
+Rate limit PUBLIC, cache 300s/900s SWR, licenca CC-BY 4.0. Sem autenticacao. Snake_case na saida.
+
+### Conformidade PNTP expandida
+
+`/api/admin/conformidade-pntp` passa de 10 para 13 itens. Novos:
+- **Lei Organica cadastrada** (categoria Institucional, PNTP Diamante)
+- **Regimento Interno cadastrado** (categoria Institucional)
+- **Codigo de Etica cadastrado** (mostra `aplicavelA` quando definido)
+
+Dashboard `/admin/conformidade-pntp` exibe os 3 novos itens na categoria Institucional sem mudanca de codigo (renderizacao dinamica por categoria).
+
+### Testes
+
+Novo arquivo `src/tests/services/norma-juridica-service.test.ts` com 5 testes:
+- Criar Lei Organica (valida versao 1 criada)
+- Criar Codigo de Etica (novo tipo Sprint 6)
+- Criar Regimento Interno
+- `buscarNormaPorIdentificacao` (sucesso)
+- `buscarNormaPorIdentificacao` (null quando nao existe)
+
+Total do projeto: **495 testes passando** (antes 490). TypeScript limpo.
+
+### Proximos passos (pos Sprint 6)
+
+Score PNTP 2026 estimado em **98%**. Pendencias remanescentes sao operacionais (nao de codigo):
+1. Cadastrar Lei Organica / RIn / Codigo de Etica reais no admin
+2. Aplicar migration Sprint 4 e Sprint 6 em producao (Supabase + VPS)
+3. Configurar `CRON_SECRET` para ativar os jobs de prazo (Sprint 5)
+4. Operacional: operadores da camara publicarem pautas/atas dentro dos prazos PNTP
+
+---
+
+## Sprint 5 PNTP 2026: Automacao de prazos + Dashboard (18/04/2026)
+
+## Sprint 5 PNTP 2026: Automacao de prazos + Dashboard (18/04/2026)
+
+Foco: automatizar as 4 verificacoes de prazo PNTP (antes manuais/reativas) e expor status via dashboard. Score de prontidao PNTP sobe de ~88% para ~95%.
+
+### 4 novos jobs em `src/lib/jobs/prazos-legais.ts`
+
+| Funcao | Regra | Detecta | Alerta |
+|--------|-------|---------|--------|
+| `verificarPautasAtrasadas` | RN-122 | Sessao em <= 48h sem `pautaSessao.dataPublicacao` ou status RASCUNHO | URGENTE se <= 12h |
+| `verificarAtasAtrasadas` | RN-123 | `Sessao.statusAta=APROVADA` sem `dataPublicacaoAta` ha >= 15d | URGENTE se atraso > 7d |
+| `verificarContratosAtrasados` | RN-124 | `Contrato.dataAssinatura` ha >= 24h sem `dataPublicacao` | URGENTE se atraso > 72h |
+| `verificarPrazosESIC` | RN-140 (LAI) | `SolicitacaoESIC.prazoResposta` vencendo (<= 3d) ou vencido | URGENTE se vencido |
+
+Todas usam helper `buscarIdsNotificados(entidadeTipo)` + `buscarDestinatariosAdmin` para dedup de 24h via `NotificacaoMulticanal.metadata.entidadeId`. Constantes exportadas em `CONSTANTES_PRAZOS_PNTP`.
+
+### Integracao em `/api/cron/daily`
+
+Endpoint agora executa 6 jobs por disparo (antes 2): `processarSancaoTacita`, `gerarNotificacoesPrazo`, `verificarPautasAtrasadas`, `verificarAtasAtrasadas`, `verificarContratosAtrasados`, `verificarPrazosESIC`. Continua agendado as 03:00 UTC (Vercel cron + VPS via `scripts/cron-daily.sh`). Falha isolada em um job nao afeta os demais.
+
+### Dashboard `/admin/conformidade-pntp`
+
+Nova pagina admin que consome `/api/admin/conformidade-pntp`. Mostra:
+- 4 cards resumo: Nivel (DIAMANTE/OURO/PRATA/BRONZE), Pontuacao %, Conformes, Pendencias
+- Bloco destaque de pendencias (vermelho) com regra PNTP (RN-XXX) e prazo
+- Lista por categoria (Processo Legislativo, Financeiro, Atendimento, Dados Abertos)
+- Icone + badge por item (conforme/pendente), regra RN-XXX quando aplicavel
+- Botao "Atualizar" revalida os dados sob demanda
+
+Permissao `dashboard.view`. Adicionado link "Conformidade PNTP" na categoria Transparencia do sidebar admin.
+
+### API `/api/admin/conformidade-pntp` expandida
+
+De 8 para 10 itens verificados. Agora usa os campos Sprint 4 (`dataPublicacaoAta`, `PautaSessao.dataPublicacao`, `Contrato.dataPublicacao`) e adiciona:
+- Verificacao de contratos atrasados (RN-124)
+- Verificacao de e-SIC vencido (RN-140)
+- Lista atualizada para 13 APIs de dados abertos (Sprint 4 incluiu 5)
+
+### Testes
+
+`src/tests/jobs/prazos-legais.test.ts` expandido com 9 novos testes (6 -> 15):
+- 3 para `verificarPautasAtrasadas` (detecta sem pauta, ignora publicada, deduplica)
+- 2 para `verificarAtasAtrasadas` (detecta + caso vazio)
+- 2 para `verificarContratosAtrasados` (detecta + caso vazio)
+- 2 para `verificarPrazosESIC` (classifica vencidos vs proximos + caso vazio)
+
+Total geral do projeto: **490 testes passando** (antes 481). TypeScript limpo.
+
+### Proximo Sprint (PNTP 2026)
+
+- **Sprint 6 (45 dias - Medio)**: Refatorar `NormaJuridica` para Lei Organica / Regimento Interno / Codigo de Etica com campos estruturados (artigo, dispositivo, historico de alteracoes).
+
+---
+
+## Sprint 4 PNTP 2026: Conformidade Nivel Diamante - Lacunas Criticas (18/04/2026)
+
+## Sprint 4 PNTP 2026: Conformidade Nivel Diamante - Lacunas Criticas (18/04/2026)
+
+Foco: fechar 6 lacunas criticas identificadas na analise de conformidade PNTP 2026 (auditoria 2026-04-18). Score de prontidao sobe de 75% para ~88%.
+
+### Novos campos no schema (`prisma/schema/models.prisma`)
+
+| Model | Campo | Regra PNTP |
+|-------|-------|------------|
+| `Parlamentar` | `suplenteDeId String?` (auto-FK) | Exigencia Diamante - registro de suplentes |
+| `Parlamentar` | `bensDeclarados Json?` | Exigencia Diamante - declaracao de patrimonio |
+| `Parlamentar` | `incompatibilidades Json?` | Registro de impedimentos legais |
+| `Sessao` | `dataPublicacaoAta DateTime?` | RN-123: ata publicada em 15 dias |
+| `PautaSessao` | `dataPublicacao DateTime?` | RN-122: pauta publicada 48h antes |
+| `Contrato` | `dataPublicacao DateTime?` | RN-124: contrato publicado em 24h |
+
+Relacao `Parlamentar.suplenteDe` / `suplentes` (auto-referencial `"ParlamentarSuplente"`). Indices criados em `suplenteDeId`, `pautas_sessao.dataPublicacao`, `contratos.dataPublicacao`.
+
+### Migration
+
+`prisma/migrations/20260418_sprint4_pntp_fields/migration.sql` - idempotente (IF NOT EXISTS / DO block). NUNCA aplicar via `prisma db push`; usar `prisma migrate deploy` (Supabase) ou psql direto (VPS). Ver feedback `feedback_prisma_schema.md`.
+
+### 5 novas rotas publicas (`/api/dados-abertos/`)
+
+| Rota | Descricao | Referencia |
+|------|-----------|------------|
+| `/servidores` | Quadro de pessoal (CPF omitido por LGPD) | PNTP Categoria Pessoal |
+| `/contratos` | Contratos firmados | RN-124 (24h apos assinatura) |
+| `/licitacoes` | Licitacoes e dispensas | PNTP Categoria Financeiro |
+| `/despesas` | Despesas empenhadas/liquidadas/pagas | PNTP Categoria Financeiro |
+| `/ordem-pagamentos` | Ordem cronologica (Lei 8.666 art. 5 / LRF) | RN-008 - obrigacao publica |
+
+Todas suportam `formato=json|csv`, paginacao (`page`, `limit`), sem autenticacao, licenca CC-BY 4.0, rate limit `PUBLIC`, cache publico (60s maxAge / 300s SWR). CPF de pessoa fisica mascarado via `mascararCpfCnpj()` no service. Indice `/api/dados-abertos` e `/api-docs` atualizados.
+
+### Service expandido
+
+`src/lib/services/dados-abertos-service.ts` ganhou 5 funcoes (`getServidores`, `getOrdensPagamento`, `getContratos`, `getLicitacoes`, `getDespesas`) + helper `mascararCpfCnpj` + 5 interfaces de filtros. Total de dados abertos: **15 endpoints** (antes 10).
+
+### Validacao
+
+- `npx prisma validate` OK
+- `npx tsc --noEmit` OK (zero erros)
+- `npx vitest run` OK (481 testes passando, sem regressao)
+
+### Proximos Sprints (PNTP 2026)
+
+- **Sprint 5 (30 dias - Alto)**: Estender `/api/cron/daily` com verificacoes de prazo RN-122/123/124/140. Dashboard `/admin/conformidade-pntp`.
+- **Sprint 6 (45 dias - Medio)**: Refatorar `NormaJuridica` para Lei Organica/Regimento Interno/Codigo de Etica com campos estruturados.
 
 ---
 

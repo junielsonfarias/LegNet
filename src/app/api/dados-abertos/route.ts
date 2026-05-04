@@ -84,6 +84,41 @@ export const GET = withErrorHandler(async () => {
         descricao: 'Estatisticas agregadas de parlamentares',
         formatos: ['json'],
         parametros: []
+      },
+      {
+        path: '/api/dados-abertos/servidores',
+        metodo: 'GET',
+        descricao: 'Quadro de pessoal (efetivos, comissionados, estagiarios, terceirizados). CPF omitido por LGPD.',
+        formatos: ['json', 'csv'],
+        parametros: ['formato', 'vinculo', 'unidade', 'situacao', 'page', 'limit']
+      },
+      {
+        path: '/api/dados-abertos/contratos',
+        metodo: 'GET',
+        descricao: 'Contratos firmados (RN-124 PNTP: publicacao em 24h apos assinatura).',
+        formatos: ['json', 'csv'],
+        parametros: ['formato', 'ano', 'situacao', 'page', 'limit']
+      },
+      {
+        path: '/api/dados-abertos/licitacoes',
+        metodo: 'GET',
+        descricao: 'Licitacoes e dispensas, com links para edital e ata.',
+        formatos: ['json', 'csv'],
+        parametros: ['formato', 'ano', 'modalidade', 'situacao', 'page', 'limit']
+      },
+      {
+        path: '/api/dados-abertos/despesas',
+        metodo: 'GET',
+        descricao: 'Despesas empenhadas, liquidadas e pagas.',
+        formatos: ['json', 'csv'],
+        parametros: ['formato', 'ano', 'mes', 'situacao', 'page', 'limit']
+      },
+      {
+        path: '/api/dados-abertos/ordem-pagamentos',
+        metodo: 'GET',
+        descricao: 'Ordem cronologica de pagamentos (Lei 8.666/93 art. 5 / LRF).',
+        formatos: ['json', 'csv'],
+        parametros: ['formato', 'ano', 'mes', 'page', 'limit']
       }
     ],
     licenca: 'Creative Commons CC-BY 4.0',

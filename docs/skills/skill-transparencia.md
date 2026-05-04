@@ -8,6 +8,66 @@ A partir de 12/04/2026 o modulo foi expandido para cobrir 100% dos itens estrutu
 
 ---
 
+## Atualizacoes 18/04/2026 - Sprint 5 PNTP 2026
+
+### Automacao de prazos PNTP via cron
+
+Adicionadas 4 funcoes em `src/lib/jobs/prazos-legais.ts` que rodam diariamente via `/api/cron/daily`:
+
+| Funcao | Regra | Detecta | Dedup |
+|--------|-------|---------|-------|
+| `verificarPautasAtrasadas` | RN-122 | Sessao AGENDADA em <= 48h sem `pautaSessao.dataPublicacao` | 24h via entidadeId=SESSAO_PAUTA |
+| `verificarAtasAtrasadas` | RN-123 | Ata APROVADA sem `dataPublicacaoAta` ha >= 15d | 24h via entidadeId=SESSAO_ATA |
+| `verificarContratosAtrasados` | RN-124 | Contrato assinado ha >= 24h sem `dataPublicacao` | 24h via entidadeId=CONTRATO |
+| `verificarPrazosESIC` | RN-140 | e-SIC ABERTO/EM_ANALISE/PRORROGADO com prazo vencendo em <= 3d | 24h via entidadeId=ESIC |
+
+Todas criam `NotificacaoMulticanal` canal=SISTEMA para usuarios com role ADMIN/SECRETARIA. Priorities: ALTA, URGENTE (vencido). Helpers privados: `buscarIdsNotificados(tipo)`, `buscarDestinatariosAdmin()`. Constantes exportadas em `CONSTANTES_PRAZOS_PNTP`.
+
+### Dashboard `/admin/conformidade-pntp`
+
+Nova pagina consumindo `/api/admin/conformidade-pntp`. Mostra 4 cards resumo (Nivel, Pontuacao %, Conformes, Pendencias), bloco de alertas (pendencias destacadas em vermelho com regra RN-XXX) e lista agrupada por categoria. Permissao `dashboard.view`. Link adicionado no sidebar em Transparencia > "Conformidade PNTP".
+
+### API `/api/admin/conformidade-pntp` expandida
+
+10 itens verificados (antes 8): inclui RN-124 (contratos 24h) e RN-140 (e-SIC 20d uteis) usando os campos Sprint 4. Lista de APIs de dados abertos atualizada para 13.
+
+### Testes
+
+15 testes para `prazos-legais.ts` (antes 6). Total do projeto: **490 testes passando**.
+
+---
+
+## Atualizacoes 18/04/2026 - Sprint 4 PNTP 2026
+
+### 5 novos endpoints publicos em `/api/dados-abertos/`
+
+Cobrem lacunas criticas apontadas pela auditoria de conformidade PNTP 2026:
+
+| Rota | Recurso | Filtros | Referencia PNTP |
+|------|---------|---------|-----------------|
+| `/servidores` | Servidor (sem CPF, por LGPD) | vinculo, unidade, situacao | Pessoal |
+| `/contratos` | Contrato | ano, situacao | RN-124 (24h) |
+| `/licitacoes` | Licitacao | ano, modalidade, situacao | Financeiro |
+| `/despesas` | Despesa | ano, mes, situacao | Financeiro |
+| `/ordem-pagamentos` | OrdemPagamento | ano, mes | RN-008 (Lei 8.666 art. 5) |
+
+Total agora: **15 endpoints publicos** (antes 10). Todas com `formato=json|csv`, paginacao, licenca CC-BY 4.0, rate limit PUBLIC. CPF de pessoa fisica mascarado via helper `mascararCpfCnpj` (CNPJ permanece publico).
+
+### Novos campos no schema
+
+- `Parlamentar.suplenteDeId` (auto-FK), `bensDeclarados` JSONB, `incompatibilidades` JSONB
+- `Sessao.dataPublicacaoAta` (RN-123 - 15 dias)
+- `PautaSessao.dataPublicacao` (RN-122 - 48h)
+- `Contrato.dataPublicacao` (RN-124 - 24h)
+
+Migration: `prisma/migrations/20260418_sprint4_pntp_fields/migration.sql` (idempotente, IF NOT EXISTS).
+
+### Service expandido
+
+`dadosAbertosService` ganhou 5 funcoes novas: `getServidores`, `getOrdensPagamento`, `getContratos`, `getLicitacoes`, `getDespesas`. 5 novas interfaces de filtros. Helper privado `mascararCpfCnpj` (11 digitos -> XXX.***.***-XX).
+
+---
+
 ## Atualizacoes 13/04/2026
 
 ### Despesas unificada no sistema de periodos

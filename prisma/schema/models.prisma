@@ -162,6 +162,12 @@ model Parlamentar {
   cargo       CargoParlamentar @default(VEREADOR)
   legislatura String // Legislatura atual (mantido para compatibilidade)
   ativo       Boolean          @default(true)
+
+  // === CAMPOS PNTP 2026 (Sprint 4) ===
+  suplenteDeId       String?   // FK para Parlamentar titular (quando este e suplente)
+  bensDeclarados     Json?     // Declaracao de bens/patrimonio (PNTP Diamante)
+  incompatibilidades Json?     // Registro de impedimentos/incompatibilidades legais
+
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -192,9 +198,14 @@ model Parlamentar {
   bancadaViceLider       Bancada[]          @relation("BancadaViceLider")
   audienciasResponsavel  AudienciaPublica[]
 
+  // Relacao de suplencia (auto-referencial)
+  suplenteDe             Parlamentar?           @relation("ParlamentarSuplente", fields: [suplenteDeId], references: [id], onDelete: SetNull)
+  suplentes              Parlamentar[]          @relation("ParlamentarSuplente")
+
   @@index([ativo, cargo])
   @@index([partido])
   @@index([nome])
+  @@index([suplenteDeId])
   @@map("parlamentares")
 }
 
@@ -224,6 +235,7 @@ model Sessao {
   statusAta              StatusAta?          // null = sem ata; PENDENTE = aguardando aprovação na próxima sessão
   sessaoAprovacaoAtaId   String?             // Sessão N+1 que aprovou/rejeitou esta ata
   arquivoAtaAssinada     String?             // URL do PDF da ata assinada após aprovação
+  dataPublicacaoAta      DateTime?           // RN-123 PNTP: data de publicação oficial da ata (prazo: 15 dias)
   painelAberto   Boolean     @default(false) // Se o painel eletrônico está aberto para votação
   temaSolene     String?     @db.Text // Tema da sessão (para sessões solenes)
 
@@ -1186,6 +1198,7 @@ model PautaSessao {
   tempoTotalEstimado    Int         @default(0)
   tempoTotalReal        Int?
   itemAtualId           String?     @unique
+  dataPublicacao        DateTime?   // RN-122 PNTP: data de publicação oficial da pauta (prazo: 48h antes da sessão)
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
@@ -1193,6 +1206,7 @@ model PautaSessao {
   itens     PautaItem[]
   itemAtual PautaItem?  @relation("SessaoItemAtual", fields: [itemAtualId], references: [id])
 
+  @@index([dataPublicacao])
   @@map("pautas_sessao")
 }
 
@@ -1600,6 +1614,7 @@ model Contrato {
   cnpjCpf           String
   valorTotal        Decimal           @db.Decimal(15, 2)
   dataAssinatura    DateTime
+  dataPublicacao    DateTime?         // RN-124 PNTP: data de publicação oficial (prazo: 24h após assinatura)
   vigenciaInicio    DateTime
   vigenciaFim       DateTime
   fiscalContrato    String?
@@ -1621,6 +1636,7 @@ model Contrato {
   @@index([situacao])
   @@index([contratado])
   @@index([vigenciaFim])
+  @@index([dataPublicacao])
   @@map("contratos")
 }
 
@@ -2296,6 +2312,11 @@ model NormaJuridica {
 
   // Situação
   situacao        SituacaoNorma     @default(VIGENTE)
+
+  // === CAMPOS PNTP 2026 (Sprint 6) ===
+  orgaoEmissor    OrgaoEmissorNorma? // LEGISLATIVO / EXECUTIVO / MISTO
+  aplicavelA      AplicavelA?        // Codigo de Etica: parlamentares / servidores / ambos
+  diarioOficial   Json?              // { nome, volume, pagina, dataPublicacao } - identificacao oficial
 
   // Indexação
   assunto         String?

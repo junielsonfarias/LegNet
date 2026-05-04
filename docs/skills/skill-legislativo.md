@@ -6,6 +6,30 @@ O processo legislativo e o conjunto de atos ordenados para a criacao de normas j
 
 ---
 
+## Atualizacoes 18/04/2026 - Sprint 6 PNTP 2026
+
+### NormaJuridica estruturada com CODIGO_ETICA
+
+Enum `TipoNormaJuridica` ganhou `CODIGO_ETICA`. Campos novos em `NormaJuridica`:
+- `orgaoEmissor OrgaoEmissorNorma?` (LEGISLATIVO/EXECUTIVO/MISTO)
+- `aplicavelA AplicavelA?` (PARLAMENTARES/SERVIDORES/AMBOS)
+- `diarioOficial Json?` (identificacao oficial — nome, volume, pagina, dataPublicacao)
+
+A estrutura hierarquica ja existia (`ArtigoNorma` + `ParagrafoNorma` + `AlteracaoNorma` + `VersaoNorma`). `norma-juridica-service.ts` cobria tudo.
+
+### 2 APIs publicas novas
+
+- `GET /api/publico/normas-juridicas` — lista com filtros tipo/ano/situacao/busca
+- `GET /api/publico/normas-juridicas/[id]` — estrutura completa (arvore de artigos + paragrafos + alteracoes + versoes)
+
+Sem autenticacao, rate limit PUBLIC, CC-BY 4.0. Saida em snake_case com referencia (`LEI_ORGANICA 1/1990` etc).
+
+### Conformidade PNTP
+
+`/api/admin/conformidade-pntp` agora verifica: Lei Organica cadastrada (vigente), Regimento Interno cadastrado, Codigo de Etica cadastrado. Cada um e um item separado na categoria "Institucional" do dashboard `/admin/conformidade-pntp`.
+
+---
+
 ## Arquivos Principais
 
 | Arquivo | Funcao |

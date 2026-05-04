@@ -15,6 +15,15 @@ vi.mock('@/lib/prisma', () => ({
     },
     user: {
       findMany: vi.fn().mockResolvedValue([])
+    },
+    sessao: {
+      findMany: vi.fn().mockResolvedValue([])
+    },
+    contrato: {
+      findMany: vi.fn().mockResolvedValue([])
+    },
+    solicitacaoESIC: {
+      findMany: vi.fn().mockResolvedValue([])
     }
   }
 }))
@@ -28,7 +37,14 @@ vi.mock('@/lib/logging/logger', () => ({
 }))
 
 import { prisma as _prisma } from '@/lib/prisma'
-import { processarSancaoTacita, gerarNotificacoesPrazo } from '@/lib/jobs/prazos-legais'
+import {
+  processarSancaoTacita,
+  gerarNotificacoesPrazo,
+  verificarPautasAtrasadas,
+  verificarAtasAtrasadas,
+  verificarContratosAtrasados,
+  verificarPrazosESIC
+} from '@/lib/jobs/prazos-legais'
 
 const prisma = _prisma as any
 
@@ -136,6 +152,184 @@ describe('gerarNotificacoesPrazo (RN-084)', () => {
 
     const result = await gerarNotificacoesPrazo()
 
+    expect(result.notificacoesCriadas).toBe(0)
+  })
+})
+
+describe('verificarPautasAtrasadas (RN-122 PNTP)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    prisma.notificacaoMulticanal.findMany.mockResolvedValue([])
+    prisma.user.findMany.mockResolvedValue([{ id: 'a1', email: 'admin@camara.gov.br' }])
+  })
+
+  it('detecta sessao proxima sem pauta publicada e gera notificacao', async () => {
+    const em24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    prisma.sessao.findMany.mockResolvedValue([
+      {
+        id: 's1',
+        numero: 42,
+        tipo: 'ORDINARIA',
+        data: em24h,
+        pautaSessao: { id: 'p1', status: 'RASCUNHO', dataPublicacao: null }
+      }
+    ])
+    prisma.notificacaoMulticanal.createMany.mockResolvedValue({ count: 1 })
+
+    const result = await verificarPautasAtrasadas()
+
+    expect(result.pendentes).toBe(1)
+    expect(result.notificacoesCriadas).toBe(1)
+    expect(prisma.notificacaoMulticanal.createMany).toHaveBeenCalled()
+  })
+
+  it('ignora sessao com pauta ja publicada', async () => {
+    const em24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    prisma.sessao.findMany.mockResolvedValue([
+      {
+        id: 's1',
+        numero: 42,
+        tipo: 'ORDINARIA',
+        data: em24h,
+        pautaSessao: { id: 'p1', status: 'APROVADA', dataPublicacao: new Date() }
+      }
+    ])
+
+    const result = await verificarPautasAtrasadas()
+
+    expect(result.pendentes).toBe(0)
+    expect(result.notificacoesCriadas).toBe(0)
+  })
+
+  it('deduplica - nao notifica sessao ja avisada nas ultimas 24h', async () => {
+    const em24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    prisma.sessao.findMany.mockResolvedValue([
+      {
+        id: 's1',
+        numero: 42,
+        tipo: 'ORDINARIA',
+        data: em24h,
+        pautaSessao: null
+      }
+    ])
+    prisma.notificacaoMulticanal.findMany.mockResolvedValue([
+      { metadata: { entidadeId: 's1', entidadeTipo: 'SESSAO_PAUTA' } }
+    ])
+
+    const result = await verificarPautasAtrasadas()
+
+    expect(result.pendentes).toBe(1)
+    expect(result.notificacoesCriadas).toBe(0)
+  })
+})
+
+describe('verificarAtasAtrasadas (RN-123 PNTP)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    prisma.notificacaoMulticanal.findMany.mockResolvedValue([])
+    prisma.user.findMany.mockResolvedValue([{ id: 'a1', email: 'admin@camara.gov.br' }])
+  })
+
+  it('detecta ata aprovada ha mais de 15 dias sem publicacao', async () => {
+    const ha30Dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    prisma.sessao.findMany.mockResolvedValue([
+      { id: 's1', numero: 10, tipo: 'ORDINARIA', data: ha30Dias, updatedAt: ha30Dias }
+    ])
+    prisma.notificacaoMulticanal.createMany.mockResolvedValue({ count: 1 })
+
+    const result = await verificarAtasAtrasadas()
+
+    expect(result.pendentes).toBe(1)
+    expect(result.notificacoesCriadas).toBe(1)
+  })
+
+  it('retorna zero quando nao ha atas atrasadas', async () => {
+    prisma.sessao.findMany.mockResolvedValue([])
+
+    const result = await verificarAtasAtrasadas()
+
+    expect(result.pendentes).toBe(0)
+    expect(result.notificacoesCriadas).toBe(0)
+    expect(prisma.notificacaoMulticanal.createMany).not.toHaveBeenCalled()
+  })
+})
+
+describe('verificarContratosAtrasados (RN-124 PNTP)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    prisma.notificacaoMulticanal.findMany.mockResolvedValue([])
+    prisma.user.findMany.mockResolvedValue([{ id: 'a1', email: 'admin@camara.gov.br' }])
+  })
+
+  it('detecta contrato assinado ha mais de 24h sem dataPublicacao', async () => {
+    const ha48h = new Date(Date.now() - 48 * 60 * 60 * 1000)
+    prisma.contrato.findMany.mockResolvedValue([
+      { id: 'c1', numero: '001', ano: 2026, contratado: 'ACME LTDA', dataAssinatura: ha48h }
+    ])
+    prisma.notificacaoMulticanal.createMany.mockResolvedValue({ count: 1 })
+
+    const result = await verificarContratosAtrasados()
+
+    expect(result.pendentes).toBe(1)
+    expect(result.notificacoesCriadas).toBe(1)
+  })
+
+  it('ignora quando nao ha contratos atrasados', async () => {
+    prisma.contrato.findMany.mockResolvedValue([])
+
+    const result = await verificarContratosAtrasados()
+
+    expect(result.pendentes).toBe(0)
+    expect(result.notificacoesCriadas).toBe(0)
+  })
+})
+
+describe('verificarPrazosESIC (RN-140 LAI)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    prisma.notificacaoMulticanal.findMany.mockResolvedValue([])
+    prisma.user.findMany.mockResolvedValue([{ id: 'a1', email: 'admin@camara.gov.br' }])
+  })
+
+  it('classifica e-SIC vencido separadamente dos proximos do vencimento', async () => {
+    const agora = new Date()
+    const ontem = new Date(agora.getTime() - 24 * 60 * 60 * 1000)
+    const em2Dias = new Date(agora.getTime() + 2 * 24 * 60 * 60 * 1000)
+
+    prisma.solicitacaoESIC.findMany.mockResolvedValue([
+      {
+        id: 'e1',
+        protocolo: 'ESIC-2026-0001',
+        assunto: 'pedido 1',
+        prazoResposta: ontem,
+        respondidoPor: null,
+        status: 'ABERTO'
+      },
+      {
+        id: 'e2',
+        protocolo: 'ESIC-2026-0002',
+        assunto: 'pedido 2',
+        prazoResposta: em2Dias,
+        respondidoPor: null,
+        status: 'EM_ANALISE'
+      }
+    ])
+    prisma.notificacaoMulticanal.createMany.mockResolvedValue({ count: 2 })
+
+    const result = await verificarPrazosESIC()
+
+    expect(result.vencidos).toBe(1)
+    expect(result.proximosVencimento).toBe(1)
+    expect(result.notificacoesCriadas).toBe(2)
+  })
+
+  it('retorna zero quando nao ha e-SIC proximo do prazo', async () => {
+    prisma.solicitacaoESIC.findMany.mockResolvedValue([])
+
+    const result = await verificarPrazosESIC()
+
+    expect(result.proximosVencimento).toBe(0)
+    expect(result.vencidos).toBe(0)
     expect(result.notificacoesCriadas).toBe(0)
   })
 })
