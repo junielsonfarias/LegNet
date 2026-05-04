@@ -5,6 +5,7 @@ import { Providers } from '@/components/providers'
 import { NotificationProvider } from '@/components/providers/notification-provider'
 import { ConditionalLayout } from '@/components/layout/conditional-layout'
 import { MunicipalThemeProvider } from '@/components/providers/theme-provider-municipal'
+import { PwaRegister } from '@/components/pwa-register'
 import { prisma } from '@/lib/prisma'
 
 const inter = Inter({
@@ -70,6 +71,21 @@ export const metadata: Metadata = {
   alternates: {
     canonical: siteUrl,
   },
+  // Fase 4 / A9: PWA — manifest gerado em src/app/manifest.ts; icones em
+  // src/app/icon.tsx e src/app/apple-icon.tsx (Next.js Metadata API).
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: siteName
+  }
+}
+
+export const viewport = {
+  themeColor: process.env.SITE_THEME_COLOR || '#374151',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5
 }
 
 // Busca cores do tema no servidor para injetar no HTML (evita flash de cor errada)
@@ -154,6 +170,7 @@ export default async function RootLayout({
         <Providers>
           <MunicipalThemeProvider>
             <NotificationProvider />
+            <PwaRegister />
             <ConditionalLayout>
               {children}
             </ConditionalLayout>
