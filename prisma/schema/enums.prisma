@@ -692,7 +692,9 @@ enum StatusESIC {
   EM_ANALISE
   RESPONDIDO
   PRORROGADO
-  RECURSO
+  RECURSO                      // legado / generico
+  RECURSO_PRIMEIRA_INSTANCIA   // LAI Lei 12.527/2011 art. 15: primeiro recurso (10 dias)
+  RECURSO_SEGUNDA_INSTANCIA    // LAI art. 16: segundo recurso (5 dias)
   ARQUIVADO
   NEGADO
 }

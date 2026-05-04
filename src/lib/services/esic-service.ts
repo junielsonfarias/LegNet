@@ -215,7 +215,19 @@ export const esicService = {
   },
 
   async criarRecurso(solicitacaoId: string, motivo: string, instancia: number) {
-    const prazoResposta = addBusinessDays(new Date(), 20)
+    // LAI 12.527/2011 art. 15 e 16:
+    //  - Recurso 1a instancia: autoridade decide em 5 dias
+    //  - Recurso 2a instancia: autoridade decide em 5 dias
+    //  - Recurso 3a+ (legado): mantem 10 dias
+    const diasPrazo = instancia >= 3 ? 10 : 5
+    const prazoResposta = addBusinessDays(new Date(), diasPrazo)
+
+    // Status granular conforme instancia (Fase 2 / C7)
+    const statusPorInstancia: Record<number, 'RECURSO' | 'RECURSO_PRIMEIRA_INSTANCIA' | 'RECURSO_SEGUNDA_INSTANCIA'> = {
+      1: 'RECURSO_PRIMEIRA_INSTANCIA',
+      2: 'RECURSO_SEGUNDA_INSTANCIA'
+    }
+    const novoStatus = statusPorInstancia[instancia] ?? 'RECURSO'
 
     const [recurso] = await prisma.$transaction([
       prisma.recursoESIC.create({
@@ -230,11 +242,12 @@ export const esicService = {
         where: { id: solicitacaoId },
         data: {
           temRecurso: true,
-          status: 'RECURSO',
+          status: novoStatus,
+          prazoResposta,
           historico: {
             create: {
               acao: 'RECURSO',
-              descricao: `Recurso de ${instancia}ª instância registrado`,
+              descricao: `Recurso de ${instancia}ª instância registrado (prazo: ${diasPrazo} dias úteis)`,
             },
           },
         },

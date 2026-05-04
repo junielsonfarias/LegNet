@@ -1122,12 +1122,18 @@ a ordem do dia com tempo habil para preparacao.
 RN-140: e-SIC - PEDIDO DE INFORMACAO
 - Cidadao PODE solicitar informacao sem necessidade de login
 - Sistema DEVE gerar protocolo unico (ESIC-{ano}-{numero})
-- Prazo de resposta: 20 dias uteis (prorrogavel por mais 10)
-- Prorrogacao DEVE ser justificada
-- Cidadao PODE interpor recurso em caso de negativa (ate 3 instancias)
+- Prazo de resposta inicial: 20 dias uteis (LAI 12.527/2011 art. 11)
+- Prorrogacao: +10 dias (LAI art. 11 §2), DEVE ser justificada (status=PRORROGADO)
+- Recurso 1a instancia: 5 dias uteis para autoridade decidir (LAI art. 15)
+  - status=RECURSO_PRIMEIRA_INSTANCIA, prazoResposta atualizado em transacao
+- Recurso 2a instancia: 5 dias uteis para autoridade decidir (LAI art. 16)
+  - status=RECURSO_SEGUNDA_INSTANCIA
+- Recurso 3a instancia (legado): 10 dias uteis, status=RECURSO
 - Todo historico de acoes DEVE ser registrado (auditoria)
 - CPF do cidadao NAO DEVE ser exibido em consultas publicas
 - Estatisticas de atendimento DEVEM ser publicas
+- Cron diario `verificarPrazosESIC` alerta 3 dias antes do vencimento de qualquer
+  estado nao terminal (ABERTO/EM_ANALISE/PRORROGADO/RECURSO_*)
 
 RN-141: OUVIDORIA
 - Cidadao PODE registrar manifestacao anonima

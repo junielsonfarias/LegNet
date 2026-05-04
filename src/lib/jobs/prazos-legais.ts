@@ -279,13 +279,25 @@ export async function verificarPautasAtrasadas(): Promise<{
       tipo: true,
       data: true,
       pautaSessao: {
-        select: { id: true, status: true, dataPublicacao: true }
+        select: {
+          id: true,
+          status: true,
+          dataPublicacao: true,
+          _count: { select: { itens: true } }
+        }
       }
     }
   })
 
+  // RN-122 (M9 refinado): pauta vazia (0 itens) NAO conta como publicada,
+  // mesmo com status APROVADA e dataPublicacao preenchidos. Pauta sem itens
+  // viola o espirito da regra (cidadao precisa ver O QUE sera tratado).
   const pendentes = sessoes.filter(
-    (s) => !s.pautaSessao || s.pautaSessao.status === 'RASCUNHO' || !s.pautaSessao.dataPublicacao
+    (s) =>
+      !s.pautaSessao ||
+      s.pautaSessao.status === 'RASCUNHO' ||
+      !s.pautaSessao.dataPublicacao ||
+      s.pautaSessao._count.itens === 0
   )
 
   if (pendentes.length === 0) return { pendentes: 0, notificacoesCriadas: 0 }
@@ -339,13 +351,24 @@ export async function verificarAtasAtrasadas(): Promise<{
   const agora = new Date()
   const limite15d = new Date(agora.getTime() - DIAS_PRAZO_ATA * 24 * 60 * 60 * 1000)
 
+  // RN-123 (M9 refinado): ata APROVADA precisa ter conteudo real (ata em texto OU
+  // arquivoAtaAssinada anexado). statusAta=APROVADA com ambos NULL nao deveria
+  // existir, mas se existir, e indicador de inconsistencia que tambem deve alertar.
   const sessoes = await prisma.sessao.findMany({
     where: {
       statusAta: 'APROVADA',
       dataPublicacaoAta: null,
       updatedAt: { lte: limite15d }
     },
-    select: { id: true, numero: true, tipo: true, data: true, updatedAt: true }
+    select: {
+      id: true,
+      numero: true,
+      tipo: true,
+      data: true,
+      updatedAt: true,
+      ata: true,
+      arquivoAtaAssinada: true
+    }
   })
 
   if (sessoes.length === 0) return { pendentes: 0, notificacoesCriadas: 0 }
@@ -360,12 +383,14 @@ export async function verificarAtasAtrasadas(): Promise<{
     const diasAtraso = Math.floor(
       (agora.getTime() - s.updatedAt.getTime()) / (1000 * 60 * 60 * 24)
     ) - DIAS_PRAZO_ATA
+    const semConteudo = !s.ata?.trim() && !s.arquivoAtaAssinada
+    const motivoExtra = semConteudo ? ' [INCONSISTENCIA: ata sem texto e sem arquivo anexado]' : ''
     for (const admin of admins) {
       notificacoes.push({
         canal: 'SISTEMA' as const,
         destinatario: admin.email,
         assunto: `PNTP: Ata atrasada - Sessao ${s.tipo} #${s.numero} (${diasAtraso}d atraso)`,
-        mensagem: `A ata da sessao ${s.tipo} #${s.numero} foi aprovada ha mais de 15 dias e nao foi publicada. RN-123 PNTP exige publicacao em 15 dias. Atraso atual: ${diasAtraso} dia(s).`,
+        mensagem: `A ata da sessao ${s.tipo} #${s.numero} foi aprovada ha mais de 15 dias e nao foi publicada${motivoExtra}. RN-123 PNTP exige publicacao em 15 dias. Atraso atual: ${diasAtraso} dia(s).`,
         metadata: {
           tipo: 'ALERTA_PRAZO_PNTP',
           entidadeId: s.id,
@@ -463,9 +488,21 @@ export async function verificarPrazosESIC(): Promise<{
   const agora = new Date()
   const em3Dias = new Date(agora.getTime() + DIAS_ANTECEDENCIA_ESIC * 24 * 60 * 60 * 1000)
 
+  // Status que ainda exigem resposta (LAI 12.527/2011): inclui recursos.
+  // RESPONDIDO, NEGADO, ARQUIVADO sao terminais. Cada instancia tem seu proprio
+  // prazo (LAI art. 15: 10 dias para 1a instancia; art. 16: 5 dias para 2a).
   const solicitacoes = await prisma.solicitacaoESIC.findMany({
     where: {
-      status: { in: ['ABERTO', 'EM_ANALISE', 'PRORROGADO'] },
+      status: {
+        in: [
+          'ABERTO',
+          'EM_ANALISE',
+          'PRORROGADO',
+          'RECURSO',
+          'RECURSO_PRIMEIRA_INSTANCIA',
+          'RECURSO_SEGUNDA_INSTANCIA'
+        ]
+      },
       prazoResposta: { lte: em3Dias }
     },
     select: {
@@ -503,6 +540,22 @@ export async function verificarPrazosESIC(): Promise<{
 
     if (idsNotificados.has(s.id)) continue
 
+    // Mensagem contextualizada por status (LAI 12.527/2011)
+    const contextoStatus = (() => {
+      switch (s.status) {
+        case 'RECURSO_PRIMEIRA_INSTANCIA':
+          return 'em recurso de 1a instancia (LAI art. 15 - decidir em 5 dias)'
+        case 'RECURSO_SEGUNDA_INSTANCIA':
+          return 'em recurso de 2a instancia (LAI art. 16 - decidir em 5 dias)'
+        case 'PRORROGADO':
+          return 'com prazo prorrogado (LAI art. 11 §2 - +10 dias)'
+        case 'RECURSO':
+          return 'em recurso (legado)'
+        default:
+          return 'aguardando resposta inicial (LAI - 20 dias uteis)'
+      }
+    })()
+
     for (const admin of admins) {
       notificacoes.push({
         canal: 'SISTEMA' as const,
@@ -511,7 +564,7 @@ export async function verificarPrazosESIC(): Promise<{
           dias < 0
             ? `LAI VENCIDO: e-SIC ${s.protocolo} (${Math.abs(dias)}d atraso)`
             : `LAI: e-SIC ${s.protocolo} vence em ${dias} dia(s)`,
-        mensagem: `A solicitacao e-SIC ${s.protocolo} (${s.assunto}) ${dias < 0 ? `esta vencida ha ${Math.abs(dias)} dia(s)` : `vence em ${dias} dia(s)`}. Prazo limite: ${s.prazoResposta.toISOString().split('T')[0]}. LAI (Lei 12.527/2011) exige resposta em 20 dias uteis.`,
+        mensagem: `A solicitacao e-SIC ${s.protocolo} (${s.assunto}) esta ${contextoStatus} e ${dias < 0 ? `vencida ha ${Math.abs(dias)} dia(s)` : `vence em ${dias} dia(s)`}. Prazo limite: ${s.prazoResposta.toISOString().split('T')[0]}.`,
         metadata: {
           tipo: 'ALERTA_PRAZO_PNTP',
           entidadeId: s.id,
