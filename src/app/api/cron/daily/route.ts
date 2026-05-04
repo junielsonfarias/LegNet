@@ -17,7 +17,8 @@ import {
   verificarPautasAtrasadas,
   verificarAtasAtrasadas,
   verificarContratosAtrasados,
-  verificarPrazosESIC
+  verificarPrazosESIC,
+  verificarTokensIntegracaoVencendo
 } from '@/lib/jobs/prazos-legais'
 import { createLogger } from '@/lib/logging/logger'
 
@@ -72,7 +73,8 @@ async function handler(request: NextRequest) {
     ['pautasAtrasadas', verificarPautasAtrasadas],
     ['atasAtrasadas', verificarAtasAtrasadas],
     ['contratosAtrasados', verificarContratosAtrasados],
-    ['prazosESIC', verificarPrazosESIC]
+    ['prazosESIC', verificarPrazosESIC],
+    ['tokensIntegracaoVencendo', verificarTokensIntegracaoVencendo]
   ]
 
   for (const [nome, fn] of verificacoesPNTP) {

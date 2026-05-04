@@ -35,6 +35,7 @@ export const GET = withAuth(async (
   }
 
   return NextResponse.json({ favorito })
+  // M12: GET idempotente (consulta) — skipCsrf seguro. PATCH/DELETE abaixo NAO tem.
 }, { skipCsrf: true })
 
 /**

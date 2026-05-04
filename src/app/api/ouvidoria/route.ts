@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { ouvidoriaService } from '@/lib/services/ouvidoria-service'
+import { classificarManifestacao } from '@/lib/services/ouvidoria-classifier'
 import type { TipoManifestacao, StatusManifestacao } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -32,7 +33,9 @@ const ManifestacaoSchema = z.object({
   email: z.string().email().nullish(),
   telefone: z.string().nullish(),
   cpf: z.string().nullish(),
-  tipo: z.string().min(1, 'Tipo é obrigatório'),
+  // Fase 5 / M10: tipo opcional. Se ausente ou 'AUTO', classificador heuristico
+  // sugere baseado em assunto+descricao. Operador pode revisar depois.
+  tipo: z.string().nullish(),
   assunto: z.string().min(1, 'Assunto é obrigatório'),
   descricao: z.string().min(1, 'Descrição é obrigatória'),
   setor: z.string().nullish()
@@ -47,20 +50,37 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new ValidationError('Para manifestações não anônimas, nome e email são obrigatórios')
   }
 
+  // Fase 5 / M10: classificacao automatica quando tipo nao informado ou 'AUTO'
+  let tipoFinal = data.tipo
+  let classificacao: ReturnType<typeof classificarManifestacao> | null = null
+  if (!tipoFinal || tipoFinal === 'AUTO') {
+    classificacao = classificarManifestacao(data.assunto, data.descricao)
+    tipoFinal = classificacao.tipo
+  }
+
   const manifestacao = await ouvidoriaService.create({
     anonimo: data.anonimo,
     nome: data.nome || undefined,
     email: data.email || undefined,
     telefone: data.telefone || undefined,
     cpf: data.cpf || undefined,
-    tipo: data.tipo as any,
+    tipo: tipoFinal as any,
     assunto: data.assunto,
     descricao: data.descricao,
     setor: data.setor || undefined
   })
 
   return createSuccessResponse(
-    { id: manifestacao.id, protocolo: manifestacao.protocolo },
+    {
+      id: manifestacao.id,
+      protocolo: manifestacao.protocolo,
+      tipo: tipoFinal,
+      // Quando classificado automaticamente, devolve confianca para
+      // que o operador saiba revisar manifestacoes de baixa confianca
+      classificacaoAutomatica: classificacao
+        ? { tipo: classificacao.tipo, confianca: classificacao.confianca, motivo: classificacao.motivo }
+        : null
+    },
     'Manifestação registrada com sucesso',
     undefined,
     201

@@ -1,10 +1,57 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-04 (Fase 1 do Plano de Correcoes Q2 — Seguranca e LGPD)
-> **Versao**: 1.13.0
+> **Ultima Atualizacao**: 2026-05-04 (Plano de Correcoes 2026-Q2 — TODAS as 5 fases concluidas)
+> **Versao**: 1.14.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## Fase 5 / 2026-Q2: Polish e Divida Tecnica (2026-05-04)
+
+6 itens de qualidade entregues. Plano de Correcoes 2026-Q2 OFICIALMENTE FECHADO.
+
+### M3 — Tipos seguros em consolidacao de votos
+- `/api/sessoes/[id]/votacao/route.ts`: `any` removido das filtragens
+- Helper `contarVotos()` tipado; interface `ProposicaoComVotacoes`
+- Comentario reforca RN-061: votacao SECRETA NUNCA expoe votos individuais
+
+### M4 — Captcha matematico interno
+- `src/lib/security/captcha.ts`: `generateCaptcha()` + `verifyCaptcha()`
+  com TTL de 5 min e one-shot
+- Endpoints `GET/POST /api/auth/captcha`
+- Sem dependencia externa (hCaptcha/Turnstile)
+- 6 testes passando
+- **Pendencia**: integracao no fluxo de login (NextAuth callback) e
+  unlock por email apos N falhas — melhoria futura
+
+### M5 — Versionamento de configuracoes
+- Schema: `ConfiguracaoSnapshot` (snapshot JSONB + motivo + userId + createdAt)
+- Migration `20260504_configuracao_snapshots`
+- `POST /api/configuracoes/restore` captura snapshot do estado atual antes
+  de aplicar payload (rollback automatico disponivel)
+- Endpoints `GET /api/configuracoes/snapshots` e `GET/DELETE /api/configuracoes/snapshots/[id]`
+
+### M6 — TTL de tokens de integracao
+- Schema: `ApiToken.expiresAt` (nullable)
+- Migration `20260504_api_token_expires`
+- `verifyIntegrationToken` rejeita tokens expirados
+- `verificarTokensIntegracaoVencendo` no cron diario (alerta 7d antes)
+
+### M10 — Classificacao automatica Ouvidoria
+- `src/lib/services/ouvidoria-classifier.ts`: heuristica regex/keyword
+  com 5 categorias (RECLAMACAO/SUGESTAO/ELOGIO/DENUNCIA/SOLICITACAO)
+- `POST /api/ouvidoria` aceita `tipo` opcional ou `'AUTO'`; classificador
+  sugere tipo + confianca; resposta inclui `classificacaoAutomatica`
+- 6 testes cobrindo as 5 categorias + default
+
+### M12 — Auditoria skipCsrf
+- 4 ocorrencias confirmadas como GETs idempotentes (analytics, favoritos/[id],
+  favoritos/check, parlamentar/status) — sem risco
+- Comentarios M12 adicionados em cada arquivo
+
+523 testes passando.
 
 ---
 

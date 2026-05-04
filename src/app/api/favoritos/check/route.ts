@@ -31,6 +31,7 @@ export const GET = withAuth(async (request: NextRequest, _ctx: unknown, session:
     favorito: !!favorito,
     dados: favorito || null,
   })
+  // M12: GET idempotente — skipCsrf seguro. POST abaixo NAO tem skipCsrf.
 }, { skipCsrf: true })
 
 /**

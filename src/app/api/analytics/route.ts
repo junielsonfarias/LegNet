@@ -71,4 +71,5 @@ export const GET = withAuth(async (request: NextRequest) => {
   }
 
   return createSuccessResponse(resultado, 'Analytics obtidos com sucesso')
+  // M12: GET idempotente (consulta agregada) restrito a ADMIN/SECRETARIA — skipCsrf seguro.
 }, { roles: ['ADMIN', 'SECRETARIA'], skipCsrf: true })

@@ -34,6 +34,37 @@ const VotoSchema = z.object({
   voto: z.enum(['SIM', 'NAO', 'ABSTENCAO'])
 })
 
+// Fase 5 / M3: tipos para consolidacao de votacao (substitui any)
+type VotoTipo = 'SIM' | 'NAO' | 'ABSTENCAO' | 'AUSENTE'
+type TipoVotacao = 'NOMINAL' | 'SECRETA' | 'SIMBOLICA' | 'LEITURA'
+
+interface VotoIndividual {
+  id: string
+  voto: VotoTipo
+  parlamentarId?: string
+  parlamentar?: { id: string; nome: string; apelido?: string | null }
+}
+
+interface ProposicaoComVotacoes {
+  id: string
+  numero: string
+  ano: number
+  tipo: string
+  titulo: string
+  status: string
+  votacoes?: VotoIndividual[]
+  // permite campos extras que vem do include do Prisma
+  [key: string]: unknown
+}
+
+const contarVotos = (votacoes: VotoIndividual[] | undefined): {
+  sim: number; nao: number; abstencao: number
+} => ({
+  sim: votacoes?.filter((v) => v.voto === 'SIM').length ?? 0,
+  nao: votacoes?.filter((v) => v.voto === 'NAO').length ?? 0,
+  abstencao: votacoes?.filter((v) => v.voto === 'ABSTENCAO').length ?? 0
+})
+
 // GET - Listar votos da sessão
 export const GET = withErrorHandler(async (
   request: NextRequest,
@@ -49,17 +80,17 @@ export const GET = withErrorHandler(async (
   }
 
   // Consolidar proposições de ambas as fontes (pauta + diretas)
-  const proposicoesMap = new Map<string, any>()
+  const proposicoesMap = new Map<string, ProposicaoComVotacoes>()
 
   // Mapa de tipoVotacao por proposicaoId
-  const tipoVotacaoMap = new Map<string, string>()
+  const tipoVotacaoMap = new Map<string, TipoVotacao>()
 
   // Adicionar proposições da pauta
   if (sessao.pautaSessao?.itens) {
     for (const item of sessao.pautaSessao.itens) {
       if (item.proposicao) {
-        proposicoesMap.set(item.proposicao.id, item.proposicao)
-        tipoVotacaoMap.set(item.proposicao.id, item.tipoVotacao || 'NOMINAL')
+        proposicoesMap.set(item.proposicao.id, item.proposicao as ProposicaoComVotacoes)
+        tipoVotacaoMap.set(item.proposicao.id, (item.tipoVotacao as TipoVotacao | null) ?? 'NOMINAL')
       }
     }
   }
@@ -67,61 +98,53 @@ export const GET = withErrorHandler(async (
   // Adicionar proposições diretas (caso não estejam na pauta)
   for (const prop of sessao.proposicoes) {
     if (!proposicoesMap.has(prop.id)) {
-      proposicoesMap.set(prop.id, prop)
+      proposicoesMap.set(prop.id, prop as ProposicaoComVotacoes)
     }
   }
 
   // Processar proposições para respeitar tipo de votação
-  const proposicoesConsolidadas = Array.from(proposicoesMap.values()).map(prop => {
-    const tipoVotacao = tipoVotacaoMap.get(prop.id) || 'NOMINAL'
+  // RN-061 (votacao secreta): NUNCA retornar votos individuais quando tipoVotacao=SECRETA
+  // SIMBOLICA tambem nao retorna individuais (sao votos por aclamacao)
+  const proposicoesConsolidadas = Array.from(proposicoesMap.values()).map((prop) => {
+    const tipoVotacao = tipoVotacaoMap.get(prop.id) ?? 'NOMINAL'
 
     // Votação LEITURA - apenas leitura, sem votação
     if (tipoVotacao === 'LEITURA') {
       return {
         ...prop,
-        tipoVotacao: 'LEITURA',
+        tipoVotacao: 'LEITURA' as const,
         votacoes: [],
         votacaoInfo: {
-          tipo: 'LEITURA',
+          tipo: 'LEITURA' as const,
           descricao: 'Apenas leitura, sem votação'
         }
       }
     }
 
-    // Votação SECRETA - não retornar detalhes individuais dos votos
+    // Votação SECRETA - não retornar detalhes individuais dos votos (RN-061)
     if (tipoVotacao === 'SECRETA') {
-      const votosSim = prop.votacoes?.filter((v: any) => v.voto === 'SIM').length || 0
-      const votosNao = prop.votacoes?.filter((v: any) => v.voto === 'NAO').length || 0
-      const votosAbstencao = prop.votacoes?.filter((v: any) => v.voto === 'ABSTENCAO').length || 0
-
+      const { sim, nao, abstencao } = contarVotos(prop.votacoes)
       return {
         ...prop,
-        tipoVotacao: 'SECRETA',
-        votacoes: [], // Não retorna votos individuais
+        tipoVotacao: 'SECRETA' as const,
+        votacoes: [], // RN-061: votos individuais NUNCA expostos em sessao secreta
         votacaoSecreta: {
-          total: votosSim + votosNao + votosAbstencao,
-          sim: votosSim,
-          nao: votosNao,
-          abstencao: votosAbstencao
+          total: sim + nao + abstencao,
+          sim, nao, abstencao
         }
       }
     }
 
     // Votação SIMBOLICA - mão levantada, apenas contagem
     if (tipoVotacao === 'SIMBOLICA') {
-      const votosSim = prop.votacoes?.filter((v: any) => v.voto === 'SIM').length || 0
-      const votosNao = prop.votacoes?.filter((v: any) => v.voto === 'NAO').length || 0
-      const votosAbstencao = prop.votacoes?.filter((v: any) => v.voto === 'ABSTENCAO').length || 0
-
+      const { sim, nao, abstencao } = contarVotos(prop.votacoes)
       return {
         ...prop,
-        tipoVotacao: 'SIMBOLICA',
-        votacoes: [], // Não retorna votos individuais
+        tipoVotacao: 'SIMBOLICA' as const,
+        votacoes: [], // simbolica e por aclamacao - nao expoe individual
         votacaoSimbolica: {
-          total: votosSim + votosNao + votosAbstencao,
-          sim: votosSim,
-          nao: votosNao,
-          abstencao: votosAbstencao,
+          total: sim + nao + abstencao,
+          sim, nao, abstencao,
           descricao: 'Votação por mão levantada'
         }
       }
@@ -130,7 +153,7 @@ export const GET = withErrorHandler(async (
     // Votação NOMINAL - retorna votos individuais
     return {
       ...prop,
-      tipoVotacao: 'NOMINAL'
+      tipoVotacao: 'NOMINAL' as const
     }
   })
 

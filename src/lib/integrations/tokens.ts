@@ -32,6 +32,11 @@ export const verifyIntegrationToken = async (tokenHeader?: string) => {
     return null
   }
 
+  // Fase 5 / M6: TTL — token expirado e tratado como invalido
+  if (token.expiresAt && token.expiresAt < new Date()) {
+    return null
+  }
+
   return token
 }
 

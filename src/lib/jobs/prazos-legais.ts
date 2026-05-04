@@ -586,6 +586,62 @@ export async function verificarPrazosESIC(): Promise<{
   return { proximosVencimento, vencidos, notificacoesCriadas: notificacoes.length }
 }
 
+/**
+ * Fase 5 / M6: alerta tokens de integracao (api_tokens) com expiresAt
+ * proximo. Avisa 7 dias antes do vencimento; depois ja foi expirado, o
+ * proprio verifyIntegrationToken bloqueia o uso.
+ */
+export async function verificarTokensIntegracaoVencendo(): Promise<{
+  vencendo: number
+  notificacoesCriadas: number
+}> {
+  const agora = new Date()
+  const em7Dias = new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+  const tokens = await prisma.apiToken.findMany({
+    where: {
+      ativo: true,
+      expiresAt: { not: null, gt: agora, lte: em7Dias }
+    },
+    select: { id: true, nome: true, expiresAt: true }
+  })
+
+  if (tokens.length === 0) return { vencendo: 0, notificacoesCriadas: 0 }
+
+  const idsNotificados = await buscarIdsNotificados('API_TOKEN')
+  const admins = await buscarDestinatariosAdmin()
+  if (admins.length === 0) return { vencendo: tokens.length, notificacoesCriadas: 0 }
+
+  const notificacoes: Prisma.NotificacaoMulticanalCreateManyInput[] = []
+  for (const t of tokens) {
+    if (idsNotificados.has(t.id)) continue
+    const dias = Math.ceil(((t.expiresAt?.getTime() || 0) - agora.getTime()) / (1000 * 60 * 60 * 24))
+    for (const admin of admins) {
+      notificacoes.push({
+        canal: 'SISTEMA' as const,
+        destinatario: admin.email,
+        assunto: `Token de integracao "${t.nome}" expira em ${dias}d`,
+        mensagem: `O token de integracao "${t.nome}" expira em ${t.expiresAt?.toISOString().split('T')[0]} (em ${dias} dias). Renove via /admin/integracoes para evitar interrupcao.`,
+        metadata: {
+          tipo: 'ALERTA_TOKEN',
+          entidadeId: t.id,
+          entidadeTipo: 'API_TOKEN',
+          prioridade: dias <= 2 ? 'URGENTE' : 'ALTA',
+          destinatarioUserId: admin.id,
+          diasRestantes: dias
+        }
+      })
+    }
+  }
+
+  if (notificacoes.length > 0) {
+    await prisma.notificacaoMulticanal.createMany({ data: notificacoes })
+    logger.info(`M6: ${notificacoes.length} notificacao(oes) de token expirando criadas`)
+  }
+
+  return { vencendo: tokens.length, notificacoesCriadas: notificacoes.length }
+}
+
 // Valor DIAS_UTEIS_ESIC exposto para testes e documentacao
 export const CONSTANTES_PRAZOS_PNTP = {
   HORAS_PRAZO_PAUTA,

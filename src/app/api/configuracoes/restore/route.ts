@@ -57,6 +57,19 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
   const body = await request.json()
   const { institucional, sistema } = RestoreSchema.parse(body)
 
+  // Fase 5 / M5: captura snapshot do estado ATUAL antes de aplicar restore.
+  // Permite rollback automatico via /api/configuracoes/snapshots.
+  const estadoAtual = await configuracaoDbService.getAllForBackup()
+  const snapshot = await prisma.configuracaoSnapshot.create({
+    data: {
+      snapshot: estadoAtual as never,
+      motivo: 'Snapshot automatico antes de restore',
+      userId: session?.user?.id ?? null,
+      userEmail: session?.user?.email ?? null
+    },
+    select: { id: true, createdAt: true }
+  })
+
   const resultados = await configuracaoDbService.restoreFromBackup(institucional, sistema as RestoreSistemaConfig[] | undefined, coerceTipo)
 
   await ensureSystemConfigDefaults(prisma)
@@ -68,9 +81,16 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     entity: 'Configuracao',
     metadata: {
       institucional: Boolean(institucional),
-      totalSistema: sistema?.length ?? 0
+      totalSistema: sistema?.length ?? 0,
+      snapshotId: snapshot.id
     }
   })
 
-  return createSuccessResponse(resultados, 'Configurações restauradas com sucesso')
+  return createSuccessResponse(
+    {
+      ...resultados,
+      snapshotAnterior: snapshot
+    },
+    `Configurações restauradas. Snapshot do estado anterior: ${snapshot.id} (${snapshot.createdAt.toISOString()})`
+  )
 }, { permissions: 'config.manage' })

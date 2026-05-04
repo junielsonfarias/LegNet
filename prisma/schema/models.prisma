@@ -413,6 +413,20 @@ model PresencaOrdemDia {
   @@map("presencas_ordem_dia")
 }
 
+/// Fase 5 / M5: snapshot automatico de configuracoes antes de cada restore.
+/// Permite rollback temporal e auditoria de mudancas.
+model ConfiguracaoSnapshot {
+  id          String   @id @default(cuid())
+  snapshot    Json     // payload completo (institucional + sistema)
+  motivo      String?  @db.Text
+  userId      String?
+  userEmail   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("configuracao_snapshots")
+}
+
 model ApiToken {
   id            String                  @id @default(cuid())
   nome          String
@@ -420,6 +434,7 @@ model ApiToken {
   hashedToken   String                  @unique
   permissoes    String[]
   ativo         Boolean                 @default(true)
+  expiresAt     DateTime?               // Fase 5 / M6: TTL opcional. Token expira automaticamente.
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
   lastUsedAt    DateTime?
@@ -428,6 +443,7 @@ model ApiToken {
   notificacoes  NotificacaoMulticanal[]
 
   @@unique([nome])
+  @@index([expiresAt])
   @@map("api_tokens")
 }
 

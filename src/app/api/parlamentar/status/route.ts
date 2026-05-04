@@ -26,4 +26,5 @@ export const GET = withAuth(async (request: NextRequest, _ctx: unknown, session:
   const data = await parlamentarDbService.getStatus(parlamentarId)
 
   return createSuccessResponse(data)
+  // M12: GET idempotente (consulta de status) — skipCsrf seguro.
 }, { skipCsrf: true })
