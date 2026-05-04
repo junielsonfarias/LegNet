@@ -191,7 +191,12 @@ describe('verificarPautasAtrasadas (RN-122 PNTP)', () => {
         numero: 42,
         tipo: 'ORDINARIA',
         data: em24h,
-        pautaSessao: { id: 'p1', status: 'APROVADA', dataPublicacao: new Date() }
+        pautaSessao: {
+          id: 'p1',
+          status: 'APROVADA',
+          dataPublicacao: new Date(),
+          _count: { itens: 3 }  // M9: pauta precisa ter itens
+        }
       }
     ])
 
@@ -199,6 +204,32 @@ describe('verificarPautasAtrasadas (RN-122 PNTP)', () => {
 
     expect(result.pendentes).toBe(0)
     expect(result.notificacoesCriadas).toBe(0)
+  })
+
+  it('M9: pauta com 0 itens nao conta como publicada', async () => {
+    const em24h = new Date(Date.now() + 24 * 60 * 60 * 1000)
+    prisma.sessao.findMany.mockResolvedValue([
+      {
+        id: 's1',
+        numero: 42,
+        tipo: 'ORDINARIA',
+        data: em24h,
+        pautaSessao: {
+          id: 'p1',
+          status: 'APROVADA',
+          dataPublicacao: new Date(),
+          _count: { itens: 0 }  // pauta vazia
+        }
+      }
+    ])
+    prisma.notificacaoMulticanal.findMany.mockResolvedValue([])
+    prisma.user.findMany.mockResolvedValue([{ id: 'u1', email: 'admin@test.com' }])
+    prisma.notificacaoMulticanal.createMany.mockResolvedValue({ count: 1 })
+
+    const result = await verificarPautasAtrasadas()
+
+    expect(result.pendentes).toBe(1)
+    expect(result.notificacoesCriadas).toBe(1)
   })
 
   it('deduplica - nao notifica sessao ja avisada nas ultimas 24h', async () => {

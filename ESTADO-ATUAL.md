@@ -8,6 +8,39 @@
 
 ---
 
+## Fase 2 / 2026-Q2: Conformidade Legal LAI/PNTP (2026-05-04)
+
+Auditoria revelou que 3 dos 4 itens da Fase 2 ja estavam implementados nos
+Sprints 4-6 anteriores. Real residual entregue:
+
+### C7 — Estados de recurso granulares (LAI 12.527/2011 art. 15-16)
+- Enum `StatusESIC` ganha `RECURSO_PRIMEIRA_INSTANCIA` e `RECURSO_SEGUNDA_INSTANCIA`
+- Migration `20260504_esic_recurso_instancias` idempotente
+- `esicService.criarRecurso` aplica prazo correto:
+  - 1a: 5 dias uteis (`status=RECURSO_PRIMEIRA_INSTANCIA`)
+  - 2a: 5 dias uteis (`status=RECURSO_SEGUNDA_INSTANCIA`)
+  - 3a+: 10 dias (legado, `status=RECURSO`)
+- `verificarPrazosESIC` inclui novos status na busca; mensagem cita o artigo da LAI
+
+### M9 — Refinar validacao RN-122/RN-123
+- RN-122: pauta com 0 itens nao conta como publicada (cidadao precisa ver O QUE sera tratado)
+- RN-123: ata APROVADA sem texto E sem `arquivoAtaAssinada` gera flag `[INCONSISTENCIA]`
+- Teste novo cobre o caso de pauta vazia
+
+### Itens ja implementados em Sprints anteriores (auditados)
+- A2: `/api/e-sic/acompanhar`, `/api/e-sic/estatisticas`, `/api/ouvidoria/acompanhar`,
+  `/api/ouvidoria/estatisticas` + UIs em `/institucional/*` (Sprint 4)
+- M11: `gerarNotificacoesPrazo` cobre alerta de parecer CLJ via `prazoEmissao` (Sprint 5)
+
+### Pos-deploy
+
+Migration `20260504_esic_recurso_instancias` aplicada via `update.sh` em VPS.
+RECURSO_PRIMEIRA_INSTANCIA / RECURSO_SEGUNDA_INSTANCIA disponiveis no enum.
+
+511 testes passando.
+
+---
+
 ## Fase 1 / 2026-Q2: Seguranca e LGPD (2026-05-04)
 
 7 itens criticos do PLANO-CORRECOES-2026-Q2 entregues em 1 sessao.
