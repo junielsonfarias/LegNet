@@ -44,7 +44,9 @@ export type Permission =
   | 'publicacao.manage'
   | 'transparencia.view'
   | 'transparencia.manage'
-  | 'financeiro.view'
+  | 'financeiro.view'           // legado: equivalente a financeiro-resumo.view
+  | 'financeiro-resumo.view'    // listas com CPF mascarado, salarios agregados
+  | 'financeiro-detalhe.view'   // CPF puro, salario individual (LGPD - apenas roles privilegiadas)
   | 'financeiro.manage'
   | 'upload.manage'
   | 'automacao.view'
@@ -100,6 +102,8 @@ const rolePermissions: RolePermissions = {
     'transparencia.view',
     'transparencia.manage',
     'financeiro.view',
+    'financeiro-resumo.view',
+    'financeiro-detalhe.view',
     'financeiro.manage',
     'upload.manage',
     'automacao.view',
@@ -141,6 +145,8 @@ const rolePermissions: RolePermissions = {
     'transparencia.view',
     'transparencia.manage',
     'financeiro.view',
+    'financeiro-resumo.view',
+    'financeiro-detalhe.view',
     'financeiro.manage',
     // Upload de arquivos
     'upload.manage',

@@ -6,8 +6,9 @@ import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 export const dynamic = 'force-dynamic'
 
 /**
- * GET - Buscar servidor por ID
- * SEGURANCA: Requer permissao financeiro.view (dados sensiveis como CPF e salario)
+ * GET - Buscar servidor por ID (retorna CPF mascarado)
+ * SEGURANCA: financeiro-resumo.view permite ver dados mascarados.
+ * Para ver CPF puro/decriptado, e necessario financeiro-detalhe.view (futuro).
  */
 export const GET = withAuth(
   async (
@@ -23,7 +24,7 @@ export const GET = withAuth(
 
     return createSuccessResponse(serializeServidor(servidor))
   },
-  { permissions: 'financeiro.view' }
+  { permissions: 'financeiro-resumo.view' }
 )
 
 export const PUT = withAuth(

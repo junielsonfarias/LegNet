@@ -22,7 +22,7 @@ export const GET = withAuth(
 
     return createSuccessResponse(verba)
   },
-  { permissions: 'financeiro.view' }
+  { permissions: 'financeiro-resumo.view' }
 )
 
 /**
