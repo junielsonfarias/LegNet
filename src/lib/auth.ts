@@ -1,5 +1,6 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { prisma } from "@/lib/prisma"
 import { mockAuth } from "@/lib/auth-mock"
 import { verifyTotpToken } from '@/lib/security/totp'
 import { safeDecrypt } from '@/lib/security/encryption'
@@ -132,11 +133,27 @@ export const authOptions: NextAuthOptions = {
     maxAge: 60 * 60 // 1 hora
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.role = user.role
         token.parlamentarId = (user as any).parlamentarId
         token.twoFactorEnabled = (user as any).twoFactorEnabled ?? false
+      }
+      // Quando o cliente chama useSession().update(), faz re-fetch do user.
+      // Necessario para refletir habilitacao de 2FA sem exigir novo login (C4).
+      if (trigger === 'update' && token.sub) {
+        try {
+          const fresh = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { twoFactorEnabled: true, role: true }
+          })
+          if (fresh) {
+            token.twoFactorEnabled = fresh.twoFactorEnabled
+            token.role = fresh.role
+          }
+        } catch (err) {
+          authLogger.warn('Falha ao atualizar token via session.update', { errorDetails: String(err) })
+        }
       }
       return token
     },

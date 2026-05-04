@@ -147,6 +147,19 @@ export async function middleware(request: NextRequest) {
         // Usuário autenticado mas sem permissão
         return NextResponse.redirect(new URL('/', request.url))
       }
+
+      // RN-144 / Fase 1 C4: ADMIN e SECRETARIA DEVEM ter 2FA habilitado.
+      // Se nao tem, redirect para a pagina de setup. Permite navegar so na propria
+      // pagina de seguranca ate fazer enrollment. APIs de 2FA tambem permitidas.
+      const requiresTwoFactor = userRole === 'ADMIN' || userRole === 'SECRETARIA'
+      const hasTwoFactor = Boolean(token.twoFactorEnabled)
+      const isOn2faSetupPage = pathname === '/admin/configuracoes/seguranca'
+
+      if (requiresTwoFactor && !hasTwoFactor && !isOn2faSetupPage) {
+        const setupUrl = new URL('/admin/configuracoes/seguranca', request.url)
+        setupUrl.searchParams.set('enroll', '1')
+        return NextResponse.redirect(setupUrl)
+      }
     }
 
     // Adiciona informações do usuário aos headers

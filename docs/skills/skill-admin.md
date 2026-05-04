@@ -315,7 +315,7 @@ src/app/admin/
 | **RN-141** | Senhas com minimo 8 caracteres, maiusculas, numeros |
 | **RN-142** | Sessao expira em 8 horas de inatividade |
 | **RN-143** | Bloqueio apos 5 tentativas de login falhas |
-| **RN-144** | 2FA opcional para roles ADMIN e OPERADOR (sera obrigatorio em fase 1/C4) |
+| **RN-144** | 2FA OBRIGATORIO para roles ADMIN e SECRETARIA (Fase 1/C4). Middleware redireciona usuarios sem 2FA para /admin/configuracoes/seguranca?enroll=1; demais rotas /admin/* bloqueadas ate enrollment. JWT atualizado via session.update() apos habilitar/desabilitar para refletir mudanca sem novo login. |
 | **RN-156** | Secrets 2FA (twoFactorSecret, twoFactorBackupCodes) criptografados em repouso com AES-256-GCM via `src/lib/security/encryption.ts`. Endpoint `/api/auth/2fa` nunca retorna o secret no JSON; cliente le apenas o `otpauth` URI. Backup codes sao baixados como `.txt` e removidos do estado React 5s apos download. Requer `ENCRYPTION_KEY` no .env. |
 
 ### Auditoria

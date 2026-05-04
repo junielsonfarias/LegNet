@@ -4,6 +4,8 @@ import { createLogger } from '@/lib/logging/logger'
 const log = createLogger('admin/configuracoes/seguranca')
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { AlertTriangle, Copy, Download, Loader2, Lock, RefreshCw, ShieldCheck, ShieldOff, Smartphone } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -21,6 +23,9 @@ interface TwoFactorStatus {
 }
 
 export default function SecuritySettingsPage() {
+  const searchParams = useSearchParams()
+  const isEnrollmentForced = searchParams?.get('enroll') === '1'
+  const { update: updateSession } = useSession()
   const [status, setStatus] = useState<TwoFactorStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [setupData, setSetupData] = useState<{ otpauth: string } | null>(null)
@@ -94,6 +99,8 @@ export default function SecuritySettingsPage() {
       setVerificationCode('')
       setStatus({ enabled: true, lastVerifiedAt: new Date().toISOString() })
       loadStatus()
+      // Atualiza o JWT para refletir twoFactorEnabled=true sem exigir logout (C4)
+      await updateSession()
       toast.success('2FA habilitado. BAIXE os códigos de backup antes de sair desta tela!', {
         duration: 8000
       })
@@ -151,6 +158,8 @@ export default function SecuritySettingsPage() {
       setBackupCodes([])
       setVerificationCode('')
       loadStatus()
+      // Atualiza o JWT para refletir twoFactorEnabled=false (C4)
+      await updateSession()
       toast.success('Autenticação em duas etapas desabilitada.')
     } catch (error: any) {
       log.error('Erro ao desabilitar 2FA', error)
@@ -225,6 +234,20 @@ export default function SecuritySettingsPage() {
           </Badge>
         </div>
       </div>
+
+      {isEnrollmentForced && !status?.enabled && (
+        <div className="border-2 border-red-500 bg-red-50 rounded-lg p-4 flex items-start gap-3">
+          <ShieldOff className="h-6 w-6 text-red-600 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-sm">
+            <p className="font-semibold text-red-900">Habilitação obrigatória de 2FA</p>
+            <p className="text-red-800">
+              Roles ADMIN e SECRETARIA precisam de autenticação em duas etapas
+              ativa para acessar o painel administrativo (RN-144). Habilite o 2FA
+              abaixo para liberar o acesso às demais áreas.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <Card className="shadow-sm border border-gray-200">
