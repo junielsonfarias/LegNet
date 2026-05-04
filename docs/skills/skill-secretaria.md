@@ -455,7 +455,7 @@ async function salvarConfiguracaoPrazo(
 | **RN-037** | Ata aprovada na sessao seguinte |
 | **RN-123** | Ata publicada em 15 dias apos aprovacao (PNTP) |
 
-> **Anexo da ata assinada**: na pagina `src/app/admin/sessoes/[id]/page.tsx`, ao lado da URL da ata gerada, ha um bloco "URL da Ata Assinada e Aprovada" que persiste `Sessao.arquivoAtaAssinada`, `Sessao.dataPublicacaoAta` e marca `Sessao.statusAta = APROVADA`. Aceito tambem para sessoes ja concluidas/finalizadas (entrada retroativa). Validado em `_validators/sessao-validators.ts` e gravado em `_handlers/update-sessao.ts` via PUT `/api/sessoes/[id]`.
+> **Anexo da ata assinada**: na pagina `src/app/admin/sessoes/[id]/page.tsx`, ao lado da URL da ata gerada, ha um bloco "URL da Ata Assinada e Aprovada" que persiste `Sessao.arquivoAtaAssinada`, `Sessao.dataPublicacaoAta` e marca `Sessao.statusAta = APROVADA`. Aceito tambem para sessoes ja concluidas/finalizadas (entrada retroativa). O bloco aceita URL externa OU upload de PDF (max 10MB) via `POST /api/upload?folder=atas` — handler `handleUploadAtaAssinada` preenche o input automaticamente apos upload. Validado em `_validators/sessao-validators.ts` e gravado em `_handlers/update-sessao.ts` via PUT `/api/sessoes/[id]`.
 
 ---
 

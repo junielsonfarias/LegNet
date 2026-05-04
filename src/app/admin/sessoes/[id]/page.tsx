@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import nextDynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,6 +39,7 @@ import {
   RefreshCw,
   Link2,
   Save,
+  Upload,
   Video,
   Radio
 } from 'lucide-react'
@@ -112,7 +113,9 @@ export default function SessaoDetailPage() {
   const [urlAudio, setUrlAudio] = useState('')
   const [salvandoUrl, setSalvandoUrl] = useState(false)
   const [salvandoAtaAssinada, setSalvandoAtaAssinada] = useState(false)
+  const [uploadingAtaAssinada, setUploadingAtaAssinada] = useState(false)
   const [salvandoLinks, setSalvandoLinks] = useState(false)
+  const ataAssinadaInputRef = useRef<HTMLInputElement>(null)
 
   // Sincronizar URLs quando sessão carrega
   const sessaoArquivoAta = sessao?.arquivoAta
@@ -152,6 +155,52 @@ export default function SessaoDetailPage() {
       toast.error('Erro ao salvar URL da ata')
     } finally {
       setSalvandoUrl(false)
+    }
+  }
+
+  const handleUploadAtaAssinada = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (file.type !== 'application/pdf') {
+      toast.error('Apenas arquivos PDF sao aceitos')
+      if (ataAssinadaInputRef.current) ataAssinadaInputRef.current.value = ''
+      return
+    }
+
+    const MAX_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      toast.error('Arquivo muito grande. Tamanho maximo: 10MB')
+      if (ataAssinadaInputRef.current) ataAssinadaInputRef.current.value = ''
+      return
+    }
+
+    setUploadingAtaAssinada(true)
+    const toastId = toast.loading(`Enviando ${file.name}...`)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'atas')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Erro ao enviar arquivo')
+      }
+
+      setArquivoAtaAssinadaUrl(data.url)
+      toast.success('PDF anexado. Clique em Salvar para confirmar.', { id: toastId })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar arquivo', { id: toastId })
+    } finally {
+      setUploadingAtaAssinada(false)
+      if (ataAssinadaInputRef.current) ataAssinadaInputRef.current.value = ''
     }
   }
 
@@ -953,17 +1002,36 @@ export default function SessaoDetailPage() {
                       )}
                     </div>
                     <p className="text-xs text-emerald-800">
-                      Anexe o link do PDF da ata após assinatura e aprovação em sessão. RN-123 PNTP: prazo de 15 dias para publicação.
+                      Anexe o link do PDF da ata após assinatura e aprovação em sessão, ou faça upload do PDF (máx. 10MB). RN-123 PNTP: prazo de 15 dias para publicação.
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Input
                         id="arquivoAtaAssinada"
                         type="url"
                         placeholder="https://exemplo.com/ata-sessao-assinada.pdf"
                         value={arquivoAtaAssinadaUrl}
                         onChange={(e) => setArquivoAtaAssinadaUrl(e.target.value)}
-                        className="flex-1"
+                        className="flex-1 min-w-[240px]"
                       />
+                      <input
+                        ref={ataAssinadaInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleUploadAtaAssinada}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="border-emerald-300 text-emerald-800 hover:bg-emerald-100"
+                        onClick={() => ataAssinadaInputRef.current?.click()}
+                        disabled={uploadingAtaAssinada || salvandoAtaAssinada}
+                      >
+                        {uploadingAtaAssinada
+                          ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" />Enviando...</>
+                          : <><Upload className="h-4 w-4 mr-1" />Anexar PDF</>}
+                      </Button>
                     </div>
                     <div className="flex flex-wrap items-end gap-2">
                       <div className="flex-1 min-w-[200px]">
