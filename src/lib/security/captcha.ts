@@ -19,12 +19,15 @@ interface CaptchaChallenge {
 const TTL_MS = 5 * 60 * 1000 // 5 minutos
 const challenges = new Map<string, CaptchaChallenge>()
 
-// Limpa challenges expirados periodicamente (lazy cleanup)
+// Limpa challenges expirados periodicamente (lazy cleanup).
+// Usa forEach para compatibilidade com targets pre-ES2015 do tsconfig
+// (evita exigir --downlevelIteration). .delete() durante forEach em Map
+// e seguro segundo a especificacao.
 function cleanup() {
   const now = Date.now()
-  for (const [id, c] of challenges) {
+  challenges.forEach((c, id) => {
     if (c.expiresAt < now) challenges.delete(id)
-  }
+  })
 }
 
 interface PublicChallenge {
