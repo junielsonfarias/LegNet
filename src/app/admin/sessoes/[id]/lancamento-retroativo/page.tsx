@@ -39,6 +39,7 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
+import { ProposicaoRetroativaModal } from '@/components/admin/proposicao-retroativa-modal'
 
 // Lazy loading do PautaEditor
 const PautaEditor = nextDynamic(
@@ -451,15 +452,24 @@ export default function LancamentoRetroativoPage() {
                   Registre leituras, votações e resultados de cada item
                 </CardDescription>
               </div>
-              {!editandoPauta && itensPauta.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditandoPauta(true)}
-                >
-                  <PenLine className="h-4 w-4 mr-1" />
-                  Editar Pauta
-                </Button>
+              {!editandoPauta && (
+                <div className="flex flex-wrap gap-2">
+                  {/* Fase 3 / C8: registrar proposicao ja votada */}
+                  <ProposicaoRetroativaModal
+                    sessaoId={sessao.id}
+                    onCreated={() => router.refresh()}
+                  />
+                  {itensPauta.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditandoPauta(true)}
+                    >
+                      <PenLine className="h-4 w-4 mr-1" />
+                      Editar Pauta
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </CardHeader>

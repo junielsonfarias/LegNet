@@ -1380,6 +1380,37 @@ Implementacao: trigger PostgreSQL `audit_logs_block_modifications` em audit_logs
 (migration 20260504_audit_log_immutable) bloqueia UPDATE/DELETE em runtime.
 Excecao: restore de backup ou reset de DEV exige dropar trigger temporariamente.
 
+REGRA RN-058: VALIDACAO DE TRAMITACAO PARA INCLUSAO EM PAUTA
+Proposicao so e elegivel para pauta se:
+1. Status = EM_TRAMITACAO
+2. Etapa atual do FluxoTramitacao tem habilitaPauta=true
+   (legado: proposicoes sem fluxoEtapaId sao toleradas)
+3. Se TipoProposicaoConfig.requerParecerCLJ = true: deve ter passado por
+   comissao com parecer (substitui lista hardcoded antiga)
+Implementacao: src/lib/services/automacao-pautas-service.ts:calcularElegibilidade
+
+REGRA RN-053: LOCK DE PAUTA APOS PUBLICACAO
+Pauta com status APROVADA NAO pode receber:
+- Novos itens (POST /api/sessoes/[id]/pauta, bulk, apply-template) bloqueados
+- Itens removidos (DELETE /api/pauta/[itemId]) bloqueado
+- Mudanca estrutural em itens (secao, titulo, ordem, proposicao, tipoAcao,
+  tipoVotacao) bloqueada via PUT /api/pauta/[itemId]
+PERMITIDO durante a sessao: mudanca de status do item, tempoReal, observacoes
+(operador precisa para conduzir a sessao em tempo real).
+Excecao: sessao CONCLUIDA permite lancamento retroativo (RN-159).
+Implementacao: pautasDbService.assertPautaEditavel(sessaoId)
+
+REGRA RN-159: PROPOSICAO RETROATIVA
+Permite registrar proposicoes ja votadas em sessoes CONCLUIDAS (digitalizacao
+de historico, importacao de sistema antigo, gestoes anteriores).
+- Schema: Proposicao.entradaRetroativa Boolean + motivoRetroativo Text
+- Endpoint: POST /api/sessoes/[id]/proposicao-retroativa
+- Apenas ADMIN ou SECRETARIA
+- Pula RN-020 (iniciativa privativa), RN-030 (parecer CLJ), RN-032 (prazos)
+- Mantem auditoria com motivo obrigatorio
+- Badge "RETROATIVA" em todas exibicoes (admin e publico)
+- Item de pauta criado com status final ja decidido
+
 REGRA RN-156: PROTECAO DE DADOS PESSOAIS (LGPD)
 CPFs e dados pessoais sensiveis DEVEM ser:
 - Armazenados criptografados em repouso (AES-256-GCM via src/lib/security/encryption.ts)

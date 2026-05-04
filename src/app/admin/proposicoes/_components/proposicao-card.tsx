@@ -65,6 +65,15 @@ export function ProposicaoCard({
                 {statusDetalhado.unidadeAtual || 'Em tramitação'}
               </Badge>
             )}
+            {/* Fase 3 / C8: marca proposicao como entrada retroativa */}
+            {(proposicao as any).entradaRetroativa && (
+              <Badge
+                className="text-xs bg-amber-100 text-amber-900 border border-amber-300"
+                title={(proposicao as any).motivoRetroativo || 'Entrada retroativa'}
+              >
+                RETROATIVA
+              </Badge>
+            )}
           </div>
 
           {/* Título */}

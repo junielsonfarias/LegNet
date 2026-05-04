@@ -512,6 +512,11 @@ model Proposicao {
   texto            String?           @db.Text
   textoFinal       String?           @db.Text  // RN-008 / Fase 3 M2: texto consolidado apos redacao final (preserva original)
   dataRedacaoFinal DateTime?                   // RN-008 / Fase 3 M2: timestamp da consolidacao
+  // Fase 3 / C8: entrada retroativa (digitalizacao de proposicoes ja votadas)
+  // Pula RN-020 (iniciativa privativa), RN-030 (CLJ obrigatoria), RN-032 (prazos).
+  // Mantém auditoria com motivo. Apenas SECRETARIA + ADMIN podem criar.
+  entradaRetroativa Boolean          @default(false)
+  motivoRetroativo  String?          @db.Text
   urlDocumento     String?           // URL externa do documento (Google Drive, etc)
   status           StatusProposicao  @default(APRESENTADA)
   regime           String    @default("NORMAL")  // NORMAL, PRIORIDADE, URGENCIA, URGENCIA_URGENTISSIMA

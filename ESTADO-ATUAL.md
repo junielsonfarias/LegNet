@@ -8,6 +8,68 @@
 
 ---
 
+## Fase 3 / 2026-Q2: Governanca do Processo Legislativo (2026-05-04)
+
+8 itens entregues em 1 sessao. M1 ja estava implementado em sprints anteriores.
+
+### M1 — Intersticio turno 2 (auditado, ja implementado)
+`turno-service.ts:382-416` ja valida via `podeIniciarSegundoTurno()`.
+
+### A6 — `publicarPauta` preenche `dataPublicacao`
+- Cron RN-122 agora calcula 48h corretamente
+- 3 pontos atualizados: `automacao-pautas-service.publicarPauta`, `pautas-db-service.publish`,
+  PATCH `/api/pautas/[id]`
+- Despublicar (RASCUNHO) limpa `dataPublicacao`
+
+### C5 — Status `CONVOCADA` em StatusSessao
+- Migration `20260504_status_sessao_convocada` (idempotente, ALTER TYPE ADD VALUE)
+- Transicoes: AGENDADA -> CONVOCADA -> EM_ANDAMENTO; tambem AGENDADA -> EM_ANDAMENTO
+- `publicarPauta` promove sessao AGENDADA -> CONVOCADA automaticamente
+
+### A5 — Lock de pauta apos publicacao (RN-053)
+- `pautasDbService.assertPautaEditavel(sessaoId)` bloqueia pauta APROVADA
+- Aplicado em: criacao, remocao, bulk, apply-template; PUT bloqueia mudanca
+  estrutural mas permite operacionais (status, tempoReal, observacoes)
+- Excecao: sessao CONCLUIDA (lancamento retroativo)
+
+### A4 — `TipoProposicaoConfig.requerParecerCLJ`
+- Schema: campo Boolean default false
+- Migration `20260504_tipo_proposicao_requer_clj` com backfill para PL/PR/PD/PLC
+- API e service aceitam o novo campo
+
+### C6 — RN-058 + RN-030 com fonte unica
+- `calcularElegibilidade` consulta `FluxoTramitacaoEtapa.habilitaPauta` da
+  tramitacao atual; proposicoes legadas sem fluxo seguem permissivas
+- `requerParecerCLJ` agora vem do banco (substitui hardcoded)
+- Batch de TipoProposicaoConfig em verificarElegibilidadeBatch (sem N+1)
+
+### M2 — `Proposicao.textoFinal` + `dataRedacaoFinal`
+- Schema: 2 colunas novas; original `texto` preservado
+- Migration `20260504_proposicao_texto_final` idempotente
+- POST `/api/proposicoes/[id]/redacao-final` grava nos novos campos
+- GET retorna `textoFinalSalvo` separado
+
+### C8 — Proposicao retroativa (RN-159)
+- Schema: `Proposicao.entradaRetroativa` + `motivoRetroativo`
+- Migration `20260504_proposicao_retroativa` com indice parcial
+- Endpoint `POST /api/sessoes/[id]/proposicao-retroativa`
+  (apenas ADMIN/SECRETARIA, exige sessao CONCLUIDA, motivo obrigatorio,
+  cria proposicao + item de pauta com status final em transacao)
+- Modal `ProposicaoRetroativaModal` em `/admin/sessoes/[id]/lancamento-retroativo`
+- Badge `RETROATIVA` em proposicao-card
+
+### Pos-deploy
+
+`update.sh` aplica 4 migrations novas:
+- 20260504_status_sessao_convocada
+- 20260504_tipo_proposicao_requer_clj
+- 20260504_proposicao_texto_final
+- 20260504_proposicao_retroativa
+
+511 testes passando.
+
+---
+
 ## Fase 2 / 2026-Q2: Conformidade Legal LAI/PNTP (2026-05-04)
 
 Auditoria revelou que 3 dos 4 itens da Fase 2 ja estavam implementados nos
