@@ -6,6 +6,7 @@ import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { prisma } from '@/lib/prisma'
 import { generateTotpSecret, createOtpAuthUri, verifyTotpToken } from '@/lib/security/totp'
+import { encrypt, safeDecrypt } from '@/lib/security/encryption'
 import { logAudit } from '@/lib/audit'
 
 // ISSUER dinâmico via variável de ambiente (Multi-Tenant)
@@ -37,16 +38,16 @@ export const POST = withAuth(async (request: NextRequest, _ctx: unknown, session
   const action = body?.action
   if (action === 'setup') {
     const secret = generateTotpSecret()
+    const uri = createOtpAuthUri(session.user.email ?? session.user.id, ISSUER, secret)
+
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
-        twoFactorSecret: secret,
+        twoFactorSecret: encrypt(secret),
         twoFactorEnabled: false,
         lastTwoFactorAt: null
       }
     })
-
-    const uri = createOtpAuthUri(session.user.email ?? session.user.id, ISSUER, secret)
 
     await logAudit({
       request,
@@ -56,8 +57,11 @@ export const POST = withAuth(async (request: NextRequest, _ctx: unknown, session
       entityId: session.user.id
     })
 
+    // A8/RN-154: secret nao retornado no JSON. Cliente le apenas o otpauth URI
+    // (que ja contem o secret embutido para o QR code) e nao deve persistir
+    // em estado React. Se o usuario precisar do secret manual, exibe na hora
+    // a partir do otpauth URI no proprio frontend e descarta apos copia.
     return createSuccessResponse({
-      secret,
       otpauth: uri
     }, 'Código 2FA gerado', undefined, 201)
   }
@@ -79,7 +83,9 @@ export const POST = withAuth(async (request: NextRequest, _ctx: unknown, session
       throw new ValidationError('Secret 2FA não encontrado. Gere um novo código.')
     }
 
-    const isValid = verifyTotpToken(user.twoFactorSecret, code)
+    // safeDecrypt: aceita secrets antigos em texto plano (legado) e novos cifrados
+    const decryptedSecret = safeDecrypt(user.twoFactorSecret)
+    const isValid = verifyTotpToken(decryptedSecret, code)
     if (!isValid) {
       throw new ValidationError('Código 2FA inválido')
     }
@@ -90,7 +96,7 @@ export const POST = withAuth(async (request: NextRequest, _ctx: unknown, session
       where: { id: session.user.id },
       data: {
         twoFactorEnabled: true,
-        twoFactorBackupCodes: JSON.stringify(backupCodes),
+        twoFactorBackupCodes: encrypt(JSON.stringify(backupCodes)),
         lastTwoFactorAt: new Date()
       }
     })

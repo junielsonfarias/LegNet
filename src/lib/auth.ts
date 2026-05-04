@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { mockAuth } from "@/lib/auth-mock"
 import { verifyTotpToken } from '@/lib/security/totp'
+import { safeDecrypt } from '@/lib/security/encryption'
 import {
   checkRateLimitWithRedis,
   resetRateLimitWithRedis
@@ -95,7 +96,7 @@ export const authOptions: NextAuthOptions = {
             if (!code) {
               throw new Error('2FA_REQUIRED')
             }
-            const isValidCode = verifyTotpToken(user.twoFactorSecret, code)
+            const isValidCode = verifyTotpToken(safeDecrypt(user.twoFactorSecret), code)
             if (!isValidCode) {
               await recordLoginAttempt(credentials.email, false)
               throw new Error('INVALID_2FA')

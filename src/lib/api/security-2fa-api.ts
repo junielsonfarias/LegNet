@@ -6,7 +6,6 @@ interface TwoFactorStatus {
 }
 
 interface TwoFactorSetupResponse {
-  secret: string
   otpauth: string
 }
 

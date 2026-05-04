@@ -4,7 +4,7 @@ import { createLogger } from '@/lib/logging/logger'
 const log = createLogger('admin/configuracoes/seguranca')
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Copy, Eye, EyeOff, Loader2, Lock, RefreshCw, ShieldCheck, ShieldOff, Smartphone } from 'lucide-react'
+import { AlertTriangle, Copy, Download, Loader2, Lock, RefreshCw, ShieldCheck, ShieldOff, Smartphone } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
@@ -23,13 +23,25 @@ interface TwoFactorStatus {
 export default function SecuritySettingsPage() {
   const [status, setStatus] = useState<TwoFactorStatus | null>(null)
   const [loading, setLoading] = useState(true)
-  const [setupData, setSetupData] = useState<{ secret: string; otpauth: string } | null>(null)
+  const [setupData, setSetupData] = useState<{ otpauth: string } | null>(null)
   const [verificationCode, setVerificationCode] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [enabling, setEnabling] = useState(false)
   const [disabling, setDisabling] = useState(false)
   const [backupCodes, setBackupCodes] = useState<string[]>([])
-  const [showCodes, setShowCodes] = useState(false)
+  const [codesDownloaded, setCodesDownloaded] = useState(false)
+  const [showManualSecret, setShowManualSecret] = useState(false)
+
+  // Extrai o secret do otpauth URI sem armazenar em estado persistente.
+  // Chamado apenas quando o usuario clica "Mostrar codigo manual".
+  const extractSecretFromOtpauth = (otpauth: string): string => {
+    try {
+      const url = new URL(otpauth)
+      return url.searchParams.get('secret') ?? ''
+    } catch {
+      return ''
+    }
+  }
 
   const loadStatus = useCallback(async () => {
     try {
@@ -54,8 +66,10 @@ export default function SecuritySettingsPage() {
       const data = await twoFactorApi.setup()
       setSetupData(data)
       setBackupCodes([])
+      setCodesDownloaded(false)
+      setShowManualSecret(false)
       setVerificationCode('')
-      toast.success('Código 2FA gerado. Escaneie o QR Code no autenticador.')
+      toast.success('Código 2FA gerado. Adicione no autenticador via link otpauth.')
     } catch (error: any) {
       log.error('Erro ao gerar código 2FA', error)
       toast.error(error?.message ?? 'Não foi possível gerar o código 2FA')
@@ -75,15 +89,57 @@ export default function SecuritySettingsPage() {
       setVerifying(true)
       const data = await twoFactorApi.verify(verificationCode)
       setBackupCodes(data.backupCodes)
+      setCodesDownloaded(false)
+      setSetupData(null) // remove otpauth/secret da memoria assim que 2FA esta ativo
+      setVerificationCode('')
       setStatus({ enabled: true, lastVerifiedAt: new Date().toISOString() })
       loadStatus()
-      toast.success('2FA habilitado com sucesso!')
+      toast.success('2FA habilitado. BAIXE os códigos de backup antes de sair desta tela!', {
+        duration: 8000
+      })
     } catch (error: any) {
       log.error('Erro ao verificar 2FA', error)
       toast.error(error?.message ?? 'Código inválido, tente novamente')
     } finally {
       setVerifying(false)
     }
+  }
+
+  const handleDownloadBackupCodes = () => {
+    if (backupCodes.length === 0) return
+    const timestamp = new Date().toISOString().split('T')[0]
+    const userIdentifier = status?.lastVerifiedAt ? '' : ''
+    const content = [
+      'CÓDIGOS DE BACKUP 2FA — CÂMARA MUNICIPAL',
+      `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
+      `${userIdentifier}`,
+      '',
+      'IMPORTANTE: guarde estes códigos em local seguro (gerenciador de senhas, cofre, etc).',
+      'Cada código pode ser usado UMA única vez para acessar caso perca o autenticador.',
+      'Se vazarem, gere novos códigos imediatamente em Configurações → Segurança.',
+      '',
+      '─────────────────────────────────────',
+      ...backupCodes.map((c, i) => `${(i + 1).toString().padStart(2, '0')}. ${c}`),
+      '─────────────────────────────────────'
+    ].join('\n')
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `codigos-backup-2fa-${timestamp}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
+    setCodesDownloaded(true)
+    toast.success('Arquivo baixado. Os códigos serão removidos da tela em 5 segundos.')
+
+    // Remove os codigos da memoria React apos curto delay (permite o usuario confirmar download)
+    setTimeout(() => {
+      setBackupCodes([])
+    }, 5000)
   }
 
   const handleDisable = async () => {
@@ -224,28 +280,18 @@ export default function SecuritySettingsPage() {
 
             {setupData && (
               <div className="space-y-4 border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    Código secreto
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(setupData.secret, 'Código secreto')}
-                      className="text-camara-primary hover:text-camara-primary/80 flex items-center gap-1 text-xs"
-                    >
-                      <Copy className="h-3 w-3" />
-                      Copiar
-                    </button>
-                  </p>
-                  <p className="mt-1 font-mono text-lg tracking-widest text-gray-900">
-                    {setupData.secret.replace(/(.{4})/g, '$1 ').trim()}
+                <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <p>
+                    <strong>Não tire screenshot.</strong> O segredo abaixo só deve ser inserido no app autenticador (Google Authenticator, Microsoft Authenticator, Authy). Após confirmar o código, ele é descartado da tela.
                   </p>
                 </div>
 
                 {otpauthLink && (
                   <div className="space-y-2">
-                    <p className="text-sm font-semibold text-gray-700">Link rápido</p>
+                    <p className="text-sm font-semibold text-gray-700">Adicionar ao autenticador</p>
                     <p className="text-xs text-gray-500">
-                      Abra o aplicativo autenticador, escolha adicionar conta por link/QR Code e use o botão abaixo.
+                      Abra o app, escolha "Adicionar conta" → "Inserir chave de configuração" e cole o link abaixo.
                     </p>
                     <Button
                       type="button"
@@ -258,6 +304,44 @@ export default function SecuritySettingsPage() {
                     </Button>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  {!showManualSecret ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowManualSecret(true)}
+                      className="text-xs text-gray-600"
+                    >
+                      Mostrar código manual (caso o link não funcione)
+                    </Button>
+                  ) : (
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        Código secreto
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(extractSecretFromOtpauth(setupData.otpauth), 'Código secreto')}
+                          className="text-camara-primary hover:text-camara-primary/80 flex items-center gap-1 text-xs"
+                        >
+                          <Copy className="h-3 w-3" />
+                          Copiar
+                        </button>
+                      </p>
+                      <p className="mt-1 font-mono text-lg tracking-widest text-gray-900">
+                        {extractSecretFromOtpauth(setupData.otpauth).replace(/(.{4})/g, '$1 ').trim()}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowManualSecret(false)}
+                        className="text-xs text-gray-500 underline mt-1"
+                      >
+                        Ocultar
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <form onSubmit={handleVerifyCode} className="space-y-3">
                   <div className="space-y-1.5">
@@ -306,44 +390,44 @@ export default function SecuritySettingsPage() {
           <CardContent className="space-y-4">
             <div className={cn(
               'border rounded-lg p-4 bg-gray-50 text-sm',
-              backupCodes.length === 0 && 'opacity-60 italic'
+              backupCodes.length === 0 && !codesDownloaded && 'opacity-60 italic'
             )}>
               {backupCodes.length > 0 ? (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-gray-700">Guarde seus códigos com segurança.</p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowCodes(prev => !prev)}
-                      className="text-gray-600 hover:text-gray-900"
-                    >
-                      {showCodes ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
+                  <div className="flex items-start gap-2 text-xs text-red-800 bg-red-50 border border-red-200 rounded-md p-3">
+                    <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <p>
+                      <strong>Baixe agora.</strong> Estes códigos só serão exibidos uma vez e desaparecem da tela após o download. Não tire screenshot — guarde o arquivo .txt em local seguro.
+                    </p>
                   </div>
+
                   <div className="grid grid-cols-2 gap-2">
                     {backupCodes.map(code => (
                       <div
                         key={code}
-                        className={cn(
-                          'rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm tracking-widest text-gray-900',
-                          !showCodes && 'blur-sm select-none pointer-events-none'
-                        )}
+                        className="rounded-md border border-gray-200 bg-white px-3 py-2 font-mono text-sm tracking-widest text-gray-900 select-none"
                       >
                         {code}
                       </div>
                     ))}
                   </div>
+
                   <Button
                     type="button"
-                    variant="secondary"
-                    onClick={() => handleCopy(backupCodes.join('\n'), 'Códigos de backup')}
-                    className="flex items-center gap-2"
+                    variant="default"
+                    onClick={handleDownloadBackupCodes}
+                    className="flex items-center gap-2 w-full"
                   >
-                    <Copy className="h-4 w-4" />
-                    Copiar códigos
+                    <Download className="h-4 w-4" />
+                    Baixar códigos como arquivo .txt
                   </Button>
+                </div>
+              ) : codesDownloaded ? (
+                <div className="space-y-2">
+                  <p className="font-semibold text-green-700">Códigos baixados com sucesso.</p>
+                  <p className="text-xs text-gray-600">
+                    Guarde o arquivo em local seguro (gerenciador de senhas, cofre, pen drive offline). Para gerar novos códigos, desabilite e reabilite o 2FA.
+                  </p>
                 </div>
               ) : (
                 <p>
@@ -356,7 +440,7 @@ export default function SecuritySettingsPage() {
             <div className="text-xs text-gray-500 space-y-2">
               <p className="font-semibold text-gray-600">Boas práticas:</p>
               <ul className="list-disc pl-4 space-y-1">
-                <li>Imprima ou anote os códigos e guarde em local seguro.</li>
+                <li>Salve o arquivo em gerenciador de senhas ou cofre offline.</li>
                 <li>Nunca compartilhe o segredo ou os códigos com terceiros.</li>
                 <li>Revogue e gere novos códigos em caso de suspeita de vazamento.</li>
               </ul>
