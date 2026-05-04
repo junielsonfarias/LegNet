@@ -305,6 +305,7 @@ src/app/admin/
 | **RN-002** | LEGALIDADE - Respeitar Lei Organica e Regimento Interno |
 | **RN-003** | RASTREABILIDADE - Todo ato com data, hora, usuario, IP |
 | **RN-004** | INTEGRIDADE - Documentos oficiais NAO alterados apos publicacao |
+| **RN-154** | AUDITORIA IMUTAVEL - audit_logs com trigger BEFORE UPDATE/DELETE bloqueando alteracao (migration 20260504_audit_log_immutable) |
 
 ### Seguranca
 

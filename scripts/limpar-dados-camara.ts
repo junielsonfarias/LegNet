@@ -225,6 +225,11 @@ async function limparDados(manterAdmin: boolean = false) {
     // === NÍVEL 10: Sistema ===
     { nome: 'Notificações Multicanal', fn: () => prisma.notificacaoMulticanal.deleteMany() },
     { nome: 'API Tokens', fn: () => prisma.apiToken.deleteMany() },
+    // RN-003: audit_logs tem trigger BEFORE DELETE bloqueando exclusao.
+    // Para limpar em DEV/test, dropar triggers temporariamente:
+    //   psql -c "DROP TRIGGER audit_logs_block_delete ON audit_logs;"
+    // E recriar depois:
+    //   psql -f prisma/migrations/20260504_audit_log_immutable/migration.sql
     { nome: 'Logs de Auditoria', fn: () => prisma.auditLog.deleteMany() },
     { nome: 'Configurações de Quórum', fn: () => prisma.configuracaoQuorum.deleteMany() },
     { nome: 'Configurações', fn: () => prisma.configuracao.deleteMany() },

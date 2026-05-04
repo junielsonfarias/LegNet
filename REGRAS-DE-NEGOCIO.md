@@ -1370,6 +1370,9 @@ Conteudo so pode ser publicado no portal por:
 REGRA RN-154: AUDITORIA
 Logs de auditoria NAO PODEM ser alterados ou excluidos
 por nenhum usuario, incluindo ADMIN.
+Implementacao: trigger PostgreSQL `audit_logs_block_modifications` em audit_logs
+(migration 20260504_audit_log_immutable) bloqueia UPDATE/DELETE em runtime.
+Excecao: restore de backup ou reset de DEV exige dropar trigger temporariamente.
 
 REGRA RN-155: ACESSO DO PARLAMENTAR DURANTE SESSAO
 Quando existe sessao EM_ANDAMENTO:
