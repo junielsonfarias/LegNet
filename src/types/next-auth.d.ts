@@ -25,5 +25,6 @@ declare module "next-auth/jwt" {
     role: string
     parlamentarId?: string | null
   twoFactorEnabled?: boolean
+  globalTwoFactorEnabled?: boolean
   }
 }

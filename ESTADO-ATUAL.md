@@ -1,10 +1,44 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-04 (Plano de Correcoes 2026-Q2 — TODAS as 5 fases concluidas)
+> **Ultima Atualizacao**: 2026-05-05 (Politica global de 2FA com toggle dinamico)
 > **Versao**: 1.14.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-05 — Politica Global de 2FA (Toggle dinamico)
+
+Verificacao em duas etapas agora possui controle global ligar/desligar via UI.
+Default: **DESABILITADA** (usuario solicitou suspensao temporaria).
+
+- **Helper**: `src/lib/security/two-factor-config.ts` com cache em memoria (TTL 60s)
+  - `is2FAEnabledGlobally()` le `Configuracao.seguranca.2fa.enabled`
+  - `setGlobalTwoFactorEnabled(boolean)` faz upsert + invalidate cache
+- **Login** (`src/lib/auth.ts`): bloco 2FA so e exigido se flag global = true
+  - Flag tambem propagada como `token.globalTwoFactorEnabled` no JWT
+- **Middleware** (`src/middleware.ts`): RN-144 (forcar enrollment ADMIN/SECRETARIA)
+  agora e condicional a `token.globalTwoFactorEnabled`
+- **API admin**: `GET/PUT /api/admin/configuracoes/2fa` (restrito ADMIN + config.manage)
+  - Audit `SYSTEM_2FA_TOGGLE_GLOBAL` com previous/next em metadata
+- **API user 2FA**: `POST /api/auth/2fa?action=setup` rejeita enrollment quando flag = OFF
+- **UI**: `src/app/admin/configuracoes/seguranca/page.tsx` ganha card "Politica Global de 2FA"
+  - Apenas ADMIN edita; demais roles veem readonly
+  - Alert RN-144 oculto quando flag global = OFF
+  - Botao "Gerar novo codigo" desabilitado quando flag = OFF
+
+**Comportamento:**
+- Flag = OFF: ninguem e solicitado pelo TOTP no login, mesmo com 2FA ativo na conta.
+  Configuracoes individuais permanecem salvas no DB.
+- Flag = ON: comportamento original restaurado (RN-144 reaplica forcamento).
+
+**Arquivos:**
+- Novo: `src/lib/security/two-factor-config.ts`
+- Novo: `src/app/api/admin/configuracoes/2fa/route.ts`
+- Mod: `src/lib/auth.ts`, `src/middleware.ts`, `src/app/api/auth/2fa/route.ts`,
+  `src/lib/api/security-2fa-api.ts`, `src/app/admin/configuracoes/seguranca/page.tsx`,
+  `src/types/next-auth.d.ts`
 
 ---
 

@@ -7,6 +7,7 @@ import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { prisma } from '@/lib/prisma'
 import { generateTotpSecret, createOtpAuthUri, verifyTotpToken } from '@/lib/security/totp'
 import { encrypt, safeDecrypt } from '@/lib/security/encryption'
+import { is2FAEnabledGlobally } from '@/lib/security/two-factor-config'
 import { logAudit } from '@/lib/audit'
 
 // ISSUER dinâmico via variável de ambiente (Multi-Tenant)
@@ -16,17 +17,21 @@ const generateBackupCodes = (quantity = 8) =>
   Array.from({ length: quantity }).map(() => crypto.randomBytes(4).toString('hex'))
 
 export const GET = withAuth(async (_request: NextRequest, _ctx: unknown, session: Session) => {
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      twoFactorEnabled: true,
-      lastTwoFactorAt: true
-    }
-  })
+  const [user, globalEnabled] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        twoFactorEnabled: true,
+        lastTwoFactorAt: true
+      }
+    }),
+    is2FAEnabledGlobally()
+  ])
 
   return createSuccessResponse({
     enabled: Boolean(user?.twoFactorEnabled),
-    lastVerifiedAt: user?.lastTwoFactorAt ?? null
+    lastVerifiedAt: user?.lastTwoFactorAt ?? null,
+    globallyEnabled: globalEnabled
   })
 }, { permissions: 'config.manage' })
 
@@ -37,6 +42,10 @@ export const POST = withAuth(async (request: NextRequest, _ctx: unknown, session
 
   const action = body?.action
   if (action === 'setup') {
+    const globalEnabled = await is2FAEnabledGlobally()
+    if (!globalEnabled) {
+      throw new ValidationError('Verificacao em duas etapas esta desabilitada globalmente. Habilite a politica em Configuracoes > Seguranca antes de configurar.')
+    }
     const secret = generateTotpSecret()
     const uri = createOtpAuthUri(session.user.email ?? session.user.id, ISSUER, secret)
 

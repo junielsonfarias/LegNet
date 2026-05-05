@@ -20,13 +20,17 @@ import { cn } from '@/lib/utils'
 interface TwoFactorStatus {
   enabled: boolean
   lastVerifiedAt: string | null
+  globallyEnabled?: boolean
 }
 
 export default function SecuritySettingsPage() {
   const searchParams = useSearchParams()
   const isEnrollmentForced = searchParams?.get('enroll') === '1'
-  const { update: updateSession } = useSession()
+  const { data: session, update: updateSession } = useSession()
+  const isAdmin = session?.user?.role === 'ADMIN'
   const [status, setStatus] = useState<TwoFactorStatus | null>(null)
+  const [globalEnabled, setGlobalEnabled] = useState<boolean | null>(null)
+  const [togglingGlobal, setTogglingGlobal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [setupData, setSetupData] = useState<{ otpauth: string } | null>(null)
   const [verificationCode, setVerificationCode] = useState('')
@@ -53,6 +57,9 @@ export default function SecuritySettingsPage() {
       setLoading(true)
       const data = await twoFactorApi.getStatus()
       setStatus(data)
+      if (typeof data.globallyEnabled === 'boolean') {
+        setGlobalEnabled(data.globallyEnabled)
+      }
     } catch (error: any) {
       log.error('Erro ao carregar status 2FA', error)
       toast.error(error?.message ?? 'Falha ao carregar informações de segurança')
@@ -60,6 +67,25 @@ export default function SecuritySettingsPage() {
       setLoading(false)
     }
   }, [])
+
+  const handleToggleGlobalPolicy = async (next: boolean) => {
+    try {
+      setTogglingGlobal(true)
+      const data = await twoFactorApi.setGlobalPolicy(next)
+      setGlobalEnabled(data.enabled)
+      await updateSession()
+      toast.success(
+        data.enabled
+          ? 'Política global de 2FA habilitada.'
+          : 'Política global de 2FA desabilitada. Nenhum usuário será solicitado pelo código no próximo login.'
+      )
+    } catch (error: any) {
+      log.error('Erro ao alternar política global de 2FA', error)
+      toast.error(error?.message ?? 'Não foi possível alterar a política global de 2FA')
+    } finally {
+      setTogglingGlobal(false)
+    }
+  }
 
   useEffect(() => {
     loadStatus()
@@ -235,7 +261,7 @@ export default function SecuritySettingsPage() {
         </div>
       </div>
 
-      {isEnrollmentForced && !status?.enabled && (
+      {isEnrollmentForced && !status?.enabled && globalEnabled && (
         <div className="border-2 border-red-500 bg-red-50 rounded-lg p-4 flex items-start gap-3">
           <ShieldOff className="h-6 w-6 text-red-600 shrink-0 mt-0.5" />
           <div className="space-y-1 text-sm">
@@ -248,6 +274,75 @@ export default function SecuritySettingsPage() {
           </div>
         </div>
       )}
+
+      <Card className="shadow-sm border border-gray-200">
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-camara-primary" />
+              Política Global de 2FA
+            </CardTitle>
+            <CardDescription>
+              Controle se o sistema exige verificação em duas etapas no login.
+              Quando desabilitado, ninguém é solicitado pelo código mesmo que
+              tenha 2FA configurado em sua conta.
+            </CardDescription>
+          </div>
+          {globalEnabled === null ? (
+            <Badge variant="outline" className="border-yellow-500 text-yellow-700 mt-1">
+              Carregando...
+            </Badge>
+          ) : globalEnabled ? (
+            <Badge variant="outline" className="border-green-500 text-green-700 mt-1">
+              Habilitado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="border-gray-400 text-gray-600 mt-1">
+              Desabilitado
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!globalEnabled && globalEnabled !== null && (
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-900 flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <p>
+                A verificação em duas etapas está <strong>desativada para todos os usuários</strong>.
+                Configurações individuais de 2FA permanecem salvas e voltam a ser
+                exigidas assim que a política global for reabilitada.
+              </p>
+            </div>
+          )}
+
+          {isAdmin ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={() => handleToggleGlobalPolicy(!globalEnabled)}
+                disabled={togglingGlobal || globalEnabled === null}
+                variant={globalEnabled ? 'destructive' : 'default'}
+                className="flex items-center gap-2"
+              >
+                {togglingGlobal ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : globalEnabled ? (
+                  <ShieldOff className="h-4 w-4" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4" />
+                )}
+                {globalEnabled ? 'Desabilitar 2FA globalmente' : 'Habilitar 2FA globalmente'}
+              </Button>
+              <p className="text-xs text-gray-500">
+                Apenas ADMIN pode alterar essa política. A mudança é registrada na auditoria.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500">
+              Apenas usuários com role ADMIN podem alterar a política global de 2FA.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <Card className="shadow-sm border border-gray-200">
@@ -276,11 +371,18 @@ export default function SecuritySettingsPage() {
               </div>
             </div>
 
+            {globalEnabled === false && (
+              <div className="bg-gray-100 border border-gray-200 rounded-md p-3 text-sm text-gray-700">
+                A política global de 2FA está desabilitada. Habilite-a no card acima
+                para gerar um novo código.
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3">
               <Button
                 type="button"
                 onClick={handleGenerateSecret}
-                disabled={enabling}
+                disabled={enabling || globalEnabled === false}
                 className="flex items-center gap-2"
               >
                 {enabling ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}

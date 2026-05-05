@@ -3,6 +3,11 @@ import { ApiResponse } from '@/lib/error-handler'
 interface TwoFactorStatus {
   enabled: boolean
   lastVerifiedAt: string | null
+  globallyEnabled?: boolean
+}
+
+interface TwoFactorGlobalStatus {
+  enabled: boolean
 }
 
 interface TwoFactorSetupResponse {
@@ -52,6 +57,20 @@ class TwoFactorApiService {
       method: 'DELETE'
     })
     await this.handleResponse(response)
+  }
+
+  async getGlobalPolicy(): Promise<TwoFactorGlobalStatus> {
+    const response = await fetch('/api/admin/configuracoes/2fa', { method: 'GET', cache: 'no-store' })
+    return this.handleResponse<TwoFactorGlobalStatus>(response)
+  }
+
+  async setGlobalPolicy(enabled: boolean): Promise<TwoFactorGlobalStatus> {
+    const response = await fetch('/api/admin/configuracoes/2fa', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled })
+    })
+    return this.handleResponse<TwoFactorGlobalStatus>(response)
   }
 }
 

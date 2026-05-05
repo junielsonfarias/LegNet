@@ -151,7 +151,10 @@ export async function middleware(request: NextRequest) {
       // RN-144 / Fase 1 C4: ADMIN e SECRETARIA DEVEM ter 2FA habilitado.
       // Se nao tem, redirect para a pagina de setup. Permite navegar so na propria
       // pagina de seguranca ate fazer enrollment. APIs de 2FA tambem permitidas.
-      const requiresTwoFactor = userRole === 'ADMIN' || userRole === 'SECRETARIA'
+      // Politica global (Configuracao seguranca.2fa.enabled) controla se a regra
+      // esta ativa: quando OFF, ninguem e forcado a fazer enrollment.
+      const globalTwoFactorEnabled = Boolean(token.globalTwoFactorEnabled)
+      const requiresTwoFactor = globalTwoFactorEnabled && (userRole === 'ADMIN' || userRole === 'SECRETARIA')
       const hasTwoFactor = Boolean(token.twoFactorEnabled)
       const isOn2faSetupPage = pathname === '/admin/configuracoes/seguranca'
 

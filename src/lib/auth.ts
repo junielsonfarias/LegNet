@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { mockAuth } from "@/lib/auth-mock"
 import { verifyTotpToken } from '@/lib/security/totp'
 import { safeDecrypt } from '@/lib/security/encryption'
+import { is2FAEnabledGlobally } from '@/lib/security/two-factor-config'
 import {
   checkRateLimitWithRedis,
   resetRateLimitWithRedis
@@ -91,8 +92,12 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
-          // SEGURANÇA: Verificar 2FA ANTES de resetar rate limit
-          if (user.twoFactorEnabled && user.twoFactorSecret) {
+          // SEGURANÇA: Verificar 2FA ANTES de resetar rate limit.
+          // Politica global (Configuracao seguranca.2fa.enabled) controla se a
+          // exigencia de 2FA esta ativa. Quando OFF, ignora o codigo mesmo
+          // que o usuario tenha twoFactorEnabled=true no DB.
+          const globalTwoFactorEnabled = await is2FAEnabledGlobally()
+          if (globalTwoFactorEnabled && user.twoFactorEnabled && user.twoFactorSecret) {
             const code = credentials.code?.toString().trim()
             if (!code) {
               throw new Error('2FA_REQUIRED')
@@ -138,6 +143,7 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role
         token.parlamentarId = (user as any).parlamentarId
         token.twoFactorEnabled = (user as any).twoFactorEnabled ?? false
+        token.globalTwoFactorEnabled = await is2FAEnabledGlobally()
       }
       // Quando o cliente chama useSession().update(), faz re-fetch do user.
       // Necessario para refletir habilitacao de 2FA sem exigir novo login (C4).
@@ -151,6 +157,7 @@ export const authOptions: NextAuthOptions = {
             token.twoFactorEnabled = fresh.twoFactorEnabled
             token.role = fresh.role
           }
+          token.globalTwoFactorEnabled = await is2FAEnabledGlobally()
         } catch (err) {
           authLogger.warn('Falha ao atualizar token via session.update', { errorDetails: String(err) })
         }
