@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { FileText, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface Documento {
   id: string
@@ -160,6 +161,8 @@ export default function AdminDocumentosPage() {
           <Plus className="h-4 w-4 mr-1" /> Novo Documento
         </Button>
       </div>
+
+      <RedirectConfig slug="documentos-oficiais" label="Documentos Oficiais" />
 
       <Card>
         <CardContent className="pt-6">

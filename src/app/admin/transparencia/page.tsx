@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { StatsGrid } from "@/components/admin/stats-grid";
 import { ListFilters } from "@/components/admin/list-filters";
 import { EmptyState } from "@/components/admin/empty-state";
+import { RedirectConfig } from "@/components/admin/redirect-config";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -297,6 +298,8 @@ export default function TransparenciaAdminPage() {
         onNewClick={() => { resetForm(); setDialogOpen(true); }}
         newLabel="Novo Documento"
       />
+
+      <RedirectConfig slug="publicacoes" label="Publicacoes" />
 
       <StatsGrid items={[
         { label: 'Total', value: stats.total, icon: FileText, color: 'blue' },

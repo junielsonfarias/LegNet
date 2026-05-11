@@ -218,6 +218,18 @@ Todas envolvidas em `<TransparenciaPageWrapper>` para suportar tela de periodos.
 - notas-fiscais, ordem-pagamentos, veiculos, obras, documentos
 - repasses, cartoes-corporativos, programas-acoes, servicos-online, fornecedores-sancionados
 
+**Toggle de Link Externo (RedirectConfig)**: TODAS as paginas admin acima
+exibem o cartao `<RedirectConfig slug="..." />` logo abaixo do cabecalho,
+igual ao padrao de `/admin/folha-pagamento`. Permite alternar entre dados
+internos e URL externa por categoria. Slugs administrativos usados:
+`notas-fiscais`, `ordem-pagamentos`, `veiculos`, `obras`, `repasses`,
+`cartao-credito` (sic, casa com o wrapper publico), `programas-acoes`,
+`servicos-online`, `fornecedores-sancionados`, `documentos-oficiais` (sem
+mapeamento 1:1 com pagina publica — wrapper usa `documentos-<tipo>`),
+`conformidade` (configuracao salva, mas a pagina publica nao usa
+`TransparenciaPageWrapper` ainda), e `publicacoes` na pagina raiz
+`/admin/transparencia`.
+
 Padrao: lista + form inline com `editingId` state. Helper `closeForm()` reseta. `handleEdit(item)` carrega dados e seta editingId. `handleSave()` faz POST ou PUT conforme `editingId`.
 
 Permissions: `transparencia.manage`.

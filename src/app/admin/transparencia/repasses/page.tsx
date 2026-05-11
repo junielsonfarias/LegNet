@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Banknote, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface Repasse {
   id: string
@@ -127,6 +128,8 @@ export default function AdminRepassesPage() {
           <Plus className="h-4 w-4 mr-1" /> Novo Repasse
         </Button>
       </div>
+
+      <RedirectConfig slug="repasses" label="Repasses Recebidos" />
 
       {showForm && (
         <Card>

@@ -58,6 +58,17 @@ export const TRANSPARENCIA_CATEGORIAS = [
   { slug: 'mesa-diretora', nome: 'Mesa Diretora', icone: 'Users' },
   { slug: 'pesquisas', nome: 'Pesquisas', icone: 'Search' },
   { slug: 'portal-da-transparencia', nome: 'Portal da Transparência', icone: 'Globe' },
+  { slug: 'notas-fiscais', nome: 'Notas Fiscais', icone: 'Receipt' },
+  { slug: 'ordem-pagamentos', nome: 'Ordem Cronológica de Pagamentos', icone: 'Clock' },
+  { slug: 'veiculos', nome: 'Veículos', icone: 'Truck' },
+  { slug: 'obras', nome: 'Obras Públicas', icone: 'HardHat' },
+  { slug: 'repasses', nome: 'Repasses Recebidos', icone: 'Banknote' },
+  { slug: 'cartao-credito', nome: 'Cartão Corporativo', icone: 'CreditCard' },
+  { slug: 'programas-acoes', nome: 'Programas e Ações', icone: 'ClipboardList' },
+  { slug: 'servicos-online', nome: 'Serviços Online', icone: 'Globe' },
+  { slug: 'fornecedores-sancionados', nome: 'Fornecedores Sancionados', icone: 'Shield' },
+  { slug: 'documentos-oficiais', nome: 'Documentos Oficiais', icone: 'FileText' },
+  { slug: 'conformidade', nome: 'Conformidade PNTP', icone: 'CheckCircle' },
 ]
 
 export const transparenciaRedirectService = {

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Truck, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface Veiculo {
   id: string
@@ -150,6 +151,8 @@ export default function AdminVeiculosPage() {
           <Plus className="h-4 w-4 mr-1" /> Novo Veiculo
         </Button>
       </div>
+
+      <RedirectConfig slug="veiculos" label="Veiculos" />
 
       {showForm && (
         <Card>

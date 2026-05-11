@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Shield, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface Sancionado {
   id: string
@@ -143,6 +144,8 @@ export default function AdminFornecedoresSancionadosPage() {
           <Plus className="h-4 w-4 mr-1" /> Nova Sancao
         </Button>
       </div>
+
+      <RedirectConfig slug="fornecedores-sancionados" label="Fornecedores Sancionados" />
 
       {showForm && (
         <Card>

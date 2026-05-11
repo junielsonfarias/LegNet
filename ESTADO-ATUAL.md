@@ -1,10 +1,46 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-11 (Fix CSP duplicado bloqueando VLibras em VPS + INTERNAL_API_SECRET em updates)
+> **Ultima Atualizacao**: 2026-05-11 (RedirectConfig em todas as paginas admin de transparencia)
 > **Versao**: 1.14.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-11 (parte 4) — Link externo (RedirectConfig) em todas as paginas /admin/transparencia/*
+
+Antes, apenas algumas paginas administrativas (folha-pagamento, despesas,
+receitas, contratos, convenios, licitacoes, etc.) tinham o cartao
+`RedirectConfig` que permite ao admin alternar entre os dados internos do sistema
+e uma URL externa (ex.: portal de transparencia legado do TCM/PA). As paginas
+sob `/admin/transparencia/*` ficaram de fora.
+
+**Mudancas:**
+- Adicionado `<RedirectConfig />` em 12 paginas:
+  - `notas-fiscais` (slug `notas-fiscais`)
+  - `ordem-pagamentos` (slug `ordem-pagamentos`)
+  - `veiculos` (slug `veiculos`)
+  - `obras` (slug `obras`)
+  - `repasses` (slug `repasses`)
+  - `cartoes-corporativos` (slug `cartao-credito` — casa com `TransparenciaPageWrapper`)
+  - `programas-acoes` (slug `programas-acoes`)
+  - `servicos-online` (slug `servicos-online`)
+  - `fornecedores-sancionados` (slug `fornecedores-sancionados`)
+  - `documentos` (slug `documentos-oficiais`)
+  - `conformidade` (slug `conformidade`)
+  - `page.tsx` (Publicacao de Documentos, slug `publicacoes`)
+- `TRANSPARENCIA_CATEGORIAS` em `src/lib/services/transparencia-redirect-service.ts`
+  recebeu 12 novas entradas para que as categorias aparecam em
+  `/admin/configuracoes/transparencia-links`.
+- API/wrapper publico (`TransparenciaPageWrapper`) ja consome a configuracao via
+  slug — nao precisou de mudanca. Toggle ativo + URL faz a pagina publica
+  correspondente exibir o `RedirectBanner` e abrir o link externo.
+
+**Arquivos:**
+- `src/components/admin/redirect-config.tsx` (reutilizado, sem alteracao)
+- `src/app/admin/transparencia/*/page.tsx` (12 arquivos)
+- `src/lib/services/transparencia-redirect-service.ts`
 
 ---
 

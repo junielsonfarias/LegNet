@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Globe, Plus, Loader2, Trash2, Save, X, Pencil, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface Servico {
   id: string
@@ -126,6 +127,8 @@ export default function AdminServicosOnlinePage() {
           <Plus className="h-4 w-4 mr-1" /> Novo Servico
         </Button>
       </div>
+
+      <RedirectConfig slug="servicos-online" label="Servicos Online" />
 
       {showForm && (
         <Card>

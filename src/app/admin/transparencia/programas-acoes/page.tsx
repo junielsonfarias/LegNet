@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ClipboardList, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface ProgramaAcao {
   id: string
@@ -130,6 +131,8 @@ export default function AdminProgramasAcoesPage() {
           <Plus className="h-4 w-4 mr-1" /> Novo
         </Button>
       </div>
+
+      <RedirectConfig slug="programas-acoes" label="Programas e Acoes" />
 
       {showForm && (
         <Card>

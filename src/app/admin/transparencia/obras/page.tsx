@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { HardHat, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface Obra {
   id: string
@@ -155,6 +156,8 @@ export default function AdminObrasPage() {
           <Plus className="h-4 w-4 mr-1" /> Nova Obra
         </Button>
       </div>
+
+      <RedirectConfig slug="obras" label="Obras Publicas" />
 
       {showForm && (
         <Card>

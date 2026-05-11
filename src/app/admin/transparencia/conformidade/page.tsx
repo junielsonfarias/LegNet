@@ -15,6 +15,7 @@ import {
   RefreshCw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { RedirectConfig } from "@/components/admin/redirect-config"
 
 interface ItemConformidade {
   nome: string
@@ -146,6 +147,8 @@ export default function AdminConformidadePage() {
           Atualizar
         </Button>
       </div>
+
+      <RedirectConfig slug="conformidade" label="Conformidade PNTP" />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

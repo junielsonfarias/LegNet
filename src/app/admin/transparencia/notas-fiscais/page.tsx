@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Receipt, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
+import { RedirectConfig } from '@/components/admin/redirect-config'
 
 interface NotaFiscal {
   id: string
@@ -136,6 +137,8 @@ export default function AdminNotasFiscaisPage() {
           <Plus className="h-4 w-4 mr-1" /> Nova Nota
         </Button>
       </div>
+
+      <RedirectConfig slug="notas-fiscais" label="Notas Fiscais" />
 
       {showForm && (
         <Card>
