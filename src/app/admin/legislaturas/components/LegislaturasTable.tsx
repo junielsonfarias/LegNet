@@ -101,7 +101,7 @@ export function LegislaturasTable({
                           <span className="text-camara-primary font-bold">{legislatura.numero}</span>
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">{legislatura.numero}a Legislatura</p>
+                          <p className="font-semibold text-gray-900">{legislatura.numero}ª Legislatura</p>
                           <p className="text-sm text-gray-500">ID: {legislatura.id.slice(0, 8)}...</p>
                         </div>
                       </div>

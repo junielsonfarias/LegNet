@@ -455,7 +455,7 @@ export default function ProposicaoDetalhePage() {
                                   className="inline-flex items-center gap-1.5 text-xs text-camara-primary hover:underline"
                                 >
                                   <Calendar className="h-3 w-3" />
-                                  Votada na {sessaoVot.numero}a Sessao
+                                  Votada na {sessaoVot.numero}ª Sessao
                                   {sessaoVot.tipo && ` ${sessaoVot.tipo === 'ORDINARIA' ? 'Ordinaria' : sessaoVot.tipo === 'EXTRAORDINARIA' ? 'Extraordinaria' : sessaoVot.tipo.replace(/_/g, ' ')}`}
                                   {' - '}
                                   {new Date(sessaoVot.data).toLocaleDateString('pt-BR')}
@@ -801,7 +801,7 @@ export default function ProposicaoDetalhePage() {
                         href={`/legislativo/sessoes/${proposicao.sessao.numero}`}
                         className="text-sm font-medium text-camara-primary hover:underline"
                       >
-                        {proposicao.sessao.numero}a Sessao - {new Date(proposicao.sessao.data).toLocaleDateString('pt-BR')}
+                        {proposicao.sessao.numero}ª Sessao - {new Date(proposicao.sessao.data).toLocaleDateString('pt-BR')}
                       </Link>
                     </div>
                   )}
@@ -813,7 +813,7 @@ export default function ProposicaoDetalhePage() {
                         href={`/legislativo/sessoes/${proposicao.sessaoVotacao.numero}`}
                         className="text-sm font-medium text-camara-primary hover:underline"
                       >
-                        {proposicao.sessaoVotacao.numero}a Sessao - {new Date(proposicao.sessaoVotacao.data).toLocaleDateString('pt-BR')}
+                        {proposicao.sessaoVotacao.numero}ª Sessao - {new Date(proposicao.sessaoVotacao.data).toLocaleDateString('pt-BR')}
                       </Link>
                     </div>
                   )}
@@ -833,7 +833,7 @@ export default function ProposicaoDetalhePage() {
                                 href={`/legislativo/sessoes/${pi.pauta.sessao.numero}`}
                                 className="text-camara-primary hover:underline"
                               >
-                                {pi.pauta.sessao.numero}a Sessao - {new Date(pi.pauta.sessao.data).toLocaleDateString('pt-BR')}
+                                {pi.pauta.sessao.numero}ª Sessao - {new Date(pi.pauta.sessao.data).toLocaleDateString('pt-BR')}
                               </Link>
                             ) : (
                               <span className="text-gray-600">{pi.titulo}</span>

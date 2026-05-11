@@ -80,7 +80,7 @@ export function PainelHeader({
             <div>
               <h1 className="flex items-center gap-3 text-2xl font-bold text-white">
                 <Monitor className="h-7 w-7 text-blue-400" />
-                {sessao.numero}a Sessao {getTipoSessaoLabel(sessao.tipo)}
+                {sessao.numero}ª Sessao {getTipoSessaoLabel(sessao.tipo)}
               </h1>
               <p className="mt-1 text-slate-400">
                 {nomeCasa || 'Camara Municipal'}

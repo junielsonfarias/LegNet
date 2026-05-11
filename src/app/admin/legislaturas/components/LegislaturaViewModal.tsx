@@ -37,7 +37,7 @@ export function LegislaturaViewModal({ legislatura, onClose, onEdit }: Legislatu
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-2xl">
-                {legislatura.numero}a Legislatura
+                {legislatura.numero}ª Legislatura
               </CardTitle>
               <p className="text-gray-600 mt-1">
                 Periodo: {legislatura.anoInicio} - {legislatura.anoFim}
@@ -56,7 +56,7 @@ export function LegislaturaViewModal({ legislatura, onClose, onEdit }: Legislatu
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-500">Numero</p>
-              <p className="text-xl font-bold">{legislatura.numero}a</p>
+              <p className="text-xl font-bold">{legislatura.numero}ª</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-500">Ano Inicio</p>

@@ -1175,7 +1175,7 @@ export default function SessaoDetailPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-sm text-gray-500">Numero</span>
-                <span className="font-medium">{sessao.numero}a</span>
+                <span className="font-medium">{sessao.numero}ª</span>
               </div>
 
               <div className="flex items-center justify-between py-2 border-b">
@@ -1232,7 +1232,7 @@ export default function SessaoDetailPage() {
               {sessao.periodo && (
                 <div className="flex items-center justify-between py-2 border-b">
                   <span className="text-sm text-gray-500">Periodo</span>
-                  <span className="font-medium">{sessao.periodo.numero}o</span>
+                  <span className="font-medium">{sessao.periodo.numero}º</span>
                 </div>
               )}
 

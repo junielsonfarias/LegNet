@@ -49,7 +49,7 @@ export function PainelHeader({
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">
-                {sessao.numero}a Sessao {tipoSessaoLabel} - {new Date(sessao.data).getFullYear()}
+                {sessao.numero}ª Sessao {tipoSessaoLabel} - {new Date(sessao.data).getFullYear()}
               </h1>
               <p className="text-blue-200">{nomeCasa}</p>
             </div>

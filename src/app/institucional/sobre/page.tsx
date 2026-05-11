@@ -286,7 +286,7 @@ export default function SobrePage() {
                 <Scale className="h-6 w-6 mr-2" />
                 Estrutura Organizacional
               </CardTitle>
-              <p className="text-sm text-gray-500 mt-1">Mesa Diretora da {dados?.legislatura ? `${dados.legislatura.numero}a Legislatura` : 'Legislatura Atual'}</p>
+              <p className="text-sm text-gray-500 mt-1">Mesa Diretora da {dados?.legislatura ? `${dados.legislatura.numero}ª Legislatura` : 'Legislatura Atual'}</p>
             </CardHeader>
             <CardContent>
               {dados?.mesaDiretora && dados.mesaDiretora.length > 0 ? (
@@ -401,7 +401,7 @@ export default function SobrePage() {
             },
             {
               label: 'Legislatura',
-              value: dados?.legislatura ? `${dados.legislatura.numero}a` : '-',
+              value: dados?.legislatura ? `${dados.legislatura.numero}ª` : '-',
               icon: Calendar,
             },
             {
