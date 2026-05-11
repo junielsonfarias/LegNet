@@ -107,7 +107,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Programas e Acoes', icon: ClipboardList, href: '/transparencia/programas-acoes', slug: 'programas-acoes' },
       { nome: 'Gastos com Cartao de Credito', icon: CreditCard, href: '/transparencia/cartoes-corporativos', slug: 'cartao-credito' },
       { nome: 'Notas Fiscais Liquidadas', icon: Receipt, href: '/transparencia/notas-fiscais', slug: 'notas-fiscais' },
-      { nome: 'Cotas para Exercicio da Atividade Parlamentar', icon: Wallet, href: '/transparencia/parlamentar/indenizatoria' },
+      { nome: 'Cotas para Exercicio da Atividade Parlamentar', icon: Wallet, href: '/transparencia/cotas-parlamentar', slug: 'cotas-parlamentar' },
       { nome: 'Ordem Cronologica de Pagamentos', icon: Clock, href: '/transparencia/ordem-pagamentos', slug: 'ordem-pagamentos' },
     ],
   },

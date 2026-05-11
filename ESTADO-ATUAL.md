@@ -1,10 +1,54 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-11 (RedirectConfig em todas as paginas admin de transparencia)
+> **Ultima Atualizacao**: 2026-05-11 (Modulo Cotas para Exercicio da Atividade Parlamentar)
 > **Versao**: 1.14.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-11 (parte 5) — Novo modulo Cotas para Exercicio da Atividade Parlamentar
+
+Criado o modulo `cotas-parlamentar` com layout publico identico ao padrao
+camaras municipais (referencia visual fornecida pelo usuario): cabecalho
+com botoes Regulamentacao + Exportar Dados, filtros mes/ano (range) +
+parlamentar, tabela com colunas Mes / Ano / Parlamentar / Observacao /
+Documento(s), e paginacao.
+
+**Modelos:**
+- Novo Prisma model `CotaParlamentar` (tabela `cotas_parlamentar`) com:
+  - `mes Int?` (null = "Ano Inteiro" - declaracao anual)
+  - `ano Int`
+  - `parlamentarId String?` (null = Camara como um todo)
+  - `nomeParlamentar String?`
+  - `observacao String @db.Text`
+  - `documentos Json?` (array `[{nome, url}]`)
+  - `valor Decimal?`
+  - `tipo String` ("DECLARACAO" | "GASTO", default "DECLARACAO")
+
+**Endpoints:**
+- `GET /api/cotas-parlamentar` (publico) — listagem com filtros `mes`,
+  `ano`, `anoInicio`, `anoFim`, `parlamentar`, `parlamentarId`, `tipo`
+- `POST /api/cotas-parlamentar` (admin) — `transparencia.manage`
+- `GET|PUT|DELETE /api/cotas-parlamentar/[id]`
+
+**Paginas:**
+- `/admin/transparencia/cotas-parlamentar` — formulario completo com
+  selecao de parlamentar, upload multiplo de documentos (`/api/upload`
+  com pasta `cotas-parlamentar`) ou link externo, RedirectConfig
+- `/transparencia/cotas-parlamentar` (publico) — layout da imagem
+  fornecida, `TransparenciaPageWrapper` para suportar redirect externo
+
+**Outras alteracoes:**
+- `/transparencia` (home) atualizado: link "Cotas para Exercicio..." agora
+  aponta para `/transparencia/cotas-parlamentar` (antes ia para
+  `/transparencia/parlamentar/indenizatoria`)
+- `admin-sidebar.tsx` — nova entrada "Cotas Parlamentar" no grupo Transparencia
+- `TRANSPARENCIA_CATEGORIAS` — slug `cotas-parlamentar` adicionado
+- `scripts/sql/add-cotas-parlamentar.sql` — migration idempotente para VPS
+- `install.sh do_update()` — roda o SQL acima apos `prisma db push` e
+  reaplica `fix-table-ownership.sql` para garantir owner correto
 
 ---
 

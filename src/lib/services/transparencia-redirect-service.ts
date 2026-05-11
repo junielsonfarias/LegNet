@@ -69,6 +69,7 @@ export const TRANSPARENCIA_CATEGORIAS = [
   { slug: 'fornecedores-sancionados', nome: 'Fornecedores Sancionados', icone: 'Shield' },
   { slug: 'documentos-oficiais', nome: 'Documentos Oficiais', icone: 'FileText' },
   { slug: 'conformidade', nome: 'Conformidade PNTP', icone: 'CheckCircle' },
+  { slug: 'cotas-parlamentar', nome: 'Cotas para Exercício da Atividade Parlamentar', icone: 'Wallet' },
 ]
 
 export const transparenciaRedirectService = {

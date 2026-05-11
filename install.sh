@@ -385,6 +385,21 @@ do_update() {
   fi
   log "Schema do banco atualizado (novas tabelas criadas, dados preservados)"
 
+  # 5c) Migracoes SQL idempotentes pos-schema (criam tabelas que o Prisma nao
+  # cria automaticamente quando ja existem indices/constraints conflitantes)
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-cotas-parlamentar.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-cotas-parlamentar.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-cotas-parlamentar.sql retornou aviso - verifique $LOG_FILE"
+    # Reaplicar ownership porque a tabela recem-criada pode ter ficado com owner=postgres
+    if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
+      sudo -u postgres psql camara_legislativo \
+        -v "db_user=${DB_USER_RUNTIME}" \
+        -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" \
+        >> "$LOG_FILE" 2>&1 || true
+    fi
+  fi
+
   # Aplicar identidade visual se solicitado
   if [ "$UPDATE_THEME" = true ]; then
     info "Aplicando nova identidade visual..."

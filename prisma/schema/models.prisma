@@ -2905,6 +2905,27 @@ model VerbaIndenizatoria {
   @@map("verbas_indenizatorias")
 }
 
+// Cota para Exercicio da Atividade Parlamentar
+// Registro de gastos OU declaracoes anuais ("Ano Inteiro", sem mes/parlamentar)
+// usados no Portal da Transparencia conforme padrao PNTP.
+model CotaParlamentar {
+  id              String   @id @default(cuid())
+  mes             Int?     // null = "Ano Inteiro" (declaracao anual)
+  ano             Int
+  parlamentarId   String?  // null = declaracao geral (Camara como um todo)
+  nomeParlamentar String?
+  observacao      String   @db.Text
+  documentos      Json?    // array [{nome, url}]
+  valor           Decimal? @db.Decimal(15, 2)
+  tipo            String   @default("DECLARACAO") // DECLARACAO | GASTO
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([ano, mes])
+  @@index([parlamentarId, ano])
+  @@map("cotas_parlamentar")
+}
+
 model Concurso {
   id                  String    @id @default(cuid())
   titulo              String

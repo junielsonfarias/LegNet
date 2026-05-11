@@ -135,6 +135,7 @@ const navigationCategories: NavCategory[] = [
       { name: 'Ordem Pagamentos', href: '/admin/transparencia/ordem-pagamentos', icon: Clock, permissions: ['transparencia.manage'] },
       { name: 'Repasses', href: '/admin/transparencia/repasses', icon: Banknote, permissions: ['transparencia.manage'] },
       { name: 'Cartao Corporativo', href: '/admin/transparencia/cartoes-corporativos', icon: CreditCard, permissions: ['transparencia.manage'] },
+      { name: 'Cotas Parlamentar', href: '/admin/transparencia/cotas-parlamentar', icon: Wallet, permissions: ['transparencia.manage'] },
       { name: 'Programas e Acoes', href: '/admin/transparencia/programas-acoes', icon: ClipboardList, permissions: ['transparencia.manage'] },
       { name: 'Licitacoes', href: '/admin/licitacoes', icon: Gavel, permissions: ['transparencia.view'] },
       { name: 'Contratos', href: '/admin/contratos', icon: FileSpreadsheet, permissions: ['transparencia.manage'] },

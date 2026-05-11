@@ -209,6 +209,7 @@ interface PeriodoTransparencia {
 | `/transparencia/fornecedores-sancionados` | FornecedorSancionado | `fornecedores-sancionados` |
 | `/transparencia/pessoal/estagiarios` | Servidor (filtra `vinculo=ESTAGIARIO`) | `estagiarios` |
 | `/transparencia/pessoal/terceirizados` | Servidor (filtra `vinculo=TERCEIRIZADO`) | `terceirizados` |
+| `/transparencia/cotas-parlamentar` | CotaParlamentar (mes nullable = "Ano Inteiro"; tipos DECLARACAO/GASTO; docs JSON) | `cotas-parlamentar` |
 
 Todas envolvidas em `<TransparenciaPageWrapper>` para suportar tela de periodos.
 
