@@ -1,14 +1,97 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-05 (Politica global de 2FA com toggle dinamico)
-> **Versao**: 1.14.0
+> **Ultima Atualizacao**: 2026-05-11 (Fix CSP duplicado bloqueando VLibras em VPS + INTERNAL_API_SECRET em updates)
+> **Versao**: 1.14.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
 
 ---
 
-## 2026-05-05 — Politica Global de 2FA (Toggle dinamico)
+## 2026-05-11 (parte 3) — fix-table-ownership.sql no install.sh
+
+Durante a recuperacao em producao, descobrimos que algumas tabelas (ex.: `oficios`)
+estavam com OWNER diferente do usuario que o Prisma usa (`camara_app`), bloqueando
+o `prisma db push` com `must be owner of table oficios` (ERR-046).
+
+**Correcao:**
+- Novo arquivo `scripts/sql/fix-table-ownership.sql`: usa `\gexec` no psql para
+  gerar e executar `ALTER TABLE/SEQUENCE ... OWNER TO :db_user` em todas as
+  tabelas/sequences do schema `public`. Parametrizavel via `-v db_user=NOME`
+  (default `camara_app`).
+- `install.sh do_update()` agora executa esse SQL como superuser `postgres`
+  ANTES do `prisma db push`.
+- Recuperacao no VPS: `git pull && sudo -u postgres psql camara_legislativo -f
+  scripts/sql/fix-table-ownership.sql`.
+
+---
+
+## 2026-05-11 (parte 2) — Hardening do install.sh (db push silencioso + pm2 nao reinicia)
+
+Durante a aplicacao do fix anterior em producao, dois problemas adicionais foram
+detectados no `install.sh do_update()`:
+
+1. **`prisma db push` cancelado silenciosamente** (ERR-044): warning sobre nova
+   UNIQUE constraint em `servidores.cpfHash` pedia confirmacao, recebia "no"
+   default (stdout redirecionado), mas script reportava "OK".
+2. **App nao reiniciou apos build** (ERR-045): `pm2 restart all` nao iniciou
+   processo que estava `stopped`.
+
+**Correcoes:**
+- `npx prisma db push --accept-data-loss --skip-generate` (aceita warnings nao
+  destrutivos como UNIQUE, ALTER TYPE)
+- Verificacao de exit code para `prisma db push` E `npm run build` — falha
+  ruidosa com instrucoes de recuperacao
+- `pm2 restart camara-legislativo` (alvo explicito) + fallback para
+  `pm2 start ecosystem.config.js`
+- `pm2 save` ao final
+
+---
+
+## 2026-05-11 — Fix CSP duplicado (VLibras bloqueado) + INTERNAL_API_SECRET em update VPS
+
+Erros reportados em producao VPS (`https://cmchaves.pa.gov.br`):
+1. CSP do navegador bloqueava `https://vlibras.gov.br` — nginx enviava header CSP
+   restritivo, conflitando com CSP completo do middleware. Quando ha dois headers
+   `Content-Security-Policy`, o navegador aplica a **intersecao** (mais restritiva).
+2. Warning `[SECURITY] INTERNAL_API_SECRET nao configurado` — variavel ausente
+   no `.env` de VPS atualizado via `do_update()` (so era setada no install fresh).
+
+**Correcoes:**
+- `scripts/templates/nginx-https.conf` e `scripts/lib/setup-nginx.sh`: removida linha
+  `add_header Content-Security-Policy ...`. CSP agora controlado UNICAMENTE pelo
+  `src/middleware.ts` (centraliza politica e evita conflito).
+- `src/middleware.ts`: adicionado `script-src-elem` e `style-src-elem` explicitos
+  (alguns navegadores nao fazem fallback corretamente para `script-src`).
+- `install.sh do_update()`:
+  - Detecta `INTERNAL_API_SECRET` ausente no `.env` e gera novo secret (32 bytes).
+  - Remove linha CSP do `/etc/nginx/sites-available/camara` se existir (limpa
+    instalacoes antigas) e recarrega nginx.
+
+**Como aplicar no VPS de producao:**
+1. `ssh root@cmchaves.pa.gov.br`
+2. `cd /opt/camara && git pull origin main`
+3. `bash install.sh` (escolher modo "atualizar")
+4. Ou manualmente:
+   ```bash
+   # Remover CSP do nginx
+   sed -i '/add_header Content-Security-Policy/d' /etc/nginx/sites-available/camara
+   nginx -t && systemctl reload nginx
+   # Adicionar INTERNAL_API_SECRET ao .env
+   echo "INTERNAL_API_SECRET=\"$(openssl rand -hex 32)\"" >> /opt/camara/.env
+   pm2 restart camara-legislativo
+   ```
+
+**Arquivos modificados:**
+- `src/middleware.ts`
+- `scripts/templates/nginx-https.conf`
+- `scripts/lib/setup-nginx.sh`
+- `install.sh` (funcao `do_update`)
+- `docs/ERROS-E-SOLUCOES.md` (ERR-042, ERR-043)
+
+---
+
+## 2026-05-05 — Politica global de 2FA (Toggle dinamico)
 
 Verificacao em duas etapas agora possui controle global ligar/desligar via UI.
 Default: **DESABILITADA** (usuario solicitou suspensao temporaria).

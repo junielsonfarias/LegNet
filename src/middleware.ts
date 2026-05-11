@@ -209,8 +209,12 @@ export async function middleware(request: NextRequest) {
     // Scripts: self + inline (necessário para Next.js hydration) + unsafe-eval apenas em dev (React Refresh)
     // VLibras (Lei 13.146/2015 art. 63 §I): vlibras.gov.br/app
     `script-src 'self' 'unsafe-inline' https://vlibras.gov.br${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+    // script-src-elem (explicito para evitar fallback ambiguo em alguns navegadores)
+    `script-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br`,
     // Estilos: self + inline (necessário para Tailwind e componentes)
     "style-src 'self' 'unsafe-inline' https://vlibras.gov.br",
+    // style-src-elem (explicito)
+    "style-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br",
     // Imagens: self + data URIs + HTTPS (para imagens externas)
     "img-src 'self' data: https: blob:",
     // Fonts: self + data URIs

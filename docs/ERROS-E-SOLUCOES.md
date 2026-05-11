@@ -1,7 +1,7 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-04-17
+> **Ultima Atualizacao**: 2026-05-11
 > **Versao Analisada**: 1.9.3
 
 ---
@@ -11,9 +11,19 @@
 | Severidade | Quantidade | Status |
 |------------|------------|--------|
 | Critica | 16 | 16 Corrigidos |
-| Alta | 5 | 5 Corrigidos |
+| Alta | 6 | 6 Corrigidos |
 | Media | 10 | 10 Corrigidos |
 | Baixa | 6 | Pendente (melhorias opcionais) |
+
+### Correções Aplicadas em 2026-05-11 (CSP duplicado, INTERNAL_API_SECRET + install.sh hardening)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-042 | CSP do nginx conflita com CSP do middleware Next.js → navegador aplica intersecao e bloqueia VLibras (`https://vlibras.gov.br`). Console: `Refused to load... script-src 'self' 'unsafe-inline' 'unsafe-eval'... script-src-elem was not explicitly set`. | Removido `add_header Content-Security-Policy` do nginx em `scripts/templates/nginx-https.conf` e `scripts/lib/setup-nginx.sh`. CSP agora controlado UNICAMENTE pelo `src/middleware.ts`. Adicionado tambem `script-src-elem` e `style-src-elem` explicitos no middleware. `install.sh do_update()` agora remove a linha CSP de instalacoes existentes. |
+| ERR-043 | Warning `[SECURITY] INTERNAL_API_SECRET nao configurado` em VPS atualizado (variavel introduzida em versao posterior nao foi propagada via `do_update`). | `install.sh do_update()` agora detecta ausencia de `INTERNAL_API_SECRET` no `.env` existente e adiciona um secret gerado via `generate_secret 32`. |
+| ERR-044 | `npx prisma db push` cancelava silenciosamente quando havia warning de UNIQUE constraint (caso `servidores.cpfHash`). stdout redirecionado para log → prompt interativo recebia "no" como default → `Push cancelled.` Mas `install.sh` reportava `[OK] Schema atualizado` (sem verificar exit code). | `install.sh do_update()` agora usa `npx prisma db push --accept-data-loss --skip-generate` e verifica exit code com `if !`. Em caso de falha, exibe erro com comando manual e aborta a atualizacao. Tambem adiciona verificacao de exit code para `npm run build`. |
+| ERR-045 | `pm2 restart all` no `install.sh do_update()` nao reiniciava app que estava `stopped` (PM2 v6+). App ficava parada apos update. Tambem usar `all` era arriscado se houvesse outros processos. | Trocado por `pm2 restart camara-legislativo` (alvo explicito) + fallback que executa `pm2 start ecosystem.config.js` ou `pm2 start npm --name camara-legislativo -- start` caso o restart falhe. `pm2 save` ao final para persistir. |
+| ERR-046 | `prisma db push` falhou com `must be owner of table oficios` na producao VPS. Tabela (e possivelmente outras) tinha owner diferente do usuario que o Prisma usa para conectar (`camara_app`). | Criado `scripts/sql/fix-table-ownership.sql` que percorre todas tabelas e sequences do schema `public` via `\gexec` e aplica `ALTER ... OWNER TO camara_app` (parametrizavel via `-v db_user=NOME`). `install.sh do_update()` agora executa esse script como superuser `postgres` ANTES do `prisma db push`. |
 
 ### Correções Aplicadas em 2026-04-17 (GET /api/sessoes 500 em produção)
 

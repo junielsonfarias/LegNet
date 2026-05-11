@@ -347,9 +347,42 @@ do_update() {
   npx prisma generate >> "$LOG_FILE" 2>&1
   log "Dependencias atualizadas"
 
+  # Adicionar variaveis ausentes ao .env (migracao de versoes antigas)
+  if [ -f "${INSTALL_DIR}/.env" ]; then
+    if ! grep -q "^INTERNAL_API_SECRET=" "${INSTALL_DIR}/.env"; then
+      local NEW_INTERNAL_SECRET
+      NEW_INTERNAL_SECRET=$(generate_secret 32)
+      echo "" >> "${INSTALL_DIR}/.env"
+      echo "# --- Seguranca (adicionado em update) ---" >> "${INSTALL_DIR}/.env"
+      echo "INTERNAL_API_SECRET=\"${NEW_INTERNAL_SECRET}\"" >> "${INSTALL_DIR}/.env"
+      log "INTERNAL_API_SECRET adicionado ao .env"
+    fi
+  fi
+
   # Etapa 5: Banco de dados
   step "Atualizando banco de dados"
-  npx prisma db push >> "$LOG_FILE" 2>&1
+
+  # 5a) Garantir que TODAS as tabelas e sequences tenham OWNER = camara_app
+  # (evita "must be owner of table X" no db push). Roda como superuser postgres.
+  local DB_USER_RUNTIME="${DB_USER:-camara_app}"
+  if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -v "db_user=${DB_USER_RUNTIME}" \
+      -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "fix-table-ownership.sql retornou erro - verifique $LOG_FILE"
+  fi
+
+  # 5b) Aplicar schema do Prisma
+  # --accept-data-loss aceita avisos automaticamente (necessario porque stdout
+  # esta redirecionado e prompts interativos receberiam "no" como default,
+  # cancelando o push silenciosamente). Nao implica perda real - apenas autoriza
+  # migracoes "potencialmente arriscadas" (UNIQUE, ALTER TYPE).
+  if ! npx prisma db push --accept-data-loss --skip-generate >> "$LOG_FILE" 2>&1; then
+    error "Falha ao aplicar schema do banco - verifique $LOG_FILE"
+    warn "Possiveis causas: duplicatas que violam constraint UNIQUE, conexao ao banco, schema invalido"
+    warn "Comando manual: cd ${INSTALL_DIR} && npx prisma db push --accept-data-loss"
+    exit 1
+  fi
   log "Schema do banco atualizado (novas tabelas criadas, dados preservados)"
 
   # Aplicar identidade visual se solicitado
@@ -386,7 +419,11 @@ TSEOF
 
   # Etapa 6: Build, Nginx e restart
   step "Recompilando e reiniciando"
-  npm run build >> "$LOG_FILE" 2>&1
+  if ! npm run build >> "$LOG_FILE" 2>&1; then
+    error "Build do Next.js falhou - verifique $LOG_FILE"
+    warn "Comando manual: cd ${INSTALL_DIR} && npm run build"
+    exit 1
+  fi
 
   # Garantir pastas necessarias existem
   mkdir -p "${INSTALL_DIR}/public/uploads/parlamentares" 2>/dev/null
@@ -395,11 +432,25 @@ TSEOF
 
   # Atualizar Nginx se configuracao mudou
   if [ -f /etc/nginx/sites-available/camara ]; then
+    local NGINX_CHANGED=false
+
     # Adicionar bloco /uploads/ se nao existe
     if ! grep -q "location /uploads/" /etc/nginx/sites-available/camara; then
       sed -i '/# Upload de arquivos/i\    # Servir arquivos de upload (fotos, documentos)\n    location /uploads/ {\n        alias '"${INSTALL_DIR}"'/public/uploads/;\n        expires 30d;\n        add_header Cache-Control "public, max-age=2592000";\n        try_files $uri =404;\n    }\n' /etc/nginx/sites-available/camara
+      NGINX_CHANGED=true
+      log "Nginx: bloco /uploads/ adicionado"
+    fi
+
+    # Remover Content-Security-Policy do nginx (conflita com middleware Next.js)
+    if grep -q "add_header Content-Security-Policy" /etc/nginx/sites-available/camara; then
+      sed -i '/add_header Content-Security-Policy/d' /etc/nginx/sites-available/camara
+      NGINX_CHANGED=true
+      log "Nginx: CSP removido (agora controlado pelo middleware Next.js)"
+    fi
+
+    if [ "$NGINX_CHANGED" = true ]; then
       nginx -t >> "$LOG_FILE" 2>&1 && systemctl reload nginx >> "$LOG_FILE" 2>&1
-      log "Nginx atualizado com suporte a uploads"
+      log "Nginx recarregado"
     fi
   fi
 
@@ -410,7 +461,17 @@ TSEOF
     exit 1
   fi
 
-  pm2 restart all >> "$LOG_FILE" 2>&1
+  # restart funciona se o processo esta online ou stopped, mas falha se foi deletado.
+  # Fallback: tentar start via ecosystem se restart falhar.
+  if ! pm2 restart camara-legislativo >> "$LOG_FILE" 2>&1; then
+    info "pm2 restart falhou - tentando start..."
+    if [ -f "${INSTALL_DIR}/ecosystem.config.js" ]; then
+      pm2 start "${INSTALL_DIR}/ecosystem.config.js" >> "$LOG_FILE" 2>&1 || true
+    else
+      cd "$INSTALL_DIR" && pm2 start npm --name camara-legislativo -- start >> "$LOG_FILE" 2>&1 || true
+    fi
+  fi
+  pm2 save >> "$LOG_FILE" 2>&1 || true
 
   # Aguardar app iniciar e verificar
   sleep 5
@@ -418,7 +479,7 @@ TSEOF
     warn "PM2 reportou erro - verificando logs..."
     pm2 logs --nostream --lines 20 >> "$LOG_FILE" 2>&1
     # Tentar mais uma vez
-    pm2 restart all >> "$LOG_FILE" 2>&1
+    pm2 restart camara-legislativo >> "$LOG_FILE" 2>&1 || true
     sleep 5
   fi
   log "Aplicacao recompilada e reiniciada"
