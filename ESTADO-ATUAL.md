@@ -1,10 +1,48 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (RN-169 — Publicacao Direta de Documentos Administrativos)
-> **Versao**: 1.16.0
+> **Ultima Atualizacao**: 2026-05-14 (RN-170 — Publicacao de Ata de Sessao com vinculo obrigatorio)
+> **Versao**: 1.17.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — RN-170: Publicacao de Ata de Sessao com vinculo obrigatorio
+
+Resolve o pedido de "tipo Ata" mantendo consistencia arquitetural: a ata
+NAO eh uma Publicacao paralela — eh propriedade da Sessao. Reaproveita
+`Sessao.arquivoAtaAssinada` ja existente. Sem duplicidade entre Sessao e
+Publicacao.
+
+**API novo**:
+- `POST /api/sessoes/publicar-ata` (auth, permissao `sessao.manage`).
+  - Modo 1: `sessaoId` informado -> anexa ata em sessao existente.
+  - Modo 2: `numero + tipo + data` informados -> find-or-create. Se nao
+    achar Sessao com (numero, tipo, ano da data), cria nova com
+    `status=CONCLUIDA, finalizada=true`; legislatura/periodo resolvidos
+    automaticamente.
+  - Atualiza `arquivoAtaAssinada`, `dataPublicacaoAta`, `statusAta`.
+  - Audit log `SESSAO_ATA_PUBLICACAO` com flag `sessaoCriada`.
+- `GET /api/sessoes/atas-publicadas` (publico, cache 60s+SWR 300s) -
+  retorna sessoes com `arquivoAtaAssinada IS NOT NULL`.
+
+**Admin**:
+- `/admin/sessoes/publicar-ata` — form com toggle "Sessao existente" /
+  "Criar nova". Upload PDF (folder=`atas-sessoes`).
+- Botao "Publicar Ata" adicionado ao header de `/admin/sessoes`.
+
+**Publico**:
+- `/transparencia/atos/atas` agora consome `/api/sessoes/atas-publicadas`
+  em vez de `/api/publicacoes` (mudanca interna; URL publica preservada).
+
+**Limpeza RN-169**:
+- `ATA_SESSAO` removida de `TIPOS_ADMINISTRATIVOS` do publicacao-direta
+  (route + form). Valor permanece no enum por idempotencia. Quem precisar
+  publicar ata DEVE usar `/admin/sessoes/publicar-ata`.
+
+**Seguranca**:
+- Folder `atas-sessoes` adicionado em `ALLOWED_UPLOAD_FOLDERS`.
 
 ---
 

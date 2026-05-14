@@ -17,7 +17,8 @@ import {
   Trash2,
   Loader2,
   Eye,
-  MapPin
+  MapPin,
+  FileCheck
 } from 'lucide-react'
 import { useSessoes } from '@/lib/hooks/use-sessoes'
 import { toast } from 'sonner'
@@ -247,6 +248,12 @@ export default function SessoesAdminPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" asChild className="flex items-center gap-2">
+            <Link href="/admin/sessoes/publicar-ata">
+              <FileCheck className="h-4 w-4" />
+              Publicar Ata
+            </Link>
+          </Button>
           <Button variant="outline" onClick={() => setShowForm(true)} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Rápido

@@ -26,11 +26,12 @@ import { toast } from 'sonner'
  * pautas avulsas. Reaproveita o modelo Publicacao.
  */
 
+// RN-170: ATA_SESSAO removida — atas tem fluxo dedicado em
+// /admin/sessoes/publicar-ata (vinculo obrigatorio com Sessao).
 const TIPOS_ADMINISTRATIVOS = [
   { codigo: 'PORTARIA', nome: 'Portaria' },
   { codigo: 'DECRETO', nome: 'Decreto' },
   { codigo: 'RESOLUCAO', nome: 'Resolução' },
-  { codigo: 'ATA_SESSAO', nome: 'Ata de Sessão' },
   { codigo: 'PAUTA_SESSAO', nome: 'Pauta de Sessão' },
   { codigo: 'ATO_MESA', nome: 'Ato da Mesa Diretora' },
   { codigo: 'ATO_PRESIDENCIA', nome: 'Ato da Presidência' },

@@ -44,12 +44,21 @@ interface Publicacao {
   autorNome: string
 }
 
-// slug URL -> { codigo enum, titulo, breve }
-const TIPOS_MAP: Record<string, { codigo: string; titulo: string; descricao: string }> = {
+// slug URL -> { codigo enum, titulo, breve, fonte }
+// fonte default = 'publicacao' (le de /api/publicacoes).
+// fonte 'sessao-ata' (RN-170): le de /api/sessoes/atas-publicadas — ata
+// reside em Sessao.arquivoAtaAssinada, nao em Publicacao.
+type AtoTipoConfig = {
+  codigo: string
+  titulo: string
+  descricao: string
+  fonte?: 'publicacao' | 'sessao-ata'
+}
+const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   'portarias': { codigo: 'PORTARIA', titulo: 'Portarias', descricao: 'Portarias administrativas da Câmara Municipal.' },
   'decretos': { codigo: 'DECRETO', titulo: 'Decretos Legislativos', descricao: 'Decretos legislativos publicados.' },
   'resolucoes': { codigo: 'RESOLUCAO', titulo: 'Resoluções', descricao: 'Resoluções da Mesa Diretora e do Plenário.' },
-  'atas': { codigo: 'ATA_SESSAO', titulo: 'Atas de Sessão', descricao: 'Atas das sessões plenárias publicadas avulsamente.' },
+  'atas': { codigo: 'ATA_SESSAO', titulo: 'Atas de Sessão', descricao: 'Atas das sessões plenárias publicadas pela Câmara.', fonte: 'sessao-ata' },
   'pautas': { codigo: 'PAUTA_SESSAO', titulo: 'Pautas de Sessão', descricao: 'Pautas das sessões plenárias publicadas avulsamente.' },
   'atos-mesa': { codigo: 'ATO_MESA', titulo: 'Atos da Mesa Diretora', descricao: 'Atos normativos expedidos pela Mesa Diretora.' },
   'atos-presidencia': { codigo: 'ATO_PRESIDENCIA', titulo: 'Atos da Presidência', descricao: 'Atos expedidos pela Presidência da Câmara.' },
@@ -59,6 +68,13 @@ const TIPOS_MAP: Record<string, { codigo: string; titulo: string; descricao: str
   'convocacoes': { codigo: 'CONVOCACAO', titulo: 'Convocações', descricao: 'Convocações para sessões e atividades oficiais.' },
   'comunicados': { codigo: 'COMUNICADO', titulo: 'Comunicados', descricao: 'Comunicados oficiais da Câmara.' },
   'agendas': { codigo: 'AGENDA', titulo: 'Agendas', descricao: 'Agendas oficiais publicadas.' },
+}
+
+const TIPO_SESSAO_LABEL: Record<string, string> = {
+  ORDINARIA: 'Ordinária',
+  EXTRAORDINARIA: 'Extraordinária',
+  SOLENE: 'Solene',
+  ESPECIAL: 'Especial',
 }
 
 const PAGE_SIZE = 20
@@ -84,28 +100,57 @@ export default function AtosTipoPage({ params }: { params: Promise<{ tipo: strin
     void (async () => {
       setLoading(true)
       try {
-        const qs = new URLSearchParams({
-          tipo: tipoMap.codigo,
-          publicada: 'true',
-          limit: '500',
-        })
-        const r = await fetch(`/api/publicacoes?${qs.toString()}`)
-        const j = await r.json()
-        const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
-          .map((p: any) => ({
-            id: p.id,
-            tipo: p.tipo,
-            titulo: p.titulo,
-            descricao: p.descricao ?? null,
-            numero: p.numero ?? null,
-            ano: p.ano,
-            data: p.data,
-            arquivo: p.arquivo ?? null,
-            url: p.url ?? null,
-            documentos: Array.isArray(p.documentos) ? p.documentos : null,
-            autorNome: p.autorNome,
-          }))
-        setPublicacoes(arr)
+        if (tipoMap.fonte === 'sessao-ata') {
+          // RN-170: atas vivem em Sessao.arquivoAtaAssinada
+          const r = await fetch(`/api/sessoes/atas-publicadas?limit=500`)
+          const j = await r.json()
+          const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
+            .map((s: any) => {
+              const dataObj = new Date(s.data)
+              const ano = dataObj.getUTCFullYear()
+              const tipoLabel = TIPO_SESSAO_LABEL[s.tipo] || s.tipo
+              const url = s.arquivoAtaAssinada || s.arquivoAta || null
+              return {
+                id: s.id,
+                tipo: 'ATA_SESSAO',
+                titulo: `Ata da ${s.numero}ª Sessão ${tipoLabel}`,
+                descricao: s.dataPublicacaoAta
+                  ? `Publicada em ${new Date(s.dataPublicacaoAta).toLocaleDateString('pt-BR')}`
+                  : null,
+                numero: String(s.numero),
+                ano,
+                data: s.data,
+                arquivo: url,
+                url: null,
+                documentos: url ? [{ nome: 'Ata em PDF', url }] : null,
+                autorNome: 'Câmara Municipal',
+              }
+            })
+          setPublicacoes(arr)
+        } else {
+          const qs = new URLSearchParams({
+            tipo: tipoMap.codigo,
+            publicada: 'true',
+            limit: '500',
+          })
+          const r = await fetch(`/api/publicacoes?${qs.toString()}`)
+          const j = await r.json()
+          const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
+            .map((p: any) => ({
+              id: p.id,
+              tipo: p.tipo,
+              titulo: p.titulo,
+              descricao: p.descricao ?? null,
+              numero: p.numero ?? null,
+              ano: p.ano,
+              data: p.data,
+              arquivo: p.arquivo ?? null,
+              url: p.url ?? null,
+              documentos: Array.isArray(p.documentos) ? p.documentos : null,
+              autorNome: p.autorNome,
+            }))
+          setPublicacoes(arr)
+        }
       } catch {
         setError('Erro ao carregar documentos.')
       } finally {

@@ -1599,6 +1599,31 @@ REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
 - Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
   rotas alvo (`captchaId` + `captchaAnswer` no body).
 
+REGRA RN-170: PUBLICACAO DE ATA DE SESSAO COM VINCULO OBRIGATORIO
+- Toda ata publicada DEVE estar vinculada a uma `Sessao`. Sem excecao.
+- Armazenamento: `Sessao.arquivoAtaAssinada` (PDF) +
+  `Sessao.dataPublicacaoAta` + `Sessao.statusAta='APROVADA'`. NAO usa o
+  modelo `Publicacao` — evita fonte dupla de verdade.
+- Endpoint dedicado: `POST /api/sessoes/publicar-ata`. Dois modos:
+  1. `sessaoId` informado: anexa a ata a sessao existente.
+  2. `numero + tipo + data` informados: faz find-or-create. Se nao
+     existir sessao com esses dados (ano da data + numero + tipo), cria
+     automaticamente com `status=CONCLUIDA` e `finalizada=true`. A
+     legislatura e periodo sao resolvidos automaticamente pela data.
+- Endpoint publico: `GET /api/sessoes/atas-publicadas` retorna sessoes
+  cujo `arquivoAtaAssinada` esta preenchido.
+- Pagina admin: `/admin/sessoes/publicar-ata` (form com toggle entre
+  modo "existente" e modo "criar").
+- Pagina publica: `/transparencia/atos/atas` lista atas vindas de Sessao.
+- ATA_SESSAO (do enum TipoPublicacao) foi REMOVIDA do fluxo
+  `/admin/publicacoes/publicacao-direta` para evitar duplicidade. O
+  valor permanece no enum por idempotencia da migration RN-169.
+- Permissoes: `sessao.manage` (ADMIN ou SECRETARIA).
+- Implementado em: `src/app/api/sessoes/publicar-ata/route.ts`,
+  `src/app/api/sessoes/atas-publicadas/route.ts`,
+  `src/app/admin/sessoes/publicar-ata/page.tsx`,
+  `src/app/transparencia/atos/[tipo]/page.tsx` (slug `atas`).
+
 REGRA RN-169: PUBLICACAO DIRETA DE DOCUMENTOS ADMINISTRATIVOS
 - Permite publicar atos administrativos diversos (portarias, atos da Mesa
   e da Presidencia, oficios, editais, erratas, convocacoes, comunicados,

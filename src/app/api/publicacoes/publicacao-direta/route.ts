@@ -32,11 +32,13 @@ import type { TipoPublicacao } from '@prisma/client'
 // Tipos administrativos suportados pela Publicacao Direta (RN-169).
 // Lista controlada (subset do enum TipoPublicacao) para evitar mistura
 // com NoticiaInformativo/Manual/etc, que tem fluxos proprios.
+// RN-170: ATA_SESSAO removida — atas agora vivem em Sessao.arquivoAtaAssinada
+// e sao publicadas via POST /api/sessoes/publicar-ata. Reintroduzir aqui
+// criaria fonte dupla de verdade.
 const TIPOS_ADMINISTRATIVOS = [
   'PORTARIA',
   'DECRETO',
   'RESOLUCAO',
-  'ATA_SESSAO',
   'PAUTA_SESSAO',
   'ATO_MESA',
   'ATO_PRESIDENCIA',
