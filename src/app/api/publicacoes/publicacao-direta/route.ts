@@ -144,5 +144,3 @@ export const POST = withAuth(
   }),
   { permissions: 'publicacao.manage' },
 )
-
-export const TIPOS_ADMINISTRATIVOS_VALORES = TIPOS_ADMINISTRATIVOS
