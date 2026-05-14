@@ -1599,6 +1599,55 @@ REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
 - Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
   rotas alvo (`captchaId` + `captchaAnswer` no body).
 
+REGRA RN-172: PUBLICACAO DE PAUTA/ATA DE REUNIAO DE COMISSAO
+- Espelha RN-170/RN-171 (ata/pauta de Sessao plenaria) para reunioes
+  de comissoes. Toda ata/pauta publicada de comissao DEVE estar
+  vinculada a uma `ReuniaoComissao`.
+- Armazenamento (novos campos no schema, migration idempotente):
+  - `ReuniaoComissao.arquivoAta` (URL do PDF)
+  - `ReuniaoComissao.arquivoPauta` (URL do PDF)
+  - `ReuniaoComissao.dataPublicacaoAta` (RN-123 — 15 dias)
+  - `ReuniaoComissao.dataPublicacaoPauta` (RN-122 — 48h)
+- Endpoints dedicados:
+  - `POST /api/reunioes-comissao/publicar-ata`
+  - `POST /api/reunioes-comissao/publicar-pauta`
+  Ambos com dois modos:
+    1. `reuniaoId` informado -> anexa em reuniao existente.
+    2. `comissaoId + numero + ano + tipo + data` -> find-or-create.
+       Se nao achar reuniao com (comissaoId, numero, ano), cria nova
+       com `status=CONCLUIDA` (e `ataAprovada=true` no caso da ata).
+       Aproveita o `@@unique([comissaoId, numero, ano])` ja existente.
+- Endpoints publicos:
+  - `GET /api/reunioes-comissao/atas-publicadas` (cache 60s+SWR 300s)
+  - `GET /api/reunioes-comissao/pautas-publicadas` (cache 60s+SWR 300s)
+  Ambos aceitam filtros `?comissaoId=X&ano=YYYY`.
+- Paginas admin:
+  - `/admin/comissoes/reunioes/publicar-ata`
+  - `/admin/comissoes/reunioes/publicar-pauta`
+  Form em 3 secoes (Comissao -> Reuniao -> Documento). Botoes
+  "Publicar Pauta" e "Publicar Ata" adicionados ao header de
+  `/admin/comissoes/reunioes`.
+- Paginas publicas:
+  - `/transparencia/atos/atas-comissoes` (slug novo).
+  - `/transparencia/atos/pautas-comissoes` (slug novo).
+  Lista agregada de todas as comissoes, ordenada por data desc.
+- Home `/transparencia` agora trata "Comissoes" como expander interno
+  com 3 sub-itens (deixou de apontar para CR2 externo).
+- Migration idempotente em `scripts/sql/add-reuniao-comissao-arquivos.sql`,
+  aplicada via prisma db execute. install.sh etapa 5j.
+- Folders `atas-reunioes-comissao` e `pautas-reunioes-comissao`
+  adicionados em `ALLOWED_UPLOAD_FOLDERS`.
+- Permissoes: `comissao.manage` (ADMIN/SECRETARIA).
+- Implementado em: `prisma/schema/models.prisma`,
+  `src/app/api/reunioes-comissao/{publicar-ata,publicar-pauta}/route.ts`,
+  `src/app/api/reunioes-comissao/{atas,pautas}-publicadas/route.ts`,
+  `src/app/admin/comissoes/reunioes/{publicar-ata,publicar-pauta}/page.tsx`,
+  `src/app/transparencia/atos/[tipo]/page.tsx`,
+  `src/app/transparencia/page.tsx`,
+  `src/lib/security/file-validation.ts`,
+  `scripts/sql/add-reuniao-comissao-arquivos.sql`,
+  `install.sh` (etapa 5j).
+
 REGRA RN-171: PUBLICACAO DE PAUTA DE SESSAO COM VINCULO OBRIGATORIO
 - Espelha RN-170, mas para Pauta. Toda pauta publicada DEVE estar
   vinculada a uma `Sessao`.

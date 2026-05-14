@@ -35,7 +35,8 @@ import {
   FileText,
   Clock,
   MapPin,
-  ChevronRight
+  ChevronRight,
+  FileCheck
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -212,13 +213,26 @@ export default function ReunioesComissaoPage() {
           </p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Reuniao
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/comissoes/reunioes/publicar-pauta">
+              <FileCheck className="h-4 w-4 mr-2" />
+              Publicar Pauta
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/admin/comissoes/reunioes/publicar-ata">
+              <FileCheck className="h-4 w-4 mr-2" />
+              Publicar Ata
+            </Link>
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Reuniao
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agendar Nova Reuniao</DialogTitle>
@@ -318,6 +332,7 @@ export default function ReunioesComissaoPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filtros */}

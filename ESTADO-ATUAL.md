@@ -1,10 +1,61 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (RN-171 — Publicacao de Pauta de Sessao com vinculo obrigatorio)
-> **Versao**: 1.18.0
+> **Ultima Atualizacao**: 2026-05-14 (RN-172 — Publicacao de Pauta/Ata de Reuniao de Comissao)
+> **Versao**: 1.19.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — RN-172: Publicacao de Pauta/Ata de Reuniao de Comissao
+
+Estende a arquitetura RN-170/RN-171 (Sessao plenaria) para reunioes de
+comissao. Ata e pauta de comissao vivem como propriedades da
+ReuniaoComissao — sem fonte paralela em Publicacao. Vinculo
+ReuniaoComissao <-> documento eh inviolavel.
+
+**Schema**:
+- 4 colunas novas em `ReuniaoComissao` (`arquivoAta`, `arquivoPauta`,
+  `dataPublicacaoAta`, `dataPublicacaoPauta`).
+- Migration idempotente em `scripts/sql/add-reuniao-comissao-arquivos.sql`
+  (ADD COLUMN IF NOT EXISTS). Aplicada no Supabase via
+  `prisma db execute`. install.sh etapa 5j.
+
+**API**:
+- `POST /api/reunioes-comissao/publicar-ata` (auth, `comissao.manage`).
+- `POST /api/reunioes-comissao/publicar-pauta` (auth, `comissao.manage`).
+  Ambos com dois modos:
+  * Modo 1: `reuniaoId` -> anexa em reuniao existente.
+  * Modo 2: `comissaoId + numero + ano + tipo + data` -> find-or-create
+    via `@@unique([comissaoId, numero, ano])`. Se nao achar, cria nova
+    com `status=CONCLUIDA` (e `ataAprovada=true` para ata).
+  * Audit logs `REUNIAO_COMISSAO_ATA_PUBLICACAO` /
+    `REUNIAO_COMISSAO_PAUTA_PUBLICACAO`.
+- `GET /api/reunioes-comissao/atas-publicadas` (publico, cache 60+SWR 300).
+- `GET /api/reunioes-comissao/pautas-publicadas` (publico, cache 60+SWR 300).
+  Ambos aceitam `?comissaoId=X&ano=YYYY`.
+
+**Admin**:
+- `/admin/comissoes/reunioes/publicar-ata` (form em 3 secoes: Comissao
+  -> Reuniao -> Documento).
+- `/admin/comissoes/reunioes/publicar-pauta` (idem).
+- Botoes "Publicar Pauta" e "Publicar Ata" no header de
+  `/admin/comissoes/reunioes`.
+
+**Publico**:
+- `/transparencia/atos/atas-comissoes` (slug novo, fonte
+  `reuniao-comissao-ata`).
+- `/transparencia/atos/pautas-comissoes` (slug novo, fonte
+  `reuniao-comissao-pauta`).
+- Home `/transparencia` agora trata o item "Comissoes" da secao
+  "Atividades do Legislativo" como expander interno (3 sub-itens:
+  "Comissoes e Membros", "Atas de Reunioes", "Pautas de Reunioes"),
+  deixando de apontar para CR2 externo.
+
+**Seguranca**:
+- Folders `atas-reunioes-comissao` e `pautas-reunioes-comissao`
+  adicionados em `ALLOWED_UPLOAD_FOLDERS`.
 
 ---
 

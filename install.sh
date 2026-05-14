@@ -434,6 +434,15 @@ do_update() {
     log "Migration RN-169 aplicada (documentos JSONB + tipos administrativos em publicacoes)"
   fi
 
+  # 5j) RN-172: Pauta/Ata de Reuniao de Comissao
+  #     - arquivoAta, arquivoPauta, dataPublicacaoAta, dataPublicacaoPauta em reunioes_comissao
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-reuniao-comissao-arquivos.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-reuniao-comissao-arquivos.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-reuniao-comissao-arquivos.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration RN-172 aplicada (arquivos de ata/pauta em reunioes de comissao)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

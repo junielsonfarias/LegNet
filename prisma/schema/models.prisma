@@ -897,6 +897,11 @@ model ReuniaoComissao {
   ataTexto          String?         @db.Text   // Ata da reuniao
   ataAprovada       Boolean         @default(false)
   dataAprovacaoAta  DateTime?
+  // RN-172: PDFs assinados de ata/pauta + datas de publicacao oficial
+  arquivoAta            String?     // URL do PDF da ata assinada
+  arquivoPauta          String?     // URL do PDF da pauta publicada
+  dataPublicacaoAta     DateTime?   // RN-123 PNTP: prazo 15 dias apos aprovacao
+  dataPublicacaoPauta   DateTime?   // RN-122 PNTP: prazo 48h antes da reuniao
 
   // Quorum
   quorumMinimo      Int             @default(2)  // Minimo de membros para instalacao

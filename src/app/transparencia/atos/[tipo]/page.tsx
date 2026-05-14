@@ -52,7 +52,12 @@ type AtoTipoConfig = {
   codigo: string
   titulo: string
   descricao: string
-  fonte?: 'publicacao' | 'sessao-ata' | 'sessao-pauta'
+  fonte?:
+    | 'publicacao'
+    | 'sessao-ata'
+    | 'sessao-pauta'
+    | 'reuniao-comissao-ata'
+    | 'reuniao-comissao-pauta'
 }
 const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   'portarias': { codigo: 'PORTARIA', titulo: 'Portarias', descricao: 'Portarias administrativas da Câmara Municipal.' },
@@ -68,6 +73,15 @@ const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   'convocacoes': { codigo: 'CONVOCACAO', titulo: 'Convocações', descricao: 'Convocações para sessões e atividades oficiais.' },
   'comunicados': { codigo: 'COMUNICADO', titulo: 'Comunicados', descricao: 'Comunicados oficiais da Câmara.' },
   'agendas': { codigo: 'AGENDA', titulo: 'Agendas', descricao: 'Agendas oficiais publicadas.' },
+  // RN-172 — Atas e pautas de reunioes de comissao
+  'atas-comissoes': { codigo: 'ATA_COMISSAO', titulo: 'Atas de Reuniões de Comissões', descricao: 'Atas das reuniões das comissões permanentes e temporárias.', fonte: 'reuniao-comissao-ata' },
+  'pautas-comissoes': { codigo: 'PAUTA_COMISSAO', titulo: 'Pautas de Reuniões de Comissões', descricao: 'Pautas das reuniões das comissões permanentes e temporárias.', fonte: 'reuniao-comissao-pauta' },
+}
+
+const TIPO_REUNIAO_LABEL: Record<string, string> = {
+  ORDINARIA: 'Ordinária',
+  EXTRAORDINARIA: 'Extraordinária',
+  ESPECIAL: 'Especial',
 }
 
 const TIPO_SESSAO_LABEL: Record<string, string> = {
@@ -124,6 +138,64 @@ export default function AtosTipoPage({ params }: { params: Promise<{ tipo: strin
                 url: null,
                 documentos: url ? [{ nome: 'Ata em PDF', url }] : null,
                 autorNome: 'Câmara Municipal',
+              }
+            })
+          setPublicacoes(arr)
+        } else if (tipoMap.fonte === 'reuniao-comissao-ata') {
+          // RN-172: atas de reuniao de comissao
+          const r = await fetch(`/api/reunioes-comissao/atas-publicadas?limit=500`)
+          const j = await r.json()
+          const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
+            .map((m: any) => {
+              const dataObj = new Date(m.data)
+              const tipoLabel = TIPO_REUNIAO_LABEL[m.tipo] || m.tipo
+              const url = m.arquivoAta || null
+              const comissaoLabel = m.comissao?.sigla
+                ? `${m.comissao.sigla} — ${m.comissao.nome}`
+                : m.comissao?.nome || 'Comissão'
+              return {
+                id: m.id,
+                tipo: 'ATA_COMISSAO',
+                titulo: `Ata da ${m.numero}ª Reunião ${tipoLabel}`,
+                descricao: comissaoLabel + (m.dataPublicacaoAta
+                  ? ` · Publicada em ${new Date(m.dataPublicacaoAta).toLocaleDateString('pt-BR')}`
+                  : ''),
+                numero: String(m.numero),
+                ano: m.ano,
+                data: m.data,
+                arquivo: url,
+                url: null,
+                documentos: url ? [{ nome: 'Ata em PDF', url }] : null,
+                autorNome: comissaoLabel,
+              }
+            })
+          setPublicacoes(arr)
+        } else if (tipoMap.fonte === 'reuniao-comissao-pauta') {
+          // RN-172: pautas de reuniao de comissao
+          const r = await fetch(`/api/reunioes-comissao/pautas-publicadas?limit=500`)
+          const j = await r.json()
+          const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
+            .map((m: any) => {
+              const dataObj = new Date(m.data)
+              const tipoLabel = TIPO_REUNIAO_LABEL[m.tipo] || m.tipo
+              const url = m.arquivoPauta || null
+              const comissaoLabel = m.comissao?.sigla
+                ? `${m.comissao.sigla} — ${m.comissao.nome}`
+                : m.comissao?.nome || 'Comissão'
+              return {
+                id: m.id,
+                tipo: 'PAUTA_COMISSAO',
+                titulo: `Pauta da ${m.numero}ª Reunião ${tipoLabel}`,
+                descricao: comissaoLabel + (m.dataPublicacaoPauta
+                  ? ` · Publicada em ${new Date(m.dataPublicacaoPauta).toLocaleDateString('pt-BR')}`
+                  : ''),
+                numero: String(m.numero),
+                ano: m.ano,
+                data: m.data,
+                arquivo: url,
+                url: null,
+                documentos: url ? [{ nome: 'Pauta em PDF', url }] : null,
+                autorNome: comissaoLabel,
               }
             })
           setPublicacoes(arr)

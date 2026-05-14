@@ -80,7 +80,15 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Parlamentares', icon: Users, href: '/parlamentares' },
       { nome: 'Mesa Diretora', icon: UserCheck, href: '/transparencia/mesa-diretora' },
       { nome: 'Agenda Externa', icon: CalendarDays, externalUrl: CR2_BASE },
-      { nome: 'Comissoes', icon: Briefcase, externalUrl: CR2_BASE },
+      {
+        nome: 'Comissoes',
+        icon: Briefcase,
+        subItens: [
+          { nome: 'Comissões e Membros', href: '/legislativo/comissoes' },
+          { nome: 'Atas de Reuniões', href: '/transparencia/atos/atas-comissoes' },
+          { nome: 'Pautas de Reuniões', href: '/transparencia/atos/pautas-comissoes' },
+        ],
+      },
       { nome: 'Perguntas Frequentes', icon: HelpCircle, href: '/institucional/sobre' },
       { nome: 'Legislacao Tributaria e Codigos de Postura', icon: Scale, externalUrl: CR2_BASE },
     ],

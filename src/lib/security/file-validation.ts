@@ -47,6 +47,8 @@ export const ALLOWED_UPLOAD_FOLDERS: ReadonlySet<string> = new Set([
   'publicacoes-atos',  // RN-169 (atos administrativos via Publicacao)
   'atas-sessoes',  // RN-170 (atas em Sessao.arquivoAtaAssinada)
   'pautas-sessoes',  // RN-171 (pautas em Sessao.arquivoPauta)
+  'atas-reunioes-comissao',  // RN-172 (atas em ReuniaoComissao.arquivoAta)
+  'pautas-reunioes-comissao',  // RN-172 (pautas em ReuniaoComissao.arquivoPauta)
   'comissoes',
   'audiencias-publicas',
   'documentos',
