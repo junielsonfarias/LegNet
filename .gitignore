@@ -67,9 +67,15 @@ prisma/*.db-journal
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
+
+# VS Code — ignora tudo, mas versiona os arquivos compartilhados do time
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
 
 # Configuracoes locais do Claude Code (pessoais do dev)
 .claude/settings.local.json

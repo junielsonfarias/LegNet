@@ -1,0 +1,104 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev: Next.js",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build: produção",
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "lint",
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "test: unitários",
+      "type": "npm",
+      "script": "test",
+      "problemMatcher": [],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "test: watch",
+      "type": "npm",
+      "script": "test:watch",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "test: coverage",
+      "type": "npm",
+      "script": "test:coverage",
+      "problemMatcher": []
+    },
+    {
+      "label": "test: e2e (smoke)",
+      "type": "npm",
+      "script": "test:e2e:smoke",
+      "problemMatcher": []
+    },
+    {
+      "label": "db: generate (Prisma client)",
+      "type": "npm",
+      "script": "db:generate",
+      "problemMatcher": []
+    },
+    {
+      "label": "db: push (sync schema)",
+      "type": "npm",
+      "script": "db:push",
+      "problemMatcher": []
+    },
+    {
+      "label": "db: studio",
+      "type": "npm",
+      "script": "db:studio",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "db: seed",
+      "type": "npm",
+      "script": "db:seed",
+      "problemMatcher": []
+    },
+    {
+      "label": "ci: verify (lint + test)",
+      "type": "npm",
+      "script": "ci:verify",
+      "problemMatcher": ["$eslint-stylish", "$tsc"]
+    },
+    {
+      "label": "security: audit",
+      "type": "npm",
+      "script": "security:audit",
+      "problemMatcher": []
+    }
+  ]
+}

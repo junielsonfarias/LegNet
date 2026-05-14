@@ -1,0 +1,248 @@
+{
+  // ============================================================
+  // Editor base
+  // ============================================================
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.rulers": [100, 120],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.stickyScroll.enabled": true,
+  "editor.linkedEditing": true,
+  "editor.suggest.preview": true,
+  "editor.inlineSuggest.enabled": true,
+
+  // ============================================================
+  // Code Actions on Save (ESLint + import organize)
+  // ============================================================
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  // ============================================================
+  // Files
+  // ============================================================
+  "files.eol": "\n",
+  "files.encoding": "utf8",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.associations": {
+    "*.css": "tailwindcss",
+    ".env.*": "dotenv"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.swc": true,
+    "**/coverage": true,
+    "**/playwright-report": true,
+    "**/test-results": true,
+    "**/.turbo": true,
+    "**/tsconfig.tsbuildinfo": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.swc": true,
+    "**/coverage": true,
+    "**/playwright-report": true,
+    "**/test-results": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/*.lock": true,
+    "package-lock.json": true,
+    "**/prisma/migrations/**": false
+  },
+  "search.useIgnoreFiles": true,
+
+  // ============================================================
+  // TypeScript
+  // ============================================================
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.preferences.quoteStyle": "single",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.autoImports": true,
+  "typescript.inlayHints.parameterNames.enabled": "literals",
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": false,
+  "typescript.inlayHints.propertyDeclarationTypes.enabled": false,
+  "typescript.tsserver.maxTsServerMemory": 8192,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  // ============================================================
+  // ESLint
+  // ============================================================
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.useFlatConfig": false,
+  "eslint.run": "onType",
+  "eslint.format.enable": false,
+
+  // ============================================================
+  // Prettier por linguagem (Prisma usa formatter próprio)
+  // ============================================================
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.wordWrap": "on",
+    "files.trimTrailingWhitespace": false
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma",
+    "editor.formatOnSave": true
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+
+  // ============================================================
+  // Tailwind CSS IntelliSense
+  // ============================================================
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+
+  // ============================================================
+  // Git / GitHub
+  // ============================================================
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true,
+  "git.fetchOnPull": true,
+  "git.pruneOnFetch": true,
+  "git.suggestSmartCommit": false,
+  "git.openRepositoryInParentFolders": "never",
+  "githubPullRequests.pullBranch": "always",
+  "githubPullRequests.defaultMergeMethod": "squash",
+  "githubPullRequests.fileListLayout": "tree",
+
+  // ============================================================
+  // GitLens
+  // ============================================================
+  "gitlens.codeLens.enabled": false,
+  "gitlens.currentLine.enabled": false,
+  "gitlens.hovers.currentLine.over": "line",
+
+  // ============================================================
+  // Spell checker (PT-BR + EN)
+  // ============================================================
+  "cSpell.language": "en,pt,pt-BR",
+  "cSpell.enableFiletypes": ["typescript", "typescriptreact", "markdown"],
+  "cSpell.words": [
+    "camara",
+    "ruropolis",
+    "chaves",
+    "parlamentar",
+    "parlamentares",
+    "transparencia",
+    "proposicoes",
+    "legislativo",
+    "comissoes",
+    "votacao",
+    "tramitacao",
+    "secretaria",
+    "auxiliar",
+    "interlegis",
+    "sapl",
+    "pntp",
+    "cpf",
+    "lgpd",
+    "prisma",
+    "shadcn",
+    "radix",
+    "lucide",
+    "vercel",
+    "supabase",
+    "nextauth",
+    "vlibras",
+    "dompurify",
+    "sonner",
+    "recharts"
+  ],
+
+  // ============================================================
+  // Terminal (PowerShell)
+  // ============================================================
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.persistentSessionReviveProcess": "onExitAndWindowClose",
+
+  // ============================================================
+  // Explorer / workbench
+  // ============================================================
+  "explorer.confirmDelete": true,
+  "explorer.confirmDragAndDrop": true,
+  "explorer.compactFolders": false,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.test.ts, ${capture}.spec.ts",
+    "*.tsx": "${capture}.test.tsx, ${capture}.spec.tsx",
+    "package.json": "package-lock.json, .npmrc, .nvmrc, .node-version",
+    "tsconfig.json": "tsconfig.*.json, next-env.d.ts, tsconfig.tsbuildinfo",
+    "next.config.js": "next.config.mjs, next.config.ts, postcss.config.js, tailwind.config.js, tailwind.config.ts",
+    ".env": ".env.*",
+    "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE, CODE_OF_CONDUCT.md, SECURITY.md"
+  },
+
+  // ============================================================
+  // NPM / Tasks
+  // ============================================================
+  "npm.packageManager": "npm",
+  "npm.autoDetect": "on",
+  "task.problemMatchers.neverPrompt": true,
+
+  // ============================================================
+  // Playwright
+  // ============================================================
+  "playwright.reuseBrowser": true,
+
+  // ============================================================
+  // Error Lens — não polui demasiado
+  // ============================================================
+  "errorLens.excludeBySource": ["cSpell"],
+  "errorLens.gutterIconsEnabled": true,
+
+  // ============================================================
+  // Vitest
+  // ============================================================
+  "vitest.enable": true,
+  "vitest.commandLine": "npm run test --"
+}
