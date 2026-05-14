@@ -1,10 +1,238 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-11 (Modulo Cotas para Exercicio da Atividade Parlamentar)
-> **Versao**: 1.14.1
+> **Ultima Atualizacao**: 2026-05-14 (Fases 1, 2, 3 e 4 do PLANO-CORRECOES-MAIO-2026 — PLANO CONCLUIDO)
+> **Versao**: 1.14.5
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — Fase 4 do PLANO-CORRECOES-MAIO-2026 (qualidade, docs e testes)
+
+Conclusao dos 6 itens da Fase 4. PLANO-CORRECOES-MAIO-2026 **completo**
+(4 fases / 24 itens). Base 570/570 testes verdes (+47 vs baseline), 0 TS
+errors.
+
+**F4.1 — README + CLAUDE.md atualizados**
+- README.md: stack atualizada para Next.js 15 (era Next 14), links quebrados
+  para `docs/archive/` corrigidos, secao "Estrutura do Banco" expandida
+  com lista organizada por dominio.
+- CLAUDE.md: stack Next 15 + Prisma 5; ponteiro de plano de execucao
+  atualizado para `docs/PLANO-CORRECOES-MAIO-2026.md`.
+
+**F4.2 — MODELOS-DADOS.md regenerado**
+- De 149 linhas (8 modelos listados) para versao completa com **120 modelos**
+  agrupados em 14 dominios: Multi-tenant, AuthN, Politica, Sessoes, Pauta,
+  Proposicoes, Comissoes, Mesa, Tramitacao, Normas, Protocolo, Autores,
+  Transparencia, Cidadao, Configuracao, Notificacoes, Auditoria.
+
+**F4.3 — Skills atualizadas**
+- `skill-admin.md`: header de data + tabela ampliada com paginas que
+  faltavam (analytics, busca, conformidade-pntp, monitoramento, servidores,
+  testes-api) e helpers novos da Fase 1/2/3.
+- `skill-legislativo.md`: header de data + crossref para Cotas em
+  skill-transparencia.
+
+**F4.4 — admin/proposicoes/page.tsx quebrado**
+- Pagina passou de 474 -> 385 linhas (-19%). NOTA: o relatorio inicial
+  apontava 1287 linhas mas estava stale; uma refatoracao parcial anterior
+  ja havia extraido os principais componentes.
+- 2 hooks novos: `use-proposicoes-pagination.ts` e
+  `use-proposicao-status-detalhado.ts` (com tipos compartilhados em
+  `_types/index.ts`).
+- 3 helpers mortos removidos (`handleNumeroAutomaticoChange`,
+  `formatFileSize`, `getTipoRelacaoLabel`).
+
+**F4.5 — formatCpf/formatDate consolidados**
+- `lib/utils/format-ptbr.ts:formatCPF` agora delega para
+  `lib/security/cpf-utils.ts:formatCpf` (LGPD-aware).
+- `participacao-cidada/sugestoes/nova/page.tsx`: removida implementacao
+  inline de `formatCPF` (33 linhas). Usa `maskCPF` central.
+- `admin/concursos/page.tsx` e `admin/diarias/page.tsx`: substituido
+  `new Date(date).toLocaleDateString('pt-BR')` inline por
+  `formatDateShort` central. Outros consumidores com transformacoes
+  especificas (UTC, formato custom) mantidos.
+
+**F4.6 — Cobertura de testes**
+- 4 novos arquivos cobrindo helpers da Fase 1/2 (47 testes adicionados):
+  - `src/tests/security/safe-redirect.test.ts` (12 testes)
+  - `src/tests/security/file-validation.test.ts` (15 testes)
+  - `src/tests/security/captcha-guard.test.ts` (8 testes)
+  - `src/tests/validation/auditoria-schema.test.ts` (12 testes)
+- Total: 570/570 testes verdes (era 523).
+
+---
+
+## 2026-05-14 — Fase 3 do PLANO-CORRECOES-MAIO-2026 (performance e cache)
+
+Conclusao dos 6 itens da Fase 3. Base 523/523 testes verdes, 0 TS errors.
+
+**F3.1 — Remover force-dynamic indevido**
+- 27 routes em `/api/publico/*` e `/api/dados-abertos/*` tinham
+  `export const dynamic = 'force-dynamic'` mesmo todas usando `withPublicCache`.
+  O `force-dynamic` anulava o cache CDN. Removido. As rotas continuam dynamic
+  por uso de `searchParams` mas agora o `s-maxage` no Cache-Control eh honrado.
+
+**F3.2 — cacheHelpers nas 5 rotas quentes**
+- Novos helpers em `src/lib/cache/memory-cache.ts`:
+  - `getComissoesAtivas` + `invalidateComissoes`
+  - `getTransparenciaRedirects` + `invalidateTransparenciaRedirects`
+  - `invalidateTiposProposicao`
+- Aplicados em:
+  - `/api/tipos-proposicao` (cache 1d, invalida em POST/PUT/DELETE/seed)
+  - `/api/transparencia/redirecionamentos` (cache 5min, invalida em POST)
+  - `/api/configuracoes` (cache 1h, invalida em PUT)
+  - `/api/parlamentares` (cache 15min apenas no cenario default — page=1,
+    limit=50, ativo=true, sem filtros custom)
+  - `/api/comissoes` (mesma logica: so listagem padrao)
+
+**F3.3 — Paginacao + cache em rotas publicas**
+- `/api/publico/servidores`: paginacao obrigatoria (page/limit, default 50,
+  max 200). Antes retornava tabela inteira (200-2000 linhas).
+- `/api/publico/audiencias-publicas`: paginacao + stats via `groupBy`
+  (eliminou findMany completo so para contar status).
+- `/api/publico/sessao-ao-vivo`: adicionado `withPublicCache` (15s ao vivo,
+  30s sem sessao + SWR). Pollado pelo banner da home — reducao drastica de
+  carga.
+
+**F3.4 — AbortController em useCrudResource**
+- `src/lib/hooks/use-crud-resource.ts`: agora rastreia request via
+  `requestIdRef` + `isMountedRef`. Quando filtros mudam ou o componente
+  desmonta, a request em voo eh marcada obsoleta — resultado e erro sao
+  descartados. Elimina race conditions onde resposta lenta sobrescrevia dados
+  bons e setState em unmount emitia warning.
+
+**F3.5 — Indices FK ausentes**
+- Schema (`prisma/schema/models.prisma`) ganhou indices em:
+  - Tramitacao: `tipoTramitacaoId`, `unidadeId`, `responsavelId`
+  - Despesa: `licitacaoId`, `contratoId`, `convenioId`
+  - MembroMesaDiretora: `parlamentarId`, `cargoId`
+  - Filiacao: `parlamentarId` + `[ativa, dataInicio]`
+  - Sessao: `periodoId`, `sessaoAprovacaoAtaId`
+  - MembroMesaSessao: `parlamentarId`
+  - ExpedienteSessao: `tipoExpedienteId`
+  - VotacaoAgrupada: `proposicaoId`
+- Migration idempotente: `scripts/sql/add-fk-indexes-2026-05.sql`
+  aplicada via `prisma db execute` no Supabase.
+- Postgres NAO cria indice automatico em FKs — sem isso, JOINs via Prisma
+  faziam seq scan acima de algumas centenas de linhas.
+
+**F3.6 — analytics: findMany → groupBy**
+- `lib/services/analytics-service.ts:342`: substituido
+  `prisma.votacao.findMany(...)` + agrupamento em JS por
+  `prisma.votacao.groupBy({ by: ['proposicaoId'], _count })`.
+- Para periodos com muitas votacoes (10k+ rows), DB passa a devolver ~N rows
+  agregadas em vez do dump completo.
+
+---
+
+## 2026-05-14 — Fase 2 do PLANO-CORRECOES-MAIO-2026 (hardening de seguranca)
+
+Conclusao dos 7 itens da Fase 2 (hardening sem mudar dados). Base 523/523
+testes verdes, 0 TS errors.
+
+**F2.1 — NEXTAUTH_SECRET fail-fast**
+- `src/lib/env-validation.ts`: agora falha em qualquer NODE_ENV diferente
+  de `development`. Antes test/staging/preview entravam no branch
+  permissivo gerando NEXTAUTH_SECRET random a cada boot (quebrava sessoes).
+
+**F2.2 — Open redirect via callbackUrl**
+- Novo helper `src/lib/security/safe-redirect.ts` (`isSafeRedirect`,
+  `safeRedirect`) — aceita so paths internos comecando com '/' e nao '//'.
+- Aplicado em `src/app/login/page.tsx`.
+
+**F2.3 — CRON_SECRET timingSafeEqual**
+- `src/app/api/cron/daily/route.ts`: substituido `===` por
+  `crypto.timingSafeEqual` (length check antes para evitar excecao).
+
+**F2.4 — Upload: magic bytes + folder allowlist**
+- Novo helper `src/lib/security/file-validation.ts` valida MIME real via
+  assinatura binaria (JPEG/PNG/GIF/WebP/PDF) sem novas dependencias.
+- `safeUploadFolder()` com allowlist (16 pastas pre-aprovadas).
+- `src/app/api/upload/route.ts` reescrito: valida MIME declarado + tamanho
+  + magic bytes; rejeita quando declarado != detectado.
+
+**F2.5 — sanitizeRichHtml isomorphic**
+- Adicionada dep `isomorphic-dompurify` (~3.13.0).
+- `src/lib/utils/sanitize-html.ts`: removida sanitizacao regex no servidor
+  (com bypasses conhecidos); agora DOMPurify roda em SSR e CSR.
+- `iframe` REMOVIDO do allowlist padrao. Nova funcao opt-in
+  `sanitizeRichHtmlWithVideo()` permite iframes APENAS de hosts confiaveis
+  (YouTube, YouTube-nocookie, Vimeo).
+
+**F2.6 — Rate limit central em forgot/reset-password**
+- `forgot-password` e `reset-password`: substituido `Map` in-memory local
+  por `allowRequest()` central (Upstash-aware). Agora limite vale entre
+  lambdas em Vercel; antes era por instancia.
+
+**F2.7 — CSP: roll-out para remover script-src 'unsafe-inline'**
+- `src/middleware.ts`: agora envia 2 headers CSP:
+  - `Content-Security-Policy` (enforcing, mantem 'unsafe-inline' por
+    enquanto para nao quebrar Next.js).
+  - `Content-Security-Policy-Report-Only` (versao estrita SEM
+    'unsafe-inline' em scripts) — browser apenas reporta no console.
+- Quando `CSP_STRICT_ENFORCE=true`, enforcing troca para a versao estrita.
+- Pre-requisito documentado: integrar nonce em scripts inline do Next
+  antes de habilitar a flag em producao.
+
+---
+
+## 2026-05-14 — Fase 1 do PLANO-CORRECOES-MAIO-2026 (bloqueadores criticos)
+
+Conclusao dos 5 itens da Fase 1 da analise consolidada (seguranca + LGPD +
+build + perf hot). Base: 523/523 testes verde antes e depois, 0 TS errors,
+1 lint warning nao-bloqueante.
+
+**F1.1 — CPF criptografado em Ouvidoria + e-SIC (RN-166 / LGPD)**
+- Schema (`prisma/schema/models.prisma`): adicionado `cpfHash String?` em
+  `ManifestacaoOuvidoria` e `SolicitacaoESIC` + `@@index([cpfHash])`.
+- Migration idempotente: `scripts/sql/add-cpf-hash-ouvidoria-esic.sql`
+  aplicada via `prisma db execute` no Supabase.
+- Services (`ouvidoria-service.ts`, `esic-service.ts`): `create()` agora
+  criptografa CPF (AES-256-GCM) e gera `cpfHash` (SHA-256). Novos helpers
+  `getByIdMasked()` e `listByCpfHash()` para acesso seguro.
+- Backfill (`scripts/backfill-cpf-encryption.ts`): estendido para suportar
+  os 2 novos modelos com flag `--modelo=ouvidoria,esic`.
+
+**F1.2 — Rate-limit + captcha em POSTs publicos (RN-167)**
+- `enforceRateLimit(request, 'PUBLIC')` aplicado em:
+  - `POST /api/ouvidoria`
+  - `POST /api/e-sic`
+  - `POST /api/participacao-cidada/sugestoes`
+- Novo helper `src/lib/security/captcha-guard.ts` com `enforcePublicCaptcha()`.
+  Politica: obrigatorio em producao (`NODE_ENV=production`), opcional em dev.
+  Flag `PUBLIC_FORMS_CAPTCHA_REQUIRED=true|false` para override explicito.
+- Zod schemas das 3 rotas agora aceitam `captchaId` + `captchaAnswer`.
+
+**F1.3 — Zod em /api/auditoria e /api/servidores**
+- Novos schemas: `src/lib/validation/servidor-schema.ts` e `auditoria-schema.ts`.
+- Servidores POST/PUT: validacao Zod completa antes do service.
+- Auditoria POST: 1 schema por tipo (`evento`, `login`, `logout`, `criacao`,
+  `atualizacao`, `exclusao`, `erro`, `relatorio`) — corrige risco de eventos
+  forjados via `audit.manage`.
+- Auditoria PUT: schema `AtualizarRelatorioSchema` valida status enum.
+
+**F1.4 — Cache em getThemeColors() do RootLayout**
+- `src/app/layout.tsx`: `getThemeColors()` envolvido em `unstable_cache`
+  com tag `theme-colors` e TTL 3600s. Reduz N queries Prisma para 1/hora.
+- Novo helper: `src/lib/cache/theme-colors-cache.ts` com
+  `invalidateThemeColorsCache()`.
+- Pontos de invalidacao adicionados em `configuracao-db-service.ts`
+  (`upsertConfiguracaoInstitucional`, `restoreFromBackup`) e
+  `institucional-db-service.ts` (`updateConfiguracao`). So invalida quando
+  cores realmente mudam.
+
+**F1.5 — Cleanup build/lint**
+- Deletado: `src/app/admin/proposicoes/page-backup.tsx`.
+- Corrigido lint: aspas escapadas em `admin/configuracoes/seguranca/page.tsx:419`.
+- Removido `as any` orfao em `lib/console-override.ts:55` (cast tipado).
+- `next.config.js`: `eslint.ignoreDuringBuilds: false` — ESLint volta a
+  rodar no build. Erros que antes ficavam escondidos agora aparecem.
+
+**Novas regras de negocio:**
+- RN-166: CPF em Ouvidoria/e-SIC armazenado criptografado, com hash para busca.
+- RN-167: Endpoints publicos com mutacao (POST/PUT) exigem rate-limit + captcha.
 
 ---
 

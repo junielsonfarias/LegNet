@@ -1,5 +1,7 @@
 # Skill: Painel Administrativo
 
+> **Ultima atualizacao**: 2026-05-14 (Fase 4 do PLANO-CORRECOES-MAIO-2026)
+
 ## Visao Geral
 
 O Painel Administrativo e o modulo central de configuracao e gestao do sistema. Permite gerenciar usuarios, roles, permissoes, configuracoes de quorum, tipos de proposicao, orgaos, auditoria e todas as configuracoes do processo legislativo.
@@ -11,8 +13,15 @@ O Painel Administrativo e o modulo central de configuracao e gestao do sistema. 
 | Arquivo | Funcao |
 |---------|--------|
 | `src/app/admin/` | Raiz do painel administrativo (52+ modulos) |
-| `src/app/admin/e-sic/` | Gestao pedidos LAI (dashboard + detalhe) |
-| `src/app/admin/ouvidoria/` | Gestao manifestacoes Ouvidoria (dashboard + detalhe) |
+| `src/app/admin/analytics/` | Estatisticas + graficos (Recharts via dynamic) |
+| `src/app/admin/auditoria/` | Lista de logs + detalhe + filtros |
+| `src/app/admin/busca/` | Busca global (proposicoes, normas, parlamentares, audiencias) |
+| `src/app/admin/conformidade-pntp/` | Dashboard de conformidade PNTP |
+| `src/app/admin/monitoramento/` | Status + uptime + alertas (`/admin/monitoramento/status`) |
+| `src/app/admin/servidores/` | CRUD servidores (CPF criptografado AES-256-GCM, RN-156) |
+| `src/app/admin/testes-api/` | Tester de endpoints internos (DEV/STAGING) |
+| `src/app/admin/e-sic/` | Gestao pedidos LAI (dashboard + detalhe) — CPF cripto (RN-166) |
+| `src/app/admin/ouvidoria/` | Gestao manifestacoes Ouvidoria (dashboard + detalhe) — CPF cripto (RN-166) |
 | `src/app/admin/diarias/` | CRUD diarias e passagens |
 | `src/app/admin/verbas-indenizatorias/` | CRUD verbas indenizatorias parlamentares |
 | `src/app/admin/concursos/` | CRUD concursos publicos |
@@ -20,9 +29,16 @@ O Painel Administrativo e o modulo central de configuracao e gestao do sistema. 
 | `src/app/admin/conteudos-educativos/` | CRUD conteudos educativos (Camara Explica) |
 | `src/app/admin/configuracoes/` | Configuracoes do sistema (9 submodulos) |
 | `src/lib/auth/permissions.ts` | Sistema de permissoes |
-| `src/app/api/configuracoes/` | APIs de configuracao |
-| `src/app/api/auditoria/` | APIs de auditoria |
+| `src/lib/security/captcha-guard.ts` | F1.2 — captcha em forms publicos |
+| `src/lib/security/safe-redirect.ts` | F2.2 — anti open redirect |
+| `src/lib/security/file-validation.ts` | F2.4 — upload magic bytes + folder allowlist |
+| `src/lib/cache/theme-colors-cache.ts` | F1.4 — invalida cache do tema |
+| `src/lib/validation/auditoria-schema.ts` | F1.3 — Zod schemas dos POSTs de auditoria |
+| `src/lib/validation/servidor-schema.ts` | F1.3 — Zod create/update Servidor |
+| `src/app/api/configuracoes/` | APIs de configuracao (cache em memoria F3.2) |
+| `src/app/api/auditoria/` | APIs de auditoria (Zod por tipo F1.3) |
 | `src/app/api/usuarios/` | APIs de usuarios |
+| `src/app/api/upload/` | Upload com magic bytes + allowlist de pastas (F2.4) |
 | `src/middleware.ts` | Middleware de autenticacao |
 
 ---

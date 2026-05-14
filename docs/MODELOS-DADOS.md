@@ -1,131 +1,253 @@
 # Modelos de Dados (Prisma)
 
-> Referencia completa dos modelos de dados do projeto.
-> Documento separado do CLAUDE.md principal.
+> Referencia consolidada dos modelos Prisma do projeto. **120 modelos** ativos
+> (`prisma/schema/models.prisma`). Documento referenciado pelo CLAUDE.md.
+
+> **Ultima atualizacao**: 2026-05-14 (Fase 4 do PLANO-CORRECOES-MAIO-2026). Atualizado quando schema muda.
+
+---
+
+## Multi-tenant
+
+- **Tenant**: tenant raiz (multi-tenant via slug/host). Identificado em
+  middleware via `tenant-resolver.ts`.
 
 ---
 
 ## Autenticacao e Usuarios
 
-- **User**: Usuarios do sistema com roles (ADMIN, EDITOR, USER, PARLAMENTAR, OPERADOR, SECRETARIA)
-- **Account, Session, VerificationToken**: NextAuth.js
+- **User**: usuarios do sistema com roles (ADMIN, EDITOR, USER, PARLAMENTAR,
+  OPERADOR, SECRETARIA, AUXILIAR_LEGISLATIVO). Campos `twoFactorSecret` e
+  `twoFactorBackupCodes` criptografados (RN-156). 2FA condicional via
+  `Configuracao.seguranca.2fa.enabled` (RN-144).
+- **Account, Session, VerificationToken**: NextAuth.js.
+- **ApiToken**: tokens para integracao externa, com `expiresAt`.
+- **SecurityAlert**: registro de incidentes de seguranca (login suspeito,
+  brute-force, etc).
 
 ---
 
-## Legislativo
+## Legislativo — Estrutura politica
 
-- **Legislatura**: Mandatos legislativos (anoInicio, anoFim, ativa)
-- **PeriodoLegislatura**: Periodos dentro de uma legislatura
-- **Parlamentar**: Vereadores com foto, biografia, partido, cargo
-- **Mandato**: Mandatos de parlamentares por legislatura
-- **Filiacao**: Historico de filiacoes partidarias
-
----
-
-## Sessoes
-
-- **Sessao**: Sessoes legislativas (ORDINARIA, EXTRAORDINARIA, SOLENE, ESPECIAL)
-- **PresencaSessao**: Controle de presenca
-- **PautaSessao**: Pauta da sessao com itens
-- **PautaItem**: Itens da pauta (proposicoes, comunicacoes, etc)
+- **Legislatura**: mandatos legislativos (anoInicio, anoFim, ativa).
+- **PeriodoLegislatura**: periodos (anos) dentro de uma legislatura.
+- **Parlamentar**: vereadores. Inclui `bensDeclarados Json?`,
+  `incompatibilidades Json?`, `suplenteDeId?` (Sprint 4 PNTP).
+- **Mandato**: vinculo Parlamentar x Legislatura, com `numeroVotos`, `cargo`,
+  `dataInicio/Fim`.
+- **Filiacao**: historico de filiacoes partidarias.
+- **Bancada**: bancada partidaria com lider e vice-lider.
 
 ---
 
-## Proposicoes
+## Legislativo — Sessoes
 
-- **Proposicao**: Projetos de lei, requerimentos, mocoes, etc
-- **TipoProposicao**: PROJETO_LEI, PROJETO_RESOLUCAO, INDICACAO, REQUERIMENTO, MOCAO, etc
-- **StatusProposicao**: APRESENTADA, EM_TRAMITACAO, APROVADA, REJEITADA, ARQUIVADA
-- **Votacao**: Votos individuais (SIM, NAO, ABSTENCAO, AUSENTE)
-
----
-
-## Comissoes
-
-- **Comissao**: Comissoes (PERMANENTE, TEMPORARIA, ESPECIAL, INQUERITO)
-- **MembroComissao**: Membros com cargos (PRESIDENTE, VICE_PRESIDENTE, RELATOR, MEMBRO)
-
----
-
-## Mesa Diretora
-
-- **MesaDiretora**: Mesa diretora de um periodo
-- **MembroMesaDiretora**: Membros da mesa
-- **CargoMesaDiretora**: Cargos da mesa diretora
-- **HistoricoParticipacao**: Historico de participacoes
+- **Sessao**: sessoes legislativas (ORDINARIA, EXTRAORDINARIA, SOLENE,
+  ESPECIAL, CONVOCADA). Inclui `urlAudio/Video/Transmissao`, `arquivoPauta`,
+  `arquivoAta`, `statusAta`, `sessaoAprovacaoAtaId` (Sprint 4 PNTP).
+- **PresencaSessao**: controle de presenca em plenario.
+- **PresencaOrdemDia**: presenca especifica para ordem do dia.
+- **MesaSessao**, **MembroMesaSessao**: mesa que presidiu uma sessao
+  especifica (separada da Mesa Diretora).
+- **OradorSessao**: oradores inscritos (tipo, ordem, tempo).
+- **QuestaoOrdem**: questoes de ordem levantadas em sessao.
+- **ExpedienteSessao**, **TipoExpediente**: conteudo do expediente.
 
 ---
 
-## Tramitacao
+## Legislativo — Pauta
 
-- **Tramitacao**: Tramitacao de proposicoes
-- **TramitacaoTipo**: Tipos de tramitacao com prazos
-- **TramitacaoUnidade**: Unidades (COMISSAO, MESA_DIRETORA, PLENARIO, PREFEITURA)
-- **TramitacaoHistorico**: Historico de movimentacoes
-- **RegraTramitacao**: Regras automaticas de tramitacao
-
----
-
-## Publicacoes
-
-- **Publicacao**: Leis, decretos, portarias, resolucoes
-- **CategoriaPublicacao**: Categorias dinamicas
-- **Noticia**: Noticias do portal
+- **PautaSessao**: pauta da sessao (status, `dataPublicacao` RN-122).
+- **PautaItem**: itens da pauta com `secao`, `ordem`, `tipoAcao`
+  (LEITURA/VOTACAO/etc), turnos (1 e 2), pedido de vista,
+  `sessaoAtaOrigemId`, `oficioId`, `parecerId`, `relatorId`.
+- **DestaquePautaItem**: destaques (artigo, emenda) votados em separado.
+- **SessaoTemplate**, **TemplateItem**: templates de sessao para auto-gerar
+  pauta.
 
 ---
 
-## Controle
+## Legislativo — Proposicoes
 
-- **Configuracao**: Configuracoes do sistema
-- **ConfiguracaoInstitucional**: Dados da casa legislativa
-- **AuditLog**: Log de auditoria de acoes
-- **ApiToken**: Tokens para integracao externa
+- **Proposicao**: PL/PLC/PDL/PR/IND/REQ/MOC/PI. Inclui `textoFinal`,
+  `entradaRetroativa` (RN-159), `dataApresentacao`, `dataVotacao`.
+- **TipoProposicaoConfig**: configuracao por tipo (`requerVotacao`,
+  `requerSancao`, `requerParecerCLJ`, `quorumAplicacao`, `totalTurnos`,
+  `intersticioDias`).
+- **Votacao**: votos individuais (SIM, NAO, ABSTENCAO, AUSENTE).
+- **VotacaoAgrupada**: agregacao por turno (votosSim/Nao/Abstencao/Ausente,
+  quorum, `votoMinerva`).
+- **Emenda**, **VotoEmenda**: emendas e votacoes correspondentes.
+- **Parecer**, **VotoParecerComissao**: pareceres de comissao.
+
+---
+
+## Legislativo — Comissoes
+
+- **Comissao**: PERMANENTE, TEMPORARIA, ESPECIAL, INQUERITO (CPI).
+- **MembroComissao**: membros com cargos (PRESIDENTE, VICE, RELATOR, MEMBRO).
+- **ReuniaoComissao**, **PautaReuniaoComissao**, **PresencaReuniaoComissao**:
+  reunioes de comissao com sua propria pauta e presenca.
+- **HistoricoParticipacao**: trilha auditavel de quem participou de qual
+  comissao em qual periodo.
+
+---
+
+## Legislativo — Mesa Diretora
+
+- **MesaDiretora**: mesa de um periodo (composicao oficial).
+- **MembroMesaDiretora**: vinculo Parlamentar x CargoMesa x periodo.
+- **CargoMesaDiretora**: cargos (PRESIDENTE, VICE, 1o/2o SECRETARIO, etc).
+
+---
+
+## Legislativo — Tramitacao
+
+- **Tramitacao**: movimentacao da proposicao entre unidades.
+- **TramitacaoTipo**: tipos com prazos.
+- **TramitacaoUnidade**: COMISSAO, MESA_DIRETORA, PLENARIO, PREFEITURA, etc.
+- **TramitacaoHistorico**: trilha completa.
+- **TramitacaoNotificacao**: notificacoes automaticas por etapa.
+- **TramitacaoTipoProposicao**: mapeamento tipo proposicao x fluxo padrao.
+- **FluxoTramitacao**, **FluxoTramitacaoEtapa**: fluxos configuraveis.
+- **RegraTramitacao**, **RegraTramitacaoEtapa**: regras automaticas
+  (condicoes -> acoes -> notificacoes).
+- **ConfiguracaoTramitacao**: configuracoes globais.
+
+---
+
+## Legislativo — Normas Juridicas
+
+- **NormaJuridica**: leis, decretos, resolucoes, regimento interno,
+  CODIGO_ETICA (Sprint 6). Campos: `orgaoEmissor`, `aplicavelA`,
+  `diarioOficial Json?`.
+- **ArtigoNorma**, **ParagrafoNorma**: estrutura hierarquica.
+- **AlteracaoNorma**, **VersaoNorma**: historico de alteracoes.
+- **Publicacao**, **CategoriaPublicacao**: publicacoes derivadas (leis,
+  decretos publicados no diario oficial municipal).
+- **Oficio**: oficios expedidos/recebidos.
+
+---
+
+## Protocolo
+
+- **Protocolo**: protocolo unico do sistema (numerador anual).
+- **ProtocoloProposicao**: vinculo protocolo x proposicao.
+- **ProtocoloTramitacao**: trilha de tramitacao do protocolo.
+- **ProtocoloAnexo**: documentos anexados ao protocolo.
+
+---
+
+## Autores (proposicoes)
+
+- **Autor**: pessoas/entidades que podem apresentar proposicao
+  (parlamentar, comissao, prefeito, cidadao, etc).
+- **TipoAutor**: classificacao do autor.
+
+---
+
+## Transparencia (PNTP)
+
+- **TransparenciaConteudo**: conteudo textual customizavel por categoria.
+- **DocumentoTransparencia**: documentos para transparencia (rota dinamica
+  `/transparencia/documentos/[tipo]`).
+- **RedirectConfig**: toggle por slug para apontar pagina publica para URL
+  externa (commit d29c602).
+- **Contrato**, **Convenio**, **Licitacao**, **LicitacaoDocumento**:
+  contratacao publica.
+- **Despesa**, **Receita**, **OrdemPagamento**, **NotaFiscal**: financeiro.
+  Despesa tem FK para `licitacaoId`, `contratoId`, `convenioId`.
+- **BemPatrimonial**: bens (MOVEL/IMOVEL) com tombamento.
+- **Veiculo**: frota.
+- **Servidor**: quadro de pessoal. **CPF criptografado** (AES-256-GCM,
+  RN-156) + `cpfHash` (SHA-256, unique).
+- **FolhaPagamento**, **Diaria**: folha e diarias.
+- **Concurso**: concursos publicos.
+- **AudienciaPublica**: audiencias (`participantes/documentos/atas/
+  transcricoes/cronograma` em campos JSON).
+- **CotaParlamentar**: cotas para exercicio da atividade parlamentar
+  (commit ddae949). `mes Int?` (null = "Ano Inteiro" — declaracao anual),
+  `tipo` (DECLARACAO|GASTO), `documentos Json?`.
+- **VerbaIndenizatoria**: verbas indenizatorias parlamentares (legado).
+- **Repasse**, **CartaoCorporativo**, **ProgramaAcao**, **ServicoOnline**,
+  **FornecedorSancionado**: outros itens PNTP.
+- **Obra**: obras publicas (com filtro `?situacao=PARALISADA`).
+- **UnidadeOrganizacional**: organograma hierarquico.
+
+---
+
+## Cidadao (LAI + Participacao)
+
+- **SolicitacaoESIC**: pedido de acesso a informacao. **CPF criptografado**
+  (RN-166) + `cpfHash`. Status granular por instancia
+  (RECURSO_PRIMEIRA_INSTANCIA, RECURSO_SEGUNDA_INSTANCIA).
+- **AnexoESIC**, **RecursoESIC** (com `instancia`), **HistoricoESIC**.
+- **ManifestacaoOuvidoria**: reclamacao/elogio/sugestao/denuncia.
+  **CPF criptografado** (RN-166) + `cpfHash`. Suporta anonimo.
+- **AnexoOuvidoria**, **HistoricoOuvidoria**.
+- **ConsultaPublica**, **ParticipacaoConsulta**, **PerguntaConsulta**,
+  **RespostaConsulta**: consultas publicas.
+- **SugestaoLegislativa**, **ApoioSugestao**: sugestoes do cidadao.
+- **ConteudoEducativo**: textos da "Camara Explica".
+
+---
+
+## Configuracao & Sistema
+
+- **Configuracao**: configuracoes chave/valor do sistema.
+- **ConfiguracaoInstitucional**: dados da casa (nome, CNPJ, endereco,
+  contato, cores `corPrimaria/Secundaria/Acento`).
+- **ConfiguracaoSnapshot**: snapshots para rollback de configuracao.
+- **ConfiguracaoQuorum**: quorum por tipo de proposicao.
+- **Noticia**: noticias do portal.
+
+---
+
+## Notificacoes
+
+- **NotificacaoMulticanal**: notificacoes por canal (email, SMS, push, etc).
+- **Favorito**: favoritos do usuario.
+
+---
+
+## Auditoria & Logs
+
+- **AuditLog**: trilha imutavel (RN-154). Trigger PostgreSQL bloqueia
+  UPDATE/DELETE.
+- **DashboardPersonalizado**: dashboards customizados.
+- **ExecucaoRelatorio**, **RelatorioAgendado**: relatorios.
 
 ---
 
 ## Regras de Negocio dos Modelos
 
-### Sessoes Legislativas
-
-1. **Tipos de Sessao**:
-   - ORDINARIA: Sessoes regulares conforme calendario
-   - EXTRAORDINARIA: Convocadas para assuntos urgentes
-   - SOLENE: Homenagens e datas comemorativas
-   - ESPECIAL: Eventos especiais
-
-2. **Status de Sessao**:
-   - AGENDADA -> EM_ANDAMENTO -> CONCLUIDA
-   - AGENDADA -> CANCELADA (se necessario)
-
-3. **Pauta de Sessao**:
-   - Secoes: EXPEDIENTE, ORDEM_DO_DIA, COMUNICACOES, HONRAS, OUTROS
-   - Status dos itens: PENDENTE, EM_DISCUSSAO, EM_VOTACAO, APROVADO, REJEITADO, RETIRADO, ADIADO
+### Sessoes
+- Tipos: ORDINARIA, EXTRAORDINARIA, SOLENE, ESPECIAL, CONVOCADA.
+- Status: AGENDADA -> EM_ANDAMENTO -> CONCLUIDA (ou CANCELADA).
+- Ata: CONCLUIDA -> PENDENTE (statusAta) -> APROVADA na sessao N+1.
 
 ### Proposicoes
+- Fluxo: APRESENTADA -> EM_TRAMITACAO -> APROVADA/REJEITADA/ARQUIVADA.
+- Numeracao: NUMERO/ANO (ex: 001/2026), sequencial por tipo e ano.
+- Retroativa: RN-159 permite registro pos-sessao com `entradaRetroativa=true`.
 
-1. **Fluxo de Tramitacao**:
-   - APRESENTADA -> EM_TRAMITACAO -> APROVADA/REJEITADA/ARQUIVADA
-   - Pode passar por comissoes antes do plenario
-
-2. **Numeracao**:
-   - Formato: NUMERO/ANO (ex: 001/2024)
-   - Sequencial por tipo e ano
-
-3. **Tipos de Votacao**:
-   - SIM, NAO, ABSTENCAO, AUSENTE
-   - Resultado: APROVADA, REJEITADA, EMPATE
+### Votacao
+- Tipos de voto: SIM, NAO, ABSTENCAO, AUSENTE.
+- Resultado: APROVADA, REJEITADA, EMPATE (votoMinerva permite desempate).
 
 ### Mesa Diretora
-
-1. **Composicao**: Presidente, Vice-Presidente, Secretarios
-2. **Mandato**: Vinculado ao periodo da legislatura
-3. **Apenas um membro ativo por cargo por vez
+- Apenas um membro ativo por cargo (`@@unique([mesaDiretoraId, cargoId, ativo])`).
+- Substituicao via dataFim na entrada antiga e nova entrada com ativo=true.
 
 ### Comissoes
+- Membro pode participar de multiplas comissoes.
+- Pareceres registrados antes da pauta plenaria (RN-030 quando aplicavel).
 
-1. **Tipos**: PERMANENTE, TEMPORARIA, ESPECIAL, INQUERITO
-2. **Cargos**: PRESIDENTE, VICE_PRESIDENTE, RELATOR, MEMBRO
-3. **Membro pode participar de multiplas comissoes
+### LGPD (Servidor/SolicitacaoESIC/ManifestacaoOuvidoria)
+- CPF NUNCA armazenado em claro: AES-256-GCM (`encryption.ts`) + `cpfHash`
+  para busca/uniqueness (RN-156, RN-166).
+- Decriptografar exige permissao explicita; listagens usam mascaramento
+  (`maskEncryptedCpf`).
 
 ---
 
@@ -133,17 +255,19 @@
 
 ```typescript
 enum UserRole {
-  ADMIN       // Acesso total ao sistema
-  EDITOR      // Pode editar conteudo (noticias, publicacoes)
-  USER        // Acesso basico de leitura
-  PARLAMENTAR // Acesso a area do parlamentar
-  OPERADOR    // Opera painel eletronico
-  SECRETARIA  // Acesso administrativo limitado
+  ADMIN                // Acesso total ao sistema
+  SECRETARIA           // Gestao legislativa completa
+  AUXILIAR_LEGISLATIVO // Proposicoes, tramitacao, comissoes
+  EDITOR               // Edita conteudo (noticias, publicacoes)
+  OPERADOR             // Opera painel eletronico
+  PARLAMENTAR          // Area do parlamentar
+  USER                 // Leitura basica
 }
 ```
 
 ### Protecao de Rotas
 
-- **Publicas**: /, /parlamentares, /transparencia, /legislativo, /noticias
+- **Publicas**: /, /parlamentares, /transparencia, /legislativo, /noticias,
+  /institucional, /participacao-cidada
 - **Autenticadas**: /admin/*, /api/* (maioria)
-- **Publicas API**: /api/integracoes/public/*, /api/publico/*
+- **Publicas API**: /api/dados-abertos/*, /api/publico/*

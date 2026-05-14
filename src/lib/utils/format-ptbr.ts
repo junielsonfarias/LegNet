@@ -1,7 +1,13 @@
 /**
  * Helpers de Formatação PT-BR
- * Formatação de valores monetários, documentos, telefones e endereços
+ * Formatação de valores monetários, documentos, telefones e endereços.
+ *
+ * F4.5 (PLANO-CORRECOES-MAIO-2026): `formatCPF` agora delega para
+ * `src/lib/security/cpf-utils.ts` (helper canonico LGPD-aware). Mantemos
+ * o export aqui para compatibilidade com codigo existente.
  */
+
+import { formatCpf as formatCpfCanonical } from '@/lib/security/cpf-utils'
 
 // ============================================
 // MOEDA / VALORES
@@ -75,14 +81,12 @@ export function formatNumber(value: number | string | null | undefined): string 
 // ============================================
 
 /**
- * Formata CPF (123.456.789-00)
+ * Formata CPF (123.456.789-00).
+ * Delega ao helper canonico em `security/cpf-utils.ts`.
  */
 export function formatCPF(value: string | null | undefined): string {
   if (!value) return ''
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-  if (digits.length !== 11) return value
-
-  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+  return formatCpfCanonical(value)
 }
 
 /**

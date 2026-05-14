@@ -3,12 +3,13 @@
 import { createLogger } from '@/lib/logging/logger'
 const log = createLogger('admin/proposicoes')
 
-import { Suspense, useMemo, useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Suspense, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FileText, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ProposicoesListSkeleton } from '@/components/skeletons/proposicao-skeleton'
 import { useProposicoesState } from './_hooks/use-proposicoes-state'
+import { useProposicoesPagination } from './_hooks/use-proposicoes-pagination'
+import { useProposicaoStatusDetalhado } from './_hooks/use-proposicao-status-detalhado'
 import {
   ProposicoesFilters,
   ProposicaoCard,
@@ -126,20 +127,17 @@ function ProposicoesContent() {
     })
   }, [proposicoes, searchTerm, statusFilter, tipoFilter, anoFilter, autorFilter])
 
-  // Paginação client-side
-  const ITEMS_PER_PAGE = 50
-  const [currentPage, setCurrentPage] = useState(1)
-
-  const totalPages = Math.ceil(filteredProposicoes.length / ITEMS_PER_PAGE)
-  const paginatedProposicoes = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE
-    return filteredProposicoes.slice(start, start + ITEMS_PER_PAGE)
-  }, [filteredProposicoes, currentPage])
-
-  // Resetar página ao mudar filtros
-  const handleFilterReset = () => {
-    setCurrentPage(1)
-  }
+  // Paginação client-side (F4.4 — extraido para hook reusavel)
+  const {
+    currentPage,
+    totalPages,
+    paginated: paginatedProposicoes,
+    itemsPerPage: ITEMS_PER_PAGE,
+    showingFrom,
+    showingTo,
+    setCurrentPage,
+    reset: resetPagination,
+  } = useProposicoesPagination(filteredProposicoes, 50)
 
   // Anos disponíveis (extraídos das proposições)
   const anosDisponiveis = useMemo(() => {
@@ -153,106 +151,19 @@ function ProposicoesContent() {
     setTipoFilter('TODOS')
     setAnoFilter('TODOS')
     setAutorFilter('TODOS')
-    setCurrentPage(1)
+    resetPagination()
   }
 
   // Wrappers que resetam a página ao filtrar
-  const handleSearchChange = (v: string) => { setSearchTerm(v); setCurrentPage(1) }
-  const handleStatusChange = (v: string) => { setStatusFilter(v); setCurrentPage(1) }
-  const handleTipoFilterChange = (v: string) => { setTipoFilter(v); setCurrentPage(1) }
-  const handleAnoFilterChange = (v: string) => { setAnoFilter(v); setCurrentPage(1) }
-  const handleAutorFilterChange = (v: string) => { setAutorFilter(v); setCurrentPage(1) }
+  const handleSearchChange = (v: string) => { setSearchTerm(v); resetPagination() }
+  const handleStatusChange = (v: string) => { setStatusFilter(v); resetPagination() }
+  const handleTipoFilterChange = (v: string) => { setTipoFilter(v); resetPagination() }
+  const handleAnoFilterChange = (v: string) => { setAnoFilter(v); resetPagination() }
+  const handleAutorFilterChange = (v: string) => { setAutorFilter(v); resetPagination() }
 
-  const statusDetalhadoAtual = useMemo(() => {
-    if (!selectedProposicao) return null
-    const relacionadas = tramitacoes
-      .filter(t => t.proposicaoId === selectedProposicao.id)
-      .sort((a, b) => new Date(b.dataEntrada).getTime() - new Date(a.dataEntrada).getTime())
-
-    if (!relacionadas.length) {
-      return {
-        status: 'NÃO_TRAMITADA',
-        localizacao: 'Não iniciada',
-        descricao: 'Proposição ainda não foi protocolada',
-        prazo: null,
-        proximoPasso: 'Protocolo na Mesa Diretora',
-        tramitacaoAtual: null
-      }
-    }
-
-    const atual = relacionadas[0]
-    const tipoTramitacao = tiposTramitacao.find(tipo => tipo.id === atual.tipoTramitacaoId)
-    const unidade = tiposOrgaos.find(orgao => orgao.id === atual.unidadeId)
-
-    return {
-      status: atual.status,
-      localizacao: unidade?.nome || 'Órgão não identificado',
-      descricao: atual.observacoes || '',
-      prazo: atual.prazoVencimento ?? null,
-      proximoPasso: 'Próxima etapa do processo',
-      tramitacaoAtual: atual,
-      tipoTramitacao,
-      unidade
-    }
-  }, [selectedProposicao, tramitacoes, tiposTramitacao, tiposOrgaos])
-
-  const tramitacaoAtual = statusDetalhadoAtual?.tramitacaoAtual
-  const podeAvancar = tramitacaoAtual?.status === 'EM_ANDAMENTO'
-  const podeFinalizar = tramitacaoAtual?.status === 'EM_ANDAMENTO'
-  const podeReabrir = tramitacaoAtual?.status === 'CONCLUIDA'
-
-  const notificacoesSelecionadas = useMemo(() => {
-    if (!selectedProposicao) return []
-    return tramitacoes
-      .filter(t => t.proposicaoId === selectedProposicao.id)
-      .flatMap(tramitacao =>
-        (tramitacao.notificacoes ?? []).map(notificacao => ({
-          ...notificacao,
-          etapa: tramitacao
-        }))
-      )
-      .sort((a, b) => {
-        const dataA = a.enviadoEm ? new Date(a.enviadoEm).getTime() : 0
-        const dataB = b.enviadoEm ? new Date(b.enviadoEm).getTime() : 0
-        return dataB - dataA
-      })
-  }, [selectedProposicao, tramitacoes])
-
-  // Helpers
-  const handleNumeroAutomaticoChange = async (checked: boolean) => {
-    if (checked && formData.tipo) {
-      try {
-        const { buscarProximoNumero } = await import('@/lib/utils/proposicao-numero')
-        const proximoNumero = await buscarProximoNumero(formData.tipo.toUpperCase(), formData.ano)
-        setFormData(prev => ({ ...prev, numeroAutomatico: true, numero: proximoNumero }))
-      } catch (error) {
-        log.error('Erro ao gerar número automático', error)
-        setFormData(prev => ({ ...prev, numeroAutomatico: true }))
-      }
-    } else {
-      setFormData(prev => ({ ...prev, numeroAutomatico: checked }))
-    }
-  }
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  const getTipoRelacaoLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      'altera': 'Altera',
-      'revoga': 'Revoga',
-      'inclui': 'Inclui',
-      'exclui': 'Exclui',
-      'regulamenta': 'Regulamenta',
-      'complementa': 'Complementa'
-    }
-    return labels[tipo] || tipo
-  }
+  // F4.4 — status detalhado + notificacoes extraidos para hook
+  const { statusDetalhado: statusDetalhadoAtual, notificacoes: notificacoesSelecionadas } =
+    useProposicaoStatusDetalhado(selectedProposicao, tramitacoes, tiposTramitacao, tiposOrgaos)
 
   // Loading state
   if (loadingProposicoes || loadingParlamentares) {
@@ -338,7 +249,7 @@ function ProposicoesContent() {
       {filteredProposicoes.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3">
           <div className="text-sm text-gray-500">
-            Mostrando {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredProposicoes.length)} de {filteredProposicoes.length} proposições
+            Mostrando {showingFrom}–{showingTo} de {filteredProposicoes.length} proposições
             {filteredProposicoes.length !== proposicoes.length && ` (${proposicoes.length} total)`}
           </div>
           {totalPages > 1 && (

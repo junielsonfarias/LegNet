@@ -10,6 +10,27 @@ import type { TramitacaoApi, TramitacaoAdvanceResponse, TramitacaoResultado } fr
 // Re-exporta tipos base
 export type { ProposicaoApi, TramitacaoApi, TramitacaoAdvanceResponse, TramitacaoResultado, TipoTramitacao, TipoOrgao }
 
+// F4.4 — tipos compartilhados entre hook use-proposicao-status-detalhado e TramitacaoModal
+export interface StatusDetalhado {
+  status: string
+  localizacao: string
+  descricao: string
+  prazo: string | null
+  proximoPasso: string
+  tramitacaoAtual: TramitacaoApi | null
+  tipoTramitacao?: TipoTramitacao
+  unidade?: TipoOrgao
+}
+
+export interface NotificacaoTramitacao {
+  id: string
+  canal: string
+  destinatario: string
+  status?: string | null
+  enviadoEm?: string | null
+  etapa: TramitacaoApi
+}
+
 // Interface para tipos de proposição carregados do banco
 export interface TipoProposicaoConfig {
   id: string

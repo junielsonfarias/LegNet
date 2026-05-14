@@ -23,29 +23,14 @@ import type {
   TramitacaoAdvanceResponse,
   TramitacaoResultado,
   TipoTramitacao,
-  TipoOrgao
+  TipoOrgao,
+  StatusDetalhado,
+  NotificacaoTramitacao,
 } from '../_types'
 import { SELECT_AUTO, RESULTADO_PADRAO, RESULTADOS_TRAMITACAO } from '../_types'
 
-interface StatusDetalhado {
-  status: string
-  localizacao: string
-  descricao: string
-  prazo: string | null
-  proximoPasso: string
-  tramitacaoAtual: TramitacaoApi | null
-  tipoTramitacao?: TipoTramitacao
-  unidade?: TipoOrgao
-}
-
-interface Notificacao {
-  id: string
-  canal: string
-  destinatario: string
-  status?: string | null
-  enviadoEm?: string | null
-  etapa: TramitacaoApi
-}
+// Alias mantido para minimizar diff dentro do arquivo
+type Notificacao = NotificacaoTramitacao
 
 interface TramitacaoModalProps {
   isOpen: boolean

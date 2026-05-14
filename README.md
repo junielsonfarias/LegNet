@@ -13,13 +13,16 @@ Sistema multi-tenant de portal legislativo municipal, incluindo:
 
 ## 🚀 Tecnologias Utilizadas
 
-- **Frontend**: Next.js 14, React 18, TypeScript
-- **Styling**: Tailwind CSS, Radix UI
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Banco de Dados**: PostgreSQL
-- **Autenticação**: NextAuth.js
+- **Frontend**: Next.js 15 (App Router), React 18, TypeScript (strict)
+- **Styling**: Tailwind CSS, Radix UI, next-themes (dark mode)
+- **Backend**: Next.js API Routes, Prisma ORM 5.x
+- **Banco de Dados**: PostgreSQL (Supabase em prod hosted; Postgres local em VPS)
+- **Autenticação**: NextAuth.js + 2FA (TOTP, toggle global via Configuracao)
 - **Validação**: Zod
 - **Formulários**: React Hook Form
+- **Sanitizacao HTML**: isomorphic-dompurify (SSR + CSR)
+- **Rate limit**: Upstash Redis (opcional) com fallback em memória
+- **Testes**: Vitest (unitários/integração) + Playwright (E2E)
 
 ## 📋 Funcionalidades
 
@@ -133,22 +136,29 @@ prisma/
 
 ## 🗄️ Estrutura do Banco de Dados
 
-O sistema utiliza as seguintes entidades principais:
+O sistema utiliza ~80 modelos Prisma organizados em domínios (ver `docs/MODELOS-DADOS.md`):
 
-- **Users**: Usuários do sistema (admin, editores)
-- **Parlamentares**: Vereadores e membros da mesa diretora
-- **Sessoes**: Sessões legislativas
-- **Proposicoes**: Projetos de lei, decretos, etc.
-- **Comissoes**: Comissões permanentes e temporárias
-- **Noticias**: Notícias e informes
-- **Publicacoes**: Leis, decretos, portarias
-- **Configuracoes**: Configurações do sistema
+**Núcleo legislativo**: `Parlamentar`, `Legislatura`, `PeriodoLegislatura`, `Mandato`, `Filiacao`, `Sessao`, `PautaSessao`, `PautaItem`, `Proposicao`, `Emenda`, `Votacao`, `VotacaoAgrupada`, `PresencaSessao`, `Tramitacao`, `Comissao`, `Parecer`.
+
+**Mesa & órgãos**: `MesaDiretora`, `MembroMesaDiretora`, `CargoMesaDiretora`, `MesaSessao`, `MembroMesaSessao`, `OradorSessao`, `ExpedienteSessao`, `QuestaoOrdem`.
+
+**Transparência (PNTP)**: `Contrato`, `Convenio`, `Licitacao`, `Despesa`, `Receita`, `OrdemPagamento`, `NotaFiscal`, `BemPatrimonial`, `Veiculo`, `Servidor`, `FolhaPagamento`, `Diaria`, `Concurso`, `AudienciaPublica`, `RedirectConfig`, `CotaParlamentar`.
+
+**Cidadão & LAI**: `SolicitacaoESIC`, `RecursoESIC`, `ManifestacaoOuvidoria`, `ConsultaPublica`, `Sugestao`, `Enquete`.
+
+**Sistema & auditoria**: `User`, `Configuracao`, `ConfiguracaoInstitucional`, `ConfiguracaoSnapshot`, `AuditLog`, `ApiToken`, `Notificacao`, `SecurityAlert`.
 
 ## 📚 Documentação Complementar
 
-- [`docs/arquitetura-atual.md`](docs/arquitetura-atual.md): visão atualizada de frontend, APIs, fluxos legislativos e uso do mock DB.
-- [`docs/ambiente-e-pipeline.md`](docs/ambiente-e-pipeline.md): diretrizes de ambientes (dev/staging/prod), variáveis de ambiente, integrações externas e pipeline CI.
-- [`docs/cronograma-producao.md`](docs/cronograma-producao.md): plano de execução em fases para alinhar o sistema às práticas do SAPL.
+- [`CLAUDE.md`](CLAUDE.md): regras supremas de documentação e mapeamento de skills.
+- [`ESTADO-ATUAL.md`](ESTADO-ATUAL.md): histórico de mudanças recentes e versão atual.
+- [`REGRAS-DE-NEGOCIO.md`](REGRAS-DE-NEGOCIO.md): regras RN-XXX do processo legislativo + LGPD + PNTP.
+- [`docs/FLUXO-LEGISLATIVO.md`](docs/FLUXO-LEGISLATIVO.md): fluxo completo de tramitação, sessões e votações.
+- [`docs/PADROES-CODIGO.md`](docs/PADROES-CODIGO.md): nomenclatura, estrutura de componentes/APIs/serviços.
+- [`docs/MODELOS-DADOS.md`](docs/MODELOS-DADOS.md): modelos Prisma e seus relacionamentos.
+- [`docs/ERROS-E-SOLUCOES.md`](docs/ERROS-E-SOLUCOES.md): erros conhecidos (ERR-XXX) e soluções.
+- [`docs/PLANO-CORRECOES-MAIO-2026.md`](docs/PLANO-CORRECOES-MAIO-2026.md): plano de correções em andamento.
+- [`docs/skills/`](docs/skills): documentação viva por módulo (frontend, legislativo, operador, comissões, transparência, parlamentar, admin, secretaria, integrações).
 
 ## 🧭 Fluxo de Tramitação
 

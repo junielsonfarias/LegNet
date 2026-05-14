@@ -1,8 +1,15 @@
 # Skill: Processo Legislativo
 
+> **Ultima atualizacao**: 2026-05-14 (Fase 4 do PLANO-CORRECOES-MAIO-2026)
+
 ## Visao Geral
 
 O processo legislativo e o conjunto de atos ordenados para a criacao de normas juridicas municipais. Este modulo gerencia todo o ciclo de vida das proposicoes, desde a iniciativa ate a publicacao da lei, incluindo tramitacao, votacao, sancao e veto.
+
+> **Nota**: o modulo `CotaParlamentar` (cotas para exercicio da atividade
+> parlamentar) eh acessorio ao trabalho parlamentar mas eh documentado em
+> `skill-transparencia.md`, ja que sua exibicao publica esta no portal de
+> transparencia (`/transparencia/cotas-parlamentar`).
 
 ---
 

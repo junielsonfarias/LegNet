@@ -11,7 +11,7 @@
 | Arquivo | Quando Atualizar | O que Registrar |
 |---------|------------------|-----------------|
 | `REGRAS-DE-NEGOCIO.md` | Ao criar/modificar regras de negocio | Novas regras RN-XXX |
-| `PLANO-EXECUCAO.md` | Ao concluir etapas/fases | Marcar checkboxes, status |
+| `docs/PLANO-CORRECOES-MAIO-2026.md` | Ao concluir etapas/fases | Marcar checkboxes, status |
 | `ESTADO-ATUAL.md` | **SEMPRE** apos qualquer mudanca | Modulos alterados, historico |
 | `docs/ERROS-E-SOLUCOES.md` | Ao encontrar/corrigir erros | Erros, solucoes, status |
 | `docs/MELHORIAS-PROPOSTAS.md` | Ao identificar/implementar melhorias | Novas ideias |
@@ -30,7 +30,7 @@
 ### Checklist ao Finalizar Tarefa
 
 - [ ] ESTADO-ATUAL.md atualizado?
-- [ ] PLANO-EXECUCAO.md com etapas marcadas?
+- [ ] Plano de correções ativo (`docs/PLANO-CORRECOES-MAIO-2026.md`) com etapas marcadas?
 - [ ] Novos erros registrados?
 - [ ] Melhorias marcadas?
 - [ ] Novas regras de negocio adicionadas?
@@ -104,7 +104,7 @@
 ## Informacoes do Projeto
 
 **Nome**: Sistema Legislativo Municipal - Portal Institucional e Painel Administrativo
-**Stack**: Next.js 14 + React 18 + TypeScript + Tailwind CSS + Prisma + PostgreSQL
+**Stack**: Next.js 15 (App Router) + React 18 + TypeScript (strict) + Tailwind CSS + Prisma 5 + PostgreSQL
 **Baseado em**: SAPL (Sistema de Apoio ao Processo Legislativo) do Interlegis
 
 ---

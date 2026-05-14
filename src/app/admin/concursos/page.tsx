@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatDateShort as formatDate } from '@/lib/utils/date'
 
 interface Concurso {
   id: string
@@ -44,8 +45,6 @@ const statusColors: Record<string, string> = {
   CONCLUIDO: 'bg-green-100 text-green-800',
   CANCELADO: 'bg-red-100 text-red-800',
 }
-
-const formatDate = (date: string) => new Date(date).toLocaleDateString('pt-BR')
 
 export default function ConcursosAdminPage() {
   const [concursos, setConcursos] = useState<Concurso[]>([])

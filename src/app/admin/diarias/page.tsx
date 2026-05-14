@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, Loader2, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatDateShort as formatDate } from '@/lib/utils/date'
+import { formatCurrency } from '@/lib/utils/format-ptbr'
 
 interface Diaria {
   id: string
@@ -32,11 +34,6 @@ interface Diaria {
   ano: number
   mes: number
 }
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-
-const formatDate = (date: string) => new Date(date).toLocaleDateString('pt-BR')
 
 export default function DiariasAdminPage() {
   const [diarias, setDiarias] = useState<Diaria[]>([])

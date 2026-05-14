@@ -18,6 +18,7 @@ import {
 import { ArrowLeft, Lightbulb, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/logging/logger'
+import { maskCPF } from '@/lib/utils/format-ptbr'
 
 const log = createLogger('participacao-cidada/sugestoes')
 
@@ -129,13 +130,7 @@ export default function NovaSugestaoPage() {
     }
   }
 
-  function formatCPF(value: string) {
-    const numbers = value.replace(/\D/g, '')
-    return numbers
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-  }
+
 
   function formatPhone(value: string) {
     const numbers = value.replace(/\D/g, '')
@@ -355,7 +350,7 @@ export default function NovaSugestaoPage() {
                     <Input
                       id="cpf"
                       value={formData.cpf}
-                      onChange={e => setFormData(prev => ({ ...prev, cpf: formatCPF(e.target.value) }))}
+                      onChange={e => setFormData(prev => ({ ...prev, cpf: maskCPF(e.target.value) }))}
                       placeholder="000.000.000-00"
                       maxLength={14}
                       className={errors.cpf ? 'border-red-500' : ''}
