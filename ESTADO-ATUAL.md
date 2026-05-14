@@ -1,10 +1,46 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (RN-172 — Publicacao de Pauta/Ata de Reuniao de Comissao)
-> **Versao**: 1.19.0
+> **Ultima Atualizacao**: 2026-05-14 (RN-173 — Publicacao de Parecer de Comissao)
+> **Versao**: 1.20.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — RN-173: Publicacao de Parecer de Comissao
+
+Estende a familia RN-170/171/172 para Parecer. SEM MIGRATION: o model
+`Parecer` ja tinha todos os campos necessarios (`arquivoUrl`,
+`arquivoNome`, `arquivoTamanho`, `dataEmissao`, etc.).
+
+**API**:
+- `POST /api/pareceres/publicar` (auth, `comissao.manage`):
+  * Modo 1: `parecerId` -> anexa PDF a parecer existente.
+  * Modo 2: `proposicaoId + comissaoId + relatorId + tipo + fundamentacao`
+    -> find-or-create via `@@unique([proposicaoId, comissaoId])`. Se nao
+    achar, cria com `status='EMITIDO'`.
+  * Audit log `PARECER_PUBLICACAO`.
+- `GET /api/pareceres/publicos` (publico, cache 60+SWR 300): pareceres
+  com `arquivoUrl NOT NULL`, com `comissao`, `relator` e `proposicao`
+  embarcados. Filtros `?comissaoId&proposicaoId&ano`.
+
+**Admin**:
+- Nova pagina `/admin/pareceres/publicar` com toggle de 2 modos
+  ("Criar parecer novo" / "Anexar a parecer existente"). Form coleta
+  vinculos (Comissao, Proposicao, Relator), conteudo (tipo,
+  fundamentacao, ementa, conclusao, numero) e arquivo.
+- Botao "Publicar Parecer" no header de `/admin/pareceres` (children do
+  PageHeader).
+
+**Publico**:
+- `/transparencia/atos/pareceres-comissoes` (slug novo, fonte
+  `parecer-comissao`).
+- Home `/transparencia` expander "Comissoes" ganhou sub-item
+  "Pareceres".
+
+**Seguranca**:
+- Folder `pareceres-publicacao` adicionado em `ALLOWED_UPLOAD_FOLDERS`.
 
 ---
 

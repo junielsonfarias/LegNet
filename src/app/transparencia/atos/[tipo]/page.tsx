@@ -58,6 +58,7 @@ type AtoTipoConfig = {
     | 'sessao-pauta'
     | 'reuniao-comissao-ata'
     | 'reuniao-comissao-pauta'
+    | 'parecer-comissao'
 }
 const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   'portarias': { codigo: 'PORTARIA', titulo: 'Portarias', descricao: 'Portarias administrativas da Câmara Municipal.' },
@@ -76,6 +77,18 @@ const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   // RN-172 — Atas e pautas de reunioes de comissao
   'atas-comissoes': { codigo: 'ATA_COMISSAO', titulo: 'Atas de Reuniões de Comissões', descricao: 'Atas das reuniões das comissões permanentes e temporárias.', fonte: 'reuniao-comissao-ata' },
   'pautas-comissoes': { codigo: 'PAUTA_COMISSAO', titulo: 'Pautas de Reuniões de Comissões', descricao: 'Pautas das reuniões das comissões permanentes e temporárias.', fonte: 'reuniao-comissao-pauta' },
+  // RN-173 — Pareceres de comissoes
+  'pareceres-comissoes': { codigo: 'PARECER_COMISSAO', titulo: 'Pareceres de Comissões', descricao: 'Pareceres técnicos emitidos pelas comissões sobre proposições.', fonte: 'parecer-comissao' },
+}
+
+const TIPO_PARECER_LABEL: Record<string, string> = {
+  FAVORAVEL: 'Favorável',
+  FAVORAVEL_COM_EMENDAS: 'Favorável com Emendas',
+  CONTRARIO: 'Contrário',
+  PELA_INCONSTITUCIONALIDADE: 'Pela Inconstitucionalidade',
+  PELA_ILEGALIDADE: 'Pela Ilegalidade',
+  PELA_PREJUDICIALIDADE: 'Pela Prejudicialidade',
+  PELA_RETIRADA: 'Pela Retirada',
 }
 
 const TIPO_REUNIAO_LABEL: Record<string, string> = {
@@ -138,6 +151,47 @@ export default function AtosTipoPage({ params }: { params: Promise<{ tipo: strin
                 url: null,
                 documentos: url ? [{ nome: 'Ata em PDF', url }] : null,
                 autorNome: 'Câmara Municipal',
+              }
+            })
+          setPublicacoes(arr)
+        } else if (tipoMap.fonte === 'parecer-comissao') {
+          // RN-173: pareceres de comissao
+          const r = await fetch(`/api/pareceres/publicos?limit=500`)
+          const j = await r.json()
+          const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
+            .map((m: any) => {
+              const url = m.arquivoUrl || null
+              const tipoLabel = TIPO_PARECER_LABEL[m.tipo] || m.tipo
+              const comissaoLabel = m.comissao?.sigla
+                ? `${m.comissao.sigla} — ${m.comissao.nome}`
+                : m.comissao?.nome || 'Comissão'
+              const propLabel = m.proposicao
+                ? `${m.proposicao.tipo} ${m.proposicao.numero}/${m.proposicao.ano}`
+                : ''
+              const relator = m.relator?.apelido || m.relator?.nome || ''
+              const numLabel = m.numero ? `Parecer ${m.numero}/${m.ano}` : `Parecer ${m.ano}`
+              const titulo = `${numLabel} — ${tipoLabel}${propLabel ? ` sobre ${propLabel}` : ''}`
+              const descricaoParts = [comissaoLabel]
+              if (relator) descricaoParts.push(`Relator: ${relator}`)
+              if (m.dataEmissao) {
+                descricaoParts.push(
+                  `Emitido em ${new Date(m.dataEmissao).toLocaleDateString('pt-BR')}`,
+                )
+              }
+              return {
+                id: m.id,
+                tipo: 'PARECER_COMISSAO',
+                titulo,
+                descricao: m.ementa || descricaoParts.join(' · '),
+                numero: m.numero ?? null,
+                ano: m.ano,
+                data: m.dataEmissao || new Date().toISOString(),
+                arquivo: url,
+                url: null,
+                documentos: url
+                  ? [{ nome: m.arquivoNome || 'Parecer em PDF', url }]
+                  : null,
+                autorNome: descricaoParts.join(' · '),
               }
             })
           setPublicacoes(arr)

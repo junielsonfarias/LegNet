@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText } from 'lucide-react'
+import { FileText, FileCheck } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/admin/page-header'
 import { EmptyState } from '@/components/admin/empty-state'
 import { usePareceres, Parecer, CreateParecerInput, UpdateParecerInput } from '@/lib/hooks/use-pareceres'
@@ -156,7 +158,14 @@ export default function PareceresAdminPage() {
         icon={FileText}
         onNewClick={() => setShowForm(true)}
         newLabel="Novo Parecer"
-      />
+      >
+        <Button variant="outline" asChild>
+          <Link href="/admin/pareceres/publicar">
+            <FileCheck className="h-4 w-4 mr-2" />
+            Publicar Parecer
+          </Link>
+        </Button>
+      </PageHeader>
 
       {/* Estatisticas */}
       <PareceresStats stats={stats} />

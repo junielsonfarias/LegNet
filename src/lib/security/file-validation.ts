@@ -49,6 +49,7 @@ export const ALLOWED_UPLOAD_FOLDERS: ReadonlySet<string> = new Set([
   'pautas-sessoes',  // RN-171 (pautas em Sessao.arquivoPauta)
   'atas-reunioes-comissao',  // RN-172 (atas em ReuniaoComissao.arquivoAta)
   'pautas-reunioes-comissao',  // RN-172 (pautas em ReuniaoComissao.arquivoPauta)
+  'pareceres-publicacao',  // RN-173 (pareceres publicados em Parecer.arquivoUrl)
   'comissoes',
   'audiencias-publicas',
   'documentos',

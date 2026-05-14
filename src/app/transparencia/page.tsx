@@ -87,6 +87,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
           { nome: 'Comissões e Membros', href: '/legislativo/comissoes' },
           { nome: 'Atas de Reuniões', href: '/transparencia/atos/atas-comissoes' },
           { nome: 'Pautas de Reuniões', href: '/transparencia/atos/pautas-comissoes' },
+          { nome: 'Pareceres', href: '/transparencia/atos/pareceres-comissoes' },
         ],
       },
       { nome: 'Perguntas Frequentes', icon: HelpCircle, href: '/institucional/sobre' },

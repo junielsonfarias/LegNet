@@ -1599,6 +1599,38 @@ REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
 - Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
   rotas alvo (`captchaId` + `captchaAnswer` no body).
 
+REGRA RN-173: PUBLICACAO DE PARECER DE COMISSAO
+- Espelha RN-170/171/172 para Parecer. Todo parecer publicado vive em
+  `Parecer.arquivoUrl` + `Parecer.dataEmissao` + `Parecer.status='EMITIDO'`.
+  Sem fonte paralela em Publicacao.
+- Schema ja tinha todos os campos prontos
+  (`arquivoUrl`, `arquivoNome`, `arquivoTamanho`, `dataEmissao`, etc.),
+  entao SEM MIGRATION necessaria nesta regra.
+- Endpoint dedicado: `POST /api/pareceres/publicar`. Dois modos:
+  1. `parecerId` informado: anexa PDF a parecer existente.
+  2. `proposicaoId + comissaoId + relatorId + tipo + fundamentacao`:
+     find-or-create via `@@unique([proposicaoId, comissaoId])`. Se nao
+     achar, cria com `status='EMITIDO'`.
+- Endpoint publico: `GET /api/pareceres/publicos` retorna pareceres com
+  `arquivoUrl NOT NULL`, com `comissao`, `relator` e `proposicao`
+  embarcados. Filtros `?comissaoId=X&proposicaoId=Y&ano=YYYY`.
+- Pagina admin: `/admin/pareceres/publicar` (form com 2 modos).
+  Botao "Publicar Parecer" no header de `/admin/pareceres` (via
+  children do PageHeader).
+- Pagina publica: `/transparencia/atos/pareceres-comissoes` (slug novo,
+  fonte `parecer-comissao`).
+- Home `/transparencia` expander "Comissoes" ganhou sub-item "Pareceres".
+- Folder upload: `pareceres-publicacao` em `ALLOWED_UPLOAD_FOLDERS`.
+- Permissoes: `comissao.manage` (ADMIN/SECRETARIA).
+- Auditoria: action `PARECER_PUBLICACAO`.
+- Implementado em: `src/app/api/pareceres/publicar/route.ts`,
+  `src/app/api/pareceres/publicos/route.ts`,
+  `src/app/admin/pareceres/publicar/page.tsx`,
+  `src/app/admin/pareceres/page.tsx` (botao no header),
+  `src/app/transparencia/atos/[tipo]/page.tsx` (slug `pareceres-comissoes`),
+  `src/app/transparencia/page.tsx` (sub-item),
+  `src/lib/security/file-validation.ts`.
+
 REGRA RN-172: PUBLICACAO DE PAUTA/ATA DE REUNIAO DE COMISSAO
 - Espelha RN-170/RN-171 (ata/pauta de Sessao plenaria) para reunioes
   de comissoes. Toda ata/pauta publicada de comissao DEVE estar
