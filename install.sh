@@ -400,6 +400,42 @@ do_update() {
     fi
   fi
 
+  # 5d) PLANO-CORRECOES-MAIO-2026 — F1.1: cpfHash em Ouvidoria + e-SIC (RN-166)
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-cpf-hash-ouvidoria-esic.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-cpf-hash-ouvidoria-esic.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-cpf-hash-ouvidoria-esic.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration F1.1 aplicada (cpfHash em Ouvidoria + e-SIC)"
+  fi
+
+  # 5e) PLANO-CORRECOES-MAIO-2026 — F3.5: 13 indices FK ausentes
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-fk-indexes-2026-05.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-fk-indexes-2026-05.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-fk-indexes-2026-05.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration F3.5 aplicada (indices FK em 8 modelos)"
+  fi
+
+  # 5f) Reaplicar ownership apos novas migrations criarem objetos
+  if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -v "db_user=${DB_USER_RUNTIME}" \
+      -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" \
+      >> "$LOG_FILE" 2>&1 || true
+  fi
+
+  # 5g) Backfill de CPF (criptografia + cpfHash) — idempotente; pula registros ja migrados
+  # Cobre Servidor (Fase 1 Q2), ManifestacaoOuvidoria e SolicitacaoESIC (F1.1 Maio/26).
+  if [ -f "${INSTALL_DIR}/scripts/backfill-cpf-encryption.ts" ]; then
+    info "Rodando backfill de CPF (criptografia + cpfHash)..."
+    if ! npx tsx scripts/backfill-cpf-encryption.ts >> "$LOG_FILE" 2>&1; then
+      warn "backfill-cpf-encryption.ts retornou erro - verifique $LOG_FILE"
+      warn "Comando manual: cd ${INSTALL_DIR} && npx tsx scripts/backfill-cpf-encryption.ts --dry-run"
+    else
+      log "Backfill de CPF concluido (idempotente)"
+    fi
+  fi
+
   # Aplicar identidade visual se solicitado
   if [ "$UPDATE_THEME" = true ]; then
     info "Aplicando nova identidade visual..."
