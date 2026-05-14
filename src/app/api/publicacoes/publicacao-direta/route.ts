@@ -22,9 +22,12 @@ import { withAuth } from '@/lib/auth/permissions'
 import {
   withErrorHandler,
   createSuccessResponse,
+  ConflictError,
 } from '@/lib/error-handler'
+import { prisma } from '@/lib/prisma'
 import { publicacoesService } from '@/lib/publicacoes-service'
 import { logAudit } from '@/lib/audit'
+import type { TipoPublicacao } from '@prisma/client'
 
 // Tipos administrativos suportados pela Publicacao Direta (RN-169).
 // Lista controlada (subset do enum TipoPublicacao) para evitar mistura
@@ -75,6 +78,29 @@ export const POST = withAuth(
     const userName = (session.user as { name?: string; email?: string })?.name
       || (session.user as { email?: string })?.email
       || 'Administrador'
+
+    // RN-169: anti-duplicidade. Quando `numero` eh fornecido, (tipo, numero, ano)
+    // deve ser unico — evita cadastrar a mesma Portaria 5/2026 duas vezes.
+    // Quando numero eh ausente (Comunicado/Agenda/etc sem numeracao), pula o
+    // check para permitir multiplos lancamentos no mesmo dia/tipo.
+    if (data.numero) {
+      const anoEfetivo = data.ano ?? new Date(data.data).getFullYear()
+      const duplicata = await prisma.publicacao.findFirst({
+        where: {
+          tipo: data.tipo as TipoPublicacao,
+          numero: data.numero,
+          ano: anoEfetivo,
+        },
+        select: { id: true, titulo: true },
+      })
+      if (duplicata) {
+        throw new ConflictError(
+          `Ja existe publicacao ${data.tipo} numero ${data.numero}/${anoEfetivo} ` +
+          `(id=${duplicata.id}, "${duplicata.titulo}"). ` +
+          `Edite a existente em vez de duplicar.`,
+        )
+      }
+    }
 
     const publicacao = await publicacoesService.create({
       titulo: data.titulo,

@@ -30,6 +30,10 @@ reaproveitando o modelo Publicacao existente.
 - `POST /api/publicacoes/publicacao-direta` — formulario enxuto, aceita
   apenas tipos administrativos via Zod (lista controlada). Publica direto
   (`publicada: true`). Permissoes `publicacao.manage`.
+- Anti-duplicidade: quando `numero` eh fornecido, valida que nao exista
+  outra Publicacao com mesmo (tipo, numero, ano) e retorna 409 com
+  mensagem clara. Quando `numero` esta ausente (Comunicado/Agenda sem
+  numeracao), permite multiplos lancamentos no mesmo dia.
 - Audit log `PUBLICACAO_DIRETA_CREATE`.
 
 **Service**:
