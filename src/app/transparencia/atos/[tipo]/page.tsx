@@ -52,14 +52,14 @@ type AtoTipoConfig = {
   codigo: string
   titulo: string
   descricao: string
-  fonte?: 'publicacao' | 'sessao-ata'
+  fonte?: 'publicacao' | 'sessao-ata' | 'sessao-pauta'
 }
 const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   'portarias': { codigo: 'PORTARIA', titulo: 'Portarias', descricao: 'Portarias administrativas da Câmara Municipal.' },
   'decretos': { codigo: 'DECRETO', titulo: 'Decretos Legislativos', descricao: 'Decretos legislativos publicados.' },
   'resolucoes': { codigo: 'RESOLUCAO', titulo: 'Resoluções', descricao: 'Resoluções da Mesa Diretora e do Plenário.' },
   'atas': { codigo: 'ATA_SESSAO', titulo: 'Atas de Sessão', descricao: 'Atas das sessões plenárias publicadas pela Câmara.', fonte: 'sessao-ata' },
-  'pautas': { codigo: 'PAUTA_SESSAO', titulo: 'Pautas de Sessão', descricao: 'Pautas das sessões plenárias publicadas avulsamente.' },
+  'pautas': { codigo: 'PAUTA_SESSAO', titulo: 'Pautas de Sessão', descricao: 'Pautas das sessões plenárias publicadas pela Câmara.', fonte: 'sessao-pauta' },
   'atos-mesa': { codigo: 'ATO_MESA', titulo: 'Atos da Mesa Diretora', descricao: 'Atos normativos expedidos pela Mesa Diretora.' },
   'atos-presidencia': { codigo: 'ATO_PRESIDENCIA', titulo: 'Atos da Presidência', descricao: 'Atos expedidos pela Presidência da Câmara.' },
   'oficios': { codigo: 'OFICIO', titulo: 'Ofícios', descricao: 'Ofícios expedidos pela Câmara Municipal.' },
@@ -123,6 +123,34 @@ export default function AtosTipoPage({ params }: { params: Promise<{ tipo: strin
                 arquivo: url,
                 url: null,
                 documentos: url ? [{ nome: 'Ata em PDF', url }] : null,
+                autorNome: 'Câmara Municipal',
+              }
+            })
+          setPublicacoes(arr)
+        } else if (tipoMap.fonte === 'sessao-pauta') {
+          // RN-171: pautas vivem em Sessao.arquivoPauta + PautaSessao.dataPublicacao
+          const r = await fetch(`/api/sessoes/pautas-publicadas?limit=500`)
+          const j = await r.json()
+          const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
+            .map((s: any) => {
+              const dataObj = new Date(s.data)
+              const ano = dataObj.getUTCFullYear()
+              const tipoLabel = TIPO_SESSAO_LABEL[s.tipo] || s.tipo
+              const url = s.arquivoPauta || null
+              const dataPub = s.pautaSessao?.dataPublicacao
+              return {
+                id: s.id,
+                tipo: 'PAUTA_SESSAO',
+                titulo: `Pauta da ${s.numero}ª Sessão ${tipoLabel}`,
+                descricao: dataPub
+                  ? `Publicada em ${new Date(dataPub).toLocaleDateString('pt-BR')}`
+                  : null,
+                numero: String(s.numero),
+                ano,
+                data: s.data,
+                arquivo: url,
+                url: null,
+                documentos: url ? [{ nome: 'Pauta em PDF', url }] : null,
                 autorNome: 'Câmara Municipal',
               }
             })

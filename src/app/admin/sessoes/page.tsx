@@ -249,6 +249,12 @@ export default function SessoesAdminPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild className="flex items-center gap-2">
+            <Link href="/admin/sessoes/publicar-pauta">
+              <FileCheck className="h-4 w-4" />
+              Publicar Pauta
+            </Link>
+          </Button>
+          <Button variant="outline" asChild className="flex items-center gap-2">
             <Link href="/admin/sessoes/publicar-ata">
               <FileCheck className="h-4 w-4" />
               Publicar Ata

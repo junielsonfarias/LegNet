@@ -1,10 +1,46 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (RN-170 — Publicacao de Ata de Sessao com vinculo obrigatorio)
-> **Versao**: 1.17.0
+> **Ultima Atualizacao**: 2026-05-14 (RN-171 — Publicacao de Pauta de Sessao com vinculo obrigatorio)
+> **Versao**: 1.18.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — RN-171: Publicacao de Pauta de Sessao com vinculo obrigatorio
+
+Espelha o RN-170 (Ata) para Pauta. Mesma decisao arquitetural: pauta vive
+em `Sessao.arquivoPauta` + `PautaSessao.dataPublicacao`, sem `Publicacao`
+paralela. Vinculo Pauta <-> Sessao eh inviolavel por construcao.
+
+**API novo**:
+- `POST /api/sessoes/publicar-pauta` (auth, `sessao.manage`):
+  * Modo 1: `sessaoId` -> anexa pauta em sessao existente.
+  * Modo 2: `numero + tipo + data` -> find-or-create. Se nao achar
+    Sessao com (numero, tipo, ano da data), cria via
+    `sessaoDbService.create` com `finalizada=true, status=CONCLUIDA`.
+  * Atualiza `Sessao.arquivoPauta` + `PautaSessao.dataPublicacao` +
+    `PautaSessao.status='APROVADA'` numa transacao.
+  * Para sessoes legadas sem `PautaSessao`, cria on-demand.
+  * Audit log `SESSAO_PAUTA_PUBLICACAO` com flag `sessaoCriada`.
+- `GET /api/sessoes/pautas-publicadas` (publico, cache 60s+SWR 300s):
+  retorna sessoes onde `arquivoPauta IS NOT NULL` (inclui
+  `pautaSessao.dataPublicacao` no payload). Filtro opcional `?ano=YYYY`.
+
+**Admin**:
+- Nova pagina `/admin/sessoes/publicar-pauta` (clone adaptado da pagina
+  de Ata). Upload PDF (folder=`pautas-sessoes`).
+- Botao "Publicar Pauta" adicionado ao header de `/admin/sessoes`.
+
+**Publico**:
+- `/transparencia/atos/pautas` agora consome `/api/sessoes/pautas-publicadas`
+  em vez de `/api/publicacoes`. URL publica preservada.
+
+**Limpeza**:
+- `PAUTA_SESSAO` removida de `TIPOS_ADMINISTRATIVOS` do publicacao-direta
+  (route + form). Valor permanece no enum por idempotencia.
+- Folder `pautas-sessoes` adicionado em `ALLOWED_UPLOAD_FOLDERS`.
 
 ---
 

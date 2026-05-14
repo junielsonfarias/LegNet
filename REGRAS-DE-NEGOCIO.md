@@ -1599,6 +1599,35 @@ REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
 - Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
   rotas alvo (`captchaId` + `captchaAnswer` no body).
 
+REGRA RN-171: PUBLICACAO DE PAUTA DE SESSAO COM VINCULO OBRIGATORIO
+- Espelha RN-170, mas para Pauta. Toda pauta publicada DEVE estar
+  vinculada a uma `Sessao`.
+- Armazenamento: `Sessao.arquivoPauta` (URL do PDF) +
+  `PautaSessao.dataPublicacao` + `PautaSessao.status='APROVADA'`. NAO
+  usa o modelo `Publicacao`.
+- Endpoint dedicado: `POST /api/sessoes/publicar-pauta`. Dois modos:
+  1. `sessaoId` informado: anexa a pauta a sessao existente.
+  2. `numero + tipo + data` informados: find-or-create. Se nao existir
+     sessao com esses dados, cria automaticamente com `status=CONCLUIDA`
+     e `finalizada=true`. O `sessaoDbService.create` ja cria uma
+     `PautaSessao` placeholder; aqui apenas atualizamos.
+- Para sessoes legadas sem `PautaSessao`, o endpoint cria a Pauta
+  on-demand com `geradaAutomaticamente=false`.
+- Endpoint publico: `GET /api/sessoes/pautas-publicadas` retorna sessoes
+  cujo `arquivoPauta` esta preenchido (inclui `pautaSessao.dataPublicacao`).
+- Pagina admin: `/admin/sessoes/publicar-pauta` (form com toggle entre
+  modo "existente" e modo "criar").
+- Pagina publica: `/transparencia/atos/pautas` lista pautas vindas de
+  Sessao (slug existente reaproveitado).
+- PAUTA_SESSAO (do enum TipoPublicacao) foi REMOVIDA do fluxo
+  `/admin/publicacoes/publicacao-direta` para evitar duplicidade. O
+  valor permanece no enum por idempotencia da migration RN-169.
+- Permissoes: `sessao.manage` (ADMIN ou SECRETARIA).
+- Implementado em: `src/app/api/sessoes/publicar-pauta/route.ts`,
+  `src/app/api/sessoes/pautas-publicadas/route.ts`,
+  `src/app/admin/sessoes/publicar-pauta/page.tsx`,
+  `src/app/transparencia/atos/[tipo]/page.tsx` (slug `pautas`).
+
 REGRA RN-170: PUBLICACAO DE ATA DE SESSAO COM VINCULO OBRIGATORIO
 - Toda ata publicada DEVE estar vinculada a uma `Sessao`. Sem excecao.
 - Armazenamento: `Sessao.arquivoAtaAssinada` (PDF) +
