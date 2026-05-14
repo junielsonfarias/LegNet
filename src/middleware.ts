@@ -203,39 +203,64 @@ export async function middleware(request: NextRequest) {
   }
 
   // Content-Security-Policy - Previne XSS e injeção de código
-  // Configuração permissiva para Next.js mas ainda segura
-  const cspDirectives = [
+  //
+  // F2.7 (PLANO-CORRECOES-MAIO-2026): roll-out gradual para remover
+  // `script-src 'unsafe-inline'`. Estrategia:
+  //
+  // 1. Sempre envia `Content-Security-Policy` (enforcing) com `'unsafe-inline'`
+  //    — politica atual, nao quebra Next.js.
+  // 2. Adicionalmente envia `Content-Security-Policy-Report-Only` SEM
+  //    `'unsafe-inline'` para mapear o que esta inline. Browser nao bloqueia,
+  //    apenas reporta no console — usado para validar antes de enforce.
+  // 3. Quando `CSP_STRICT_ENFORCE=true`, troca enforcing para a versao
+  //    estrita (sem unsafe-inline). Roll-out controlado.
+  //
+  // Pre-requisitos para passar de step 2 para step 3:
+  //  - VLibras (script externo) liberado por host (https://vlibras.gov.br)
+  //  - Scripts inline de Next.js (hydration) precisam de nonce — ver
+  //    documentacao Next 15 sobre nonce em middleware + Script component.
+
+  const cspStrictEnforce = process.env.CSP_STRICT_ENFORCE === 'true'
+  const upgradeInsecureDirective: string[] =
+    process.env.NODE_ENV === 'production' && siteUrl.startsWith('https://')
+      ? ['upgrade-insecure-requests']
+      : []
+
+  const baseDirectives = [
     "default-src 'self'",
-    // Scripts: self + inline (necessário para Next.js hydration) + unsafe-eval apenas em dev (React Refresh)
-    // VLibras (Lei 13.146/2015 art. 63 §I): vlibras.gov.br/app
-    `script-src 'self' 'unsafe-inline' https://vlibras.gov.br${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
-    // script-src-elem (explicito para evitar fallback ambiguo em alguns navegadores)
-    `script-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br`,
-    // Estilos: self + inline (necessário para Tailwind e componentes)
-    "style-src 'self' 'unsafe-inline' https://vlibras.gov.br",
-    // style-src-elem (explicito)
-    "style-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br",
-    // Imagens: self + data URIs + HTTPS (para imagens externas)
     "img-src 'self' data: https: blob:",
-    // Fonts: self + data URIs
     "font-src 'self' data: https://vlibras.gov.br",
-    // Conexões: self + Supabase + WebSockets + VLibras
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.resend.com https://vlibras.gov.br",
-    // Frames: self + YouTube/Vimeo (transmissoes) + VLibras
     "frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://vlibras.gov.br",
-    // Base URI: apenas self
     "base-uri 'self'",
-    // Form actions: apenas self
     "form-action 'self'",
-    // Frame ancestors: apenas self (equivalente ao X-Frame-Options)
     "frame-ancestors 'self'",
-    // Object sources: nenhum (previne plugins)
     "object-src 'none'",
-    // Upgrade insecure requests apenas quando rodando em HTTPS
-    ...(process.env.NODE_ENV === 'production' && siteUrl.startsWith('https://') ? ['upgrade-insecure-requests'] : [])
+    ...upgradeInsecureDirective,
   ]
 
-  response.headers.set('Content-Security-Policy', cspDirectives.join('; '))
+  const stylesPermissive = [
+    "style-src 'self' 'unsafe-inline' https://vlibras.gov.br",
+    "style-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br",
+  ]
+  const scriptsPermissive = [
+    `script-src 'self' 'unsafe-inline' https://vlibras.gov.br${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+    "script-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br",
+  ]
+  // Estrita: sem unsafe-inline em scripts (mantemos em styles porque Tailwind
+  // gera inline styles em runtime — quebrar style-src inviabilizaria o portal).
+  const scriptsStrict = [
+    `script-src 'self' https://vlibras.gov.br${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+    "script-src-elem 'self' https://vlibras.gov.br",
+  ]
+
+  const enforcingDirectives = [...baseDirectives, ...stylesPermissive, ...(cspStrictEnforce ? scriptsStrict : scriptsPermissive)]
+  response.headers.set('Content-Security-Policy', enforcingDirectives.join('; '))
+
+  if (!cspStrictEnforce) {
+    const reportOnlyDirectives = [...baseDirectives, ...stylesPermissive, ...scriptsStrict]
+    response.headers.set('Content-Security-Policy-Report-Only', reportOnlyDirectives.join('; '))
+  }
 
   return response
 }

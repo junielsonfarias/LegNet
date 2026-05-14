@@ -4,14 +4,14 @@ import { existsSync } from 'fs'
 import path from 'path'
 import { withAuth } from '@/lib/auth/permissions'
 import { generateSecureShortId } from '@/lib/utils/secure-id'
+import {
+  ALL_ALLOWED_MIME,
+  detectMimeFromBytes,
+  safeUploadFolder,
+} from '@/lib/security/file-validation'
 
 // Configurar para renderizacao dinamica
 export const dynamic = 'force-dynamic'
-
-// Tipos de arquivos permitidos
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-const ALLOWED_DOCUMENT_TYPES = ['application/pdf']
-const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOCUMENT_TYPES]
 
 // Tamanho maximo: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -19,7 +19,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024
 export const POST = withAuth(async (request: NextRequest) => {
   const formData = await request.formData()
   const file = formData.get('file') as File | null
-  const folder = (formData.get('folder') as string) || 'uploads'
+  // F2.4 — allowlist de pastas (rejeita strings desconhecidas com fallback)
+  const folder = safeUploadFolder(formData.get('folder') as string | null)
 
   if (!file) {
     return NextResponse.json(
@@ -28,15 +29,15 @@ export const POST = withAuth(async (request: NextRequest) => {
     )
   }
 
-  // Validar tipo de arquivo
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  // 1. Validar MIME declarado pelo cliente (filtro inicial)
+  if (!ALL_ALLOWED_MIME.has(file.type)) {
     return NextResponse.json(
       { success: false, error: 'Tipo de arquivo nao permitido. Use JPEG, PNG, GIF, WebP ou PDF.' },
       { status: 400 }
     )
   }
 
-  // Validar tamanho
+  // 2. Validar tamanho
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json(
       { success: false, error: 'Arquivo muito grande. Tamanho maximo: 10MB' },
@@ -44,34 +45,45 @@ export const POST = withAuth(async (request: NextRequest) => {
     )
   }
 
-  // Criar nome unico para o arquivo
-  // SEGURANÇA: Usa crypto em vez de Math.random() para nome de arquivo
+  // 3. Ler bytes para validacao via magic bytes (F2.4)
+  const bytes = await file.arrayBuffer()
+  const buffer = Buffer.from(bytes)
+  const detectedType = detectMimeFromBytes(buffer)
+
+  if (!detectedType) {
+    return NextResponse.json(
+      { success: false, error: 'Arquivo invalido: conteudo nao corresponde a JPEG, PNG, GIF, WebP ou PDF.' },
+      { status: 400 }
+    )
+  }
+
+  // 4. MIME declarado x detectado precisam casar — rejeita PNG renomeado para .pdf etc
+  if (file.type !== detectedType) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Conteudo do arquivo (${detectedType}) nao corresponde ao tipo declarado (${file.type}).`,
+      },
+      { status: 400 }
+    )
+  }
+
+  // 5. Nome unico e seguro
   const timestamp = Date.now()
   const randomSuffix = generateSecureShortId()
   const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
   const fileName = `${timestamp}-${randomSuffix}-${originalName}`
 
-  // Sanitizar folder para evitar path traversal
-  const safeFolder = folder.replace(/[^a-zA-Z0-9-_]/g, '')
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads', folder)
 
-  // Diretorio de upload
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', safeFolder)
-
-  // Criar diretorio se nao existir
   if (!existsSync(uploadDir)) {
     await mkdir(uploadDir, { recursive: true })
   }
 
-  // Caminho completo do arquivo
   const filePath = path.join(uploadDir, fileName)
-
-  // Converter File para Buffer e salvar
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
   await writeFile(filePath, buffer)
 
-  // URL publica do arquivo
-  const url = `/uploads/${safeFolder}/${fileName}`
+  const url = `/uploads/${folder}/${fileName}`
 
   return NextResponse.json({
     success: true,
@@ -79,6 +91,6 @@ export const POST = withAuth(async (request: NextRequest) => {
     fileName,
     originalName: file.name,
     size: file.size,
-    type: file.type
+    type: detectedType,
   })
 }, { permissions: 'upload.manage' })

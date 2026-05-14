@@ -11,42 +11,18 @@ import { prisma } from '@/lib/prisma'
 import { createHash } from 'crypto'
 import bcrypt from 'bcryptjs'
 import { createLogger } from '@/lib/logging/logger'
+import { allowRequest } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const logger = createLogger('reset-password')
 
-// Rate limiting para prevenir brute force de tokens
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+// F2.6 — rate limit central (Upstash-aware) — antes usava Map por lambda.
 const RATE_LIMIT_MAX = 5 // 5 tentativas
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000 // 15 minutos
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000 // 15 minutos
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const record = rateLimitMap.get(ip)
-
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
-    return true
-  }
-
-  if (record.count >= RATE_LIMIT_MAX) {
-    return false
-  }
-
-  record.count++
-  return true
+async function checkRateLimit(ip: string): Promise<boolean> {
+  return allowRequest(`reset-password:${ip}`, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS)
 }
-
-// Limpar entradas expiradas periodicamente
-setInterval(() => {
-  const now = Date.now()
-  const entries = Array.from(rateLimitMap.entries())
-  for (const [key, record] of entries) {
-    if (now > record.resetAt) {
-      rateLimitMap.delete(key)
-    }
-  }
-}, 60000)
 
 // Schema de validação
 const resetPasswordSchema = z.object({
@@ -72,7 +48,7 @@ export async function POST(request: NextRequest) {
                'unknown'
 
     // Verificar rate limit
-    if (!checkRateLimit(ip)) {
+    if (!(await checkRateLimit(ip))) {
       logger.warn('Rate limit excedido para reset-password', {
         action: 'reset_password_rate_limited',
         ip

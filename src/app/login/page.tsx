@@ -21,6 +21,7 @@ import {
   EyeOff
 } from 'lucide-react'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { safeRedirect } from '@/lib/security/safe-redirect'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -32,7 +33,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/admin'
+  // F2.2 — bloqueia open redirect via callbackUrl externo
+  const callbackUrl = safeRedirect(searchParams.get('callbackUrl'))
   const { configuracao } = useConfiguracaoInstitucional()
 
   const nomeCasa = configuracao.nomeCasa || 'Câmara Municipal'

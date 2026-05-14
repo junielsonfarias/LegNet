@@ -11,6 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import {
   processarSancaoTacita,
   gerarNotificacoesPrazo,
@@ -35,7 +36,12 @@ function autorizar(request: NextRequest): boolean {
   }
   const header = request.headers.get('authorization') || ''
   const token = header.startsWith('Bearer ') ? header.slice(7) : header
-  return token === secret
+  // F2.3 — timing-safe compare (evita oracle por tempo de resposta).
+  // timingSafeEqual exige buffers de mesmo tamanho; checamos length antes.
+  const a = Buffer.from(token)
+  const b = Buffer.from(secret)
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
 }
 
 async function handler(request: NextRequest) {

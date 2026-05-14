@@ -80,9 +80,17 @@ export function getEnv(): EnvConfig {
 
     log.error('Variaveis de ambiente invalidas', undefined, { problems: errors.join('; ') })
 
-    // Em producao, nao inicia a aplicacao com configuracao invalida
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Configuracao de ambiente invalida. Verifique os logs.')
+    // F2.1 (PLANO-CORRECOES-MAIO-2026): fail-fast em qualquer ambiente que nao
+    // seja `development` puro. Antes, qualquer NODE_ENV != 'production' entrava
+    // no branch permissivo (gerando NEXTAUTH_SECRET random a cada boot), o que
+    // mascarava configuracoes ausentes em test/staging/preview e quebrava
+    // sessoes a cada restart. Agora so dev passa.
+    const nodeEnv = process.env.NODE_ENV
+    if (nodeEnv !== 'development') {
+      throw new Error(
+        `Configuracao de ambiente invalida (NODE_ENV=${nodeEnv ?? 'undefined'}). ` +
+        `Apenas 'development' permite fallback. Verifique os logs.`
+      )
     }
 
     // Em desenvolvimento, apenas avisa mas continua (para permitir desenvolvimento)
@@ -102,7 +110,7 @@ export function getEnv(): EnvConfig {
       NEXTAUTH_SECRET: devSecret,
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
       DATABASE_URL: process.env.DATABASE_URL || '',
-      NODE_ENV: (process.env.NODE_ENV as 'development' | 'production' | 'test') || 'development',
+      NODE_ENV: 'development',
     } as EnvConfig
 
     return _validatedEnv

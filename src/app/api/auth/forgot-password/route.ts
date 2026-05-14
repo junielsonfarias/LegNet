@@ -11,6 +11,7 @@ import { prisma } from '@/lib/prisma'
 import { createHash, randomBytes } from 'crypto'
 import { sendPasswordResetEmail } from '@/lib/services/email-service'
 import { createLogger } from '@/lib/logging/logger'
+import { allowRequest } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 const logger = createLogger('forgot-password')
@@ -20,27 +21,14 @@ const forgotPasswordSchema = z.object({
   email: z.string().email('Email inválido')
 })
 
-// Rate limiting simples (em produção, usar Redis)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+// F2.6 — rate limit central via allowRequest (Upstash quando disponivel,
+// memory fallback caso contrario). Antes usava Map local que nao escala
+// entre lambdas em Vercel.
 const RATE_LIMIT_MAX = 3
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hora
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000 // 1 hora
 
-function checkRateLimit(email: string): boolean {
-  const now = Date.now()
-  const key = email.toLowerCase()
-  const record = rateLimitMap.get(key)
-
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
-    return true
-  }
-
-  if (record.count >= RATE_LIMIT_MAX) {
-    return false
-  }
-
-  record.count++
-  return true
+async function checkRateLimit(email: string): Promise<boolean> {
+  return allowRequest(`forgot-password:${email.toLowerCase()}`, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS)
 }
 
 // Gerar token seguro
@@ -71,7 +59,7 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = email.toLowerCase().trim()
 
     // Verificar rate limit
-    if (!checkRateLimit(normalizedEmail)) {
+    if (!(await checkRateLimit(normalizedEmail))) {
       logger.warn('Rate limit excedido para forgot-password', {
         action: 'rate_limit_exceeded',
         email: normalizedEmail
