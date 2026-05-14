@@ -1599,6 +1599,31 @@ REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
 - Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
   rotas alvo (`captchaId` + `captchaAnswer` no body).
 
+REGRA RN-168: PUBLICACAO DIRETA DE PROPOSICOES (entrada retroativa)
+- Permite registrar proposicoes JA com o resultado final, sem passar pelo
+  fluxo de tramitacao automatica. Caso de uso principal: importacao de
+  dados historicos OU tramitacao feita fora do sistema.
+- `Proposicao.entradaRetroativa = true` + `status = APROVADA|REJEITADA` +
+  `motivoRetroativo` (auditoria obrigatoria).
+- Endpoint dedicado `POST /api/proposicoes/publicacao-direta`.
+- Votos individuais sao OPCIONAIS. Quando ausentes, totais agregados sao
+  suficientes. Quando fornecidos, sao criados em `Votacao[]` (turno=1).
+- Sessao de votacao eh OPCIONAL:
+  - Com FK existente: cria `VotacaoAgrupada` (turno=1) com totais e
+    `observacoes` para o texto livre.
+  - Sem FK: texto livre vai concatenado em `Proposicao.motivoRetroativo`
+    no formato `[Sessao: <texto>] <motivo>`. NAO cria Sessao fantasma.
+- Documentos: array `[{nome, url}]` em `Proposicao.documentos` (JSONB).
+  Campo legado `Proposicao.urlDocumento` mantido para compatibilidade.
+  Leitura: `documentos ?? [{nome:'Documento', url: urlDocumento}]`.
+- Permissoes: `ADMIN` ou `SECRETARIA` (mesma restricao da entrada retroativa
+  por sessao em `proposicao-retroativa/route.ts`).
+- NAO dispara tramitacao automatica nem cria `PautaItem`.
+- Implementado em: `src/app/api/proposicoes/publicacao-direta/route.ts`,
+  `src/app/admin/proposicoes/publicacao-direta/page.tsx`,
+  `scripts/sql/add-proposicao-documentos.sql` (campo `documentos` em
+  `proposicoes`).
+
 ---
 
 > **FIM DO DOCUMENTO DE REGRAS DE NEGOCIO**

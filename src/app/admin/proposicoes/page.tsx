@@ -4,8 +4,9 @@ import { createLogger } from '@/lib/logging/logger'
 const log = createLogger('admin/proposicoes')
 
 import { Suspense, useMemo } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FileText, Plus, ChevronLeft, ChevronRight, FileCheck } from 'lucide-react'
 import { ProposicoesListSkeleton } from '@/components/skeletons/proposicao-skeleton'
 import { useProposicoesState } from './_hooks/use-proposicoes-state'
 import { useProposicoesPagination } from './_hooks/use-proposicoes-pagination'
@@ -192,10 +193,18 @@ function ProposicoesContent() {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Proposições</h1>
           <p className="text-gray-600 mt-1">Gerencie as proposições legislativas</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Proposição
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/proposicoes/publicacao-direta">
+              <FileCheck className="h-4 w-4 mr-2" />
+              Publicação Direta
+            </Link>
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Proposição
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}

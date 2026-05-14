@@ -4,7 +4,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import type { StatusProposicao, ResultadoVotacao } from '@prisma/client'
+import { Prisma, type StatusProposicao, type ResultadoVotacao } from '@prisma/client'
 import { isSlugProposicao, parseSlugProposicao, gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 import { ValidationError } from '@/lib/error-handler'
 
@@ -28,11 +28,17 @@ const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
   'RETIRADA': ['ARQUIVADA'],
 }
 
+export interface ProposicaoDocumento {
+  nome: string
+  url: string
+}
+
 export interface ProposicaoListFilters {
   status?: string
   tipo?: string
   autorId?: string
   ano?: number
+  entradaRetroativa?: boolean  // RN-168: filtrar publicacao direta vs modo completo
 }
 
 export interface ProposicaoCreateData {
@@ -44,13 +50,17 @@ export interface ProposicaoCreateData {
   ementa: string
   texto?: string | null
   urlDocumento?: string | null
+  documentos?: ProposicaoDocumento[] | null  // RN-168
   status: string
   dataApresentacao: Date
   dataVotacao?: Date | null
   resultado?: string | null
   sessaoId?: string | null
+  sessaoVotacaoId?: string | null  // usado pelo modo publicacao direta
   autorId: string
   regime?: string
+  entradaRetroativa?: boolean  // RN-168
+  motivoRetroativo?: string | null  // RN-168
 }
 
 export interface ProposicaoUpdateData {
@@ -62,6 +72,7 @@ export interface ProposicaoUpdateData {
   ementa?: string
   texto?: string
   urlDocumento?: string | null
+  documentos?: ProposicaoDocumento[] | null  // RN-168
   status?: string
   dataApresentacao?: Date
   dataVotacao?: Date | null
@@ -97,6 +108,7 @@ export const proposicaoDbService = {
     if (filters.tipo) where.tipo = filters.tipo
     if (filters.autorId) where.autorId = filters.autorId
     if (filters.ano) where.ano = filters.ano
+    if (filters.entradaRetroativa !== undefined) where.entradaRetroativa = filters.entradaRetroativa
 
     const [proposicoes, total] = await Promise.all([
       prisma.proposicao.findMany({
@@ -267,13 +279,19 @@ export const proposicaoDbService = {
         ementa: data.ementa,
         texto: data.texto || null,
         urlDocumento: data.urlDocumento || null,
+        documentos: data.documentos && data.documentos.length > 0
+          ? (data.documentos as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
         status: (data.status || 'APRESENTADA') as StatusProposicao,
         dataApresentacao: data.dataApresentacao,
         dataVotacao: data.dataVotacao || null,
         resultado: (data.resultado || null) as ResultadoVotacao | null,
         sessaoId: data.sessaoId || null,
+        sessaoVotacaoId: data.sessaoVotacaoId || null,
         autorId: data.autorId,
-        regime: data.regime || 'NORMAL'
+        regime: data.regime || 'NORMAL',
+        entradaRetroativa: data.entradaRetroativa ?? false,
+        motivoRetroativo: data.motivoRetroativo ?? null
       },
       include: {
         autor: {
@@ -313,6 +331,11 @@ export const proposicaoDbService = {
     if (data.ementa !== undefined) updateFields.ementa = data.ementa
     if (data.texto !== undefined) updateFields.texto = data.texto
     if (data.urlDocumento !== undefined) updateFields.urlDocumento = data.urlDocumento
+    if (data.documentos !== undefined) {
+      updateFields.documentos = data.documentos && data.documentos.length > 0
+        ? (data.documentos as unknown as Prisma.InputJsonValue)
+        : Prisma.JsonNull
+    }
     if (data.status !== undefined) updateFields.status = data.status as StatusProposicao
     if (data.dataApresentacao !== undefined) updateFields.dataApresentacao = data.dataApresentacao
     if (data.dataVotacao !== undefined) updateFields.dataVotacao = data.dataVotacao

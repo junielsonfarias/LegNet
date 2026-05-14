@@ -1,10 +1,64 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (Fases 1, 2, 3 e 4 do PLANO-CORRECOES-MAIO-2026 — PLANO CONCLUIDO)
-> **Versao**: 1.14.5
+> **Ultima Atualizacao**: 2026-05-14 (RN-168 — Publicacao Direta de Proposicoes)
+> **Versao**: 1.15.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — RN-168: Publicacao Direta de Proposicoes (modo simplificado)
+
+Novo modo coexistente com o modulo Completo (tramitacao automatica + painel
+eletronico). Permite cadastrar proposicoes ja com resultado final, sem fluxo
+de tramitacao. Caso de uso principal: digitalizacao de dados historicos e
+paridade com portais de transparencia mais simples como CR2.
+
+**Schema**:
+- Adicionado `Proposicao.documentos Json?` para multiplos anexos (espelho
+  do padrao usado em `CotaParlamentar`). `urlDocumento` mantido para
+  compatibilidade.
+- Migration idempotente: `scripts/sql/add-proposicao-documentos.sql`
+  aplicada via `prisma db execute` no Supabase.
+
+**API novo**:
+- `POST /api/proposicoes/publicacao-direta` (`src/app/api/proposicoes/
+  publicacao-direta/route.ts`). Permissoes: ADMIN ou SECRETARIA.
+- NAO dispara tramitacao automatica. NAO cria `PautaItem`.
+- Cria `Proposicao` com `entradaRetroativa=true`, status final
+  (APROVADA/REJEITADA), e opcionalmente `VotacaoAgrupada` + `Votacao[]`.
+- Suporta sessao via FK existente OU texto livre (vai para
+  `motivoRetroativo` formatado).
+- Endpoint atual `POST /api/proposicoes` (modo completo) intacto.
+
+**API ajustes**:
+- `GET /api/proposicoes` agora aceita filtro `?entradaRetroativa=true|false`.
+- `proposicao-db-service.ts`: `documentos` em create/update via
+  `Prisma.JsonNull` quando vazio.
+
+**Admin**:
+- Nova pagina `/admin/proposicoes/publicacao-direta` com formulario em 5
+  secoes (Identificacao, Conteudo, Votacao, Documentos, Votos).
+- Toggle "Registrar votos individuais": expande lista de parlamentares
+  com radio SIM/NAO/ABSTENCAO/AUSENTE.
+- Botao "Publicacao Direta" adicionado ao header de `/admin/proposicoes`.
+
+**Publico**:
+- `/legislativo/proposicoes/[id]` agora renderiza `documentos[]` com
+  fallback para `urlDocumento` legado.
+- Badge ambar "Publicacao Direta" no hero quando `entradaRetroativa=true`
+  (tooltip mostra o `motivoRetroativo`).
+
+**Seguranca**:
+- Folder allowlist: `proposicoes-publicacao-direta` adicionado em
+  `src/lib/security/file-validation.ts`.
+
+**Audit**:
+- `logAudit('PROPOSICAO_PUBLICACAO_DIRETA_CREATE')` com metadata completa.
+
+**Install.sh**:
+- Etapa 5h aplica a migration automaticamente em `do_update`.
 
 ---
 

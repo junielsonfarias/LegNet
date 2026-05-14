@@ -151,6 +151,15 @@ export default function ProposicaoDetalhePage() {
   const isLocalPdf = docUrl && isPdfUrl(docUrl) && docUrl.startsWith('/uploads/')
   const isExternalUrl = docUrl && !docUrl.startsWith('/uploads/')
 
+  // RN-168: multiplos documentos via JSON; fallback para urlDocumento legado
+  const documentos: Array<{ nome: string; url: string }> = Array.isArray((proposicao as any).documentos)
+    ? (proposicao as any).documentos
+    : []
+  if (documentos.length === 0 && docUrl) {
+    documentos.push({ nome: 'Documento', url: docUrl })
+  }
+  const ehPublicacaoDireta = Boolean((proposicao as any).entradaRetroativa)
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header com fundo colorido */}
@@ -179,6 +188,11 @@ export default function ProposicaoDetalhePage() {
                 Resultado: {proposicao.resultado === 'APROVADA' ? 'Aprovada' :
                   proposicao.resultado === 'REJEITADA' ? 'Rejeitada' :
                   proposicao.resultado === 'EMPATE' ? 'Empate' : proposicao.resultado}
+              </Badge>
+            )}
+            {ehPublicacaoDireta && (
+              <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800" title={(proposicao as any).motivoRetroativo || 'Publicacao retroativa'}>
+                Publicação Direta
               </Badge>
             )}
           </div>
@@ -340,36 +354,42 @@ export default function ProposicaoDetalhePage() {
               </Card>
             )}
 
-            {/* Documento PDF - card destaque quando nao esta no viewer */}
-            {docUrl && !showPdfViewer && (
-              <Card className="border-blue-200 bg-blue-50/50">
-                <CardContent className="py-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
-                      <FileText className="h-6 w-6 text-red-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900">
-                        {isLocalPdf ? 'Documento PDF anexado' : 'Documento externo vinculado'}
-                      </p>
-                      <p className="text-sm text-gray-500 truncate">{docUrl}</p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      {isLocalPdf && (
-                        <Button size="sm" onClick={() => setShowPdfViewer(true)}>
-                          <Eye className="h-4 w-4 mr-1.5" />
-                          Visualizar
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={docUrl} target="_blank" rel="noopener noreferrer">
-                          {isLocalPdf ? <Download className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Documentos anexados (RN-168 — multiplos) ou documento legado */}
+            {documentos.length > 0 && !showPdfViewer && (
+              <div className="space-y-3">
+                {documentos.map((doc, idx) => {
+                  const ehLocal = doc.url.startsWith('/uploads/') && isPdfUrl(doc.url)
+                  const ehPdfPrincipal = idx === 0 && ehLocal && doc.url === docUrl
+                  return (
+                    <Card key={`${doc.url}-${idx}`} className="border-blue-200 bg-blue-50/50">
+                      <CardContent className="py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
+                            <FileText className="h-6 w-6 text-red-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900">{doc.nome}</p>
+                            <p className="text-sm text-gray-500 truncate">{doc.url}</p>
+                          </div>
+                          <div className="flex gap-2 shrink-0">
+                            {ehPdfPrincipal && (
+                              <Button size="sm" onClick={() => setShowPdfViewer(true)}>
+                                <Eye className="h-4 w-4 mr-1.5" />
+                                Visualizar
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline" asChild>
+                              <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                {ehLocal ? <Download className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
             )}
 
             {/* Votacao */}

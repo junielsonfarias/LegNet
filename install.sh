@@ -416,6 +416,14 @@ do_update() {
     log "Migration F3.5 aplicada (indices FK em 8 modelos)"
   fi
 
+  # 5h) RN-168: Publicacao Direta de Proposicoes — coluna documentos JSONB
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-proposicao-documentos.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-proposicao-documentos.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-proposicao-documentos.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration RN-168 aplicada (documentos JSONB em proposicoes)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

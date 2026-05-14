@@ -537,7 +537,8 @@ model Proposicao {
   // Mantém auditoria com motivo. Apenas SECRETARIA + ADMIN podem criar.
   entradaRetroativa Boolean          @default(false)
   motivoRetroativo  String?          @db.Text
-  urlDocumento     String?           // URL externa do documento (Google Drive, etc)
+  urlDocumento     String?           // URL externa do documento (Google Drive, etc) — legado, manter para compatibilidade
+  documentos       Json?             // RN-168: Array [{nome, url}] de anexos multiplos (padrao CotaParlamentar). Preferir sobre urlDocumento.
   status           StatusProposicao  @default(APRESENTADA)
   regime           String    @default("NORMAL")  // NORMAL, PRIORIDADE, URGENCIA, URGENCIA_URGENTISSIMA
   dataApresentacao DateTime

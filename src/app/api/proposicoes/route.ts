@@ -48,15 +48,24 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const tipo = searchParams.get('tipo')
   const autorId = searchParams.get('autorId')
   const ano = searchParams.get('ano')
+  const entradaRetroativaRaw = searchParams.get('entradaRetroativa')
   const page = parseInt(searchParams.get('page') || '1')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 500)
+
+  // RN-168: filtra modo (publicacao direta vs completo)
+  const entradaRetroativa = entradaRetroativaRaw === 'true'
+    ? true
+    : entradaRetroativaRaw === 'false'
+      ? false
+      : undefined
 
   const result = await proposicaoDbService.list(
     {
       status: status || undefined,
       tipo: tipo || undefined,
       autorId: autorId || undefined,
-      ano: ano ? parseInt(ano) : undefined
+      ano: ano ? parseInt(ano) : undefined,
+      entradaRetroativa
     },
     { page, limit }
   )

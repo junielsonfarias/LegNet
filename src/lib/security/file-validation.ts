@@ -43,6 +43,7 @@ export const ALLOWED_UPLOAD_FOLDERS: ReadonlySet<string> = new Set([
   'transparencia',
   'cotas-parlamentar',
   'proposicoes',
+  'proposicoes-publicacao-direta',  // RN-168
   'comissoes',
   'audiencias-publicas',
   'documentos',
