@@ -7,6 +7,8 @@ import {
 } from '@/lib/error-handler'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { enforceRateLimit } from '@/lib/middleware/rate-limit'
+import { enforcePublicCaptcha } from '@/lib/security/captcha-guard'
 import {
   criarSugestao,
   listarSugestoes,
@@ -25,7 +27,10 @@ const CriarSugestaoSchema = z.object({
   titulo: z.string().min(10, 'Titulo deve ter pelo menos 10 caracteres'),
   descricao: z.string().min(50, 'Descricao deve ter pelo menos 50 caracteres'),
   justificativa: z.string().min(30, 'Justificativa deve ter pelo menos 30 caracteres'),
-  categoria: z.string().nullish().transform(v => v ?? undefined)
+  categoria: z.string().nullish().transform(v => v ?? undefined),
+  // F1.2 — captcha publico
+  captchaId: z.string().optional(),
+  captchaAnswer: z.union([z.string(), z.number()]).optional(),
 })
 
 /**
@@ -77,12 +82,23 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
 /**
  * POST - Criar sugestão (público)
+ *
+ * F1.2 — rate-limit + captcha obrigatorio em producao (RN-167).
  */
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  enforceRateLimit(request, 'PUBLIC')
+
   const body = await request.json()
   const validatedData = CriarSugestaoSchema.parse(body)
 
-  const sugestao = await criarSugestao(validatedData)
+  enforcePublicCaptcha({
+    captchaId: validatedData.captchaId,
+    captchaAnswer: validatedData.captchaAnswer,
+  })
+
+  // Remove captcha do payload antes de gravar (nao faz parte do modelo)
+  const { captchaId: _cId, captchaAnswer: _cA, ...payload } = validatedData
+  const sugestao = await criarSugestao(payload)
 
   return createSuccessResponse(sugestao, 'Sugestão enviada com sucesso')
 })

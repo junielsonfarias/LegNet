@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { CaptchaChallenge, type CaptchaChallengeHandle, type CaptchaValue } from '@/components/ui/captcha-challenge'
 import { ArrowLeft, Lightbulb, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/logging/logger'
@@ -53,6 +54,11 @@ export default function NovaSugestaoPage() {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // F1.2 — captcha matematico publico
+  const [captcha, setCaptcha] = useState<CaptchaValue>({ captchaId: '', captchaAnswer: '' })
+  const [captchaError, setCaptchaError] = useState(false)
+  const captchaRef = useRef<CaptchaChallengeHandle>(null)
 
   function validate() {
     const newErrors: Record<string, string> = {}
@@ -96,6 +102,7 @@ export default function NovaSugestaoPage() {
     }
 
     setSubmitting(true)
+    setCaptchaError(false)
 
     try {
       const response = await fetch('/api/participacao/sugestoes', {
@@ -110,7 +117,9 @@ export default function NovaSugestaoPage() {
           email: formData.email,
           cpf: formData.cpf.replace(/\D/g, ''),
           bairro: formData.bairro,
-          telefone: formData.telefone
+          telefone: formData.telefone,
+          captchaId: captcha.captchaId,
+          captchaAnswer: captcha.captchaAnswer,
         })
       })
 
@@ -120,7 +129,12 @@ export default function NovaSugestaoPage() {
         setSubmitted(true)
         toast.success('Sugestao enviada com sucesso!')
       } else {
-        toast.error(data.error || 'Erro ao enviar sugestao')
+        const msg = data.error || 'Erro ao enviar sugestao'
+        if (/captcha/i.test(msg)) {
+          setCaptchaError(true)
+          void captchaRef.current?.reload()
+        }
+        toast.error(msg)
       }
     } catch (error) {
       log.error('Erro ao enviar sugestao', error)
@@ -383,6 +397,14 @@ export default function NovaSugestaoPage() {
                       maxLength={15}
                     />
                   </div>
+
+                  <CaptchaChallenge
+                    ref={captchaRef}
+                    value={captcha}
+                    onChange={setCaptcha}
+                    hasError={captchaError}
+                    errorMessage={captchaError ? 'Resposta incorreta. Tente novamente com o novo desafio.' : undefined}
+                  />
 
                   <Button
                     type="submit"

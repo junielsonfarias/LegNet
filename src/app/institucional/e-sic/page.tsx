@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { CaptchaChallenge, type CaptchaChallengeHandle, type CaptchaValue } from '@/components/ui/captcha-challenge'
 import {
   Shield, FileText, Clock, CheckCircle, AlertCircle, Search, Loader2, Copy
 } from 'lucide-react'
@@ -32,24 +33,39 @@ export default function ESicPage() {
   const [error, setError] = useState('')
   const [protocoloConsulta, setProtocoloConsulta] = useState('')
 
+  // F1.2 — captcha matematico publico
+  const [captcha, setCaptcha] = useState<CaptchaValue>({ captchaId: '', captchaAnswer: '' })
+  const [captchaError, setCaptchaError] = useState(false)
+  const captchaRef = useRef<CaptchaChallengeHandle>(null)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
     setError('')
+    setCaptchaError(false)
     setResultado(null)
 
     try {
       const res = await fetch('/api/e-sic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          captchaId: captcha.captchaId,
+          captchaAnswer: captcha.captchaAnswer,
+        }),
       })
       const json = await res.json()
       if (json.success) {
         setResultado({ protocolo: json.protocolo, prazoResposta: json.prazoResposta })
         setFormData({ nome: '', email: '', cpf: '', telefone: '', tipoSolicitante: '', assunto: '', descricao: '', orgao: '', formaResposta: '' })
       } else {
-        setError(json.error || 'Erro ao enviar solicitacao.')
+        const msg = json.error || 'Erro ao enviar solicitacao.'
+        if (/captcha/i.test(msg)) {
+          setCaptchaError(true)
+          void captchaRef.current?.reload()
+        }
+        setError(msg)
       }
     } catch {
       setError('Erro de conexao. Tente novamente.')
@@ -311,6 +327,14 @@ export default function ESicPage() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <CaptchaChallenge
+                    ref={captchaRef}
+                    value={captcha}
+                    onChange={setCaptcha}
+                    hasError={captchaError}
+                    errorMessage={captchaError ? 'Resposta incorreta. Tente novamente com o novo desafio.' : undefined}
+                  />
 
                   <Button type="submit" className="w-full" disabled={submitting}>
                     {submitting ? (
