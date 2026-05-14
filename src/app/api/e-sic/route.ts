@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { esicService } from '@/lib/services/esic-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
+import { enforceRateLimit } from '@/lib/middleware/rate-limit'
+import { enforcePublicCaptcha } from '@/lib/security/captcha-guard'
 import type { StatusESIC } from '@prisma/client'
 
 const CriarSolicitacaoSchema = z.object({
@@ -14,7 +16,10 @@ const CriarSolicitacaoSchema = z.object({
   assunto: z.string().min(5).max(300).trim(),
   descricao: z.string().min(10).max(5000).trim(),
   orgao: z.string().max(200).optional(),
-  formaResposta: z.string().max(50).optional()
+  formaResposta: z.string().max(50).optional(),
+  // F1.2 / RN-167 — captcha
+  captchaId: z.string().optional(),
+  captchaAnswer: z.union([z.string(), z.number()]).optional(),
 })
 
 export const dynamic = 'force-dynamic'
@@ -48,6 +53,9 @@ export const GET = withAuth(async (request: NextRequest) => {
  * Não requer autenticação
  */
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  // F1.2 — rate limit por IP+user-agent (PUBLIC bucket)
+  enforceRateLimit(request, 'PUBLIC')
+
   const body = await request.json()
 
   const parsed = CriarSolicitacaoSchema.safeParse(body)
@@ -55,7 +63,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     throw new ValidationError(parsed.error.errors.map(e => e.message).join(', '))
   }
 
-  const solicitacao = await esicService.create(parsed.data)
+  // F1.2 — captcha (opcional/obrigatorio conforme env)
+  enforcePublicCaptcha({ captchaId: parsed.data.captchaId, captchaAnswer: parsed.data.captchaAnswer })
+
+  // Remove campos de captcha antes de persistir (nao fazem parte do modelo)
+  const { captchaId: _cId, captchaAnswer: _cA, ...payload } = parsed.data
+  const solicitacao = await esicService.create(payload)
 
   return createSuccessResponse(
     {

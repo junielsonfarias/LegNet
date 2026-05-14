@@ -4,6 +4,8 @@ import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/
 import { withAuth } from '@/lib/auth/permissions'
 import { ouvidoriaService } from '@/lib/services/ouvidoria-service'
 import { classificarManifestacao } from '@/lib/services/ouvidoria-classifier'
+import { enforceRateLimit } from '@/lib/middleware/rate-limit'
+import { enforcePublicCaptcha } from '@/lib/security/captcha-guard'
 import type { TipoManifestacao, StatusManifestacao } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -36,15 +38,24 @@ const ManifestacaoSchema = z.object({
   // Fase 5 / M10: tipo opcional. Se ausente ou 'AUTO', classificador heuristico
   // sugere baseado em assunto+descricao. Operador pode revisar depois.
   tipo: z.string().nullish(),
-  assunto: z.string().min(1, 'Assunto é obrigatório'),
-  descricao: z.string().min(1, 'Descrição é obrigatória'),
-  setor: z.string().nullish()
+  assunto: z.string().min(1, 'Assunto é obrigatório').max(300),
+  descricao: z.string().min(1, 'Descrição é obrigatória').max(5000),
+  setor: z.string().nullish(),
+  // F1.2 / RN-167 — captcha opcional (obrigatorio quando PUBLIC_FORMS_CAPTCHA_REQUIRED=true)
+  captchaId: z.string().nullish(),
+  captchaAnswer: z.union([z.string(), z.number()]).nullish(),
 })
 
 // POST - Criar manifestação (público, sem auth)
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  // F1.2 — rate limit por IP+user-agent (PUBLIC bucket)
+  enforceRateLimit(request, 'PUBLIC')
+
   const body = await request.json()
   const data = ManifestacaoSchema.parse(body)
+
+  // F1.2 — captcha (opcional/obrigatorio conforme env)
+  enforcePublicCaptcha({ captchaId: data.captchaId, captchaAnswer: data.captchaAnswer })
 
   if (!data.anonimo && (!data.nome || !data.email)) {
     throw new ValidationError('Para manifestações não anônimas, nome e email são obrigatórios')

@@ -121,10 +121,16 @@ export const institucionalDbService = {
    * Atualiza uma configuracao institucional existente
    */
   async updateConfiguracao(id: string, data: Record<string, unknown>) {
-    return prisma.configuracaoInstitucional.update({
+    const result = await prisma.configuracaoInstitucional.update({
       where: { id },
       data
     })
+    // F1.4 — invalida cache do tema se cores mudaram
+    if ('corPrimaria' in data || 'corSecundaria' in data || 'corAcento' in data) {
+      const { invalidateThemeColorsCache } = await import('@/lib/cache/theme-colors-cache')
+      invalidateThemeColorsCache()
+    }
+    return result
   },
 
   /**

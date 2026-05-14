@@ -3,6 +3,11 @@ import { z } from 'zod'
 import { auditoriaService } from '@/lib/auditoria-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
+import {
+  TipoOperacaoEnum,
+  auditoriaPostSchemas,
+  AtualizarRelatorioSchema,
+} from '@/lib/validation/auditoria-schema'
 
 // Schema para validação de query params
 const AuditoriaQuerySchema = z.object({
@@ -110,120 +115,119 @@ export const GET = withAuth(async (request: NextRequest) => {
 }, { roles: ['ADMIN', 'SECRETARIA'], permissions: 'audit.view' })
 
 // POST - Registrar novo evento ou criar relatório
+// F1.3 — todo payload agora valida via Zod schema por tipo
 export const POST = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
-  const tipo = searchParams.get('tipo')
-  const data = await request.json()
-
-  if (tipo === 'evento') {
-    const evento = auditoriaService.registrarEvento(data)
-    return createSuccessResponse(evento, 'Evento registrado', undefined, 201)
+  const tipoRaw = searchParams.get('tipo')
+  const tipoParsed = TipoOperacaoEnum.safeParse(tipoRaw)
+  if (!tipoParsed.success) {
+    throw new ValidationError(`tipo invalido: ${tipoRaw}. Aceitos: ${TipoOperacaoEnum.options.join(', ')}`)
   }
+  const tipo = tipoParsed.data
 
-  if (tipo === 'login') {
-    const evento = auditoriaService.registrarLogin(
-      data.usuarioId,
-      data.usuarioNome,
-      data.sucesso,
-      data.ip,
-      data.userAgent,
-      data.erro
-    )
-    return createSuccessResponse(evento, undefined, undefined, 201)
+  const rawBody = await request.json()
+  const schema = auditoriaPostSchemas[tipo]
+  const parsed = schema.safeParse(rawBody)
+  if (!parsed.success) {
+    throw new ValidationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; '))
   }
+  const data = parsed.data
 
-  if (tipo === 'logout') {
-    const evento = auditoriaService.registrarLogout(
-      data.usuarioId,
-      data.usuarioNome,
-      data.ip,
-      data.userAgent
-    )
-    return createSuccessResponse(evento, undefined, undefined, 201)
+  switch (tipo) {
+    case 'evento':
+      return createSuccessResponse(auditoriaService.registrarEvento(data as any), 'Evento registrado', undefined, 201)
+    case 'login': {
+      const d = data as z.infer<typeof auditoriaPostSchemas.login>
+      return createSuccessResponse(
+        auditoriaService.registrarLogin(d.usuarioId, d.usuarioNome, d.sucesso, d.ip, d.userAgent, d.erro),
+        undefined,
+        undefined,
+        201,
+      )
+    }
+    case 'logout': {
+      const d = data as z.infer<typeof auditoriaPostSchemas.logout>
+      return createSuccessResponse(
+        auditoriaService.registrarLogout(d.usuarioId, d.usuarioNome, d.ip, d.userAgent),
+        undefined,
+        undefined,
+        201,
+      )
+    }
+    case 'criacao': {
+      const d = data as z.infer<typeof auditoriaPostSchemas.criacao>
+      return createSuccessResponse(
+        auditoriaService.registrarCriacao(d.usuarioId, d.usuarioNome, d.entidade, d.entidadeId, d.dados, d.ip, d.userAgent),
+        undefined,
+        undefined,
+        201,
+      )
+    }
+    case 'atualizacao': {
+      const d = data as z.infer<typeof auditoriaPostSchemas.atualizacao>
+      return createSuccessResponse(
+        auditoriaService.registrarAtualizacao(
+          d.usuarioId,
+          d.usuarioNome,
+          d.entidade,
+          d.entidadeId,
+          d.dadosAnteriores,
+          d.dadosNovos,
+          d.ip,
+          d.userAgent,
+        ),
+        undefined,
+        undefined,
+        201,
+      )
+    }
+    case 'exclusao': {
+      const d = data as z.infer<typeof auditoriaPostSchemas.exclusao>
+      return createSuccessResponse(
+        auditoriaService.registrarExclusao(d.usuarioId, d.usuarioNome, d.entidade, d.entidadeId, d.dadosAnteriores, d.ip, d.userAgent),
+        undefined,
+        undefined,
+        201,
+      )
+    }
+    case 'erro': {
+      const d = data as z.infer<typeof auditoriaPostSchemas.erro>
+      return createSuccessResponse(
+        auditoriaService.registrarErro(d.usuarioId, d.usuarioNome, d.acao, d.entidade, d.entidadeId, d.erro, d.ip, d.userAgent),
+        undefined,
+        undefined,
+        201,
+      )
+    }
+    case 'relatorio': {
+      const d = data as z.infer<typeof auditoriaPostSchemas.relatorio>
+      return createSuccessResponse(
+        auditoriaService.criarRelatorio(d.nome, d.descricao ?? '', d.filtros ?? {}, d.geradoPor),
+        undefined,
+        undefined,
+        201,
+      )
+    }
   }
-
-  if (tipo === 'criacao') {
-    const evento = auditoriaService.registrarCriacao(
-      data.usuarioId,
-      data.usuarioNome,
-      data.entidade,
-      data.entidadeId,
-      data.dados,
-      data.ip,
-      data.userAgent
-    )
-    return createSuccessResponse(evento, undefined, undefined, 201)
-  }
-
-  if (tipo === 'atualizacao') {
-    const evento = auditoriaService.registrarAtualizacao(
-      data.usuarioId,
-      data.usuarioNome,
-      data.entidade,
-      data.entidadeId,
-      data.dadosAnteriores,
-      data.dadosNovos,
-      data.ip,
-      data.userAgent
-    )
-    return createSuccessResponse(evento, undefined, undefined, 201)
-  }
-
-  if (tipo === 'exclusao') {
-    const evento = auditoriaService.registrarExclusao(
-      data.usuarioId,
-      data.usuarioNome,
-      data.entidade,
-      data.entidadeId,
-      data.dadosAnteriores,
-      data.ip,
-      data.userAgent
-    )
-    return createSuccessResponse(evento, undefined, undefined, 201)
-  }
-
-  if (tipo === 'erro') {
-    const evento = auditoriaService.registrarErro(
-      data.usuarioId,
-      data.usuarioNome,
-      data.acao,
-      data.entidade,
-      data.entidadeId,
-      data.erro,
-      data.ip,
-      data.userAgent
-    )
-    return createSuccessResponse(evento, undefined, undefined, 201)
-  }
-
-  if (tipo === 'relatorio') {
-    const relatorio = auditoriaService.criarRelatorio(
-      data.nome,
-      data.descricao,
-      data.filtros,
-      data.geradoPor
-    )
-    return createSuccessResponse(relatorio, undefined, undefined, 201)
-  }
-
-  throw new ValidationError('Tipo não especificado')
 }, { roles: ['ADMIN', 'SECRETARIA'], permissions: 'audit.manage' })
 
 // PUT - Atualizar relatório
 export const PUT = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
-  const data = await request.json()
 
   if (!id) {
     throw new ValidationError('ID é obrigatório')
   }
 
-  const relatorio = auditoriaService.atualizarStatusRelatorio(
-    id,
-    data.status,
-    data.arquivo
-  )
+  const rawBody = await request.json()
+  const parsed = AtualizarRelatorioSchema.safeParse(rawBody)
+  if (!parsed.success) {
+    throw new ValidationError(parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; '))
+  }
+  const data = parsed.data
+
+  const relatorio = auditoriaService.atualizarStatusRelatorio(id, data.status, data.arquivo)
 
   if (!relatorio) {
     throw new (await import('@/lib/error-handler')).NotFoundError('Relatório')

@@ -52,8 +52,10 @@ if (typeof window !== 'undefined') {
 
   // Interceptar também mensagens específicas do React
   const originalError = Error;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).Error = function(message: string, ...args: unknown[]) {
+  ;(window as unknown as { Error: unknown }).Error = function (
+    message: string,
+    ...args: unknown[]
+  ) {
     if (shouldSuppress(message)) {
       return new originalError('Suppressed error');
     }

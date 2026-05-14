@@ -11,9 +11,10 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // F1.5 (PLANO-CORRECOES-MAIO-2026): ESLint volta a rodar no build.
+  // Warnings nao quebram o build; erros quebram. Validado em 2026-05-14.
   eslint: {
-    // Ignorar erros ESLint durante build (falso positivo em rules-of-hooks)
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   // Configurações de performance
   experimental: {

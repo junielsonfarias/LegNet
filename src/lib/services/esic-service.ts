@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import type { StatusESIC } from '@prisma/client'
+import { encryptCpf, hashCpf, isValidCpfFormat, maskEncryptedCpf } from '@/lib/security/cpf-utils'
 
 export interface ESICFilters {
   status?: StatusESIC
@@ -109,8 +110,33 @@ export const esicService = {
 
     if (!solicitacao) return null
 
-    const { cpf, ...semCpf } = solicitacao
+    const { cpf: _cpf, cpfHash: _cpfHash, ...semCpf } = solicitacao
     return semCpf
+  },
+
+  /**
+   * Versao com CPF mascarado para painel admin. RN-166.
+   */
+  async getByIdMasked(id: string) {
+    const s = await prisma.solicitacaoESIC.findUnique({
+      where: { id },
+      include: {
+        anexos: true,
+        recursos: { orderBy: { dataRecurso: 'desc' } },
+        historico: { orderBy: { data: 'desc' } },
+      },
+    })
+    if (!s) return null
+    return { ...s, cpf: maskEncryptedCpf(s.cpf), cpfHash: undefined }
+  },
+
+  async listByCpfHash(cpf: string) {
+    if (!isValidCpfFormat(cpf)) return []
+    return prisma.solicitacaoESIC.findMany({
+      where: { cpfHash: hashCpf(cpf) },
+      select: { id: true, protocolo: true, assunto: true, status: true, prazoResposta: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    })
   },
 
   async create(data: {
@@ -128,6 +154,12 @@ export const esicService = {
     const { protocolo, numero } = await esicService.gerarProtocolo(ano)
     const prazoResposta = esicService.calcularPrazoResposta(new Date())
 
+    // RN-166 (LGPD): CPF criptografado em repouso + hash deterministico para busca
+    const cpfNormalizado = data.cpf?.trim()
+    const cpfStorage = cpfNormalizado && isValidCpfFormat(cpfNormalizado)
+      ? { cpf: encryptCpf(cpfNormalizado), cpfHash: hashCpf(cpfNormalizado) }
+      : { cpf: null, cpfHash: null }
+
     return prisma.solicitacaoESIC.create({
       data: {
         protocolo,
@@ -135,7 +167,8 @@ export const esicService = {
         numero,
         nome: data.nome,
         email: data.email,
-        cpf: data.cpf ?? null,
+        cpf: cpfStorage.cpf,
+        cpfHash: cpfStorage.cpfHash,
         telefone: data.telefone ?? null,
         tipoSolicitante: data.tipoSolicitante ?? null,
         assunto: data.assunto,

@@ -126,7 +126,7 @@ export const configuracaoDbService = {
   },
 
   async upsertConfiguracaoInstitucional(data: ConfiguracaoInstitucionalData) {
-    return prisma.configuracaoInstitucional.upsert({
+    const result = await prisma.configuracaoInstitucional.upsert({
       where: { slug: CONFIG_SLUG },
       update: data,
       create: {
@@ -134,6 +134,12 @@ export const configuracaoDbService = {
         ...data
       }
     })
+    // F1.4 — invalida cache do tema se cores mudaram
+    if ('corPrimaria' in data || 'corSecundaria' in data || 'corAcento' in data) {
+      const { invalidateThemeColorsCache } = await import('@/lib/cache/theme-colors-cache')
+      invalidateThemeColorsCache()
+    }
+    return result
   },
 
   // ======================================================================
@@ -156,6 +162,7 @@ export const configuracaoDbService = {
   ) {
     const resultados: { institucional?: Record<string, unknown>; sistema?: number } = {}
 
+    let cresInstitucionalMudou = false
     await prisma.$transaction(async (tx) => {
       if (institucional) {
         resultados.institucional = await tx.configuracaoInstitucional.upsert({
@@ -166,6 +173,7 @@ export const configuracaoDbService = {
             ...institucional
           }
         })
+        cresInstitucionalMudou = true
       }
 
       if (sistema) {
@@ -189,6 +197,12 @@ export const configuracaoDbService = {
         resultados.sistema = count
       }
     })
+
+    // F1.4 — invalida cache do tema apos restore
+    if (cresInstitucionalMudou) {
+      const { invalidateThemeColorsCache } = await import('@/lib/cache/theme-colors-cache')
+      invalidateThemeColorsCache()
+    }
 
     return resultados
   }

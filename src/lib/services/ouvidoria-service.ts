@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import type { TipoManifestacao, StatusManifestacao } from '@prisma/client'
+import { encryptCpf, hashCpf, isValidCpfFormat, maskEncryptedCpf } from '@/lib/security/cpf-utils'
 
 export interface OuvidoriaFilters {
   tipo?: TipoManifestacao
@@ -88,6 +89,35 @@ export const ouvidoriaService = {
     })
   },
 
+  /**
+   * Versao mascarada para listagens/exibicao. CPF nunca volta em claro.
+   * RN-166: decriptografia apenas via getByIdComCpf() com permissao explicita.
+   */
+  async getByIdMasked(id: string) {
+    const m = await prisma.manifestacaoOuvidoria.findUnique({
+      where: { id },
+      include: {
+        anexos: true,
+        historico: { orderBy: { data: 'desc' } },
+      },
+    })
+    if (!m) return null
+    return { ...m, cpf: maskEncryptedCpf(m.cpf), cpfHash: undefined }
+  },
+
+  /**
+   * Busca por CPF (nao reversivel) — usada quando cidadao consulta seus protocolos.
+   * Retorna apenas dados minimos.
+   */
+  async listByCpfHash(cpf: string) {
+    if (!isValidCpfFormat(cpf)) return []
+    return prisma.manifestacaoOuvidoria.findMany({
+      where: { cpfHash: hashCpf(cpf) },
+      select: { id: true, protocolo: true, tipo: true, assunto: true, status: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    })
+  },
+
   async getByProtocolo(protocolo: string) {
     const manifestacao = await prisma.manifestacaoOuvidoria.findUnique({
       where: { protocolo },
@@ -99,9 +129,9 @@ export const ouvidoriaService = {
 
     if (!manifestacao) return null
 
-    const { cpf, ...semCpf } = manifestacao
+    const { cpf: _cpf, cpfHash: _cpfHash, ...semCpf } = manifestacao
     if (manifestacao.anonimo) {
-      return { ...semCpf, nome: null }
+      return { ...semCpf, nome: null, email: null, telefone: null }
     }
     return semCpf
   },
@@ -122,6 +152,12 @@ export const ouvidoriaService = {
     const { protocolo, numero } = await ouvidoriaService.gerarProtocolo(ano)
     const prazoResposta = ouvidoriaService.calcularPrazoResposta(data.tipo)
 
+    // RN-166 (LGPD): CPF criptografado em repouso + hash deterministico para busca
+    const cpfNormalizado = data.cpf?.trim()
+    const cpfStorage = cpfNormalizado && isValidCpfFormat(cpfNormalizado)
+      ? { cpf: encryptCpf(cpfNormalizado), cpfHash: hashCpf(cpfNormalizado) }
+      : { cpf: null, cpfHash: null }
+
     return prisma.manifestacaoOuvidoria.create({
       data: {
         protocolo,
@@ -131,7 +167,8 @@ export const ouvidoriaService = {
         nome: data.nome ?? null,
         email: data.email ?? null,
         telefone: data.telefone ?? null,
-        cpf: data.cpf ?? null,
+        cpf: cpfStorage.cpf,
+        cpfHash: cpfStorage.cpfHash,
         tipo: data.tipo,
         assunto: data.assunto,
         descricao: data.descricao,

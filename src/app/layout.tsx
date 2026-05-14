@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { unstable_cache } from 'next/cache'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { NotificationProvider } from '@/components/providers/notification-provider'
@@ -7,6 +8,7 @@ import { ConditionalLayout } from '@/components/layout/conditional-layout'
 import { MunicipalThemeProvider } from '@/components/providers/theme-provider-municipal'
 import { PwaRegister } from '@/components/pwa-register'
 import { prisma } from '@/lib/prisma'
+import { THEME_COLORS_CACHE_TAG } from '@/lib/cache/theme-colors-cache'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -88,18 +90,26 @@ export const viewport = {
   maximumScale: 5
 }
 
-// Busca cores do tema no servidor para injetar no HTML (evita flash de cor errada)
-async function getThemeColors() {
-  try {
-    const config = await prisma.configuracaoInstitucional.findFirst({
-      select: { corPrimaria: true, corSecundaria: true, corAcento: true }
-    })
-    if (config?.corPrimaria) return config
-  } catch {
-    // Fallback silencioso se banco não disponível
-  }
-  return null
-}
+// Busca cores do tema no servidor para injetar no HTML (evita flash de cor errada).
+// F1.4 (PLANO-CORRECOES-MAIO-2026): cacheado por 1h com tag THEME_COLORS_CACHE_TAG.
+// Invalidado em todo upsert/update de ConfiguracaoInstitucional (configuracao-db-service.ts,
+// institucional-db-service.ts) via revalidateTag(). Reduz round-trip ao DB em 100% das
+// requisicoes apos o primeiro hit dentro da janela do TTL.
+const getThemeColors = unstable_cache(
+  async () => {
+    try {
+      const config = await prisma.configuracaoInstitucional.findFirst({
+        select: { corPrimaria: true, corSecundaria: true, corAcento: true }
+      })
+      if (config?.corPrimaria) return config
+    } catch {
+      // Fallback silencioso se banco não disponível
+    }
+    return null
+  },
+  ['theme-colors'],
+  { tags: [THEME_COLORS_CACHE_TAG], revalidate: 3600 }
+)
 
 // Valida que o valor é um hex color válido (previne CSS injection)
 function isValidHexColor(value: string): boolean {

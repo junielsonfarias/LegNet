@@ -1573,6 +1573,34 @@ a qualquer momento antes do encerramento da sessao.
 
 ---
 
+## SEGURANCA E PROTECAO DE DADOS — Maio 2026
+
+REGRA RN-166: CPF EM CANAIS DE CIDADANIA (LGPD)
+- Toda manifestacao de Ouvidoria e solicitacao e-SIC armazena CPF de forma
+  CRIPTOGRAFADA (AES-256-GCM via `src/lib/security/encryption.ts`) e gera
+  hash deterministico (`cpfHash` SHA-256) para busca/agrupamento.
+- O CPF nunca volta em claro em listagens. Use `getByIdMasked()` em qualquer
+  resposta publica/admin padrao.
+- Decriptografar exige permissao explicita (futura `ouvidoria-detalhe.view`
+  / `esic-detalhe.view`) e DEVE gerar evento de auditoria.
+- Implementado em: `prisma/schema/models.prisma` (`cpfHash` em
+  `ManifestacaoOuvidoria` e `SolicitacaoESIC`), `ouvidoria-service.ts`,
+  `esic-service.ts`, `scripts/backfill-cpf-encryption.ts`.
+
+REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
+- Toda rota POST/PUT publica (sem autenticacao) DEVE aplicar:
+  1. `enforceRateLimit(request, 'PUBLIC')` por IP+UA.
+  2. `enforcePublicCaptcha({ captchaId, captchaAnswer })` com captcha
+     matematico interno (`/api/auth/captcha`).
+- Em producao (`NODE_ENV=production`) o captcha eh OBRIGATORIO. Em dev eh
+  ignorado quando ausente. Override via env `PUBLIC_FORMS_CAPTCHA_REQUIRED`.
+- Cobertura inicial: `/api/ouvidoria`, `/api/e-sic`,
+  `/api/participacao-cidada/sugestoes`.
+- Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
+  rotas alvo (`captchaId` + `captchaAnswer` no body).
+
+---
+
 > **FIM DO DOCUMENTO DE REGRAS DE NEGOCIO**
 >
 > Este documento DEVE ser consultado pelo Claude antes de qualquer implementacao

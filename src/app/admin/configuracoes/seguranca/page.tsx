@@ -416,7 +416,7 @@ export default function SecuritySettingsPage() {
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-gray-700">Adicionar ao autenticador</p>
                     <p className="text-xs text-gray-500">
-                      Abra o app, escolha "Adicionar conta" → "Inserir chave de configuração" e cole o link abaixo.
+                      Abra o app, escolha &quot;Adicionar conta&quot; → &quot;Inserir chave de configuração&quot; e cole o link abaixo.
                     </p>
                     <Button
                       type="button"

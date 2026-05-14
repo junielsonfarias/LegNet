@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { 
-  withErrorHandler, 
-  createSuccessResponse, 
+import {
+  withErrorHandler,
+  createSuccessResponse,
   createErrorResponse,
   ValidationError
 } from '@/lib/error-handler'
+import { enforceRateLimit } from '@/lib/middleware/rate-limit'
+import { enforcePublicCaptcha } from '@/lib/security/captcha-guard'
 
 // Schema de validação para sugestão
 const SugestaoSchema = z.object({
@@ -27,7 +29,10 @@ const SugestaoSchema = z.object({
   autorTelefone: z.string()
     .optional()
     .refine(val => !val || val.length >= 10, 'Telefone deve ter pelo menos 10 caracteres'),
-  anonimo: z.boolean().default(false)
+  anonimo: z.boolean().default(false),
+  // F1.2 / RN-167 — captcha
+  captchaId: z.string().optional(),
+  captchaAnswer: z.union([z.string(), z.number()]).optional(),
 })
 
 // Interface para sugestão
@@ -116,10 +121,16 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
 // POST - Criar sugestão
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  // F1.2 — rate limit por IP+user-agent (PUBLIC bucket)
+  enforceRateLimit(request, 'PUBLIC')
+
   const body = await request.json()
-  
+
   // Validar dados
   const validatedData = SugestaoSchema.parse(body)
+
+  // F1.2 — captcha (opcional/obrigatorio conforme env)
+  enforcePublicCaptcha({ captchaId: validatedData.captchaId, captchaAnswer: validatedData.captchaAnswer })
   
   // Criar nova sugestão
   const novaSugestao: Sugestao = {
