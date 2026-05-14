@@ -162,7 +162,7 @@ export default function AtosTipoPage({ params }: { params: Promise<{ tipo: strin
                 arquivo: url,
                 url: null,
                 documentos: url ? [{ nome: 'Ata em PDF', url }] : null,
-                autorNome: 'Câmara Municipal',
+                autorNome: 'Mesa Diretora',
               }
             })
           setPublicacoes(arr)
@@ -330,7 +330,7 @@ export default function AtosTipoPage({ params }: { params: Promise<{ tipo: strin
                 arquivo: url,
                 url: null,
                 documentos: url ? [{ nome: 'Pauta em PDF', url }] : null,
-                autorNome: 'Câmara Municipal',
+                autorNome: 'Mesa Diretora',
               }
             })
           setPublicacoes(arr)
