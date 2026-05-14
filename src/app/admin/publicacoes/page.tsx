@@ -27,6 +27,7 @@ import { toast } from 'sonner'
 
 import { usePublicacoes, useCategoriasPublicacao } from '@/lib/hooks/use-publicacoes'
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
+import { useComissoes } from '@/lib/hooks/use-comissoes'
 import type { PublicacaoPayload } from '@/lib/api/publicacoes-api'
 import type { AutorPublicacaoTipo } from '@/lib/categorias-publicacao-service'
 
@@ -69,8 +70,19 @@ const tipoPublicacaoOptions = [
   { value: 'OUTRO', label: 'Outro' }
 ]
 
-const autorTipoOptions: Array<{ value: AutorPublicacaoTipo; label: string }> = [
+// UI inclui 'MESA_DIRETORA' como opcao especial — internamente eh persistida
+// como autorTipo='ORGAO' + autorNome='Mesa Diretora' (sem migration). A UI
+// detecta esse caso ao reabrir registros via nomeEhMesaDiretora() abaixo.
+type AutorTipoUI = AutorPublicacaoTipo | 'MESA_DIRETORA'
+
+const NOME_MESA_DIRETORA = 'Mesa Diretora'
+
+const nomeEhMesaDiretora = (nome: string | null | undefined): boolean =>
+  (nome ?? '').trim().toLowerCase() === NOME_MESA_DIRETORA.toLowerCase()
+
+const autorTipoOptions: Array<{ value: AutorTipoUI; label: string }> = [
   { value: 'PARLAMENTAR', label: 'Parlamentar' },
+  { value: 'MESA_DIRETORA', label: 'Mesa Diretora' },
   { value: 'COMISSAO', label: 'Comissão' },
   { value: 'ORGAO', label: 'Órgão' },
   { value: 'OUTRO', label: 'Outro' }
@@ -158,6 +170,15 @@ export default function PublicacoesPage() {
   } = useCategoriasPublicacao({ includeInativas: true })
 
   const { parlamentares, loading: loadingParlamentares } = useParlamentares({ ativo: true })
+  const { comissoes, loading: loadingComissoes } = useComissoes({ ativa: true })
+
+  // Tipo de autor exibido na UI (inclui MESA_DIRETORA, que NAO existe no
+  // enum Prisma — eh persistido como autorTipo=ORGAO + autorNome='Mesa
+  // Diretora').
+  const [autorTipoUI, setAutorTipoUI] = useState<AutorTipoUI>('OUTRO')
+  // ID da comissao selecionada quando autorTipoUI === 'COMISSAO' (so UI,
+  // nao eh persistido — o nome da comissao vai pra autorNome).
+  const [comissaoSelecionadaId, setComissaoSelecionadaId] = useState<string>('')
 
   useEffect(() => {
     refetch({ page, limit })
@@ -178,6 +199,8 @@ export default function PublicacoesPage() {
       data: new Date().toISOString().split('T')[0]
     })
     setEditingId(null)
+    setAutorTipoUI('OUTRO')
+    setComissaoSelecionadaId('')
   }, [])
 
   const openCreateDialog = useCallback(() => {
@@ -208,10 +231,27 @@ export default function PublicacoesPage() {
         autorNome: selected.autorNome,
         autorId: selected.autorId ?? null
       })
+      // Inferir tipo UI a partir do persistido:
+      // - autorTipo=ORGAO + nome='Mesa Diretora' -> MESA_DIRETORA na UI
+      // - autorTipo=COMISSAO + nome casa com alguma comissao -> seta o ID
+      if (selected.autorTipo === 'ORGAO' && nomeEhMesaDiretora(selected.autorNome)) {
+        setAutorTipoUI('MESA_DIRETORA')
+        setComissaoSelecionadaId('')
+      } else {
+        setAutorTipoUI(selected.autorTipo as AutorTipoUI)
+        if (selected.autorTipo === 'COMISSAO') {
+          const match = comissoes.find(
+            (c) => c.nome === selected.autorNome || c.sigla === selected.autorNome,
+          )
+          setComissaoSelecionadaId(match?.id ?? '')
+        } else {
+          setComissaoSelecionadaId('')
+        }
+      }
       setEditingId(selected.id)
       setIsFormOpen(true)
     },
-    [publicacoes]
+    [publicacoes, comissoes]
   )
 
   const openDeleteConfirm = useCallback(
@@ -252,11 +292,46 @@ export default function PublicacoesPage() {
       toast.error('Selecione o tipo da publicação.')
       return
     }
-    if (formData.autorTipo === 'PARLAMENTAR' && !formData.autorId) {
+    if (autorTipoUI === 'PARLAMENTAR' && !formData.autorId) {
       toast.error('Selecione o parlamentar responsável.')
       return
     }
-    if (!formData.autorNome?.trim()) {
+    if (autorTipoUI === 'COMISSAO' && !comissaoSelecionadaId) {
+      toast.error('Selecione a comissão.')
+      return
+    }
+
+    // Resolve autorTipo persistido + autorNome derivados da escolha UI
+    let autorTipoPersistido: AutorPublicacaoTipo
+    let autorNomeFinal: string
+    let autorIdFinal: string | null
+    switch (autorTipoUI) {
+      case 'MESA_DIRETORA':
+        // Sem migration: persistido como ORGAO com nome fixo.
+        autorTipoPersistido = 'ORGAO'
+        autorNomeFinal = NOME_MESA_DIRETORA
+        autorIdFinal = null
+        break
+      case 'COMISSAO': {
+        const c = comissoes.find((x) => x.id === comissaoSelecionadaId)
+        autorTipoPersistido = 'COMISSAO'
+        autorNomeFinal = c?.nome ?? formData.autorNome ?? ''
+        autorIdFinal = null
+        break
+      }
+      case 'PARLAMENTAR':
+        autorTipoPersistido = 'PARLAMENTAR'
+        autorNomeFinal =
+          parlamentares.find((p) => p.id === formData.autorId)?.nome ?? formData.autorNome ?? ''
+        autorIdFinal = formData.autorId ?? null
+        break
+      default:
+        autorTipoPersistido = autorTipoUI
+        autorNomeFinal = formData.autorNome ?? ''
+        autorIdFinal = null
+    }
+
+    if (!autorNomeFinal.trim()) {
       toast.error('Informe o autor da publicação.')
       return
     }
@@ -273,12 +348,9 @@ export default function PublicacoesPage() {
       tamanho: formData.tamanho ?? null,
       publicada: formData.publicada,
       categoriaId: formData.categoriaId ?? null,
-      autorTipo: formData.autorTipo,
-      autorNome:
-        formData.autorTipo === 'PARLAMENTAR'
-          ? parlamentares.find(p => p.id === formData.autorId)?.nome ?? formData.autorNome
-          : formData.autorNome,
-      autorId: formData.autorTipo === 'PARLAMENTAR' ? formData.autorId : null
+      autorTipo: autorTipoPersistido,
+      autorNome: autorNomeFinal,
+      autorId: autorIdFinal
     }
 
     try {
@@ -295,7 +367,17 @@ export default function PublicacoesPage() {
       const message = error instanceof Error ? error.message : 'Erro ao salvar publicação.'
       toast.error(message)
     }
-  }, [create, editingId, formData, parlamentares, resetForm, update])
+  }, [
+    create,
+    editingId,
+    formData,
+    parlamentares,
+    comissoes,
+    autorTipoUI,
+    comissaoSelecionadaId,
+    resetForm,
+    update,
+  ])
 
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -783,14 +865,27 @@ export default function PublicacoesPage() {
                 <div className="space-y-2">
                   <Label>Autor — tipo</Label>
                   <Select
-                    value={formData.autorTipo ?? 'OUTRO'}
-                    onValueChange={value =>
-                      setFormData(prev => ({
-                        ...prev,
-                        autorTipo: value as AutorPublicacaoTipo,
-                        autorId: value === 'PARLAMENTAR' ? prev.autorId : null
-                      }))
-                    }
+                    value={autorTipoUI}
+                    onValueChange={(value) => {
+                      const novo = value as AutorTipoUI
+                      setAutorTipoUI(novo)
+                      // Limpa selecoes dependentes ao trocar de tipo
+                      if (novo !== 'PARLAMENTAR') {
+                        setFormData((prev) => ({ ...prev, autorId: null }))
+                      }
+                      if (novo !== 'COMISSAO') {
+                        setComissaoSelecionadaId('')
+                      }
+                      if (novo === 'MESA_DIRETORA') {
+                        setFormData((prev) => ({ ...prev, autorNome: NOME_MESA_DIRETORA }))
+                      } else if (novo !== 'PARLAMENTAR' && novo !== 'COMISSAO') {
+                        // ORGAO ou OUTRO -> permite texto livre, mas se vinha
+                        // de Mesa Diretora, limpa
+                        setFormData((prev) =>
+                          nomeEhMesaDiretora(prev.autorNome) ? { ...prev, autorNome: '' } : prev,
+                        )
+                      }
+                    }}
                   >
                     <SelectTrigger aria-required="true">
                       <SelectValue placeholder="Selecione o tipo de autor" />
@@ -804,7 +899,7 @@ export default function PublicacoesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                {formData.autorTipo === 'PARLAMENTAR' ? (
+                {autorTipoUI === 'PARLAMENTAR' ? (
                   <div className="space-y-2">
                     <Label htmlFor="autor-parlamentar">Parlamentar</Label>
                     <Select
@@ -834,6 +929,46 @@ export default function PublicacoesPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                ) : autorTipoUI === 'COMISSAO' ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="autor-comissao">Comissão</Label>
+                    <Select
+                      value={comissaoSelecionadaId || 'none'}
+                      onValueChange={(value) => {
+                        if (value === 'none') {
+                          setComissaoSelecionadaId('')
+                          return
+                        }
+                        setComissaoSelecionadaId(value)
+                        const c = comissoes.find((x) => x.id === value)
+                        if (c) {
+                          setFormData((prev) => ({ ...prev, autorNome: c.nome }))
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="autor-comissao" aria-required="true">
+                        <SelectValue
+                          placeholder={loadingComissoes ? 'Carregando...' : 'Selecione a comissão'}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Selecione</SelectItem>
+                        {comissoes.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.sigla ? `${c.sigla} — ${c.nome}` : c.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : autorTipoUI === 'MESA_DIRETORA' ? (
+                  <div className="space-y-2">
+                    <Label>Autor</Label>
+                    <Input value={NOME_MESA_DIRETORA} readOnly disabled />
+                    <p className="text-xs text-gray-500">
+                      Registrado como Mesa Diretora (autorTipo=ORGAO no banco).
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     <Label htmlFor="autor-nome">Autor</Label>
@@ -841,7 +976,7 @@ export default function PublicacoesPage() {
                       id="autor-nome"
                       value={formData.autorNome ?? ''}
                       onChange={event => setFormData(prev => ({ ...prev, autorNome: event.target.value }))}
-                      placeholder="Ex: Comissão de Finanças"
+                      placeholder="Ex: Presidência, Secretaria Legislativa"
                     />
                   </div>
                 )}
