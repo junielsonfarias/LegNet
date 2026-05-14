@@ -254,7 +254,7 @@ export default function PublicarEmendaPage() {
         </h1>
         <p className="text-gray-600 mt-1">
           Anexe o PDF assinado a uma emenda. Se a emenda ainda não existe, ela será
-          criada com status "Apresentada" usando find-or-create por proposição+número.
+          criada com status &ldquo;Apresentada&rdquo; usando find-or-create por proposição+número.
         </p>
       </div>
 
