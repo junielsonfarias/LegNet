@@ -8,6 +8,69 @@ A partir de 12/04/2026 o modulo foi expandido para cobrir 100% dos itens estrutu
 
 ---
 
+## Atualizacoes 14/05/2026 - RN-169 Publicacao Direta de Documentos Administrativos
+
+Extensao do padrao RN-168 (Proposicoes) para documentos administrativos. Reaproveita o modelo `Publicacao` como hub universal — portarias, atos da Mesa/Presidencia, oficios, editais, erratas, convocacoes, comunicados, agendas, atas e pautas avulsas, decretos, resolucoes e relatorios — sem passar por fluxo de tramitacao. Resolve a paridade com o portal CR2.
+
+### Schema
+
+- `Publicacao.documentos Json?` — array `[{nome, url}]` para multiplos anexos (mesmo padrao usado em CotaParlamentar). Campos legados `arquivo` e `url` permanecem para compatibilidade.
+- Enum `TipoPublicacao` expandido com 10 novos valores: `ATA_SESSAO`, `PAUTA_SESSAO`, `ATO_MESA`, `ATO_PRESIDENCIA`, `OFICIO`, `EDITAL`, `ERRATA`, `CONVOCACAO`, `COMUNICADO`, `AGENDA`.
+- Migration idempotente em `scripts/sql/add-publicacao-documentos-tipos.sql` (usa `IF NOT EXISTS` + `DO $$ BEGIN ... END$$` para enum). Aplicada via `prisma db execute` no Supabase. `install.sh` etapa 5i aplica automaticamente em VPS.
+
+### API
+
+- `POST /api/publicacoes/publicacao-direta` (novo) — Zod schema com `TIPOS_ADMINISTRATIVOS` controlados (subset do enum). Conteudo opcional; pode ser apenas titulo + ementa + PDFs. `publicada: true` por padrao. Permissao `publicacao.manage`. Audit log `PUBLICACAO_DIRETA_CREATE`.
+- `GET /api/publicacoes` aceita `?tipo=X&publicada=true&limit=500&ano=Y` para alimentar a pagina publica dinamica.
+
+### Service (`src/lib/publicacoes-service.ts`)
+
+- `PublicacaoPayload` ganha `documentos: PublicacaoDocumento[] | null`.
+- `create()` trata `Prisma.JsonNull` quando vazio (sem isso, JSON ficaria string `"null"`).
+- `mapPublicacao` agora retorna `documentos` no shape de resposta (antes silenciosamente omitia, mesmo gravado no DB — bug corrigido junto).
+- `paginate` cap de `limit` elevado de 100 para 500. A pagina publica `/transparencia/atos/[tipo]` chama `?limit=500`. Mesmo padrao de bug ERR-047 (Zod limit desalinhado com frontend) ja conhecido.
+
+### Admin
+
+- Nova pagina `/admin/publicacoes/publicacao-direta` com formulario em 3 secoes (Identificacao / Conteudo opcional / Anexos). Upload PDF/imagem (folder=`publicacoes-atos`) e adicao via link externo.
+- Botao "Publicacao Direta" adicionado ao header de `/admin/publicacoes`.
+
+### Publico - rota dinamica `/transparencia/atos/[tipo]`
+
+Mapeia 13 slugs URL para valores do enum `TipoPublicacao`:
+
+| Slug URL | Enum | Titulo |
+|----------|------|--------|
+| `portarias` | PORTARIA | Portarias |
+| `decretos` | DECRETO | Decretos Legislativos |
+| `resolucoes` | RESOLUCAO | Resolucoes |
+| `atas` | ATA_SESSAO | Atas de Sessao |
+| `pautas` | PAUTA_SESSAO | Pautas de Sessao |
+| `atos-mesa` | ATO_MESA | Atos da Mesa Diretora |
+| `atos-presidencia` | ATO_PRESIDENCIA | Atos da Presidencia |
+| `oficios` | OFICIO | Oficios |
+| `editais` | EDITAL | Editais |
+| `erratas` | ERRATA | Erratas |
+| `convocacoes` | CONVOCACAO | Convocacoes |
+| `comunicados` | COMUNICADO | Comunicados |
+| `agendas` | AGENDA | Agendas |
+
+Layout espelha o concorrente CR2: tabela paginada (20/pag) com busca + filtro de ano + Dialog de documentos multiplos. Componente `TransparenciaPageWrapper` aplica controle de visibilidade por slug `atos-<tipo>`.
+
+### Seguranca
+
+- Folder `publicacoes-atos` adicionado em `ALLOWED_UPLOAD_FOLDERS` (`src/lib/security/file-validation.ts`).
+
+### Como adicionar novo tipo administrativo
+
+1. Adicionar valor no enum `TipoPublicacao` em `prisma/schema/enums.prisma`.
+2. Atualizar `scripts/sql/add-publicacao-documentos-tipos.sql` com novo `IF NOT EXISTS ... ADD VALUE`.
+3. Adicionar entrada em `TIPOS_ADMINISTRATIVOS` em `src/app/api/publicacoes/publicacao-direta/route.ts` (Zod) e `src/app/admin/publicacoes/publicacao-direta/page.tsx` (UI).
+4. Adicionar slug+titulo+descricao em `TIPOS_MAP` em `src/app/transparencia/atos/[tipo]/page.tsx`.
+5. (Opcional) Adicionar tile na home `/transparencia/page.tsx`.
+
+---
+
 ## Atualizacoes 18/04/2026 - Sprint 5 PNTP 2026
 
 ### Automacao de prazos PNTP via cron

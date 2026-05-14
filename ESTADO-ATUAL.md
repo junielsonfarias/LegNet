@@ -52,6 +52,9 @@ reaproveitando o modelo Publicacao existente.
   atos-presidencia, oficios, editais, erratas, convocacoes, comunicados,
   agendas. Layout espelha o concorrente CR2: tabela paginada (20/pag)
   com busca + filtro de ano + dialog de documentos multiplos.
+- Item "Documentos Administrativos" em `/transparencia` (secao "Atividades
+  do Legislativo") deixa de apontar para CR2 e vira expander com os 13
+  tipos linkando para as rotas internas.
 
 **Seguranca**:
 - Folder `publicacoes-atos` adicionado em `ALLOWED_UPLOAD_FOLDERS`
