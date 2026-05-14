@@ -259,6 +259,17 @@ enum TipoPublicacao {
   PLANEJAMENTO
   MANUAL
   CODIGO
+  // RN-169 — Tipos adicionados para Publicacao Direta de Documentos Administrativos
+  ATA_SESSAO
+  PAUTA_SESSAO
+  ATO_MESA
+  ATO_PRESIDENCIA
+  OFICIO
+  EDITAL
+  ERRATA
+  CONVOCACAO
+  COMUNICADO
+  AGENDA
   OUTRO
 }
 

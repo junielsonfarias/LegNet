@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from './prisma'
 
 import type { CategoriaPublicacao, AutorPublicacaoTipo } from './categorias-publicacao-service'
@@ -13,6 +14,7 @@ export interface Publicacao {
   conteudo: string
   arquivo: string | null
   url: string | null
+  documentos: PublicacaoDocumento[] | null
   tamanho: string | null
   publicada: boolean
   visualizacoes: number
@@ -31,6 +33,11 @@ export interface Publicacao {
   updatedAt: string
 }
 
+export interface PublicacaoDocumento {
+  nome: string
+  url: string
+}
+
 export interface PublicacaoPayload {
   titulo: string
   descricao?: string | null
@@ -41,6 +48,7 @@ export interface PublicacaoPayload {
   conteudo: string
   arquivo?: string | null
   url?: string | null
+  documentos?: PublicacaoDocumento[] | null  // RN-169: multiplos anexos
   tamanho?: string | null
   publicada?: boolean
   categoriaId?: string | null
@@ -83,6 +91,7 @@ const mapPublicacao = (publicacao: any): Publicacao => ({
   conteudo: publicacao.conteudo,
   arquivo: publicacao.arquivo ?? null,
   url: publicacao.url ?? null,
+  documentos: Array.isArray(publicacao.documentos) ? (publicacao.documentos as PublicacaoDocumento[]) : null,
   tamanho: publicacao.tamanho ?? null,
   publicada: Boolean(publicacao.publicada),
   visualizacoes: publicacao.visualizacoes ?? 0,
@@ -154,7 +163,7 @@ export const publicacoesService = {
 
   async paginate(filters: PublicacaoFilters = {}, options: { page?: number; limit?: number } = {}) {
     const page = Math.max(1, options.page ?? 1)
-    const limit = Math.min(100, Math.max(1, options.limit ?? 10))
+    const limit = Math.min(500, Math.max(1, options.limit ?? 10))
     const skip = (page - 1) * limit
 
     const where = buildWhereClause(filters)
@@ -214,6 +223,9 @@ export const publicacoesService = {
         conteudo: payload.conteudo,
         arquivo: payload.arquivo?.trim() || null,
         url: payload.url?.trim() || null,
+        documentos: payload.documentos && payload.documentos.length > 0
+          ? (payload.documentos as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
         tamanho: payload.tamanho?.trim() || null,
         publicada: payload.publicada ?? false,
         categoriaId: payload.categoriaId || null,

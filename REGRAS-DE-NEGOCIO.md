@@ -1599,6 +1599,30 @@ REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
 - Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
   rotas alvo (`captchaId` + `captchaAnswer` no body).
 
+REGRA RN-169: PUBLICACAO DIRETA DE DOCUMENTOS ADMINISTRATIVOS
+- Permite publicar atos administrativos diversos (portarias, atos da Mesa
+  e da Presidencia, oficios, editais, erratas, convocacoes, comunicados,
+  agendas, atas e pautas avulsas, decretos, resolucoes, relatorios) sem
+  passar por fluxo de tramitacao.
+- Reaproveita o modelo `Publicacao` como hub universal de documentos.
+- Endpoint dedicado: `POST /api/publicacoes/publicacao-direta`.
+- Campo `Publicacao.documentos Json?` para multiplos anexos
+  (array `[{nome, url}]`, padrao CotaParlamentar).
+- Enum `TipoPublicacao` expandido com tipos administrativos novos:
+  ATA_SESSAO, PAUTA_SESSAO, ATO_MESA, ATO_PRESIDENCIA, OFICIO, EDITAL,
+  ERRATA, CONVOCACAO, COMUNICADO, AGENDA.
+- Pagina admin: `/admin/publicacoes/publicacao-direta` (formulario enxuto).
+- Pagina publica dinamica: `/transparencia/atos/[tipo]` mapeia slugs
+  (portarias, atos-mesa, atos-presidencia, oficios, editais, erratas,
+  convocacoes, comunicados, agendas, decretos, resolucoes, atas, pautas)
+  para o enum TipoPublicacao.
+- Permissoes: `publicacao.manage`.
+- Implementado em: `prisma/schema/{models,enums}.prisma`, `src/lib/publicacoes-service.ts`,
+  `src/app/api/publicacoes/publicacao-direta/route.ts`,
+  `src/app/admin/publicacoes/publicacao-direta/page.tsx`,
+  `src/app/transparencia/atos/[tipo]/page.tsx`,
+  `scripts/sql/add-publicacao-documentos-tipos.sql`.
+
 REGRA RN-168: PUBLICACAO DIRETA DE PROPOSICOES (entrada retroativa)
 - Permite registrar proposicoes JA com o resultado final, sem passar pelo
   fluxo de tramitacao automatica. Caso de uso principal: importacao de

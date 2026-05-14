@@ -424,6 +424,16 @@ do_update() {
     log "Migration RN-168 aplicada (documentos JSONB em proposicoes)"
   fi
 
+  # 5i) RN-169: Publicacao Direta de Documentos Administrativos
+  #     - documentos JSONB em publicacoes
+  #     - valores novos no enum TipoPublicacao (ATA_SESSAO, ATO_MESA, etc)
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-publicacao-documentos-tipos.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-publicacao-documentos-tipos.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-publicacao-documentos-tipos.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration RN-169 aplicada (documentos JSONB + tipos administrativos em publicacoes)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

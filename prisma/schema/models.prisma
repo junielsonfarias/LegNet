@@ -1041,6 +1041,7 @@ model Publicacao {
   conteudo      String              @db.Text
   arquivo       String?
   url           String?             // Link externo (Google Drive, etc.)
+  documentos    Json?               // RN-169: Array [{nome, url}] de anexos multiplos
   tamanho       String?
   publicada     Boolean             @default(false)
   visualizacoes Int                 @default(0)

@@ -1,10 +1,64 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (RN-168 — Publicacao Direta de Proposicoes)
-> **Versao**: 1.15.0
+> **Ultima Atualizacao**: 2026-05-14 (RN-169 — Publicacao Direta de Documentos Administrativos)
+> **Versao**: 1.16.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — RN-169: Publicacao Direta de Documentos Administrativos
+
+Extensao do padrao RN-168 (que cobre Proposicoes) para o universo de
+documentos administrativos. Resolve a paridade com o portal concorrente
+CR2: permite publicar portarias, atos da Mesa, atos da Presidencia,
+oficios, editais, erratas, convocacoes, comunicados, agendas, atas
+avulsas, pautas avulsas, decretos, resolucoes e relatorios — tudo
+reaproveitando o modelo Publicacao existente.
+
+**Schema**:
+- `Publicacao.documentos Json?` (multiplos anexos, padrao CotaParlamentar).
+- Enum `TipoPublicacao` expandido com 10 novos valores: ATA_SESSAO,
+  PAUTA_SESSAO, ATO_MESA, ATO_PRESIDENCIA, OFICIO, EDITAL, ERRATA,
+  CONVOCACAO, COMUNICADO, AGENDA.
+- Migration idempotente em `scripts/sql/add-publicacao-documentos-tipos.sql`
+  (usa `IF NOT EXISTS` + `DO $$ BEGIN ... END$$` para enum). Aplicada via
+  `prisma db execute` no Supabase.
+
+**API novo**:
+- `POST /api/publicacoes/publicacao-direta` — formulario enxuto, aceita
+  apenas tipos administrativos via Zod (lista controlada). Publica direto
+  (`publicada: true`). Permissoes `publicacao.manage`.
+- Audit log `PUBLICACAO_DIRETA_CREATE`.
+
+**Service**:
+- `publicacoes-service.ts:create` agora aceita `documentos` via
+  `Prisma.JsonNull` quando vazio.
+- `mapPublicacao` agora retorna o campo `documentos` (sem isso, o GET
+  voltaria sem os anexos mesmo gravados no DB).
+- `paginate` teve cap de `limit` elevado de 100 para 500 — a pagina
+  publica `/transparencia/atos/[tipo]` chama `?limit=500`. Mesmo padrao
+  de bug ERR-047 (Zod limit desalinhado com frontend) ja registrado.
+
+**Admin**:
+- Nova pagina `/admin/publicacoes/publicacao-direta` com formulario em 3
+  secoes (Identificacao / Conteudo opcional / Anexos).
+- Botao "Publicacao Direta" no header de `/admin/publicacoes`.
+
+**Publico**:
+- Nova rota dinamica `/transparencia/atos/[tipo]` com 13 slugs mapeados:
+  portarias, decretos, resolucoes, atas, pautas, atos-mesa,
+  atos-presidencia, oficios, editais, erratas, convocacoes, comunicados,
+  agendas. Layout espelha o concorrente CR2: tabela paginada (20/pag)
+  com busca + filtro de ano + dialog de documentos multiplos.
+
+**Seguranca**:
+- Folder `publicacoes-atos` adicionado em `ALLOWED_UPLOAD_FOLDERS`
+  (`src/lib/security/file-validation.ts`).
+
+**Install.sh**:
+- Etapa 5i aplica a migration automaticamente.
 
 ---
 

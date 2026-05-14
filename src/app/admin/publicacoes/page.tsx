@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   Activity,
   Archive,
@@ -8,6 +9,7 @@ import {
   Calendar,
   CheckCircle,
   Edit,
+  FileCheck,
   FileText,
   Filter,
   Loader2,
@@ -362,14 +364,22 @@ export default function PublicacoesPage() {
               Organize as publicações oficiais, defina categorias e mantenha o histórico legislativo alinhado ao SAPL.
             </p>
           </div>
-          <Button
-            className="flex items-center gap-2"
-            onClick={openCreateDialog}
-            aria-label="Cadastrar nova publicação"
-          >
-            <Plus className="h-4 w-4" />
-            Nova publicação
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/admin/publicacoes/publicacao-direta">
+                <FileCheck className="h-4 w-4 mr-2" />
+                Publicação Direta
+              </Link>
+            </Button>
+            <Button
+              className="flex items-center gap-2"
+              onClick={openCreateDialog}
+              aria-label="Cadastrar nova publicação"
+            >
+              <Plus className="h-4 w-4" />
+              Nova publicação
+            </Button>
+          </div>
         </div>
       </header>
 
