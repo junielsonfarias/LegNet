@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { withErrorHandler } from '@/lib/error-handler'
 import { withPublicCache } from '@/lib/http-cache'
 
-export const dynamic = 'force-dynamic'
 
 export const GET = withErrorHandler(async (_request: NextRequest) => {
   const anoAtual = new Date().getFullYear()

@@ -11,7 +11,6 @@ import { withErrorHandler } from '@/lib/error-handler'
 import { withPublicCache } from '@/lib/http-cache'
 import { convertToCSV } from '@/lib/utils/csv-export'
 
-export const dynamic = 'force-dynamic'
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   enforceRateLimit(request, 'PUBLIC')

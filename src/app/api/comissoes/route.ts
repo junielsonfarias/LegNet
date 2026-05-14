@@ -8,6 +8,7 @@ import {
 import { withAuth } from '@/lib/auth/permissions'
 import { comissaoDbService } from '@/lib/services/comissao-db-service'
 import { syncComissaoHistorico } from '@/lib/participation-history'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -29,13 +30,20 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const page = parseInt(searchParams.get('page') || '1')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-  const result = await comissaoDbService.paginate(
-    {
-      tipo,
-      ativa: ativa !== null ? ativa === 'true' : undefined
-    },
-    { page, limit }
-  )
+  // F3.2 — listagem padrao (ativas) usada pela home e portal; cache 15min
+  const isDefaultListing = page === 1 && limit === 50 && !tipo && ativa === 'true'
+
+  const result = isDefaultListing
+    ? await cacheHelpers.getComissoesAtivas(() =>
+        comissaoDbService.paginate({ ativa: true }, { page: 1, limit: 50 }),
+      )
+    : await comissaoDbService.paginate(
+        {
+          tipo,
+          ativa: ativa !== null ? ativa === 'true' : undefined
+        },
+        { page, limit }
+      )
 
   return createSuccessResponse(
     result.data,
@@ -61,6 +69,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   }
 
   const comissao = await comissaoDbService.create(validatedData)
+  cacheHelpers.invalidateComissoes()
 
   await syncComissaoHistorico(comissao.id)
 

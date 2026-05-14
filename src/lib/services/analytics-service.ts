@@ -338,29 +338,25 @@ export async function calcularMetricasVotacoes(
   }
   porMes.sort((a, b) => a.mes.localeCompare(b.mes))
 
-  // Participação média em votações
+  // Participação média em votações.
+  // F3.6 — substitui findMany + groupBy-em-JS por prisma.groupBy. Antes podia
+  // carregar dezenas de milhares de linhas para agregar; agora o DB devolve
+  // direto ~N rows (uma por proposicao).
   const totalParlamentares = await prisma.parlamentar.count({ where: { ativo: true } })
-  const votos = await prisma.votacao.findMany({
+  const votosPorProp = await prisma.votacao.groupBy({
+    by: ['proposicaoId'],
     where: {
       proposicao: {
-        dataVotacao: {
-          gte: inicio,
-          lte: fim
-        }
-      }
-    }
+        dataVotacao: { gte: inicio, lte: fim },
+      },
+    },
+    _count: { _all: true },
   })
 
-  // Agrupa por proposição para calcular participação
-  const votosPorProposicao: Record<string, number> = {}
-  for (const v of votos) {
-    votosPorProposicao[v.proposicaoId] = (votosPorProposicao[v.proposicaoId] || 0) + 1
-  }
-
   let participacaoTotal = 0
-  const numProposicoes = Object.keys(votosPorProposicao).length
-  for (const qtd of Object.values(votosPorProposicao)) {
-    participacaoTotal += totalParlamentares > 0 ? (qtd / totalParlamentares) * 100 : 0
+  const numProposicoes = votosPorProp.length
+  for (const g of votosPorProp) {
+    participacaoTotal += totalParlamentares > 0 ? (g._count._all / totalParlamentares) * 100 : 0
   }
   const participacaoMedia = numProposicoes > 0 ? participacaoTotal / numProposicoes : 0
 

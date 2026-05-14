@@ -4,6 +4,7 @@ import { createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { configuracaoDbService } from '@/lib/services/configuracao-db-service'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +31,10 @@ const ConfiguracaoSchema = z.object({
 })
 
 export const GET = withAuth(async (_request: NextRequest) => {
-  const configuracao = await configuracaoDbService.ensureConfiguracaoInstitucional()
+  // F3.2 — configuracoes mudam raramente (1x/mes); cache 1h em memoria.
+  const configuracao = await cacheHelpers.getConfiguracoes(() =>
+    configuracaoDbService.ensureConfiguracaoInstitucional(),
+  )
   return createSuccessResponse(configuracao, 'Configurações carregadas com sucesso')
 }, { permissions: 'config.view' })
 
@@ -39,6 +43,7 @@ export const PUT = withAuth(async (request: NextRequest, _ctx, session) => {
   const validatedData = ConfiguracaoSchema.parse(body)
 
   const configuracao = await configuracaoDbService.upsertConfiguracaoInstitucional(validatedData)
+  cacheHelpers.invalidateConfiguracoes()
 
   await logAudit({
     request,

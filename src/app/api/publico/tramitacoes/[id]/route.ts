@@ -4,7 +4,6 @@ import { createSuccessResponse, NotFoundError, createErrorResponse } from '@/lib
 import { publicGetById } from '@/lib/services/tramitacao-service'
 import { withPublicCache } from '@/lib/http-cache'
 
-export const dynamic = 'force-dynamic'
 
 export const GET = async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   try {

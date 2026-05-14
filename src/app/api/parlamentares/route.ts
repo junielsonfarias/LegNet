@@ -9,6 +9,7 @@ import {
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -75,16 +76,32 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const page = parseInt(searchParams.get('page') || '1')
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
 
-  const result = await parlamentarDbService.paginate(
-    {
-      ativo: ativo !== null ? ativo === 'true' : undefined,
-      cargo,
-      partido,
-      search,
-      legislaturaId
-    },
-    { page, limit }
-  )
+  // F3.2 — cenario padrao (page=1, limit=50, ativo=true, sem filtros custom)
+  // eh chamado em todo carregamento do portal. Cache 15min em memoria nesse
+  // caso. Qualquer filtro extra/page/limit diferente bypassa.
+  const isDefaultListing =
+    page === 1 &&
+    limit === 50 &&
+    ativo === 'true' &&
+    !cargo &&
+    !partido &&
+    !search &&
+    !legislaturaId
+
+  const result = isDefaultListing
+    ? await cacheHelpers.getParlamentaresAtivos(() =>
+        parlamentarDbService.paginate({ ativo: true }, { page: 1, limit: 50 }),
+      )
+    : await parlamentarDbService.paginate(
+        {
+          ativo: ativo !== null ? ativo === 'true' : undefined,
+          cargo,
+          partido,
+          search,
+          legislaturaId
+        },
+        { page, limit }
+      )
 
   return createSuccessResponse(
     result.data,
@@ -110,6 +127,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   }
 
   const parlamentar = await parlamentarDbService.create(validatedData)
+  cacheHelpers.invalidateParlamentares()
 
   return createSuccessResponse(
     parlamentar,

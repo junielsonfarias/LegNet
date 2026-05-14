@@ -3,7 +3,6 @@ import { withErrorHandler } from '@/lib/error-handler'
 import { withPublicCache } from '@/lib/http-cache'
 import { RESOURCE_SCHEMAS } from '@/lib/services/dados-abertos-schemas'
 
-export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/dados-abertos/schema

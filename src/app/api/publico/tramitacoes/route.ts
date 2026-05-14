@@ -4,7 +4,6 @@ import { createSuccessResponse } from '@/lib/error-handler'
 import { publicList } from '@/lib/services/tramitacao-service'
 import { withPublicCache } from '@/lib/http-cache'
 
-export const dynamic = 'force-dynamic'
 
 export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)

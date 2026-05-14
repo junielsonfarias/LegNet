@@ -9,6 +9,7 @@ import {
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { parlamentarDbService } from '@/lib/services/parlamentar-db-service'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -92,6 +93,7 @@ export const PUT = withAuth(async (
   }
 
   const updatedParlamentar = await parlamentarDbService.update(id, validatedData)
+  cacheHelpers.invalidateParlamentares()
 
   return createSuccessResponse(updatedParlamentar, 'Parlamentar atualizado com sucesso')
 }, { permissions: 'parlamentar.manage' })
@@ -119,9 +121,11 @@ export const DELETE = withAuth(async (
         { status: 409 }
       )
     }
+    cacheHelpers.invalidateParlamentares()
     return createSuccessResponse(null, 'Parlamentar excluido permanentemente')
   }
 
   await parlamentarDbService.remove(id)
+  cacheHelpers.invalidateParlamentares()
   return createSuccessResponse(null, 'Parlamentar desativado com sucesso')
 }, { permissions: 'parlamentar.manage' })

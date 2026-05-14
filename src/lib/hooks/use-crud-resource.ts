@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { withRetry } from '@/lib/utils/retry'
 import { useStableFilters } from '@/lib/utils/use-stable-filters'
@@ -97,7 +97,24 @@ export function useCrudResource<T, TFilters extends object | undefined, TCreate,
 
   const stableFilters = useStableFilters(filters)
 
+  // F3.4 (PLANO-CORRECOES-MAIO-2026): rastreia o fetch corrente para
+  // descartar o resultado quando filtros mudam OU componente desmonta. Antes
+  // disso, uma resposta lenta de filtros antigos podia sobrescrever dados
+  // bons (race condition) e setState em componente desmontado emitia warning.
+  const requestIdRef = useRef(0)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
   const fetchData = useCallback(async () => {
+    const myRequestId = ++requestIdRef.current
+    const isStale = () => myRequestId !== requestIdRef.current || !isMountedRef.current
+
     try {
       setLoading(true)
       setError(null)
@@ -106,23 +123,29 @@ export function useCrudResource<T, TFilters extends object | undefined, TCreate,
         retryCount,
         retryDelay
       )
+      if (isStale()) return
       const items = transformResponse ? transformResponse(result.data) : result.data
       setData(items)
       setMeta(result.meta)
     } catch (err) {
+      if (isStale()) return
       const errorMessage = err instanceof Error
         ? err.message
         : `Erro ao carregar ${entityName}`
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
-      setLoading(false)
+      if (!isStale()) setLoading(false)
     }
   }, [api, entityName, stableFilters, transformResponse, retryCount, retryDelay])
 
   useEffect(() => {
     if (autoFetch) {
       fetchData()
+    }
+    // Quando filtros mudam, marca a request anterior como obsoleta
+    return () => {
+      requestIdRef.current++
     }
   }, [fetchData, autoFetch])
 

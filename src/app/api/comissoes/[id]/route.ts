@@ -10,6 +10,7 @@ import {
 import { withAuth } from '@/lib/auth/permissions'
 import { comissaoDbService } from '@/lib/services/comissao-db-service'
 import { syncComissaoHistorico } from '@/lib/participation-history'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -63,6 +64,7 @@ export const PUT = withAuth(async (
   }
 
   const updatedComissao = await comissaoDbService.update(id, validatedData)
+  cacheHelpers.invalidateComissoes()
 
   await syncComissaoHistorico(id)
 
@@ -83,6 +85,7 @@ export const DELETE = withAuth(async (
   }
 
   await comissaoDbService.remove(id)
+  cacheHelpers.invalidateComissoes()
 
   // Desativar histórico de participação
   await comissaoDbService.deactivateHistoricoParticipacao(id)

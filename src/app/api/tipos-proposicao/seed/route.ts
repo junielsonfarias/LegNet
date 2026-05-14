@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiLogger } from '@/lib/logging/logger'
 import { withAuth } from '@/lib/auth/permissions'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -173,6 +174,11 @@ export const POST = withAuth(async (request: NextRequest) => {
       } catch (err) {
         resultados.erros.push(`Erro ao processar ${tipo.codigo}: ${err}`)
       }
+    }
+
+    // F3.2 — seed modifica massa de tipos; invalida cache
+    if (resultados.criados > 0 || resultados.atualizados > 0) {
+      cacheHelpers.invalidateTiposProposicao()
     }
 
     return NextResponse.json({

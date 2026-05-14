@@ -34,7 +34,8 @@ export const CACHE_KEYS = {
   CONFIGURACOES: 'configuracoes:sistema',
   PARLAMENTARES_ATIVOS: 'parlamentares:ativos',
   COMISSOES_ATIVAS: 'comissoes:ativas',
-  ESTATISTICAS_GERAL: 'estatisticas:geral'
+  ESTATISTICAS_GERAL: 'estatisticas:geral',
+  TRANSPARENCIA_REDIRECTS: 'transparencia:redirects',
 }
 
 class MemoryCache {
@@ -288,11 +289,47 @@ export const cacheHelpers = {
   },
 
   /**
+   * Cache para comissoes ativas (F3.2)
+   */
+  async getComissoesAtivas<T>(fetcher: () => Promise<T>): Promise<T> {
+    return cache.getOrSet(CACHE_KEYS.COMISSOES_ATIVAS, fetcher, CACHE_TTL.LONG)
+  },
+
+  /**
+   * Cache para configuracoes de redirect da transparencia (F3.2)
+   */
+  async getTransparenciaRedirects<T>(fetcher: () => Promise<T>): Promise<T> {
+    return cache.getOrSet(CACHE_KEYS.TRANSPARENCIA_REDIRECTS, fetcher, CACHE_TTL.MEDIUM)
+  },
+
+  /**
    * Invalida caches de parlamentares
    */
   invalidateParlamentares(): void {
     invalidateEntityCache('parlamentares')
     cache.delete(CACHE_KEYS.PARLAMENTARES_ATIVOS)
+  },
+
+  /**
+   * Invalida cache de comissoes
+   */
+  invalidateComissoes(): void {
+    invalidateEntityCache('comissoes')
+    cache.delete(CACHE_KEYS.COMISSOES_ATIVAS)
+  },
+
+  /**
+   * Invalida cache de redirects da transparencia
+   */
+  invalidateTransparenciaRedirects(): void {
+    cache.delete(CACHE_KEYS.TRANSPARENCIA_REDIRECTS)
+  },
+
+  /**
+   * Invalida cache de tipos de proposicao
+   */
+  invalidateTiposProposicao(): void {
+    cache.delete(CACHE_KEYS.TIPOS_PROPOSICAO)
   },
 
   /**

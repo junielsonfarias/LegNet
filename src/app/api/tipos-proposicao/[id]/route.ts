@@ -3,6 +3,7 @@ import { withAuth } from '@/lib/auth/permissions'
 import { z } from 'zod'
 import { tiposProposicaoDbService } from '@/lib/services/tipos-proposicao-db-service'
 import { withErrorHandler, createSuccessResponse, NotFoundError, ValidationError } from '@/lib/error-handler'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,6 +55,7 @@ export const PUT = withAuth(async (request: NextRequest, context: RouteParams) =
   }
 
   const tipo = await tiposProposicaoDbService.update(id, validatedData)
+  cacheHelpers.invalidateTiposProposicao()
   return createSuccessResponse(tipo, 'Tipo de proposição atualizado com sucesso')
 }, { permissions: 'config.manage' })
 
@@ -74,5 +76,6 @@ export const DELETE = withAuth(async (request: NextRequest, context: RouteParams
   }
 
   await tiposProposicaoDbService.remove(id)
+  cacheHelpers.invalidateTiposProposicao()
   return createSuccessResponse({ removed: true }, 'Tipo de proposição excluído com sucesso')
 }, { permissions: 'config.manage' })

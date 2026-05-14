@@ -9,7 +9,6 @@ import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 import { withErrorHandler } from '@/lib/error-handler'
 import { withPublicCache } from '@/lib/http-cache'
 
-export const dynamic = 'force-dynamic'
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   enforceRateLimit(request, 'PUBLIC')

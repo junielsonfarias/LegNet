@@ -3,8 +3,7 @@ import { z } from 'zod'
 import { withAuth } from '@/lib/auth/permissions'
 import { tiposProposicaoDbService } from '@/lib/services/tipos-proposicao-db-service'
 import { withErrorHandler, createSuccessResponse, ConflictError } from '@/lib/error-handler'
-
-export const dynamic = 'force-dynamic'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 const APLICACOES_QUORUM = [
   'VOTACAO_SIMPLES',
@@ -41,9 +40,13 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const apenasAtivos = searchParams.get('ativo') === 'true'
 
-  const tipos = await tiposProposicaoDbService.list({
-    ativo: apenasAtivos ? true : undefined
-  })
+  // F3.2 — tipos de proposicao mudam raramente; cache em memoria 1d quando
+  // listagem padrao (so ativos). Filtros custom (ativo=null) bypassam.
+  const tipos = apenasAtivos
+    ? await cacheHelpers.getTiposProposicao(() =>
+        tiposProposicaoDbService.list({ ativo: true }),
+      )
+    : await tiposProposicaoDbService.list({})
 
   return createSuccessResponse(tipos)
 })
@@ -58,6 +61,7 @@ export const POST = withAuth(async (request: NextRequest) => {
   }
 
   const tipo = await tiposProposicaoDbService.create(validatedData)
+  cacheHelpers.invalidateTiposProposicao()
 
   return createSuccessResponse(tipo, 'Tipo de proposição criado com sucesso', undefined, 201)
 }, { permissions: 'config.manage' })

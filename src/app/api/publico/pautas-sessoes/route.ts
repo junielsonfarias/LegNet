@@ -8,7 +8,6 @@ import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { prisma } from '@/lib/prisma'
 import { withPublicCache } from '@/lib/http-cache'
 
-export const dynamic = 'force-dynamic'
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)

@@ -8,7 +8,6 @@ import { dadosAbertosService } from '@/lib/services/dados-abertos-service'
 import { withErrorHandler } from '@/lib/error-handler'
 import { withPublicCache } from '@/lib/http-cache'
 
-export const dynamic = 'force-dynamic'
 
 export const GET = withErrorHandler(async () => {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'

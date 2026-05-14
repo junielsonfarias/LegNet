@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { withPublicCache } from '@/lib/http-cache'
 
-export const dynamic = 'force-dynamic'
 
 interface ItemConformidade {
   nome: string
