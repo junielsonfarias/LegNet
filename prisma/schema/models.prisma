@@ -792,6 +792,11 @@ model Emenda {
   // Observacoes
   observacoes         String?     @db.Text
 
+  // RN-174: PDF assinado + data de publicacao
+  arquivoUrl          String?     // URL do PDF assinado
+  arquivoNome         String?     // Nome original do arquivo
+  dataPublicacao      DateTime?   // Data oficial de publicacao
+
   // Controle
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt

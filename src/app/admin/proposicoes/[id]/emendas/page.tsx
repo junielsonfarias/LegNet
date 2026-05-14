@@ -49,7 +49,8 @@ import {
   AlertCircle,
   RefreshCw,
   FileSignature,
-  Users
+  Users,
+  FileCheck
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { EmendaApi, CriarEmendaInput } from '@/lib/api/emendas-api'
@@ -280,6 +281,12 @@ export default function EmendasProposicaoPage() {
         <Button onClick={() => carregarDados()} variant="outline">
           <RefreshCw className="mr-2 h-4 w-4" />
           Atualizar
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={`/admin/emendas/publicar?proposicaoId=${proposicaoId}`}>
+            <FileCheck className="mr-2 h-4 w-4" />
+            Publicar Emenda
+          </Link>
         </Button>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>

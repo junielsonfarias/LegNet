@@ -119,6 +119,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
         ],
       },
       { nome: 'Materias Legislativas', icon: ScrollText, href: '/legislativo' },
+      { nome: 'Emendas', icon: FileSignature, href: '/transparencia/atos/emendas' },
       { nome: 'Sessoes', icon: ClipboardList, href: '/legislativo/pautas-sessoes' },
       { nome: 'Normas Juridicas', icon: Gavel, href: '/legislativo/normas' },
     ],

@@ -1,10 +1,48 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (RN-173 — Publicacao de Parecer de Comissao)
-> **Versao**: 1.20.0
+> **Ultima Atualizacao**: 2026-05-14 (RN-174 — Publicacao de Emenda)
+> **Versao**: 1.21.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-14 — RN-174: Publicacao de Emenda
+
+Estende a familia RN-170/171/172/173 para Emenda. Migration leve: o
+schema ganhou 3 colunas em `Emenda` (arquivoUrl, arquivoNome,
+dataPublicacao). Aplicada no Supabase via prisma db execute. install.sh
+etapa 5k.
+
+**API**:
+- `POST /api/emendas/publicar` (auth, `proposicao.manage`):
+  * Modo 1: `emendaId` -> anexa PDF a emenda existente.
+  * Modo 2: `proposicaoId + numero + tipo + autorId + textoNovo +
+    justificativa` -> find-or-create via
+    `@@unique([proposicaoId, numero])`. Se nao achar, cria com
+    `status='APRESENTADA'`.
+  * Audit log `EMENDA_PUBLICACAO`.
+- `GET /api/emendas/publicas` (publico, cache 60+SWR 300): emendas com
+  `arquivoUrl NOT NULL`, com `autor` e `proposicao` embarcados. Filtros
+  `?proposicaoId&autorId&ano`.
+
+**Admin**:
+- `/admin/emendas/publicar` (standalone). Aceita `?proposicaoId=X` via
+  querystring (botao do header de `/admin/proposicoes/[id]/emendas`
+  passa esse parametro automaticamente).
+- Form em 4 secoes (Modo -> Proposicao -> Conteudo -> Arquivo).
+- Botao "Publicar Emenda" no header de
+  `/admin/proposicoes/[id]/emendas`.
+
+**Publico**:
+- `/transparencia/atos/emendas` (slug novo, fonte `emenda`). Cards
+  mostram numero, tipo, proposicao alvo, autor e data de publicacao.
+- Item "Emendas" adicionado a secao "Atividades do Legislativo" da home
+  `/transparencia`.
+
+**Seguranca**:
+- Folder `emendas-publicacao` adicionado em `ALLOWED_UPLOAD_FOLDERS`.
 
 ---
 

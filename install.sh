@@ -443,6 +443,15 @@ do_update() {
     log "Migration RN-172 aplicada (arquivos de ata/pauta em reunioes de comissao)"
   fi
 
+  # 5k) RN-174: Publicacao de Emenda
+  #     - arquivoUrl, arquivoNome, dataPublicacao em emendas
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-emenda-arquivos.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-emenda-arquivos.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-emenda-arquivos.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration RN-174 aplicada (arquivo PDF + dataPublicacao em emendas)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

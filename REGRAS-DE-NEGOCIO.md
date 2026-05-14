@@ -1599,6 +1599,48 @@ REGRA RN-167: PROTECAO ANTI-SPAM EM FORMULARIOS PUBLICOS
 - Implementado em: `src/lib/security/captcha-guard.ts` + Zod schemas das
   rotas alvo (`captchaId` + `captchaAnswer` no body).
 
+REGRA RN-174: PUBLICACAO DE EMENDA
+- Espelha RN-170/171/172/173 para Emenda. Toda emenda publicada vive
+  em `Emenda.arquivoUrl` + `Emenda.dataPublicacao`. Sem fonte paralela
+  em Publicacao.
+- Schema ganhou 3 campos via migration idempotente:
+  - `arquivoUrl` (URL do PDF)
+  - `arquivoNome` (nome original)
+  - `dataPublicacao` (data oficial de publicacao)
+- Migration: `scripts/sql/add-emenda-arquivos.sql` (ADD COLUMN IF NOT
+  EXISTS). Aplicada no Supabase via prisma db execute. install.sh
+  etapa 5k.
+- Endpoint dedicado: `POST /api/emendas/publicar`. Dois modos:
+  1. `emendaId` informado: anexa PDF a emenda existente.
+  2. `proposicaoId + numero + tipo + autorId + textoNovo + justificativa`:
+     find-or-create via `@@unique([proposicaoId, numero])`. Se nao
+     achar, cria com `status='APRESENTADA'`.
+- Endpoint publico: `GET /api/emendas/publicas` retorna emendas com
+  `arquivoUrl NOT NULL`, com `autor` e `proposicao` embarcados. Filtros
+  `?proposicaoId=X&autorId=Y&ano=YYYY` (ano filtra por dataPublicacao).
+- Pagina admin: `/admin/emendas/publicar` (standalone, aceita
+  `?proposicaoId=X` via querystring). Form em 4 secoes (Modo ->
+  Proposicao -> Conteudo -> Arquivo).
+- Botao "Publicar Emenda" no header de
+  `/admin/proposicoes/[id]/emendas`.
+- Pagina publica: `/transparencia/atos/emendas` (slug novo, fonte
+  `emenda`).
+- Item "Emendas" adicionado a secao "Atividades do Legislativo" da home
+  `/transparencia` (entre Materias Legislativas e Sessoes).
+- Folder upload: `emendas-publicacao` em `ALLOWED_UPLOAD_FOLDERS`.
+- Permissoes: `proposicao.manage` (ADMIN/SECRETARIA).
+- Auditoria: action `EMENDA_PUBLICACAO`.
+- Implementado em: `prisma/schema/models.prisma`,
+  `scripts/sql/add-emenda-arquivos.sql`,
+  `src/app/api/emendas/publicar/route.ts`,
+  `src/app/api/emendas/publicas/route.ts`,
+  `src/app/admin/emendas/publicar/page.tsx`,
+  `src/app/admin/proposicoes/[id]/emendas/page.tsx` (botao),
+  `src/app/transparencia/atos/[tipo]/page.tsx` (slug `emendas`),
+  `src/app/transparencia/page.tsx` (item),
+  `src/lib/security/file-validation.ts`,
+  `install.sh` (etapa 5k).
+
 REGRA RN-173: PUBLICACAO DE PARECER DE COMISSAO
 - Espelha RN-170/171/172 para Parecer. Todo parecer publicado vive em
   `Parecer.arquivoUrl` + `Parecer.dataEmissao` + `Parecer.status='EMITIDO'`.

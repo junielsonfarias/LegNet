@@ -59,6 +59,7 @@ type AtoTipoConfig = {
     | 'reuniao-comissao-ata'
     | 'reuniao-comissao-pauta'
     | 'parecer-comissao'
+    | 'emenda'
 }
 const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   'portarias': { codigo: 'PORTARIA', titulo: 'Portarias', descricao: 'Portarias administrativas da Câmara Municipal.' },
@@ -79,6 +80,17 @@ const TIPOS_MAP: Record<string, AtoTipoConfig> = {
   'pautas-comissoes': { codigo: 'PAUTA_COMISSAO', titulo: 'Pautas de Reuniões de Comissões', descricao: 'Pautas das reuniões das comissões permanentes e temporárias.', fonte: 'reuniao-comissao-pauta' },
   // RN-173 — Pareceres de comissoes
   'pareceres-comissoes': { codigo: 'PARECER_COMISSAO', titulo: 'Pareceres de Comissões', descricao: 'Pareceres técnicos emitidos pelas comissões sobre proposições.', fonte: 'parecer-comissao' },
+  // RN-174 — Emendas
+  'emendas': { codigo: 'EMENDA', titulo: 'Emendas', descricao: 'Emendas apresentadas a proposições legislativas.', fonte: 'emenda' },
+}
+
+const TIPO_EMENDA_LABEL: Record<string, string> = {
+  ADITIVA: 'Aditiva',
+  MODIFICATIVA: 'Modificativa',
+  SUPRESSIVA: 'Supressiva',
+  SUBSTITUTIVA: 'Substitutiva',
+  EMENDA_DE_REDACAO: 'De Redação',
+  AGLUTINATIVA: 'Aglutinativa',
 }
 
 const TIPO_PARECER_LABEL: Record<string, string> = {
@@ -151,6 +163,47 @@ export default function AtosTipoPage({ params }: { params: Promise<{ tipo: strin
                 url: null,
                 documentos: url ? [{ nome: 'Ata em PDF', url }] : null,
                 autorNome: 'Câmara Municipal',
+              }
+            })
+          setPublicacoes(arr)
+        } else if (tipoMap.fonte === 'emenda') {
+          // RN-174: emendas
+          const r = await fetch(`/api/emendas/publicas?limit=500`)
+          const j = await r.json()
+          const arr: Publicacao[] = (Array.isArray(j?.data) ? j.data : [])
+            .map((m: any) => {
+              const url = m.arquivoUrl || null
+              const tipoLabel = TIPO_EMENDA_LABEL[m.tipo] || m.tipo
+              const propLabel = m.proposicao
+                ? `${m.proposicao.tipo} ${m.proposicao.numero}/${m.proposicao.ano}`
+                : ''
+              const autor = m.autor?.apelido || m.autor?.nome || ''
+              const dataObj = m.dataPublicacao
+                ? new Date(m.dataPublicacao)
+                : new Date()
+              const ano = dataObj.getUTCFullYear()
+              const descricaoParts: string[] = []
+              if (propLabel) descricaoParts.push(`Sobre ${propLabel}`)
+              if (autor) descricaoParts.push(`Autor: ${autor}`)
+              if (m.dataPublicacao) {
+                descricaoParts.push(
+                  `Publicada em ${new Date(m.dataPublicacao).toLocaleDateString('pt-BR')}`,
+                )
+              }
+              return {
+                id: m.id,
+                tipo: 'EMENDA',
+                titulo: `Emenda nº ${m.numero} — ${tipoLabel}`,
+                descricao: descricaoParts.join(' · ') || null,
+                numero: String(m.numero),
+                ano,
+                data: m.dataPublicacao || new Date().toISOString(),
+                arquivo: url,
+                url: null,
+                documentos: url
+                  ? [{ nome: m.arquivoNome || 'Emenda em PDF', url }]
+                  : null,
+                autorNome: autor || 'Câmara Municipal',
               }
             })
           setPublicacoes(arr)
