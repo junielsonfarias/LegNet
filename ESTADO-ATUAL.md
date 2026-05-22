@@ -1,10 +1,44 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit I — publicacao de RGF/LDO/LOA/PPA)
-> **Versao**: 1.24.3
+> **Ultima Atualizacao**: 2026-05-22 (Commit J — restos a pagar + PDA/regulamentacao publicaveis)
+> **Versao**: 1.25.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit J: pendencias PNTP menores (restos a pagar, PDA, ouvidoria)
+
+Fecha as 3 pendencias menores remanescentes da analise de campos de
+publicacao direta. Uma migration (1 tabela + 2 valores de enum).
+
+**#3 — Restos a Pagar (modulo completo):**
+- Modelo `RestoPagar` (`restos_pagar`): ano, credor, cnpjCpf,
+  numeroEmpenho, tipo (PROCESSADO | NAO_PROCESSADO), valorInscrito,
+  valorPago, valorCancelado.
+- API `/api/restos-pagar` (+ `[id]`): GET protegido (`transparencia.manage`)
+  — a pagina publica e SSR.
+- Admin `/admin/transparencia/restos-pagar` (CRUD) + sidebar.
+- Pagina publica `/transparencia/restos-pagar` (SSR + filtro client,
+  CPF de credor PF mascarado via `maskCpfOrCnpj`, totais). Item novo na
+  secao "Receitas e Despesas" da home.
+
+**#1/#2 — Plano de Dados Abertos e Regulamentacao da Ouvidoria:**
+- Enum `TipoDocumentoTransparencia` ganhou `PLANO_DADOS_ABERTOS` e
+  `REGULAMENTO_OUVIDORIA` (publicaveis em `/admin/transparencia/documentos`).
+- Novo componente SSR `DocumentosOficiais` (`src/components/transparencia/`)
+  lista os documentos publicados de um tipo.
+- As paginas `/transparencia/plano-dados-abertos` e
+  `/transparencia/ouvidoria/regulamentacao` deixaram de ser `force-static`
+  e ganharam uma secao "Documentos Oficiais" — o ato normativo que
+  institui o PDA / regulamenta a Ouvidoria agora pode ser publicado.
+
+**Migration:** `scripts/sql/add-restos-pagar.sql` (idempotente — tabela
++ `ALTER TYPE ADD VALUE`), aplicada no Supabase. install.sh etapa 5p.
+
+Validacao: build de producao OK, 570/570 testes, 0 erros TypeScript,
+ESLint limpo.
 
 ---
 

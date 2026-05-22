@@ -19,7 +19,9 @@ const TIPOS = [
   'RGF',
   'LDO',
   'LOA',
-  'PPA'
+  'PPA',
+  'PLANO_DADOS_ABERTOS',
+  'REGULAMENTO_OUVIDORIA'
 ] as const
 
 const QuerySchema = z.object({

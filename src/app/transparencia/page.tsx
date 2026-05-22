@@ -132,6 +132,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Notas Fiscais Liquidadas', icon: Receipt, href: '/transparencia/notas-fiscais', slug: 'notas-fiscais' },
       { nome: 'Cotas para Exercicio da Atividade Parlamentar', icon: Wallet, href: '/transparencia/cotas-parlamentar', slug: 'cotas-parlamentar' },
       { nome: 'Ordem Cronologica de Pagamentos', icon: Clock, href: '/transparencia/ordem-pagamentos', slug: 'ordem-pagamentos' },
+      { nome: 'Restos a Pagar', icon: Banknote, href: '/transparencia/restos-pagar' },
     ],
   },
   {

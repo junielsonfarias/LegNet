@@ -37,7 +37,9 @@ const TIPOS = [
   { value: 'RGF', label: 'Relatorio de Gestao Fiscal (RGF)' },
   { value: 'LDO', label: 'Lei de Diretrizes Orcamentarias (LDO)' },
   { value: 'LOA', label: 'Lei Orcamentaria Anual (LOA)' },
-  { value: 'PPA', label: 'Plano Plurianual (PPA)' }
+  { value: 'PPA', label: 'Plano Plurianual (PPA)' },
+  { value: 'PLANO_DADOS_ABERTOS', label: 'Plano de Dados Abertos' },
+  { value: 'REGULAMENTO_OUVIDORIA', label: 'Regulamento da Ouvidoria' }
 ] as const
 
 const EMPTY_FORM = {

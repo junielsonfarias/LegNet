@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Database, ArrowLeft, Target, RefreshCw, FileJson, Scale, ExternalLink,
 } from 'lucide-react'
+import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const principios = [
   'Publicidade como regra: os dados sao abertos por padrao, salvo sigilo legal.',
@@ -22,7 +23,7 @@ const periodicidades = [
   { dado: 'Servidores, licitacoes e demais conjuntos', prazo: 'Atualizacao continua' },
 ]
 
-export default function PlanoDadosAbertosPage() {
+export default async function PlanoDadosAbertosPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -143,6 +144,11 @@ export default function PlanoDadosAbertosPage() {
               </p>
             </CardContent>
           </Card>
+
+          <DocumentosOficiais
+            tipo="PLANO_DADOS_ABERTOS"
+            titulo="Documento Oficial do Plano de Dados Abertos"
+          />
         </div>
       </div>
     </div>

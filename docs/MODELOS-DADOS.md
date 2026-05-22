@@ -1,9 +1,9 @@
 # Modelos de Dados (Prisma)
 
-> Referencia consolidada dos modelos Prisma do projeto. **127 modelos** ativos
+> Referencia consolidada dos modelos Prisma do projeto. **128 modelos** ativos
 > (`prisma/schema/models.prisma`). Documento referenciado pelo CLAUDE.md.
 
-> **Ultima atualizacao**: 2026-05-22 (Commits C/E/F — gaps CR2/PNTP, +7 modelos). Atualizado quando schema muda.
+> **Ultima atualizacao**: 2026-05-22 (Commits C/E/F/J — gaps CR2/PNTP, +8 modelos). Atualizado quando schema muda.
 
 ---
 
@@ -190,6 +190,9 @@
 - **AgendaParlamentar**: agenda externa de parlamentares (Commit F).
   Padrao snapshot `parlamentarId` + `parlamentarNome`, sem FK formal
   (como `CotaParlamentar`).
+- **RestoPagar**: restos a pagar — despesas empenhadas e nao pagas
+  (Commit J). `tipo` (PROCESSADO|NAO_PROCESSADO), valores inscrito/pago/
+  cancelado. CPF de credor PF mascarado na pagina publica.
 
 ---
 

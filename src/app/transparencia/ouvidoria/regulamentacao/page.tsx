@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookOpen, ArrowLeft, Scale, Clock, MessageSquare, FileSearch } from 'lucide-react'
+import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const baseLegal = [
   {
@@ -35,7 +36,7 @@ const tiposManifestacao = [
   { tipo: 'Solicitacao', descricao: 'Pedido de adocao de providencia ou de prestacao de servico.' },
 ]
 
-export default function RegulamentacaoOuvidoriaPage() {
+export default async function RegulamentacaoOuvidoriaPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -127,6 +128,11 @@ export default function RegulamentacaoOuvidoriaPage() {
               </p>
             </CardContent>
           </Card>
+
+          <DocumentosOficiais
+            tipo="REGULAMENTO_OUVIDORIA"
+            titulo="Regulamento da Ouvidoria"
+          />
 
           <Card className="border-l-4 border-l-camara-primary">
             <CardContent className="p-5">

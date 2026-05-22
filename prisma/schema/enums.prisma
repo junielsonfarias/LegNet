@@ -450,6 +450,9 @@ enum TipoDocumentoTransparencia {
   LDO
   LOA
   PPA
+  // Commit J — atos institucionais publicaveis como documento
+  PLANO_DADOS_ABERTOS
+  REGULAMENTO_OUVIDORIA
 }
 
 enum SituacaoVeiculo {

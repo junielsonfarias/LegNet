@@ -484,6 +484,14 @@ do_update() {
     log "Migration Commit I aplicada (tipos RGF/LDO/LOA/PPA em documentos de transparencia)"
   fi
 
+  # 5p) Commit J gaps PNTP: restos a pagar + tipos PLANO_DADOS_ABERTOS/REGULAMENTO_OUVIDORIA
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-restos-pagar.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-restos-pagar.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-restos-pagar.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Commit J aplicada (restos a pagar + tipos institucionais de documento)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

@@ -371,6 +371,10 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 - Listas `TIPOS` ampliadas na API `/api/documentos-transparencia` e no admin `/admin/transparencia/documentos`. Rota `/transparencia/documentos/[tipo]` ganhou os slugs `rgf`/`ldo`/`loa`/`ppa`.
 - Home religada; paginas mock `/transparencia/{rgf,ldo,loa,ppa}` removidas. RGF/LDO/LOA/PPA agora publicaveis como documentos.
 
+**Commit J (2026-05-22)** — pendencias PNTP menores:
+- Modelo `RestoPagar` + API `/api/restos-pagar` (GET protegido) + admin `/admin/transparencia/restos-pagar` + pagina publica SSR `/transparencia/restos-pagar` (filtro client, CPF mascarado). Migration `add-restos-pagar.sql`, install.sh 5p.
+- Enum `TipoDocumentoTransparencia` + `PLANO_DADOS_ABERTOS` e `REGULAMENTO_OUVIDORIA`. Componente SSR `DocumentosOficiais` (`src/components/transparencia/documentos-oficiais.tsx`); paginas `/transparencia/plano-dados-abertos` e `/transparencia/ouvidoria/regulamentacao` ganharam secao de documentos oficiais (deixaram de ser estaticas).
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.
