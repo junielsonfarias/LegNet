@@ -1,10 +1,60 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit B — gaps CR2: paginas legislaturas + ouvidoria)
-> **Versao**: 1.21.2
+> **Ultima Atualizacao**: 2026-05-22 (Commit C — gaps CR2: cargos, valores de diaria, fornecedores)
+> **Versao**: 1.22.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit C: gaps CR2 (cargos, valores de diaria, fornecedores)
+
+Terceiro e ultimo commit dos gaps CR2/PNTP. Cria 4 modelos novos com
+migration aplicada no Supabase, CRUD admin completo e paginas publicas.
+
+**Modelos novos (`prisma/schema/models.prisma`):**
+- `PlanoCargos` (`planos_cargos`) — planos de cargos vigentes (nome,
+  lei, ano, descricao, ativo).
+- `Cargo` (`cargos`) — cargos com remuneracao base; FK opcional para
+  `PlanoCargos` (`onDelete: SetNull`). Campo `tipo` String (EFETIVO |
+  COMISSIONADO | FUNCAO_GRATIFICADA | ELETIVO).
+- `ValorDiariaTabela` (`valores_diaria`) — tabela de referencia de
+  valores de diaria por categoria e abrangencia.
+- `Fornecedor` (`fornecedores`) — cadastro de fornecedores habilitados.
+
+Campos de classificacao usam String (nao enum Prisma) para evitar
+divergencia enum x String em migration manual.
+
+**Migration:** `scripts/sql/add-cargos-diarias-fornecedores.sql`
+(idempotente, `CREATE TABLE IF NOT EXISTS`). Aplicada no Supabase
+Ruropolis via `prisma db execute` com DIRECT_URL. install.sh ganhou a
+etapa 5l para a VPS.
+
+**APIs (`transparencia.manage` para escrita; GET publico):**
+- `/api/plano-cargos` + `/api/plano-cargos/[id]`
+- `/api/cargos` + `/api/cargos/[id]`
+- `/api/valores-diaria` + `/api/valores-diaria/[id]`
+- `/api/fornecedores` + `/api/fornecedores/[id]`
+
+**Admin:**
+- `/admin/transparencia/plano-cargos` — pagina combinada (planos +
+  cargos, com dropdown de plano no form de cargo).
+- `/admin/transparencia/valores-diaria` — CRUD de valores de diaria.
+- `/admin/transparencia/fornecedores` — CRUD de fornecedores.
+- Sidebar: "Plano de Cargos" e "Valores de Diaria" no grupo Pessoal;
+  "Cadastro de Fornecedores" no grupo Transparencia.
+
+**Publico:**
+- `/transparencia/cargos` — relacao de cargos e remuneracao.
+- `/transparencia/pessoal/valores-diarias` — tabela de valores de diaria.
+- `/transparencia/fornecedores` — cadastro de fornecedores.
+- Home `/transparencia`: "Relacao de Cargos e Remuneracao", "Tabela com
+  os Valores das Diarias" e "Cadastro de Fornecedores" religados (saiam
+  do CR2).
+
+Validacao: build de producao OK, 570/570 testes, 0 erros TypeScript,
+ESLint limpo (1 warning pre-existente sem relacao).
 
 ---
 

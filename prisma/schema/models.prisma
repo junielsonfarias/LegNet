@@ -2957,6 +2957,83 @@ model CotaParlamentar {
   @@map("cotas_parlamentar")
 }
 
+// === Gaps CR2 — Commit C (2026-05-22) ===
+// Plano de cargos + cargos, tabela de valores de diarias e cadastro de
+// fornecedores. Campos de classificacao usam String (nao enum Prisma)
+// para evitar divergencia enum x String em migration manual (ERR-041).
+
+model PlanoCargos {
+  id        String   @id @default(cuid())
+  nome      String
+  lei       String? // Lei municipal que instituiu o plano
+  ano       Int
+  descricao String?  @db.Text
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cargos Cargo[]
+
+  @@index([ano])
+  @@map("planos_cargos")
+}
+
+model Cargo {
+  id              String   @id @default(cuid())
+  planoCargosId   String?
+  denominacao     String
+  tipo            String   @default("EFETIVO") // EFETIVO | COMISSIONADO | FUNCAO_GRATIFICADA | ELETIVO
+  quantidadeVagas Int?
+  cargaHoraria    Int? // horas semanais
+  salarioBase     Decimal  @db.Decimal(15, 2)
+  observacoes     String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  planoCargos PlanoCargos? @relation(fields: [planoCargosId], references: [id], onDelete: SetNull)
+
+  @@index([planoCargosId])
+  @@index([tipo])
+  @@map("cargos")
+}
+
+model ValorDiariaTabela {
+  id          String   @id @default(cuid())
+  categoria   String // Ex.: Vereador, Servidor de nivel superior
+  abrangencia String   @default("ESTADUAL") // MUNICIPAL | ESTADUAL | NACIONAL | INTERNACIONAL
+  descricao   String?  @db.Text
+  valor       Decimal  @db.Decimal(15, 2)
+  ano         Int
+  ativo       Boolean  @default(true)
+  observacoes String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ano])
+  @@index([categoria])
+  @@map("valores_diaria")
+}
+
+model Fornecedor {
+  id            String   @id @default(cuid())
+  nome          String
+  cnpjCpf       String?
+  tipoPessoa    String   @default("PJ") // PF | PJ
+  ramoAtividade String?
+  municipio     String?
+  uf            String?
+  telefone      String?
+  email         String?
+  situacao      String   @default("ATIVO") // ATIVO | INATIVO | SUSPENSO
+  observacoes   String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([situacao])
+  @@index([nome])
+  @@map("fornecedores")
+}
+
 model Concurso {
   id                  String    @id @default(cuid())
   titulo              String

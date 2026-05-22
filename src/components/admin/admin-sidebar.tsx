@@ -141,6 +141,7 @@ const navigationCategories: NavCategory[] = [
       { name: 'Contratos', href: '/admin/contratos', icon: FileSpreadsheet, permissions: ['transparencia.manage'] },
       { name: 'Convenios', href: '/admin/convenios', icon: Handshake, permissions: ['transparencia.manage'] },
       { name: 'Fornecedores Sancionados', href: '/admin/transparencia/fornecedores-sancionados', icon: Shield, permissions: ['transparencia.manage'] },
+      { name: 'Cadastro de Fornecedores', href: '/admin/transparencia/fornecedores', icon: Database, permissions: ['transparencia.manage'] },
       { name: 'Obras', href: '/admin/transparencia/obras', icon: HardHat, permissions: ['transparencia.manage'] },
       { name: 'Veiculos', href: '/admin/transparencia/veiculos', icon: Truck, permissions: ['transparencia.manage'] },
       { name: 'Documentos Oficiais', href: '/admin/transparencia/documentos', icon: FileText, permissions: ['transparencia.manage'] },
@@ -154,8 +155,10 @@ const navigationCategories: NavCategory[] = [
     icon: UserCircle,
     items: [
       { name: 'Servidores', href: '/admin/servidores', icon: Users, permissions: ['transparencia.manage'] },
+      { name: 'Plano de Cargos', href: '/admin/transparencia/plano-cargos', icon: Briefcase, permissions: ['transparencia.manage'] },
       { name: 'Folha de Pagamento', href: '/admin/folha-pagamento', icon: Wallet, permissions: ['transparencia.manage'] },
       { name: 'Diarias', href: '/admin/diarias', icon: Plane, permissions: ['transparencia.manage'] },
+      { name: 'Valores de Diaria', href: '/admin/transparencia/valores-diaria', icon: Plane, permissions: ['transparencia.manage'] },
       { name: 'Verbas Indenizatorias', href: '/admin/verbas-indenizatorias', icon: CreditCard, permissions: ['transparencia.manage'] },
       { name: 'Concursos', href: '/admin/concursos', icon: GraduationCap, permissions: ['transparencia.manage'] },
       { name: 'Bens Patrimoniais', href: '/admin/bens-patrimoniais', icon: Package, permissions: ['transparencia.manage'] },

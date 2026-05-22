@@ -333,6 +333,12 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 - `/transparencia/ouvidoria/regulamentacao` — conteudo estatico (base legal, tipos, prazos).
 - "Consultar Manifestacoes" religado para `/institucional/ouvidoria/acompanhar` (pagina ja existente).
 
+**Commit C (2026-05-22)** — 4 modelos novos + migration aplicada no Supabase:
+- Models: `PlanoCargos`, `Cargo` (FK opcional p/ plano), `ValorDiariaTabela`, `Fornecedor`. Migration `scripts/sql/add-cargos-diarias-fornecedores.sql` (idempotente) + install.sh etapa 5l.
+- APIs: `/api/plano-cargos`, `/api/cargos`, `/api/valores-diaria`, `/api/fornecedores` (+ `[id]`). Escrita exige `transparencia.manage`; GET publico.
+- Admin: `/admin/transparencia/plano-cargos` (planos + cargos), `/admin/transparencia/valores-diaria`, `/admin/transparencia/fornecedores`.
+- Publico: `/transparencia/cargos`, `/transparencia/pessoal/valores-diarias`, `/transparencia/fornecedores`. Itens "Relacao de Cargos e Remuneracao", "Tabela de Valores das Diarias" e "Cadastro de Fornecedores" religados na home.
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.

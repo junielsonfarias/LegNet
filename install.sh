@@ -452,6 +452,14 @@ do_update() {
     log "Migration RN-174 aplicada (arquivo PDF + dataPublicacao em emendas)"
   fi
 
+  # 5l) Commit C gaps CR2: planos de cargos, cargos, valores de diaria, fornecedores
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-cargos-diarias-fornecedores.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-cargos-diarias-fornecedores.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-cargos-diarias-fornecedores.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Commit C aplicada (planos de cargos, cargos, valores de diaria, fornecedores)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \
