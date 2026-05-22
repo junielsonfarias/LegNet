@@ -3034,6 +3034,31 @@ model Fornecedor {
   @@map("fornecedores")
 }
 
+// === Gap PNTP — Commit E (2026-05-22) ===
+// Rol de informacoes classificadas e desclassificadas (LAI Art. 30).
+// O `titulo` deve descrever o ASSUNTO de forma generica — nunca o
+// conteudo sigiloso em si.
+
+model DocumentoClassificado {
+  id                   String    @id @default(cuid())
+  titulo               String
+  categoria            String?
+  grau                 String    @default("RESERVADA") // RESERVADA | SECRETA | ULTRASSECRETA
+  fundamentoLegal      String?   @db.Text
+  dataClassificacao    DateTime
+  prazoAnos            Int       @default(5) // 5 (reservada) | 15 (secreta) | 25 (ultrassecreta)
+  dataDesclassificacao DateTime?
+  situacao             String    @default("CLASSIFICADA") // CLASSIFICADA | DESCLASSIFICADA
+  autoridade           String?
+  observacoes          String?   @db.Text
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([situacao])
+  @@index([grau])
+  @@map("documentos_classificados")
+}
+
 model Concurso {
   id                  String    @id @default(cuid())
   titulo              String

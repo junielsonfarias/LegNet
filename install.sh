@@ -460,6 +460,14 @@ do_update() {
     log "Migration Commit C aplicada (planos de cargos, cargos, valores de diaria, fornecedores)"
   fi
 
+  # 5m) Commit E gap PNTP: rol de informacoes classificadas (LAI Art. 30) + chaves DPO
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-documentos-classificados.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-documentos-classificados.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-documentos-classificados.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Commit E aplicada (documentos classificados + chaves do Encarregado de Dados)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

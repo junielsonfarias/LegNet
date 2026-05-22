@@ -1,10 +1,51 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit D — correcoes LGPD em fornecedores e ouvidoria)
-> **Versao**: 1.22.1
+> **Ultima Atualizacao**: 2026-05-22 (Commit E — gaps PNTP: informacoes classificadas, e-SIC, DPO)
+> **Versao**: 1.23.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit E: gaps PNTP (informacoes classificadas, e-SIC, DPO)
+
+Fecha as 3 lacunas acionaveis identificadas na analise de conformidade
+PNTP. Uma migration (1 tabela + seed de chaves de configuracao).
+
+**#1 — Rol de Informacoes Classificadas (LAI Art. 30):**
+- Modelo `DocumentoClassificado` (`documentos_classificados`): titulo
+  generico, grau (RESERVADA | SECRETA | ULTRASSECRETA), fundamento
+  legal, datas, prazo, situacao (CLASSIFICADA | DESCLASSIFICADA).
+- API `/api/documentos-classificados` (+ `[id]`). GET publico (o rol e
+  de publicacao obrigatoria); escrita exige `transparencia.manage`.
+  POST calcula `dataDesclassificacao` (classificacao + prazo) se ausente.
+- Admin `/admin/transparencia/documentos-classificados` + sidebar.
+- Pagina publica `/transparencia/informacoes-classificadas` (SSR): dois
+  roes — classificados por grau + desclassificados nos ultimos 12 meses.
+- Home: item "Documentos e Informacoes Sigilosas" -> "Informacoes
+  Classificadas (LAI)", religado (saiu do CR2).
+
+**#2 — Estatisticas do e-SIC:**
+- Pagina publica `/transparencia/e-sic/estatisticas` (SSR) via
+  `esicService.estatisticas()`: recebidos, atendidos, indeferidos,
+  tempo medio, distribuicao por situacao (LAI Art. 30, III).
+- Home: novo item "Estatisticas do e-SIC"; o item de ouvidoria foi
+  renomeado para "Relatorios Estatisticos da Ouvidoria".
+
+**#3 — Encarregado de Dados (DPO):**
+- 4 chaves em `Configuracao` (categoria LGPD): `lgpd_encarregado_nome`,
+  `_email`, `_telefone`, `_setor` — semeadas pela migration
+  (`ON CONFLICT DO NOTHING`), editaveis pelo admin de configuracoes.
+- Pagina publica `/transparencia/encarregado-dados` (SSR, Art. 41 LGPD).
+- Home: novo item "Encarregado de Dados (DPO)" na secao LGPD.
+
+**Migration:** `scripts/sql/add-documentos-classificados.sql`
+(idempotente), aplicada no Supabase via `prisma db execute`. install.sh
+etapa 5m.
+
+Validacao: build de producao OK (271 paginas), 570/570 testes, 0 erros
+TypeScript, ESLint limpo.
 
 ---
 

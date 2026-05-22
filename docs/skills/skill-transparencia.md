@@ -344,6 +344,12 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 - `/transparencia/fornecedores` virou SSR: `select` so de campos publicos + `maskCpfOrCnpj` no CPF. Filtro no client component `fornecedores-cliente.tsx`.
 - `/transparencia/ouvidoria/manifestacoes`: assunto de manifestacoes tipo `DENUNCIA` exibido como "Assunto reservado".
 
+**Commit E (2026-05-22)** — gaps PNTP:
+- Modelo `DocumentoClassificado` (rol LAI Art. 30) + migration `add-documentos-classificados.sql` + install.sh etapa 5m. API `/api/documentos-classificados` (GET publico, escrita `transparencia.manage`). Admin `/admin/transparencia/documentos-classificados`. Pagina publica `/transparencia/informacoes-classificadas` (SSR — roes de classificados e desclassificados).
+- Pagina `/transparencia/e-sic/estatisticas` (SSR) via `esicService.estatisticas()` (LAI Art. 30, III).
+- DPO: 4 chaves `lgpd_encarregado_*` em `Configuracao` (semeadas na migration) + pagina `/transparencia/encarregado-dados` (SSR).
+- Home: "Informacoes Classificadas (LAI)", "Estatisticas do e-SIC" e "Encarregado de Dados (DPO)" religados/adicionados.
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.

@@ -209,11 +209,12 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     itens: [
       { nome: 'Ouvidoria', icon: MessageSquare, href: '/institucional/ouvidoria' },
       { nome: 'Servico de Informacao ao Cidadao (e-SIC)', icon: FileSearch, href: '/institucional/e-sic' },
+      { nome: 'Estatisticas do e-SIC', icon: BarChart3, href: '/transparencia/e-sic/estatisticas' },
       { nome: 'Consultar Manifestacoes', icon: Search, href: '/institucional/ouvidoria/acompanhar' },
       { nome: 'Manifestacoes Realizadas', icon: FileQuestion, href: '/transparencia/ouvidoria/manifestacoes' },
-      { nome: 'Relatorios Estatisticos', icon: BarChart3, href: '/transparencia/ouvidoria/estatisticas' },
+      { nome: 'Relatorios Estatisticos da Ouvidoria', icon: BarChart3, href: '/transparencia/ouvidoria/estatisticas' },
       { nome: 'Regulamentacao', icon: BookOpen, href: '/transparencia/ouvidoria/regulamentacao' },
-      { nome: 'Documentos e Informacoes Sigilosas', icon: Lock, externalUrl: CR2_BASE },
+      { nome: 'Informacoes Classificadas (LAI)', icon: Lock, href: '/transparencia/informacoes-classificadas' },
     ],
   },
   {
@@ -222,6 +223,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     icon: Shield,
     itens: [
       { nome: 'LGPD e Governo Digital', icon: Shield, href: '/transparencia/documentos/lgpd' },
+      { nome: 'Encarregado de Dados (DPO)', icon: UserCheck, href: '/transparencia/encarregado-dados' },
       { nome: 'Dados Abertos', icon: Database, href: '/transparencia/dados-abertos' },
       { nome: 'Servico Online', icon: Globe, href: '/transparencia/servicos-online' },
       { nome: 'Carta de Servicos ao Usuario', icon: ScrollText, href: '/transparencia/documentos/carta-servicos' },

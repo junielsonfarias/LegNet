@@ -1559,6 +1559,9 @@ a qualquer momento antes do encerramento da sessao.
 - [x] Regimento Interno estruturado — `NormaJuridica (tipo=REGIMENTO_INTERNO)` (Sprint 6)
 - [x] Codigo de Etica estruturado — `NormaJuridica (tipo=CODIGO_ETICA, aplicavelA=...)` (Sprint 6)
 - [x] Historico de alteracoes de normas — `AlteracaoNorma` + `VersaoNorma` (pre-existente, validado Sprint 6)
+- [x] Rol de informacoes classificadas/desclassificadas (LAI Art. 30) — `DocumentoClassificado` + `/transparencia/informacoes-classificadas` (Commit E)
+- [x] Relatorio estatistico do e-SIC (LAI Art. 30, III) — `/transparencia/e-sic/estatisticas` (Commit E)
+- [x] Encarregado pelo Tratamento de Dados/DPO identificado (LGPD Art. 41) — chaves `lgpd_encarregado_*` + `/transparencia/encarregado-dados` (Commit E)
 
 ### C.2 Checklist Processo Legislativo
 
