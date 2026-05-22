@@ -1,10 +1,39 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-14 (RN-174 — Publicacao de Emenda)
-> **Versao**: 1.21.0
+> **Ultima Atualizacao**: 2026-05-22 (Commit A — gaps CR2: religamento remuneracao + aviso licitacao)
+> **Versao**: 1.21.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit A: gaps CR2 (religamento sem migration)
+
+Primeiro dos commits estruturais de gaps CR2/PNTP. Religa 2 itens da home
+de transparencia que ainda apontavam para o portal legado CR2, sem
+nenhuma mudanca de schema.
+
+**Home `/transparencia`:**
+- "Relacao Nominal de Remuneracao" — `externalUrl: CR2_BASE` ->
+  `href: '/transparencia/pessoal/remuneracao'` (pagina ja existia,
+  exibe faixas de remuneracao por cargo, LGPD-safe).
+- "Aviso de Licitacao" — `externalUrl: CR2_BASE` ->
+  `href: '/transparencia/licitacoes?aviso=true'`.
+
+**Pagina `/transparencia/licitacoes`:**
+- Le query param `?aviso=true` via `useSearchParams()`. No modo aviso,
+  filtra para certames `EM_ANDAMENTO` com `dataAbertura >= hoje`
+  (avisos vigentes, sessao de abertura ainda por realizar). Titulo e
+  subtitulo adaptados.
+- Componente envolto em `<Suspense>` (exigencia do Next 15 para
+  `useSearchParams`). Logica movida para `LicitacoesContent`; default
+  export passa a ser o wrapper com fallback de loading.
+- Decisao: NAO foi criado campo `Licitacao.dataAvisoPublicacao` (o
+  schema ja tem `dataPublicacao`); filtro derivado de situacao + data,
+  zero migration.
+
+Validacao: 570/570 testes verdes, 0 erros TypeScript, ESLint limpo.
 
 ---
 

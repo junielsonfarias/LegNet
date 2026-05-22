@@ -322,7 +322,9 @@ Padrao: Zod validation, `withErrorHandler`/`withAuth`, prisma direto (sem servic
 
 ### Hub `/transparencia/page.tsx`
 
-Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 14 itens migrados de `externalUrl: CR2_BASE` para rotas internas. Apenas itens institucionais (Legislaturas, Comissoes, Agenda Externa, Documentos Administrativos, Legislacao Tributaria) ainda apontam para CR2 ate serem migrados.
+Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migrados de `externalUrl: CR2_BASE` para rotas internas. Itens ainda apontando para CR2 ate serem migrados: Legislaturas, Agenda Externa, Legislacao Tributaria, Relacao de Cargos e Remuneracao, Tabela de Valores das Diarias, Cadastro de Fornecedores e os 5 itens de Ouvidoria.
+
+**Commit A (2026-05-22)** — religados sem migration: "Relacao Nominal de Remuneracao" -> `/transparencia/pessoal/remuneracao`; "Aviso de Licitacao" -> `/transparencia/licitacoes?aviso=true`. A pagina de licitacoes le `?aviso=true` (via `useSearchParams`, dentro de `<Suspense>`) e filtra para certames `EM_ANDAMENTO` com `dataAbertura >= hoje` (avisos vigentes).
 
 ### Importer CR2
 

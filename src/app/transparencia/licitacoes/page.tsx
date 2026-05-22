@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,7 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { PDFModal } from '@/components/pdf'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
@@ -37,7 +38,9 @@ const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> =
   SUSPENSA: { color: 'bg-gray-100 text-gray-800', icon: <AlertCircle className="h-4 w-4" /> }
 }
 
-export default function LicitacoesPage() {
+function LicitacoesContent() {
+  const searchParams = useSearchParams()
+  const avisoMode = searchParams.get('aviso') === 'true'
   const { licitacoes, loading } = useLicitacoes()
   const [filtroModalidade, setFiltroModalidade] = useState('all')
   const [filtroSituacao, setFiltroSituacao] = useState('all')
@@ -73,6 +76,8 @@ export default function LicitacoesPage() {
   }, [licitacoes])
 
   const licitacoesFiltradas = useMemo(() => {
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
     return licitacoes.filter(l => {
       const matchModalidade = filtroModalidade === 'all' || l.modalidade === filtroModalidade
       const matchSituacao = filtroSituacao === 'all' || l.situacao === filtroSituacao
@@ -80,9 +85,12 @@ export default function LicitacoesPage() {
       const matchSearch = !searchTerm ||
         l.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
         l.objeto.toLowerCase().includes(searchTerm.toLowerCase())
-      return matchModalidade && matchSituacao && matchAno && matchSearch
+      // Modo "Aviso de Licitacao": apenas certames publicados e ainda nao abertos
+      const matchAviso = !avisoMode ||
+        (l.situacao === 'EM_ANDAMENTO' && new Date(l.dataAbertura) >= hoje)
+      return matchModalidade && matchSituacao && matchAno && matchSearch && matchAviso
     })
-  }, [licitacoes, filtroModalidade, filtroSituacao, filtroAno, searchTerm])
+  }, [licitacoes, filtroModalidade, filtroSituacao, filtroAno, searchTerm, avisoMode])
 
   const estatisticas = useMemo(() => ({
     total: licitacoes.length,
@@ -111,10 +119,12 @@ export default function LicitacoesPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
           <Gavel className="h-8 w-8 text-primary" />
-          Licitacoes
+          {avisoMode ? 'Avisos de Licitacao' : 'Licitacoes'}
         </h1>
         <p className="text-muted-foreground">
-          Consulte todas as licitacoes realizadas pela Camara Municipal
+          {avisoMode
+            ? 'Certames publicados com sessao de abertura ainda por realizar'
+            : 'Consulte todas as licitacoes realizadas pela Camara Municipal'}
         </p>
       </div>
 
@@ -327,5 +337,19 @@ export default function LicitacoesPage() {
       />
     </div>
     </TransparenciaPageWrapper>
+  )
+}
+
+export default function LicitacoesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <LicitacoesContent />
+    </Suspense>
   )
 }

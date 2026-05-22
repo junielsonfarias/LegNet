@@ -144,7 +144,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     subtitulo: 'Servidores, cargos e diarias',
     icon: UserCheck,
     itens: [
-      { nome: 'Relacao Nominal de Remuneracao', icon: Users, externalUrl: CR2_BASE },
+      { nome: 'Relacao Nominal de Remuneracao', icon: Users, href: '/transparencia/pessoal/remuneracao' },
       { nome: 'Relacao de Cargos e Remuneracao', icon: Briefcase, externalUrl: CR2_BASE },
       { nome: 'Relacao de Estagiarios', icon: GraduationCap, href: '/transparencia/pessoal/estagiarios' },
       { nome: 'Relacao de Prestadores de Servicos Terceirizados', icon: UserPlus, href: '/transparencia/pessoal/terceirizados' },
@@ -160,7 +160,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     icon: Search,
     itens: [
       { nome: 'Licitacoes', icon: Search, href: '/transparencia/licitacoes', slug: 'licitacoes' },
-      { nome: 'Aviso de Licitacao', icon: Megaphone, externalUrl: CR2_BASE },
+      { nome: 'Aviso de Licitacao', icon: Megaphone, href: '/transparencia/licitacoes?aviso=true' },
       { nome: 'Contratos', icon: FileSignature, href: '/transparencia/contratos', slug: 'contratos' },
       { nome: 'Plano Anual de Contratacoes', icon: ClipboardList, href: '/transparencia/documentos/plano-anual-contratacoes' },
       { nome: 'Licitantes/Contratados Sancionados Administrativamente', icon: Shield, href: '/transparencia/fornecedores-sancionados' },
