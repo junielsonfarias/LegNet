@@ -202,6 +202,7 @@ const navigationCategories: NavCategory[] = [
       { name: 'Transparencia - Links', href: '/admin/configuracoes/transparencia-links', icon: ExternalLink, permissions: ['config.manage'] },
       { name: 'Transparencia - Periodos', href: '/admin/configuracoes/transparencia-periodos', icon: CalendarDays, permissions: ['config.manage'] },
       { name: 'Transparencia - Conteudo', href: '/admin/configuracoes/transparencia-conteudo', icon: Layers, permissions: ['config.manage'] },
+      { name: 'Encarregado de Dados (LGPD)', href: '/admin/configuracoes/encarregado-dados', icon: Lock, permissions: ['config.manage'] },
       { name: 'Usuarios', href: '/admin/usuarios', icon: Shield, permissions: ['user.manage'] },
       { name: 'Templates Sessao', href: '/admin/templates-sessao', icon: Layers, permissions: ['sessao.manage'] },
       { name: 'Quorum', href: '/admin/configuracoes/quorum', icon: Vote, permissions: ['config.manage'] },

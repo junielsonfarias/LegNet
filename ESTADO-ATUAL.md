@@ -1,10 +1,30 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit G — revisao: ajustes pos-analise A-F)
-> **Versao**: 1.24.1
+> **Ultima Atualizacao**: 2026-05-22 (Commit H — atalho admin do Encarregado de Dados)
+> **Versao**: 1.24.2
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit H: atalho admin do Encarregado de Dados (DPO)
+
+Apos a verificacao de vinculacao dos modulos novos, a edicao do DPO so
+era possivel rolando ate a secao "LGPD" do card de configuracoes do
+sistema. Adicionado acesso dedicado.
+
+- Pagina admin `/admin/configuracoes/encarregado-dados` — formulario
+  focado nas 4 chaves `lgpd_encarregado_*`. Reutiliza a API existente
+  `/api/configuracoes/sistema` (GET `?prefix=lgpd_encarregado` + PUT).
+  Sem nova API nem mudanca de schema.
+- Cartao de atalho "Encarregado de Dados (LGPD)" na grade de links
+  rapidos de `/admin/configuracoes`.
+- Item "Encarregado de Dados (LGPD)" no menu lateral, grupo
+  Configuracoes (`config.manage`).
+
+Validacao: build de producao OK, 570/570 testes, 0 erros TypeScript,
+ESLint limpo.
 
 ---
 

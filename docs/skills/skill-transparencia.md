@@ -363,6 +363,9 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 - `GET /api/documentos-classificados` e `GET /api/faq` (+ `[id]`) passaram a `withAuth` — as paginas publicas sao SSR e nao usam essas APIs. `select` publico explicito na pagina SSR de classificadas.
 - `docs/MODELOS-DADOS.md` regenerado (127 modelos).
 
+**Commit H (2026-05-22)** — atalho admin do Encarregado de Dados (DPO):
+- Pagina `/admin/configuracoes/encarregado-dados` (form focado nas 4 chaves `lgpd_encarregado_*`, via `/api/configuracoes/sistema`) + cartao de atalho em `/admin/configuracoes` + item no menu lateral (grupo Configuracoes).
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.

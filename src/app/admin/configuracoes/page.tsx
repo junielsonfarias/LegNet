@@ -552,6 +552,20 @@ export default function ConfiguracoesPage() {
           </div>
           <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
         </Link>
+
+        <Link
+          href="/admin/configuracoes/encarregado-dados"
+          className="group flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 transition-all hover:border-camara-primary hover:shadow-md"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+            <Shield className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-gray-900">Encarregado de Dados (LGPD)</p>
+            <p className="text-xs text-gray-500">DPO e canal de contato</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-camara-primary" />
+        </Link>
       </div>
 
       {!canManage && (
