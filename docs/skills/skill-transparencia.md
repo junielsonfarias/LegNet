@@ -326,6 +326,13 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 
 **Commit A (2026-05-22)** — religados sem migration: "Relacao Nominal de Remuneracao" -> `/transparencia/pessoal/remuneracao`; "Aviso de Licitacao" -> `/transparencia/licitacoes?aviso=true`. A pagina de licitacoes le `?aviso=true` (via `useSearchParams`, dentro de `<Suspense>`) e filtra para certames `EM_ANDAMENTO` com `dataAbertura >= hoje` (avisos vigentes).
 
+**Commit B (2026-05-22)** — 4 paginas publicas novas (SSR, sem migration) + religamento de 5 itens da home:
+- `/transparencia/legislaturas` — historico de legislaturas (model `Legislatura` + periodos + contagem de sessoes/mandatos).
+- `/transparencia/ouvidoria/manifestacoes` — listagem publica LGPD-safe (`select` sem dados pessoais).
+- `/transparencia/ouvidoria/estatisticas` — agregados via `ouvidoriaService.estatisticas()`.
+- `/transparencia/ouvidoria/regulamentacao` — conteudo estatico (base legal, tipos, prazos).
+- "Consultar Manifestacoes" religado para `/institucional/ouvidoria/acompanhar` (pagina ja existente).
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.

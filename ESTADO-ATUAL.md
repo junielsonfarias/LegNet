@@ -1,10 +1,45 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit A — gaps CR2: religamento remuneracao + aviso licitacao)
-> **Versao**: 1.21.1
+> **Ultima Atualizacao**: 2026-05-22 (Commit B — gaps CR2: paginas legislaturas + ouvidoria)
+> **Versao**: 1.21.2
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit B: gaps CR2 (paginas legislaturas + ouvidoria)
+
+Segundo commit dos gaps CR2/PNTP. Cria 4 paginas publicas funcionais
+(sem mudanca de schema) e religa 5 itens da home de transparencia.
+
+**Paginas novas (SSR, force-dynamic, leem dados reais):**
+- `/transparencia/legislaturas` — historico de legislaturas (model
+  `Legislatura`) com periodos, contagem de sessoes e mandatos.
+- `/transparencia/ouvidoria/manifestacoes` — listagem publica das
+  manifestacoes da Ouvidoria, LGPD-safe (`select` apenas de protocolo,
+  tipo, assunto, setor, status e datas — sem nome/email/cpf/descricao).
+- `/transparencia/ouvidoria/estatisticas` — indicadores agregados via
+  `ouvidoriaService.estatisticas()` (total, respondidas, tempo medio,
+  distribuicao por tipo e status com barras de progresso).
+- `/transparencia/ouvidoria/regulamentacao` — pagina de conteudo
+  (force-static): base legal (Lei 13.460/2017, LAI, LGPD), tipos de
+  manifestacao e prazos de resposta.
+
+**Home `/transparencia` — itens religados (externalUrl CR2 -> href):**
+- Legislaturas -> `/transparencia/legislaturas`
+- Consultar Manifestacoes -> `/institucional/ouvidoria/acompanhar`
+  (pagina ja existente; gap CR2 era aparente, sem necessidade de
+  pagina nova)
+- Manifestacoes Realizadas -> `/transparencia/ouvidoria/manifestacoes`
+- Relatorios Estatisticos -> `/transparencia/ouvidoria/estatisticas`
+- Regulamentacao -> `/transparencia/ouvidoria/regulamentacao`
+
+Item "Documentos e Informacoes Sigilosas" segue apontando para CR2
+(gap do modelo `DocumentoClassificado` / LAI Art. 23, fora do escopo).
+
+Validacao: 570/570 testes (1 flaky pre-existente em captcha.test.ts,
+sem relacao), 0 erros TypeScript, ESLint limpo.
 
 ---
 

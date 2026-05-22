@@ -76,7 +76,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     icon: Building2,
     itens: [
       { nome: 'Estrutura Organizacional', icon: Activity, href: '/transparencia/institucional/organograma' },
-      { nome: 'Legislaturas', icon: Calendar, externalUrl: CR2_BASE },
+      { nome: 'Legislaturas', icon: Calendar, href: '/transparencia/legislaturas' },
       { nome: 'Parlamentares', icon: Users, href: '/parlamentares' },
       { nome: 'Mesa Diretora', icon: UserCheck, href: '/transparencia/mesa-diretora' },
       { nome: 'Agenda Externa', icon: CalendarDays, externalUrl: CR2_BASE },
@@ -209,10 +209,10 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     itens: [
       { nome: 'Ouvidoria', icon: MessageSquare, href: '/institucional/ouvidoria' },
       { nome: 'Servico de Informacao ao Cidadao (e-SIC)', icon: FileSearch, href: '/institucional/e-sic' },
-      { nome: 'Consultar Manifestacoes', icon: Search, externalUrl: CR2_BASE },
-      { nome: 'Manifestacoes Realizadas', icon: FileQuestion, externalUrl: CR2_BASE },
-      { nome: 'Relatorios Estatisticos', icon: BarChart3, externalUrl: CR2_BASE },
-      { nome: 'Regulamentacao', icon: BookOpen, externalUrl: CR2_BASE },
+      { nome: 'Consultar Manifestacoes', icon: Search, href: '/institucional/ouvidoria/acompanhar' },
+      { nome: 'Manifestacoes Realizadas', icon: FileQuestion, href: '/transparencia/ouvidoria/manifestacoes' },
+      { nome: 'Relatorios Estatisticos', icon: BarChart3, href: '/transparencia/ouvidoria/estatisticas' },
+      { nome: 'Regulamentacao', icon: BookOpen, href: '/transparencia/ouvidoria/regulamentacao' },
       { nome: 'Documentos e Informacoes Sigilosas', icon: Lock, externalUrl: CR2_BASE },
     ],
   },
