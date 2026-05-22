@@ -1,10 +1,37 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit C — gaps CR2: cargos, valores de diaria, fornecedores)
-> **Versao**: 1.22.0
+> **Ultima Atualizacao**: 2026-05-22 (Commit D — correcoes LGPD em fornecedores e ouvidoria)
+> **Versao**: 1.22.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit D: correcoes LGPD (revisao dos commits A/B/C)
+
+Revisao critica dos commits A/B/C identificou 2 exposicoes de dados.
+Sem mudanca de schema.
+
+**Fix 1 — Fornecedores expunham PII:**
+- O GET publico `/api/fornecedores` (e `/[id]`) retornava o registro
+  inteiro — `cnpjCpf`, `email`, `telefone`, `observacoes`. Para
+  fornecedor pessoa fisica isso vazava CPF e contatos pessoais.
+- Ambos os GET passaram a exigir `transparencia.manage` (`withAuth`).
+- A pagina publica `/transparencia/fornecedores` virou SSR (server
+  component): consulta o Prisma com `select` so de campos publicos
+  (sem email/telefone/observacoes) e mascara `cnpjCpf` via
+  `maskCpfOrCnpj` (CPF -> `123.***.***-09`, CNPJ inalterado). A UI de
+  filtro foi extraida para o client component `fornecedores-cliente.tsx`.
+- O admin nao foi afetado (sessao autenticada cobre o `withAuth`).
+
+**Fix 2 — Assunto de denuncias na ouvidoria:**
+- `/transparencia/ouvidoria/manifestacoes` exibia o `assunto` de todas
+  as manifestacoes. Para o tipo `DENUNCIA` o titulo passa a ser exibido
+  como "Assunto reservado". Demais tipos inalterados.
+
+Validacao: build de producao OK, 570/570 testes, 0 erros TypeScript,
+ESLint limpo.
 
 ---
 

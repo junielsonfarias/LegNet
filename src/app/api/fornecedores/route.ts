@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
-import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { createSuccessResponse } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,10 @@ const QuerySchema = z.object({
   nome: z.string().optional()
 })
 
-export const GET = withErrorHandler(async (request: NextRequest) => {
+// GET protegido: retorna o registro completo (inclui CPF/email/telefone).
+// A pagina publica /transparencia/fornecedores NAO usa esta rota — ela e
+// SSR com select de campos publicos e CPF mascarado (RN-156 / LGPD).
+export const GET = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const params = QuerySchema.parse(Object.fromEntries(searchParams))
 
@@ -40,7 +43,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     limit: params.limit,
     totalPages: Math.ceil(total / params.limit)
   })
-})
+}, { permissions: 'transparencia.manage' })
 
 const CreateSchema = z.object({
   nome: z.string().min(1, 'Nome e obrigatorio'),

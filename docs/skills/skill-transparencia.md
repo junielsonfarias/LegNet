@@ -339,6 +339,11 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 - Admin: `/admin/transparencia/plano-cargos` (planos + cargos), `/admin/transparencia/valores-diaria`, `/admin/transparencia/fornecedores`.
 - Publico: `/transparencia/cargos`, `/transparencia/pessoal/valores-diarias`, `/transparencia/fornecedores`. Itens "Relacao de Cargos e Remuneracao", "Tabela de Valores das Diarias" e "Cadastro de Fornecedores" religados na home.
 
+**Commit D (2026-05-22)** — correcoes LGPD pos-revisao de A/B/C:
+- `/api/fornecedores` e `/api/fornecedores/[id]` GET passaram a exigir `transparencia.manage` (antes eram publicos e retornavam CPF/email/telefone/observacoes).
+- `/transparencia/fornecedores` virou SSR: `select` so de campos publicos + `maskCpfOrCnpj` no CPF. Filtro no client component `fornecedores-cliente.tsx`.
+- `/transparencia/ouvidoria/manifestacoes`: assunto de manifestacoes tipo `DENUNCIA` exibido como "Assunto reservado".
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.

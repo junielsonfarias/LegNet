@@ -91,7 +91,8 @@ export default async function ManifestacoesOuvidoriaPage() {
             <ShieldCheck className="h-5 w-5 text-camara-primary mt-0.5 flex-shrink-0" />
             <p className="text-sm text-gray-700">
               Em atencao a Lei Geral de Protecao de Dados (LGPD), esta listagem nao
-              exibe dados pessoais do manifestante. Para consultar o andamento de uma
+              exibe dados pessoais do manifestante, e o assunto das manifestacoes do
+              tipo denuncia e mantido reservado. Para consultar o andamento de uma
               manifestacao especifica, utilize a{' '}
               <Link
                 href="/institucional/ouvidoria/acompanhar"
@@ -142,7 +143,13 @@ export default async function ManifestacoesOuvidoriaPage() {
                             <Badge variant="outline">{tipoLabels[m.tipo] || m.tipo}</Badge>
                           </td>
                           <td className="px-4 py-3 max-w-md">
-                            <span className="line-clamp-2">{m.assunto}</span>
+                            {m.tipo === 'DENUNCIA' ? (
+                              <span className="italic text-muted-foreground">
+                                Assunto reservado
+                              </span>
+                            ) : (
+                              <span className="line-clamp-2">{m.assunto}</span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">{m.setor || '-'}</td>
                           <td className="px-4 py-3">
