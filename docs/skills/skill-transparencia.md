@@ -350,6 +350,14 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 - DPO: 4 chaves `lgpd_encarregado_*` em `Configuracao` (semeadas na migration) + pagina `/transparencia/encarregado-dados` (SSR).
 - Home: "Informacoes Classificadas (LAI)", "Estatisticas do e-SIC" e "Encarregado de Dados (DPO)" religados/adicionados.
 
+**Commit F (2026-05-22)** — gaps PNTP de baixa prioridade:
+- Modelo `PerguntaFrequente` + API `/api/faq` + admin `/admin/transparencia/faq` + pagina publica `/transparencia/faq` (SSR, accordion `<details>`).
+- Modelo `AgendaParlamentar` (snapshot `parlamentarId`+`parlamentarNome`, sem FK) + API `/api/agenda-parlamentar` + admin + pagina publica `/transparencia/agenda-parlamentar`.
+- Pagina de conteudo `/transparencia/plano-dados-abertos` (force-static).
+- Monitor `/api/admin/conformidade-pntp` ampliado de 13 -> 20 itens.
+- Migration `add-faq-agenda.sql` + install.sh etapa 5n.
+- Home: "Agenda Externa", "Perguntas Frequentes" e "Plano de Dados Abertos" religados/adicionados.
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.

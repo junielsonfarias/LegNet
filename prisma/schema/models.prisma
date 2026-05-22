@@ -3059,6 +3059,42 @@ model DocumentoClassificado {
   @@map("documentos_classificados")
 }
 
+// === Gaps PNTP — Commit F (2026-05-22) ===
+// FAQ e Agenda Externa de parlamentares. Agenda segue o padrao de
+// CotaParlamentar: parlamentarId + nome em snapshot, sem FK formal.
+
+model PerguntaFrequente {
+  id        String   @id @default(cuid())
+  pergunta  String   @db.Text
+  resposta  String   @db.Text
+  categoria String?
+  ordem     Int      @default(0)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ativo, ordem])
+  @@map("perguntas_frequentes")
+}
+
+model AgendaParlamentar {
+  id              String    @id @default(cuid())
+  parlamentarId   String?
+  parlamentarNome String?
+  titulo          String
+  descricao       String?   @db.Text
+  local           String?
+  dataInicio      DateTime
+  dataFim         DateTime?
+  tipo            String    @default("COMPROMISSO") // COMPROMISSO | REUNIAO | EVENTO | VIAGEM | AUDIENCIA
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([parlamentarId])
+  @@index([dataInicio])
+  @@map("agendas_parlamentar")
+}
+
 model Concurso {
   id                  String    @id @default(cuid())
   titulo              String

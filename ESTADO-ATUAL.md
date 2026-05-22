@@ -1,10 +1,51 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit E — gaps PNTP: informacoes classificadas, e-SIC, DPO)
-> **Versao**: 1.23.0
+> **Ultima Atualizacao**: 2026-05-22 (Commit F — gaps PNTP: FAQ, agenda externa, PDA, monitor)
+> **Versao**: 1.24.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit F: gaps PNTP (FAQ, agenda, PDA, monitor)
+
+Fecha as 4 lacunas de baixa prioridade remanescentes da analise PNTP.
+Uma migration (2 tabelas).
+
+**#1 — Perguntas Frequentes (FAQ):**
+- Modelo `PerguntaFrequente` (`perguntas_frequentes`).
+- API `/api/faq` (+ `[id]`): GET publico, escrita `transparencia.manage`.
+- Admin `/admin/transparencia/faq` + sidebar.
+- Pagina publica `/transparencia/faq` (SSR, accordion nativo `<details>`,
+  agrupada por categoria).
+- Home: item "Perguntas Frequentes" religado de `/institucional/sobre`
+  (link generico) para `/transparencia/faq`.
+
+**#2 — Agenda Externa dos parlamentares:**
+- Modelo `AgendaParlamentar` (`agendas_parlamentar`) — padrao snapshot
+  `parlamentarId` + `parlamentarNome`, sem FK (como `CotaParlamentar`).
+- API `/api/agenda-parlamentar` (+ `[id]`).
+- Admin `/admin/transparencia/agenda-parlamentar` + sidebar.
+- Pagina publica `/transparencia/agenda-parlamentar` (SSR — proximos
+  compromissos + realizados).
+- Home: "Agenda Externa" religado (saiu do CR2).
+
+**#3 — Plano de Dados Abertos:**
+- Pagina de conteudo `/transparencia/plano-dados-abertos` (force-static):
+  objetivo, principios, catalogo/formatos, periodicidade, governanca.
+- Home: novo item "Plano de Dados Abertos" na secao LGPD.
+
+**#4 — Monitor de conformidade PNTP ampliado:**
+- `/api/admin/conformidade-pntp` passou de 13 para **20 itens**: +DPO
+  identificado, +Carta de Servicos, +rol de informacoes classificadas,
+  +quadro de pessoal, +FAQ, +licitacoes, +veiculos.
+
+**Migration:** `scripts/sql/add-faq-agenda.sql` (idempotente), aplicada
+no Supabase via `prisma db execute`. install.sh etapa 5n.
+
+Validacao: build de producao OK, 570/570 testes, 0 erros TypeScript,
+ESLint limpo.
 
 ---
 

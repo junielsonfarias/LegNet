@@ -468,6 +468,14 @@ do_update() {
     log "Migration Commit E aplicada (documentos classificados + chaves do Encarregado de Dados)"
   fi
 
+  # 5n) Commit F gaps PNTP: perguntas frequentes (FAQ) + agenda externa de parlamentares
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-faq-agenda.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-faq-agenda.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-faq-agenda.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Commit F aplicada (FAQ + agenda externa de parlamentares)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

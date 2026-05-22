@@ -39,7 +39,14 @@ export const GET = withAuth(async () => {
     ouvidoriaTotal,
     leiOrganica,
     regimento,
-    codigoEtica
+    codigoEtica,
+    dpoConfig,
+    cartaServicos,
+    servidoresTotal,
+    licitacoesTotal,
+    veiculosTotal,
+    documentosClassificadosTotal,
+    faqTotal
   ] = await Promise.all([
     prisma.votacaoAgrupada.count({
       where: { finalizadaEm: { gte: trintaDiasAtras }, tipoVotacao: 'NOMINAL' }
@@ -112,7 +119,17 @@ export const GET = withAuth(async () => {
     prisma.normaJuridica.findFirst({
       where: { tipo: 'CODIGO_ETICA', situacao: 'VIGENTE' },
       select: { id: true, numero: true, ano: true, aplicavelA: true }
-    })
+    }),
+    prisma.configuracao.findUnique({
+      where: { chave: 'lgpd_encarregado_nome' },
+      select: { valor: true }
+    }),
+    prisma.documentoTransparencia.count({ where: { tipo: 'CARTA_SERVICOS' } }),
+    prisma.servidor.count(),
+    prisma.licitacao.count(),
+    prisma.veiculo.count(),
+    prisma.documentoClassificado.count(),
+    prisma.perguntaFrequente.count({ where: { ativo: true } })
   ])
 
   const pautasPendentes = sessoesProximas.filter(
@@ -282,6 +299,79 @@ export const GET = withAuth(async () => {
       detalhes: codigoEtica
         ? `Código de Ética ${codigoEtica.numero}/${codigoEtica.ano} cadastrado (aplicável a: ${codigoEtica.aplicavelA || 'não especificado'})`
         : 'Código de Ética não cadastrado'
+    },
+    // 14. LGPD - Encarregado de Dados (DPO) identificado
+    {
+      categoria: 'Boa Governança',
+      item: 'Encarregado de Dados (DPO)',
+      requisito: 'Encarregado pelo Tratamento de Dados Pessoais identificado',
+      prazo: 'Permanente',
+      regra: 'LGPD Art. 41',
+      conforme: !!dpoConfig?.valor?.trim(),
+      detalhes: dpoConfig?.valor?.trim()
+        ? `Encarregado identificado: ${dpoConfig.valor}`
+        : 'Encarregado de Dados não identificado — preencha a configuração lgpd_encarregado_nome'
+    },
+    // 15. Carta de Serviços ao Usuário
+    {
+      categoria: 'Atendimento ao Cidadão',
+      item: 'Carta de Serviços ao Usuário',
+      requisito: 'Carta de Serviços publicada (Lei nº 13.460/2017)',
+      prazo: 'Permanente',
+      conforme: cartaServicos > 0,
+      detalhes: cartaServicos > 0
+        ? `${cartaServicos} documento(s) de Carta de Serviços publicado(s)`
+        : 'Carta de Serviços ao Usuário não publicada'
+    },
+    // 16. Rol de informações classificadas (LAI Art. 30)
+    {
+      categoria: 'Institucional',
+      item: 'Informações Classificadas',
+      requisito: 'Rol de informações classificadas/desclassificadas disponível',
+      prazo: 'Permanente',
+      regra: 'LAI Art. 30',
+      conforme: true,
+      detalhes: `${documentosClassificadosTotal} registro(s) no rol — publicado em /transparencia/informacoes-classificadas`
+    },
+    // 17. Lista de servidores publicada
+    {
+      categoria: 'Recursos Humanos',
+      item: 'Quadro de Pessoal',
+      requisito: 'Lista de servidores publicada',
+      prazo: 'Permanente',
+      conforme: servidoresTotal > 0,
+      detalhes: servidoresTotal > 0
+        ? `${servidoresTotal} servidor(es) cadastrado(s)`
+        : 'Nenhum servidor cadastrado'
+    },
+    // 18. Perguntas Frequentes (FAQ)
+    {
+      categoria: 'Boa Governança',
+      item: 'Perguntas Frequentes',
+      requisito: 'Canal de perguntas frequentes (FAQ) disponível',
+      prazo: 'Permanente',
+      conforme: faqTotal > 0,
+      detalhes: faqTotal > 0
+        ? `${faqTotal} pergunta(s) frequente(s) publicada(s)`
+        : 'Nenhuma pergunta frequente publicada'
+    },
+    // 19. Licitações publicadas
+    {
+      categoria: 'Financeiro',
+      item: 'Licitações',
+      requisito: 'Licitações publicadas no portal',
+      prazo: 'Permanente',
+      conforme: true,
+      detalhes: `${licitacoesTotal} licitação(ões) cadastrada(s)`
+    },
+    // 20. Frota de veículos
+    {
+      categoria: 'Patrimônio',
+      item: 'Veículos',
+      requisito: 'Frota de veículos publicada',
+      prazo: 'Permanente',
+      conforme: true,
+      detalhes: `${veiculosTotal} veículo(s) cadastrado(s)`
     }
   ]
 
