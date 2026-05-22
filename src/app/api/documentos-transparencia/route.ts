@@ -15,7 +15,11 @@ const TIPOS = [
   'CARTA_SERVICOS',
   'LGPD_GOVERNO_DIGITAL',
   'PLANO_ANUAL_CONTRATACOES',
-  'RELATORIO_GESTAO'
+  'RELATORIO_GESTAO',
+  'RGF',
+  'LDO',
+  'LOA',
+  'PPA'
 ] as const
 
 const QuerySchema = z.object({

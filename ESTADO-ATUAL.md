@@ -1,10 +1,37 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit H — atalho admin do Encarregado de Dados)
-> **Versao**: 1.24.2
+> **Ultima Atualizacao**: 2026-05-22 (Commit I — publicacao de RGF/LDO/LOA/PPA)
+> **Versao**: 1.24.3
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit I: publicacao de RGF, LDO, LOA e PPA
+
+A analise de campos de publicacao direta para todos os pontos do PNTP
+identificou que RGF, LDO, LOA e PPA tinham paginas publicas, mas eram
+placeholders ligados a arrays mock vazios — sem modelo, sem admin, sem
+forma de publicar. Corrigido reaproveitando o `DocumentoTransparencia`.
+
+- **Enum**: `TipoDocumentoTransparencia` ganhou `RGF`, `LDO`, `LOA`,
+  `PPA`. Migration `add-documento-transparencia-orcamentarios.sql`
+  (`ALTER TYPE ... ADD VALUE` idempotente, padrao RN-169). Aplicada no
+  Supabase. install.sh etapa 5o.
+- **Admin**: o CRUD `/admin/transparencia/documentos` ganhou os 4 tipos
+  na lista `TIPOS` — ja permite publicar RGF/LDO/LOA/PPA (PDF/URL).
+- **API**: `/api/documentos-transparencia` aceita os 4 tipos novos
+  (lista `TIPOS` ampliada nos schemas Zod).
+- **Publico**: a rota `/transparencia/documentos/[tipo]` ganhou os
+  slugs `rgf`, `ldo`, `loa`, `ppa` (mapas `TIPO_LABELS` e
+  `TIPO_ENUM_MAP`). A home foi religada para
+  `/transparencia/documentos/{rgf,ldo,loa,ppa}`.
+- **Removidas** as 4 paginas mock `/transparencia/{rgf,ldo,loa,ppa}`
+  (placeholders vazios, substituidas pela rota de documentos).
+
+Validacao: build de producao OK, 570/570 testes, 0 erros TypeScript,
+ESLint limpo.
 
 ---
 

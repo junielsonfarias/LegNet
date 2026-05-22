@@ -445,6 +445,11 @@ enum TipoDocumentoTransparencia {
   LGPD_GOVERNO_DIGITAL
   PLANO_ANUAL_CONTRATACOES
   RELATORIO_GESTAO
+  // Commit I — instrumentos orcamentarios e fiscais (gap PNTP)
+  RGF
+  LDO
+  LOA
+  PPA
 }
 
 enum SituacaoVeiculo {

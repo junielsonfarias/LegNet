@@ -28,7 +28,11 @@ const TIPO_LABELS: Record<string, string> = {
   'carta-servicos': 'Carta de Servicos ao Usuario',
   'lgpd': 'LGPD e Governo Digital',
   'plano-anual-contratacoes': 'Plano Anual de Contratacoes',
-  'relatorio-gestao': 'Relatorio de Gestao'
+  'relatorio-gestao': 'Relatorio de Gestao',
+  'rgf': 'Relatorio de Gestao Fiscal (RGF)',
+  'ldo': 'LDO - Lei de Diretrizes Orcamentarias',
+  'loa': 'LOA - Lei Orcamentaria Anual',
+  'ppa': 'PPA - Plano Plurianual'
 }
 
 const TIPO_ENUM_MAP: Record<string, string> = {
@@ -40,7 +44,11 @@ const TIPO_ENUM_MAP: Record<string, string> = {
   'carta-servicos': 'CARTA_SERVICOS',
   'lgpd': 'LGPD_GOVERNO_DIGITAL',
   'plano-anual-contratacoes': 'PLANO_ANUAL_CONTRATACOES',
-  'relatorio-gestao': 'RELATORIO_GESTAO'
+  'relatorio-gestao': 'RELATORIO_GESTAO',
+  'rgf': 'RGF',
+  'ldo': 'LDO',
+  'loa': 'LOA',
+  'ppa': 'PPA'
 }
 
 const formatDate = (s: string) => new Date(s).toLocaleDateString('pt-BR')

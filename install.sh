@@ -476,6 +476,14 @@ do_update() {
     log "Migration Commit F aplicada (FAQ + agenda externa de parlamentares)"
   fi
 
+  # 5o) Commit I gap PNTP: RGF, LDO, LOA, PPA no enum TipoDocumentoTransparencia
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-documento-transparencia-orcamentarios.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-documento-transparencia-orcamentarios.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-documento-transparencia-orcamentarios.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Commit I aplicada (tipos RGF/LDO/LOA/PPA em documentos de transparencia)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

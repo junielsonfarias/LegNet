@@ -366,6 +366,11 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 **Commit H (2026-05-22)** — atalho admin do Encarregado de Dados (DPO):
 - Pagina `/admin/configuracoes/encarregado-dados` (form focado nas 4 chaves `lgpd_encarregado_*`, via `/api/configuracoes/sistema`) + cartao de atalho em `/admin/configuracoes` + item no menu lateral (grupo Configuracoes).
 
+**Commit I (2026-05-22)** — publicacao de RGF/LDO/LOA/PPA:
+- Enum `TipoDocumentoTransparencia` + `RGF`, `LDO`, `LOA`, `PPA` (migration `add-documento-transparencia-orcamentarios.sql`, `ALTER TYPE ADD VALUE` idempotente, install.sh 5o).
+- Listas `TIPOS` ampliadas na API `/api/documentos-transparencia` e no admin `/admin/transparencia/documentos`. Rota `/transparencia/documentos/[tipo]` ganhou os slugs `rgf`/`ldo`/`loa`/`ppa`.
+- Home religada; paginas mock `/transparencia/{rgf,ldo,loa,ppa}` removidas. RGF/LDO/LOA/PPA agora publicaveis como documentos.
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.

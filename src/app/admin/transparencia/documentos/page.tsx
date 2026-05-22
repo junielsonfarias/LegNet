@@ -33,7 +33,11 @@ const TIPOS = [
   { value: 'CARTA_SERVICOS', label: 'Carta de Servicos' },
   { value: 'LGPD_GOVERNO_DIGITAL', label: 'LGPD / Governo Digital' },
   { value: 'PLANO_ANUAL_CONTRATACOES', label: 'Plano Anual de Contratacoes (PAC)' },
-  { value: 'RELATORIO_GESTAO', label: 'Relatorio de Gestao' }
+  { value: 'RELATORIO_GESTAO', label: 'Relatorio de Gestao' },
+  { value: 'RGF', label: 'Relatorio de Gestao Fiscal (RGF)' },
+  { value: 'LDO', label: 'Lei de Diretrizes Orcamentarias (LDO)' },
+  { value: 'LOA', label: 'Lei Orcamentaria Anual (LOA)' },
+  { value: 'PPA', label: 'Plano Plurianual (PPA)' }
 ] as const
 
 const EMPTY_FORM = {
