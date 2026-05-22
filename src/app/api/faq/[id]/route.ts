@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
-import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +14,7 @@ const UpdateSchema = z.object({
   ativo: z.boolean().optional()
 })
 
-export const GET = withErrorHandler(async (
+export const GET = withAuth(async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) => {
@@ -22,7 +22,7 @@ export const GET = withErrorHandler(async (
   const item = await prisma.perguntaFrequente.findUnique({ where: { id } })
   if (!item) throw new NotFoundError('Pergunta nao encontrada')
   return createSuccessResponse(item)
-})
+}, { permissions: 'transparencia.manage' })
 
 export const PUT = withAuth(async (
   request: NextRequest,

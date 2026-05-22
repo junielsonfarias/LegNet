@@ -1,9 +1,9 @@
 # Modelos de Dados (Prisma)
 
-> Referencia consolidada dos modelos Prisma do projeto. **120 modelos** ativos
+> Referencia consolidada dos modelos Prisma do projeto. **127 modelos** ativos
 > (`prisma/schema/models.prisma`). Documento referenciado pelo CLAUDE.md.
 
-> **Ultima atualizacao**: 2026-05-14 (Fase 4 do PLANO-CORRECOES-MAIO-2026). Atualizado quando schema muda.
+> **Ultima atualizacao**: 2026-05-22 (Commits C/E/F — gaps CR2/PNTP, +7 modelos). Atualizado quando schema muda.
 
 ---
 
@@ -173,6 +173,23 @@
   **FornecedorSancionado**: outros itens PNTP.
 - **Obra**: obras publicas (com filtro `?situacao=PARALISADA`).
 - **UnidadeOrganizacional**: organograma hierarquico.
+- **PlanoCargos**, **Cargo**: plano de cargos e relacao de cargos com
+  remuneracao base (gaps CR2, Commit C). `Cargo` tem FK opcional para
+  `PlanoCargos` (`onDelete: SetNull`); `tipo` String
+  (EFETIVO|COMISSIONADO|FUNCAO_GRATIFICADA|ELETIVO).
+- **ValorDiariaTabela**: tabela de valores de diaria por categoria e
+  abrangencia (Commit C).
+- **Fornecedor**: cadastro de fornecedores habilitados (Commit C). GET
+  da API protegido; CPF de pessoa fisica mascarado na pagina publica
+  via `maskCpfOrCnpj` (Commit D).
+- **DocumentoClassificado**: rol de informacoes classificadas e
+  desclassificadas (LAI Art. 30, Commit E). `grau`
+  (RESERVADA|SECRETA|ULTRASSECRETA), `situacao`
+  (CLASSIFICADA|DESCLASSIFICADA), prazos de sigilo.
+- **PerguntaFrequente**: perguntas frequentes (FAQ) do portal (Commit F).
+- **AgendaParlamentar**: agenda externa de parlamentares (Commit F).
+  Padrao snapshot `parlamentarId` + `parlamentarNome`, sem FK formal
+  (como `CotaParlamentar`).
 
 ---
 

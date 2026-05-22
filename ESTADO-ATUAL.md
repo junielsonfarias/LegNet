@@ -1,10 +1,33 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit F — gaps PNTP: FAQ, agenda externa, PDA, monitor)
-> **Versao**: 1.24.0
+> **Ultima Atualizacao**: 2026-05-22 (Commit G — revisao: ajustes pos-analise A-F)
+> **Versao**: 1.24.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-22 — Commit G: ajustes da revisao dos commits A-F
+
+Correcoes pontuais apontadas na revisao. Sem mudanca de schema.
+
+- **#1 Legislacao Tributaria**: o item da home apontava para o portal
+  legado CR2. Religado para `/legislativo/normas`. A constante
+  `CR2_BASE` (agora sem uso) foi removida — **nenhum item do portal
+  aponta mais para o CR2**.
+- **#2/#4 GET internos protegidos**: `GET /api/documentos-classificados`
+  e `GET /api/faq` (+ `[id]`) passaram de publicos para `withAuth`
+  (`transparencia.manage`). As paginas publicas correspondentes sao SSR
+  e consultam o Prisma diretamente — nao usam essas APIs —, entao nada
+  publico foi afetado. Elimina a exposicao de `observacoes` (rol de
+  classificadas) e de perguntas inativas (FAQ) via API. A pagina SSR de
+  classificadas ganhou `select` explicito de campos publicos.
+- **#5 MODELOS-DADOS.md**: regenerado — 120 -> 127 modelos, com os 7
+  modelos novos dos commits C/E/F documentados.
+
+Validacao: build de producao OK, 570/570 testes, 0 erros TypeScript,
+ESLint limpo.
 
 ---
 

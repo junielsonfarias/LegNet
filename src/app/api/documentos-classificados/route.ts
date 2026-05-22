@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
-import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { createSuccessResponse } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,10 +16,10 @@ const QuerySchema = z.object({
   situacao: z.enum(SITUACOES).optional()
 })
 
-// GET publico: o rol de informacoes classificadas e de publicacao
-// obrigatoria (LAI Art. 30). Expoe apenas metadados — nunca o conteudo
-// sigiloso (o campo `titulo` descreve o assunto de forma generica).
-export const GET = withErrorHandler(async (request: NextRequest) => {
+// GET protegido (transparencia.manage): usado pelo painel admin. O rol
+// publico (LAI Art. 30) e servido pela pagina SSR
+// /transparencia/informacoes-classificadas, que consulta o Prisma direto.
+export const GET = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const params = QuerySchema.parse(Object.fromEntries(searchParams))
 
@@ -43,7 +43,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     limit: params.limit,
     totalPages: Math.ceil(total / params.limit)
   })
-})
+}, { permissions: 'transparencia.manage' })
 
 /** Calcula a data de desclassificacao a partir da classificacao + prazo. */
 function calcularDesclassificacao(dataClassificacao: Date, prazoAnos: number): Date {

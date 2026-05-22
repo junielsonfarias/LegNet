@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
-import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { createSuccessResponse } from '@/lib/error-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +13,9 @@ const QuerySchema = z.object({
   ativo: z.enum(['true', 'false']).optional()
 })
 
-export const GET = withErrorHandler(async (request: NextRequest) => {
+// GET protegido (transparencia.manage): usado pelo painel admin. O FAQ
+// publico e servido pela pagina SSR /transparencia/faq (so perguntas ativas).
+export const GET = withAuth(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
   const params = QuerySchema.parse(Object.fromEntries(searchParams))
 
@@ -37,7 +39,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     limit: params.limit,
     totalPages: Math.ceil(total / params.limit)
   })
-})
+}, { permissions: 'transparencia.manage' })
 
 const CreateSchema = z.object({
   pergunta: z.string().min(1, 'Pergunta e obrigatoria'),

@@ -20,11 +20,6 @@ import { createLogger } from '@/lib/logging/logger';
 
 const log = createLogger('transparencia');
 
-// URL do portal externo legado (CR2). E um app Bubble.io com roteamento client-side,
-// entao deep links nao funcionam de forma confiavel - todos os itens nao migrados
-// apontam para a raiz da entidade e o usuario navega no menu de la.
-const CR2_BASE = 'https://www.portalcr2.com.br/entidade/cm-chaves';
-
 type TransparenciaSubItem = {
   nome: string;
   href?: string;
@@ -67,8 +62,8 @@ type TransparenciaSecao = {
   itens: TransparenciaItem[];
 };
 
-// Estrutura espelhada do portal antigo (CR2) - 9 secoes, todos os itens e subitens.
-// Itens com `href` usam rota interna; itens com `externalUrl` abrem o portal CR2 em nova aba.
+// Estrutura do portal da transparencia. Itens com `href` usam rota interna;
+// itens com `externalUrl` abrem uma URL externa em nova aba (ex.: overlay de periodos).
 const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
   {
     titulo: 'Informacoes Institucionais',
@@ -91,7 +86,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
         ],
       },
       { nome: 'Perguntas Frequentes', icon: HelpCircle, href: '/transparencia/faq' },
-      { nome: 'Legislacao Tributaria e Codigos de Postura', icon: Scale, externalUrl: CR2_BASE },
+      { nome: 'Legislacao Tributaria e Codigos de Postura', icon: Scale, href: '/legislativo/normas' },
     ],
   },
   {

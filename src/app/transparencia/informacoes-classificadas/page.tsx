@@ -18,8 +18,19 @@ interface DocClassificado {
   dataClassificacao: Date
   prazoAnos: number
   dataDesclassificacao: Date | null
-  autoridade: string | null
 }
+
+// Campos publicos do rol — observacoes e autoridade nao sao expostos.
+const SELECT_PUBLICO = {
+  id: true,
+  titulo: true,
+  categoria: true,
+  grau: true,
+  fundamentoLegal: true,
+  dataClassificacao: true,
+  prazoAnos: true,
+  dataDesclassificacao: true,
+} as const
 
 const grauBadge: Record<string, string> = {
   RESERVADA: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
@@ -83,6 +94,7 @@ export default async function InformacoesClassificadasPage() {
       prisma.documentoClassificado.findMany({
         where: { situacao: 'CLASSIFICADA' },
         orderBy: [{ grau: 'asc' }, { dataClassificacao: 'desc' }],
+        select: SELECT_PUBLICO,
       }),
       prisma.documentoClassificado.findMany({
         where: {
@@ -90,6 +102,7 @@ export default async function InformacoesClassificadasPage() {
           dataDesclassificacao: { gte: dozeMesesAtras },
         },
         orderBy: { dataDesclassificacao: 'desc' },
+        select: SELECT_PUBLICO,
       }),
     ])
     classificados = c

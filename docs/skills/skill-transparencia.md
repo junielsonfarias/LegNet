@@ -358,6 +358,11 @@ Estrutura completa do portal CR2 espelhada em 9 secoes (52 itens). 16 itens migr
 - Migration `add-faq-agenda.sql` + install.sh etapa 5n.
 - Home: "Agenda Externa", "Perguntas Frequentes" e "Plano de Dados Abertos" religados/adicionados.
 
+**Commit G (2026-05-22)** — ajustes da revisao A-F:
+- "Legislacao Tributaria" religada para `/legislativo/normas`; constante `CR2_BASE` removida (nenhum item aponta mais para o CR2).
+- `GET /api/documentos-classificados` e `GET /api/faq` (+ `[id]`) passaram a `withAuth` — as paginas publicas sao SSR e nao usam essas APIs. `select` publico explicito na pagina SSR de classificadas.
+- `docs/MODELOS-DADOS.md` regenerado (127 modelos).
+
 ### Importer CR2
 
 `scripts/import-cr2-backup.ts` - esqueleto CLI com `--dry-run` e `--only=despesas,obras`. Mapeamentos `mapXxx()` ficam como TODO ate o formato real do backup ser confirmado.
