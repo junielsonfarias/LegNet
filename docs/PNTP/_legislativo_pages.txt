@@ -1,0 +1,752 @@
+
+====== Page 217 ======
+Acesso rápido
+Menu de critérios
+217
+Disponibilidade:
+Devem ser divulgados o plano de educação e o respectivo relatório
+de resultados.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo, um ano da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa. Quando o dado mais recente se referir ao ano imediatamente
+anterior ao da consulta (X), a série histórica deverá contemplar os anos X-1,
+X-2 e X-3.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+Figura 101 – Exemplo de divulgação do plano de educação e o respectivo relatório de
+resultados.
+
+====== Page 218 ======
+Acesso rápido
+Menu de critérios
+218
+Figura 102 – Exemplo de divulgação do plano de educação e o respectivo relatório de
+resultados.
+Figura 103 – Exemplo de divulgação do plano de educação e o respectivo relatório de
+resultados.
+19.2 Divulga a lista de espera em creches públicas e os critérios de
+priorização de acesso a elas?
+➢  Fundamentação: Art. 37, "caput" da CF e Art. 8º, § 1º, V, da Lei nº
+12.527/2011 – LAI; Art. 5º, §1º, IV da Lei nº 9.394/96 (LDB,
+alterada pela Lei nº 14.685/23)
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Executivo Municipal.
+➢  Itens de verificação exigidos: disponibilidade e atualidade.
+Disponibilidade:
+Reconhecendo a importância da primeira infância na formação dos
+cidadãos brasileiros, exige-se que seja divulgada a lista de espera ordenada,
+além dos critérios de priorização de acesso a elas (quem recebe a vaga
+primeiro e assim por diante).
+Para os Poderes Executivos Estaduais, considerar atendido esse
+critério, já que a oferta de vagas em creches públicas é de responsabilidade
+
+====== Page 219 ======
+Acesso rápido
+Menu de critérios
+219
+prioritária dos entes municipais. De qualquer forma, é possível a existência
+de creches mantidas pelo Estado. Estimula-se, nesse caso, como forma de
+ampliar a transparência, a divulgação da lista de espera.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes forem datadas de, no máximo, 30 dias da data em que a consulta
+for realizada. É necessário constar a indicação da data da última
+atualização, inclusive nos casos em que não ocorra alteração na lista de
+espera. Isso assegura transparência quanto à frequência das atualizações,
+permitindo que os usuários saibam quando os dados foram verificados pela
+última vez, independentemente de terem sido alterados ou não.
+Figura 104 – Exemplo de divulgação da lista de espera em creches públicas.
+
+====== Page 220 ======
+Acesso rápido
+Menu de critérios
+220
+19.3 Divulga informações atualizadas sobre a composição e o
+funcionamento do Conselho do Fundeb?
+➢  Fundamentação: Art. 34, § 11, I, II, III, IV e V da Lei nº
+14.113/2020.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Executivo Municipal e Estadual e do Distrito
+Federal.
+➢  Item de verificação exigido: disponibilidade .
+Disponibilidade:
+Exige-se que sejam disponibilizadas, em sítio oficial na internet,
+informações atualizadas acerca da composição e do funcionamento do
+Conselho do Fundeb, compreendendo, no mínimo:
+- Nomes dos atuais conselheiros e das respectivas entidades ou
+segmentos que representam;
+- Correio eletrônico ou outro canal de contato direto com o
+Conselho;
+- Atas das reuniões realizadas;
+- Relatórios e pareceres emitidos.
+Atende ao critério se as informações estiverem publicadas em seção
+específica do site ou em menu/seção facilmente identificável (ex.:
+“Conselhos” ou “Conselho do Fundeb”), ou ainda dentro da seção
+“educação”.
+19.4 Divulga informações atualizadas sobre a composição e o
+funcionamento do Conselho de Assistência Social?
+➢  Fundamentação: Arts. 17, §1º, e 18, XIV da Lei nº 8.742/93; art. 3º,
+II da Lei nº 12.527/11.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Executivo Municipal e Estadual e do Distrito
+Federal.
+➢  Item de verificação exigido: disponibilidade .
+
+====== Page 221 ======
+Acesso rápido
+Menu de critérios
+221
+Disponibilidade:
+Exige-se que sejam disponibilizadas, em sítio oficial na internet,
+informações atualizadas acerca da composição e do funcionamento do
+Conselho de Assistência Social, compreendendo, no mínimo:
+- Nomes dos atuais conselheiros e das respectivas entidades ou
+segmentos que representam;
+- Correio eletrônico ou outro canal de contato direto com o
+Conselho;
+- Atas das reuniões realizadas;
+- Relatórios e pareceres emitidos.
+Atende ao critério se as informações estiverem publicadas na seção
+específica do site ou em menu/seção facilmente identificável (ex.:
+“Conselhos” ou “Conselho de Assistência Social”).
+
+====== Page 222 ======
+Acesso rápido
+Menu de critérios
+222
+MATRIZ ESPECÍFICA: PODER LEGISLATIVO
+20. Atividades Finalísticas – Poder Legislativo
+20.1 Divulga a composição da Casa, com a biografia dos parlamentares?
+➢  Fundamentação: Art. 37, "caput" da CF e Art. 8º, § 1º, I, da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Legislativo.
+➢  Item de verificação exigido: disponibilidade .
+Disponibilidade:
+Deve constar no site institucional ou no portal da transparência, a
+lista dos parlamentares, contendo foto, partido político e uma breve
+biografia que apresente um panorama geral de sua trajetória pessoal,
+profissional e política.
+Também é considerada uma boa prática a inclusão de informações
+complementares, como área de atuação, base eleitoral e contatos, entre
+outros. No entanto, a ausência desses últimos elementos não compromete o
+atendimento a este critério
+Figura 105 – Exemplo de divulgação dos parlamentares.
+
+====== Page 223 ======
+Acesso rápido
+Menu de critérios
+223
+20.2 Divulga as leis e atos infralegais (resoluções, decretos, etc.)
+produzidos?
+➢  Fundamentação: Art. 37, da CF (princípio da publicidade) e arts.
+6, inciso I, e 8º da Lei nº 12.527/2011 – LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável ao: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica e filtro de pesquisa.
+Disponibilidade:
+Trata-se da possibilidade de acessar toda a legislação do Ente
+federado já editadas (Constituição, Lei Orgânica, Leis Ordinárias, Leis
+Complementares, Resoluções, Decretos, dentre outras). A documentação
+deve ser disponibilizada, pelo menos, em formato de PDF pesquisável.
+Figura 106 – Exemplo de divulgação das leis/atos.
+
+====== Page 224 ======
+Acesso rápido
+Menu de critérios
+224
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+Considera-se atendido o item de verificação “filtro de pesquisa”
+quando for possível realizar a busca do ato normativo de acordo com a
+numeração, a data, as palavras-chave ou o texto livre.
+20.3 Divulga projetos de leis e de atos infralegais, bem como as
+respectivas tramitações (contemplando ementa, documentos anexos,
+situação atual e autor/relator)?
+➢  Fundamentação: Art. 37, da CF (princípio da publicidade) e arts.
+6, inciso I, e 8º da Lei nº 12.527/2011 – LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica e filtro de pesquisa.
+
+====== Page 225 ======
+Acesso rápido
+Menu de critérios
+225
+Disponibilidade:
+Trata-se da possibilidade de acessar os projetos de leis e de atos
+infralegais, bem como as respectivas tramitações, com as seguintes
+informações:
+- Ementa;
+- Documentos anexos;
+- Situação atual;
+- Autor/relator.
+A documentação deve ser disponibilizada, pelo menos, no formato
+PDF pesquisável.
+Figura 107 – Exemplo de divulgação das leis/atos e suas tramitações.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+
+====== Page 226 ======
+Acesso rápido
+Menu de critérios
+226
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+Considera-se atendido o item de verificação “filtro de pesquisa”
+para este critério quando for possível realizar a busca do ato normativo de
+acordo com a numeração, a data, as palavras-chave ou o texto livre.
+20.4 Divulga a pauta das sessões do Plenário?
+➢  Fundamentação: arts. 7º, incisos IV, V e VI, e 8º "caput" da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade , atualidade,
+gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+Trata-se da disponibilização da pauta das matérias a serem
+discutidas no Plenário. A divulgação pode se dar na forma de publicação de
+pauta conjunta, desde que fiquem explicitadas as respectivas atividades
+legislativas.
+
+====== Page 227 ======
+Acesso rápido
+Menu de critérios
+227
+Figura 108 – Exemplo de divulgação das pautas das sessões plenárias.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Gravação de Relatórios:
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+20.5 Divulga a pauta das Comissões?
+➢  Fundamentação: Art. 37, caput, da CF e Art. 3, II, da Lei nº
+12.527/2011 – LAI.
+Possibilidade de download das pautas em pelo menos um formato 
+editável (em extensões do tipo xls, xlsx, txt, csv, odt, calc, ods, doc, docx e 
+outros). Considera-se igualmente atendido se apresentar documentos em 
+formato PDF pesquisável.
+====== Page 228 ======
+Acesso rápido
+Menu de critérios
+228
+➢  Classificação: Obrigatória.
+➢  Aplicável ao: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade , atualidade,
+gravação de relatórios e filtro de pesquisa
+Disponibilidade:
+Trata-se da disponibilização da pauta das matérias a serem
+discutidas nas Comissões. A divulgação pode se dar na forma de publicação
+de pauta conjunta, desde que fiquem explicitadas as respectivas atividades
+legislativas.
+Figura 109 – Exemplo de divulgação das pautas das Comissões.
+Atualidade:
+Considera-se que as informações estejam atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+
+====== Page 229 ======
+Acesso rápido
+Menu de critérios
+229
+Gravação de Relatórios:
+Possibilidade de download das pautas em pelo menos um formato
+editável (em extensões do tipo xls, xlsx, txt, csv, odt, calc, ods, doc, docx e
+outros). Considera-se igualmente atendido se apresentar documentos em
+formato PDF pesquisável.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+20.6 Divulga as atas das sessões, incluindo a lista de presença dos
+parlamentares em cada sessão?
+➢  Fundamentação: Art. 37, caput, da CF e Art. 3, II, da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica, gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+Trata-se da divulgação das atas das Sessões do Plenário e da lista de
+presenças dos parlamentares. É considerada boa prática a publicação da
+lista de ausência, o que, no entanto, não impacta na pontuação deste
+critério.
+
+====== Page 230 ======
+Acesso rápido
+Menu de critérios
+230
+Figura 110 – Exemplo de divulgação das atas das sessões.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Gravação de Relatórios:
+Possibilidade de download das atas das sessões em pelo menos um
+formato editável (em extensões do tipo xls, xlsx, txt, csv, odt, calc, ods, doc,
+docx e outros), dentro de um conjunto específico de informações.
+Considera-se igualmente atendido se apresentar documentos em formato
+PDF pesquisável.
+
+====== Page 231 ======
+Acesso rápido
+Menu de critérios
+231
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+20.7 Divulga lista sobre as votações nominais?
+➢  Fundamentação: Art. 37, caput, da CF e Art. 3, II, da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica, gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+Trata-se da divulgação da lista nominal de votação dos projetos de
+lei. Sendo votações unânimes, a lista será dispensada, devendo o critério ser
+considerado atendido.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Gravação de Relatórios:
+Possibilidade de gravar as listas em pelo menos um formato editável
+(em extensões do tipo xls, xlsx, txt, csv, odt, calc, ods, doc, docx e outros).
+
+====== Page 232 ======
+Acesso rápido
+Menu de critérios
+232
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+20.8 Divulga o ato que aprecia as Contas do Chefe do Poder Executivo
+(Decreto) e o teor do julgamento (Ata ou Resumo da Sessão que aprovou
+ou rejeitou as contas)?
+➢  Fundamentação: Art. 7º, inciso VII, alínea "b", da Lei nº
+12.527/2011 - LAI e art. 56, §3º, da LRF.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica e filtro de pesquisa.
+Disponibilidade:
+Trata-se da divulgação dos atos que apreciaram as Contas dos Chefes
+de Poderes Executivos (por exemplo, decreto) e o teor dos respectivos
+julgamentos.
+Deve ser possível extrair a justificativa a respeito do acolhimento ou
+da rejeição das contas dos Chefes dos Poderes Executivos, o que pode ser
+feito por meio da publicação do inteiro teor da ata da respectiva sessão ou
+apenas de um resumo desta.
+Atualidade:
+Considera-se que as informações estejam atualizadas quando
+divulgada a última apreciação do parecer prévio emitido pelo Tribunal de
+Contas.
+
+====== Page 233 ======
+Acesso rápido
+Menu de critérios
+233
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+20.9 Há transmissão de sessões, audiências públicas, consultas públicas
+ou outras formas de participação popular via meios de comunicação como
+rádio, TV, internet, entre outros?
+➢  Fundamentação: Arts. 7, 13 e ss. da Lei 13.460/17, c/c art. 9º,
+inciso II, da Lei nº 12.527/2011 - LAI e art. 37, "caput", da CF
+(princípio da publicidade).
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Legislativo.
+➢  Item de verificação exigido: disponibilidade.
+Disponibilidade:
+Para atendimento ao critério, o portal deve transmitir as sessões,
+audiências públicas, consultas públicas ou outras formas de participação
+popular via meios de comunicação como rádio, TV, internet, entre outros.
+
+====== Page 234 ======
+Acesso rápido
+Menu de critérios
+234
+20.10 Divulga a regulamentação e os valores relativos às cotas para
+exercício da atividade parlamentar/verba indenizatória?
+➢  Fundamentação: Arts. 7º, incisos IV e V, e 8º "caput" da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica, gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+Para que a informação seja considerada disponível, deve estar
+publicada em local de fácil acesso, preferencialmente em seção específica
+de transparência, com dados atualizados e detalhados sobre as cotas
+parlamentares e os gastos com verba indenizatória, incluindo valores,
+beneficiários e descrição das despesas.
+
+====== Page 235 ======
+Acesso rápido
+Menu de critérios
+235
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Gravação de Relatórios:
+Possibilidade de gravar as informações referentes aos valores das
+cotas para exercício da atividade parlamentar/verba indenizatória em pelo
+menos um formato editável (em extensões do tipo xls, xlsx, txt, csv, odt,
+calc, ods, doc, docx e outros), dentro de um conjunto específico de
+informações.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+20.11 Divulga dados sobre as atividades legislativas dos parlamentares?
+➢  Fundamentação: Art. 37, "caput" da CF e Art. 8º, § 1º, V, da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Legislativo.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica e filtro de pesquisa.
+
+====== Page 236 ======
+Acesso rápido
+Menu de critérios
+236
+Disponibilidade:
+Trata-se da divulgação de relatório de atividades legislativas dos
+parlamentares, contendo informações como: autoria, relatoria,
+pronunciamentos e presidência de comissão etc.
+Comitê executivo: Divulgação de relatório de atividades legislativas,
+por parlamentar, contendo informações como: projetos de leis e
+requerimentos propostos, participação em audiências e comissões, etc
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo, 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e
+executar buscas direcionadas sobre os dados disponibilizados.
+
+====== Page 237 ======
+Acesso rápido
+Menu de critérios
+237
+MATRIZ ESPECÍFICA: PODER JUDICIÁRIO
+21. Atividades Finalísticas - Poder Judiciário
+21.1 Divulga a composição da Casa, com a indicação de onde cada
+magistrado atua?
+➢  Fundamentação: Art. 37, "caput" da CF e Art. 8º, § 1º, I, da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Judiciário.
+➢  Item de verificação exigido: disponibilidade .
+Disponibilidade:
+Deve constar no site institucional ou no portal da transparência, a lista
+dos magistrados, com a indicação de onde atuam. É considerada boa prática
+a disponibilização de um resumo do currículo do juiz, desembargador ou
+ministro no portal, o que, no entanto, não impacta no atendimento a este
+critério.
+Figura 111 – Exemplo de divulgação da composição.
+
+====== Page 238 ======
+Acesso rápido
+Menu de critérios
+238
+21.2 Divulga pauta das sessões?
+➢  Fundamentação: Art. 7º, V, da Lei nº 12.527/2011 - LAI; art. 12, § 1º,
+da Lei nº 13.105/15.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Judiciário.
+➢  Itens de verificação exigidos: disponibilidade , atualidade,
+gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+É necessário que seja divulgada a pauta das sessões (a lista de
+processos conclusos e aptos a julgamento), preferencialmente por ordem
+cronológica, contendo lista de processos aptos a julgamento e conclusos.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Gravação de Relatórios:
+Possibilidade de download das atas das sessões em pelo menos um
+formato editável (em extensões do tipo xls, xlsx, txt, csv, odt, calc, ods, doc,
+docx e outros). Considera-se igualmente atendido se apresentar documentos
+em formato PDF pesquisável.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e executar
+buscas direcionadas sobre os dados disponibilizados.
+
+====== Page 239 ======
+Acesso rápido
+Menu de critérios
+239
+21.3 Divulga ata das sessões de julgamento/deliberativas?
+➢  Fundamentação: Arts. 37, "caput" (princípio da publicidade), e 93,
+IX e X, da CF; arts. 7º, II e V, e 8º, caput, da Lei nº 12.527/2011 -
+LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Poder Judiciário.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica, gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+Exige-se a divulgação das atas das sessões de julgamento, com a
+indicação dos magistrados presentes na solenidade.
+Figura 112 – Exemplo de divulgação das atas das sessões.
+
+====== Page 240 ======
+Acesso rápido
+Menu de critérios
+240
+Figura 113 – Exemplo de divulgação das atas das sessões.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Gravação de Relatórios:
+Possibilidade de download das atas das sessões em pelo menos um
+formato editável (em extensões do tipo xls, xlsx, txt, csv, odt, calc, ods, doc,
+docx e outros). Considera-se igualmente atendido se apresentar documentos
+em formato PDF pesquisável.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+
+====== Page 241 ======
+Acesso rápido
+Menu de critérios
+241
+dados correspondente a cada critério avaliado, refinando os resultados e
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e executar
+buscas direcionadas sobre os dados disponibilizados.
+21.4 Divulga suas decisões?
+➢  Fundamentação: Arts. 7º, incisos II e VI, e 8º, "caput" da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável ao: Poder Judiciário.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica e filtro de pesquisa.
+Disponibilidade:
+Considerando a natureza das decisões judiciais, que são, em regra,
+assinadas digitalmente e integradas aos sistemas processuais em formato
+PDF, a documentação deve ser disponibilizada, no mínimo, em PDF
+pesquisável, o que possibilita a identificação dos caracteres no documento,
+permitindo a busca por palavras, números ou símbolos, além de viabilizar a
+cópia de trechos do texto pelo usuário, facilitando o acesso e a análise das
+informações.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+
+====== Page 242 ======
+Acesso rápido
+Menu de critérios
+242
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e executar
+buscas direcionadas sobre os dados disponibilizados.
+21.5 Divulga informativo de jurisprudência contendo decisões atualizadas?
+➢  Fundamentação: Arts. 37, "caput" (princípio da publicidade), e 93,
+IX e X, da CF; arts. 7º, II e V, e 8º, "caput", da Lei nº 12.527/2011 -
+LAI e art. 24, parágrafo único da do Decreto-Lei nº 4.657/42.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Judiciário.
+➢  Itens de verificação exigidos: disponibilidade, atualidade, série
+histórica, gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+Deve ser divulgada a coletânea das decisões mais relevantes do
+Tribunal.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.
+Série Histórica:
+Considera-se que existe histórico de informações quando os dados
+disponibilizados referirem-se, pelo menos, a 3 anos que antecedem ao da
+pesquisa.
+Gravação de Relatórios:
+Possibilidade de download dos informativos em pelo menos um
+formato editável (em extensões do tipo xls, xlsx, txt, csv, odt, calc, ods, doc,
+docx e outros), dentro de um conjunto específico de informações.
+Filtro de Pesquisa:
+Trata-se do instrumento que permite ao usuário selecionar
+parâmetros para localizar informações específicas dentro do conjunto de
+dados correspondente a cada critério avaliado, refinando os resultados e
+
+====== Page 243 ======
+Acesso rápido
+Menu de critérios
+243
+direcionando a consulta conforme opções previamente estruturadas.
+Considera-se existente o filtro de pesquisa específico quando, no âmbito do
+critério analisado, for possível definir parâmetros, aplicar recortes e executar
+buscas direcionadas sobre os dados disponibilizados.
+21.6 Há transmissão das sessões de julgamento e eventuais audiências
+públicas via meios de comunicação como rádio, TV, internet, entre outros?
+➢  Fundamentação: Art. 37, caput, da CF e Arts. 3º, incisos II, III e X, e
+14 da Lei 14.129/2021 e Art. 3º, III, da Lei nº 12.527/2011 – LAI.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Poder Judiciário.
+➢  Item de verificação exigido: disponibilidade .
+Disponibilidade:
+Para atendimento ao critério, o portal deve transmitir as sessões de
+julgamento e eventuais audiências públicas via meios de comunicação como
+rádio, TV, internet, entre outros.
+
+====== Page 244 ======
+Acesso rápido
+Menu de critérios
+244
+Figura 114 – Exemplo de divulgação das transmissões das sessões de julgamento e eventuais
+audiências públicas via meios de comunicação.
+
+====== Page 245 ======
+Acesso rápido
+Menu de critérios
+245
+MATRIZ ESPECÍFICA: TRIBUNAL DE CONTAS
+22. Atividades Finalísticas - Tribunais de Contas
+22.1 Divulga a composição da Casa, com a indicação das funções exercidas
+por membro e onde cada um deles atua?
+➢  Fundamentação: Art. 37, "caput" da CF e Art. 8º, § 1º, I, da Lei nº
+12.527/2011 - LAI.
+➢  Classificação: Recomendada.
+➢  Aplicável a: Tribunais de Contas.
+➢  Item de verificação exigido: disponibilidade .
+Disponibilidade:
+Deve constar no site institucional ou no portal da transparência, a lista
+dos magistrados, com a indicação de onde atuam e as funções
+desempenhadas por cada um deles. É considerada boa prática a
+disponibilização de um resumo do currículo do conselheiro ou ministro, o
+que, no entanto, não impacta na pontuação deste critério.
+22.2 Divulga pauta das sessões?
+➢  Fundamentação: Arts. 7º, incisos IV e V; e 8º, "caput" da Lei nº
+12.527/2011 – LAI.
+➢  Classificação: Obrigatória.
+➢  Aplicável a: Tribunais de Contas.
+➢  Itens de verificação exigidos: disponibilidade , atualidade,
+gravação de relatórios e filtro de pesquisa.
+Disponibilidade:
+É necessário que seja divulgada a pauta das sessões (a lista de
+processos conclusos e aptos a julgamento), preferencialmente por ordem
+cronológica, contendo lista de processos aptos a julgamento e conclusos.
+Atualidade:
+Considera-se que as informações estão atualizadas quando as mais
+recentes datarem de, no máximo 30 dias da data em que for realizada a
+consulta.

@@ -1,0 +1,500 @@
+[
+  {
+    "id": "1.1",
+    "dim": "Informações Prioritárias",
+    "class": "Essencial",
+    "titulo": "Possui sítio oficial próprio na internet?"
+  },
+  {
+    "id": "1.2",
+    "dim": "Informações Prioritárias",
+    "class": "Essencial",
+    "titulo": "Possui portal da transparência próprio ou compartilhado na internet?"
+  },
+  {
+    "id": "1.3",
+    "dim": "Informações Prioritárias",
+    "class": "Obrigatoria",
+    "titulo": "O acesso ao portal transparência está visível na capa do site?"
+  },
+  {
+    "id": "1.4",
+    "dim": "Informações Prioritárias",
+    "class": "Obrigatoria",
+    "titulo": "O site e o portal de transparência contêm ferramenta de pesquisa de conteúdo que permita o acesso à informação?"
+  },
+  {
+    "id": "2.1",
+    "dim": "Informações Institucionais",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a sua estrutura organizacional e a norma que a institui/altera?"
+  },
+  {
+    "id": "2.2",
+    "dim": "Informações Institucionais",
+    "class": "Obrigatoria",
+    "titulo": "Divulga competências e/ou atribuições?"
+  },
+  {
+    "id": "2.3",
+    "dim": "Informações Institucionais",
+    "class": "Obrigatoria",
+    "titulo": "Identifica o nome dos atuais responsáveis pela gestão do Poder/Órgão?"
+  },
+  {
+    "id": "2.4",
+    "dim": "Informações Institucionais",
+    "class": "Obrigatoria",
+    "titulo": "Divulga os endereços e telefones atuais do Poder ou órgão e e-mails institucionais?"
+  },
+  {
+    "id": "2.5",
+    "dim": "Informações Institucionais",
+    "class": "Obrigatoria",
+    "titulo": "Divulga o horário de atendimento?"
+  },
+  {
+    "id": "2.6",
+    "dim": "Informações Institucionais",
+    "class": "Obrigatoria",
+    "titulo": "Divulga os atos normativos próprios?"
+  },
+  {
+    "id": "2.7",
+    "dim": "Informações Institucionais",
+    "class": "Obrigatoria",
+    "titulo": "Divulga as perguntas e respostas mais frequentes relacionadas às atividades desenvolvidas pelo Poder/Órgão?"
+  },
+  {
+    "id": "2.8",
+    "dim": "Informações Institucionais",
+    "class": "Recomendada",
+    "titulo": "Participa em redes sociais e apresenta, no seu sítio institucional, link de acesso ao seu perfil?"
+  },
+  {
+    "id": "2.9",
+    "dim": "Informações Institucionais",
+    "class": "Recomendada",
+    "titulo": "Inclui botão do Radar da Transparência Pública no site institucional ou portal transparência?"
+  },
+  {
+    "id": "3.1",
+    "dim": "Receita",
+    "class": "Essencial",
+    "titulo": "Divulga as receitas do Poder ou órgão, evidenciando sua previsão e realização?"
+  },
+  {
+    "id": "4.1",
+    "dim": "Despesa",
+    "class": "Essencial",
+    "titulo": "Divulga o total das despesas empenhadas, liquidadas e pagas?"
+  },
+  {
+    "id": "4.2",
+    "dim": "Despesa",
+    "class": "Essencial",
+    "titulo": "Divulga as despesas por classificação orçamentária?"
+  },
+  {
+    "id": "4.3",
+    "dim": "Despesa",
+    "class": "Essencial",
+    "titulo": "Possibilita a consulta de empenhos com os detalhes do beneficiário do pagamento ou credor, o valor, o bem fornecido ou s"
+  },
+  {
+    "id": "5.1",
+    "dim": "Convênios e Transferências",
+    "class": "Obrigatoria",
+    "titulo": "Divulga as transferências recebidas a partir da celebração de convênios/acordos com indicação, no mínimo, do número/ano "
+  },
+  {
+    "id": "5.2",
+    "dim": "Convênios e Transferências",
+    "class": "Obrigatoria",
+    "titulo": "Divulga as transferências realizadas a partir da celebração de convênios/acordos/ajustes, com indicação, no mínimo, do n"
+  },
+  {
+    "id": "5.3",
+    "dim": "Convênios e Transferências",
+    "class": "Obrigatoria",
+    "titulo": "Divulga os acordos firmados que não envolvam transferência de recursos financeiros, identificando as partes, o número/an"
+  },
+  {
+    "id": "6.1",
+    "dim": "Recursos Humanos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a relação nominal dos servidores/autoridades/membros, seus cargos/funções, as respectivas lotações, as suas data"
+  },
+  {
+    "id": "6.2",
+    "dim": "Recursos Humanos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a remuneração nominal de cada servidor/autoridade/Membro?"
+  },
+  {
+    "id": "6.3",
+    "dim": "Recursos Humanos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a tabela com o padrão remuneratório dos cargos e funções?"
+  },
+  {
+    "id": "6.4",
+    "dim": "Recursos Humanos",
+    "class": "Recomendada",
+    "titulo": "Divulga a lista de seus estagiários, contendo o nome dos estudantes; a data de contratação e a data de término do respec"
+  },
+  {
+    "id": "6.5",
+    "dim": "Recursos Humanos",
+    "class": "Recomendada",
+    "titulo": "Publica lista dos terceirizados que prestam serviços para o Poder ou órgão/entidades, contendo, em relação a cada um del"
+  },
+  {
+    "id": "6.6",
+    "dim": "Recursos Humanos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a íntegra dos editais de concursos e seleções públicas realizados pelo Poder ou órgão para provimento de cargos "
+  },
+  {
+    "id": "6.7",
+    "dim": "Recursos Humanos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga informações sobre os demais atos dos concursos públicos e processos seletivos do Poder ou órgão, contendo no mín"
+  },
+  {
+    "id": "7.1",
+    "dim": "Diárias",
+    "class": "Obrigatoria",
+    "titulo": "Divulga o nome e o cargo/função do beneficiário, além do valor total recebido, número de diárias usufruídas por afastame"
+  },
+  {
+    "id": "7.2",
+    "dim": "Diárias",
+    "class": "Obrigatoria",
+    "titulo": "Divulga tabela ou relação que explicite os valores das diárias dentro do Estado, fora do Estado e fora do país, conforme"
+  },
+  {
+    "id": "8.1",
+    "dim": "Licitações",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a relação das licitações em ordem sequencial, informando o número e modalidade licitatória, o objeto, a data, o "
+  },
+  {
+    "id": "8.2",
+    "dim": "Licitações",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a íntegra dos editais de licitação?"
+  },
+  {
+    "id": "8.3",
+    "dim": "Licitações",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a íntegra dos demais documentos das fases interna e externa das licitações?"
+  },
+  {
+    "id": "8.4",
+    "dim": "Licitações",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a íntegra dos principais documentos dos processos de dispensa e inexigibilidade de licitação?"
+  },
+  {
+    "id": "8.5",
+    "dim": "Licitações",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a íntegra das Atas de Adesão – SRP?"
+  },
+  {
+    "id": "8.6",
+    "dim": "Licitações",
+    "class": "Recomendada",
+    "titulo": "Divulga o plano de contratações anual?"
+  },
+  {
+    "id": "8.7",
+    "dim": "Licitações",
+    "class": "Recomendada",
+    "titulo": "Divulga a relação dos licitantes e/ou contratados sancionados administrativamente pelo Poder ou órgão?"
+  },
+  {
+    "id": "9.1",
+    "dim": "Contratos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a relação dos contratos celebrados em ordem sequencial, com o seu respectivo resumo, contendo, no mínimo, indica"
+  },
+  {
+    "id": "9.2",
+    "dim": "Contratos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga o inteiro teor dos contratos e dos respectivos termos aditivos?"
+  },
+  {
+    "id": "9.3",
+    "dim": "Contratos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a relação/lista dos fiscais de cada contrato vigente e encerrado?"
+  },
+  {
+    "id": "9.4",
+    "dim": "Contratos",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a ordem cronológica de seus pagamentos, bem como as justificativas que fundamentaram a eventual alteração dessa "
+  },
+  {
+    "id": "10.1",
+    "dim": "Obras",
+    "class": "Recomendada",
+    "titulo": "Divulga informações sobre as obras contendo o objeto, a situação atual, as datas de início e de conclusão da obra, empre"
+  },
+  {
+    "id": "10.2",
+    "dim": "Obras",
+    "class": "Obrigatoria",
+    "titulo": "Divulga os quantitativos, os preços unitários e totais contratados?"
+  },
+  {
+    "id": "10.3",
+    "dim": "Obras",
+    "class": "Obrigatoria",
+    "titulo": "Divulga os quantitativos executados e os preços efetivamente pagos?"
+  },
+  {
+    "id": "10.4",
+    "dim": "Obras",
+    "class": "Obrigatoria",
+    "titulo": "Divulga relação das obras paralisadas contendo o motivo, o responsável pela inexecução temporária do objeto do contrato "
+  },
+  {
+    "id": "11.1",
+    "dim": "Planejamento e Prestação de contas",
+    "class": "Obrigatoria",
+    "titulo": "Publica a Prestação de Contas do Ano Anterior (Balanço Geral)?"
+  },
+  {
+    "id": "11.2",
+    "dim": "Planejamento e Prestação de contas",
+    "class": "Obrigatoria",
+    "titulo": "Divulga o Relatório de Gestão ou Atividades?"
+  },
+  {
+    "id": "11.3",
+    "dim": "Planejamento e Prestação de contas",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a íntegra da decisão da apreciação ou julgamento das contas pelo Tribunal de Contas?"
+  },
+  {
+    "id": "11.5",
+    "dim": "Planejamento e Prestação de contas",
+    "class": "Essencial",
+    "titulo": "Divulga o Relatório de Gestão Fiscal (RGF)?"
+  },
+  {
+    "id": "11.7",
+    "dim": "Planejamento e Prestação de contas",
+    "class": "Recomendada",
+    "titulo": "Divulga o plano estratégico institucional?"
+  },
+  {
+    "id": "12.1",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "Existe o SIC no site ou no portal de transparência e indica a unidade/setor responsável?"
+  },
+  {
+    "id": "12.2",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "Indica o endereço físico, o telefone e o e-mail da unidade responsável pelo SIC, além do horário de funcionamento?"
+  },
+  {
+    "id": "12.3",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "Há possibilidade de envio de pedidos de informação de forma eletrônica (e­-SIC)?"
+  },
+  {
+    "id": "12.4",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "A solicitação por meio de eSic é simples, ou seja, sem a exigência de itens de identificação do requerente que dificulte"
+  },
+  {
+    "id": "12.5",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "Divulga nesta seção, instrumento normativo local que regulamente a Lei nº 12.527/2011 – LAI?"
+  },
+  {
+    "id": "12.6",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Recomendada",
+    "titulo": "Divulga, na seção relativa ao e-SIC, os prazos de resposta ao cidadão, incluindo o recursal, e as autoridades competente"
+  },
+  {
+    "id": "12.7",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "Divulga relatório anual estatístico contendo a quantidade de pedidos de acesso recebidos, atendidos, indeferidos, bem co"
+  },
+  {
+    "id": "12.8",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "Divulga lista de documentos classificados em cada grau de sigilo, contendo pelo menos o assunto sobre o qual versa a inf"
+  },
+  {
+    "id": "12.9",
+    "dim": "Serviço de Informação ao Cidadão - SIC",
+    "class": "Obrigatoria",
+    "titulo": "Divulga lista das informações que tenham sido desclassificadas nos últimos 12 (doze) meses?"
+  },
+  {
+    "id": "13.1",
+    "dim": "Acessibilidade",
+    "class": "Obrigatoria",
+    "titulo": "O site oficial e o portal de transparência contêm símbolo de acessibilidade em destaque?"
+  },
+  {
+    "id": "13.2",
+    "dim": "Acessibilidade",
+    "class": "Obrigatoria",
+    "titulo": "O site e o portal de transparência contêm exibição do “caminho” de páginas percorridas pelo usuário?"
+  },
+  {
+    "id": "13.3",
+    "dim": "Acessibilidade",
+    "class": "Obrigatoria",
+    "titulo": "O site e o portal de transparência contêm opção de alto contraste?"
+  },
+  {
+    "id": "13.4",
+    "dim": "Acessibilidade",
+    "class": "Obrigatoria",
+    "titulo": "O site e o portal de transparência contêm ferramenta de redimensionamento de texto?"
+  },
+  {
+    "id": "13.5",
+    "dim": "Acessibilidade",
+    "class": "Recomendada",
+    "titulo": "Contém mapa do site institucional?"
+  },
+  {
+    "id": "14.1",
+    "dim": "Ouvidorias",
+    "class": "Obrigatoria",
+    "titulo": "Há informações sobre o atendimento presencial pela Ouvidoria (Indicação de endereço físico e telefone, além do horário d"
+  },
+  {
+    "id": "14.2.",
+    "dim": "Ouvidorias",
+    "class": "Obrigatoria",
+    "titulo": "Há canal eletrônico de acesso/interação com a ouvidoria?"
+  },
+  {
+    "id": "14.3",
+    "dim": "Ouvidorias",
+    "class": "Obrigatoria",
+    "titulo": "Divulga Carta de Serviços ao Usuário?"
+  },
+  {
+    "id": "15.1",
+    "dim": "Lei Geral de Proteção de Dados (LGPD) e Governo Digital",
+    "class": "Obrigatoria",
+    "titulo": "Identifica o encarregado/responsável pelo tratamento de dados pessoais e disponibiliza Canal de Comunicação com esse ser"
+  },
+  {
+    "id": "15.2",
+    "dim": "Lei Geral de Proteção de Dados (LGPD) e Governo Digital",
+    "class": "Recomendada",
+    "titulo": "Publica a sua Política de Privacidade e Proteção de Dados?"
+  },
+  {
+    "id": "15.3",
+    "dim": "Lei Geral de Proteção de Dados (LGPD) e Governo Digital",
+    "class": "Obrigatoria",
+    "titulo": "Possibilita a demanda e o acesso a serviços públicos por meio digital, sem necessidade de solicitação presencial?"
+  },
+  {
+    "id": "15.4",
+    "dim": "Lei Geral de Proteção de Dados (LGPD) e Governo Digital",
+    "class": "Obrigatoria",
+    "titulo": "Possibilita o acesso automatizado por sistemas externos em dados abertos  (estruturados e legíveis por máquina), e a pág"
+  },
+  {
+    "id": "15.5",
+    "dim": "Lei Geral de Proteção de Dados (LGPD) e Governo Digital",
+    "class": "Recomendada",
+    "titulo": "Regulamenta a Lei Federal nº 14.129/2021 (Governo Digital) e divulga a normativa em seu portal?"
+  },
+  {
+    "id": "15.6",
+    "dim": "Lei Geral de Proteção de Dados (LGPD) e Governo Digital",
+    "class": "Obrigatoria",
+    "titulo": "Realiza e divulga resultados de pesquisas de satisfação?"
+  },
+  {
+    "id": "20.1",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a composição da Casa, com a biografia dos parlamentares?"
+  },
+  {
+    "id": "20.2",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Obrigatoria",
+    "titulo": "Divulga as leis e atos infralegais (resoluções, decretos, etc.) produzidos?"
+  },
+  {
+    "id": "20.3",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Obrigatoria",
+    "titulo": "Divulga projetos de leis e de atos infralegais, bem como as respectivas tramitações (contemplando ementa, documentos ane"
+  },
+  {
+    "id": "20.4",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a pauta das sessões do Plenário?"
+  },
+  {
+    "id": "20.5",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Obrigatoria",
+    "titulo": "Divulga a pauta das Comissões?"
+  },
+  {
+    "id": "20.6",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Obrigatoria",
+    "titulo": "Divulga as atas das sessões, incluindo a lista de presença dos parlamentares em cada sessão?"
+  },
+  {
+    "id": "20.7",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Recomendada",
+    "titulo": "Divulga lista sobre as votações nominais?"
+  },
+  {
+    "id": "20.8",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Obrigatoria",
+    "titulo": "Divulga o ato que aprecia as Contas do Chefe do Poder Executivo (Decreto) e o teor do julgamento (Ata ou Resumo da Sessã"
+  },
+  {
+    "id": "20.9",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Recomendada",
+    "titulo": "Há transmissão de sessões, audiências públicas, consultas públicas ou outras formas de participação popular via meios de"
+  },
+  {
+    "id": "20.10",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Recomendada",
+    "titulo": "Divulga a regulamentação e os valores relativos às cotas para exercício da atividade parlamentar/verba indenizatória?"
+  },
+  {
+    "id": "20.11",
+    "dim": "Atividades Finalísticas - PL",
+    "class": "Recomendada",
+    "titulo": "Divulga dados sobre as atividades legislativas dos parlamentares?"
+  }
+]

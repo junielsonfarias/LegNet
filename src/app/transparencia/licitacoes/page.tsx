@@ -27,6 +27,8 @@ import { useSearchParams } from 'next/navigation'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { PDFModal } from '@/components/pdf'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { ExportarDadosButton } from '@/components/transparencia/exportar-dados-button'
+import { UltimaAtualizacao } from '@/components/transparencia/ultima-atualizacao'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   EM_ANDAMENTO: { color: 'bg-camara-primary/10 text-camara-primary', icon: <Clock className="h-4 w-4" /> },
@@ -246,6 +248,23 @@ function LicitacoesContent() {
         </CardContent>
       </Card>
 
+      {/* Indicador de atualidade + exportacao */}
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+        <UltimaAtualizacao />
+        <ExportarDadosButton
+          data={licitacoesFiltradas.map((l) => ({
+            numero: l.numero,
+            ano: l.ano,
+            modalidade: l.modalidade,
+            objeto: l.objeto,
+            valor_estimado: Number(l.valorEstimado ?? 0),
+            data_abertura: l.dataAbertura,
+            situacao: l.situacao,
+          }))}
+          filename={`licitacoes-${filtroAno !== 'all' ? filtroAno : 'todos'}`}
+        />
+      </div>
+
       {/* Lista de Licitacoes */}
       <div className="space-y-4">
         {licitacoesFiltradas.length === 0 ? (
@@ -299,6 +318,12 @@ function LicitacoesContent() {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/transparencia/licitacoes/${licitacao.id}`}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Detalhes / Documentos
+                        </Link>
+                      </Button>
                       {licitacao.linkEdital && (
                         <>
                           {isPdf(licitacao.linkEdital) && (

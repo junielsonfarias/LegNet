@@ -1644,6 +1644,291 @@ REGRA RN-174: PUBLICACAO DE EMENDA
   `src/lib/security/file-validation.ts`,
   `install.sh` (etapa 5k).
 
+REGRA RN-175: PESQUISA DE SATISFACAO PUBLICADA (PNTP 15.6)
+- Atende ao criterio 15.6 da Matriz PNTP 2026 e a Lei 13.460/2017 (Carta
+  de Servicos): Camara DEVE realizar e divulgar resultados de pesquisas
+  de satisfacao dos usuarios.
+- Modelos novos:
+  - `PesquisaSatisfacao` (id, titulo, descricao, periodoInicio,
+    periodoFim, ativa, perguntas JSON, publicaResultados, ...).
+  - `RespostaPesquisaSatisfacao` (id, pesquisaId FK CASCADE, respostas
+    JSON, ipHash SHA-256, userAgent, criadoEm). Anonimo por padrao.
+- Tipos de pergunta suportados: ESCALA_1_5, SIM_NAO, TEXTO,
+  MULTIPLA_ESCOLHA (campo `opcoes` array).
+- Migration: `scripts/sql/add-pesquisa-satisfacao.sql` (idempotente,
+  CREATE TABLE IF NOT EXISTS + FK condicional via DO $$). install.sh
+  etapa 5r.
+- APIs:
+  - `GET /api/pesquisas-satisfacao` (publico, lista resumo)
+  - `POST /api/pesquisas-satisfacao` (`transparencia.manage`)
+  - `GET/PUT/DELETE /api/pesquisas-satisfacao/[id]` (read publico,
+    write `transparencia.manage`)
+  - `POST /api/pesquisas-satisfacao/[id]/respostas` (publico, rate-limit
+    PUBLIC + captcha + valida obrigatorias e periodo)
+  - `GET /api/pesquisas-satisfacao/[id]/resultados` (publico, respeita
+    `publicaResultados=false` retornando 404; nunca expoe respostas
+    individuais — apenas agregados)
+- Paginas publicas:
+  - `/transparencia/pesquisas-satisfacao` (lista — ativas + encerradas)
+  - `/transparencia/pesquisas-satisfacao/[id]` (formulario de resposta)
+  - `/transparencia/pesquisas-satisfacao/[id]/resultados` (dashboard
+    agregado: media+distribuicao para escala 1-5, distribuicao para
+    sim/nao e multipla, amostra de textos)
+- Admin: `/admin/transparencia/pesquisas-satisfacao` (CRUD inline com
+  builder de perguntas).
+- Privacidade: respostas armazenam apenas `ipHash` (SHA-256), nunca IP
+  bruto. Resultados publicos so trazem agregacoes (LGPD).
+- Monitor: `/api/admin/conformidade-pntp` item 22 verifica
+  `PesquisaSatisfacao.count() > 0`.
+
+REGRA RN-176: POLITICA DE PRIVACIDADE LGPD PUBLICADA (PNTP 15.2)
+- Atende ao criterio 15.2 da Matriz PNTP 2026 e a LGPD: portal DEVE
+  publicar formalmente sua Politica de Privacidade e Protecao de Dados.
+- Enum `TipoDocumentoTransparencia` ganhou valor `POLITICA_PRIVACIDADE`
+  (migration `scripts/sql/add-politica-privacidade-tipo.sql`, ALTER TYPE
+  ADD VALUE idempotente; install.sh etapa 5q).
+- Pagina publica: `/transparencia/politica-privacidade` (SSR) com:
+  - 9 principios do Art. 6 da LGPD
+  - Categorias de dados coletados
+  - Direitos do titular (Art. 18)
+  - Identificacao do DPO (le `Configuracao.lgpd_encarregado_*`)
+  - Base legal (LGPD, LAI, Governo Digital, CF)
+  - Secao `DocumentosOficiais` filtrando `POLITICA_PRIVACIDADE` para
+    permitir publicar PDF assinado ao lado do conteudo HTML.
+- Item incluido na secao "LGPD e Governo Digital" da home
+  `/transparencia` e no footer (coluna Institucional).
+- Admin: `/admin/transparencia/documentos` ganhou tipo
+  POLITICA_PRIVACIDADE; tambem listado em `/api/documentos-transparencia`.
+- Monitor: `/api/admin/conformidade-pntp` item 21 verifica
+  `DocumentoTransparencia.count({tipo: 'POLITICA_PRIVACIDADE'}) > 0`.
+
+REGRA RN-177: BOTAO RADAR TRANSPARENCIA ATRICON (PNTP 2.9)
+- Atende ao criterio 2.9 (Recomendada): incluir botao do Radar da
+  Transparencia Publica no site institucional ou portal transparencia.
+- Componente `<RadarBadge variant="hero|footer|inline" />` em
+  `src/components/transparencia/radar-badge.tsx`.
+- URL oficial: `https://radardatransparencia.atricon.org.br/`. Link
+  abre em nova janela com `aria-label` completo.
+- Inserido em 2 locais:
+  - Hero da home `/transparencia` (variant=hero, abaixo da resolucao TCM)
+  - Footer global (variant=footer, barra inferior; substituiu o texto
+    estatico "Radar ATRICON")
+
+REGRA RN-178: MAPA DO SITE HTML LEGIVEL (PNTP 13.5)
+- Atende ao criterio 13.5 (Recomendada): mapa do site institucional.
+  Distinto de `sitemap.xml` (SEO/maquina) — esta pagina e legivel ao
+  cidadao, organizada por dimensao do PNTP.
+- Pagina: `/transparencia/mapa-do-site` (`force-static`), agrupada em
+  12 secoes (Institucional, Legislativo, Atos Normativos, Financeiro,
+  Pessoal, Licitacoes/Contratos/Patrimonio, Planejamento, Atendimento,
+  LGPD, Participacao, Acessibilidade, Obras).
+- Cada secao referencia a dimensao PNTP correspondente.
+- Link no footer (coluna Transparencia) e na home `/transparencia`
+  (secao Informacoes Institucionais).
+
+REGRA RN-180: PLANO DE CONTRATACOES ANUAL (PNTP 8.6)
+- Atende ao criterio 8.6 da Matriz PNTP 2026 e ao Art. 12, § 1º da Lei
+  14.133/2021: divulgacao do Plano de Contratacoes Anual (PCA) do
+  exercicio. Recomendada na matriz PNTP, mas obrigatoria pela Lei
+  14.133/2021.
+- Pagina publica `/transparencia/plano-contratacoes-anual` (`force-dynamic`,
+  para captar novos uploads automaticamente) com:
+  - O que e o PCA (introducao)
+  - Conteudo minimo (demanda, especificacoes, pesquisa, fonte, cronograma)
+  - Beneficios para o cidadao
+  - Base legal (Lei 14.133/2021, Decreto 10.947/2022, IN SEGES/ME 1/2019,
+    cartilha PNTP 2026)
+  - Secao `DocumentosOficiais` filtrando `PLANO_ANUAL_CONTRATACOES` —
+    permite publicar o PDF assinado de cada exercicio.
+- Reaproveita o enum `TipoDocumentoTransparencia.PLANO_ANUAL_CONTRATACOES`
+  (ja existente desde Sprint 4).
+- Item na home `/transparencia` (secao Licitacoes/Contratos/Obras) agora
+  aponta para `/transparencia/plano-contratacoes-anual` (antes apontava
+  para `/transparencia/documentos/plano-anual-contratacoes`).
+- Monitor: `/api/admin/conformidade-pntp` item 25 verifica
+  `DocumentoTransparencia.count({tipo:'PLANO_ANUAL_CONTRATACOES', ano:Y, status:'publicado'}) > 0`
+  onde Y e o ano corrente.
+
+REGRA RN-181: ATAS DE ADESAO A SRP (PNTP 8.5)
+- Atende ao criterio 8.5 (Obrigatoria): publicacao integral das atas de
+  adesao a Atas de Registro de Precos gerenciadas por outros orgaos.
+- Modelo `AtaAdesaoSRP` (`atas_adesao_srp`):
+  - Identificacao: numero, ano (UNIQUE composto), objeto
+  - Origem: orgaoGerenciador, fornecedor, cnpjFornecedor, valorTotal
+  - Vigencia: vigenciaInicio, vigenciaFim
+  - Ata original: numeroAtaOriginal, orgaoOrigem
+  - Anexos: documentos JSON ([{nome, url}]) + arquivo (PDF principal)
+  - Publicacao: dataPublicacao (RN-124 - 24h apos assinatura)
+  - Estado: situacao (VIGENTE | ENCERRADA | CANCELADA), observacoes
+- Migration: `scripts/sql/add-atas-adesao-srp.sql` (idempotente). Aplicada
+  no Supabase via prisma db execute. install.sh etapa 5s.
+- APIs:
+  - `GET /api/atas-adesao-srp` (publico, paginado, filtros ano/situacao/busca)
+  - `POST /api/atas-adesao-srp` (`transparencia.manage`)
+  - `GET/PUT/DELETE /api/atas-adesao-srp/[id]`
+- Admin: `/admin/transparencia/atas-adesao-srp` (CRUD inline + builder
+  de documentos anexos).
+- Sidebar admin: novo atalho (icon Layers) em Transparencia.
+- Pagina publica: `/transparencia/atas-adesao-srp` (SSR, exibe 3 cards
+  de resumo + lista detalhada com botoes para anexos e ata integral).
+- Tile na home `/transparencia` (secao Licitacoes/Contratos/Obras).
+- Monitor: `/api/admin/conformidade-pntp` item 24.
+
+REGRA RN-182: DOCUMENTOS COMPLETOS DE LICITACAO (PNTP 8.3, 8.4)
+- Atende aos criterios 8.3 (Obrigatoria) e 8.4 (Obrigatoria): divulgacao
+  da integra dos documentos das fases interna e externa de licitacoes,
+  incluindo processos de dispensa e inexigibilidade.
+- Schema `Licitacao` ganhou 2 colunas JSONB:
+  - `documentosFaseInterna` — array `[{nome, url, tipo?}]` para parecer
+    juridico, termo de referencia, estudo tecnico preliminar, minuta de
+    edital, pesquisa de mercado e atos de planejamento.
+  - `documentosFaseExterna` — array `[{nome, url, tipo?}]` para edital
+    publicado, atas de abertura/julgamento, propostas, recursos,
+    adjudicacao e homologacao.
+- Migration: `scripts/sql/add-licitacao-documentos-fase.sql` (ADD COLUMN
+  IF NOT EXISTS, idempotente). install.sh etapa 5t.
+- API dedicada `/api/licitacoes/[id]/documentos`:
+  - `GET` publico — retorna apenas os campos das duas fases + metadados base.
+  - `PUT` (`financeiro.manage`) — substitui o array inteiro de cada fase.
+- Pagina publica `/transparencia/licitacoes/[id]` (SSR) com:
+  - Resumo (objeto, modalidade, valores, datas, unidade gestora)
+  - Bloco Fase Interna (lista de anexos)
+  - Bloco Fase Externa (lista de anexos)
+  - Bloco "Anexos diversos" (LicitacaoDocumento legado)
+  - Observacoes
+- Admin: `/admin/licitacoes/[id]/documentos-fase` — pagina focada com
+  builder de documentos por fase e botoes de sugestao (cada fase mostra
+  ate 7 tipos comuns como atalho).
+- Lista publica `/transparencia/licitacoes` ganhou botao
+  "Detalhes / Documentos" linkando para a pagina de detalhe.
+- Monitor: item 26 verifica `licitacoes` com `jsonb_array_length` > 0 em
+  ambas as fases.
+
+REGRA RN-183: PLANO ESTRATEGICO INSTITUCIONAL (PNTP 11.7)
+- Atende ao criterio 11.7 da Matriz PNTP 2026 (Recomendada): divulgacao
+  do Planejamento Estrategico Institucional da Camara.
+- Reaproveita o enum `TipoDocumentoTransparencia.PLANEJAMENTO_ESTRATEGICO`
+  (ja existente desde Sprint 4 / Commit C).
+- Pagina publica `/transparencia/plano-estrategico` (`force-dynamic`) com:
+  - Introducao explicativa
+  - 6 elementos minimos (missao/visao/valores, diagnostico, objetivos,
+    indicadores, metas e cronograma de revisao)
+  - 4 beneficios para o cidadao
+  - Vinculacao com PPA / LDO / LOA / PCA
+  - Base legal (Art. 37 CF, Lei Organica, cartilha PNTP, Resolucao CNJ 198/2014)
+  - Secao `DocumentosOficiais` filtrando PLANEJAMENTO_ESTRATEGICO
+- Item da home `/transparencia` (secao Planejamento) agora aponta para
+  `/transparencia/plano-estrategico` (antes apontava
+  `/transparencia/documentos/planejamento-estrategico`).
+- Monitor: item 28 verifica `documentoTransparencia.count({tipo:'PLANEJAMENTO_ESTRATEGICO', status:'publicado'}) > 0`.
+
+REGRA RN-184: PAUTAS DE COMISSOES PUBLICAS (PNTP 20.5)
+- Atende ao criterio 20.5 (Obrigatoria): divulgacao das pautas das
+  reunioes de Comissoes (distintas das pautas do Plenario).
+- Reaproveita campos ja existentes em `ReuniaoComissao` (RN-172):
+  - `pautaTexto` (texto livre)
+  - `arquivoPauta` (URL do PDF)
+  - `dataPublicacaoPauta` (RN-122 — 48h antes da reuniao)
+- Pagina publica `/transparencia/legislativo/pautas-comissoes` (SSR):
+  - Lista todas as reunioes que tenham pauta publicada
+  - Agrupa por comissao (com sigla)
+  - 3 cards de resumo (reunioes / comissoes / prazo legal 48h)
+  - Para cada reuniao: numero, data/hora, local, status, pauta texto +
+    botao para PDF
+- Item "Pautas das Comissoes" adicionado na home (`/transparencia`,
+  secao "Atividades do Legislativo", logo apos "Sessoes").
+- Monitor: item 30 verifica
+  `reuniaoComissao.count({arquivoPauta ou dataPublicacaoPauta != null}) > 0`.
+
+REGRA RN-185: MARCO NORMATIVO E PRAZOS DA LAI (PNTP 12.5, 12.6)
+- Atende aos criterios 12.5 (Obrigatoria) e 12.6 (Recomendada):
+  divulgacao do regulamento local da LAI e dos prazos de resposta,
+  recurso e autoridades competentes.
+- Novo valor de enum `TipoDocumentoTransparencia.REGULAMENTO_LAI`
+  (migration `scripts/sql/add-regulamento-lai-tipo.sql`, idempotente;
+  install.sh 5w).
+- Pagina publica `/transparencia/e-sic/normativa` (`force-dynamic`):
+  - Tabela de 5 prazos (resposta inicial 20du, prorrogacao +10du,
+    recurso 1ª instancia 10du, decisao 5du, recurso 2ª instancia 10du)
+    com base legal de cada um
+  - Autoridades competentes em cada instancia
+  - Procedimento em 4 passos (pedir / acompanhar / receber / recorrer)
+  - Secao `DocumentosOficiais` filtrando REGULAMENTO_LAI
+  - Links para e-SIC, Estatisticas, Informacoes Classificadas, DPO
+- Item "Marco Normativo da LAI" adicionado na home (`/transparencia`,
+  secao "Atendimento ao Cidadao").
+- Tipo `REGULAMENTO_LAI` disponivel em `/api/documentos-transparencia` e
+  no admin `/admin/transparencia/documentos`.
+- Monitor: item 32 verifica
+  `documentoTransparencia.count({tipo:'REGULAMENTO_LAI', status:'publicado'}) > 0`.
+
+REGRA RN-186: QUALIDADE TRANSVERSAL PNTP (Atualidade, Serie, Filtro, Gravacao)
+- Atende aos itens de verificacao da Matriz PNTP 2026 que valem 40% da
+  pontuacao de cada criterio (Atualidade 30% + Serie Historica 20% +
+  Gravacao de Relatorios 10% + Filtro de Pesquisa 10%, descontando-se
+  Disponibilidade 30% que ja era padrao).
+- 4 componentes reutilizaveis novos em `src/components/transparencia/`:
+  - `<UltimaAtualizacao data={...} />` (N4) — exibe "Informacoes
+    atualizadas em DD/MM/AAAA" ou fallback "atualizado em tempo real".
+  - `<ExportarDadosButton data={...} filename="..." />` (N1) — dropdown
+    com CSV (separador `;`, BOM UTF-8, abre em Excel/LibreOffice) e JSON.
+    NAO requer dependencia nova de planilha.
+  - `<FiltroAno anosAnteriores={3} />` (N2) — filtro de URL `?ano=YYYY`
+    com X-1, X-2, X-3 alinhado a exigencia de 3 anos de serie historica.
+  - `<FiltroPesquisa campos={['numero','data','palavraChave','textoLivre']} />`
+    (N3) — filtro estruturado conforme exigido para dim. 20 (Legislativo).
+- Aplicados em paginas-chave: votacoes-nominais, contratos, licitacoes
+  (demonstracao do padrao). Para uma roadmap completa, replicar a aplicacao
+  em receitas/despesas/convenios/RH/diarias/obras/atas/cotas/relatorios.
+- Busca global N5: API `GET /api/busca/global?q=...` consulta 6 modelos
+  publicos (Proposicao, Norma, Publicacao, Parlamentar, Documento, Noticia)
+  via `contains` case-insensitive + pagina `/transparencia/busca` com
+  facetas por tipo. Atende ao criterio 1.4 (ferramenta de pesquisa de conteudo).
+- Monitor N6: 2 endpoints disponiveis:
+  - Legado `/api/admin/conformidade-pntp` — 32 itens curados (apresentacao
+    classica usada pelo dashboard).
+  - Oficial `/api/admin/conformidade-pntp/matriz` — refletindo os 83
+    criterios oficiais da Atricon agrupados por 16 dimensoes, com
+    pontuacao ponderada (peso_dim × peso_classificacao × pontuacao_item)
+    e niveis Diamante/Ouro/Prata/Elevado/Intermediario/Basico/Inicial/Inexistente.
+- Modulo `src/lib/pntp/matriz-2026.ts` — catalogo + funcoes
+  `pontuarCriterio()` e `calcularResultadoGeral()` que implementam a
+  metodologia oficial. Pode ser reusado em scripts, exports PDF de
+  autoavaliacao e relatorios.
+- Dashboard `/admin/conformidade-pntp` ganha card "Matriz Oficial PNTP 2026"
+  no topo, listando as 16 dimensoes em accordion com barra de pontuacao
+  e detalhamento dos criterios ao expandir.
+
+REGRA RN-179: TRANSMISSAO DE SESSOES (PNTP 20.9)
+- Atende ao criterio 20.9 (Recomendada, mas peso 3 na dim. 20):
+  transmissao de sessoes/audiencias publicas via radio, TV, internet.
+- Configuracao em `Configuracao` (key/value), chaves novas:
+  - `transmissao_ativa` ('sim'/'nao'; quando 'sim', banner aparece)
+  - `transmissao_url` (URL principal — canal/playlist/sessao)
+  - `transmissao_plataforma` (YOUTUBE/FACEBOOK/TWITCH/VIMEO/CUSTOM)
+  - `transmissao_embed_html` (iframe oficial; tem prioridade sobre URL
+    quando disponivel)
+  - `transmissao_titulo` e `transmissao_aviso` (texto auxiliar)
+- Service helper: `src/lib/services/transmissao-service.ts` com
+  `getTransmissaoConfig()` (carrega o conjunto) e `urlToEmbed()`
+  (converte URLs comuns YouTube/Vimeo em embed). Nao expoe embedHtml
+  via API publica para evitar injecao externa.
+- Componentes:
+  - `<TransmissaoAoVivo variant="banner|full">` (Server Component, uso em
+    paginas SSR — incluindo `/transparencia/transmissao` variant=full)
+  - `<TransmissaoBannerClient />` (Client Component, uso em paginas
+    'use client' — home `/transparencia` consome via `/api/transmissao`)
+- API publica `GET /api/transmissao` devolve apenas dados de visualizacao
+  (titulo, url, plataforma, aviso) — NAO retorna embedHtml.
+- Pagina publica dedicada: `/transparencia/transmissao` (SSR, player
+  responsivo 16:9; quando inativa exibe aviso + link para calendario).
+- Banner ao vivo na home `/transparencia` (some quando inativa).
+- Item adicionado na secao "Atividades do Legislativo" da home.
+- Admin: `/admin/configuracoes/transmissao` (form focado nas chaves).
+- Sidebar admin: novo atalho em Configuracoes (icon Tv).
+- Cartao de atalho em `/admin/configuracoes`.
+- Monitor: `/api/admin/conformidade-pntp` item 23.
+
 REGRA RN-173: PUBLICACAO DE PARECER DE COMISSAO
 - Espelha RN-170/171/172 para Parecer. Todo parecer publicado vive em
   `Parecer.arquivoUrl` + `Parecer.dataEmissao` + `Parecer.status='EMITIDO'`.

@@ -1,0 +1,302 @@
+
+====== Page 39 ======
+Acesso rápido
+Menu de critérios
+39
+III. METODOLOGIA
+i. Matriz de Critérios de Avaliação
+A matriz está dividida em “dimensões”, “critérios” e “itens de
+verificação”.
+As dimensões são os assuntos objetos de análise nos portais (por
+exemplo: licitações, contratos, receitas, despesas etc.).
+Cada dimensão é dividida em critérios. Os critérios são os quesitos a
+serem examinados nos portais, ou seja, as perguntas feitas na avaliação (por
+exemplo, na dimensão “Informações prioritárias”, temos as três seguintes
+perguntas: “Possui sítio oficial próprio na internet?”; “Possui portal da
+transparência próprio ou compartilhado na internet?” e “O acesso ao portal
+transparência está visível na capa do site?”.
+A Matriz de Avaliação contém no total 181 critérios cujas respostas são
+objetivas do tipo “atende” ou “não atende”. Desse total, 72 são comuns a todos
+os poderes e órgãos e os demais são específicos para cada tipo de Poder ou
+Órgão, avaliando aspectos próprios, em função da atividade fim
+desempenhada, conforme demonstrado a seguir:
+Matriz Comum
+Total de critérios Quant Essencial Obrigatória Recomendado
+72 7 53 12
+Matriz Específica - Poder Executivo 23 4 12 7
+Matriz Específica - Poder Executivo e
+Consórcios Públicos
+1 1 0 0
+Matriz Específica - Poder Legislativo 11 0 7 4
+Matriz Específica - Poder Judiciário 6 0 3 3
+Matriz Específica - Tribunal de Contas 12 0 4 8
+Matriz Específica - Ministério Público 4 0 3 1
+Matriz Específica - Defensoria 3 0 0 3
+Matriz Específica - Estatais1 41 0 27 14
+Matriz Específica - Consórcios Públicos 8 0 1 7
+Total 181 12 110 59
+Tabela 1 – Total geral de critérios.
+Nota 1: Do total de 41 critérios da matriz específica das estatais, existe um que se refere apenas
+às estatais independentes, sendo classificado como critério obrigatório.
+
+====== Page 40 ======
+Acesso rápido
+Menu de critérios
+40
+Os critérios são classificados em essenciais, obrigatórios e
+recomendados.
+Os critérios classificados como “essenciais” são aqueles referentes a
+informações da execução orçamentária e financeira que se o Poder ou órgão
+deixar de dar transparência, fica impedido de receber transferências
+voluntárias e contratar operações de crédito, de acordo com os arts. 48 e 48-A
+c/c o art. 51 da Lei Complementar nº 101/2000.
+Os critérios classificados como “obrigatórios” são aqueles cujo dever de
+divulgação na internet está explicitamente prevista em leis e atos normativos.
+Já os “recomendados” são informações importantes para o público
+em geral, que, apesar de não constarem expressamente como exigíveis
+na legislação, são boas práticas que devem ser estimuladas.
+Por fim, é de se registrar que a composição da nota de cada critério será
+definida de acordo com seus itens de verificação: disponibilidade, atualidade,
+série histórica, gravação de relatórios e filtro de pesquisa.
+O inteiro teor da Matriz está disponível no portal da Atricon e no hotsite
+do PNTP.
+ii. Fórmula para cálculo do índice
+O cálculo do índice da avaliação leva em consideração:
+● Peso da Dimensão - Conforme definido pela Atricon na metodologia (4;
+3; 2; ou 1);
+● Peso de cada Critério, de acordo com a classificação de sua
+exigibilidade (2; 1, 5; ou 1);
+● Peso dos itens de verificação (disponibilidade, atualidade, série
+histórica, filtro de pesquisa e gravação de relatórios) de cada critério (3;
+2; e, 1).
+Informações Prioritárias
+Dimensões Peso na avaliação
+2
+Informações Institucionais 2
+Receita 4
+Despesa 4
+Convênios e Transferências 1
+
+====== Page 41 ======
+Acesso rápido
+Menu de critérios
+41
+Recursos humanos 3
+Diárias 1
+Licitações 3
+Contratos 3
+Obras 2
+Planejamento e Prestação de Contas 4
+SIC 2
+Acessibilidade 1
+Ouvidoria 1
+LGPD e Governo Digital 1
+Renúncia de Receita 1
+Emendas parlamentares 1
+Saúde 1
+Educação e Assistência Social 1
+Atividades Finalísticas 3
+Tabela 2 – Pesos atribuídos aos grupos de critérios.
+Dentro de cada dimensão, cada critério receberá pontuações
+individuais. Como já informado, os essenciais terão peso 2, os obrigatórios 1,5,
+e os recomendados 1. A soma da pontuação dos critérios individuais deve
+chegar ao valor total da dimensão respectiva. Dessa forma, critérios terão
+valores diferentes, dependendo do peso da dimensão.
+Cada critério tem a sua pontuação subdividida conforme o número de
+itens de verificação (disponibilidade, atualidade, histórico, gravação de
+relatório e ferramenta de pesquisa). Cada um desses itens corresponde a um
+percentual da pontuação máxima do critério (disponibilidade: 30%, atualidade:
+30%, série histórica: 20%, gravação de relatório: 10% e filtro de pesquisa: 10%).
+Quando um ou mais desses itens não forem aplicáveis para o critério, seu
+percentual será rateado de forma proporcional entre os demais itens de
+verificação.
+Dimensões Peso na avaliação
+====== Page 42 ======
+Acesso rápido
+Menu de critérios
+42
+Importante ressaltar que o sistema de pontuação de cada Poder ou
+órgão levará em consideração suas quantidades específicas de dimensões e
+critérios, sem deixar de lado os pesos explicitados acima.
+iii. Sistema utilizado para a avaliação dos portais
+A partir do ciclo de 2023, todas as fases do programa passaram a ser
+gerenciadas por um sistema informatizado desenvolvido especialmente para o
+PNTP, desde o cadastro de usuários, o registro das autoavaliações e validações,
+armazenamento de dados e atribuição de notas às unidades gestoras
+participantes.
+O sistema reproduz a matriz de critérios, devendo o avaliador marcar a
+resposta “atende/não atende” em cada questão. Caso a resposta seja “atende”,
+deve-se inserir o link da internet onde consta a informação, como forma de
+evidenciar a resposta. Quando a resposta for “não atende”, informação não
+localizada no portal, abre-se um campo de justificativa.
+A ferramenta também permite o upload de prints das páginas (imagem
+PNG e JPEG), com o objetivo de melhor comprovar a existência ou inexistência
+da informação. Trata-se de um recurso a mais à disposição dos avaliadores.
+Apenas a inserção do link (no caso de atendimento) é obrigatória.
+iv. Níveis de Transparência
+Os portais avaliados foram classificados a partir dos índices obtidos, que
+variam de 0 a 100%. Assim, a metodologia definiu níveis de transparência para
+cada faixa de índices, conforme se demonstra abaixo:
+Diamante
+Faixa de transparência Nível mínimo de
+transparência Requisito adicional
+Entre 95% e 100% 100% dos critérios essenciais
+Ouro Entre 85% e 94% 100% dos critérios essenciais
+Prata Entre 75% e 84% 100% dos critérios essenciais
+Elevado Acima de 75% Menos de 100% dos critérios essenciais
+Intermediário Entre 50% e 74% -
+Básico Entre 30% e 49% -
+
+====== Page 43 ======
+Acesso rápido
+Menu de critérios
+43
+Faixa de transparência Nível mínimo de
+transparência
+Inicial Entre 1% e 29% -
+Inexistente 0% -
+Tabela 3 - Níveis de Transparência.
+Os resultados da pesquisa são utilizados para a concessão de Selo de
+Qualidade de Transparência Pública, reconhecendo as unidades gestoras que
+– após levantamento submetido às regras de controle e garantia de qualidade
+– tenham alcançado os índices de transparência Diamante, Ouro e Prata.
+IV. PREMIAÇÃO – SELO DE QUALIDADE DE TRANSPARÊNCIA PÚBLICA
+O "Levantamento Nacional de Transparência Pública” contempla, entre
+seus objetivos, a premiação dos portais que se destacaram no quesito
+transparência. A estes sítios institucionais, será concedido o Selo de Qualidade
+de Transparência Pública.
+Qualificam-se ao prêmio aqueles que se enquadrarem nas classificações
+Diamante, Ouro e Prata, explicitadas na Resolução nº 09/2018.
+Figura 2 – Modelos de selos utilizados em 2025.
+Ressalva-se que, caso um ou mais critérios “essenciais” não tenham sido
+atendidos, o Poder ou órgão perde a certificação/premiação mesmo que o
+índice final seja superior a 75%.
+Compete a cada Tribunal de Contas e à Atricon a entrega dos Selos de
+Qualidade relativos aos seus jurisdicionados premiados.
+Requisito adicional
+====== Page 44 ======
+Acesso rápido
+Menu de critérios
+44
+V. CRITÉRIOS
+ORIENTAÇÕES PRELIMINARES
+Antes de adentrar nos critérios propriamente ditos, enumeram-se, a
+seguir, orientações gerais sobre a disponibilização de informações de forma
+ativa nos portais públicos:
+a) Para a efetiva promoção da transparência pública, as informações
+divulgadas pelos Poderes e órgãos públicos em seus portais devem estar
+disponibilizadas em local de fácil acesso, ou seja, em seções intuitivas e
+compatíveis com a lógica de navegação do cidadão comum. Por esse motivo
+existe a segregação dos dados em dimensões (seções específicas) . Não é
+suficiente que a informação esteja apenas publicada; é indispensável que possa
+ser encontrada de forma simples, rápida e sem a necessidade de
+conhecimento técnico prévio.
+Exemplos de práticas que podem configurar dificuldade de acesso às
+informações da transparência:
+- disponibilização ao público de mais de um portal da transparência
+ativos simultaneamente, sem aviso destacado de descontinuidade do
+portal mais antigo e acesso ao mais recente, de modo a não permitir ao
+cidadão saber qual deles é o oficial ou contém as informações
+atualizadas;
+- duplicidade de seções com a mesma finalidade e com conteúdo diverso;
+- existência de seções acessíveis apenas a partir da URL informada no
+preenchimento da avaliação pelos controladores internos no âmbito do
+PNTP, não sendo possível encontrar a informação percorrendo as
+opções disponibilizadas no próprio site.
+b) A forma de organização, apresentação e disponibilização dos dados
+influencia diretamente a capacidade de acesso e compreensão pelo cidadão.
+Assim, a divulgação constitui apenas o primeiro passo, sendo essencial que as
+informações estejam estruturadas de modo claro, acessível e facilmente
+localizável, preferencialmente em formato HTML visível na tela de consulta,
+de modo a permitir seu efetivo uso pela sociedade.
+
+====== Page 45 ======
+Acesso rápido
+Menu de critérios
+45
+c) Ao acessar um portal institucional, o cidadão não dispõe de meios
+para distinguir se a ausência de determinada informação decorre da não
+ocorrência do fato ou da falta de divulgação pelo órgão responsável. Assim,
+quando não houver a ocorrência de determinado evento, a sua inexistência
+deve ser informada de forma explícita, no mesmo local em que os dados
+seriam normalmente disponibilizados. A mera criação de link, aba ou seção
+sem conteúdo não é suficiente para assegurar a adequada compreensão pelo
+usuário.
+Importante: Quando houver a declaração de inexistência da
+informação, será considerada atendida a DISPONIBILIDADE, o FILTRO DE
+PESQUISA E GRAVAÇÃO DE RELATÓRIOS (caso seja um item de verificação
+exigido). Quanto à ATUALIDADE e à SÉRIE HISTÓRICA, deve-se observar as
+informações contidas na declaração.
+Atenção! A declaração de não ocorrência não deve ser utilizada de
+forma indiscriminada como mecanismo para justificar ou suprir
+indevidamente a omissão do jurisdicionado quanto à prática de ato ou à
+existência de instrumento cuja elaboração ou divulgação seja legalmente
+obrigatória. Por exemplo, a declaração de não ocorrência não supre a ausência
+de elaboração e publicação do plano anual de contratações, visto que sua
+obrigatoriedade decorre do art. 12, §1º, da Lei 14.133/2021 (a menos que não
+haja realização de licitações ou execução de contratos).
+Abaixo alguns exemplos de como devem ser explicitadas aos usuários a
+não ocorrência de ato ou fato:
+● Informa-se que não houve licitantes ou contratados sancionados
+administrativamente no período de março de 2022 a fevereiro de 2026.
+Atualizado em 30/03/2026;
+● Não houve ocorrência de obras paralisadas no período de janeiro de 2022
+a dezembro de 2025. Atualizado em 31/01/2026.
+d) No contexto da transparência pública, "disponibilidade" significa que
+a informação deve estar não apenas publicada, mas efetivamente acessível ao
+cidadão, em tempo razoável . Quando o site demora excessivamente para
+responder ou falha ao carregar, a finalidade da transparência é comprometida,
+pois o acesso à informação, na prática, não se concretiza.
+
+====== Page 46 ======
+Acesso rápido
+Menu de critérios
+46
+Importante: se, após reiteradas tentativas de acesso em momentos
+distintos, o endereço informado apresentar tempo de carregamento excessivo
+ou, por vezes, não concluir a abertura do conteúdo, impedindo a validação, a
+evidência não será aceita e o item “Disponibilidade” não será atendido.
+i. Disponibilidade (30%): será sempre o primeiro item a ser verificado.
+Avalia-se se a informação está integralmente disponível no portal, conforme a
+descrição do critério, preferencialmente em formato HTML.
+Importante: caso o avaliador assinale este item como “não atendido”,
+todo o critério receberá a pontuação zero , ou seja, os demais itens de
+verificação (atualidade, série histórica, gravação de relatórios e filtro de
+pesquisa) serão automaticamente considerados “não atendidos”.
+ii. Atualidade (30%): para este item, avalia-se se as informações são
+atuais. De modo geral, considera-se que as informações estão atualizadas
+quando as mais recentes datarem de, no máximo 30 dias da data em que for
+realizada a consulta.
+Esse parâmetro pode variar conforme o critério analisado, devendo ser
+observadas as orientações específicas previstas em cada item.
+Destaca-se que as atualizações automáticas de páginas ( datas geradas
+pelo sistema do portal sempre que o usuário acessa ou há carregamento de
+página (stamp automático) — não devem ser consideradas para avaliação da
+atualidade da informação, pois não se trata de atualização de conteúdo.
+
+====== Page 47 ======
+Acesso rápido
+Menu de critérios
+47
+Figura 3 - Exemplo de atualização automática do sistema.
+Para fins de avaliação da atualidade, é necessário, portanto, que seja
+possível identificar a data de atualização efetiva das informações (conteúdo)
+ou a data de referência dos dados divulgados . Quando essa informação não
+puder ser inferida diretamente do conteúdo apresentado, recomenda-se
+incluir indicação explícita na página, como por exemplo: “Informações
+atualizadas em XX/XX/20XX”.
+iii. Série Histórica (20%): aqui avalia-se se existe a divulgação do
+histórico de informações dos últimos 3 anos que antecedem à pesquisa.
+Busca-se neste quesito conferir se a organização mantém o repositório de
+informações disponibilizadas ao longo do tempo.
+Em relação ao ciclo atual do PNTP, exercício de 2026, por exemplo,
+considera-se Série Histórica a divulgação, no mínimo, do histórico de 2025,
+2024 e 2023, com exceção dos critérios em que a atualidade se refira ao último
+exercício encerrado (2025). Nesse caso a série histórica a ser considerada deve
+se referir a 2024, 2023 e 2022.
+Importante: Em caso de migração de um portal para uma nova
+plataforma, o portal anterior deve manter aviso claro e visível informando a
+descontinuidade de sua atualização, com a indicação expressa da data limite
+até a qual as informações foram ali disponibilizadas. Deve, ainda, conter link de
+acesso ao novo portal, acompanhado da indicação da data a partir da qual os
+dados passaram a ser publicados exclusivamente na nova página, de modo a

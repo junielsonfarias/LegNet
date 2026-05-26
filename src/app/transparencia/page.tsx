@@ -17,6 +17,8 @@ import Link from 'next/link';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs';
 import { createLogger } from '@/lib/logging/logger';
+import { RadarBadge } from '@/components/transparencia/radar-badge';
+import { TransmissaoBannerClient } from '@/components/transparencia/transmissao-banner-client';
 
 const log = createLogger('transparencia');
 
@@ -86,6 +88,8 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
         ],
       },
       { nome: 'Perguntas Frequentes', icon: HelpCircle, href: '/transparencia/faq' },
+      { nome: 'Mapa do Site', icon: Globe, href: '/transparencia/mapa-do-site' },
+      { nome: 'Pesquisa de Conteudo', icon: Search, href: '/transparencia/busca' },
       { nome: 'Legislacao Tributaria e Codigos de Postura', icon: Scale, href: '/legislativo/normas' },
     ],
   },
@@ -116,6 +120,8 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Materias Legislativas', icon: ScrollText, href: '/legislativo' },
       { nome: 'Emendas', icon: FileSignature, href: '/transparencia/atos/emendas' },
       { nome: 'Sessoes', icon: ClipboardList, href: '/legislativo/pautas-sessoes' },
+      { nome: 'Pautas das Comissoes', icon: Briefcase, href: '/transparencia/legislativo/pautas-comissoes' },
+      { nome: 'Transmissao das Sessoes', icon: Megaphone, href: '/transparencia/transmissao' },
       { nome: 'Normas Juridicas', icon: Gavel, href: '/legislativo/normas' },
     ],
   },
@@ -158,7 +164,8 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Licitacoes', icon: Search, href: '/transparencia/licitacoes', slug: 'licitacoes' },
       { nome: 'Aviso de Licitacao', icon: Megaphone, href: '/transparencia/licitacoes?aviso=true' },
       { nome: 'Contratos', icon: FileSignature, href: '/transparencia/contratos', slug: 'contratos' },
-      { nome: 'Plano Anual de Contratacoes', icon: ClipboardList, href: '/transparencia/documentos/plano-anual-contratacoes' },
+      { nome: 'Atas de Adesao a SRP', icon: FileText, href: '/transparencia/atas-adesao-srp' },
+      { nome: 'Plano Anual de Contratacoes', icon: ClipboardList, href: '/transparencia/plano-contratacoes-anual' },
       { nome: 'Licitantes/Contratados Sancionados Administrativamente', icon: Shield, href: '/transparencia/fornecedores-sancionados' },
       { nome: 'Cadastro de Fornecedores', icon: Database, href: '/transparencia/fornecedores' },
       { nome: 'Convenios / Transferencias Voluntarias', icon: Handshake, href: '/transparencia/convenios', slug: 'convenios' },
@@ -195,7 +202,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Parecer do Tribunal de Contas', icon: Gavel, href: '/transparencia/documentos/parecer-tcm' },
       { nome: 'Julgamento das Contas do Executivo pelo Legislativo', icon: Scale, href: '/transparencia/documentos/julgamento-contas' },
       { nome: 'Relatorio de Gestao Fiscal - RGF', icon: BarChart3, href: '/transparencia/documentos/rgf' },
-      { nome: 'Planejamento Estrategico', icon: TrendingUp, href: '/transparencia/documentos/planejamento-estrategico' },
+      { nome: 'Planejamento Estrategico', icon: TrendingUp, href: '/transparencia/plano-estrategico' },
     ],
   },
   {
@@ -206,6 +213,7 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
       { nome: 'Ouvidoria', icon: MessageSquare, href: '/institucional/ouvidoria' },
       { nome: 'Servico de Informacao ao Cidadao (e-SIC)', icon: FileSearch, href: '/institucional/e-sic' },
       { nome: 'Estatisticas do e-SIC', icon: BarChart3, href: '/transparencia/e-sic/estatisticas' },
+      { nome: 'Marco Normativo da LAI', icon: Scale, href: '/transparencia/e-sic/normativa' },
       { nome: 'Consultar Manifestacoes', icon: Search, href: '/institucional/ouvidoria/acompanhar' },
       { nome: 'Manifestacoes Realizadas', icon: FileQuestion, href: '/transparencia/ouvidoria/manifestacoes' },
       { nome: 'Relatorios Estatisticos da Ouvidoria', icon: BarChart3, href: '/transparencia/ouvidoria/estatisticas' },
@@ -219,12 +227,13 @@ const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
     icon: Shield,
     itens: [
       { nome: 'LGPD e Governo Digital', icon: Shield, href: '/transparencia/documentos/lgpd' },
+      { nome: 'Politica de Privacidade', icon: Lock, href: '/transparencia/politica-privacidade' },
       { nome: 'Encarregado de Dados (DPO)', icon: UserCheck, href: '/transparencia/encarregado-dados' },
       { nome: 'Dados Abertos', icon: Database, href: '/transparencia/dados-abertos' },
       { nome: 'Plano de Dados Abertos', icon: FileText, href: '/transparencia/plano-dados-abertos' },
       { nome: 'Servico Online', icon: Globe, href: '/transparencia/servicos-online' },
       { nome: 'Carta de Servicos ao Usuario', icon: ScrollText, href: '/transparencia/documentos/carta-servicos' },
-      { nome: 'Pesquisas de Satisfacao', icon: CheckCircle2, href: '/transparencia/pesquisas' },
+      { nome: 'Pesquisas de Satisfacao', icon: CheckCircle2, href: '/transparencia/pesquisas-satisfacao' },
     ],
   },
 ];
@@ -349,6 +358,9 @@ export default function TransparenciaPage() {
                 Em atendimento a resolucao administrativa no 007/2016/TCMPA e instrucao normativa no11/2021/TCMPA
               </p>
             </div>
+            <div className="flex justify-center pt-2">
+              <RadarBadge variant="hero" />
+            </div>
           </div>
         </div>
       </div>
@@ -376,6 +388,11 @@ export default function TransparenciaPage() {
           ))}
         </div>
       </nav>
+
+      {/* Banner de Transmissao Ao Vivo (so aparece quando ativa) */}
+      <div className="container mx-auto px-4 mt-8">
+        <TransmissaoBannerClient />
+      </div>
 
       {/* Secoes Tematicas */}
       <section aria-label="Secoes tematicas de transparencia" className="container mx-auto px-4 py-10 md:py-14">
@@ -458,11 +475,11 @@ export default function TransparenciaPage() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { nome: 'Dados Abertos', href: '/api-docs', icon: Globe },
+            { nome: 'Dados Abertos', href: '/transparencia/dados-abertos', icon: Globe },
             { nome: 'Glossario', href: '/institucional/dicionario', icon: BookOpen },
-            { nome: 'Pesquisa Satisfacao', href: '/transparencia/pesquisas', icon: Search },
-            { nome: 'LGPD', href: '/transparencia', icon: Shield },
-            { nome: 'Mapa do Site', href: '/busca', icon: MapPin },
+            { nome: 'Pesquisa Satisfacao', href: '/transparencia/pesquisas-satisfacao', icon: Search },
+            { nome: 'LGPD', href: '/transparencia/documentos/lgpd', icon: Shield },
+            { nome: 'Mapa do Site', href: '/transparencia/mapa-do-site', icon: MapPin },
             { nome: 'Contatos', href: '/institucional/ouvidoria', icon: Phone },
           ].map((item) => (
             <Link

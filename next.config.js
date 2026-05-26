@@ -71,6 +71,38 @@ const nextConfig = {
   // Configurações de compressão
   compress: true,
   
+  // Redirects 308 (permanente) para consolidar URLs duplicadas:
+  //  - /transparencia/decretos|portarias: paginas legadas substituidas por
+  //    /transparencia/atos/[tipo] (criterio PNTP 2.6).
+  //  - /transparencia/documentos/plano-anual-contratacoes e
+  //    /transparencia/documentos/planejamento-estrategico: documentos com
+  //    pagina dedicada e mais rica em /transparencia/plano-contratacoes-anual
+  //    e /transparencia/plano-estrategico.
+  async redirects() {
+    return [
+      {
+        source: '/transparencia/decretos',
+        destination: '/transparencia/atos/decretos',
+        permanent: true,
+      },
+      {
+        source: '/transparencia/portarias',
+        destination: '/transparencia/atos/portarias',
+        permanent: true,
+      },
+      {
+        source: '/transparencia/documentos/plano-anual-contratacoes',
+        destination: '/transparencia/plano-contratacoes-anual',
+        permanent: true,
+      },
+      {
+        source: '/transparencia/documentos/planejamento-estrategico',
+        destination: '/transparencia/plano-estrategico',
+        permanent: true,
+      },
+    ]
+  },
+
   // Configurações de headers de segurança
   async headers() {
     return [

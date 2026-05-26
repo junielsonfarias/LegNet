@@ -21,7 +21,9 @@ const TIPOS = [
   'LOA',
   'PPA',
   'PLANO_DADOS_ABERTOS',
-  'REGULAMENTO_OUVIDORIA'
+  'REGULAMENTO_OUVIDORIA',
+  'POLITICA_PRIVACIDADE',
+  'REGULAMENTO_LAI'
 ] as const
 
 const QuerySchema = z.object({

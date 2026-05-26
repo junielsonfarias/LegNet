@@ -14,6 +14,12 @@ const UpdateSchema = z.object({
   valorEstimado: z.number().nullish(),
   valorContratado: z.number().nullish(),
   valorExecutado: z.number().nullish(),
+  // Fase M (PNTP 10.3) — execução física e pagamento
+  valorPago: z.number().nullish(),
+  quantidadeContratada: z.number().nullish(),
+  quantidadeExecutada: z.number().nullish(),
+  unidadeMedida: z.string().nullish(),
+  dataUltimaMedicao: z.string().nullish(),
   dataInicio: z.string().nullish(),
   dataPrevistaFim: z.string().nullish(),
   dataConclusao: z.string().nullish(),
@@ -48,7 +54,8 @@ export const PUT = withAuth(async (
       ...data,
       dataInicio: data.dataInicio ? new Date(data.dataInicio) : undefined,
       dataPrevistaFim: data.dataPrevistaFim ? new Date(data.dataPrevistaFim) : undefined,
-      dataConclusao: data.dataConclusao ? new Date(data.dataConclusao) : undefined
+      dataConclusao: data.dataConclusao ? new Date(data.dataConclusao) : undefined,
+      dataUltimaMedicao: data.dataUltimaMedicao ? new Date(data.dataUltimaMedicao) : undefined
     }
   })
   return createSuccessResponse(updated, 'Obra atualizada')

@@ -22,6 +22,8 @@ import Link from 'next/link'
 import { useContratos } from '@/lib/hooks/use-contratos'
 import { PDFModal } from '@/components/pdf'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { ExportarDadosButton } from '@/components/transparencia/exportar-dados-button'
+import { UltimaAtualizacao } from '@/components/transparencia/ultima-atualizacao'
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   VIGENTE: { color: 'bg-green-100 text-green-800', icon: <CheckCircle2 className="h-4 w-4" /> },
@@ -168,6 +170,28 @@ export default function ContratosPage() {
         </Card>
       </div>
 
+      {/* Indicador de atualidade + exportacao */}
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+        <UltimaAtualizacao />
+        <ExportarDadosButton
+          data={contratosFiltrados.map((c) => ({
+            numero: c.numero,
+            ano: c.ano,
+            modalidade: c.modalidade || '',
+            objeto: c.objeto,
+            contratado: c.contratado,
+            cnpj_cpf: c.cnpjCpf || '',
+            valor_total: Number(c.valorTotal ?? 0),
+            data_assinatura: c.dataAssinatura,
+            vigencia_inicio: c.vigenciaInicio,
+            vigencia_fim: c.vigenciaFim,
+            fiscal: c.fiscalContrato || '',
+            situacao: c.situacao,
+          }))}
+          filename={`contratos-${filtroAno !== 'all' ? filtroAno : 'todos'}`}
+        />
+      </div>
+
       {/* Filtros */}
       <Card className="mb-8">
         <CardHeader>
@@ -270,11 +294,14 @@ export default function ContratosPage() {
                           <span>R$ {Number(contrato.valorTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
                       </div>
-                      {contrato.cnpjCpf && (
-                        <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-muted-foreground">
+                        {contrato.cnpjCpf && (
                           <span>CNPJ/CPF: {contrato.cnpjCpf}</span>
-                        </div>
-                      )}
+                        )}
+                        {contrato.fiscalContrato && (
+                          <span>Fiscal: <strong className="text-gray-700">{contrato.fiscalContrato}</strong></span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {contrato.arquivo && (

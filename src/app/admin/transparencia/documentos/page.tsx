@@ -39,7 +39,9 @@ const TIPOS = [
   { value: 'LOA', label: 'Lei Orcamentaria Anual (LOA)' },
   { value: 'PPA', label: 'Plano Plurianual (PPA)' },
   { value: 'PLANO_DADOS_ABERTOS', label: 'Plano de Dados Abertos' },
-  { value: 'REGULAMENTO_OUVIDORIA', label: 'Regulamento da Ouvidoria' }
+  { value: 'REGULAMENTO_OUVIDORIA', label: 'Regulamento da Ouvidoria' },
+  { value: 'POLITICA_PRIVACIDADE', label: 'Politica de Privacidade (LGPD)' },
+  { value: 'REGULAMENTO_LAI', label: 'Regulamento Municipal da LAI' }
 ] as const
 
 const EMPTY_FORM = {

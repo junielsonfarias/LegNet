@@ -55,6 +55,12 @@ const CreateSchema = z.object({
   valorEstimado: z.number().optional(),
   valorContratado: z.number().optional(),
   valorExecutado: z.number().optional(),
+  // Fase M (PNTP 10.3) — execução física e pagamento
+  valorPago: z.number().optional(),
+  quantidadeContratada: z.number().optional(),
+  quantidadeExecutada: z.number().optional(),
+  unidadeMedida: z.string().optional(),
+  dataUltimaMedicao: z.string().optional(),
   dataInicio: z.string().optional(),
   dataPrevistaFim: z.string().optional(),
   dataConclusao: z.string().optional(),
@@ -74,7 +80,8 @@ export const POST = withAuth(async (request: NextRequest) => {
       ...data,
       dataInicio: data.dataInicio ? new Date(data.dataInicio) : null,
       dataPrevistaFim: data.dataPrevistaFim ? new Date(data.dataPrevistaFim) : null,
-      dataConclusao: data.dataConclusao ? new Date(data.dataConclusao) : null
+      dataConclusao: data.dataConclusao ? new Date(data.dataConclusao) : null,
+      dataUltimaMedicao: data.dataUltimaMedicao ? new Date(data.dataUltimaMedicao) : null
     }
   })
   return createSuccessResponse(created, 'Obra criada', undefined, 201)

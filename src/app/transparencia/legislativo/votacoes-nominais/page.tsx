@@ -9,6 +9,8 @@ import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
 } from '@/components/ui/table'
 import { Vote, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { ExportarDadosButton } from '@/components/transparencia/exportar-dados-button'
+import { UltimaAtualizacao } from '@/components/transparencia/ultima-atualizacao'
 
 interface Voto {
   parlamentar?: { nome: string }
@@ -67,10 +69,13 @@ export default function VotacoesNominaisPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Votacoes Nominais</h1>
           <p className="text-gray-600">Registro de votacoes nominais nas sessoes legislativas</p>
+          <div className="mt-3 flex justify-center">
+            <UltimaAtualizacao />
+          </div>
         </div>
 
         <Card className="mb-6">
-          <CardContent className="p-4">
+          <CardContent className="p-4 flex items-center gap-3 flex-wrap">
             <Select value={ano} onValueChange={setAno}>
               <SelectTrigger className="w-full md:w-40">
                 <SelectValue placeholder="Ano" />
@@ -81,6 +86,21 @@ export default function VotacoesNominaisPage() {
                 ))}
               </SelectContent>
             </Select>
+            <ExportarDadosButton
+              data={votacoes.map((v) => ({
+                id: v.id,
+                tipo: v.tipo || '',
+                resultado: v.resultado || '',
+                sessao: v.sessao?.titulo || v.sessaoTitulo || '',
+                data_sessao: v.sessao?.dataInicio || '',
+                proposicao: v.proposicao ? `${v.proposicao.tipo} ${v.proposicao.numero}/${v.proposicao.ano}` : '',
+                ementa: v.proposicao?.ementa || '',
+                total_sim: v.totalSim ?? 0,
+                total_nao: v.totalNao ?? 0,
+                total_abstencao: v.totalAbstencao ?? 0,
+              }))}
+              filename={`votacoes-nominais-${ano}`}
+            />
           </CardContent>
         </Card>
 

@@ -18,6 +18,7 @@ interface DocClassificado {
   dataClassificacao: Date
   prazoAnos: number
   dataDesclassificacao: Date | null
+  motivoDesclassificacao: string | null
 }
 
 // Campos publicos do rol — observacoes e autoridade nao sao expostos.
@@ -30,6 +31,7 @@ const SELECT_PUBLICO = {
   dataClassificacao: true,
   prazoAnos: true,
   dataDesclassificacao: true,
+  motivoDesclassificacao: true,
 } as const
 
 const grauBadge: Record<string, string> = {
@@ -73,6 +75,11 @@ function TabelaClassificados({ itens }: { itens: DocClassificado[] }) {
                 <span className="block text-xs text-muted-foreground">
                   prazo: {d.prazoAnos} ano(s)
                 </span>
+                {d.motivoDesclassificacao && (
+                  <span className="block text-xs text-muted-foreground italic mt-1 max-w-[20rem] whitespace-normal">
+                    Motivo: {d.motivoDesclassificacao}
+                  </span>
+                )}
               </td>
             </tr>
           ))}

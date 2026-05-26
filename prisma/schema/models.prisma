@@ -67,34 +67,34 @@ model VerificationToken {
 }
 
 model Tenant {
-  id          String       @id @default(cuid())
-  slug        String       @unique // Identificador único (ex: "santarem", "ruropolis")
-  nome        String // Nome da Câmara Municipal
-  sigla       String? // Sigla (ex: "CMS", "CMM")
-  cnpj        String?
-  dominio     String?      @unique // Domínio customizado (ex: "camara.santarem.pa.gov.br")
-  subdominio  String?      @unique // Subdomínio (ex: "santarem" para santarem.camaras.gov.br)
-  ativo       Boolean      @default(true)
-  plano       PlanoTenant  @default(BASICO)
+  id                 String      @id @default(cuid())
+  slug               String      @unique // Identificador único (ex: "santarem", "ruropolis")
+  nome               String // Nome da Câmara Municipal
+  sigla              String? // Sigla (ex: "CMS", "CMM")
+  cnpj               String?
+  dominio            String?     @unique // Domínio customizado (ex: "camara.santarem.pa.gov.br")
+  subdominio         String?     @unique // Subdomínio (ex: "santarem" para santarem.camaras.gov.br)
+  ativo              Boolean     @default(true)
+  plano              PlanoTenant @default(BASICO)
   // Configurações visuais
-  logoUrl     String?
-  faviconUrl  String?
-  corPrimaria String?      @default("#374151") // Azul padrão
-  corSecundaria String?    @default("#6b7280")
+  logoUrl            String?
+  faviconUrl         String?
+  corPrimaria        String?     @default("#374151") // Azul padrão
+  corSecundaria      String?     @default("#6b7280")
   // Localização
-  cidade      String?
-  estado      String?
+  cidade             String?
+  estado             String?
   // Configurações
-  timezone    String       @default("America/Sao_Paulo")
-  idioma      String       @default("pt-BR")
+  timezone           String      @default("America/Sao_Paulo")
+  idioma             String      @default("pt-BR")
   // Limites do plano
-  maxUsuarios Int          @default(10)
-  maxParlamentares Int     @default(20)
-  maxArmazenamentoMb Int   @default(1024) // 1GB padrão
+  maxUsuarios        Int         @default(10)
+  maxParlamentares   Int         @default(20)
+  maxArmazenamentoMb Int         @default(1024) // 1GB padrão
   // Metadados
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  expiraEm    DateTime? // Data de expiração do plano
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  expiraEm           DateTime? // Data de expiração do plano
 
   // Relacionamento com configuração institucional detalhada
   configuracao ConfiguracaoInstitucional?
@@ -164,12 +164,12 @@ model Parlamentar {
   ativo       Boolean          @default(true)
 
   // === CAMPOS PNTP 2026 (Sprint 4) ===
-  suplenteDeId       String?   // FK para Parlamentar titular (quando este e suplente)
-  bensDeclarados     Json?     // Declaracao de bens/patrimonio (PNTP Diamante)
-  incompatibilidades Json?     // Registro de impedimentos/incompatibilidades legais
+  suplenteDeId       String? // FK para Parlamentar titular (quando este e suplente)
+  bensDeclarados     Json? // Declaracao de bens/patrimonio (PNTP Diamante)
+  incompatibilidades Json? // Registro de impedimentos/incompatibilidades legais
 
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
   proposicoes            Proposicao[]
@@ -179,28 +179,28 @@ model Parlamentar {
   mandatos               Mandato[]
   filiacoes              Filiacao[]
   mesasDiretora          MembroMesaDiretora[]
-  mesasSessao            MembroMesaSessao[]     // Participações em mesas de sessão
+  mesasSessao            MembroMesaSessao[] // Participações em mesas de sessão
   historicoParticipacoes HistoricoParticipacao[]
   usuario                User? // Relacionamento com User (se tiver acesso ao sistema)
   Tramitacao             Tramitacao[]
   Publicacao             Publicacao[]
-  pareceresRelator       Parecer[]              @relation("ParecerRelator")
-  votosParecerComissao   VotoParecerComissao[]  @relation("VotoParecerComissao")
-  emendasAutor           Emenda[]               @relation("EmendaAutor")
-  emendasParecerRelator  Emenda[]               @relation("EmendaParecerRelator")
+  pareceresRelator       Parecer[]               @relation("ParecerRelator")
+  votosParecerComissao   VotoParecerComissao[]   @relation("VotoParecerComissao")
+  emendasAutor           Emenda[]                @relation("EmendaAutor")
+  emendasParecerRelator  Emenda[]                @relation("EmendaParecerRelator")
   votosEmenda            VotoEmenda[]
-  pautaItensRelator      PautaItem[]            @relation("PautaItemRelator")
-  autorEntidade          Autor?                 @relation("AutorParlamentar") // Vínculo com sistema de autores
-  oradoresSessao         OradorSessao[]         // Inscrições como orador em sessões
-  presencasOrdemDia      PresencaOrdemDia[]     // Presenças na ordem do dia
+  pautaItensRelator      PautaItem[]             @relation("PautaItemRelator")
+  autorEntidade          Autor?                  @relation("AutorParlamentar") // Vínculo com sistema de autores
+  oradoresSessao         OradorSessao[] // Inscrições como orador em sessões
+  presencasOrdemDia      PresencaOrdemDia[] // Presenças na ordem do dia
   questoesOrdem          QuestaoOrdem[]
-  bancadaLider           Bancada[]          @relation("BancadaLider")
-  bancadaViceLider       Bancada[]          @relation("BancadaViceLider")
+  bancadaLider           Bancada[]               @relation("BancadaLider")
+  bancadaViceLider       Bancada[]               @relation("BancadaViceLider")
   audienciasResponsavel  AudienciaPublica[]
 
   // Relacao de suplencia (auto-referencial)
-  suplenteDe             Parlamentar?           @relation("ParlamentarSuplente", fields: [suplenteDeId], references: [id], onDelete: SetNull)
-  suplentes              Parlamentar[]          @relation("ParlamentarSuplente")
+  suplenteDe Parlamentar?  @relation("ParlamentarSuplente", fields: [suplenteDeId], references: [id], onDelete: SetNull)
+  suplentes  Parlamentar[] @relation("ParlamentarSuplente")
 
   @@index([ativo, cargo])
   @@index([partido])
@@ -210,55 +210,55 @@ model Parlamentar {
 }
 
 model Sessao {
-  id            String       @id @default(cuid())
-  numero        Int
-  tipo          TipoSessao
-  data          DateTime
-  horario       String? // Hora da sessão (ex: "14:00")
-  local         String? // Local da sessão
-  status        StatusSessao @default(AGENDADA)
-  descricao     String?      @db.Text
-  ata           String?      @db.Text
-  finalizada    Boolean      @default(false) // Indica se é uma sessão já finalizada (para inclusão de dados pretéritos)
-  legislaturaId String? // Relacionamento com Legislatura
-  periodoId     String? // Relacionamento com PeriodoLegislatura
-  tempoInicio    DateTime?   // Data/hora real em que a sessão foi iniciada (para cronômetro)
-  tempoAcumulado Int         @default(0) // Segundos acumulados (usado para suspensão)
+  id             String       @id @default(cuid())
+  numero         Int
+  tipo           TipoSessao
+  data           DateTime
+  horario        String? // Hora da sessão (ex: "14:00")
+  local          String? // Local da sessão
+  status         StatusSessao @default(AGENDADA)
+  descricao      String?      @db.Text
+  ata            String?      @db.Text
+  finalizada     Boolean      @default(false) // Indica se é uma sessão já finalizada (para inclusão de dados pretéritos)
+  legislaturaId  String? // Relacionamento com Legislatura
+  periodoId      String? // Relacionamento com PeriodoLegislatura
+  tempoInicio    DateTime? // Data/hora real em que a sessão foi iniciada (para cronômetro)
+  tempoAcumulado Int          @default(0) // Segundos acumulados (usado para suspensão)
 
   // === CAMPOS DE MÍDIA (SAPL) ===
-  urlAudio       String?     // Link do áudio da sessão (YouTube, etc)
-  urlVideo       String?     // Link do vídeo da sessão
-  urlTransmissao String?     // Link da transmissão ao vivo
-  arquivoPauta   String?     // URL do PDF da pauta publicada
-  arquivoAta     String?     // URL do PDF da ata aprovada
+  urlAudio             String? // Link do áudio da sessão (YouTube, etc)
+  urlVideo             String? // Link do vídeo da sessão
+  urlTransmissao       String? // Link da transmissão ao vivo
+  arquivoPauta         String? // URL do PDF da pauta publicada
+  arquivoAta           String? // URL do PDF da ata aprovada
   // === CAMPOS DE APROVAÇÃO DA ATA ===
-  statusAta              StatusAta?          // null = sem ata; PENDENTE = aguardando aprovação na próxima sessão
-  sessaoAprovacaoAtaId   String?             // Sessão N+1 que aprovou/rejeitou esta ata
-  arquivoAtaAssinada     String?             // URL do PDF da ata assinada após aprovação
-  dataPublicacaoAta      DateTime?           // RN-123 PNTP: data de publicação oficial da ata (prazo: 15 dias)
-  painelAberto   Boolean     @default(false) // Se o painel eletrônico está aberto para votação
-  temaSolene     String?     @db.Text // Tema da sessão (para sessões solenes)
+  statusAta            StatusAta? // null = sem ata; PENDENTE = aguardando aprovação na próxima sessão
+  sessaoAprovacaoAtaId String? // Sessão N+1 que aprovou/rejeitou esta ata
+  arquivoAtaAssinada   String? // URL do PDF da ata assinada após aprovação
+  dataPublicacaoAta    DateTime? // RN-123 PNTP: data de publicação oficial da ata (prazo: 15 dias)
+  painelAberto         Boolean    @default(false) // Se o painel eletrônico está aberto para votação
+  temaSolene           String?    @db.Text // Tema da sessão (para sessões solenes)
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  legislatura         Legislatura?        @relation(fields: [legislaturaId], references: [id])
-  periodo             PeriodoLegislatura? @relation(fields: [periodoId], references: [id])
-  presencas           PresencaSessao[]
-  votacoesAgrupadas   VotacaoAgrupada[]
-  proposicoes         Proposicao[]        @relation("ProposicaoApresentacao") // Proposições APRESENTADAS nesta sessão
-  proposicoesVotadas  Proposicao[]        @relation("ProposicaoVotacao")      // Proposições VOTADAS nesta sessão
-  pautaSessao         PautaSessao?
-  emendasVotadas      Emenda[]            @relation("EmendaVotacao")          // Emendas VOTADAS nesta sessão
-  mesaSessao          MesaSessao?         // Mesa que presidiu esta sessão específica
-  oradores            OradorSessao[]      // Oradores inscritos na sessão
-  expedientes         ExpedienteSessao[]  // Conteúdo dos expedientes
-  presencasOrdemDia   PresencaOrdemDia[]  // Presença específica para ordem do dia
-  questoesOrdem       QuestaoOrdem[]
-  sessaoAprovacaoAta  Sessao?             @relation("AtaAprovadaEm", fields: [sessaoAprovacaoAtaId], references: [id])
-  atasAprovadas       Sessao[]            @relation("AtaAprovadaEm")   // Sessões cuja ata foi aprovada NESTA sessão
-  pautaItensAta       PautaItem[]         @relation("AtaOrigemPauta")  // Itens de pauta referentes à ata desta sessão
+  legislatura        Legislatura?        @relation(fields: [legislaturaId], references: [id])
+  periodo            PeriodoLegislatura? @relation(fields: [periodoId], references: [id])
+  presencas          PresencaSessao[]
+  votacoesAgrupadas  VotacaoAgrupada[]
+  proposicoes        Proposicao[]        @relation("ProposicaoApresentacao") // Proposições APRESENTADAS nesta sessão
+  proposicoesVotadas Proposicao[]        @relation("ProposicaoVotacao") // Proposições VOTADAS nesta sessão
+  pautaSessao        PautaSessao?
+  emendasVotadas     Emenda[]            @relation("EmendaVotacao") // Emendas VOTADAS nesta sessão
+  mesaSessao         MesaSessao? // Mesa que presidiu esta sessão específica
+  oradores           OradorSessao[] // Oradores inscritos na sessão
+  expedientes        ExpedienteSessao[] // Conteúdo dos expedientes
+  presencasOrdemDia  PresencaOrdemDia[] // Presença específica para ordem do dia
+  questoesOrdem      QuestaoOrdem[]
+  sessaoAprovacaoAta Sessao?             @relation("AtaAprovadaEm", fields: [sessaoAprovacaoAtaId], references: [id])
+  atasAprovadas      Sessao[]            @relation("AtaAprovadaEm") // Sessões cuja ata foi aprovada NESTA sessão
+  pautaItensAta      PautaItem[]         @relation("AtaOrigemPauta") // Itens de pauta referentes à ata desta sessão
 
   @@index([status, data])
   @@index([tipo, status])
@@ -270,12 +270,12 @@ model Sessao {
 }
 
 model MesaSessao {
-  id            String   @id @default(cuid())
-  sessaoId      String   @unique
-  observacoes   String?  @db.Text // Observações sobre a composição (ex: "Vice assumiu por ausência do presidente")
-  criadoPor     String?  // User.id que criou/atualizou
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  sessaoId    String   @unique
+  observacoes String?  @db.Text // Observações sobre a composição (ex: "Vice assumiu por ausência do presidente")
+  criadoPor   String? // User.id que criou/atualizou
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relacionamentos
   sessao  Sessao             @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
@@ -285,14 +285,14 @@ model MesaSessao {
 }
 
 model MembroMesaSessao {
-  id           String  @id @default(cuid())
-  mesaSessaoId String
+  id            String   @id @default(cuid())
+  mesaSessaoId  String
   parlamentarId String
-  cargo        String  // "PRESIDENTE", "VICE_PRESIDENTE", "PRIMEIRO_SECRETARIO", "SEGUNDO_SECRETARIO"
-  titular      Boolean @default(true) // Se é o titular do cargo ou substituto
-  observacoes  String? @db.Text // Motivo da substituição, se aplicável
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  cargo         String // "PRESIDENTE", "VICE_PRESIDENTE", "PRIMEIRO_SECRETARIO", "SEGUNDO_SECRETARIO"
+  titular       Boolean  @default(true) // Se é o titular do cargo ou substituto
+  observacoes   String?  @db.Text // Motivo da substituição, se aplicável
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   mesaSessao  MesaSessao  @relation(fields: [mesaSessaoId], references: [id], onDelete: Cascade)
   parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
@@ -303,20 +303,20 @@ model MembroMesaSessao {
 }
 
 model OradorSessao {
-  id            String        @id @default(cuid())
+  id            String       @id @default(cuid())
   sessaoId      String
   parlamentarId String
-  tipo          TipoOrador    // Tipo de inscrição
-  ordem         Int           // Ordem de inscrição/fala
-  tempoLimite   Int?          // Tempo limite em minutos
-  tempoUsado    Int?          // Tempo utilizado em minutos
-  assunto       String?       @db.Text // Assunto do pronunciamento
-  status        StatusOrador  @default(INSCRITO)
-  iniciadoEm    DateTime?     // Quando começou a falar
-  finalizadoEm  DateTime?     // Quando terminou
-  observacoes   String?       @db.Text
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  tipo          TipoOrador // Tipo de inscrição
+  ordem         Int // Ordem de inscrição/fala
+  tempoLimite   Int? // Tempo limite em minutos
+  tempoUsado    Int? // Tempo utilizado em minutos
+  assunto       String?      @db.Text // Assunto do pronunciamento
+  status        StatusOrador @default(INSCRITO)
+  iniciadoEm    DateTime? // Quando começou a falar
+  finalizadoEm  DateTime? // Quando terminou
+  observacoes   String?      @db.Text
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   sessao      Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
   parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
@@ -327,20 +327,20 @@ model OradorSessao {
 }
 
 model QuestaoOrdem {
-  id              String   @id @default(cuid())
-  sessaoId        String
-  parlamentarId   String
-  momento         DateTime @default(now())
-  descricao       String   @db.Text
-  fundamentacao   String?  @db.Text     // Artigo do regimento invocado
-  decisao         String?  @db.Text     // Decisão do presidente
-  deferida        Boolean?              // null = pendente, true = deferida, false = indeferida
-  observacoes     String?  @db.Text
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(cuid())
+  sessaoId      String
+  parlamentarId String
+  momento       DateTime @default(now())
+  descricao     String   @db.Text
+  fundamentacao String?  @db.Text // Artigo do regimento invocado
+  decisao       String?  @db.Text // Decisão do presidente
+  deferida      Boolean? // null = pendente, true = deferida, false = indeferida
+  observacoes   String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  sessao       Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
-  parlamentar  Parlamentar @relation(fields: [parlamentarId], references: [id])
+  sessao      Sessao      @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id])
 
   @@index([sessaoId])
   @@index([parlamentarId])
@@ -349,10 +349,10 @@ model QuestaoOrdem {
 
 model TipoExpediente {
   id          String   @id @default(cuid())
-  nome        String   // Ex: "Pequeno Expediente", "Grande Expediente"
+  nome        String // Ex: "Pequeno Expediente", "Grande Expediente"
   descricao   String?  @db.Text
   ordem       Int      @default(0) // Ordem de exibição
-  tempoMaximo Int?     // Tempo máximo em minutos (opcional)
+  tempoMaximo Int? // Tempo máximo em minutos (opcional)
   ativo       Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -382,18 +382,18 @@ model ExpedienteSessao {
 }
 
 model Oficio {
-  id          String    @id @default(cuid())
-  numero      String                        // Número do ofício (ex: "001/2026")
-  data        DateTime                      // Data do ofício
-  remetente   String                        // Quem enviou (ex: "Gabinete do Prefeito")
-  assunto     String    @db.Text            // Assunto do ofício
-  arquivo     String?                       // URL do PDF/arquivo digitalizado
-  observacoes String?   @db.Text
-  lido        Boolean   @default(false)     // Se já foi lido em sessão
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  numero      String // Número do ofício (ex: "001/2026")
+  data        DateTime // Data do ofício
+  remetente   String // Quem enviou (ex: "Gabinete do Prefeito")
+  assunto     String   @db.Text // Assunto do ofício
+  arquivo     String? // URL do PDF/arquivo digitalizado
+  observacoes String?  @db.Text
+  lido        Boolean  @default(false) // Se já foi lido em sessão
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  pautaItens  PautaItem[] @relation("OficioPautaItem")
+  pautaItens PautaItem[] @relation("OficioPautaItem")
 
   @@index([numero])
   @@index([data])
@@ -420,12 +420,12 @@ model PresencaOrdemDia {
 /// Fase 5 / M5: snapshot automatico de configuracoes antes de cada restore.
 /// Permite rollback temporal e auditoria de mudancas.
 model ConfiguracaoSnapshot {
-  id          String   @id @default(cuid())
-  snapshot    Json     // payload completo (institucional + sistema)
-  motivo      String?  @db.Text
-  userId      String?
-  userEmail   String?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  snapshot  Json // payload completo (institucional + sistema)
+  motivo    String?  @db.Text
+  userId    String?
+  userEmail String?
+  createdAt DateTime @default(now())
 
   @@index([createdAt])
   @@map("configuracao_snapshots")
@@ -438,7 +438,7 @@ model ApiToken {
   hashedToken   String                  @unique
   permissoes    String[]
   ativo         Boolean                 @default(true)
-  expiresAt     DateTime?               // Fase 5 / M6: TTL opcional. Token expira automaticamente.
+  expiresAt     DateTime? // Fase 5 / M6: TTL opcional. Token expira automaticamente.
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
   lastUsedAt    DateTime?
@@ -488,17 +488,17 @@ model SessaoTemplate {
 }
 
 model TemplateItem {
-  id             String          @id @default(cuid())
+  id             String   @id @default(cuid())
   templateId     String
-  secao          String          // ID do TipoExpediente ou valor legado
+  secao          String // ID do TipoExpediente ou valor legado
   ordem          Int
   titulo         String
-  descricao      String?         @db.Text
+  descricao      String?  @db.Text
   tempoEstimado  Int?
-  tipoProposicao String?         // Codigo do tipo de proposicao (flexivel, nao mais enum)
-  obrigatorio    Boolean         @default(false)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  tipoProposicao String? // Codigo do tipo de proposicao (flexivel, nao mais enum)
+  obrigatorio    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   template SessaoTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 
@@ -522,51 +522,51 @@ model PresencaSessao {
 }
 
 model Proposicao {
-  id               String            @id @default(cuid())
-  slug             String?           @unique // URL amigável: pl-0022-2025
-  numero           String
-  ano              Int
-  tipo             String            // Codigo do tipo (ex: PROJETO_LEI, INDICACAO, ou customizado)
-  titulo           String
-  ementa           String            @db.Text
-  texto            String?           @db.Text
-  textoFinal       String?           @db.Text  // RN-008 / Fase 3 M2: texto consolidado apos redacao final (preserva original)
-  dataRedacaoFinal DateTime?                   // RN-008 / Fase 3 M2: timestamp da consolidacao
+  id                String            @id @default(cuid())
+  slug              String?           @unique // URL amigável: pl-0022-2025
+  numero            String
+  ano               Int
+  tipo              String // Codigo do tipo (ex: PROJETO_LEI, INDICACAO, ou customizado)
+  titulo            String
+  ementa            String            @db.Text
+  texto             String?           @db.Text
+  textoFinal        String?           @db.Text // RN-008 / Fase 3 M2: texto consolidado apos redacao final (preserva original)
+  dataRedacaoFinal  DateTime? // RN-008 / Fase 3 M2: timestamp da consolidacao
   // Fase 3 / C8: entrada retroativa (digitalizacao de proposicoes ja votadas)
   // Pula RN-020 (iniciativa privativa), RN-030 (CLJ obrigatoria), RN-032 (prazos).
   // Mantém auditoria com motivo. Apenas SECRETARIA + ADMIN podem criar.
-  entradaRetroativa Boolean          @default(false)
-  motivoRetroativo  String?          @db.Text
-  urlDocumento     String?           // URL externa do documento (Google Drive, etc) — legado, manter para compatibilidade
-  documentos       Json?             // RN-168: Array [{nome, url}] de anexos multiplos (padrao CotaParlamentar). Preferir sobre urlDocumento.
-  status           StatusProposicao  @default(APRESENTADA)
-  regime           String    @default("NORMAL")  // NORMAL, PRIORIDADE, URGENCIA, URGENCIA_URGENTISSIMA
-  dataApresentacao DateTime
-  dataVotacao      DateTime?
-  resultado        ResultadoVotacao?
-  sessaoId         String?           // Sessão onde foi APRESENTADA/LIDA
-  sessaoVotacaoId  String?           // Sessão onde foi VOTADA
-  dataLeitura      DateTime?         // Data/hora em que foi lida em plenário
+  entradaRetroativa Boolean           @default(false)
+  motivoRetroativo  String?           @db.Text
+  urlDocumento      String? // URL externa do documento (Google Drive, etc) — legado, manter para compatibilidade
+  documentos        Json? // RN-168: Array [{nome, url}] de anexos multiplos (padrao CotaParlamentar). Preferir sobre urlDocumento.
+  status            StatusProposicao  @default(APRESENTADA)
+  regime            String            @default("NORMAL") // NORMAL, PRIORIDADE, URGENCIA, URGENCIA_URGENTISSIMA
+  dataApresentacao  DateTime
+  dataVotacao       DateTime?
+  resultado         ResultadoVotacao?
+  sessaoId          String? // Sessão onde foi APRESENTADA/LIDA
+  sessaoVotacaoId   String? // Sessão onde foi VOTADA
+  dataLeitura       DateTime? // Data/hora em que foi lida em plenário
 
   // Autoria - dois sistemas (migração gradual)
-  autorId          String?           // LEGADO: Parlamentar autor (opcional para compatibilidade)
-  autorEntidadeId  String?           // NOVO: Autor do sistema de autores (Parlamentar, Executivo, Comissão, etc.)
+  autorId         String? // LEGADO: Parlamentar autor (opcional para compatibilidade)
+  autorEntidadeId String? // NOVO: Autor do sistema de autores (Parlamentar, Executivo, Comissão, etc.)
 
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  sessao        Sessao?      @relation("ProposicaoApresentacao", fields: [sessaoId], references: [id])
-  sessaoVotacao Sessao?      @relation("ProposicaoVotacao", fields: [sessaoVotacaoId], references: [id])
-  autor         Parlamentar? @relation(fields: [autorId], references: [id]) // LEGADO
-  autorEntidade Autor?       @relation("ProposicaoAutorEntidade", fields: [autorEntidadeId], references: [id]) // NOVO
-  votacoes      Votacao[]
-  votacoesAgrupadas VotacaoAgrupada[]
-  pautaItens    PautaItem[]
-  tramitacoes   Tramitacao[]
-  pareceres     Parecer[]    // Pareceres das comissões sobre esta proposição
+  sessao                Sessao?                @relation("ProposicaoApresentacao", fields: [sessaoId], references: [id])
+  sessaoVotacao         Sessao?                @relation("ProposicaoVotacao", fields: [sessaoVotacaoId], references: [id])
+  autor                 Parlamentar?           @relation(fields: [autorId], references: [id]) // LEGADO
+  autorEntidade         Autor?                 @relation("ProposicaoAutorEntidade", fields: [autorEntidadeId], references: [id]) // NOVO
+  votacoes              Votacao[]
+  votacoesAgrupadas     VotacaoAgrupada[]
+  pautaItens            PautaItem[]
+  tramitacoes           Tramitacao[]
+  pareceres             Parecer[] // Pareceres das comissões sobre esta proposição
   pautasReuniaoComissao PautaReuniaoComissao[] // Itens de pauta de reunioes de comissao
-  emendas       Emenda[]     // Emendas apresentadas a esta proposicao
+  emendas               Emenda[] // Emendas apresentadas a esta proposicao
 
   @@unique([tipo, numero, ano], name: "tipo_numero_ano")
   @@index([status, dataApresentacao])
@@ -581,75 +581,75 @@ model Proposicao {
 }
 
 model TipoProposicaoConfig {
-  id              String          @id @default(cuid())
-  codigo          String          @unique  // Codigo unico do tipo (ex: PROJETO_LEI, INDICACAO, HOMENAGEM_ESPECIAL)
-  nome            String                    // Nome completo (ex: "Projeto de Lei")
-  sigla           String                    // Sigla (ex: "PL")
-  descricao       String?         @db.Text  // Descrição do tipo
-  prazoLimite     Int?                      // Prazo limite em dias para tramitação
-  requerVotacao   Boolean         @default(true)   // Se requer votação em plenário
-  requerSancao    Boolean         @default(false)  // Se requer sanção do executivo
-  numeracaoAnual  Boolean         @default(true)   // Se a numeração reinicia a cada ano
-  prefixoNumeracao String?                  // Prefixo personalizado (ex: "PL", "IND")
-  ativo           Boolean         @default(true)   // Se está ativo para uso
-  ordem           Int             @default(0)      // Ordem de exibição
-  corBadge        String?                   // Cor para exibição (hex)
-  icone           String?                   // Ícone (nome do lucide icon)
+  id               String  @id @default(cuid())
+  codigo           String  @unique // Codigo unico do tipo (ex: PROJETO_LEI, INDICACAO, HOMENAGEM_ESPECIAL)
+  nome             String // Nome completo (ex: "Projeto de Lei")
+  sigla            String // Sigla (ex: "PL")
+  descricao        String? @db.Text // Descrição do tipo
+  prazoLimite      Int? // Prazo limite em dias para tramitação
+  requerVotacao    Boolean @default(true) // Se requer votação em plenário
+  requerSancao     Boolean @default(false) // Se requer sanção do executivo
+  numeracaoAnual   Boolean @default(true) // Se a numeração reinicia a cada ano
+  prefixoNumeracao String? // Prefixo personalizado (ex: "PL", "IND")
+  ativo            Boolean @default(true) // Se está ativo para uso
+  ordem            Int     @default(0) // Ordem de exibição
+  corBadge         String? // Cor para exibição (hex)
+  icone            String? // Ícone (nome do lucide icon)
 
   // Configuração de Quorum e Turnos (vinculação dinâmica)
-  quorumAplicacao       String?   @default("VOTACAO_SIMPLES")  // Aplicação de quorum: VOTACAO_SIMPLES, VOTACAO_ABSOLUTA, VOTACAO_QUALIFICADA, VOTACAO_URGENCIA
-  quorumAplicacao2Turno String?                                 // Aplicação para 2º turno (se diferente do 1º)
-  totalTurnos           Int       @default(1)                   // Número de turnos: 1 ou 2
-  intersticioDias       Int       @default(0)                   // Dias úteis de interstício entre turnos
+  quorumAplicacao       String? @default("VOTACAO_SIMPLES") // Aplicação de quorum: VOTACAO_SIMPLES, VOTACAO_ABSOLUTA, VOTACAO_QUALIFICADA, VOTACAO_URGENCIA
+  quorumAplicacao2Turno String? // Aplicação para 2º turno (se diferente do 1º)
+  totalTurnos           Int     @default(1) // Número de turnos: 1 ou 2
+  intersticioDias       Int     @default(0) // Dias úteis de interstício entre turnos
 
   // Configuração de Pareceres (Fase 3 / A4 / RN-030)
-  requerParecerCLJ      Boolean   @default(false) // Exige parecer da CLJ antes de pautar (PL, PR, PD, etc)
+  requerParecerCLJ Boolean @default(false) // Exige parecer da CLJ antes de pautar (PL, PR, PD, etc)
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("tipos_proposicao_config")
 }
 
 model TipoAutor {
-  id          String   @id @default(cuid())
-  nome        String   @unique // Ex: "Parlamentar", "Poder Executivo", "Comissão"
-  descricao   String?  @db.Text
-  ativo       Boolean  @default(true)
-  ordem       Int      @default(0) // Ordem de exibição
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  nome      String   @unique // Ex: "Parlamentar", "Poder Executivo", "Comissão"
+  descricao String?  @db.Text
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0) // Ordem de exibição
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  autores     Autor[]
+  autores Autor[]
 
   @@index([ativo, ordem])
   @@map("tipos_autor")
 }
 
 model Autor {
-  id              String    @id @default(cuid())
-  tipoAutorId     String
-  nome            String    // Nome de exibição do autor
-  descricao       String?   @db.Text
+  id          String  @id @default(cuid())
+  tipoAutorId String
+  nome        String // Nome de exibição do autor
+  descricao   String? @db.Text
 
   // Vinculações opcionais (apenas uma deve ser preenchida)
-  parlamentarId   String?   @unique // Se for um parlamentar
-  comissaoId      String?   // Se for uma comissão
+  parlamentarId String? @unique // Se for um parlamentar
+  comissaoId    String? // Se for uma comissão
 
   // Para autores externos (Poder Executivo, Iniciativa Popular, etc.)
-  cargo           String?   // Ex: "Prefeito Municipal", "Presidente da Câmara"
-  email           String?
-  telefone        String?
+  cargo    String? // Ex: "Prefeito Municipal", "Presidente da Câmara"
+  email    String?
+  telefone String?
 
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  tipoAutor       TipoAutor    @relation(fields: [tipoAutorId], references: [id])
-  parlamentar     Parlamentar? @relation("AutorParlamentar", fields: [parlamentarId], references: [id])
-  comissao        Comissao?    @relation("AutorComissao", fields: [comissaoId], references: [id])
-  proposicoes     Proposicao[] @relation("ProposicaoAutorEntidade")
+  tipoAutor   TipoAutor    @relation(fields: [tipoAutorId], references: [id])
+  parlamentar Parlamentar? @relation("AutorParlamentar", fields: [parlamentarId], references: [id])
+  comissao    Comissao?    @relation("AutorComissao", fields: [comissaoId], references: [id])
+  proposicoes Proposicao[] @relation("ProposicaoAutorEntidade")
 
   @@index([tipoAutorId])
   @@index([parlamentarId])
@@ -659,16 +659,16 @@ model Autor {
 }
 
 model ProtocoloProposicao {
-  id              String    @id @default(cuid())
-  numero          Int       // Numero sequencial do ano
-  ano             Int       // Ano do protocolo
-  codigo          String    @unique // PROT-00001/2026
-  proposicaoId    String    @unique
-  dataProtocolo   DateTime  @default(now())
-  responsavelId   String?   // Usuario que registrou o protocolo
-  observacoes     String?   @db.Text
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String   @id @default(cuid())
+  numero        Int // Numero sequencial do ano
+  ano           Int // Ano do protocolo
+  codigo        String   @unique // PROT-00001/2026
+  proposicaoId  String   @unique
+  dataProtocolo DateTime @default(now())
+  responsavelId String? // Usuario que registrou o protocolo
+  observacoes   String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([numero, ano])
   @@index([ano])
@@ -682,7 +682,7 @@ model Votacao {
   parlamentarId String
   voto          TipoVoto
   turno         Int      @default(1) // Turno da votação (1º ou 2º turno)
-  sessaoId      String?              // Sessão onde o voto foi registrado
+  sessaoId      String? // Sessão onde o voto foi registrado
   createdAt     DateTime @default(now())
 
   proposicao  Proposicao  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
@@ -696,41 +696,41 @@ model Votacao {
 }
 
 model VotacaoAgrupada {
-  id              String              @id @default(cuid())
-  proposicaoId    String
-  sessaoId        String
-  turno           Int                 @default(1)
-  tipoQuorum      TipoQuorum          @default(MAIORIA_SIMPLES)
-  tipoVotacao     TipoVotacao         @default(NOMINAL)
+  id           String      @id @default(cuid())
+  proposicaoId String
+  sessaoId     String
+  turno        Int         @default(1)
+  tipoQuorum   TipoQuorum  @default(MAIORIA_SIMPLES)
+  tipoVotacao  TipoVotacao @default(NOMINAL)
 
   // Contagem de votos
-  votosSim        Int                 @default(0)
-  votosNao        Int                 @default(0)
-  votosAbstencao  Int                 @default(0)
-  votosAusente    Int                 @default(0)
+  votosSim       Int @default(0)
+  votosNao       Int @default(0)
+  votosAbstencao Int @default(0)
+  votosAusente   Int @default(0)
 
   // Quorum e resultado
-  totalMembros    Int                 @default(0)
-  totalPresentes  Int                 @default(0)
-  quorumNecessario Int                @default(0)
-  resultado       ResultadoVotacaoAgrupada?
+  totalMembros     Int                       @default(0)
+  totalPresentes   Int                       @default(0)
+  quorumNecessario Int                       @default(0)
+  resultado        ResultadoVotacaoAgrupada?
 
   // Controle de tempo
-  iniciadaEm      DateTime?
-  finalizadaEm    DateTime?
+  iniciadaEm   DateTime?
+  finalizadaEm DateTime?
 
   // Voto de minerva
-  votoMinerva      Boolean   @default(false) // Presidente exerceu voto de desempate
+  votoMinerva Boolean @default(false) // Presidente exerceu voto de desempate
 
   // Observações
-  observacoes     String?             @db.Text
+  observacoes String? @db.Text
 
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  proposicao      Proposicao          @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
-  sessao          Sessao              @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
+  proposicao Proposicao @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  sessao     Sessao     @relation(fields: [sessaoId], references: [id], onDelete: Cascade)
 
   @@unique([proposicaoId, sessaoId, turno])
   @@index([sessaoId, turno])
@@ -740,75 +740,75 @@ model VotacaoAgrupada {
 }
 
 model Emenda {
-  id              String          @id @default(cuid())
-  proposicaoId    String          // Proposicao que esta sendo emendada
+  id           String @id @default(cuid())
+  proposicaoId String // Proposicao que esta sendo emendada
 
   // Numeracao
-  numero          Int             // Numero sequencial da emenda na proposicao
+  numero Int // Numero sequencial da emenda na proposicao
 
   // Tipo de emenda
-  tipo            TipoEmenda
+  tipo TipoEmenda
 
   // Status
-  status          StatusEmenda    @default(APRESENTADA)
+  status StatusEmenda @default(APRESENTADA)
 
   // Autor
-  autorId         String          // Parlamentar autor da emenda
-  coautores       String?         @db.Text  // JSON com IDs dos coautores
+  autorId   String // Parlamentar autor da emenda
+  coautores String? @db.Text // JSON com IDs dos coautores
 
   // Referencia ao texto original (onde a emenda incide)
-  artigo          String?         // Ex: "Art. 1"
-  paragrafo       String?         // Ex: "§ 1º"
-  inciso          String?         // Ex: "I"
-  alinea          String?         // Ex: "a"
-  dispositivo     String?         @db.Text  // Descricao livre do dispositivo
+  artigo      String? // Ex: "Art. 1"
+  paragrafo   String? // Ex: "§ 1º"
+  inciso      String? // Ex: "I"
+  alinea      String? // Ex: "a"
+  dispositivo String? @db.Text // Descricao livre do dispositivo
 
   // Conteudo da emenda
-  textoOriginal   String?         @db.Text  // Texto original que sera alterado
-  textoNovo       String          @db.Text  // Novo texto proposto
-  justificativa   String          @db.Text  // Justificativa da emenda
+  textoOriginal String? @db.Text // Texto original que sera alterado
+  textoNovo     String  @db.Text // Novo texto proposto
+  justificativa String  @db.Text // Justificativa da emenda
 
   // Votacao
-  turnoApresentacao   Int         @default(1)  // Turno em que foi apresentada
-  sessaoVotacaoId     String?     // Sessao onde foi votada
-  dataVotacao         DateTime?
-  resultado           ResultadoEmenda?
-  votosSim            Int?        // Contagem de votos SIM
-  votosNao            Int?        // Contagem de votos NAO
-  votosAbstencao      Int?        // Contagem de abstencoes
-  prazoEmenda         DateTime?   // Prazo para apresentacao da emenda
+  turnoApresentacao Int              @default(1) // Turno em que foi apresentada
+  sessaoVotacaoId   String? // Sessao onde foi votada
+  dataVotacao       DateTime?
+  resultado         ResultadoEmenda?
+  votosSim          Int? // Contagem de votos SIM
+  votosNao          Int? // Contagem de votos NAO
+  votosAbstencao    Int? // Contagem de abstencoes
+  prazoEmenda       DateTime? // Prazo para apresentacao da emenda
 
   // Parecer
-  parecerComissao     String?     // ID da comissao que emitiu parecer
-  parecerTipo         TipoParecerEmenda?
-  parecerTexto        String?     @db.Text
-  parecerData         DateTime?
-  parecerRelatorId    String?     // Parlamentar relator do parecer
+  parecerComissao  String? // ID da comissao que emitiu parecer
+  parecerTipo      TipoParecerEmenda?
+  parecerTexto     String?            @db.Text
+  parecerData      DateTime?
+  parecerRelatorId String? // Parlamentar relator do parecer
 
   // Aglutinacao (quando varias emendas sao unidas)
-  aglutinada          Boolean     @default(false)
-  emendaAglutinadaId  String?     // ID da emenda resultante da aglutinacao
+  aglutinada         Boolean @default(false)
+  emendaAglutinadaId String? // ID da emenda resultante da aglutinacao
 
   // Observacoes
-  observacoes         String?     @db.Text
+  observacoes String? @db.Text
 
   // RN-174: PDF assinado + data de publicacao
-  arquivoUrl          String?     // URL do PDF assinado
-  arquivoNome         String?     // Nome original do arquivo
-  dataPublicacao      DateTime?   // Data oficial de publicacao
+  arquivoUrl     String? // URL do PDF assinado
+  arquivoNome    String? // Nome original do arquivo
+  dataPublicacao DateTime? // Data oficial de publicacao
 
   // Controle
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  proposicao          Proposicao  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
-  autor               Parlamentar @relation("EmendaAutor", fields: [autorId], references: [id])
-  parecerRelator      Parlamentar? @relation("EmendaParecerRelator", fields: [parecerRelatorId], references: [id])
-  sessaoVotacao       Sessao?     @relation("EmendaVotacao", fields: [sessaoVotacaoId], references: [id])
-  emendaAglutinada    Emenda?     @relation("EmendaAglutinacao", fields: [emendaAglutinadaId], references: [id])
-  emendasAglutinadas  Emenda[]    @relation("EmendaAglutinacao")
-  votosEmenda         VotoEmenda[]
+  proposicao         Proposicao   @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  autor              Parlamentar  @relation("EmendaAutor", fields: [autorId], references: [id])
+  parecerRelator     Parlamentar? @relation("EmendaParecerRelator", fields: [parecerRelatorId], references: [id])
+  sessaoVotacao      Sessao?      @relation("EmendaVotacao", fields: [sessaoVotacaoId], references: [id])
+  emendaAglutinada   Emenda?      @relation("EmendaAglutinacao", fields: [emendaAglutinadaId], references: [id])
+  emendasAglutinadas Emenda[]     @relation("EmendaAglutinacao")
+  votosEmenda        VotoEmenda[]
 
   @@unique([proposicaoId, numero])
   @@index([proposicaoId])
@@ -819,15 +819,15 @@ model Emenda {
 }
 
 model VotoEmenda {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   emendaId      String
   parlamentarId String
   voto          TipoVoto
-  sessaoId      String?     // Sessao onde o voto foi registrado
-  createdAt     DateTime    @default(now())
+  sessaoId      String? // Sessao onde o voto foi registrado
+  createdAt     DateTime @default(now())
 
-  emenda        Emenda      @relation(fields: [emendaId], references: [id], onDelete: Cascade)
-  parlamentar   Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  emenda      Emenda      @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
 
   @@unique([emendaId, parlamentarId])
   @@index([emendaId])
@@ -838,7 +838,7 @@ model VotoEmenda {
 model Comissao {
   id        String       @id @default(cuid())
   nome      String
-  sigla     String?      // Sigla da comissão (ex: CLJ, CFO)
+  sigla     String? // Sigla da comissão (ex: CLJ, CFO)
   descricao String?      @db.Text
   tipo      TipoComissao
   ativa     Boolean      @default(true)
@@ -847,9 +847,9 @@ model Comissao {
 
   // Relacionamentos
   membros        MembroComissao[]
-  pareceres      Parecer[]    // Pareceres emitidos por esta comissão
-  reunioes       ReuniaoComissao[]  // Reunioes da comissao
-  autorEntidades Autor[]      @relation("AutorComissao") // Vínculo com sistema de autores
+  pareceres      Parecer[] // Pareceres emitidos por esta comissão
+  reunioes       ReuniaoComissao[] // Reunioes da comissao
+  autorEntidades Autor[]           @relation("AutorComissao") // Vínculo com sistema de autores
 
   @@index([tipo, ativa])
   @@index([ativa])
@@ -867,8 +867,8 @@ model MembroComissao {
   observacoes   String?       @db.Text
   createdAt     DateTime      @default(now())
 
-  comissao         Comissao    @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
-  parlamentar      Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
+  comissao         Comissao                  @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
+  parlamentar      Parlamentar               @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
   presencasReuniao PresencaReuniaoComissao[]
 
   @@unique([comissaoId, parlamentarId])
@@ -878,52 +878,52 @@ model MembroComissao {
 }
 
 model ReuniaoComissao {
-  id            String              @id @default(cuid())
-  comissaoId    String
+  id         String @id @default(cuid())
+  comissaoId String
 
   // Dados da reuniao
-  numero        Int                 // Numero sequencial da reuniao no ano
-  ano           Int
-  tipo          TipoReuniaoComissao @default(ORDINARIA)
-  status        StatusReuniaoComissao @default(AGENDADA)
+  numero Int // Numero sequencial da reuniao no ano
+  ano    Int
+  tipo   TipoReuniaoComissao   @default(ORDINARIA)
+  status StatusReuniaoComissao @default(AGENDADA)
 
   // Data e local
-  data          DateTime
-  horaInicio    DateTime?
-  horaFim       DateTime?
-  local         String?
+  data       DateTime
+  horaInicio DateTime?
+  horaFim    DateTime?
+  local      String?
 
   // Convocacao
-  dataConvocacao    DateTime?
-  motivoConvocacao  String?         @db.Text
+  dataConvocacao   DateTime?
+  motivoConvocacao String?   @db.Text
 
   // Pauta e ata
-  pautaTexto        String?         @db.Text   // Pauta em texto livre (alem dos itens)
-  ataTexto          String?         @db.Text   // Ata da reuniao
-  ataAprovada       Boolean         @default(false)
-  dataAprovacaoAta  DateTime?
+  pautaTexto          String?   @db.Text // Pauta em texto livre (alem dos itens)
+  ataTexto            String?   @db.Text // Ata da reuniao
+  ataAprovada         Boolean   @default(false)
+  dataAprovacaoAta    DateTime?
   // RN-172: PDFs assinados de ata/pauta + datas de publicacao oficial
-  arquivoAta            String?     // URL do PDF da ata assinada
-  arquivoPauta          String?     // URL do PDF da pauta publicada
-  dataPublicacaoAta     DateTime?   // RN-123 PNTP: prazo 15 dias apos aprovacao
-  dataPublicacaoPauta   DateTime?   // RN-122 PNTP: prazo 48h antes da reuniao
+  arquivoAta          String? // URL do PDF da ata assinada
+  arquivoPauta        String? // URL do PDF da pauta publicada
+  dataPublicacaoAta   DateTime? // RN-123 PNTP: prazo 15 dias apos aprovacao
+  dataPublicacaoPauta DateTime? // RN-122 PNTP: prazo 48h antes da reuniao
 
   // Quorum
-  quorumMinimo      Int             @default(2)  // Minimo de membros para instalacao
+  quorumMinimo Int @default(2) // Minimo de membros para instalacao
 
   // Observacoes
-  observacoes       String?         @db.Text
+  observacoes String? @db.Text
 
   // Controle
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  criadoPorId       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  criadoPorId String?
 
   // Relacionamentos
-  comissao          Comissao        @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
-  itens             PautaReuniaoComissao[]
-  presencas         PresencaReuniaoComissao[]
-  pareceres         Parecer[]       // Pareceres votados nesta reuniao
+  comissao  Comissao                  @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
+  itens     PautaReuniaoComissao[]
+  presencas PresencaReuniaoComissao[]
+  pareceres Parecer[] // Pareceres votados nesta reuniao
 
   @@unique([comissaoId, numero, ano])
   @@index([comissaoId])
@@ -933,33 +933,33 @@ model ReuniaoComissao {
 }
 
 model PautaReuniaoComissao {
-  id            String                    @id @default(cuid())
-  reuniaoId     String
-  proposicaoId  String?                   // Proposicao em analise (opcional)
-  parecerId     String?                   // Parecer a ser votado (opcional)
+  id           String  @id @default(cuid())
+  reuniaoId    String
+  proposicaoId String? // Proposicao em analise (opcional)
+  parecerId    String? // Parecer a ser votado (opcional)
 
   // Dados do item
-  ordem         Int                       // Ordem na pauta
-  titulo        String                    // Titulo/descricao do item
-  descricao     String?                   @db.Text
-  tipo          TipoItemPautaReuniao      @default(ANALISE_PROPOSICAO)
+  ordem     Int // Ordem na pauta
+  titulo    String // Titulo/descricao do item
+  descricao String?              @db.Text
+  tipo      TipoItemPautaReuniao @default(ANALISE_PROPOSICAO)
 
   // Resultado
-  status        StatusItemPautaReuniao    @default(PENDENTE)
-  resultado     String?                   // Resultado da deliberacao
-  observacoes   String?                   @db.Text
+  status      StatusItemPautaReuniao @default(PENDENTE)
+  resultado   String? // Resultado da deliberacao
+  observacoes String?                @db.Text
 
   // Tempo
-  tempoEstimado Int?                      // Minutos estimados
-  tempoReal     Int?                      // Minutos reais
+  tempoEstimado Int? // Minutos estimados
+  tempoReal     Int? // Minutos reais
 
   // Controle
-  createdAt     DateTime                  @default(now())
-  updatedAt     DateTime                  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  reuniao       ReuniaoComissao           @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
-  proposicao    Proposicao?               @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
+  reuniao    ReuniaoComissao @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  proposicao Proposicao?     @relation(fields: [proposicaoId], references: [id], onDelete: SetNull)
 
   @@unique([reuniaoId, ordem])
   @@index([reuniaoId])
@@ -968,25 +968,25 @@ model PautaReuniaoComissao {
 }
 
 model PresencaReuniaoComissao {
-  id                String          @id @default(cuid())
-  reuniaoId         String
-  membroComissaoId  String
+  id               String @id @default(cuid())
+  reuniaoId        String
+  membroComissaoId String
 
   // Status de presenca
-  presente          Boolean         @default(false)
-  justificativa     String?         // Se ausente, justificativa
+  presente      Boolean @default(false)
+  justificativa String? // Se ausente, justificativa
 
   // Horarios
-  horaChegada       DateTime?
-  horaSaida         DateTime?
+  horaChegada DateTime?
+  horaSaida   DateTime?
 
   // Controle
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  reuniao           ReuniaoComissao @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
-  membro            MembroComissao  @relation(fields: [membroComissaoId], references: [id], onDelete: Cascade)
+  reuniao ReuniaoComissao @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  membro  MembroComissao  @relation(fields: [membroComissaoId], references: [id], onDelete: Cascade)
 
   @@unique([reuniaoId, membroComissaoId])
   @@index([reuniaoId])
@@ -994,19 +994,19 @@ model PresencaReuniaoComissao {
 }
 
 model Bancada {
-  id              String      @id @default(cuid())
-  nome            String
-  sigla           String?
-  partido         String?            // Sigla do partido (PT, MDB, etc)
-  tipo            TipoBancada @default(PARTIDARIA)
-  liderId         String?            // Parlamentar líder
-  viceLiderId     String?            // Vice-líder
-  ativa           Boolean     @default(true)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id          String      @id @default(cuid())
+  nome        String
+  sigla       String?
+  partido     String? // Sigla do partido (PT, MDB, etc)
+  tipo        TipoBancada @default(PARTIDARIA)
+  liderId     String? // Parlamentar líder
+  viceLiderId String? // Vice-líder
+  ativa       Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  lider           Parlamentar?  @relation("BancadaLider", fields: [liderId], references: [id], onDelete: SetNull)
-  viceLider       Parlamentar?  @relation("BancadaViceLider", fields: [viceLiderId], references: [id], onDelete: SetNull)
+  lider     Parlamentar? @relation("BancadaLider", fields: [liderId], references: [id], onDelete: SetNull)
+  viceLider Parlamentar? @relation("BancadaViceLider", fields: [viceLiderId], references: [id], onDelete: SetNull)
 
   @@index([partido])
   @@index([ativa])
@@ -1050,8 +1050,8 @@ model Publicacao {
   data          DateTime
   conteudo      String              @db.Text
   arquivo       String?
-  url           String?             // Link externo (Google Drive, etc.)
-  documentos    Json?               // RN-169: Array [{nome, url}] de anexos multiplos
+  url           String? // Link externo (Google Drive, etc.)
+  documentos    Json? // RN-169: Array [{nome, url}] de anexos multiplos
   tamanho       String?
   publicada     Boolean             @default(false)
   visualizacoes Int                 @default(0)
@@ -1245,7 +1245,7 @@ model PautaSessao {
   tempoTotalEstimado    Int         @default(0)
   tempoTotalReal        Int?
   itemAtualId           String?     @unique
-  dataPublicacao        DateTime?   // RN-122 PNTP: data de publicação oficial da pauta (prazo: 48h antes da sessão)
+  dataPublicacao        DateTime? // RN-122 PNTP: data de publicação oficial da pauta (prazo: 48h antes da sessão)
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
@@ -1258,59 +1258,59 @@ model PautaSessao {
 }
 
 model PautaItem {
-  id             String          @id @default(cuid())
-  pautaId        String
-  secao          String          // ID do TipoExpediente ou valor legado
-  ordem          Int
-  titulo         String
-  descricao      String?         @db.Text
-  proposicaoId   String?
-  tempoEstimado  Int?
-  tempoReal      Int?
-  status         PautaItemStatus @default(PENDENTE)
-  tipoAcao       TipoAcaoPauta   @default(VOTACAO)  // Tipo de ação: LEITURA, VOTACAO, etc.
-  autor          String?
-  observacoes    String?         @db.Text
-  tempoAcumulado Int             @default(0)
-  iniciadoEm     DateTime?
-  finalizadoEm   DateTime?
-  tipoVotacao    TipoVotacao     @default(NOMINAL)  // Tipo de votação: nominal ou secreta
-  vistaRequestedBy String?                           // ID do parlamentar que pediu vista
-  vistaRequestedAt DateTime?                         // Data/hora do pedido de vista
-  vistaPrazo     DateTime?                           // Prazo para devolução da matéria
+  id               String          @id @default(cuid())
+  pautaId          String
+  secao            String // ID do TipoExpediente ou valor legado
+  ordem            Int
+  titulo           String
+  descricao        String?         @db.Text
+  proposicaoId     String?
+  tempoEstimado    Int?
+  tempoReal        Int?
+  status           PautaItemStatus @default(PENDENTE)
+  tipoAcao         TipoAcaoPauta   @default(VOTACAO) // Tipo de ação: LEITURA, VOTACAO, etc.
+  autor            String?
+  observacoes      String?         @db.Text
+  tempoAcumulado   Int             @default(0)
+  iniciadoEm       DateTime?
+  finalizadoEm     DateTime?
+  tipoVotacao      TipoVotacao     @default(NOMINAL) // Tipo de votação: nominal ou secreta
+  vistaRequestedBy String? // ID do parlamentar que pediu vista
+  vistaRequestedAt DateTime? // Data/hora do pedido de vista
+  vistaPrazo       DateTime? // Prazo para devolução da matéria
 
   // === CAMPOS DE TURNO (SAPL) ===
-  turnoAtual           Int                @default(1)   // Turno atual (1 ou 2)
-  turnoFinal           Int?                             // Número total de turnos necessários (1 ou 2)
-  resultadoTurno1      ResultadoVotacaoAgrupada?        // Resultado do 1º turno
-  resultadoTurno2      ResultadoVotacaoAgrupada?        // Resultado do 2º turno
-  dataVotacaoTurno1    DateTime?                        // Data/hora da votação do 1º turno
-  dataVotacaoTurno2    DateTime?                        // Data/hora da votação do 2º turno
-  intersticio          Boolean            @default(false) // Se aguarda interstício entre turnos
-  dataIntersticio      DateTime?                        // Data em que o interstício foi iniciado
-  prazoIntersticio     DateTime?                        // Data limite para votação em 2º turno
+  turnoAtual        Int                       @default(1) // Turno atual (1 ou 2)
+  turnoFinal        Int? // Número total de turnos necessários (1 ou 2)
+  resultadoTurno1   ResultadoVotacaoAgrupada? // Resultado do 1º turno
+  resultadoTurno2   ResultadoVotacaoAgrupada? // Resultado do 2º turno
+  dataVotacaoTurno1 DateTime? // Data/hora da votação do 1º turno
+  dataVotacaoTurno2 DateTime? // Data/hora da votação do 2º turno
+  intersticio       Boolean                   @default(false) // Se aguarda interstício entre turnos
+  dataIntersticio   DateTime? // Data em que o interstício foi iniciado
+  prazoIntersticio  DateTime? // Data limite para votação em 2º turno
 
   // === CAMPOS DE ATA E OFÍCIO ===
-  sessaoAtaOrigemId String?         // Para itens "Leitura da Ata" - sessão cuja ata será lida/aprovada
-  oficioId          String?         // Para itens "Leitura de Ofício" - ofício a ser lido
+  sessaoAtaOrigemId String? // Para itens "Leitura da Ata" - sessão cuja ata será lida/aprovada
+  oficioId          String? // Para itens "Leitura de Ofício" - ofício a ser lido
 
   // === CAMPOS DE ETAPA E LEITURA ===
-  etapa           Int?              // Sub-etapa: 1 = "1ª Ordem do Dia" (leituras), 2 = "2ª Ordem do Dia" (votações)
-  parecerId       String?           // Referência ao parecer da comissão vinculado
-  leituraNumero   Int?              // Número da leitura (1ª, 2ª, 3ª leitura)
-  relatorId       String?           // Relator designado para o item
+  etapa         Int? // Sub-etapa: 1 = "1ª Ordem do Dia" (leituras), 2 = "2ª Ordem do Dia" (votações)
+  parecerId     String? // Referência ao parecer da comissão vinculado
+  leituraNumero Int? // Número da leitura (1ª, 2ª, 3ª leitura)
+  relatorId     String? // Relator designado para o item
 
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  pauta       PautaSessao  @relation(fields: [pautaId], references: [id], onDelete: Cascade)
-  proposicao  Proposicao?  @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
-  sessaoAtual PautaSessao? @relation("SessaoItemAtual")
-  destaques   DestaquePautaItem[]
-  parecer         Parecer?     @relation(fields: [parecerId], references: [id], onDelete: Cascade)
-  relator         Parlamentar? @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
-  sessaoAtaOrigem Sessao?      @relation("AtaOrigemPauta", fields: [sessaoAtaOrigemId], references: [id], onDelete: SetNull)
-  oficio          Oficio?      @relation("OficioPautaItem", fields: [oficioId], references: [id], onDelete: SetNull)
+  pauta           PautaSessao         @relation(fields: [pautaId], references: [id], onDelete: Cascade)
+  proposicao      Proposicao?         @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  sessaoAtual     PautaSessao?        @relation("SessaoItemAtual")
+  destaques       DestaquePautaItem[]
+  parecer         Parecer?            @relation(fields: [parecerId], references: [id], onDelete: Cascade)
+  relator         Parlamentar?        @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
+  sessaoAtaOrigem Sessao?             @relation("AtaOrigemPauta", fields: [sessaoAtaOrigemId], references: [id], onDelete: SetNull)
+  oficio          Oficio?             @relation("OficioPautaItem", fields: [oficioId], references: [id], onDelete: SetNull)
 
   @@index([pautaId, secao, ordem])
   @@index([tipoAcao])
@@ -1324,23 +1324,23 @@ model PautaItem {
 }
 
 model DestaquePautaItem {
-  id              String   @id @default(cuid())
-  pautaItemId     String
-  titulo          String                              // Ex: "Artigo 3º", "Emenda nº 1"
-  descricao       String?  @db.Text
-  status          PautaItemStatus @default(PENDENTE)  // Status do destaque
-  resultado       String?                              // Resultado da votação do destaque
-  votosSim        Int      @default(0)
-  votosNao        Int      @default(0)
-  votosAbstencao  Int      @default(0)
-  tipoVotacao     TipoVotacao @default(NOMINAL)
-  solicitadoPor   String?                              // ID do parlamentar que solicitou
-  solicitadoEm    DateTime @default(now())
-  votadoEm        DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String          @id @default(cuid())
+  pautaItemId    String
+  titulo         String // Ex: "Artigo 3º", "Emenda nº 1"
+  descricao      String?         @db.Text
+  status         PautaItemStatus @default(PENDENTE) // Status do destaque
+  resultado      String? // Resultado da votação do destaque
+  votosSim       Int             @default(0)
+  votosNao       Int             @default(0)
+  votosAbstencao Int             @default(0)
+  tipoVotacao    TipoVotacao     @default(NOMINAL)
+  solicitadoPor  String? // ID do parlamentar que solicitou
+  solicitadoEm   DateTime        @default(now())
+  votadoEm       DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  pautaItem       PautaItem @relation(fields: [pautaItemId], references: [id], onDelete: Cascade)
+  pautaItem PautaItem @relation(fields: [pautaItemId], references: [id], onDelete: Cascade)
 
   @@index([pautaItemId])
   @@map("destaques_pauta_item")
@@ -1382,18 +1382,18 @@ model AuditLog {
 }
 
 model TramitacaoTipoProposicao {
-  id             String          @id @default(cuid())
-  tipoProposicao String?         // Codigo do tipo de proposicao (flexivel)
+  id             String   @id @default(cuid())
+  tipoProposicao String? // Codigo do tipo de proposicao (flexivel)
   nome           String
   sigla          String
   descricao      String?
-  ativo          Boolean         @default(true)
+  ativo          Boolean  @default(true)
   prazoLimite    Int?
-  requerVotacao  Boolean         @default(true)
-  requerSancao   Boolean         @default(false)
-  ordem          Int             @default(0)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  requerVotacao  Boolean  @default(true)
+  requerSancao   Boolean  @default(false)
+  ordem          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([tipoProposicao])
   @@map("tramitacao_tipo_proposicoes")
@@ -1455,7 +1455,7 @@ model Tramitacao {
   prazoVencimento  DateTime?
   diasVencidos     Int?
   automatica       Boolean              @default(false)
-  fluxoEtapaId     String?              // Referencia a etapa do fluxo configurado
+  fluxoEtapaId     String? // Referencia a etapa do fluxo configurado
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
 
@@ -1565,41 +1565,41 @@ model ConfiguracaoTramitacao {
 }
 
 model FluxoTramitacao {
-  id              String          @id @default(cuid())
-  tipoProposicao  String          @unique  // Codigo do tipo de proposicao (flexivel)
-  nome            String
-  descricao       String?         @db.Text
-  ativo           Boolean         @default(true)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             String   @id @default(cuid())
+  tipoProposicao String   @unique // Codigo do tipo de proposicao (flexivel)
+  nome           String
+  descricao      String?  @db.Text
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  etapas          FluxoTramitacaoEtapa[]
+  etapas FluxoTramitacaoEtapa[]
 
   @@map("fluxos_tramitacao")
 }
 
 model FluxoTramitacaoEtapa {
-  id                String                  @id @default(cuid())
+  id                String             @id @default(cuid())
   fluxoId           String
   ordem             Int
   nome              String
-  descricao         String?                 @db.Text
+  descricao         String?            @db.Text
   unidadeId         String?
-  prazoDiasNormal   Int                     @default(15)
+  prazoDiasNormal   Int                @default(15)
   prazoDiasUrgencia Int?
-  requerParecer     Boolean                 @default(false)
-  habilitaPauta     Boolean                 @default(false)  // Marca etapa que habilita inclusao na pauta
-  ehEtapaFinal      Boolean                 @default(false)
+  requerParecer     Boolean            @default(false)
+  habilitaPauta     Boolean            @default(false) // Marca etapa que habilita inclusao na pauta
+  ehEtapaFinal      Boolean            @default(false)
   // Campos para etapas condicionais
-  condicional       Boolean                 @default(false)  // Se e etapa condicional (pode ser pulada)
-  tipoCondicao      TipoCondicaoEtapa?      // Tipo de condicao para executar a etapa
-  condicaoConfig    Json?                   // Configuracao adicional da condicao (campo, operador, valor)
-  createdAt         DateTime                @default(now())
-  updatedAt         DateTime                @updatedAt
+  condicional       Boolean            @default(false) // Se e etapa condicional (pode ser pulada)
+  tipoCondicao      TipoCondicaoEtapa? // Tipo de condicao para executar a etapa
+  condicaoConfig    Json? // Configuracao adicional da condicao (campo, operador, valor)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
-  fluxo             FluxoTramitacao         @relation(fields: [fluxoId], references: [id], onDelete: Cascade)
-  unidade           TramitacaoUnidade?      @relation(fields: [unidadeId], references: [id])
-  tramitacoes       Tramitacao[]
+  fluxo       FluxoTramitacao    @relation(fields: [fluxoId], references: [id], onDelete: Cascade)
+  unidade     TramitacaoUnidade? @relation(fields: [unidadeId], references: [id])
+  tramitacoes Tramitacao[]
 
   @@unique([fluxoId, ordem])
   @@index([fluxoId])
@@ -1607,27 +1607,31 @@ model FluxoTramitacaoEtapa {
 }
 
 model Licitacao {
-  id                    String             @id @default(cuid())
-  numero                String
-  ano                   Int
-  modalidade            ModalidadeLicitacao
-  tipo                  TipoLicitacao      @default(MENOR_PRECO)
-  objeto                String             @db.Text
-  valorEstimado         Decimal?           @db.Decimal(15, 2)
-  valorHomologado       Decimal?           @db.Decimal(15, 2)
-  dataPublicacao        DateTime?
-  dataAbertura          DateTime
-  horaAbertura          String?
-  dataEntregaPropostas  DateTime?
-  horaEntregaPropostas  String?
-  situacao              SituacaoLicitacao  @default(EM_ANDAMENTO)
-  unidadeGestora        String?
-  linkEdital            String?
-  linkAta               String?
-  arquivo               String?
-  observacoes           String?            @db.Text
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  id                   String              @id @default(cuid())
+  numero               String
+  ano                  Int
+  modalidade           ModalidadeLicitacao
+  tipo                 TipoLicitacao       @default(MENOR_PRECO)
+  objeto               String              @db.Text
+  valorEstimado        Decimal?            @db.Decimal(15, 2)
+  valorHomologado      Decimal?            @db.Decimal(15, 2)
+  dataPublicacao       DateTime?
+  dataAbertura         DateTime
+  horaAbertura         String?
+  dataEntregaPropostas DateTime?
+  horaEntregaPropostas String?
+  situacao             SituacaoLicitacao   @default(EM_ANDAMENTO)
+  unidadeGestora       String?
+  linkEdital           String?
+  linkAta              String?
+  arquivo              String?
+  observacoes          String?             @db.Text
+  // Fase L (PNTP 8.3, 8.4) — anexos completos das fases interna/externa.
+  // Cada item: { nome, url, tipo? }. Acessivel publicamente em /transparencia/licitacoes/[id].
+  documentosFaseInterna Json?
+  documentosFaseExterna Json?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
   contratos  Contrato[]
   despesas   Despesa[]
@@ -1641,13 +1645,13 @@ model Licitacao {
 }
 
 model LicitacaoDocumento {
-  id           String   @id @default(cuid())
-  licitacaoId  String
-  titulo       String
-  tipo         String?  // edital, ata, anexo, etc
-  arquivo      String
-  tamanho      String?
-  dataUpload   DateTime @default(now())
+  id          String   @id @default(cuid())
+  licitacaoId String
+  titulo      String
+  tipo        String? // edital, ata, anexo, etc
+  arquivo     String
+  tamanho     String?
+  dataUpload  DateTime @default(now())
 
   licitacao Licitacao @relation(fields: [licitacaoId], references: [id], onDelete: Cascade)
 
@@ -1655,32 +1659,32 @@ model LicitacaoDocumento {
 }
 
 model Contrato {
-  id                String            @id @default(cuid())
-  numero            String
-  ano               Int
-  modalidade        ModalidadeContrato @default(CONTRATO_ORIGINAL)
-  objeto            String            @db.Text
-  contratado        String
-  cnpjCpf           String
-  valorTotal        Decimal           @db.Decimal(15, 2)
-  dataAssinatura    DateTime
-  dataPublicacao    DateTime?         // RN-124 PNTP: data de publicação oficial (prazo: 24h após assinatura)
-  vigenciaInicio    DateTime
-  vigenciaFim       DateTime
-  fiscalContrato    String?
-  situacao          SituacaoContrato  @default(VIGENTE)
-  licitacaoId       String?
-  contratoOrigemId  String?           // Para aditivos, referência ao contrato original
-  arquivo           String?
-  observacoes       String?           @db.Text
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id               String             @id @default(cuid())
+  numero           String
+  ano              Int
+  modalidade       ModalidadeContrato @default(CONTRATO_ORIGINAL)
+  objeto           String             @db.Text
+  contratado       String
+  cnpjCpf          String
+  valorTotal       Decimal            @db.Decimal(15, 2)
+  dataAssinatura   DateTime
+  dataPublicacao   DateTime? // RN-124 PNTP: data de publicação oficial (prazo: 24h após assinatura)
+  vigenciaInicio   DateTime
+  vigenciaFim      DateTime
+  fiscalContrato   String?
+  situacao         SituacaoContrato   @default(VIGENTE)
+  licitacaoId      String?
+  contratoOrigemId String? // Para aditivos, referência ao contrato original
+  arquivo          String?
+  observacoes      String?            @db.Text
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
-  licitacao       Licitacao? @relation(fields: [licitacaoId], references: [id], onDelete: SetNull)
-  contratoOrigem  Contrato?  @relation("ContratoAditivos", fields: [contratoOrigemId], references: [id], onDelete: SetNull)
-  aditivos        Contrato[] @relation("ContratoAditivos")
-  despesas        Despesa[]
-  obras           Obra[]
+  licitacao      Licitacao? @relation(fields: [licitacaoId], references: [id], onDelete: SetNull)
+  contratoOrigem Contrato?  @relation("ContratoAditivos", fields: [contratoOrigemId], references: [id], onDelete: SetNull)
+  aditivos       Contrato[] @relation("ContratoAditivos")
+  despesas       Despesa[]
+  obras          Obra[]
 
   @@unique([numero, ano])
   @@index([situacao])
@@ -1691,28 +1695,28 @@ model Contrato {
 }
 
 model Convenio {
-  id                  String           @id @default(cuid())
-  numero              String
-  ano                 Int
-  convenente          String
-  cnpjConvenente      String
-  orgaoConcedente     String
-  objeto              String           @db.Text
-  programa            String?
-  acao                String?
-  valorTotal          Decimal          @db.Decimal(15, 2)
-  valorRepasse        Decimal          @db.Decimal(15, 2)
-  valorContrapartida  Decimal          @db.Decimal(15, 2) @default(0)
-  dataCelebracao      DateTime
-  vigenciaInicio      DateTime
-  vigenciaFim         DateTime
-  responsavelTecnico  String?
-  situacao            SituacaoConvenio @default(EM_EXECUCAO)
-  fonteRecurso        String?
-  arquivo             String?
-  observacoes         String?          @db.Text
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  id                 String           @id @default(cuid())
+  numero             String
+  ano                Int
+  convenente         String
+  cnpjConvenente     String
+  orgaoConcedente    String
+  objeto             String           @db.Text
+  programa           String?
+  acao               String?
+  valorTotal         Decimal          @db.Decimal(15, 2)
+  valorRepasse       Decimal          @db.Decimal(15, 2)
+  valorContrapartida Decimal          @default(0) @db.Decimal(15, 2)
+  dataCelebracao     DateTime
+  vigenciaInicio     DateTime
+  vigenciaFim        DateTime
+  responsavelTecnico String?
+  situacao           SituacaoConvenio @default(EM_EXECUCAO)
+  fonteRecurso       String?
+  arquivo            String?
+  observacoes        String?          @db.Text
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   despesas Despesa[]
 
@@ -1724,28 +1728,28 @@ model Convenio {
 }
 
 model Receita {
-  id               String          @id @default(cuid())
-  numero           String?
-  ano              Int
-  mes              Int
-  data             DateTime
-  contribuinte     String?
-  cnpjCpf          String?
-  unidade          String?
-  categoria        CategoriaReceita @default(RECEITA_CORRENTE)
-  origem           OrigemReceita   @default(OUTRAS)
-  especie          String?
-  rubrica          String?
-  subrubrica       String?
-  alinea           String?
-  subalinea        String?
-  valorPrevisto    Decimal         @db.Decimal(15, 2) @default(0)
-  valorArrecadado  Decimal         @db.Decimal(15, 2) @default(0)
-  situacao         SituacaoReceita @default(PREVISTA)
-  fonteRecurso     String?
-  observacoes      String?         @db.Text
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  id              String           @id @default(cuid())
+  numero          String?
+  ano             Int
+  mes             Int
+  data            DateTime
+  contribuinte    String?
+  cnpjCpf         String?
+  unidade         String?
+  categoria       CategoriaReceita @default(RECEITA_CORRENTE)
+  origem          OrigemReceita    @default(OUTRAS)
+  especie         String?
+  rubrica         String?
+  subrubrica      String?
+  alinea          String?
+  subalinea       String?
+  valorPrevisto   Decimal          @default(0) @db.Decimal(15, 2)
+  valorArrecadado Decimal          @default(0) @db.Decimal(15, 2)
+  situacao        SituacaoReceita  @default(PREVISTA)
+  fonteRecurso    String?
+  observacoes     String?          @db.Text
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@index([ano, mes])
   @@index([categoria])
@@ -1754,37 +1758,37 @@ model Receita {
 }
 
 model Despesa {
-  id              String          @id @default(cuid())
-  numeroEmpenho   String
-  ano             Int
-  mes             Int
-  data            DateTime
-  credor          String
-  cnpjCpf         String
-  unidade         String?
-  elemento        String?
-  funcao          String?
-  subfuncao       String?
-  programa        String?
-  acao            String?
-  valorEmpenhado  Decimal         @db.Decimal(15, 2)
-  valorLiquidado  Decimal         @db.Decimal(15, 2) @default(0)
-  valorPago       Decimal         @db.Decimal(15, 2) @default(0)
-  situacao        SituacaoDespesa @default(EMPENHADA)
-  fonteRecurso    String?
-  modalidade      String?
-  licitacaoId     String?
-  contratoId      String?
-  convenioId      String?
-  observacoes     String?         @db.Text
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             String          @id @default(cuid())
+  numeroEmpenho  String
+  ano            Int
+  mes            Int
+  data           DateTime
+  credor         String
+  cnpjCpf        String
+  unidade        String?
+  elemento       String?
+  funcao         String?
+  subfuncao      String?
+  programa       String?
+  acao           String?
+  valorEmpenhado Decimal         @db.Decimal(15, 2)
+  valorLiquidado Decimal         @default(0) @db.Decimal(15, 2)
+  valorPago      Decimal         @default(0) @db.Decimal(15, 2)
+  situacao       SituacaoDespesa @default(EMPENHADA)
+  fonteRecurso   String?
+  modalidade     String?
+  licitacaoId    String?
+  contratoId     String?
+  convenioId     String?
+  observacoes    String?         @db.Text
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  licitacao Licitacao? @relation(fields: [licitacaoId], references: [id], onDelete: SetNull)
-  contrato  Contrato?  @relation(fields: [contratoId], references: [id], onDelete: SetNull)
-  convenio  Convenio?  @relation(fields: [convenioId], references: [id], onDelete: SetNull)
-  notasFiscais     NotaFiscal[]
-  ordensPagamento  OrdemPagamento[]
+  licitacao       Licitacao?       @relation(fields: [licitacaoId], references: [id], onDelete: SetNull)
+  contrato        Contrato?        @relation(fields: [contratoId], references: [id], onDelete: SetNull)
+  convenio        Convenio?        @relation(fields: [convenioId], references: [id], onDelete: SetNull)
+  notasFiscais    NotaFiscal[]
+  ordensPagamento OrdemPagamento[]
 
   @@unique([numeroEmpenho, ano])
   @@index([ano, mes])
@@ -1797,24 +1801,24 @@ model Despesa {
 }
 
 model Servidor {
-  id              String          @id @default(cuid())
-  nome            String
-  cpf             String          // Criptografado via AES-256-GCM (Fase 1 / C2). Use src/lib/security/cpf-utils.ts.
-  cpfHash         String?         @unique // Hash SHA-256 deterministico para busca/uniqueness. Backfill via scripts/backfill-cpf-encryption.ts.
-  matricula       String          @unique
-  cargo           String
-  funcao          String?
-  unidade         String?
-  lotacao         String?
-  vinculo         VinculoServidor @default(EFETIVO)
-  dataAdmissao    DateTime
+  id               String           @id @default(cuid())
+  nome             String
+  cpf              String // Criptografado via AES-256-GCM (Fase 1 / C2). Use src/lib/security/cpf-utils.ts.
+  cpfHash          String?          @unique // Hash SHA-256 deterministico para busca/uniqueness. Backfill via scripts/backfill-cpf-encryption.ts.
+  matricula        String           @unique
+  cargo            String
+  funcao           String?
+  unidade          String?
+  lotacao          String?
+  vinculo          VinculoServidor  @default(EFETIVO)
+  dataAdmissao     DateTime
   dataDesligamento DateTime?
-  cargaHoraria    Int?            @default(40)
-  salarioBruto    Decimal         @db.Decimal(15, 2)
-  situacao        SituacaoServidor @default(ATIVO)
-  observacoes     String?         @db.Text
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  cargaHoraria     Int?             @default(40)
+  salarioBruto     Decimal          @db.Decimal(15, 2)
+  situacao         SituacaoServidor @default(ATIVO)
+  observacoes      String?          @db.Text
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([situacao])
   @@index([vinculo])
@@ -1823,20 +1827,20 @@ model Servidor {
 }
 
 model FolhaPagamento {
-  id                String   @id @default(cuid())
-  competencia       String   // Ex: "2025/01"
+  id                String    @id @default(cuid())
+  competencia       String // Ex: "2025/01"
   mes               Int
   ano               Int
-  totalServidores   Int      @default(0)
-  totalBruto        Decimal  @db.Decimal(15, 2) @default(0)
-  totalDeducoes     Decimal  @db.Decimal(15, 2) @default(0)
-  totalLiquido      Decimal  @db.Decimal(15, 2) @default(0)
+  totalServidores   Int       @default(0)
+  totalBruto        Decimal   @default(0) @db.Decimal(15, 2)
+  totalDeducoes     Decimal   @default(0) @db.Decimal(15, 2)
+  totalLiquido      Decimal   @default(0) @db.Decimal(15, 2)
   dataProcessamento DateTime?
-  situacao          String   @default("PROCESSADA")
+  situacao          String    @default("PROCESSADA")
   arquivo           String?
-  observacoes       String?  @db.Text
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  observacoes       String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@unique([mes, ano])
   @@index([ano])
@@ -1844,25 +1848,25 @@ model FolhaPagamento {
 }
 
 model BemPatrimonial {
-  id               String       @id @default(cuid())
-  tipo             TipoBem
-  tombamento       String       @unique
-  descricao        String
-  especificacao    String?      @db.Text
-  dataAquisicao    DateTime
-  valorAquisicao   Decimal      @db.Decimal(15, 2)
-  valorAtual       Decimal?     @db.Decimal(15, 2)
-  localizacao      String?
-  responsavel      String?
-  situacao         SituacaoBem  @default(EM_USO)
+  id              String      @id @default(cuid())
+  tipo            TipoBem
+  tombamento      String      @unique
+  descricao       String
+  especificacao   String?     @db.Text
+  dataAquisicao   DateTime
+  valorAquisicao  Decimal     @db.Decimal(15, 2)
+  valorAtual      Decimal?    @db.Decimal(15, 2)
+  localizacao     String?
+  responsavel     String?
+  situacao        SituacaoBem @default(EM_USO)
   // Campos especificos para imoveis
-  matriculaImovel  String?
-  enderecoImovel   String?
-  areaImovel       Decimal?     @db.Decimal(15, 2)
+  matriculaImovel String?
+  enderecoImovel  String?
+  areaImovel      Decimal?    @db.Decimal(15, 2)
   // Comum
-  observacoes      String?      @db.Text
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  observacoes     String?     @db.Text
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   @@index([tipo])
   @@index([situacao])
@@ -1870,21 +1874,21 @@ model BemPatrimonial {
 }
 
 model DocumentoTransparencia {
-  id              String                     @id @default(cuid())
-  tipo            TipoDocumentoTransparencia
-  titulo          String
-  descricao       String?                    @db.Text
-  ano             Int
-  mes             Int?                       // null = anual
-  dataPublicacao  DateTime
-  arquivo         String?                    // URL/path do PDF
-  url             String?                    // link externo
-  tamanho         Int?
-  responsavel     String?
-  observacoes     String?                    @db.Text
-  status          String                     @default("publicado")
-  createdAt       DateTime                   @default(now())
-  updatedAt       DateTime                   @updatedAt
+  id             String                     @id @default(cuid())
+  tipo           TipoDocumentoTransparencia
+  titulo         String
+  descricao      String?                    @db.Text
+  ano            Int
+  mes            Int? // null = anual
+  dataPublicacao DateTime
+  arquivo        String? // URL/path do PDF
+  url            String? // link externo
+  tamanho        Int?
+  responsavel    String?
+  observacoes    String?                    @db.Text
+  status         String                     @default("publicado")
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
 
   @@index([tipo, ano])
   @@index([dataPublicacao])
@@ -1892,25 +1896,116 @@ model DocumentoTransparencia {
   @@map("documentos_transparencia")
 }
 
+// =====================================================================
+// Fase K (PNTP 2026 - RN-175, criterio 15.6): Pesquisa de Satisfacao
+// Permite publicar formularios de pesquisa de satisfacao ao cidadao e
+// divulgar os resultados agregados (preserva o anonimato dos respondentes).
+// =====================================================================
+model PesquisaSatisfacao {
+  id                String    @id @default(cuid())
+  titulo            String
+  descricao         String?   @db.Text
+  // Vigencia da pesquisa. Quando `ativa = false`, novas respostas sao
+  // recusadas (mas a pesquisa continua visivel com seus resultados).
+  periodoInicio     DateTime
+  periodoFim        DateTime?
+  ativa             Boolean   @default(true)
+  // Array JSON de perguntas. Estrutura sugerida:
+  //   [{id, label, tipo: 'ESCALA_1_5' | 'SIM_NAO' | 'TEXTO' | 'MULTIPLA_ESCOLHA', opcoes?}]
+  perguntas         Json
+  // Tornar publica a tabulacao dos resultados (gates de privacidade extra)
+  publicaResultados Boolean   @default(true)
+  // Autoria administrativa
+  criadoPorId       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  respostas RespostaPesquisaSatisfacao[]
+
+  @@index([ativa])
+  @@index([periodoInicio])
+  @@map("pesquisas_satisfacao")
+}
+
+model RespostaPesquisaSatisfacao {
+  id         String             @id @default(cuid())
+  pesquisaId String
+  pesquisa   PesquisaSatisfacao @relation(fields: [pesquisaId], references: [id], onDelete: Cascade)
+  // Objeto JSON `{perguntaId: respostaValor}` — sem identificacao do respondente
+  respostas  Json
+  // Hash IP (SHA-256) usado apenas para deteccao de duplicidades agregadas e
+  // rate-limit; nunca exposto publicamente. Nao guardamos IP em texto puro
+  // por padrao LGPD.
+  ipHash     String?
+  userAgent  String?            @db.Text
+  criadoEm   DateTime           @default(now())
+
+  @@index([pesquisaId])
+  @@index([criadoEm])
+  @@map("respostas_pesquisa_satisfacao")
+}
+
+// =====================================================================
+// Fase L (PNTP 2026 - RN-181, criterio 8.5): Atas de Adesao a SRP
+// Sistema de Registro de Precos — quando a Camara adere a uma ata
+// gerenciada por outro orgao, esse instrumento deve ser publicado
+// integralmente (PNTP 8.5 - Obrigatoria).
+// =====================================================================
+model AtaAdesaoSRP {
+  id                String    @id @default(cuid())
+  numero            String                 // numero da ata de adesao
+  ano               Int
+  objeto            String    @db.Text
+  // Orgao que gerencia a ata original
+  orgaoGerenciador  String
+  // Fornecedor da ata adquirida
+  fornecedor        String
+  cnpjFornecedor    String?
+  valorTotal        Decimal   @db.Decimal(15, 2)
+  // Vigencia da adesao (pode ser menor que a vigencia da ata original)
+  vigenciaInicio    DateTime
+  vigenciaFim       DateTime
+  // Numero/ano da ata original gerenciada por outro orgao
+  numeroAtaOriginal String?
+  orgaoOrigem       String?
+  // Documentos publicaveis: array JSON [{nome, url}] (ata integral, termo
+  // de adesao, pesquisa de mercado, etc.)
+  documentos        Json?
+  // Arquivo principal (PDF da ata) — campo legado para compatibilidade
+  arquivo           String?
+  // RN-124: prazo de 24h apos assinatura
+  dataPublicacao    DateTime?
+  situacao          String    @default("VIGENTE") // VIGENTE | ENCERRADA | CANCELADA
+  observacoes       String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([numero, ano])
+  @@index([ano])
+  @@index([situacao])
+  @@index([dataPublicacao])
+  @@map("atas_adesao_srp")
+}
+
 model NotaFiscal {
-  id              String              @id @default(cuid())
-  numero          String
-  serie           String?
-  chaveAcesso     String?             @unique // chave 44 digitos NFe
-  fornecedor      String
-  cnpjCpf         String
-  dataEmissao     DateTime
-  dataLiquidacao  DateTime?
-  dataPagamento   DateTime?
-  valor           Decimal             @db.Decimal(15, 2)
-  situacao        SituacaoNotaFiscal  @default(EMITIDA)
-  ano             Int
-  mes             Int
-  despesaId       String?
-  arquivo         String?             // PDF/XML
-  observacoes     String?             @db.Text
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id             String             @id @default(cuid())
+  numero         String
+  serie          String?
+  chaveAcesso    String?            @unique // chave 44 digitos NFe
+  fornecedor     String
+  cnpjCpf        String
+  dataEmissao    DateTime
+  dataLiquidacao DateTime?
+  dataPagamento  DateTime?
+  valor          Decimal            @db.Decimal(15, 2)
+  situacao       SituacaoNotaFiscal @default(EMITIDA)
+  ano            Int
+  mes            Int
+  despesaId      String?
+  arquivo        String? // PDF/XML
+  observacoes    String?            @db.Text
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   despesa Despesa? @relation(fields: [despesaId], references: [id], onDelete: SetNull)
 
@@ -1932,7 +2027,7 @@ model OrdemPagamento {
   valor            Decimal   @db.Decimal(15, 2)
   dataVencimento   DateTime?
   dataPagamento    DateTime?
-  ordemCronologica Int?      // posicao na fila
+  ordemCronologica Int? // posicao na fila
   fonteRecurso     String?
   despesaId        String?
   observacoes      String?   @db.Text
@@ -1948,50 +2043,56 @@ model OrdemPagamento {
 }
 
 model Veiculo {
-  id              String          @id @default(cuid())
-  placa           String          @unique
-  marca           String
-  modelo          String
-  anoFabricacao   Int
-  anoModelo       Int
-  chassi          String?         @unique
-  renavam         String?
-  cor             String?
-  combustivel     String?
-  dataAquisicao   DateTime
-  valorAquisicao  Decimal         @db.Decimal(15, 2)
-  valorAtual      Decimal?        @db.Decimal(15, 2)
-  responsavel     String?
-  lotacao         String?
-  situacao        SituacaoVeiculo @default(ATIVO)
-  observacoes     String?         @db.Text
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             String          @id @default(cuid())
+  placa          String          @unique
+  marca          String
+  modelo         String
+  anoFabricacao  Int
+  anoModelo      Int
+  chassi         String?         @unique
+  renavam        String?
+  cor            String?
+  combustivel    String?
+  dataAquisicao  DateTime
+  valorAquisicao Decimal         @db.Decimal(15, 2)
+  valorAtual     Decimal?        @db.Decimal(15, 2)
+  responsavel    String?
+  lotacao        String?
+  situacao       SituacaoVeiculo @default(ATIVO)
+  observacoes    String?         @db.Text
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([situacao])
   @@map("veiculos")
 }
 
 model Obra {
-  id                  String       @id @default(cuid())
-  descricao           String
-  endereco            String?
-  bairro              String?
-  cidade              String?
-  valorEstimado       Decimal?     @db.Decimal(15, 2)
-  valorContratado     Decimal?     @db.Decimal(15, 2)
-  valorExecutado      Decimal?     @db.Decimal(15, 2)
-  dataInicio          DateTime?
-  dataPrevistaFim     DateTime?
-  dataConclusao       DateTime?
-  percentualExecucao  Int?         @default(0)
-  situacao            SituacaoObra @default(PLANEJADA)
-  motivoParalisacao   String?      @db.Text
-  contratoId          String?
-  arquivo             String?
-  observacoes         String?      @db.Text
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  id                 String       @id @default(cuid())
+  descricao          String
+  endereco           String?
+  bairro             String?
+  cidade             String?
+  valorEstimado      Decimal?     @db.Decimal(15, 2)
+  valorContratado    Decimal?     @db.Decimal(15, 2)
+  valorExecutado     Decimal?     @db.Decimal(15, 2)
+  // Fase M (PNTP 10.3): valor efetivamente pago e quantitativos executados
+  valorPago             Decimal?  @db.Decimal(15, 2)
+  quantidadeContratada  Decimal?  @db.Decimal(15, 4)
+  quantidadeExecutada   Decimal?  @db.Decimal(15, 4)
+  unidadeMedida         String?                          // m2, m, unidade, etc.
+  dataUltimaMedicao     DateTime?
+  dataInicio         DateTime?
+  dataPrevistaFim    DateTime?
+  dataConclusao      DateTime?
+  percentualExecucao Int?         @default(0)
+  situacao           SituacaoObra @default(PLANEJADA)
+  motivoParalisacao  String?      @db.Text
+  contratoId         String?
+  arquivo            String?
+  observacoes        String?      @db.Text
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
   contrato Contrato? @relation(fields: [contratoId], references: [id], onDelete: SetNull)
 
@@ -2000,19 +2101,19 @@ model Obra {
 }
 
 model Repasse {
-  id              String   @id @default(cuid())
-  orgaoOrigem     String              // Quem repassou (ex: Uniao, Estado)
-  programa        String?             // Programa orcamentario
-  acao            String?
-  valor           Decimal  @db.Decimal(15, 2)
-  data            DateTime
-  ano             Int
-  mes             Int
-  fonteRecurso    String?
-  observacoes     String?  @db.Text
-  arquivo         String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(cuid())
+  orgaoOrigem  String // Quem repassou (ex: Uniao, Estado)
+  programa     String? // Programa orcamentario
+  acao         String?
+  valor        Decimal  @db.Decimal(15, 2)
+  data         DateTime
+  ano          Int
+  mes          Int
+  fonteRecurso String?
+  observacoes  String?  @db.Text
+  arquivo      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([ano, mes])
   @@index([orgaoOrigem])
@@ -2020,22 +2121,22 @@ model Repasse {
 }
 
 model CartaoCorporativo {
-  id              String   @id @default(cuid())
-  portador        String              // Servidor responsavel
-  cnpjCpfPortador String?
-  estabelecimento String              // Onde foi gasto
+  id                  String   @id @default(cuid())
+  portador            String // Servidor responsavel
+  cnpjCpfPortador     String?
+  estabelecimento     String // Onde foi gasto
   cnpjEstabelecimento String?
-  dataCompra      DateTime
-  valor           Decimal  @db.Decimal(15, 2)
-  descricao       String              // O que foi comprado
-  numeroFatura    String?
-  numeroParcela   Int?
-  ano             Int
-  mes             Int
-  observacoes     String?  @db.Text
-  arquivo         String?  // comprovante
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  dataCompra          DateTime
+  valor               Decimal  @db.Decimal(15, 2)
+  descricao           String // O que foi comprado
+  numeroFatura        String?
+  numeroParcela       Int?
+  ano                 Int
+  mes                 Int
+  observacoes         String?  @db.Text
+  arquivo             String? // comprovante
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([ano, mes])
   @@index([portador])
@@ -2043,19 +2144,19 @@ model CartaoCorporativo {
 }
 
 model ProgramaAcao {
-  id              String           @id @default(cuid())
-  codigo          String           // Codigo orcamentario (ex: 0001)
-  nome            String
-  descricao       String?          @db.Text
-  tipo            TipoProgramaAcao @default(PROGRAMA)
-  ano             Int
-  valorPrevisto   Decimal?         @db.Decimal(15, 2)
-  valorExecutado  Decimal?         @db.Decimal(15, 2)
+  id                 String           @id @default(cuid())
+  codigo             String // Codigo orcamentario (ex: 0001)
+  nome               String
+  descricao          String?          @db.Text
+  tipo               TipoProgramaAcao @default(PROGRAMA)
+  ano                Int
+  valorPrevisto      Decimal?         @db.Decimal(15, 2)
+  valorExecutado     Decimal?         @db.Decimal(15, 2)
   unidadeResponsavel String?
-  metaFisica      String?          // Ex: "Atender 1000 alunos"
-  ativo           Boolean          @default(true)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  metaFisica         String? // Ex: "Atender 1000 alunos"
+  ativo              Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@unique([codigo, ano])
   @@index([tipo, ano])
@@ -2063,18 +2164,18 @@ model ProgramaAcao {
 }
 
 model ServicoOnline {
-  id              String   @id @default(cuid())
-  nome            String
-  descricao       String?  @db.Text
-  url             String              // Link do servico
-  categoria       String?             // Ex: "Cidadao", "Empresa", "Servidor"
-  icone           String?             // Nome do icone Lucide ou path
-  publicoAlvo     String?
-  requisitos      String?  @db.Text
-  ordem           Int      @default(0)
-  ativo           Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  nome        String
+  descricao   String?  @db.Text
+  url         String // Link do servico
+  categoria   String? // Ex: "Cidadao", "Empresa", "Servidor"
+  icone       String? // Nome do icone Lucide ou path
+  publicoAlvo String?
+  requisitos  String?  @db.Text
+  ordem       Int      @default(0)
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([categoria, ativo])
   @@index([ordem])
@@ -2082,21 +2183,21 @@ model ServicoOnline {
 }
 
 model FornecedorSancionado {
-  id                  String     @id @default(cuid())
-  nome                String
-  cnpjCpf             String
-  tipoSancao          TipoSancao
-  motivo              String     @db.Text
-  numeroProcesso      String?
-  orgaoSancionador    String              // Quem aplicou (TCM, CGU, etc)
-  dataInicio          DateTime
-  dataFim             DateTime?           // Null = indeterminado
-  ativo               Boolean    @default(true)
-  fundamentoLegal     String?
-  observacoes         String?    @db.Text
-  arquivo             String?
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  id               String     @id @default(cuid())
+  nome             String
+  cnpjCpf          String
+  tipoSancao       TipoSancao
+  motivo           String     @db.Text
+  numeroProcesso   String?
+  orgaoSancionador String // Quem aplicou (TCM, CGU, etc)
+  dataInicio       DateTime
+  dataFim          DateTime? // Null = indeterminado
+  ativo            Boolean    @default(true)
+  fundamentoLegal  String?
+  observacoes      String?    @db.Text
+  arquivo          String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   @@index([cnpjCpf])
   @@index([tipoSancao, ativo])
@@ -2105,62 +2206,62 @@ model FornecedorSancionado {
 }
 
 model Parecer {
-  id                String        @id @default(cuid())
+  id           String  @id @default(cuid())
   // Relacionamentos principais
-  proposicaoId      String
-  comissaoId        String
-  relatorId         String        // Parlamentar designado como relator
-  reuniaoId         String?       // Reuniao onde o parecer foi votado (opcional)
+  proposicaoId String
+  comissaoId   String
+  relatorId    String // Parlamentar designado como relator
+  reuniaoId    String? // Reuniao onde o parecer foi votado (opcional)
 
   // Dados do parecer
-  numero            String?       // Numero do parecer (ex: 001/2026)
-  ano               Int
-  tipo              TipoParecer
-  status            StatusParecer @default(RASCUNHO)
+  numero String? // Numero do parecer (ex: 001/2026)
+  ano    Int
+  tipo   TipoParecer
+  status StatusParecer @default(RASCUNHO)
 
   // Conteudo
-  fundamentacao     String        @db.Text   // Texto completo do parecer
-  conclusao         String?       @db.Text   // Conclusao/recomendacao
-  ementa            String?                  // Resumo do parecer
+  fundamentacao String  @db.Text // Texto completo do parecer
+  conclusao     String? @db.Text // Conclusao/recomendacao
+  ementa        String? // Resumo do parecer
 
   // Emendas propostas (se FAVORAVEL_COM_EMENDAS)
-  emendasPropostas  String?       @db.Text   // JSON com emendas propostas
+  emendasPropostas String? @db.Text // JSON com emendas propostas
 
   // Datas
-  dataDistribuicao  DateTime      // Data em que foi distribuido ao relator
-  prazoEmissao      DateTime?     // Prazo para emitir parecer
-  dataElaboracao    DateTime?     // Data em que o relator finalizou
-  dataVotacao       DateTime?     // Data da votacao na comissao
-  dataEmissao       DateTime?     // Data da emissao oficial
+  dataDistribuicao DateTime // Data em que foi distribuido ao relator
+  prazoEmissao     DateTime? // Prazo para emitir parecer
+  dataElaboracao   DateTime? // Data em que o relator finalizou
+  dataVotacao      DateTime? // Data da votacao na comissao
+  dataEmissao      DateTime? // Data da emissao oficial
 
   // Votacao na comissao
-  votosAFavor       Int           @default(0)
-  votosContra       Int           @default(0)
-  votosAbstencao    Int           @default(0)
+  votosAFavor    Int @default(0)
+  votosContra    Int @default(0)
+  votosAbstencao Int @default(0)
 
   // Observacoes e historico
-  observacoes       String?       @db.Text
-  motivoRejeicao    String?       @db.Text   // Se rejeitado pela comissao
+  observacoes    String? @db.Text
+  motivoRejeicao String? @db.Text // Se rejeitado pela comissao
 
   // Arquivo do parecer (PDF anexado)
-  arquivoUrl        String?       // URL do arquivo no storage
-  arquivoNome       String?       // Nome original do arquivo
-  arquivoTamanho    Int?          // Tamanho em bytes
+  arquivoUrl     String? // URL do arquivo no storage
+  arquivoNome    String? // Nome original do arquivo
+  arquivoTamanho Int? // Tamanho em bytes
 
   // Link externo (Google Drive, OneDrive, etc)
-  driveUrl          String?       // URL do arquivo em servico externo
+  driveUrl String? // URL do arquivo em servico externo
 
   // Controle
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  proposicao        Proposicao    @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
-  comissao          Comissao      @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
-  relator           Parlamentar   @relation("ParecerRelator", fields: [relatorId], references: [id])
-  reuniao           ReuniaoComissao? @relation(fields: [reuniaoId], references: [id], onDelete: SetNull)
-  votosComissao     VotoParecerComissao[]
-  pautaItens        PautaItem[]
+  proposicao    Proposicao            @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
+  comissao      Comissao              @relation(fields: [comissaoId], references: [id], onDelete: Cascade)
+  relator       Parlamentar           @relation("ParecerRelator", fields: [relatorId], references: [id])
+  reuniao       ReuniaoComissao?      @relation(fields: [reuniaoId], references: [id], onDelete: SetNull)
+  votosComissao VotoParecerComissao[]
+  pautaItens    PautaItem[]
 
   @@unique([proposicaoId, comissaoId]) // Uma proposicao so pode ter um parecer por comissao
   @@index([proposicaoId])
@@ -2173,59 +2274,59 @@ model Parecer {
 }
 
 model VotoParecerComissao {
-  id            String      @id @default(cuid())
+  id            String   @id @default(cuid())
   parecerId     String
   parlamentarId String
-  voto          TipoVoto    // SIM (aprova parecer), NAO (rejeita), ABSTENCAO
-  dataVoto      DateTime    @default(now())
+  voto          TipoVoto // SIM (aprova parecer), NAO (rejeita), ABSTENCAO
+  dataVoto      DateTime @default(now())
   observacoes   String?
 
-  parecer       Parecer     @relation(fields: [parecerId], references: [id], onDelete: Cascade)
-  parlamentar   Parlamentar @relation("VotoParecerComissao", fields: [parlamentarId], references: [id])
+  parecer     Parecer     @relation(fields: [parecerId], references: [id], onDelete: Cascade)
+  parlamentar Parlamentar @relation("VotoParecerComissao", fields: [parlamentarId], references: [id])
 
   @@unique([parecerId, parlamentarId]) // Um parlamentar so vota uma vez por parecer
   @@map("votos_parecer_comissao")
 }
 
 model ConfiguracaoQuorum {
-  id                String          @id @default(cuid())
+  id String @id @default(cuid())
 
   // Identificacao
-  nome              String          // Ex: "Quorum para PLC"
-  descricao         String?         @db.Text
-  aplicacao         AplicacaoQuorum @unique
+  nome      String // Ex: "Quorum para PLC"
+  descricao String?         @db.Text
+  aplicacao AplicacaoQuorum @unique
 
   // Tipo de quorum
-  tipoQuorum        TipoQuorum      @default(MAIORIA_SIMPLES)
+  tipoQuorum TipoQuorum @default(MAIORIA_SIMPLES)
 
   // Configuracoes personalizadas (para casos especiais)
-  percentualMinimo  Float?          // Ex: 66.67 para 2/3
-  numeroMinimo      Int?            // Numero absoluto minimo (se aplicavel)
+  percentualMinimo Float? // Ex: 66.67 para 2/3
+  numeroMinimo     Int? // Numero absoluto minimo (se aplicavel)
 
   // Base de calculo
-  baseCalculo       String          @default("PRESENTES") // PRESENTES, TOTAL_MEMBROS, TOTAL_MANDATOS
+  baseCalculo String @default("PRESENTES") // PRESENTES, TOTAL_MEMBROS, TOTAL_MANDATOS
 
   // Tipos de proposicao que usam este quorum
-  tiposProposicao   String?         @db.Text // JSON array com tipos: ["PROJETO_LEI_COMPLEMENTAR", "EMENDA_LEI_ORGANICA"]
+  tiposProposicao String? @db.Text // JSON array com tipos: ["PROJETO_LEI_COMPLEMENTAR", "EMENDA_LEI_ORGANICA"]
 
   // Configuracoes adicionais
-  permitirAbstencao Boolean         @default(true)
-  abstencaoContaContra Boolean      @default(false) // Se abstencao conta como voto contra
-  requererVotacaoNominal Boolean    @default(false)
+  permitirAbstencao      Boolean @default(true)
+  abstencaoContaContra   Boolean @default(false) // Se abstencao conta como voto contra
+  requererVotacaoNominal Boolean @default(false)
 
   // Mensagens personalizadas
-  mensagemAprovacao String?         // Ex: "Aprovado por maioria absoluta"
-  mensagemRejeicao  String?         // Ex: "Rejeitado por nao atingir quorum"
+  mensagemAprovacao String? // Ex: "Aprovado por maioria absoluta"
+  mensagemRejeicao  String? // Ex: "Rejeitado por nao atingir quorum"
 
   // Controle
-  ativo             Boolean         @default(true)
-  ordem             Int             @default(0)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Multi-tenant
-  tenantId          String?
-  tenant            Tenant?         @relation(fields: [tenantId], references: [id])
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   @@index([aplicacao])
   @@index([ativo])
@@ -2234,31 +2335,31 @@ model ConfiguracaoQuorum {
 }
 
 model Favorito {
-  id              String          @id @default(cuid())
+  id String @id @default(cuid())
 
   // Usuario que favoritou
-  userId          String
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Tipo e referencia do item favoritado
-  tipoItem        TipoFavorito
-  itemId          String          // ID da proposicao, sessao, parlamentar, etc.
+  tipoItem TipoFavorito
+  itemId   String // ID da proposicao, sessao, parlamentar, etc.
 
   // Configuracoes de notificacao
-  notificarMudancas  Boolean      @default(true)
-  notificarVotacao   Boolean      @default(true)
-  notificarParecer   Boolean      @default(true)
+  notificarMudancas Boolean @default(true)
+  notificarVotacao  Boolean @default(true)
+  notificarParecer  Boolean @default(true)
 
   // Anotacoes pessoais
-  anotacao        String?         @db.Text
+  anotacao String? @db.Text
 
   // Metadados
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Multi-tenant
-  tenantId        String?
-  tenant          Tenant?         @relation(fields: [tenantId], references: [id])
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
 
   // Indices
   @@unique([userId, tipoItem, itemId])
@@ -2270,45 +2371,45 @@ model Favorito {
 }
 
 model Protocolo {
-  id                String              @id @default(cuid())
-  numero            Int
-  ano               Int
-  tipo              TipoProtocolo       @default(ENTRADA)
+  id     String        @id @default(cuid())
+  numero Int
+  ano    Int
+  tipo   TipoProtocolo @default(ENTRADA)
 
   // Remetente
   nomeRemetente     String
   cpfCnpjRemetente  String?
-  tipoRemetente     TipoRemetente       @default(PESSOA_FISICA)
+  tipoRemetente     TipoRemetente @default(PESSOA_FISICA)
   enderecoRemetente String?
   telefoneRemetente String?
   emailRemetente    String?
 
   // Conteúdo
-  assunto           String
-  descricao         String?             @db.Text
-  tipoDocumento     String?             // Ofício, Requerimento, Solicitação, etc.
-  numeroDocOrigem   String?             // Número do documento original
+  assunto         String
+  descricao       String? @db.Text
+  tipoDocumento   String? // Ofício, Requerimento, Solicitação, etc.
+  numeroDocOrigem String? // Número do documento original
 
   // Controle
-  situacao          SituacaoProtocolo   @default(ABERTO)
-  prazoResposta     DateTime?
-  prioridade        PrioridadeProtocolo @default(NORMAL)
-  sigiloso          Boolean             @default(false)
+  situacao      SituacaoProtocolo   @default(ABERTO)
+  prazoResposta DateTime?
+  prioridade    PrioridadeProtocolo @default(NORMAL)
+  sigiloso      Boolean             @default(false)
 
   // Rastreamento
-  etiquetaCodigo    String?             @unique // Código de barras/QR
+  etiquetaCodigo String? @unique // Código de barras/QR
 
   // Datas
-  dataRecebimento   DateTime            @default(now())
-  dataResposta      DateTime?
+  dataRecebimento DateTime  @default(now())
+  dataResposta    DateTime?
 
   // Controle
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  anexos            ProtocoloAnexo[]
-  tramitacoes       ProtocoloTramitacao[]
+  anexos      ProtocoloAnexo[]
+  tramitacoes ProtocoloTramitacao[]
 
   @@unique([numero, ano])
   @@index([situacao])
@@ -2319,13 +2420,13 @@ model Protocolo {
 }
 
 model ProtocoloAnexo {
-  id           String   @id @default(cuid())
-  protocoloId  String
-  titulo       String
-  arquivo      String
-  tamanho      Int?
-  tipoMime     String?
-  dataUpload   DateTime @default(now())
+  id          String   @id @default(cuid())
+  protocoloId String
+  titulo      String
+  arquivo     String
+  tamanho     Int?
+  tipoMime    String?
+  dataUpload  DateTime @default(now())
 
   protocolo Protocolo @relation(fields: [protocoloId], references: [id], onDelete: Cascade)
 
@@ -2334,14 +2435,14 @@ model ProtocoloAnexo {
 }
 
 model ProtocoloTramitacao {
-  id              String   @id @default(cuid())
-  protocoloId     String
-  data            DateTime @default(now())
-  unidadeOrigem   String
-  unidadeDestino  String
-  acao            String   // Encaminhado, Recebido, Devolvido, etc.
-  despacho        String?  @db.Text
-  usuarioId       String?
+  id             String   @id @default(cuid())
+  protocoloId    String
+  data           DateTime @default(now())
+  unidadeOrigem  String
+  unidadeDestino String
+  acao           String // Encaminhado, Recebido, Devolvido, etc.
+  despacho       String?  @db.Text
+  usuarioId      String?
 
   protocolo Protocolo @relation(fields: [protocoloId], references: [id], onDelete: Cascade)
 
@@ -2350,42 +2451,42 @@ model ProtocoloTramitacao {
 }
 
 model NormaJuridica {
-  id              String            @id @default(cuid())
-  tipo            TipoNormaJuridica
-  numero          Int
-  ano             Int
-  data            DateTime          // Data de aprovação
-  dataPublicacao  DateTime?
-  dataVigencia    DateTime?         // Data em que entra em vigor
+  id             String            @id @default(cuid())
+  tipo           TipoNormaJuridica
+  numero         Int
+  ano            Int
+  data           DateTime // Data de aprovação
+  dataPublicacao DateTime?
+  dataVigencia   DateTime? // Data em que entra em vigor
 
   // Conteúdo
-  ementa          String            @db.Text
-  preambulo       String?           @db.Text
-  texto           String            @db.Text
-  textoCompilado  String?           @db.Text // Texto com todas as alterações incorporadas
+  ementa         String  @db.Text
+  preambulo      String? @db.Text
+  texto          String  @db.Text
+  textoCompilado String? @db.Text // Texto com todas as alterações incorporadas
 
   // Situação
-  situacao        SituacaoNorma     @default(VIGENTE)
+  situacao SituacaoNorma @default(VIGENTE)
 
   // === CAMPOS PNTP 2026 (Sprint 6) ===
-  orgaoEmissor    OrgaoEmissorNorma? // LEGISLATIVO / EXECUTIVO / MISTO
-  aplicavelA      AplicavelA?        // Codigo de Etica: parlamentares / servidores / ambos
-  diarioOficial   Json?              // { nome, volume, pagina, dataPublicacao } - identificacao oficial
+  orgaoEmissor  OrgaoEmissorNorma? // LEGISLATIVO / EXECUTIVO / MISTO
+  aplicavelA    AplicavelA? // Codigo de Etica: parlamentares / servidores / ambos
+  diarioOficial Json? // { nome, volume, pagina, dataPublicacao } - identificacao oficial
 
   // Indexação
-  assunto         String?
-  indexacao       String?           @db.Text // Palavras-chave para busca
-  observacao      String?           @db.Text
+  assunto    String?
+  indexacao  String? @db.Text // Palavras-chave para busca
+  observacao String? @db.Text
 
   // Origem (se veio de proposição)
   proposicaoOrigemId String?
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  artigos         ArtigoNorma[]
-  versoes         VersaoNorma[]
+  artigos             ArtigoNorma[]
+  versoes             VersaoNorma[]
   alteracoesRecebidas AlteracaoNorma[] @relation("NormaAlterada")
   alteracoesFeitas    AlteracaoNorma[] @relation("NormaAlteradora")
 
@@ -2397,19 +2498,19 @@ model NormaJuridica {
 }
 
 model ArtigoNorma {
-  id            String   @id @default(cuid())
+  id            String  @id @default(cuid())
   normaId       String
-  numero        String   // "1", "1-A", etc.
-  caput         String   @db.Text
-  vigente       Boolean  @default(true)
-  revogadoPor   String?  // ID da norma que revogou
-  alteradoPor   String?  // ID da norma que alterou
-  textoOriginal String?  @db.Text
+  numero        String // "1", "1-A", etc.
+  caput         String  @db.Text
+  vigente       Boolean @default(true)
+  revogadoPor   String? // ID da norma que revogou
+  alteradoPor   String? // ID da norma que alterou
+  textoOriginal String? @db.Text
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  norma      NormaJuridica   @relation(fields: [normaId], references: [id], onDelete: Cascade)
+  norma      NormaJuridica    @relation(fields: [normaId], references: [id], onDelete: Cascade)
   paragrafos ParagrafoNorma[]
 
   @@index([normaId])
@@ -2418,15 +2519,15 @@ model ArtigoNorma {
 }
 
 model ParagrafoNorma {
-  id        String             @id @default(cuid())
-  artigoId  String
-  tipo      TipoParagrafoNorma
-  numero    String?            // "§1º", "I", "a", etc.
-  texto     String             @db.Text
-  vigente   Boolean            @default(true)
+  id       String             @id @default(cuid())
+  artigoId String
+  tipo     TipoParagrafoNorma
+  numero   String? // "§1º", "I", "a", etc.
+  texto    String             @db.Text
+  vigente  Boolean            @default(true)
 
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   artigo ArtigoNorma @relation(fields: [artigoId], references: [id], onDelete: Cascade)
 
@@ -2435,18 +2536,18 @@ model ParagrafoNorma {
 }
 
 model AlteracaoNorma {
-  id               String             @id @default(cuid())
-  normaAlteradaId  String
+  id                String             @id @default(cuid())
+  normaAlteradaId   String
   normaAlteradoraId String
-  tipoAlteracao    TipoAlteracaoNorma
-  artigoAlterado   String?            // Referência ao artigo alterado
-  descricao        String?            @db.Text
-  dataAlteracao    DateTime
+  tipoAlteracao     TipoAlteracaoNorma
+  artigoAlterado    String? // Referência ao artigo alterado
+  descricao         String?            @db.Text
+  dataAlteracao     DateTime
 
-  createdAt        DateTime           @default(now())
+  createdAt DateTime @default(now())
 
-  normaAlterada    NormaJuridica @relation("NormaAlterada", fields: [normaAlteradaId], references: [id], onDelete: Cascade)
-  normaAlteradora  NormaJuridica @relation("NormaAlteradora", fields: [normaAlteradoraId], references: [id], onDelete: Cascade)
+  normaAlterada   NormaJuridica @relation("NormaAlterada", fields: [normaAlteradaId], references: [id], onDelete: Cascade)
+  normaAlteradora NormaJuridica @relation("NormaAlteradora", fields: [normaAlteradoraId], references: [id], onDelete: Cascade)
 
   @@index([normaAlteradaId])
   @@index([normaAlteradoraId])
@@ -2461,7 +2562,7 @@ model VersaoNorma {
   motivoAlteracao String?
   dataVersao      DateTime
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   norma NormaJuridica @relation(fields: [normaId], references: [id], onDelete: Cascade)
 
@@ -2471,30 +2572,30 @@ model VersaoNorma {
 }
 
 model ConsultaPublica {
-  id              String                @id @default(cuid())
-  titulo          String
-  descricao       String                @db.Text
-  proposicaoId    String?               // Se relacionada a uma proposição
-  status          StatusConsultaPublica @default(RASCUNHO)
+  id           String                @id @default(cuid())
+  titulo       String
+  descricao    String                @db.Text
+  proposicaoId String? // Se relacionada a uma proposição
+  status       StatusConsultaPublica @default(RASCUNHO)
 
   // Período
-  dataInicio      DateTime
-  dataFim         DateTime
+  dataInicio DateTime
+  dataFim    DateTime
 
   // Configuração
-  permitirAnonimo Boolean               @default(false)
-  requerCadastro  Boolean               @default(true)
-  moderacao       Boolean               @default(true) // Moderar respostas antes de publicar
+  permitirAnonimo Boolean @default(false)
+  requerCadastro  Boolean @default(true)
+  moderacao       Boolean @default(true) // Moderar respostas antes de publicar
 
   // Estatísticas
-  totalParticipacoes Int               @default(0)
+  totalParticipacoes Int @default(0)
 
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  perguntas       PerguntaConsulta[]
-  participacoes   ParticipacaoConsulta[]
+  perguntas     PerguntaConsulta[]
+  participacoes ParticipacaoConsulta[]
 
   @@index([status])
   @@index([dataInicio, dataFim])
@@ -2502,18 +2603,18 @@ model ConsultaPublica {
 }
 
 model PerguntaConsulta {
-  id            String               @id @default(cuid())
-  consultaId    String
-  ordem         Int
-  texto         String
-  tipo          TipoPerguntaConsulta @default(ESCOLHA_UNICA)
-  obrigatoria   Boolean              @default(true)
-  opcoes        String?              @db.Text // JSON array de opções
+  id          String               @id @default(cuid())
+  consultaId  String
+  ordem       Int
+  texto       String
+  tipo        TipoPerguntaConsulta @default(ESCOLHA_UNICA)
+  obrigatoria Boolean              @default(true)
+  opcoes      String?              @db.Text // JSON array de opções
 
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  consulta ConsultaPublica    @relation(fields: [consultaId], references: [id], onDelete: Cascade)
+  consulta  ConsultaPublica    @relation(fields: [consultaId], references: [id], onDelete: Cascade)
   respostas RespostaConsulta[]
 
   @@index([consultaId, ordem])
@@ -2521,15 +2622,15 @@ model PerguntaConsulta {
 }
 
 model ParticipacaoConsulta {
-  id          String   @id @default(cuid())
-  consultaId  String
-  nome        String?
-  email       String?
-  cpfHash     String?  // Hash do CPF para evitar duplicação
-  bairro      String?
+  id               String   @id @default(cuid())
+  consultaId       String
+  nome             String?
+  email            String?
+  cpfHash          String? // Hash do CPF para evitar duplicação
+  bairro           String?
   dataParticipacao DateTime @default(now())
 
-  consulta ConsultaPublica @relation(fields: [consultaId], references: [id], onDelete: Cascade)
+  consulta  ConsultaPublica    @relation(fields: [consultaId], references: [id], onDelete: Cascade)
   respostas RespostaConsulta[]
 
   @@index([consultaId])
@@ -2538,12 +2639,12 @@ model ParticipacaoConsulta {
 }
 
 model RespostaConsulta {
-  id             String   @id @default(cuid())
+  id             String @id @default(cuid())
   participacaoId String
   perguntaId     String
-  resposta       String   @db.Text
+  resposta       String @db.Text
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
   participacao ParticipacaoConsulta @relation(fields: [participacaoId], references: [id], onDelete: Cascade)
   pergunta     PerguntaConsulta     @relation(fields: [perguntaId], references: [id], onDelete: Cascade)
@@ -2553,35 +2654,35 @@ model RespostaConsulta {
 }
 
 model SugestaoLegislativa {
-  id                String                    @id @default(cuid())
+  id String @id @default(cuid())
 
   // Autor
-  nome              String
-  email             String
-  cpfHash           String?                   // Hash do CPF
-  bairro            String?
-  telefone          String?
+  nome     String
+  email    String
+  cpfHash  String? // Hash do CPF
+  bairro   String?
+  telefone String?
 
   // Conteúdo
-  titulo            String
-  descricao         String                    @db.Text
-  justificativa     String                    @db.Text
-  categoria         CategoriaSugestao         @default(OUTROS)
+  titulo        String
+  descricao     String            @db.Text
+  justificativa String            @db.Text
+  categoria     CategoriaSugestao @default(OUTROS)
 
   // Status
-  status            StatusSugestaoLegislativa @default(PENDENTE)
-  motivoRecusa      String?                   @db.Text
-  proposicaoId      String?                   // Se convertida em proposição
-  parlamentarResponsavelId String?            // Parlamentar que assumiu
+  status                   StatusSugestaoLegislativa @default(PENDENTE)
+  motivoRecusa             String?                   @db.Text
+  proposicaoId             String? // Se convertida em proposição
+  parlamentarResponsavelId String? // Parlamentar que assumiu
 
   // Apoios
-  totalApoios       Int                       @default(0)
+  totalApoios Int @default(0)
 
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  apoios            ApoioSugestao[]
+  apoios ApoioSugestao[]
 
   @@index([status])
   @@index([categoria])
@@ -2594,7 +2695,7 @@ model ApoioSugestao {
   sugestaoId String
   nome       String
   email      String
-  cpfHash    String   // Hash do CPF para evitar duplicação
+  cpfHash    String // Hash do CPF para evitar duplicação
   createdAt  DateTime @default(now())
 
   sugestao SugestaoLegislativa @relation(fields: [sugestaoId], references: [id], onDelete: Cascade)
@@ -2605,31 +2706,31 @@ model ApoioSugestao {
 }
 
 model RelatorioAgendado {
-  id              String               @id @default(cuid())
-  nome            String
-  descricao       String?
-  tipo            TipoRelatorioAgendado @default(PERSONALIZADO)
-  filtros         String?              @db.Text // JSON com filtros do relatório
+  id        String                @id @default(cuid())
+  nome      String
+  descricao String?
+  tipo      TipoRelatorioAgendado @default(PERSONALIZADO)
+  filtros   String?               @db.Text // JSON com filtros do relatório
 
   // Agendamento
-  frequencia      FrequenciaRelatorio
-  diaSemana       Int?                 // 0-6 para semanal
-  diaHora         String?              // "08:00" horário de execução
+  frequencia FrequenciaRelatorio
+  diaSemana  Int? // 0-6 para semanal
+  diaHora    String? // "08:00" horário de execução
 
   // Destino
-  destinatarios   String?              @db.Text // JSON array de emails
-  formato         FormatoRelatorio     @default(PDF)
+  destinatarios String?          @db.Text // JSON array de emails
+  formato       FormatoRelatorio @default(PDF)
 
   // Controle
-  ativo           Boolean              @default(true)
+  ativo           Boolean   @default(true)
   ultimaExecucao  DateTime?
   proximaExecucao DateTime?
 
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  execucoes       ExecucaoRelatorio[]
+  execucoes ExecucaoRelatorio[]
 
   @@index([ativo])
   @@index([proximaExecucao])
@@ -2637,13 +2738,13 @@ model RelatorioAgendado {
 }
 
 model ExecucaoRelatorio {
-  id             String   @id @default(cuid())
-  relatorioId    String
-  dataExecucao   DateTime @default(now())
-  status         String   @default("EXECUTANDO") // EXECUTANDO, CONCLUIDO, ERRO
-  arquivoUrl     String?
-  erro           String?  @db.Text
-  tempoExecucao  Int?     // Em segundos
+  id            String   @id @default(cuid())
+  relatorioId   String
+  dataExecucao  DateTime @default(now())
+  status        String   @default("EXECUTANDO") // EXECUTANDO, CONCLUIDO, ERRO
+  arquivoUrl    String?
+  erro          String?  @db.Text
+  tempoExecucao Int? // Em segundos
 
   relatorio RelatorioAgendado @relation(fields: [relatorioId], references: [id], onDelete: Cascade)
 
@@ -2652,12 +2753,12 @@ model ExecucaoRelatorio {
 }
 
 model DashboardPersonalizado {
-  id        String   @id @default(cuid())
-  userId    String
-  nome      String
-  widgets   String   @db.Text // JSON com configuração dos widgets
-  layout    String?  @db.Text // JSON com layout do dashboard
-  publico   Boolean  @default(false)
+  id      String  @id @default(cuid())
+  userId  String
+  nome    String
+  widgets String  @db.Text // JSON com configuração dos widgets
+  layout  String? @db.Text // JSON com layout do dashboard
+  publico Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2668,24 +2769,24 @@ model DashboardPersonalizado {
 }
 
 model SecurityAlert {
-  id              String         @id @default(cuid())
-  type            AlertType
-  severity        AlertSeverity
-  status          AlertStatus    @default(NEW)
-  title           String
-  description     String         @db.Text
-  metadata        Json?          // Dados adicionais do alerta
-  sourceIp        String?
-  userId          String?
-  userName        String?
+  id          String        @id @default(cuid())
+  type        AlertType
+  severity    AlertSeverity
+  status      AlertStatus   @default(NEW)
+  title       String
+  description String        @db.Text
+  metadata    Json? // Dados adicionais do alerta
+  sourceIp    String?
+  userId      String?
+  userName    String?
 
   // Timestamps
-  createdAt       DateTime       @default(now())
-  acknowledgedAt  DateTime?
-  acknowledgedBy  String?
-  resolvedAt      DateTime?
-  resolvedBy      String?
-  notes           String?        @db.Text
+  createdAt      DateTime  @default(now())
+  acknowledgedAt DateTime?
+  acknowledgedBy String?
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  notes          String?   @db.Text
 
   @@index([status])
   @@index([severity])
@@ -2697,24 +2798,24 @@ model SecurityAlert {
 }
 
 model SolicitacaoESIC {
-  id                String     @id @default(cuid())
-  protocolo         String     @unique
-  ano               Int
-  numero            Int
+  id        String @id @default(cuid())
+  protocolo String @unique
+  ano       Int
+  numero    Int
 
   // Solicitante
-  nome              String
-  email             String
-  cpf               String?    // Criptografado via AES-256-GCM (RN-166). Use src/lib/security/cpf-utils.ts.
-  cpfHash           String?    // Hash SHA-256 deterministico para busca. Nao unique (varias solicitacoes por CPF).
-  telefone          String?
-  tipoSolicitante   String?    // pessoa_fisica, pessoa_juridica
+  nome            String
+  email           String
+  cpf             String? // Criptografado via AES-256-GCM (RN-166). Use src/lib/security/cpf-utils.ts.
+  cpfHash         String? // Hash SHA-256 deterministico para busca. Nao unique (varias solicitacoes por CPF).
+  telefone        String?
+  tipoSolicitante String? // pessoa_fisica, pessoa_juridica
 
   // Solicitacao
-  assunto           String
-  descricao         String     @db.Text
-  orgao             String?
-  formaResposta     String?    // email, correspondencia, presencial
+  assunto       String
+  descricao     String  @db.Text
+  orgao         String?
+  formaResposta String? // email, correspondencia, presencial
 
   // Controle
   status            StatusESIC @default(ABERTO)
@@ -2723,19 +2824,19 @@ model SolicitacaoESIC {
   motivoProrrogacao String?    @db.Text
 
   // Resposta
-  resposta          String?    @db.Text
-  respondidoPor     String?
-  dataResposta      DateTime?
+  resposta      String?   @db.Text
+  respondidoPor String?
+  dataResposta  DateTime?
 
   // Recurso
-  temRecurso        Boolean    @default(false)
+  temRecurso Boolean @default(false)
 
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  anexos            AnexoESIC[]
-  recursos          RecursoESIC[]
-  historico         HistoricoESIC[]
+  anexos    AnexoESIC[]
+  recursos  RecursoESIC[]
+  historico HistoricoESIC[]
 
   @@unique([ano, numero])
   @@index([status])
@@ -2746,88 +2847,88 @@ model SolicitacaoESIC {
 }
 
 model AnexoESIC {
-  id             String   @id @default(cuid())
-  solicitacaoId  String
-  arquivo        String
-  nome           String
-  tamanho        Int?
-  tipo           String?  // solicitacao, resposta
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  solicitacaoId String
+  arquivo       String
+  nome          String
+  tamanho       Int?
+  tipo          String? // solicitacao, resposta
+  createdAt     DateTime @default(now())
 
-  solicitacao    SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  solicitacao SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
 
   @@index([solicitacaoId])
   @@map("anexos_esic")
 }
 
 model RecursoESIC {
-  id             String   @id @default(cuid())
-  solicitacaoId  String
-  instancia      Int      @default(1)
-  motivo         String   @db.Text
-  status         String   @default("ABERTO")
-  resposta       String?  @db.Text
-  dataRecurso    DateTime @default(now())
-  dataResposta   DateTime?
-  prazoResposta  DateTime
+  id            String    @id @default(cuid())
+  solicitacaoId String
+  instancia     Int       @default(1)
+  motivo        String    @db.Text
+  status        String    @default("ABERTO")
+  resposta      String?   @db.Text
+  dataRecurso   DateTime  @default(now())
+  dataResposta  DateTime?
+  prazoResposta DateTime
 
-  solicitacao    SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  solicitacao SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
 
   @@index([solicitacaoId])
   @@map("recursos_esic")
 }
 
 model HistoricoESIC {
-  id             String   @id @default(cuid())
-  solicitacaoId  String
-  acao           String
-  descricao      String?  @db.Text
-  usuarioId      String?
-  usuarioNome    String?
-  data           DateTime @default(now())
+  id            String   @id @default(cuid())
+  solicitacaoId String
+  acao          String
+  descricao     String?  @db.Text
+  usuarioId     String?
+  usuarioNome   String?
+  data          DateTime @default(now())
 
-  solicitacao    SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  solicitacao SolicitacaoESIC @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
 
   @@index([solicitacaoId])
   @@map("historico_esic")
 }
 
 model ManifestacaoOuvidoria {
-  id              String              @id @default(cuid())
-  protocolo       String              @unique
-  ano             Int
-  numero          Int
+  id        String @id @default(cuid())
+  protocolo String @unique
+  ano       Int
+  numero    Int
 
   // Manifestante (pode ser anonimo)
-  anonimo         Boolean             @default(false)
-  nome            String?
-  email           String?
-  telefone        String?
-  cpf             String?             // Criptografado via AES-256-GCM (RN-166). Use src/lib/security/cpf-utils.ts.
-  cpfHash         String?             // Hash SHA-256 deterministico para busca. Nao unique.
+  anonimo  Boolean @default(false)
+  nome     String?
+  email    String?
+  telefone String?
+  cpf      String? // Criptografado via AES-256-GCM (RN-166). Use src/lib/security/cpf-utils.ts.
+  cpfHash  String? // Hash SHA-256 deterministico para busca. Nao unique.
 
   // Manifestacao
-  tipo            TipoManifestacao
-  assunto         String
-  descricao       String              @db.Text
-  setor           String?
+  tipo      TipoManifestacao
+  assunto   String
+  descricao String           @db.Text
+  setor     String?
 
   // Controle
-  status          StatusManifestacao   @default(REGISTRADA)
-  prioridade      String              @default("NORMAL")
-  prazoResposta   DateTime
+  status        StatusManifestacao @default(REGISTRADA)
+  prioridade    String             @default("NORMAL")
+  prazoResposta DateTime
 
   // Resposta
-  resposta        String?             @db.Text
-  respondidoPor   String?
-  dataResposta    DateTime?
-  satisfacao      Int?
+  resposta      String?   @db.Text
+  respondidoPor String?
+  dataResposta  DateTime?
+  satisfacao    Int?
 
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  anexos          AnexoOuvidoria[]
-  historico       HistoricoOuvidoria[]
+  anexos    AnexoOuvidoria[]
+  historico HistoricoOuvidoria[]
 
   @@unique([ano, numero])
   @@index([tipo, status])
@@ -2838,52 +2939,52 @@ model ManifestacaoOuvidoria {
 }
 
 model AnexoOuvidoria {
-  id               String   @id @default(cuid())
-  manifestacaoId   String
-  arquivo          String
-  nome             String
-  tamanho          Int?
-  tipo             String?
-  createdAt        DateTime @default(now())
+  id             String   @id @default(cuid())
+  manifestacaoId String
+  arquivo        String
+  nome           String
+  tamanho        Int?
+  tipo           String?
+  createdAt      DateTime @default(now())
 
-  manifestacao     ManifestacaoOuvidoria @relation(fields: [manifestacaoId], references: [id], onDelete: Cascade)
+  manifestacao ManifestacaoOuvidoria @relation(fields: [manifestacaoId], references: [id], onDelete: Cascade)
 
   @@index([manifestacaoId])
   @@map("anexos_ouvidoria")
 }
 
 model HistoricoOuvidoria {
-  id               String   @id @default(cuid())
-  manifestacaoId   String
-  acao             String
-  descricao        String?  @db.Text
-  usuarioId        String?
-  usuarioNome      String?
-  data             DateTime @default(now())
+  id             String   @id @default(cuid())
+  manifestacaoId String
+  acao           String
+  descricao      String?  @db.Text
+  usuarioId      String?
+  usuarioNome    String?
+  data           DateTime @default(now())
 
-  manifestacao     ManifestacaoOuvidoria @relation(fields: [manifestacaoId], references: [id], onDelete: Cascade)
+  manifestacao ManifestacaoOuvidoria @relation(fields: [manifestacaoId], references: [id], onDelete: Cascade)
 
   @@index([manifestacaoId])
   @@map("historico_ouvidoria")
 }
 
 model UnidadeOrganizacional {
-  id              String   @id @default(cuid())
-  nome            String
-  sigla           String?
-  descricao       String?  @db.Text
-  responsavel     String?
-  cargo           String?
-  parentId        String?
-  ordem           Int      @default(0)
-  ativo           Boolean  @default(true)
-  telefone        String?
-  email           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  nome        String
+  sigla       String?
+  descricao   String?  @db.Text
+  responsavel String?
+  cargo       String?
+  parentId    String?
+  ordem       Int      @default(0)
+  ativo       Boolean  @default(true)
+  telefone    String?
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  parent          UnidadeOrganizacional?  @relation("UnidadeHierarquia", fields: [parentId], references: [id])
-  children        UnidadeOrganizacional[] @relation("UnidadeHierarquia")
+  parent   UnidadeOrganizacional?  @relation("UnidadeHierarquia", fields: [parentId], references: [id])
+  children UnidadeOrganizacional[] @relation("UnidadeHierarquia")
 
   @@index([parentId])
   @@index([ativo])
@@ -2891,26 +2992,26 @@ model UnidadeOrganizacional {
 }
 
 model Diaria {
-  id              String   @id @default(cuid())
-  servidorId      String?
-  parlamentarId   String?
-  nome            String
-  cargo           String
-  destino         String
-  motivo          String   @db.Text
-  dataInicio      DateTime
-  dataFim         DateTime
-  quantidade      Int
-  valorUnitario   Decimal  @db.Decimal(15, 2)
-  valorTotal      Decimal  @db.Decimal(15, 2)
-  comprovante     String?
-  numeroPortaria  String?
-  dataPortaria    DateTime?
-  status          String?  @default("PUBLICADA")
-  ano             Int
-  mes             Int
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String    @id @default(cuid())
+  servidorId     String?
+  parlamentarId  String?
+  nome           String
+  cargo          String
+  destino        String
+  motivo         String    @db.Text
+  dataInicio     DateTime
+  dataFim        DateTime
+  quantidade     Int
+  valorUnitario  Decimal   @db.Decimal(15, 2)
+  valorTotal     Decimal   @db.Decimal(15, 2)
+  comprovante    String?
+  numeroPortaria String?
+  dataPortaria   DateTime?
+  status         String?   @default("PUBLICADA")
+  ano            Int
+  mes            Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([ano, mes])
   @@index([parlamentarId])
@@ -2923,7 +3024,7 @@ model VerbaIndenizatoria {
   parlamentarId   String
   nomeParlamentar String?
   descricao       String
-  tipo            String   // combustivel, telefone, escritorio, etc.
+  tipo            String // combustivel, telefone, escritorio, etc.
   valor           Decimal  @db.Decimal(15, 2)
   mes             Int
   ano             Int
@@ -2941,12 +3042,12 @@ model VerbaIndenizatoria {
 // usados no Portal da Transparencia conforme padrao PNTP.
 model CotaParlamentar {
   id              String   @id @default(cuid())
-  mes             Int?     // null = "Ano Inteiro" (declaracao anual)
+  mes             Int? // null = "Ano Inteiro" (declaracao anual)
   ano             Int
-  parlamentarId   String?  // null = declaracao geral (Camara como um todo)
+  parlamentarId   String? // null = declaracao geral (Camara como um todo)
   nomeParlamentar String?
   observacao      String   @db.Text
-  documentos      Json?    // array [{nome, url}]
+  documentos      Json? // array [{nome, url}]
   valor           Decimal? @db.Decimal(15, 2)
   tipo            String   @default("DECLARACAO") // DECLARACAO | GASTO
   createdAt       DateTime @default(now())
@@ -3040,19 +3141,21 @@ model Fornecedor {
 // conteudo sigiloso em si.
 
 model DocumentoClassificado {
-  id                   String    @id @default(cuid())
-  titulo               String
-  categoria            String?
-  grau                 String    @default("RESERVADA") // RESERVADA | SECRETA | ULTRASSECRETA
-  fundamentoLegal      String?   @db.Text
-  dataClassificacao    DateTime
-  prazoAnos            Int       @default(5) // 5 (reservada) | 15 (secreta) | 25 (ultrassecreta)
-  dataDesclassificacao DateTime?
-  situacao             String    @default("CLASSIFICADA") // CLASSIFICADA | DESCLASSIFICADA
-  autoridade           String?
-  observacoes          String?   @db.Text
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                     String    @id @default(cuid())
+  titulo                 String
+  categoria              String?
+  grau                   String    @default("RESERVADA") // RESERVADA | SECRETA | ULTRASSECRETA
+  fundamentoLegal        String?   @db.Text
+  dataClassificacao      DateTime
+  prazoAnos              Int       @default(5) // 5 (reservada) | 15 (secreta) | 25 (ultrassecreta)
+  dataDesclassificacao   DateTime?
+  // Fase M (PNTP 12.9): motivo formal da desclassificacao (exposto publicamente)
+  motivoDesclassificacao String?   @db.Text
+  situacao               String    @default("CLASSIFICADA") // CLASSIFICADA | DESCLASSIFICADA
+  autoridade             String?
+  observacoes            String?   @db.Text
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   @@index([situacao])
   @@index([grau])
@@ -3107,8 +3210,8 @@ model RestoPagar {
   descricao      String?  @db.Text
   tipo           String   @default("PROCESSADO") // PROCESSADO | NAO_PROCESSADO
   valorInscrito  Decimal  @db.Decimal(15, 2)
-  valorPago      Decimal  @db.Decimal(15, 2) @default(0)
-  valorCancelado Decimal  @db.Decimal(15, 2) @default(0)
+  valorPago      Decimal  @default(0) @db.Decimal(15, 2)
+  valorCancelado Decimal  @default(0) @db.Decimal(15, 2)
   observacoes    String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -3144,7 +3247,7 @@ model TransparenciaConteudo {
   subcategoria      String
   titulo            String
   descricao         String    @db.Text
-  tipo              String    // documento, relatorio, informacao, servico
+  tipo              String // documento, relatorio, informacao, servico
   dataPublicacao    DateTime
   ano               Int
   url               String?
@@ -3168,17 +3271,17 @@ model TransparenciaConteudo {
 }
 
 model ConteudoEducativo {
-  id              String   @id @default(cuid())
-  titulo          String
-  slug            String   @unique
-  conteudo        String   @db.Text
-  resumo          String?
-  imagem          String?
-  categoria       String   // como-funciona, glossario, guias
-  ordem           Int      @default(0)
-  publicado       Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(cuid())
+  titulo    String
+  slug      String   @unique
+  conteudo  String   @db.Text
+  resumo    String?
+  imagem    String?
+  categoria String // como-funciona, glossario, guias
+  ordem     Int      @default(0)
+  publicado Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([categoria, publicado])
   @@index([slug])
@@ -3186,36 +3289,36 @@ model ConteudoEducativo {
 }
 
 model AudienciaPublica {
-  id                    String                  @id @default(cuid())
-  numero                String                  @unique
-  titulo                String
-  descricao             String                  @db.Text
-  tipo                  TipoAudienciaPublica    @default(ORDINARIA)
-  status                StatusAudienciaPublica  @default(AGENDADA)
-  dataHora              DateTime
-  local                 String
-  endereco              String?
-  responsavel           String
-  parlamentarId         String?
-  comissaoId            String?
-  materiaLegislativaId  String?
-  objetivo              String                  @db.Text
-  publicoAlvo           String                  @db.Text
-  observacoes           String?                 @db.Text
+  id                   String                 @id @default(cuid())
+  numero               String                 @unique
+  titulo               String
+  descricao            String                 @db.Text
+  tipo                 TipoAudienciaPublica   @default(ORDINARIA)
+  status               StatusAudienciaPublica @default(AGENDADA)
+  dataHora             DateTime
+  local                String
+  endereco             String?
+  responsavel          String
+  parlamentarId        String?
+  comissaoId           String?
+  materiaLegislativaId String?
+  objetivo             String                 @db.Text
+  publicoAlvo          String                 @db.Text
+  observacoes          String?                @db.Text
 
   // Estruturas ricas em JSON (participantes, documentos, atas, etc.)
-  participantes         Json                    @default("[]")
-  documentos            Json                    @default("[]")
-  atas                  Json                    @default("[]")
-  transcricoes          Json                    @default("[]")
-  links                 Json                    @default("[]")
-  transmissaoAoVivo     Json?
-  inscricoesPublicas    Json?
-  publicacaoPublica     Json?
-  cronograma            Json?
+  participantes      Json  @default("[]")
+  documentos         Json  @default("[]")
+  atas               Json  @default("[]")
+  transcricoes       Json  @default("[]")
+  links              Json  @default("[]")
+  transmissaoAoVivo  Json?
+  inscricoesPublicas Json?
+  publicacaoPublica  Json?
+  cronograma         Json?
 
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   parlamentar Parlamentar? @relation(fields: [parlamentarId], references: [id], onDelete: SetNull)
 

@@ -1,10 +1,427 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-22 (Commit J — restos a pagar + PDA/regulamentacao publicaveis)
-> **Versao**: 1.25.0
+> **Ultima Atualizacao**: 2026-05-26 (Consolidacao de URLs duplicadas + 4 redirects 308)
+> **Versao**: 1.29.3
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-26 — Consolidacao de URLs duplicadas + 4 redirects 308
+
+Consolidacao das URLs canonicas detectadas na auditoria do portal /transparencia.
+
+**Paginas legadas removidas (substituidas por /atos/[tipo]):**
+
+- `src/app/transparencia/decretos/page.tsx` — deletado
+- `src/app/transparencia/portarias/page.tsx` — deletado
+
+**Redirects 308 adicionados em `next.config.js` (`async redirects()`):**
+
+| Origem (legacy) | Destino (canonico) |
+|-----------------|--------------------|
+| `/transparencia/decretos` | `/transparencia/atos/decretos` |
+| `/transparencia/portarias` | `/transparencia/atos/portarias` |
+| `/transparencia/documentos/plano-anual-contratacoes` | `/transparencia/plano-contratacoes-anual` |
+| `/transparencia/documentos/planejamento-estrategico` | `/transparencia/plano-estrategico` |
+
+Os redirects rodam antes do match dinamico, entao `/transparencia/documentos/[tipo]`
+continua atendendo os demais slugs (ldo, loa, ppa, rgf, parecer-tcm, etc.).
+
+**Referencias internas atualizadas:**
+
+- `src/components/layout/footer.tsx:182` — link "Decretos" → `/transparencia/atos/decretos`
+- `src/app/sitemap.ts:20` — entrada `/transparencia/decretos` → `/atos/decretos` + nova entrada `/atos/portarias`
+- `src/app/transparencia/mapa-do-site/page.tsx:146-147` — PCA e Planejamento Estrategico apontam para URL canonica
+
+Observacao: `/transparencia/leis` foi MANTIDA (nao e duplicata de /atos — Lei Municipal
+nao tem slug no TIPOS_MAP). Continua canonica e e usada por footer, sitemap, quick-search
+e 404. Referenciada do mapa-do-site, ausente da home (oportunidade futura).
+
+---
+
+## 2026-05-26 — Correcao de links no card "Boas Praticas" da home /transparencia
+
+Auditoria dos caminhos do portal institucional revelou 3 links incorretos no card
+"Boas Praticas de Transparencia" em `src/app/transparencia/page.tsx`:
+
+| Label | href antigo | href novo |
+|-------|-------------|-----------|
+| Dados Abertos | `/api-docs` (Swagger) | `/transparencia/dados-abertos` (portal) |
+| LGPD | `/transparencia` (recarregava a propria pagina) | `/transparencia/documentos/lgpd` |
+| Mapa do Site | `/busca` (busca global) | `/transparencia/mapa-do-site` |
+| Pesquisa Satisfacao | `/transparencia/pesquisas` (legacy) | `/transparencia/pesquisas-satisfacao` |
+
+Arquivo alterado: `src/app/transparencia/page.tsx:478-482`.
+
+Sem impacto em testes ou schema. Demais blocos da home foram cruzados contra
+`/transparencia/mapa-do-site` e contra todas as `page.tsx` existentes — os 16
+slugs do criterio PNTP 2.6 (`/transparencia/atos/[tipo]`) estao todos linkados
+corretamente.
+
+---
+
+## 2026-05-26 — Revisao do Plano PNTP 2026: auditoria + correcoes pos-Fase N
+
+Auditoria sistematica das Fases K-N usando 3 agentes paralelos (migrations,
+paginas, monitor) cruzou o entregue com a Matriz oficial PNTP 2026 + cartilha
+Atricon. Encontrou 3 bugs reais no monitor + 1 melhoria de performance.
+
+**Bugs corrigidos no `src/app/api/admin/conformidade-pntp/matriz/route.ts`:**
+
+1. **Critério 10.2** (Obras - Quantitativos contratados):
+   - Era: `disponibilidade: obrasTotal > 0 || true` (sempre `true` — BUG)
+   - Agora: `disponibilidade: obrasTotal === 0 ? true : obrasComExecucao > 0`
+   - Comportamento correto: sem obras = declaracao de nao-ocorrencia; com
+     obras = exige dado real.
+
+2. **Critério 9.3** (Fiscais de contrato):
+   - Era: condicao confusa `contratosComFiscal > 0 || ctConf === false`
+   - Agora: regra clara — quando ha contratos, exige fiscal preenchido;
+     sem contratos, declaracao de nao-ocorrencia.
+
+3. **Critério 10.3** (Execucao fisica/preco pago):
+   - Era: condicao confusa `obrasTotal === 0 || obrasComExecucao > 0`
+   - Agora: clara — sem obras = declaracao de nao-ocorrencia; com obras =
+     exige dado real.
+
+4. **Atualidade real nos ESSENCIAIS (3.1, 4.1, 4.2, 4.3)**:
+   - Era: `atualidade: receitasTotal > 0` (so olhava presenca, nao data)
+   - Agora: `prisma.receita.findFirst({ orderBy: { updatedAt: 'desc' } })` +
+     helper `ehAtual()` que valida `updatedAt >= 30 dias atras`.
+   - Detalhes do criterio mostram a data da ultima atualizacao e marcador
+     "(FORA DO PRAZO 30d)" quando aplicavel.
+
+**Melhoria de performance:**
+
+5. **Indices GIN nas colunas JSONB de Licitacao**:
+   - Migration `add-licitacao-documentos-fase.sql` atualizada (idempotente)
+     com `CREATE INDEX IF NOT EXISTS ... USING GIN` para `documentosFaseInterna`
+     e `documentosFaseExterna`.
+   - Reaplicada no Supabase. Acelera `jsonb_array_length()` usado pelo monitor.
+   - Documentacao do schema esperado dos arrays JSONB incluida nos comentarios SQL.
+
+**Pontos verificados (auditor de paginas reportou falsos negativos):**
+
+- ✅ Badge Radar Atricon: implementado em `radar-badge.tsx`, ativo no hero
+  da home `/transparencia` + footer global (auditor errou ao reportar como
+  faltante).
+- ✅ Fiscal de contrato: exibido em `/transparencia/contratos` (linhas 301-302)
+  e em `/api/dados-abertos/contratos` campo `fiscal_contrato` (auditor errou
+  ao reportar como faltante).
+
+**Auditoria — resultado final:**
+
+- **Migrations**: 7/7 OK (1 ganhou GIN apos correcao).
+- **Paginas publicas**: cobertura ~95% (gaps reais sao apenas falta de dado
+  real, nao falta de codigo).
+- **Monitor**: metodologia oficial Atricon 100% correta (pesos, niveis,
+  regra do eliminatorio); 4 anomalias logicas corrigidas; 7 essenciais
+  conferem com a matriz canonica.
+
+**TypeScript:** 0 erros.
+
+---
+
+## 2026-05-26 — Fase N (Plano PNTP 2026): Qualidade transversal + Matriz Oficial
+
+Quarta e ultima fase do Plano PNTP 2026. Entrega os componentes transversais
+(Exportacao, Filtro de Ano, Filtro de Pesquisa, Ultima Atualizacao) que valem
+40% de cada criterio + Busca global de conteudo + Monitor refletindo os 83
+criterios oficiais da Matriz Atricon. Com isso o plano fica completo e o
+sistema esta apto a atingir o **selo Diamante (≥95%)**.
+
+**N1 — Botao Exportar CSV/XLSX universal (RN-186):**
+- Componente `<ExportarDadosButton data={...} filename="..." />` em
+  `src/components/transparencia/exportar-dados-button.tsx`.
+- Dropdown com 2 formatos: CSV (separador `;`, BOM UTF-8 — abre direto em
+  Excel/LibreOffice) e JSON (interoperacao).
+- Sem dependencias novas. Aplicado em votacoes-nominais, contratos e
+  licitacoes (3 demonstrações).
+
+**N2 — Filtro de Ano (serie historica):**
+- `<FiltroAno anosAnteriores={3} />` em `filtro-ano.tsx`.
+- Default 3 anos anteriores (X-1, X-2, X-3) conforme exigencia PNTP.
+- URL state via `?ano=YYYY` (default param name) ou callback client-only.
+
+**N3 — Filtro de pesquisa estruturado:**
+- `<FiltroPesquisa campos={['numero','data','palavraChave','textoLivre']} />`
+  em `filtro-pesquisa.tsx`.
+- Debounced 250ms. Os 4 tipos atendem ao requisito da dim. 20 (Legislativo).
+
+**N4 — UltimaAtualizacao reutilizavel:**
+- `<UltimaAtualizacao data={...} />` em `ultima-atualizacao.tsx`.
+- Suporta Date / string ISO / null. Fallback exibe "atualizado em tempo real".
+
+**N5 — Busca global de conteudo (PNTP 1.4):**
+- API `GET /api/busca/global?q=...` consulta 6 modelos publicos
+  (Proposicao, NormaJuridica, Publicacao, Parlamentar, DocumentoTransparencia,
+  Noticia) via `contains` case-insensitive + `Promise.all`.
+- Rate-limit PUBLIC + Zod validation (q.min=2.max=200, limit.max=50).
+- Pagina `/transparencia/busca` com input, facetas por tipo (botoes), badges
+  coloridos, ordenacao por data desc.
+- Item "Pesquisa de Conteudo" adicionado na home (secao Informacoes Institucionais).
+- Para portais grandes (>100k registros), migrar futuramente para Postgres
+  tsvector + indice GIN (deferido — abordagem `contains` atende portal medio).
+
+**N6 — Monitor refletindo os 83 criterios oficiais:**
+- Catalogo `src/lib/pntp/matriz-2026.ts` com:
+  - 83 criterios completos (60 COMUM + 8 COMUM-exc-Estatais + 4 exc-Indep + 11 PL)
+  - 16 dimensoes com pesos oficiais (4 para Receita/Despesa/Planejamento, 3 para
+    RH/Licit/Contr/AtFin, 2 para outras, 1 para acessoria)
+  - Pesos por classificacao (Essencial=2, Obrig=1.5, Recom=1)
+  - Pesos por item de verificacao (Disp 30%, Atual 30%, Serie 20%, Grav 10%, Filtro 10%)
+  - Funcoes `pontuarCriterio()` e `calcularResultadoGeral()` aplicando a
+    formula oficial da Atricon (soma_ponderada / total_ponderado)
+- Endpoint `/api/admin/conformidade-pntp/matriz` agrega sinais de >30 modelos
+  do banco e devolve avaliacao completa.
+- Niveis: Diamante (95-100% + todos essenciais), Ouro (85-94%+), Prata (75-84%+),
+  Elevado (>75% sem todos essenciais), Intermediario (50-74%), Basico (30-49%),
+  Inicial (1-29%), Inexistente (0%).
+- Dashboard `/admin/conformidade-pntp` ganha card "Matriz Oficial PNTP 2026"
+  no topo com:
+  - Nivel + pontuacao oficial
+  - Contagem de essenciais faltantes (alerta vermelho se > 0)
+  - 16 dimensoes em accordion com barra de pontuacao
+  - Lista detalhada dos criterios ao expandir (id, titulo, classificacao,
+    pontuacao individual, detalhes)
+- API legado `/api/admin/conformidade-pntp` (32 itens) mantida para
+  compatibilidade.
+
+**Arquivos novos (Fase N):**
+- `src/components/transparencia/ultima-atualizacao.tsx`
+- `src/components/transparencia/exportar-dados-button.tsx`
+- `src/components/transparencia/filtro-ano.tsx`
+- `src/components/transparencia/filtro-pesquisa.tsx`
+- `src/lib/pntp/matriz-2026.ts`
+- `src/app/api/busca/global/route.ts`
+- `src/app/api/admin/conformidade-pntp/matriz/route.ts`
+- `src/app/transparencia/busca/page.tsx`
+
+**RN nova:** RN-186 (`REGRAS-DE-NEGOCIO.md`).
+
+**Score esperado pos-N (conteudo minimo populado):** ≥ 95% — **Selo Diamante**.
+
+---
+
+## 2026-05-26 — Fase M (Plano PNTP 2026): Dim. 20 + Planejamento + LAI
+
+Terceira fase do Plano PNTP 2026. Fecha os parciais da matriz PODER LEGISLATIVO
+(dimensao 20 — peso 3) e da dimensao 11 (Planejamento — peso 4) + lacunas da
+dimensao 12 (SIC). Adiciona ~2-3% ao score final.
+
+**M1 — Plano Estrategico Institucional (RN-183, PNTP 11.7):**
+- Reaproveita enum `TipoDocumentoTransparencia.PLANEJAMENTO_ESTRATEGICO` (Sprint 4).
+- Pagina dedicada `/transparencia/plano-estrategico` com 6 elementos minimos,
+  beneficios, vinculacao com PPA/LDO/LOA/PCA, base legal e `DocumentosOficiais`.
+- Tile da home redirecionado.
+
+**M2 — Obras: execucao fisica e pagamento (PNTP 10.3):**
+- 5 colunas novas em `Obra`: `valorPago`, `quantidadeContratada`,
+  `quantidadeExecutada`, `unidadeMedida`, `dataUltimaMedicao`.
+- Migration `scripts/sql/add-obra-execucao-fields.sql` (ADD COLUMN IF NOT EXISTS;
+  install.sh 5u).
+- API `/api/obras` (POST) e `/api/obras/[id]` (PUT) atualizadas.
+- Pagina publica `/transparencia/obras` exibe valor pago, quantitativos e data
+  de ultima medicao.
+
+**M3 — Pautas de Comissoes (RN-184, PNTP 20.5):**
+- Reaproveita campos existentes em `ReuniaoComissao` (`pautaTexto`,
+  `arquivoPauta`, `dataPublicacaoPauta` — RN-122/172).
+- Pagina publica dedicada `/transparencia/legislativo/pautas-comissoes` (SSR)
+  agrupada por comissao com cards de resumo.
+- Item "Pautas das Comissoes" na home (apos "Sessoes").
+
+**M4 — Desclassificadas LAI (PNTP 12.9):**
+- Campo `motivoDesclassificacao TEXT` em `DocumentoClassificado`.
+- Migration `scripts/sql/add-motivo-desclassificacao.sql` (install.sh 5v).
+- Pagina `/transparencia/informacoes-classificadas` ja tinha bloco
+  "Documentos Desclassificados nos Ultimos 12 Meses" — agora tambem
+  exibe o motivo de cada desclassificacao.
+
+**M5 — Marco Normativo e Prazos da LAI (RN-185, PNTP 12.5, 12.6):**
+- Novo valor de enum `TipoDocumentoTransparencia.REGULAMENTO_LAI`.
+- Migration `scripts/sql/add-regulamento-lai-tipo.sql` (install.sh 5w).
+- Pagina publica `/transparencia/e-sic/normativa` com tabela de 5 prazos
+  (resposta inicial 20du, prorrogacao +10du, recursos), autoridades
+  competentes, procedimento e secao `DocumentosOficiais`.
+- Tipo REGULAMENTO_LAI disponivel em `/api/documentos-transparencia` e
+  `/admin/transparencia/documentos`.
+- Item "Marco Normativo da LAI" na home (secao Atendimento ao Cidadao).
+
+**Monitor de conformidade:** `/api/admin/conformidade-pntp` expandido de 27
+para **32 itens** (planoEstrategico, obrasExecucao, pautasComissoes,
+desclassificados, regulamentoLai). Tratamento graceful para tabelas vazias
+(obras / pautas).
+
+**Score esperado pos-M:** ≥ 93% (Ouro alto, perto de Diamante).
+Proxima fase **N** (qualidade transversal: exportacao, filtros, serie historica,
+indicador de atualizacao, busca global) leva ao Diamante (≥ 95%).
+
+**Arquivos novos (Fase M):**
+- `prisma/schema/models.prisma` — 5 colunas em `Obra` + 1 em `DocumentoClassificado` + enum
+- `prisma/schema/enums.prisma` — REGULAMENTO_LAI
+- `scripts/sql/add-obra-execucao-fields.sql`
+- `scripts/sql/add-motivo-desclassificacao.sql`
+- `scripts/sql/add-regulamento-lai-tipo.sql`
+- `src/app/transparencia/plano-estrategico/page.tsx`
+- `src/app/transparencia/legislativo/pautas-comissoes/page.tsx`
+- `src/app/transparencia/e-sic/normativa/page.tsx`
+
+**RNs novas:** RN-183, RN-184, RN-185 (`REGRAS-DE-NEGOCIO.md`).
+
+---
+
+## 2026-05-26 — Fase L (Plano PNTP 2026): Licitacoes e Contratos 100%
+
+Segunda fase do Plano PNTP 2026. Fecha as 4 lacunas da dimensao 8 (Licitacoes
+— peso 3 no score) e a parcial da dimensao 9 (Contratos — peso 3). Juntas
+adicionam ~10% ao score final.
+
+**L1 — Atas de Adesao a SRP (RN-181, PNTP 8.5):**
+- Novo modelo `AtaAdesaoSRP` (`atas_adesao_srp`) com numero+ano unique,
+  documentos JSON, vigencia, situacao, dataPublicacao (RN-124).
+- Migration `scripts/sql/add-atas-adesao-srp.sql` (idempotente; install.sh 5s).
+- 2 endpoints: `/api/atas-adesao-srp` (GET publico, POST auth) e `[id]` (GET/PUT/DELETE).
+- Admin `/admin/transparencia/atas-adesao-srp` (CRUD inline + builder de anexos).
+- Pagina publica `/transparencia/atas-adesao-srp` (SSR, 3 cards de resumo +
+  lista detalhada com botoes para anexos).
+- Sidebar admin + tile na home `/transparencia` (secao Licitacoes/Contratos/Obras).
+
+**L2 — Plano de Contratacoes Anual (RN-180, PNTP 8.6 / Lei 14.133/2021):**
+- Pagina dedicada `/transparencia/plano-contratacoes-anual` (`force-dynamic`)
+  com introducao, conteudo minimo, beneficios, base legal e secao
+  `DocumentosOficiais` filtrando `PLANO_ANUAL_CONTRATACOES`.
+- Item da home `/transparencia` agora aponta para essa pagina (era
+  `/transparencia/documentos/plano-anual-contratacoes`).
+- Reaproveita enum `PLANO_ANUAL_CONTRATACOES` (Sprint 4) — admin existente
+  em `/admin/transparencia/documentos` segue valido.
+
+**L3 — Documentos completos de licitacao (RN-182, PNTP 8.3 / 8.4):**
+- Schema `Licitacao` ganhou 2 colunas JSONB: `documentosFaseInterna` e
+  `documentosFaseExterna` (cada item: `{nome, url, tipo?}`).
+- Migration `scripts/sql/add-licitacao-documentos-fase.sql` (idempotente; install.sh 5t).
+- API dedicada `/api/licitacoes/[id]/documentos` (GET publico + PUT com auth).
+- Pagina publica `/transparencia/licitacoes/[id]` (SSR) com 3 blocos:
+  Resumo, Fase Interna, Fase Externa + Anexos diversos.
+- Admin `/admin/licitacoes/[id]/documentos-fase` com builder por fase e
+  botoes de sugestao para os 7 tipos mais comuns de cada fase.
+- Lista publica `/transparencia/licitacoes` ganhou botao
+  "Detalhes / Documentos" linkando para a pagina de detalhe.
+
+**L4 — Fiscais de contrato expostos (PNTP 9.3):**
+- Campo `Contrato.fiscalContrato` ja existia no schema (linha 1670).
+- Pagina publica `/transparencia/contratos` agora exibe o nome do fiscal
+  abaixo do CNPJ/CPF em cada cartao de contrato.
+- API `/api/dados-abertos/contratos` ja expunha o campo `fiscal_contrato`
+  (validado).
+
+**Monitor de conformidade:** `/api/admin/conformidade-pntp` expandido de 23
+para **27 itens** (atasSrp, pca, licitacoesFaseInterna+Externa, fiscaisContrato).
+Uso de `prisma.$queryRaw` para `jsonb_array_length` nos campos JSONB.
+
+**Score esperado pos-L:** ≥ 91% (Ouro alto, perto de Prata->Diamante).
+Proximas fases M → N levam ao Diamante (≥ 95%).
+
+**Arquivos novos (Fase L):**
+- `prisma/schema/models.prisma` — `AtaAdesaoSRP` + 2 colunas em `Licitacao`
+- `scripts/sql/add-atas-adesao-srp.sql`
+- `scripts/sql/add-licitacao-documentos-fase.sql`
+- `src/app/api/atas-adesao-srp/route.ts` + `[id]/route.ts`
+- `src/app/api/licitacoes/[id]/documentos/route.ts`
+- `src/app/admin/transparencia/atas-adesao-srp/page.tsx`
+- `src/app/admin/licitacoes/[id]/documentos-fase/page.tsx`
+- `src/app/transparencia/atas-adesao-srp/page.tsx`
+- `src/app/transparencia/licitacoes/[id]/page.tsx`
+- `src/app/transparencia/plano-contratacoes-anual/page.tsx`
+
+**RNs novas:** RN-180, RN-181, RN-182 (`REGRAS-DE-NEGOCIO.md`).
+
+---
+
+## 2026-05-26 — Fase K (Plano PNTP 2026): 5 gaps Diamante fechados
+
+Primeira fase do Plano PNTP 2026 (`docs/PLANO-PNTP-2026.md`). Foram entregues
+os 5 itens criticos que impediam o salto de Ouro para Diamante — RN-175 a
+RN-179. Cobre 3 criterios obrigatorios/recomendados que totalizam ~9% do
+score final.
+
+**K3 — Botao Radar Transparencia (RN-177, PNTP 2.9):**
+- Componente `<RadarBadge variant="hero|footer|inline" />` em
+  `src/components/transparencia/radar-badge.tsx`.
+- Inserido no Hero da home `/transparencia` e no footer global (substituiu
+  texto estatico "Radar ATRICON"). Link para
+  `https://radardatransparencia.atricon.org.br/`.
+
+**K2 — Politica de Privacidade LGPD (RN-176, PNTP 15.2):**
+- Enum `TipoDocumentoTransparencia` ganhou `POLITICA_PRIVACIDADE` (migration
+  `scripts/sql/add-politica-privacidade-tipo.sql`, idempotente; install.sh 5q).
+- Pagina SSR `/transparencia/politica-privacidade` com principios da LGPD,
+  direitos do titular, identificacao do DPO, base legal e secao de
+  documentos oficiais.
+- Tile na home (secao LGPD) + link no footer.
+
+**K4 — Mapa do Site HTML (RN-178, PNTP 13.5):**
+- Pagina `/transparencia/mapa-do-site` (`force-static`), agrupada em 12
+  secoes por dimensao do PNTP, listando ~120 links publicos. Distinto de
+  `sitemap.xml` (SEO).
+- Link no footer + tile na home.
+
+**K5 — Transmissao de Sessoes (RN-179, PNTP 20.9):**
+- Configuracao em `Configuracao` (6 chaves `transmissao_*`).
+- Service `src/lib/services/transmissao-service.ts` + 2 componentes
+  (`<TransmissaoAoVivo>` SSR e `<TransmissaoBannerClient>` client).
+- API publica `GET /api/transmissao` (devolve so dados de visualizacao,
+  nao expoe embedHtml).
+- Pagina dedicada `/transparencia/transmissao` (SSR, player 16:9).
+- Banner ao vivo na home `/transparencia` (some quando inativa).
+- Admin `/admin/configuracoes/transmissao` + sidebar + cartao em
+  `/admin/configuracoes`.
+
+**K1 — Pesquisa de Satisfacao (RN-175, PNTP 15.6):**
+- 2 modelos Prisma novos: `PesquisaSatisfacao` e `RespostaPesquisaSatisfacao`
+  (FK CASCADE, ipHash SHA-256, sem dados pessoais).
+- Migration `scripts/sql/add-pesquisa-satisfacao.sql` (idempotente,
+  install.sh 5r).
+- Service `src/lib/services/pesquisa-satisfacao-service.ts` com agregacao
+  para 4 tipos (ESCALA_1_5, SIM_NAO, MULTIPLA_ESCOLHA, TEXTO).
+- 4 endpoints:
+  - `/api/pesquisas-satisfacao` (GET publico, POST com auth)
+  - `/api/pesquisas-satisfacao/[id]` (GET/PUT/DELETE)
+  - `/api/pesquisas-satisfacao/[id]/respostas` (POST publico + rate-limit + captcha)
+  - `/api/pesquisas-satisfacao/[id]/resultados` (GET publico, respeita flag `publicaResultados`)
+- 3 paginas publicas:
+  - `/transparencia/pesquisas-satisfacao` (lista ativas + encerradas)
+  - `/transparencia/pesquisas-satisfacao/[id]` (formulario de resposta com 4 tipos de input)
+  - `/transparencia/pesquisas-satisfacao/[id]/resultados` (dashboard agregado anonimo)
+- Admin `/admin/transparencia/pesquisas-satisfacao` (CRUD inline + builder de perguntas).
+- Sidebar admin atualizada.
+
+**Monitor de conformidade:** `/api/admin/conformidade-pntp` expandido de 20 para
+**23 itens** (politicaPrivacidade, pesquisaSatisfacao, transmissaoAtiva).
+
+**Score esperado pos-K:** ≥ 88% (Ouro firme). Proximas fases L → M → N levam ao
+Diamante (≥ 95%).
+
+**Arquivos novos (resumo):**
+- `src/components/transparencia/radar-badge.tsx`
+- `src/components/transparencia/transmissao-ao-vivo.tsx`
+- `src/components/transparencia/transmissao-banner-client.tsx`
+- `src/lib/services/transmissao-service.ts`
+- `src/lib/services/pesquisa-satisfacao-service.ts`
+- `src/app/api/transmissao/route.ts`
+- `src/app/api/pesquisas-satisfacao/route.ts` + `[id]/route.ts` + `[id]/respostas/route.ts` + `[id]/resultados/route.ts`
+- `src/app/transparencia/politica-privacidade/page.tsx`
+- `src/app/transparencia/mapa-do-site/page.tsx`
+- `src/app/transparencia/transmissao/page.tsx`
+- `src/app/transparencia/pesquisas-satisfacao/page.tsx` + `[id]/page.tsx` + `[id]/resultados/page.tsx`
+- `src/app/admin/configuracoes/transmissao/page.tsx`
+- `src/app/admin/transparencia/pesquisas-satisfacao/page.tsx`
+- `scripts/sql/add-politica-privacidade-tipo.sql`
+- `scripts/sql/add-pesquisa-satisfacao.sql`
+
+**RNs novas:** RN-175 a RN-179 (`REGRAS-DE-NEGOCIO.md`).
 
 ---
 

@@ -16,6 +16,12 @@ interface Obra {
   valorEstimado: string | number | null
   valorContratado: string | number | null
   valorExecutado: string | number | null
+  // Fase M (PNTP 10.3)
+  valorPago: string | number | null
+  quantidadeContratada: string | number | null
+  quantidadeExecutada: string | number | null
+  unidadeMedida: string | null
+  dataUltimaMedicao: string | null
   dataInicio: string | null
   dataPrevistaFim: string | null
   dataConclusao: string | null
@@ -127,7 +133,27 @@ export default function ObrasPage() {
                       <div><span className="block">Estimado</span><span className="text-foreground font-medium">{formatBRL(o.valorEstimado)}</span></div>
                       <div><span className="block">Contratado</span><span className="text-foreground font-medium">{formatBRL(o.valorContratado)}</span></div>
                       <div><span className="block">Executado</span><span className="text-foreground font-medium">{formatBRL(o.valorExecutado)}</span></div>
+                      <div><span className="block">Pago</span><span className="text-foreground font-medium">{formatBRL(o.valorPago)}</span></div>
+                      {(o.quantidadeContratada != null || o.quantidadeExecutada != null) && (
+                        <>
+                          <div>
+                            <span className="block">Quantidade contratada</span>
+                            <span className="text-foreground font-medium">
+                              {o.quantidadeContratada != null ? `${Number(o.quantidadeContratada).toLocaleString('pt-BR')} ${o.unidadeMedida || ''}` : '-'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="block">Quantidade executada</span>
+                            <span className="text-foreground font-medium">
+                              {o.quantidadeExecutada != null ? `${Number(o.quantidadeExecutada).toLocaleString('pt-BR')} ${o.unidadeMedida || ''}` : '-'}
+                            </span>
+                          </div>
+                        </>
+                      )}
                       <div><span className="block">Inicio / Previsao</span><span className="text-foreground font-medium">{formatDate(o.dataInicio)} / {formatDate(o.dataPrevistaFim)}</span></div>
+                      {o.dataUltimaMedicao && (
+                        <div><span className="block">Ultima medicao</span><span className="text-foreground font-medium">{formatDate(o.dataUltimaMedicao)}</span></div>
+                      )}
                     </div>
                     {o.percentualExecucao != null && (
                       <div className="mt-3">

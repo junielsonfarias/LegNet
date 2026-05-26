@@ -25,22 +25,22 @@ enum CargoParlamentar {
 }
 
 enum TipoOrador {
-  PEQUENO_EXPEDIENTE    // Pequeno expediente (tempo menor)
-  GRANDE_EXPEDIENTE     // Grande expediente (tempo maior)
-  LIDERANCA             // Pronunciamento de líder de bancada
-  ORDEM_DO_DIA          // Durante discussão da ordem do dia
-  EXPLICACAO_PESSOAL    // Explicação pessoal
-  APARTE                // Aparte durante discurso de outro
-  TRIBUNA_LIVRE         // Tribuna livre/popular
-  COMUNICACAO           // Comunicação breve
+  PEQUENO_EXPEDIENTE // Pequeno expediente (tempo menor)
+  GRANDE_EXPEDIENTE // Grande expediente (tempo maior)
+  LIDERANCA // Pronunciamento de líder de bancada
+  ORDEM_DO_DIA // Durante discussão da ordem do dia
+  EXPLICACAO_PESSOAL // Explicação pessoal
+  APARTE // Aparte durante discurso de outro
+  TRIBUNA_LIVRE // Tribuna livre/popular
+  COMUNICACAO // Comunicação breve
 }
 
 enum StatusOrador {
-  INSCRITO              // Inscrito, aguardando vez
-  FALANDO               // Em uso da palavra
-  CONCLUIDO             // Terminou o pronunciamento
-  DESISTIU              // Desistiu da inscrição
-  TEMPO_ESGOTADO        // Tempo esgotado
+  INSCRITO // Inscrito, aguardando vez
+  FALANDO // Em uso da palavra
+  CONCLUIDO // Terminou o pronunciamento
+  DESISTIU // Desistiu da inscrição
+  TEMPO_ESGOTADO // Tempo esgotado
 }
 
 enum TipoSessao {
@@ -51,18 +51,18 @@ enum TipoSessao {
 }
 
 enum StatusSessao {
-  AGENDADA       // Sessao criada, aguardando convocacao oficial
-  CONVOCADA      // Pauta publicada (>= 48h antes da sessao). RN-043/RN-122.
-  EM_ANDAMENTO   // Sessao iniciada, em curso
-  SUSPENSA       // Suspensa temporariamente
+  AGENDADA // Sessao criada, aguardando convocacao oficial
+  CONVOCADA // Pauta publicada (>= 48h antes da sessao). RN-043/RN-122.
+  EM_ANDAMENTO // Sessao iniciada, em curso
+  SUSPENSA // Suspensa temporariamente
   CONCLUIDA
   CANCELADA
 }
 
 enum StatusAta {
-  PENDENTE            // Ata gerada, aguardando aprovação na próxima sessão
-  APROVADA            // Ata lida e aprovada em sessão
-  REJEITADA           // Ata rejeitada (deve ser refeita)
+  PENDENTE // Ata gerada, aguardando aprovação na próxima sessão
+  APROVADA // Ata lida e aprovada em sessão
+  REJEITADA // Ata rejeitada (deve ser refeita)
 }
 
 enum PautaStatus {
@@ -81,14 +81,14 @@ enum PautaItemStatus {
   RETIRADO
   ADIADO
   CONCLUIDO
-  VISTA             // Pedido de vista - matéria retirada para análise
+  VISTA // Pedido de vista - matéria retirada para análise
 }
 
 enum TipoVotacao {
-  NOMINAL           // Votação nominal - votos individuais são registrados
-  SECRETA           // Votação secreta - apenas totais são registrados
-  SIMBOLICA         // Votação simbólica - mão levantada, sem registro individual
-  LEITURA           // Apenas leitura, sem votação efetiva
+  NOMINAL // Votação nominal - votos individuais são registrados
+  SECRETA // Votação secreta - apenas totais são registrados
+  SIMBOLICA // Votação simbólica - mão levantada, sem registro individual
+  LEITURA // Apenas leitura, sem votação efetiva
 }
 
 enum TipoProposicao {
@@ -105,30 +105,30 @@ enum TipoProposicao {
 enum StatusProposicao {
   APRESENTADA
   EM_TRAMITACAO
-  AGUARDANDO_PAUTA  // Com pareceres, pronta para inclusão na pauta
-  EM_PAUTA          // Incluída na ordem do dia de uma sessão
-  EM_DISCUSSAO      // Em discussão no plenário
-  EM_VOTACAO        // Em processo de votação
+  AGUARDANDO_PAUTA // Com pareceres, pronta para inclusão na pauta
+  EM_PAUTA // Incluída na ordem do dia de uma sessão
+  EM_DISCUSSAO // Em discussão no plenário
+  EM_VOTACAO // Em processo de votação
   APROVADA
   REJEITADA
-  RETIRADA          // Retirada pelo autor antes da votação
-  ADIADA            // Adiada para sessão futura
+  RETIRADA // Retirada pelo autor antes da votação
+  ADIADA // Adiada para sessão futura
   ARQUIVADA
   VETADA
-  SANCIONADA        // Sancionada pelo Executivo
-  PROMULGADA        // Promulgada e publicada
+  SANCIONADA // Sancionada pelo Executivo
+  PROMULGADA // Promulgada e publicada
 }
 
 enum TipoAcaoPauta {
-  LEITURA             // Apenas leitura no Expediente (primeira apresentação)
-  DISCUSSAO           // Discussão sem votação
-  VOTACAO             // Discussão e votação na Ordem do Dia
-  LEITURA_VOTACAO     // Leitura seguida de votação
-  DISCUSSAO_VOTACAO   // Discussão seguida de votação
-  COMUNICADO          // Informes e comunicações
-  HOMENAGEM           // Votos de pesar, aplauso, moções
-  LEITURA_ATA         // Leitura e votação da ata da sessão anterior
-  LEITURA_OFICIO      // Leitura de ofício recebido
+  LEITURA // Apenas leitura no Expediente (primeira apresentação)
+  DISCUSSAO // Discussão sem votação
+  VOTACAO // Discussão e votação na Ordem do Dia
+  LEITURA_VOTACAO // Leitura seguida de votação
+  DISCUSSAO_VOTACAO // Discussão seguida de votação
+  COMUNICADO // Informes e comunicações
+  HOMENAGEM // Votos de pesar, aplauso, moções
+  LEITURA_ATA // Leitura e votação da ata da sessão anterior
+  LEITURA_OFICIO // Leitura de ofício recebido
 }
 
 enum ResultadoVotacao {
@@ -154,24 +154,24 @@ enum TipoVoto {
 }
 
 enum TipoEmenda {
-  ADITIVA           // Acrescenta texto novo
-  MODIFICATIVA      // Altera texto existente
-  SUPRESSIVA        // Remove texto existente
-  SUBSTITUTIVA      // Substitui integralmente o texto
+  ADITIVA // Acrescenta texto novo
+  MODIFICATIVA // Altera texto existente
+  SUPRESSIVA // Remove texto existente
+  SUBSTITUTIVA // Substitui integralmente o texto
   EMENDA_DE_REDACAO // Corrige redacao sem alterar conteudo
-  AGLUTINATIVA      // Une varias emendas em uma
+  AGLUTINATIVA // Une varias emendas em uma
 }
 
 enum StatusEmenda {
-  APRESENTADA       // Emenda apresentada
-  EM_ANALISE        // Em analise pela comissao
-  PARECER_EMITIDO   // Parecer da comissao emitido
-  EM_VOTACAO        // Em votacao no plenario
-  APROVADA          // Aprovada
-  REJEITADA         // Rejeitada
-  PREJUDICADA       // Prejudicada por aprovacao de outra
-  RETIRADA          // Retirada pelo autor
-  INCORPORADA       // Incorporada ao texto (apos aprovacao)
+  APRESENTADA // Emenda apresentada
+  EM_ANALISE // Em analise pela comissao
+  PARECER_EMITIDO // Parecer da comissao emitido
+  EM_VOTACAO // Em votacao no plenario
+  APROVADA // Aprovada
+  REJEITADA // Rejeitada
+  PREJUDICADA // Prejudicada por aprovacao de outra
+  RETIRADA // Retirada pelo autor
+  INCORPORADA // Incorporada ao texto (apos aprovacao)
 }
 
 enum ResultadoEmenda {
@@ -219,11 +219,11 @@ enum StatusReuniaoComissao {
 }
 
 enum TipoItemPautaReuniao {
-  ANALISE_PROPOSICAO      // Analise de proposicao
-  VOTACAO_PARECER         // Votacao de parecer
-  DESIGNACAO_RELATOR      // Designar relator
-  COMUNICACAO             // Comunicado/informe
-  OUTROS                  // Outros assuntos
+  ANALISE_PROPOSICAO // Analise de proposicao
+  VOTACAO_PARECER // Votacao de parecer
+  DESIGNACAO_RELATOR // Designar relator
+  COMUNICACAO // Comunicado/informe
+  OUTROS // Outros assuntos
 }
 
 enum StatusItemPautaReuniao {
@@ -237,10 +237,10 @@ enum StatusItemPautaReuniao {
 }
 
 enum TipoBancada {
-  PARTIDARIA        // Bancada de partido único
-  BLOCO             // Bloco parlamentar (coalizão)
-  GOVERNO           // Base do governo
-  OPOSICAO          // Oposição
+  PARTIDARIA // Bancada de partido único
+  BLOCO // Bloco parlamentar (coalizão)
+  GOVERNO // Base do governo
+  OPOSICAO // Oposição
 }
 
 enum ParticipacaoTipo {
@@ -286,10 +286,10 @@ enum AuditStatus {
 }
 
 enum TramitacaoStatus {
-  RECEBIDA      // Proposição recebida na unidade, aguardando análise
-  EM_ANDAMENTO  // Em análise/tramitação
-  CONCLUIDA     // Finalizada na unidade
-  CANCELADA     // Cancelada
+  RECEBIDA // Proposição recebida na unidade, aguardando análise
+  EM_ANDAMENTO // Em análise/tramitação
+  CONCLUIDA // Finalizada na unidade
+  CANCELADA // Cancelada
 }
 
 enum TramitacaoResultado {
@@ -300,24 +300,24 @@ enum TramitacaoResultado {
 }
 
 enum TramitacaoUnidadeTipo {
-  COMISSAO          // Comissões permanentes e temporárias
-  MESA_DIRETORA     // Mesa Diretora
-  PLENARIO          // Plenário
-  PREFEITURA        // Órgãos do Executivo
-  SECRETARIA        // Secretarias internas (ex: Secretaria Geral)
-  GABINETE          // Gabinetes (Presidente, Vereadores)
-  ARQUIVO           // Setor de Arquivo
-  PROTOCOLO         // Setor de Protocolo
-  ASSESSORIA        // Assessorias (Jurídica, Comunicação, etc.)
-  OUTROS            // Outros órgãos não classificados
+  COMISSAO // Comissões permanentes e temporárias
+  MESA_DIRETORA // Mesa Diretora
+  PLENARIO // Plenário
+  PREFEITURA // Órgãos do Executivo
+  SECRETARIA // Secretarias internas (ex: Secretaria Geral)
+  GABINETE // Gabinetes (Presidente, Vereadores)
+  ARQUIVO // Setor de Arquivo
+  PROTOCOLO // Setor de Protocolo
+  ASSESSORIA // Assessorias (Jurídica, Comunicação, etc.)
+  OUTROS // Outros órgãos não classificados
 }
 
 enum TipoCondicaoEtapa {
-  SEMPRE                    // Etapa obrigatoria (padrao)
-  IMPACTO_FINANCEIRO        // Executar se proposicao tiver impacto financeiro
-  REGIME_URGENCIA           // Executar se proposicao estiver em regime de urgencia
-  REGIME_NORMAL             // Executar apenas em regime normal
-  CAMPO_PERSONALIZADO       // Condicao baseada em campo especifico da proposicao
+  SEMPRE // Etapa obrigatoria (padrao)
+  IMPACTO_FINANCEIRO // Executar se proposicao tiver impacto financeiro
+  REGIME_URGENCIA // Executar se proposicao estiver em regime de urgencia
+  REGIME_NORMAL // Executar apenas em regime normal
+  CAMPO_PERSONALIZADO // Condicao baseada em campo especifico da proposicao
 }
 
 enum ModalidadeLicitacao {
@@ -453,6 +453,10 @@ enum TipoDocumentoTransparencia {
   // Commit J — atos institucionais publicaveis como documento
   PLANO_DADOS_ABERTOS
   REGULAMENTO_OUVIDORIA
+  // Fase K (PNTP 2026 — RN-176): politica de privacidade LGPD publicada formalmente
+  POLITICA_PRIVACIDADE
+  // Fase M (PNTP 2026 — criterio 12.5): instrumento normativo local que regulamenta a LAI
+  REGULAMENTO_LAI
 }
 
 enum SituacaoVeiculo {
@@ -502,31 +506,31 @@ enum TipoParecer {
 }
 
 enum StatusParecer {
-  RASCUNHO                 // Relator esta elaborando
-  AGUARDANDO_PAUTA         // Concluido, aguardando inclusao em pauta de reuniao
-  AGUARDANDO_VOTACAO       // Incluido na pauta, aguardando votacao na comissao
-  APROVADO_COMISSAO        // Aprovado pela comissao
-  REJEITADO_COMISSAO       // Rejeitado pela comissao (volta ao relator)
-  EMITIDO                  // Parecer final emitido
-  ARQUIVADO                // Arquivado (materia arquivada)
+  RASCUNHO // Relator esta elaborando
+  AGUARDANDO_PAUTA // Concluido, aguardando inclusao em pauta de reuniao
+  AGUARDANDO_VOTACAO // Incluido na pauta, aguardando votacao na comissao
+  APROVADO_COMISSAO // Aprovado pela comissao
+  REJEITADO_COMISSAO // Rejeitado pela comissao (volta ao relator)
+  EMITIDO // Parecer final emitido
+  ARQUIVADO // Arquivado (materia arquivada)
 }
 
 enum TipoQuorum {
-  MAIORIA_SIMPLES        // Mais SIMs que NAOs dos presentes
-  MAIORIA_ABSOLUTA       // Mais de 50% do total de membros
-  DOIS_TERCOS            // 2/3 do total de membros
-  TRES_QUINTOS           // 3/5 do total de membros
-  UNANIMIDADE            // 100% dos presentes
+  MAIORIA_SIMPLES // Mais SIMs que NAOs dos presentes
+  MAIORIA_ABSOLUTA // Mais de 50% do total de membros
+  DOIS_TERCOS // 2/3 do total de membros
+  TRES_QUINTOS // 3/5 do total de membros
+  UNANIMIDADE // 100% dos presentes
 }
 
 enum AplicacaoQuorum {
-  INSTALACAO_SESSAO      // Quorum para iniciar sessao
-  VOTACAO_SIMPLES        // Votacao de materias simples
-  VOTACAO_ABSOLUTA       // PLCs, Regimento Interno
-  VOTACAO_QUALIFICADA    // Emendas a Lei Organica, vetos
-  VOTACAO_URGENCIA       // Regime de urgencia
-  VOTACAO_COMISSAO       // Votacao em comissoes
-  DERRUBADA_VETO         // Derrubar veto do Executivo
+  INSTALACAO_SESSAO // Quorum para iniciar sessao
+  VOTACAO_SIMPLES // Votacao de materias simples
+  VOTACAO_ABSOLUTA // PLCs, Regimento Interno
+  VOTACAO_QUALIFICADA // Emendas a Lei Organica, vetos
+  VOTACAO_URGENCIA // Regime de urgencia
+  VOTACAO_COMISSAO // Votacao em comissoes
+  DERRUBADA_VETO // Derrubar veto do Executivo
 }
 
 enum TipoFavorito {
@@ -625,7 +629,7 @@ enum TipoPerguntaConsulta {
   MULTIPLA_ESCOLHA
   ESCOLHA_UNICA
   TEXTO_LIVRE
-  ESCALA           // 1-5, 1-10
+  ESCALA // 1-5, 1-10
   SIM_NAO
 }
 
@@ -712,9 +716,9 @@ enum StatusESIC {
   EM_ANALISE
   RESPONDIDO
   PRORROGADO
-  RECURSO                      // legado / generico
-  RECURSO_PRIMEIRA_INSTANCIA   // LAI Lei 12.527/2011 art. 15: primeiro recurso (10 dias)
-  RECURSO_SEGUNDA_INSTANCIA    // LAI art. 16: segundo recurso (5 dias)
+  RECURSO // legado / generico
+  RECURSO_PRIMEIRA_INSTANCIA // LAI Lei 12.527/2011 art. 15: primeiro recurso (10 dias)
+  RECURSO_SEGUNDA_INSTANCIA // LAI art. 16: segundo recurso (5 dias)
   ARQUIVADO
   NEGADO
 }

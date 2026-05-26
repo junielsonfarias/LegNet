@@ -492,6 +492,62 @@ do_update() {
     log "Migration Commit J aplicada (restos a pagar + tipos institucionais de documento)"
   fi
 
+  # 5q) Fase K (PNTP 2026 - RN-176): tipo POLITICA_PRIVACIDADE em DocumentoTransparencia
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-politica-privacidade-tipo.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-politica-privacidade-tipo.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-politica-privacidade-tipo.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Fase K aplicada (tipo POLITICA_PRIVACIDADE em documentos de transparencia)"
+  fi
+
+  # 5r) Fase K (PNTP 2026 - RN-175): tabelas de Pesquisa de Satisfacao
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-pesquisa-satisfacao.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-pesquisa-satisfacao.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-pesquisa-satisfacao.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Fase K aplicada (Pesquisa de Satisfacao - PNTP 15.6)"
+  fi
+
+  # 5s) Fase L (PNTP 2026 - RN-181): Atas de Adesao a SRP
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-atas-adesao-srp.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-atas-adesao-srp.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-atas-adesao-srp.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Fase L aplicada (Atas de Adesao SRP - PNTP 8.5)"
+  fi
+
+  # 5t) Fase L (PNTP 2026 - criterios 8.3, 8.4): documentos fase interna/externa em licitacoes
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-licitacao-documentos-fase.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-licitacao-documentos-fase.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-licitacao-documentos-fase.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Fase L aplicada (documentos fase interna/externa em licitacoes - PNTP 8.3/8.4)"
+  fi
+
+  # 5u) Fase M (PNTP 2026 - criterio 10.3): campos de execucao fisica e pagamento em obras
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-obra-execucao-fields.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-obra-execucao-fields.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-obra-execucao-fields.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Fase M aplicada (valor pago + quantitativos executados em obras - PNTP 10.3)"
+  fi
+
+  # 5v) Fase M (PNTP 2026 - criterio 12.9): motivo de desclassificacao em DocumentoClassificado
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-motivo-desclassificacao.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-motivo-desclassificacao.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-motivo-desclassificacao.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Fase M aplicada (motivo desclassificacao - PNTP 12.9)"
+  fi
+
+  # 5w) Fase M (PNTP 2026 - criterio 12.5): tipo REGULAMENTO_LAI em DocumentoTransparencia
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-regulamento-lai-tipo.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-regulamento-lai-tipo.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-regulamento-lai-tipo.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Fase M aplicada (tipo REGULAMENTO_LAI - PNTP 12.5)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \

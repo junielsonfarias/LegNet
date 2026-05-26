@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Youtube } from 'lucide-react'
 import { useConfiguracaoInstitucional, formatarEnderecoClient } from '@/lib/hooks/use-configuracao-institucional'
+import { RadarBadge } from '@/components/transparencia/radar-badge'
 
 export function Footer() {
   const { configuracao, legislatura, mesaDiretora } = useConfiguracaoInstitucional()
@@ -156,6 +157,7 @@ export function Footer() {
               <li><Link href="/institucional/lei-organica" className={linkClass}>Lei Organica</Link></li>
               <li><Link href="/institucional/regimento" className={linkClass}>Regimento Interno</Link></li>
               <li><Link href="/institucional/ouvidoria" className={linkClass}>Ouvidoria</Link></li>
+              <li><Link href="/transparencia/politica-privacidade" className={linkClass}>Politica de Privacidade</Link></li>
             </ul>
           </nav>
 
@@ -177,8 +179,9 @@ export function Footer() {
             <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm" role="list">
               <li><Link href="/transparencia/gestao-fiscal" className={linkClass}>Gestao Fiscal</Link></li>
               <li><Link href="/transparencia/leis" className={linkClass}>Leis</Link></li>
-              <li><Link href="/transparencia/decretos" className={linkClass}>Decretos</Link></li>
+              <li><Link href="/transparencia/atos/decretos" className={linkClass}>Decretos</Link></li>
               <li><Link href="/transparencia" className={linkClass}>Portal Completo</Link></li>
+              <li><Link href="/transparencia/mapa-do-site" className={linkClass}>Mapa do Site</Link></li>
             </ul>
           </nav>
         </div>
@@ -211,12 +214,10 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Radar ATRICON */}
+      {/* Radar ATRICON - Programa Nacional de Transparencia Publica (PNTP) */}
       <div className="bg-camara-primary py-1.5 md:py-2">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-xs md:text-sm text-white">
-            <strong>Radar ATRICON</strong> - {nomeCasa}
-          </p>
+          <RadarBadge variant="footer" />
         </div>
       </div>
     </footer>
