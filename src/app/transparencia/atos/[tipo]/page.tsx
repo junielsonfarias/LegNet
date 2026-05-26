@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { ATOS_TIPOS_MAP } from '@/lib/transparencia/atos-tipos'
 
 /**
  * RN-169 — Listagem publica dinamica de documentos administrativos.
@@ -22,7 +23,9 @@ import { TransparenciaPageWrapper } from '@/components/transparencia/transparenc
  * URL: /transparencia/atos/[tipo]
  *
  * Mapeia o slug da URL para um valor do enum TipoPublicacao e lista os
- * registros via /api/publicacoes?tipo=X&publicada=true.
+ * registros via /api/publicacoes?tipo=X&publicada=true. O catalogo de
+ * tipos vive em `src/lib/transparencia/atos-tipos.ts` (compartilhado com
+ * o indice `/transparencia/atos`).
  */
 
 interface Documento {
@@ -44,45 +47,7 @@ interface Publicacao {
   autorNome: string
 }
 
-// slug URL -> { codigo enum, titulo, breve, fonte }
-// fonte default = 'publicacao' (le de /api/publicacoes).
-// fonte 'sessao-ata' (RN-170): le de /api/sessoes/atas-publicadas — ata
-// reside em Sessao.arquivoAtaAssinada, nao em Publicacao.
-type AtoTipoConfig = {
-  codigo: string
-  titulo: string
-  descricao: string
-  fonte?:
-    | 'publicacao'
-    | 'sessao-ata'
-    | 'sessao-pauta'
-    | 'reuniao-comissao-ata'
-    | 'reuniao-comissao-pauta'
-    | 'parecer-comissao'
-    | 'emenda'
-}
-const TIPOS_MAP: Record<string, AtoTipoConfig> = {
-  'portarias': { codigo: 'PORTARIA', titulo: 'Portarias', descricao: 'Portarias administrativas da Câmara Municipal.' },
-  'decretos': { codigo: 'DECRETO', titulo: 'Decretos Legislativos', descricao: 'Decretos legislativos publicados.' },
-  'resolucoes': { codigo: 'RESOLUCAO', titulo: 'Resoluções', descricao: 'Resoluções da Mesa Diretora e do Plenário.' },
-  'atas': { codigo: 'ATA_SESSAO', titulo: 'Atas de Sessão', descricao: 'Atas das sessões plenárias publicadas pela Câmara.', fonte: 'sessao-ata' },
-  'pautas': { codigo: 'PAUTA_SESSAO', titulo: 'Pautas de Sessão', descricao: 'Pautas das sessões plenárias publicadas pela Câmara.', fonte: 'sessao-pauta' },
-  'atos-mesa': { codigo: 'ATO_MESA', titulo: 'Atos da Mesa Diretora', descricao: 'Atos normativos expedidos pela Mesa Diretora.' },
-  'atos-presidencia': { codigo: 'ATO_PRESIDENCIA', titulo: 'Atos da Presidência', descricao: 'Atos expedidos pela Presidência da Câmara.' },
-  'oficios': { codigo: 'OFICIO', titulo: 'Ofícios', descricao: 'Ofícios expedidos pela Câmara Municipal.' },
-  'editais': { codigo: 'EDITAL', titulo: 'Editais', descricao: 'Editais publicados.' },
-  'erratas': { codigo: 'ERRATA', titulo: 'Erratas', descricao: 'Correções e erratas de publicações anteriores.' },
-  'convocacoes': { codigo: 'CONVOCACAO', titulo: 'Convocações', descricao: 'Convocações para sessões e atividades oficiais.' },
-  'comunicados': { codigo: 'COMUNICADO', titulo: 'Comunicados', descricao: 'Comunicados oficiais da Câmara.' },
-  'agendas': { codigo: 'AGENDA', titulo: 'Agendas', descricao: 'Agendas oficiais publicadas.' },
-  // RN-172 — Atas e pautas de reunioes de comissao
-  'atas-comissoes': { codigo: 'ATA_COMISSAO', titulo: 'Atas de Reuniões de Comissões', descricao: 'Atas das reuniões das comissões permanentes e temporárias.', fonte: 'reuniao-comissao-ata' },
-  'pautas-comissoes': { codigo: 'PAUTA_COMISSAO', titulo: 'Pautas de Reuniões de Comissões', descricao: 'Pautas das reuniões das comissões permanentes e temporárias.', fonte: 'reuniao-comissao-pauta' },
-  // RN-173 — Pareceres de comissoes
-  'pareceres-comissoes': { codigo: 'PARECER_COMISSAO', titulo: 'Pareceres de Comissões', descricao: 'Pareceres técnicos emitidos pelas comissões sobre proposições.', fonte: 'parecer-comissao' },
-  // RN-174 — Emendas
-  'emendas': { codigo: 'EMENDA', titulo: 'Emendas', descricao: 'Emendas apresentadas a proposições legislativas.', fonte: 'emenda' },
-}
+const TIPOS_MAP = ATOS_TIPOS_MAP
 
 const TIPO_EMENDA_LABEL: Record<string, string> = {
   ADITIVA: 'Aditiva',

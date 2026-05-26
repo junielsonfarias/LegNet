@@ -65,6 +65,7 @@ const MAPA_DO_SITE: SiteSecao[] = [
     icon: FolderOpen,
     dimensaoPntp: 'Dimensoes 2 e 20',
     links: [
+      { nome: 'Indice de Documentos Administrativos', href: '/transparencia/atos' },
       { nome: 'Leis', href: '/transparencia/leis' },
       { nome: 'Decretos Legislativos', href: '/transparencia/atos/decretos' },
       { nome: 'Resolucoes', href: '/transparencia/atos/resolucoes' },

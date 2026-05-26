@@ -200,7 +200,7 @@ export const GET = withAuth(
     put('2.3', { disponibilidade: true, detalhes: 'Mesa Diretora em /transparencia/mesa-diretora' })
     put('2.4', { disponibilidade: true, detalhes: 'Footer e Configuracao Institucional' })
     put('2.5', { disponibilidade: true, detalhes: 'Pagina /transparencia/institucional/horario-funcionamento' })
-    put('2.6', { disponibilidade: true, detalhes: 'Atos em /transparencia/atos/[tipo] (13 tipos)' })
+    put('2.6', { disponibilidade: true, detalhes: 'Indice /transparencia/atos + 17 tipos em /transparencia/atos/[tipo]' })
     put('2.7', { disponibilidade: faqTotal > 0, detalhes: `${faqTotal} FAQ(s) publicada(s)` })
     put('2.8', { disponibilidade: true, detalhes: 'Footer com redes sociais (quando configuradas)' })
     put('2.9', { disponibilidade: true, detalhes: 'Badge Radar Atricon no hero/footer' })

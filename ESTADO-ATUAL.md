@@ -1,10 +1,44 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-26 (Consolidacao de URLs duplicadas + 4 redirects 308)
-> **Versao**: 1.29.3
+> **Ultima Atualizacao**: 2026-05-26 (Indice /transparencia/atos: 13 sub-itens -> 1 link + filtros)
+> **Versao**: 1.29.4
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-26 — Indice /transparencia/atos: 13 sub-itens da home -> 1 link + filtros
+
+Refatoracao do menu "Documentos Administrativos" da home /transparencia.
+Antes: dropdown com 13 sub-links (poluia o menu). Agora: 1 link unico para
+uma pagina-indice com busca por nome/descricao e cards agrupados por
+categoria.
+
+**Novos arquivos:**
+
+- `src/lib/transparencia/atos-tipos.ts` — catalogo compartilhado dos 17
+  tipos de ato (ATOS_TIPOS_MAP, ATOS_TIPOS_ORDEM, GRUPO_LABEL). Substitui
+  o TIPOS_MAP inline em `/atos/[tipo]/page.tsx`.
+- `src/app/transparencia/atos/page.tsx` — indice publico com search bar,
+  filtro por nome/descricao, e grid de cards agrupados em 4 categorias
+  (normativo, sessao, comissao, proposicao).
+
+**Mudancas:**
+
+- `src/app/transparencia/atos/[tipo]/page.tsx` — TIPOS_MAP local removido,
+  agora importa de `@/lib/transparencia/atos-tipos` (fonte unica).
+- `src/app/transparencia/page.tsx` — bloco "Documentos Administrativos"
+  reduzido de 13 sub-itens para 1 link direto a `/transparencia/atos`.
+- `src/app/transparencia/mapa-do-site/page.tsx` — adicionada entrada
+  "Indice de Documentos Administrativos" no topo da secao "Atos Normativos
+  e Documentos". Links individuais por tipo mantidos (servem ao sitemap).
+- `src/app/sitemap.ts` — `/transparencia/atos` adicionado ao sitemap.xml
+  com priority 0.8 (acima dos /atos/[tipo] individuais).
+- `src/app/api/admin/conformidade-pntp/matriz/route.ts:187` — detalhes do
+  criterio 2.6 atualizado para "Indice + 17 tipos".
+
+`npx tsc --noEmit` passou sem erros.
 
 ---
 
