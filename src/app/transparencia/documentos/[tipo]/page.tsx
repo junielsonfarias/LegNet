@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 interface Doc {
   id: string
@@ -370,6 +371,9 @@ function DocumentosTipoContent({ tipo, config }: { tipo: string; config: TipoCon
           </>
         )}
       </div>
+
+      {/* Links Relacionados (serie historica / sistemas externos) */}
+      <LinksRelacionados slug={`documentos-${tipo}`} />
     </div>
   )
 }

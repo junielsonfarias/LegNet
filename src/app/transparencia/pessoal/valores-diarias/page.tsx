@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plane, ArrowLeft, Loader2, Search } from 'lucide-react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 interface ValorDiaria {
   id: string
@@ -168,6 +169,8 @@ function ValoresDiariasPublicContent() {
             </CardContent>
           </Card>
         )}
+
+        <LinksRelacionados slug="valores-diarias" />
       </div>
     </div>
   )

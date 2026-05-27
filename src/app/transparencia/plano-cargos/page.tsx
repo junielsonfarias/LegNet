@@ -14,6 +14,7 @@ import {
   Users,
 } from 'lucide-react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 import { createLogger } from '@/lib/logging/logger'
 
 const log = createLogger('transparencia/plano-cargos')
@@ -182,6 +183,8 @@ function PlanoCargosContent() {
             )}
           </>
         )}
+
+        <LinksRelacionados slug="plano-cargos" />
       </div>
     </div>
   )

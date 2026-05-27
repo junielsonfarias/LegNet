@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { GraduationCap, Calendar, Users, FileText, Loader2, ExternalLink } from 'lucide-react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 interface Concurso {
   id: string
@@ -152,6 +153,8 @@ function ConcursosPageContent() {
             })}
           </div>
         )}
+
+        <LinksRelacionados slug="concursos" />
       </div>
     </div>
   )

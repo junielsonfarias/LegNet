@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Layers, ArrowLeft, Calendar, Building2, FileText, Download, ExternalLink } from 'lucide-react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 const log = createLogger('transparencia/atas-adesao-srp')
 
@@ -234,6 +235,8 @@ export default async function AtasAdesaoSRPPage() {
             ))}
           </div>
         )}
+
+        <LinksRelacionados slug="atas-adesao-srp" />
       </div>
     </div>
     </TransparenciaPageWrapper>

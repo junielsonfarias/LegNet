@@ -18,6 +18,7 @@ import {
   Settings2,
   ExternalLink,
   Home,
+  Link2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -50,6 +51,23 @@ interface RedirectConfig {
   label?: string
 }
 
+interface LinkRelacionado {
+  id: string
+  label: string
+  url: string
+  externo: boolean
+  ordem: number
+  ativo: boolean
+  descricao?: string
+}
+
+interface ConfigLinksRelacionados {
+  enabled: boolean
+  titulo?: string
+  descricao?: string
+  links: LinkRelacionado[]
+}
+
 type Modo = 'interno' | 'redirect' | 'periodos'
 
 const EMPTY_PERIODOS: ConfigPeriodos = {
@@ -65,12 +83,21 @@ const EMPTY_REDIRECT: RedirectConfig = {
   label: '',
 }
 
+const EMPTY_LINKS: ConfigLinksRelacionados = {
+  enabled: false,
+  titulo: 'Links Relacionados',
+  descricao: '',
+  links: [],
+}
+
 export default function TransparenciaPeriodosPage() {
   const [secaoFiltro, setSecaoFiltro] = useState<SecaoSlug | 'todos'>('todos')
   const [slug, setSlug] = useState<string>(ITENS_TRANSPARENCIA[0].slug)
   const [modo, setModo] = useState<Modo>('interno')
   const [periodos, setPeriodos] = useState<ConfigPeriodos>(EMPTY_PERIODOS)
   const [redirect, setRedirect] = useState<RedirectConfig>(EMPTY_REDIRECT)
+  const [linksRelacionados, setLinksRelacionados] =
+    useState<ConfigLinksRelacionados>(EMPTY_LINKS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -98,16 +125,19 @@ export default function TransparenciaPeriodosPage() {
     const fetchConfig = async () => {
       setLoading(true)
       try {
-        const [redirectRes, periodosRes] = await Promise.all([
+        const [redirectRes, periodosRes, linksRes] = await Promise.all([
           fetch(`/api/transparencia/redirecionamentos?slug=${slug}`),
           fetch(`/api/transparencia/periodos?slug=${slug}`),
+          fetch(`/api/transparencia/links-relacionados?slug=${slug}`),
         ])
 
         const redirectJson = redirectRes.ok ? await redirectRes.json() : null
         const periodosJson = periodosRes.ok ? await periodosRes.json() : null
+        const linksJson = linksRes.ok ? await linksRes.json() : null
 
         const redirectData = redirectJson?.data
         const periodosData = periodosJson?.data
+        const linksData = linksJson?.data
 
         if (redirectData?.enabled && redirectData?.url) {
           setModo('redirect')
@@ -126,10 +156,14 @@ export default function TransparenciaPeriodosPage() {
           setPeriodos(periodosData ?? { ...EMPTY_PERIODOS })
           setRedirect(redirectData ?? { ...EMPTY_REDIRECT })
         }
+
+        // Links Relacionados (independente do modo)
+        setLinksRelacionados(linksData ?? { ...EMPTY_LINKS })
       } catch {
         setModo('interno')
         setPeriodos({ ...EMPTY_PERIODOS })
         setRedirect({ ...EMPTY_REDIRECT })
+        setLinksRelacionados({ ...EMPTY_LINKS })
       } finally {
         setLoading(false)
       }
@@ -250,6 +284,87 @@ export default function TransparenciaPeriodosPage() {
       ...periodos,
       periodos: lista.map((p, i) => ({ ...p, ordem: i })),
     })
+  }
+
+  // ===== Links Relacionados =====
+  const addLink = () => {
+    const novoOrdem = linksRelacionados.links.length
+    setLinksRelacionados({
+      ...linksRelacionados,
+      enabled: true,
+      links: [
+        ...linksRelacionados.links,
+        {
+          id: `link-${Date.now()}`,
+          label: '',
+          url: '',
+          externo: true,
+          ordem: novoOrdem,
+          ativo: true,
+          descricao: '',
+        },
+      ],
+    })
+  }
+
+  const updateLink = (idx: number, updates: Partial<LinkRelacionado>) => {
+    setLinksRelacionados({
+      ...linksRelacionados,
+      links: linksRelacionados.links.map((l, i) => (i === idx ? { ...l, ...updates } : l)),
+    })
+  }
+
+  const removeLink = (idx: number) => {
+    setLinksRelacionados({
+      ...linksRelacionados,
+      links: linksRelacionados.links
+        .filter((_, i) => i !== idx)
+        .map((l, i) => ({ ...l, ordem: i })),
+    })
+  }
+
+  const moveLink = (idx: number, direction: -1 | 1) => {
+    const novaIdx = idx + direction
+    if (novaIdx < 0 || novaIdx >= linksRelacionados.links.length) return
+    const lista = [...linksRelacionados.links]
+    ;[lista[idx], lista[novaIdx]] = [lista[novaIdx], lista[idx]]
+    setLinksRelacionados({
+      ...linksRelacionados,
+      links: lista.map((l, i) => ({ ...l, ordem: i })),
+    })
+  }
+
+  const handleSaveLinks = async () => {
+    // Valida URLs externas (rotas internas comecam com / e nao precisam de validacao URL)
+    const incompletos = linksRelacionados.links.filter((l) => !l.label.trim() || !l.url.trim())
+    if (incompletos.length > 0) {
+      toast.error('Cada link precisa de rotulo e URL/rota preenchidos.')
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/transparencia/links-relacionados', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          enabled: linksRelacionados.enabled,
+          titulo: linksRelacionados.titulo,
+          descricao: linksRelacionados.descricao,
+          links: linksRelacionados.links,
+        }),
+      })
+      if (res.ok) {
+        toast.success('Links relacionados salvos')
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast.error(err?.message || `Erro ao salvar (status ${res.status})`)
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -563,16 +678,204 @@ export default function TransparenciaPeriodosPage() {
         </>
       )}
 
-      <div className="flex justify-end gap-3 pb-8">
+      <div className="flex justify-end gap-3">
         <Button onClick={handleSave} disabled={saving || loading}>
           {saving ? (
             <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
           ) : (
             <Save className="h-4 w-4 mr-1.5" />
           )}
-          Salvar configuracao
+          Salvar modo de exibicao
         </Button>
       </div>
+
+      {/* =================================================================
+            SECAO INDEPENDENTE — Links Relacionados (serie historica /
+            sistemas externos correlatos). Aparece DENTRO da pagina alvo,
+            funciona em qualquer modo de exibicao.
+          ================================================================= */}
+      {!loading && (
+        <>
+          <div className="border-t pt-6 mt-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Link2 className="h-4 w-4" />
+                    Links Relacionados — exibidos DENTRO da pagina
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Use para serie historica (ex: &quot;Consulte ate 2021&quot; em sistema antigo)
+                    ou referencias correlatas. Independe do modo de exibicao escolhido acima.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="links-enabled"
+                    checked={linksRelacionados.enabled}
+                    onCheckedChange={(checked) =>
+                      setLinksRelacionados({ ...linksRelacionados, enabled: checked })
+                    }
+                  />
+                  <Label htmlFor="links-enabled" className="cursor-pointer text-sm">
+                    Exibir
+                  </Label>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="links-titulo">Titulo da secao</Label>
+                    <Input
+                      id="links-titulo"
+                      placeholder="Links Relacionados"
+                      value={linksRelacionados.titulo || ''}
+                      onChange={(e) =>
+                        setLinksRelacionados({ ...linksRelacionados, titulo: e.target.value })
+                      }
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="links-descricao">Descricao (opcional)</Label>
+                    <Input
+                      id="links-descricao"
+                      placeholder="Ex: Acesse o historico anterior a 2026..."
+                      value={linksRelacionados.descricao || ''}
+                      onChange={(e) =>
+                        setLinksRelacionados({ ...linksRelacionados, descricao: e.target.value })
+                      }
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <p className="text-sm text-muted-foreground">
+                    {linksRelacionados.links.length} link(s) cadastrado(s)
+                  </p>
+                  <Button size="sm" onClick={addLink} variant="outline">
+                    <Plus className="h-4 w-4 mr-1" /> Adicionar link
+                  </Button>
+                </div>
+
+                {linksRelacionados.links.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4 border rounded-md bg-muted/30">
+                    Nenhum link cadastrado.
+                  </p>
+                )}
+
+                <div className="space-y-2">
+                  {linksRelacionados.links.map((link, idx) => (
+                    <Card key={link.id} className={link.ativo ? '' : 'opacity-60'}>
+                      <CardContent className="pt-4 space-y-3">
+                        <div className="flex items-start gap-2">
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => moveLink(idx, -1)}
+                              disabled={idx === 0}
+                            >
+                              <ArrowUp className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => moveLink(idx, 1)}
+                              disabled={idx === linksRelacionados.links.length - 1}
+                            >
+                              <ArrowDown className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="md:col-span-2">
+                              <Label className="text-xs">Rotulo</Label>
+                              <Input
+                                placeholder="Ex: Consulte as informacoes ate 2021"
+                                value={link.label}
+                                onChange={(e) => updateLink(idx, { label: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <Label className="text-xs">
+                                URL{link.externo ? ' externa' : ' (interna)'}
+                              </Label>
+                              <Input
+                                placeholder={
+                                  link.externo
+                                    ? 'https://portal-antigo.exemplo.gov.br/2021'
+                                    : '/transparencia/algum-recurso'
+                                }
+                                value={link.url}
+                                onChange={(e) => updateLink(idx, { url: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <Label className="text-xs">Descricao (opcional)</Label>
+                              <Input
+                                placeholder="Texto auxiliar abaixo do rotulo"
+                                value={link.descricao || ''}
+                                onChange={(e) => updateLink(idx, { descricao: e.target.value })}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Switch
+                                id={`externo-${link.id}`}
+                                checked={link.externo}
+                                onCheckedChange={(checked) => updateLink(idx, { externo: checked })}
+                              />
+                              <Label htmlFor={`externo-${link.id}`} className="text-xs cursor-pointer">
+                                Link externo (abre em nova aba)
+                              </Label>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Switch
+                                id={`ativo-link-${link.id}`}
+                                checked={link.ativo}
+                                onCheckedChange={(checked) => updateLink(idx, { ativo: checked })}
+                              />
+                              <Label htmlFor={`ativo-link-${link.id}`} className="text-xs cursor-pointer">
+                                Ativo
+                              </Label>
+                            </div>
+                          </div>
+
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => removeLink(idx)}
+                            className="text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex justify-end gap-3 pb-8">
+            <Button onClick={handleSaveLinks} disabled={saving || loading} variant="secondary">
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+              ) : (
+                <Save className="h-4 w-4 mr-1.5" />
+              )}
+              Salvar Links Relacionados
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

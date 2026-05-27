@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { maskCpfOrCnpj } from '@/lib/security/cpf-utils'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 import { RestosPagarCliente, type RestoPagarPublico } from './restos-pagar-cliente'
 
 const log = createLogger('transparencia/restos-pagar')
@@ -45,6 +46,9 @@ export default async function RestosPagarPublicPage() {
   return (
     <TransparenciaPageWrapper slug="restos-pagar" nome="Restos a Pagar">
       <RestosPagarCliente data={registros} />
+      <div className="container mx-auto px-4">
+        <LinksRelacionados slug="restos-pagar" />
+      </div>
     </TransparenciaPageWrapper>
   )
 }

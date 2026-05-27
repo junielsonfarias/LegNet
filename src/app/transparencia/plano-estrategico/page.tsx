@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 export const dynamic = 'force-dynamic'
 
@@ -162,6 +163,8 @@ export default function PlanoEstrategicoPage() {
             tipo="PLANEJAMENTO_ESTRATEGICO"
             titulo="Documentos do Planejamento Estrategico"
           />
+
+          <LinksRelacionados slug="plano-estrategico" />
         </div>
       </div>
     </div>

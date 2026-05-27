@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 export const dynamic = 'force-dynamic'
 
@@ -152,6 +153,8 @@ export default function PlanoContratacoesAnualPage() {
               </ul>
             </CardContent>
           </Card>
+
+          <LinksRelacionados slug="plano-contratacoes-anual" />
         </div>
       </div>
     </div>

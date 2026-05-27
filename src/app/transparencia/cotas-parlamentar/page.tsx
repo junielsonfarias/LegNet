@@ -13,6 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
 } from '@/components/ui/dialog'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 interface Documento {
   nome: string
@@ -355,6 +356,9 @@ export default function CotasParlamentarPublicPage() {
             </>
           )}
         </div>
+
+        {/* Links Relacionados (serie historica / sistemas externos) */}
+        <LinksRelacionados slug="cotas-parlamentar" />
       </div>
     </TransparenciaPageWrapper>
   )

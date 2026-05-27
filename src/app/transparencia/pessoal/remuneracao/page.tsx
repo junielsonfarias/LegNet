@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table'
 import { DollarSign, Lock } from 'lucide-react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,6 +106,10 @@ export default async function RemuneracaoPage() {
             )}
           </CardContent>
         </Card>
+
+        <div className="mt-4">
+          <LinksRelacionados slug="relacao-remuneracao" />
+        </div>
       </div>
     </div>
     </TransparenciaPageWrapper>

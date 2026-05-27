@@ -1,10 +1,83 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (RGF e 17 tipos de documento no padrão tabela Cotas)
-> **Versao**: 1.30.4
+> **Ultima Atualizacao**: 2026-05-27 (Componente Links Relacionados — série histórica dentro das páginas)
+> **Versao**: 1.30.5
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Componente Links Relacionados (série histórica dentro das páginas)
+
+Nova seção opcional "Links Relacionados" que aparece DENTRO das páginas de
+transparência (não substitui nem redireciona — é uma seção auxiliar no rodapé
+do conteúdo). Permite ao gestor cadastrar links como "Consulte até 2021"
+apontando para sistema antigo, "Consulte até 2025" outro link, "Veja o
+regulamento" etc.
+
+**Diferença em relação aos 3 modos do menu:**
+
+| Recurso | Onde aparece | Para que serve |
+|---------|--------------|----------------|
+| `interno` (default) | Menu | Rota padrão do sistema |
+| `redirect` | Menu + página interna | Item vira link externo direto |
+| `periodos` | Menu (expandível) + página interna (tela de seleção) | Substitui página por escolha de período |
+| **`Links Relacionados` (novo)** | **DENTRO da página** | **Seção auxiliar — coexiste com qualquer modo** |
+
+**Novos arquivos:**
+
+- `src/lib/services/transparencia-redirect-service.ts` — adicionados métodos
+  `getLinksRelacionados`, `setLinksRelacionados`, `getAllLinksRelacionados`,
+  `removeLinksRelacionados`. Storage: `Configuracao.chave =
+  transparencia.linksRelacionados.<slug>`.
+- `src/app/api/transparencia/links-relacionados/route.ts` — GET público
+  (com ou sem `?slug=...`), POST/DELETE com permissão `config.manage`.
+  Invalida `revalidateTag` no save.
+- `src/components/transparencia/links-relacionados.tsx` — client component
+  `<LinksRelacionados slug="...">` que renderiza zero quando não há config
+  ou config tem `enabled=false`.
+
+**Admin estendido:**
+
+- `src/app/admin/configuracoes/transparencia-periodos/page.tsx` — nova seção
+  "Links Relacionados" após o card do modo de exibição, SEPARADA do save
+  do modo. Tem botão próprio "Salvar Links Relacionados". Permite cadastrar
+  N links com: rótulo, URL (externa ou rota interna), descrição opcional,
+  toggle externo/interno, toggle ativo, reordenação por setas. Validação
+  client-side antes do submit.
+
+**Aplicado em 12 páginas:**
+
+- `/transparencia/cotas-parlamentar`
+- `/transparencia/documentos/[tipo]` (17 tipos via slug dinâmico
+  `documentos-${tipo}`)
+- `/transparencia/restos-pagar`
+- `/transparencia/cargos`
+- `/transparencia/atas-adesao-srp`
+- `/transparencia/plano-cargos`
+- `/transparencia/plano-contratacoes-anual`
+- `/transparencia/plano-estrategico`
+- `/transparencia/pessoal/concursos`
+- `/transparencia/pessoal/diarias`
+- `/transparencia/pessoal/valores-diarias`
+- `/transparencia/pessoal/remuneracao`
+
+**Uso prático:**
+
+1. Admin acessa `/admin/configuracoes/transparencia-periodos`
+2. Seleciona o item (ex: "Relatório de Gestão Fiscal (RGF)" via slug
+   `documentos-rgf`)
+3. Rola até a seção "Links Relacionados" (independe do modo escolhido)
+4. Liga o toggle "Exibir"
+5. Adiciona link "Consulte as informações até 2021" com URL externa
+   `https://portal-antigo.exemplo.gov.br/rgf/2021`
+6. Adiciona segundo link "Consulte as informações até 2025" com outra URL
+7. Salva (botão "Salvar Links Relacionados")
+8. Na página pública `/transparencia/documentos/rgf`, a seção aparece no
+   rodapé do conteúdo com os 2 links clicáveis e ícone de link externo
+
+`npx tsc --noEmit` passou sem erros.
 
 ---
 

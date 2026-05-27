@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/table'
 import { Plane, Loader2 } from 'lucide-react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 interface Diaria {
   id: string
@@ -164,6 +165,10 @@ function DiariasPageContent() {
             )}
           </CardContent>
         </Card>
+
+        <div className="mt-4">
+          <LinksRelacionados slug="diarias" />
+        </div>
       </div>
     </div>
   )

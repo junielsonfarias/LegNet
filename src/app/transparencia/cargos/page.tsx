@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Briefcase, ArrowLeft, Loader2, Search } from 'lucide-react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
+import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
 interface Cargo {
   id: string
@@ -173,6 +174,8 @@ function CargosContent() {
             </CardContent>
           </Card>
         )}
+
+        <LinksRelacionados slug="cargos" />
       </div>
     </div>
   )

@@ -17,6 +17,7 @@ export interface TransparenciaRedirect {
 
 const CONFIG_PREFIX = 'transparencia.redirect.'
 const PERIODOS_PREFIX = 'transparencia.periodos.'
+const LINKS_RELACIONADOS_PREFIX = 'transparencia.linksRelacionados.'
 
 export interface PeriodoTransparencia {
   id: string             // ex: "ate-2021", "2024", "interno-2025"
@@ -33,6 +34,23 @@ export interface ConfiguracaoPeriodos {
   titulo?: string               // ex: "Selecione o periodo"
   descricao?: string
   periodos: PeriodoTransparencia[]
+}
+
+export interface LinkRelacionado {
+  id: string                    // ex: "ate-2021"
+  label: string                 // "Consulte as informacoes ate 2021"
+  url: string                   // pode ser URL externa OU rota interna
+  externo: boolean              // se true, abre em nova aba
+  ordem: number
+  ativo: boolean
+  descricao?: string            // texto opcional abaixo do titulo
+}
+
+export interface ConfiguracaoLinksRelacionados {
+  enabled: boolean              // se false, nada e renderizado mesmo com links cadastrados
+  titulo?: string               // padrao "Links Relacionados"
+  descricao?: string
+  links: LinkRelacionado[]
 }
 
 // Todas as categorias de transparência disponíveis
@@ -207,6 +225,68 @@ export const transparenciaRedirectService = {
   async removePeriodos(slug: string): Promise<void> {
     await prisma.configuracao.deleteMany({
       where: { chave: `${PERIODOS_PREFIX}${slug}` }
+    })
+  },
+
+  // ==========================================================================
+  // LINKS RELACIONADOS — seção opcional renderizada DENTRO da pagina
+  // (diferente de periodos, que substitui a pagina por uma tela de selecao).
+  // Ex: cards "Consulte ate 2021" + "Consulte ate 2025" no rodape da pagina
+  // de RGF, apontando para sistemas antigos.
+  // ==========================================================================
+
+  async getLinksRelacionados(slug: string): Promise<ConfiguracaoLinksRelacionados | null> {
+    const config = await prisma.configuracao.findUnique({
+      where: { chave: `${LINKS_RELACIONADOS_PREFIX}${slug}` },
+    })
+    if (!config) return null
+    try {
+      return JSON.parse(config.valor) as ConfiguracaoLinksRelacionados
+    } catch {
+      return null
+    }
+  },
+
+  async setLinksRelacionados(
+    slug: string,
+    data: ConfiguracaoLinksRelacionados,
+  ): Promise<ConfiguracaoLinksRelacionados> {
+    const chave = `${LINKS_RELACIONADOS_PREFIX}${slug}`
+    const valor = JSON.stringify(data)
+    await prisma.configuracao.upsert({
+      where: { chave },
+      update: { valor },
+      create: {
+        chave,
+        valor,
+        descricao: `Links Relacionados: ${slug}`,
+        categoria: 'Transparência',
+        tipo: 'json',
+        editavel: true,
+      },
+    })
+    return data
+  },
+
+  async getAllLinksRelacionados(): Promise<Record<string, ConfiguracaoLinksRelacionados>> {
+    const configs = await prisma.configuracao.findMany({
+      where: { chave: { startsWith: LINKS_RELACIONADOS_PREFIX } },
+    })
+    const result: Record<string, ConfiguracaoLinksRelacionados> = {}
+    for (const c of configs) {
+      const slug = c.chave.replace(LINKS_RELACIONADOS_PREFIX, '')
+      try {
+        result[slug] = JSON.parse(c.valor) as ConfiguracaoLinksRelacionados
+      } catch {
+        // skip
+      }
+    }
+    return result
+  },
+
+  async removeLinksRelacionados(slug: string): Promise<void> {
+    await prisma.configuracao.deleteMany({
+      where: { chave: `${LINKS_RELACIONADOS_PREFIX}${slug}` },
     })
   },
 
