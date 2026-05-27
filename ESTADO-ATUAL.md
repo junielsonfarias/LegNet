@@ -1,10 +1,58 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Plano de Cargos + cobertura TransparenciaPageWrapper em 28 páginas adicionais)
-> **Versao**: 1.30.3
+> **Ultima Atualizacao**: 2026-05-27 (RGF e 17 tipos de documento no padrão tabela Cotas)
+> **Versao**: 1.30.4
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Padrão Cotas (tabela) aplicado a RGF e 16 outros tipos
+
+A página `/transparencia/documentos/[tipo]` (compartilhada por 17 tipos) foi
+refatorada para o mesmo padrão visual de `/transparencia/cotas-parlamentar`:
+tabela com filtros, paginação, exportação CSV e botão de regulamentação no
+topo. Cada documento individual pode ter 2 origens: arquivo interno (upload
+PDF) ou URL externa direta (sistema legado/portal terceiro).
+
+**Novo arquivo:**
+
+- `docs/PADRAO-TABELA-DOCUMENTOS.md` — referência completa do padrão, lista
+  de tipos cobertos, regulamentação por tipo, e mapa de onde mais aplicar.
+
+**Página refatorada:**
+
+- `src/app/transparencia/documentos/[tipo]/page.tsx` — antes mostrava cards
+  com botões "Baixar" e "Acessar". Agora apresenta:
+  - Header com breadcrumb (Home > Portal > Página)
+  - Botão "Regulamentação" (conforme tipo: LRF para RGF/LDO/LOA, Lei 14.133
+    para PCA, Art. 165 CF para PPA, etc.)
+  - Botão "Exportar Dados" (CSV)
+  - Filtros: Ano inicial, Ano final, Buscar no título
+  - Tabela: Período | Ano | Título | Descrição | Documento
+  - Coluna "Documento": ícone diferente para interno (📁 FolderOpen) vs
+    externo (🌐 ExternalLink)
+  - Paginação (10 itens por página)
+  - Mantém `TransparenciaPageWrapper` (admin pode configurar redirect/períodos)
+
+**Tipos cobertos automaticamente pela refatoração:**
+
+balancete-financeiro, balanco-anual, parecer-tcm, julgamento-contas,
+planejamento-estrategico, carta-servicos, lgpd, plano-anual-contratacoes,
+relatorio-gestao, **rgf**, ldo, loa, ppa, plano-dados-abertos,
+regulamento-ouvidoria, politica-privacidade, regulamento-lai.
+
+**Admin de documentos (validado):**
+
+`/admin/transparencia/documentos` já oferecia os 2 campos:
+- `arquivo` (URL/path interno) — para PDF hospedado em `/uploads/`
+- `url` (URL externa) — para link em sistema legado/portal terceiro
+
+Validação no submit exige pelo menos 1 dos 2 (mensagem: "Informe um arquivo
+OU uma URL externa").
+
+`npx tsc --noEmit` passou sem erros.
 
 ---
 
