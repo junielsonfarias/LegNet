@@ -1,10 +1,41 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-26 (Indice /transparencia/atos: 13 sub-itens -> 1 link + filtros)
-> **Versao**: 1.29.4
+> **Ultima Atualizacao**: 2026-05-27 (Matriz de Conformidade PNTP 2026 — auditoria critério x link)
+> **Versao**: 1.29.5
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Matriz de Conformidade PNTP 2026 (auditoria critério x link)
+
+Auditoria completa cruzando os 83 critérios oficiais da Cartilha PNTP 2026
+(Atricon — 4ª Edição) com as páginas implantadas em `src/app/transparencia/**`.
+
+**Novo arquivo:**
+
+- `docs/PNTP/CONFORMIDADE-LINKS-2026.md` — matriz definitiva com URL específico
+  por critério, status (✅ pronto / ⚙️ depende de dado / 📋 declaração de
+  não-ocorrência habilitada), pesos de cada dimensão, lista de essenciais
+  bloqueadores do selo Diamante e plano de ação para 100% de conformidade.
+
+**Resultado da auditoria:**
+
+- 83/83 critérios com infraestrutura completa (páginas implementadas).
+- 31 critérios ✅ totalmente conformes (dados + página + acessibilidade).
+- 43 critérios ⚙️ aguardando dados populados pela administração (Receita,
+  Despesa, Concursos, Convênios, Licitações, Contratos, Obras, Diárias etc.).
+- 9 critérios 📋 com declaração de não-ocorrência ativada (8.7, 10.1-10.4,
+  12.8, 12.9) — cartilha p.45 considera disponibilidade atendida.
+
+**Critérios essenciais (bloqueadores Diamante):** 3.1, 4.1, 4.2, 4.3 dependem
+do cron SIAFI ou cadastro manual de Receita/Despesa. 11.5 (RGF) está
+publicado conforme commit `e6914bf`.
+
+**Validação automática:** endpoint `GET /api/admin/conformidade-pntp/matriz`
+retorna pontuação ponderada (peso dim × peso class × pontuação critério)
+seguindo a metodologia oficial Atricon.
 
 ---
 
