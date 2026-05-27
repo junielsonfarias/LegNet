@@ -2,15 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import {
-  FileText, Users, Building2, DollarSign, Shield, BookOpen, Scale,
-  CheckCircle2, FileCheck, FolderOpen, MessageSquare, HelpCircle,
-  Mail, Phone, MapPin, TrendingUp, BarChart3, Activity,
-  Globe, Briefcase, ChevronRight, Loader2, Landmark, Receipt,
-  Gavel, UserCheck, Clock, Search, Vote, Handshake, ScrollText,
-  FileSearch, CreditCard, CalendarDays, ExternalLink, Car, HardHat,
-  GraduationCap, ClipboardList, PieChart, Wallet, Banknote, FileBarChart,
-  Lock, Database, Megaphone, Calendar, FileSignature, UserPlus, FileQuestion,
-  Truck
+  Shield, MessageSquare, FileSearch, Globe, FolderOpen, MapPin, Phone, Mail,
+  Clock, Building2, Activity, Users, Loader2, Scale, BookOpen, DollarSign,
+  FileText, Gavel, ScrollText, ClipboardList, CheckCircle2,
+  ChevronRight, ExternalLink,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -19,206 +14,10 @@ import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs';
 import { createLogger } from '@/lib/logging/logger';
 import { RadarBadge } from '@/components/transparencia/radar-badge';
 import { TransmissaoBannerClient } from '@/components/transparencia/transmissao-banner-client';
+import { getIcone } from '@/lib/transparencia/itens-icones';
+import type { ItemResolvido, MenuResolvido } from '@/lib/transparencia/itens-catalogo';
 
 const log = createLogger('transparencia');
-
-type TransparenciaSubItem = {
-  nome: string;
-  href?: string;
-  externalUrl?: string;
-};
-
-type TransparenciaItem = {
-  nome: string;
-  icon: LucideIcon;
-  href?: string;
-  externalUrl?: string;
-  subItens?: TransparenciaSubItem[];
-  // Slug que liga este item a uma categoria configuravel em
-  // /admin/configuracoes/transparencia-periodos. Quando houver config ativa
-  // no DB, os subItens hardcoded sao substituidos pelos periodos configurados.
-  slug?: string;
-};
-
-type PeriodoDb = {
-  id: string;
-  label: string;
-  url?: string;
-  hrefInterno?: string;
-  ano?: number | null;
-  ordem: number;
-  ativo: boolean;
-};
-
-type ConfigPeriodosDb = {
-  enabled: boolean;
-  titulo?: string;
-  descricao?: string;
-  periodos: PeriodoDb[];
-};
-
-type TransparenciaSecao = {
-  titulo: string;
-  subtitulo: string;
-  icon: LucideIcon;
-  itens: TransparenciaItem[];
-};
-
-// Estrutura do portal da transparencia. Itens com `href` usam rota interna;
-// itens com `externalUrl` abrem uma URL externa em nova aba (ex.: overlay de periodos).
-const SECOES_TRANSPARENCIA: TransparenciaSecao[] = [
-  {
-    titulo: 'Informacoes Institucionais',
-    subtitulo: 'Estrutura, parlamentares e funcionamento',
-    icon: Building2,
-    itens: [
-      { nome: 'Estrutura Organizacional', icon: Activity, href: '/transparencia/institucional/organograma' },
-      { nome: 'Legislaturas', icon: Calendar, href: '/transparencia/legislaturas' },
-      { nome: 'Parlamentares', icon: Users, href: '/parlamentares' },
-      { nome: 'Mesa Diretora', icon: UserCheck, href: '/transparencia/mesa-diretora' },
-      { nome: 'Agenda Externa', icon: CalendarDays, href: '/transparencia/agenda-parlamentar' },
-      {
-        nome: 'Comissoes',
-        icon: Briefcase,
-        subItens: [
-          { nome: 'Comissões e Membros', href: '/legislativo/comissoes' },
-          { nome: 'Atas de Reuniões', href: '/transparencia/atos/atas-comissoes' },
-          { nome: 'Pautas de Reuniões', href: '/transparencia/atos/pautas-comissoes' },
-          { nome: 'Pareceres', href: '/transparencia/atos/pareceres-comissoes' },
-        ],
-      },
-      { nome: 'Perguntas Frequentes', icon: HelpCircle, href: '/transparencia/faq' },
-      { nome: 'Mapa do Site', icon: Globe, href: '/transparencia/mapa-do-site' },
-      { nome: 'Pesquisa de Conteudo', icon: Search, href: '/transparencia/busca' },
-      { nome: 'Legislacao Tributaria e Codigos de Postura', icon: Scale, href: '/legislativo/normas' },
-    ],
-  },
-  {
-    titulo: 'Atividades do Legislativo',
-    subtitulo: 'Documentos, materias e sessoes',
-    icon: FolderOpen,
-    itens: [
-      { nome: 'Documentos Administrativos', icon: FileText, href: '/transparencia/atos' },
-      { nome: 'Materias Legislativas', icon: ScrollText, href: '/legislativo' },
-      { nome: 'Emendas', icon: FileSignature, href: '/transparencia/atos/emendas' },
-      { nome: 'Sessoes', icon: ClipboardList, href: '/legislativo/pautas-sessoes' },
-      { nome: 'Pautas das Comissoes', icon: Briefcase, href: '/transparencia/legislativo/pautas-comissoes' },
-      { nome: 'Transmissao das Sessoes', icon: Megaphone, href: '/transparencia/transmissao' },
-      { nome: 'Normas Juridicas', icon: Gavel, href: '/legislativo/normas' },
-    ],
-  },
-  {
-    titulo: 'Receitas e Despesas',
-    subtitulo: 'Execucao orcamentaria e financeira',
-    icon: DollarSign,
-    itens: [
-      { nome: 'Receitas', icon: TrendingUp, href: '/transparencia/receitas', slug: 'receitas' },
-      { nome: 'Despesas', icon: CreditCard, href: '/transparencia/despesas', slug: 'despesas' },
-      { nome: 'Repasses', icon: Banknote, href: '/transparencia/repasses', slug: 'repasses' },
-      { nome: 'Programas e Acoes', icon: ClipboardList, href: '/transparencia/programas-acoes', slug: 'programas-acoes' },
-      { nome: 'Gastos com Cartao de Credito', icon: CreditCard, href: '/transparencia/cartoes-corporativos', slug: 'cartao-credito' },
-      { nome: 'Notas Fiscais Liquidadas', icon: Receipt, href: '/transparencia/notas-fiscais', slug: 'notas-fiscais' },
-      { nome: 'Cotas para Exercicio da Atividade Parlamentar', icon: Wallet, href: '/transparencia/cotas-parlamentar', slug: 'cotas-parlamentar' },
-      { nome: 'Ordem Cronologica de Pagamentos', icon: Clock, href: '/transparencia/ordem-pagamentos', slug: 'ordem-pagamentos' },
-      { nome: 'Restos a Pagar', icon: Banknote, href: '/transparencia/restos-pagar' },
-    ],
-  },
-  {
-    titulo: 'Recursos Humanos',
-    subtitulo: 'Servidores, cargos e diarias',
-    icon: UserCheck,
-    itens: [
-      { nome: 'Relacao Nominal de Remuneracao', icon: Users, href: '/transparencia/pessoal/remuneracao' },
-      { nome: 'Relacao de Cargos e Remuneracao', icon: Briefcase, href: '/transparencia/cargos' },
-      { nome: 'Relacao de Estagiarios', icon: GraduationCap, href: '/transparencia/pessoal/estagiarios' },
-      { nome: 'Relacao de Prestadores de Servicos Terceirizados', icon: UserPlus, href: '/transparencia/pessoal/terceirizados' },
-      { nome: 'Concursos e Processos Seletivos', icon: FileCheck, href: '/transparencia/pessoal/concursos' },
-      { nome: 'Diarias', icon: CalendarDays, href: '/transparencia/pessoal/diarias', slug: 'diarias' },
-      { nome: 'Tabela com os Valores das Diarias', icon: FileBarChart, href: '/transparencia/pessoal/valores-diarias' },
-      { nome: 'Folha de Pagamento', icon: Wallet, href: '/transparencia/folha-pagamento', slug: 'folha-pagamento' },
-    ],
-  },
-  {
-    titulo: 'Licitacoes, Contratos, Convenios e Obras',
-    subtitulo: 'Contratacoes publicas e transferencias',
-    icon: Search,
-    itens: [
-      { nome: 'Licitacoes', icon: Search, href: '/transparencia/licitacoes', slug: 'licitacoes' },
-      { nome: 'Aviso de Licitacao', icon: Megaphone, href: '/transparencia/licitacoes?aviso=true' },
-      { nome: 'Contratos', icon: FileSignature, href: '/transparencia/contratos', slug: 'contratos' },
-      { nome: 'Atas de Adesao a SRP', icon: FileText, href: '/transparencia/atas-adesao-srp' },
-      { nome: 'Plano Anual de Contratacoes', icon: ClipboardList, href: '/transparencia/plano-contratacoes-anual' },
-      { nome: 'Licitantes/Contratados Sancionados Administrativamente', icon: Shield, href: '/transparencia/fornecedores-sancionados' },
-      { nome: 'Cadastro de Fornecedores', icon: Database, href: '/transparencia/fornecedores' },
-      { nome: 'Convenios / Transferencias Voluntarias', icon: Handshake, href: '/transparencia/convenios', slug: 'convenios' },
-      { nome: 'Obras', icon: HardHat, href: '/transparencia/obras', slug: 'obras' },
-      { nome: 'Obras Paralisadas', icon: HardHat, href: '/transparencia/obras?situacao=PARALISADA' },
-    ],
-  },
-  {
-    titulo: 'Patrimonio',
-    subtitulo: 'Bens moveis, imoveis e veiculos',
-    icon: Landmark,
-    itens: [
-      { nome: 'Bens Moveis', icon: Briefcase, href: '/transparencia/bens-moveis' },
-      { nome: 'Bens Imoveis', icon: Building2, href: '/transparencia/bens-imoveis' },
-      { nome: 'Veiculos', icon: Truck, href: '/transparencia/veiculos', slug: 'veiculos' },
-    ],
-  },
-  {
-    titulo: 'Planejamento e Prestacao de Contas',
-    subtitulo: 'Orcamento, balancos e gestao fiscal',
-    icon: PieChart,
-    itens: [
-      { nome: 'Balancete Financeiro', icon: FileBarChart, href: '/transparencia/documentos/balancete-financeiro' },
-      { nome: 'Balanco e Relatorios Anuais', icon: BarChart3, href: '/transparencia/documentos/balanco-anual' },
-      {
-        nome: 'LDO, LOA e PPA',
-        icon: FileText,
-        subItens: [
-          { nome: 'LDO - Lei de Diretrizes Orcamentarias', href: '/transparencia/documentos/ldo' },
-          { nome: 'LOA - Lei Orcamentaria Anual', href: '/transparencia/documentos/loa' },
-          { nome: 'PPA - Plano Plurianual', href: '/transparencia/documentos/ppa' },
-        ],
-      },
-      { nome: 'Parecer do Tribunal de Contas', icon: Gavel, href: '/transparencia/documentos/parecer-tcm' },
-      { nome: 'Julgamento das Contas do Executivo pelo Legislativo', icon: Scale, href: '/transparencia/documentos/julgamento-contas' },
-      { nome: 'Relatorio de Gestao Fiscal - RGF', icon: BarChart3, href: '/transparencia/documentos/rgf' },
-      { nome: 'Planejamento Estrategico', icon: TrendingUp, href: '/transparencia/plano-estrategico' },
-    ],
-  },
-  {
-    titulo: 'Ouvidoria / Servico de Informacao ao Cidadao',
-    subtitulo: 'Canais de atendimento e manifestacoes',
-    icon: MessageSquare,
-    itens: [
-      { nome: 'Ouvidoria', icon: MessageSquare, href: '/institucional/ouvidoria' },
-      { nome: 'Servico de Informacao ao Cidadao (e-SIC)', icon: FileSearch, href: '/institucional/e-sic' },
-      { nome: 'Estatisticas do e-SIC', icon: BarChart3, href: '/transparencia/e-sic/estatisticas' },
-      { nome: 'Marco Normativo da LAI', icon: Scale, href: '/transparencia/e-sic/normativa' },
-      { nome: 'Consultar Manifestacoes', icon: Search, href: '/institucional/ouvidoria/acompanhar' },
-      { nome: 'Manifestacoes Realizadas', icon: FileQuestion, href: '/transparencia/ouvidoria/manifestacoes' },
-      { nome: 'Relatorios Estatisticos da Ouvidoria', icon: BarChart3, href: '/transparencia/ouvidoria/estatisticas' },
-      { nome: 'Regulamentacao', icon: BookOpen, href: '/transparencia/ouvidoria/regulamentacao' },
-      { nome: 'Informacoes Classificadas (LAI)', icon: Lock, href: '/transparencia/informacoes-classificadas' },
-    ],
-  },
-  {
-    titulo: 'LGPD e Governo Digital',
-    subtitulo: 'Protecao de dados e servicos digitais',
-    icon: Shield,
-    itens: [
-      { nome: 'LGPD e Governo Digital', icon: Shield, href: '/transparencia/documentos/lgpd' },
-      { nome: 'Politica de Privacidade', icon: Lock, href: '/transparencia/politica-privacidade' },
-      { nome: 'Encarregado de Dados (DPO)', icon: UserCheck, href: '/transparencia/encarregado-dados' },
-      { nome: 'Dados Abertos', icon: Database, href: '/transparencia/dados-abertos' },
-      { nome: 'Plano de Dados Abertos', icon: FileText, href: '/transparencia/plano-dados-abertos' },
-      { nome: 'Servico Online', icon: Globe, href: '/transparencia/servicos-online' },
-      { nome: 'Carta de Servicos ao Usuario', icon: ScrollText, href: '/transparencia/documentos/carta-servicos' },
-      { nome: 'Pesquisas de Satisfacao', icon: CheckCircle2, href: '/transparencia/pesquisas-satisfacao' },
-    ],
-  },
-];
 
 interface ConfiguracaoInstitucional {
   nome: string;
@@ -239,25 +38,25 @@ interface ConfiguracaoInstitucional {
 
 export default function TransparenciaPage() {
   const [dados, setDados] = useState<{ configuracao: ConfiguracaoInstitucional | null } | null>(null);
+  const [menu, setMenu] = useState<MenuResolvido | null>(null);
   const [loading, setLoading] = useState(true);
-  const [periodosConfig, setPeriodosConfig] = useState<Record<string, ConfigPeriodosDb>>({});
   const breadcrumbs = useBreadcrumbs();
 
   useEffect(() => {
     const fetchDados = async () => {
       try {
-        const [institRes, periodosRes] = await Promise.all([
+        const [institRes, menuRes] = await Promise.all([
           fetch('/api/institucional'),
-          fetch('/api/transparencia/periodos')
+          fetch('/api/transparencia/menu'),
         ]);
         const institResult = await institRes.json();
         if (institResult.dados) setDados(institResult.dados);
-        if (periodosRes.ok) {
-          const periodosJson = await periodosRes.json();
-          if (periodosJson?.data) setPeriodosConfig(periodosJson.data);
+        if (menuRes.ok) {
+          const menuJson = await menuRes.json();
+          if (menuJson?.data) setMenu(menuJson.data as MenuResolvido);
         }
       } catch (err) {
-        log.error('Erro ao buscar dados institucionais', err);
+        log.error('Erro ao buscar dados', err);
       } finally {
         setLoading(false);
       }
@@ -270,34 +69,7 @@ export default function TransparenciaPage() {
   const endereco = config?.endereco;
   const enderecoCompleto = endereco?.logradouro
     ? `${endereco.logradouro}${endereco.numero ? `, ${endereco.numero}` : ', s/no'}${endereco.bairro ? ` - ${endereco.bairro}` : ''}`
-    : 'Rua Deputado Jose Macedo, s/no - Centro';
-
-  // Aplica periodos configurados no admin sobre os subItens hardcoded.
-  // Se o item tem slug e a config do DB esta enabled, os subItens sao
-  // substituidos pelos periodos ativos ordenados. Caso contrario mantem
-  // o fallback hardcoded (ou nenhum).
-  const resolveSubItens = (item: TransparenciaItem): TransparenciaSubItem[] | undefined => {
-    if (!item.slug) return item.subItens;
-    const cfg = periodosConfig[item.slug];
-    if (!cfg || !cfg.enabled) return item.subItens;
-    const periodosAtivos = cfg.periodos
-      .filter((p) => p.ativo)
-      .sort((a, b) => a.ordem - b.ordem);
-    if (periodosAtivos.length === 0) return item.subItens;
-    return periodosAtivos.map((p) => ({
-      nome: p.label,
-      href: p.hrefInterno || undefined,
-      externalUrl: p.url || undefined,
-    }));
-  };
-
-  const secoes = SECOES_TRANSPARENCIA.map((secao) => ({
-    ...secao,
-    itens: secao.itens.map((item) => ({
-      ...item,
-      subItens: resolveSubItens(item),
-    })),
-  }));
+    : 'Endereco nao configurado';
 
   // Estilos baseados no tema municipal (CSS variables da instalacao)
   const themeStyles = {
@@ -306,8 +78,6 @@ export default function TransparenciaPage() {
     sectionBg: { backgroundColor: 'var(--municipal-primary-lighter)' },
     textColor: { color: 'var(--municipal-primary-dark)' },
     iconColor: { color: 'var(--municipal-primary)' },
-    borderColor: { borderColor: 'var(--municipal-primary-light)' },
-    hoverBorder: { borderColor: 'var(--municipal-primary)' },
   };
 
   return (
@@ -378,34 +148,41 @@ export default function TransparenciaPage() {
 
       {/* Secoes Tematicas */}
       <section aria-label="Secoes tematicas de transparencia" className="container mx-auto px-4 py-10 md:py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
-          {secoes.map((secao) => (
-              <div
-                key={secao.titulo}
-                className="bg-white rounded-xl border-2 border-gray-100 hover:border-[var(--municipal-primary-light)] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
-              >
-                {/* Header do card */}
-                <div className="px-5 py-4 border-b border-gray-100" style={themeStyles.sectionBg}>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg shadow-sm group-hover:scale-110 transition-transform" style={themeStyles.iconBg}>
-                      <secao.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-base" style={themeStyles.textColor}>{secao.titulo}</h3>
-                      <p className="text-xs text-gray-500">{secao.subtitulo}</p>
+        {loading || !menu ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin" style={themeStyles.iconColor} />
+            <span className="ml-2 text-gray-600">Carregando portal...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 md:gap-6">
+            {menu.secoes.map((secao) => {
+              const SecaoIcon = getIcone(secao.icone);
+              return (
+                <div
+                  key={secao.slug}
+                  className="bg-white rounded-xl border-2 border-gray-100 hover:border-[var(--municipal-primary-light)] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="px-5 py-4 border-b border-gray-100" style={themeStyles.sectionBg}>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 rounded-lg shadow-sm group-hover:scale-110 transition-transform" style={themeStyles.iconBg}>
+                        <SecaoIcon className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-base" style={themeStyles.textColor}>{secao.titulo}</h3>
+                        <p className="text-xs text-gray-500">{secao.subtitulo}</p>
+                      </div>
                     </div>
                   </div>
+                  <div className="p-3">
+                    {secao.itens.map((item) => (
+                      <TransparenciaItemRow key={item.slug} item={item} themeStyles={themeStyles} />
+                    ))}
+                  </div>
                 </div>
-
-                {/* Itens do card */}
-                <div className="p-3">
-                  {secao.itens.map((item) => (
-                    <TransparenciaItemRow key={item.nome} item={item} themeStyles={themeStyles} />
-                  ))}
-                </div>
-              </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Legislacao Vigente - Barra horizontal */}
@@ -459,7 +236,7 @@ export default function TransparenciaPage() {
           {[
             { nome: 'Dados Abertos', href: '/transparencia/dados-abertos', icon: Globe },
             { nome: 'Glossario', href: '/institucional/dicionario', icon: BookOpen },
-            { nome: 'Pesquisa Satisfacao', href: '/transparencia/pesquisas-satisfacao', icon: Search },
+            { nome: 'Pesquisa Satisfacao', href: '/transparencia/pesquisas-satisfacao', icon: FileSearch },
             { nome: 'LGPD', href: '/transparencia/documentos/lgpd', icon: Shield },
             { nome: 'Mapa do Site', href: '/transparencia/mapa-do-site', icon: MapPin },
             { nome: 'Contatos', href: '/institucional/ouvidoria', icon: Phone },
@@ -541,14 +318,18 @@ export default function TransparenciaPage() {
   );
 }
 
-// Linha de item do menu: suporta link interno, externo e subitens (details/summary).
+// Linha de item do menu — usa o catalogo resolvido pelo /api/transparencia/menu.
+// Modos:
+//  - 'redirect': link externo direto (sem sub-itens)
+//  - 'periodos': expande sub-itens (cada um pode ser interno ou externo)
+//  - 'interno': link interno padrao OU sub-itens padrao do catalogo
 type ThemeStyles = {
   iconBgLight: React.CSSProperties;
   iconColor: React.CSSProperties;
 };
 
-function TransparenciaItemRow({ item, themeStyles }: { item: TransparenciaItem; themeStyles: ThemeStyles }) {
-  const Icon = item.icon;
+function TransparenciaItemRow({ item, themeStyles }: { item: ItemResolvido; themeStyles: ThemeStyles }) {
+  const Icon: LucideIcon = getIcone(item.icone);
 
   const content = (
     <>
@@ -556,15 +337,31 @@ function TransparenciaItemRow({ item, themeStyles }: { item: TransparenciaItem; 
         <Icon className="h-4 w-4" style={themeStyles.iconColor} />
       </div>
       <span className="text-sm text-gray-700 group-hover/item:text-gray-900 flex-1">
-        {item.nome}
+        {item.label}
       </span>
     </>
   );
 
   const baseRow = 'flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors group/item';
 
-  // Caso 1: itens com subitens (periodos ou sub-links) → <details> nativo
-  if (item.subItens && item.subItens.length > 0) {
+  // 1) Modo redirect — link externo direto, sem sub-itens
+  if (item.modo === 'redirect' && item.urlExterna) {
+    return (
+      <a
+        href={item.urlExterna}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={baseRow}
+        title={`Abrir ${item.label} em nova aba (sistema externo)`}
+      >
+        {content}
+        <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 flex-shrink-0" />
+      </a>
+    );
+  }
+
+  // 2) Modo periodos OU subItensPadrao do catalogo — expande em <details>
+  if (item.subItensResolvidos && item.subItensResolvidos.length > 0) {
     return (
       <details className="group/details">
         <summary className={`${baseRow} cursor-pointer list-none`}>
@@ -572,25 +369,26 @@ function TransparenciaItemRow({ item, themeStyles }: { item: TransparenciaItem; 
           <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 transition-transform group-open/details:rotate-90 flex-shrink-0" />
         </summary>
         <div className="ml-9 mt-1 mb-1 border-l-2 border-gray-100 pl-2 space-y-0.5">
-          {item.subItens.map((sub) => {
+          {item.subItensResolvidos.map((sub) => {
             const subClass = 'flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-50 text-xs text-gray-600 hover:text-gray-900 transition-colors';
-            if (sub.externalUrl) {
+            if (sub.urlExterna) {
               return (
                 <a
-                  key={sub.nome}
-                  href={sub.externalUrl}
+                  key={sub.slug}
+                  href={sub.urlExterna}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={subClass}
+                  title="Abrir em nova aba (sistema externo)"
                 >
-                  <span className="flex-1">{sub.nome}</span>
+                  <span className="flex-1">{sub.label}</span>
                   <ExternalLink className="h-3 w-3 text-gray-400 flex-shrink-0" />
                 </a>
               );
             }
             return (
-              <Link key={sub.nome} href={sub.href || '#'} className={subClass}>
-                <span className="flex-1">{sub.nome}</span>
+              <Link key={sub.slug} href={sub.href || '#'} className={subClass}>
+                <span className="flex-1">{sub.label}</span>
                 <ChevronRight className="h-3 w-3 text-gray-300 flex-shrink-0" />
               </Link>
             );
@@ -600,24 +398,9 @@ function TransparenciaItemRow({ item, themeStyles }: { item: TransparenciaItem; 
     );
   }
 
-  // Caso 2: link externo → abre em nova aba
-  if (item.externalUrl) {
-    return (
-      <a
-        href={item.externalUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={baseRow}
-      >
-        {content}
-        <ExternalLink className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 flex-shrink-0" />
-      </a>
-    );
-  }
-
-  // Caso 3: link interno
+  // 3) Default — link interno padrao
   return (
-    <Link href={item.href || '#'} className={baseRow}>
+    <Link href={item.hrefInterno || '#'} className={baseRow}>
       {content}
       <ChevronRight className="h-3.5 w-3.5 text-gray-300 group-hover/item:text-gray-500 group-hover/item:translate-x-0.5 transition-all flex-shrink-0" />
     </Link>

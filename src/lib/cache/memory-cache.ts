@@ -36,6 +36,7 @@ export const CACHE_KEYS = {
   COMISSOES_ATIVAS: 'comissoes:ativas',
   ESTATISTICAS_GERAL: 'estatisticas:geral',
   TRANSPARENCIA_REDIRECTS: 'transparencia:redirects',
+  TRANSPARENCIA_MENU: 'transparencia:menu',
 }
 
 class MemoryCache {
@@ -303,6 +304,13 @@ export const cacheHelpers = {
   },
 
   /**
+   * Cache para menu resolvido do portal /transparencia
+   */
+  async getTransparenciaMenu<T>(fetcher: () => Promise<T>): Promise<T> {
+    return cache.getOrSet(CACHE_KEYS.TRANSPARENCIA_MENU, fetcher, CACHE_TTL.MEDIUM)
+  },
+
+  /**
    * Invalida caches de parlamentares
    */
   invalidateParlamentares(): void {
@@ -323,6 +331,14 @@ export const cacheHelpers = {
    */
   invalidateTransparenciaRedirects(): void {
     cache.delete(CACHE_KEYS.TRANSPARENCIA_REDIRECTS)
+    cache.delete(CACHE_KEYS.TRANSPARENCIA_MENU)
+  },
+
+  /**
+   * Invalida cache do menu resolvido de transparencia
+   */
+  invalidateTransparenciaMenu(): void {
+    cache.delete(CACHE_KEYS.TRANSPARENCIA_MENU)
   },
 
   /**

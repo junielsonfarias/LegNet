@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { CaptchaChallenge, type CaptchaChallengeHandle, type CaptchaValue } from '@/components/ui/captcha-challenge'
 import {
   MessageSquare, Phone, Mail, MapPin, Clock, Shield, FileText, AlertCircle,
-  Loader2, CheckCircle, Copy, Search
+  Loader2, CheckCircle, Copy, Search, ScrollText, BarChart3, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -378,7 +378,7 @@ export default function OuvidoriaPage() {
         </div>
 
         {/* Prazos */}
-        <Card className="border-l-4 border-l-camara-primary">
+        <Card className="border-l-4 border-l-camara-primary mb-8">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-camara-primary">Prazos de Resposta</CardTitle>
           </CardHeader>
@@ -404,6 +404,58 @@ export default function OuvidoriaPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Links cruzados — Carta de Servicos (PNTP 14.3), Estatisticas e Regulamentacao */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/transparencia/documentos/carta-servicos" className="group">
+            <Card className="h-full hover:shadow-md transition-shadow border-l-4 border-l-camara-primary">
+              <CardContent className="p-5 flex items-start gap-3">
+                <ScrollText className="h-8 w-8 text-camara-primary flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary mb-1">
+                    Carta de Servicos ao Usuario
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Servicos prestados, prazos, requisitos e formas de acesso.
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-camara-primary flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/transparencia/ouvidoria/estatisticas" className="group">
+            <Card className="h-full hover:shadow-md transition-shadow border-l-4 border-l-camara-secondary">
+              <CardContent className="p-5 flex items-start gap-3">
+                <BarChart3 className="h-8 w-8 text-camara-secondary flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-camara-secondary mb-1">
+                    Relatorios da Ouvidoria
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Estatisticas das manifestacoes por tipo, prazo e desfecho.
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-camara-secondary flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/transparencia/ouvidoria/regulamentacao" className="group">
+            <Card className="h-full hover:shadow-md transition-shadow border-l-4 border-l-amber-500">
+              <CardContent className="p-5 flex items-start gap-3">
+                <FileText className="h-8 w-8 text-amber-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 mb-1">
+                    Regulamentacao da Ouvidoria
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Norma local que disciplina o funcionamento da Ouvidoria.
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-amber-600 flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
       </div>
     </div>
   )

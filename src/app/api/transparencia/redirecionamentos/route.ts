@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import {
   withErrorHandler,
@@ -50,6 +51,8 @@ export const POST = withAuth(async (request: NextRequest) => {
   })
 
   cacheHelpers.invalidateTransparenciaRedirects()
+  revalidateTag('transparencia-menu')
+  revalidateTag('transparencia-redirects')
 
   return createSuccessResponse(result, 'Redirecionamento salvo com sucesso')
 }, { permissions: 'config.manage' })

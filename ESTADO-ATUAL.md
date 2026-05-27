@@ -1,10 +1,192 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Matriz de Conformidade PNTP 2026 — auditoria critério x link)
-> **Versao**: 1.29.5
+> **Ultima Atualizacao**: 2026-05-27 (Endpoint atômico item-config + unstable_cache multi-instância)
+> **Versao**: 1.30.2
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Endpoint atômico item-config + cache multi-instância
+
+Endereçados os 2 riscos remanescentes da revisão anterior: cache stale em
+multi-instância e save paralelo com falha parcial.
+
+**Novos arquivos:**
+
+- `src/app/api/transparencia/item-config/route.ts` — endpoint atômico POST
+  que aceita `{slug, modo, redirect?, periodos?}`. Substitui o duplo POST
+  (`redirecionamentos` + `periodos`) que existia antes. Validação Zod com
+  `superRefine` para regras condicionais por modo.
+
+**Alteracoes na camada de servico:**
+
+- `src/lib/services/transparencia-redirect-service.ts` — novo metodo
+  `setItemConfig(slug, modo, redirect?, periodos?)` que usa
+  `prisma.$transaction([upsert, upsert])` para garantir atomicidade. Se uma
+  das upserts falhar, ambas sao revertidas — sem estado parcial.
+
+**Migracao para cache multi-instancia:**
+
+- `src/app/api/transparencia/menu/route.ts` — substituido
+  `cacheHelpers.getTransparenciaMenu` por `unstable_cache` do Next.js com
+  tag `'transparencia-menu'`. Quando admin salva, chama
+  `revalidateTag('transparencia-menu')` que **invalida em TODAS as
+  instancias serverless da Vercel** (resolvido o risco multi-instancia).
+- Endpoints legados (`/redirecionamentos`, `/periodos`) tambem chamam
+  `revalidateTag` para manter sincronizacao quando admin antigo for usado.
+
+**Atualizacao no admin:**
+
+- `src/app/admin/configuracoes/transparencia-periodos/page.tsx` —
+  `handleSave` agora faz 1 unica chamada ao endpoint atomico. Sem
+  possibilidade de falha parcial. Toast usa mensagem especifica do servidor
+  (validacao Zod) em caso de erro.
+
+**Riscos remanescentes resolvidos:**
+
+| Risco anterior | Status |
+|----------------|--------|
+| Cache stale em multi-instancia (TTL 5min mitigava) | ✅ RESOLVIDO via `unstable_cache` + `revalidateTag` |
+| Save paralelo com falha parcial | ✅ RESOLVIDO via endpoint atomico com `$transaction` |
+
+`npx tsc --noEmit` passou sem erros.
+
+---
+
+## 2026-05-27 — Revisão do catálogo /transparencia: 7 correções + 10 slugs legados
+
+Auditoria crítica do refactor anterior, identificando 7 problemas (1 alto, 2
+médios, 4 baixos) e aplicando correções.
+
+**Novos arquivos:**
+
+- `docs/TRANSPARENCIA-REVISAO-2026-05-27.md` — auditoria completa com matriz
+  de problemas/correções, validação técnica, conformidade PNTP 2026 e riscos
+  remanescentes.
+
+**Correções aplicadas:**
+
+- Tipos `MenuResolvido`, `ItemResolvido`, `SubItemResolvido`, `ModoItem`
+  movidos do route handler para o catálogo (`itens-catalogo.ts`). Reduz
+  fragilidade de imports de client components.
+- Slug do item `lgpd` renomeado para `lgpd-info` (evita colisão semântica
+  com `SecaoSlug` `'lgpd'`). Rota mantida.
+- Adicionados 10 slugs como `ocultoNoMenu: true` para retrocompatibilidade
+  com configs já salvas no banco e páginas internas que usam o
+  `TransparenciaPageWrapper`:
+  - `leis`, `gestao-fiscal`, `lei-responsabilidade-fiscal`, `publicacoes`,
+    `pesquisas`, `portal-da-transparencia`, `documentos-oficiais`,
+    `conformidade`, `decretos`, `portarias`
+- Endpoint `/api/transparencia/menu` filtra `ocultoNoMenu` das `secoes`
+  (não aparecem na home) mas os mantém em `itens` (mapa por slug — para o
+  `TransparenciaPageWrapper` consumir).
+- Admin auto-reseta `slug` ao mudar filtro de seção (UX).
+- Admin marca visualmente itens ocultos com `○` no select + aviso amarelo
+  quando selecionados.
+- Validação client-side antes do submit (URL obrigatória no modo redirect,
+  formato válido via `new URL()`, períodos com label e URL/rota).
+
+**Cobertura final do admin:**
+
+- 70 itens visíveis no menu + 10 itens ocultos = **80 slugs configuráveis**
+- Antes do refactor: 14 slugs hardcoded
+- Conformidade PNTP 2026: ✅ aprovada, com ganho específico no item de Série
+  Histórica (20% do score de cada critério)
+
+`npx tsc --noEmit` passou sem erros.
+
+---
+
+## 2026-05-27 — Catálogo unificado /transparencia + admin com 3 modos por item
+
+Refatoração da arquitetura do portal `/transparencia` para permitir que TODOS
+os ~80 itens sejam configurados via painel admin com 3 modos: rota interna
+padrão, URL externa direta, ou sub-itens por período (cada um interno ou
+externo). Antes só 14 itens eram configuráveis no admin.
+
+**Novos arquivos:**
+
+- `src/lib/transparencia/itens-catalogo.ts` — catálogo único com 9 seções e
+  80+ itens. Cada item tem `slug` único, `label`, `secao`, `hrefInterno`,
+  `icone`, `subItensPadrao?`, `pntp?`. Fonte da verdade para a home e o admin.
+- `src/lib/transparencia/itens-icones.tsx` — mapa `LucideIconName` →
+  componente lucide-react (resolução client-side).
+- `src/app/api/transparencia/menu/route.ts` — endpoint GET público que
+  retorna o catálogo já resolvido com sobreposições aplicadas. Cacheado 5min.
+- `docs/TRANSPARENCIA-CONFIG-ITENS.md` — documentação da arquitetura, modos,
+  fluxo do admin e API.
+
+**Páginas alteradas:**
+
+- `src/app/transparencia/page.tsx` — refatorada para usar `/api/transparencia/menu`.
+  Antes: SECOES_TRANSPARENCIA hardcoded. Agora: catálogo. Suporta os 3 modos:
+  - `interno` (default): link interno padrão
+  - `redirect`: item vira link externo direto (com `<ExternalLink>` icon)
+  - `periodos`: item expande em `<details>` com sub-itens (cada um pode ser
+    interno ou externo)
+- `src/app/admin/configuracoes/transparencia-periodos/page.tsx` — refatorada
+  para enumerar TODOS os 80+ itens do catálogo, agrupados por seção. Novo
+  seletor de "Modo de exibição" com 3 cards. Salva via 2 endpoints
+  (redirecionamentos + periodos) em uma operação atômica.
+- `src/lib/cache/memory-cache.ts` — adicionado `TRANSPARENCIA_MENU` ao cache
+  + helpers `getTransparenciaMenu()` e `invalidateTransparenciaMenu()`. Invalidação
+  automática quando admin salva redirect ou periodos.
+- `src/app/api/transparencia/periodos/route.ts` — invalida menu cache no POST/DELETE.
+
+**Resultados:**
+
+- O administrador pode configurar QUALQUER item do portal (não só os 14
+  pre-definidos). Ex: agora "Relação de Estagiários", "Folha de Pagamento",
+  "Cargos" etc. podem ter URL externa ou sub-itens por período.
+- Atende ao requisito de "Série Histórica" (20% do score PNTP de cada
+  critério) via modo `periodos`: cada item pode listar "Consulte até 2025"
+  (externo) + "2026 em diante" (interno).
+- Atende ao caso de portais de migração (Cartilha PNTP p.47): sistema atual
+  aponta para histórico em sistema antigo via `URL externa direta`.
+
+`npx tsc --noEmit` passou sem erros.
+
+---
+
+## 2026-05-27 — Site Institucional: índice + links cruzados para PNTP
+
+Auditoria do site institucional (`src/app/institucional/**`) cruzando com
+os critérios PNTP que se aplicam a ele (Dim. 1, 2, 12, 14, 15, 20). Três
+ajustes para reforçar a navegação direta entre `/institucional` e os
+artefatos de transparência exigidos pela Cartilha.
+
+**Novos arquivos:**
+
+- `src/app/institucional/page.tsx` — índice institucional (`force-static`)
+  com 4 seções (A Casa Legislativa, Marco Regulatório, Atendimento ao
+  Cidadão, Conheça o Legislativo) e 12 atalhos. Antes, acessar
+  `/institucional` retornava 404.
+- `docs/PNTP/CONFORMIDADE-INSTITUCIONAL-2026.md` — matriz crítério ×
+  página institucional + auditoria de campos + ajustes feitos.
+
+**Páginas alteradas:**
+
+- `src/app/institucional/e-sic/page.tsx` — adicionados 3 cards de acesso
+  rápido após os serviços principais:
+  - "Marco Normativo da LAI" → `/transparencia/e-sic/normativa` (crit. 12.5/12.6)
+  - "Estatísticas do e-SIC" → `/transparencia/e-sic/estatisticas` (crit. 12.7)
+  - "Informações Classificadas" → `/transparencia/informacoes-classificadas` (crit. 12.8/12.9)
+- `src/app/institucional/ouvidoria/page.tsx` — adicionados 3 cards após
+  a tabela de prazos:
+  - "Carta de Serviços ao Usuário" → `/transparencia/documentos/carta-servicos` (crit. 14.3)
+  - "Relatórios da Ouvidoria" → `/transparencia/ouvidoria/estatisticas`
+  - "Regulamentação da Ouvidoria" → `/transparencia/ouvidoria/regulamentacao`
+
+**Cobertura final do site institucional:**
+
+- Dim. 2 (Institucionais): 7/7 ✅ (2.1 a 2.7)
+- Dim. 12 (SIC): 9/9 ✅ (todos os caminhos a partir de `/institucional/e-sic`)
+- Dim. 14 (Ouvidoria): 3/3 ✅ (carta de serviços agora linkada)
+- Dim. 1, 15, 20: contribuições de apoio ✅
+
+`npx tsc --noEmit` passou sem erros.
 
 ---
 

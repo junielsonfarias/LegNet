@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { CaptchaChallenge, type CaptchaChallengeHandle, type CaptchaValue } from '@/components/ui/captcha-challenge'
 import {
-  Shield, FileText, Clock, CheckCircle, AlertCircle, Search, Loader2, Copy
+  Shield, FileText, Clock, CheckCircle, AlertCircle, Search, Loader2, Copy,
+  BarChart3, BookOpen, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
@@ -168,6 +169,58 @@ export default function ESicPage() {
               </Link>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Acesso rapido a normativa e estatisticas (PNTP 12.5, 12.6, 12.7) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+          <Link href="/transparencia/e-sic/normativa" className="group">
+            <Card className="h-full hover:shadow-md transition-shadow border-l-4 border-l-camara-primary">
+              <CardContent className="p-5 flex items-start gap-3">
+                <BookOpen className="h-8 w-8 text-camara-primary flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-camara-primary mb-1">
+                    Marco Normativo da LAI
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Regulamento local, prazos, autoridades competentes e procedimento de recurso.
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-camara-primary flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/transparencia/e-sic/estatisticas" className="group">
+            <Card className="h-full hover:shadow-md transition-shadow border-l-4 border-l-camara-secondary">
+              <CardContent className="p-5 flex items-start gap-3">
+                <BarChart3 className="h-8 w-8 text-camara-secondary flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-camara-secondary mb-1">
+                    Estatisticas do e-SIC
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Relatorio anual com pedidos recebidos, atendidos, indeferidos e prazos.
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-camara-secondary flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/transparencia/informacoes-classificadas" className="group">
+            <Card className="h-full hover:shadow-md transition-shadow border-l-4 border-l-amber-500">
+              <CardContent className="p-5 flex items-start gap-3">
+                <Shield className="h-8 w-8 text-amber-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-amber-600 mb-1">
+                    Informacoes Classificadas
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Rol de documentos com grau de sigilo e lista de desclassificados.
+                  </p>
+                </div>
+                <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-amber-600 flex-shrink-0" />
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* Formulario */}

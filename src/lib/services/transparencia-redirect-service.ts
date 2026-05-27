@@ -211,6 +211,71 @@ export const transparenciaRedirectService = {
   },
 
   /**
+   * Salvar configuracao completa de um item em transacao atomica.
+   * Garante consistencia entre redirect e periodos: ou ambos sao aplicados,
+   * ou nenhum (rollback automatico).
+   *
+   * @param slug Slug do item no catalogo
+   * @param modo 'interno' | 'redirect' | 'periodos'
+   * @param redirect Quando modo='redirect': {url, label?}
+   * @param periodos Quando modo='periodos': ConfiguracaoPeriodos completa
+   */
+  async setItemConfig(
+    slug: string,
+    modo: 'interno' | 'redirect' | 'periodos',
+    redirect?: { url: string; label?: string },
+    periodos?: ConfiguracaoPeriodos,
+  ): Promise<void> {
+    const chaveRedirect = `${CONFIG_PREFIX}${slug}`
+    const chavePeriodos = `${PERIODOS_PREFIX}${slug}`
+
+    // Calcula payloads conforme o modo escolhido
+    const redirectAtivo = modo === 'redirect'
+    const periodosAtivos = modo === 'periodos'
+
+    const redirectValor = JSON.stringify({
+      enabled: redirectAtivo,
+      url: redirectAtivo ? redirect?.url ?? '' : '',
+      label: redirectAtivo ? redirect?.label ?? undefined : undefined,
+    })
+
+    const periodosValor = JSON.stringify({
+      enabled: periodosAtivos,
+      titulo: periodos?.titulo,
+      descricao: periodos?.descricao,
+      periodos: periodosAtivos ? periodos?.periodos ?? [] : [],
+    })
+
+    // Transacao atomica: as 2 upserts sao aplicadas juntas ou desfeitas juntas.
+    await prisma.$transaction([
+      prisma.configuracao.upsert({
+        where: { chave: chaveRedirect },
+        update: { valor: redirectValor },
+        create: {
+          chave: chaveRedirect,
+          valor: redirectValor,
+          descricao: `Redirecionamento: ${slug}`,
+          categoria: 'Transparência',
+          tipo: 'json',
+          editavel: true,
+        },
+      }),
+      prisma.configuracao.upsert({
+        where: { chave: chavePeriodos },
+        update: { valor: periodosValor },
+        create: {
+          chave: chavePeriodos,
+          valor: periodosValor,
+          descricao: `Periodos: ${slug}`,
+          categoria: 'Transparência',
+          tipo: 'json',
+          editavel: true,
+        },
+      }),
+    ])
+  },
+
+  /**
    * Buscar mapa completo de categorias com status de redirecionamento
    */
   async getFullMap(): Promise<Array<{

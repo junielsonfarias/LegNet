@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+import { revalidateTag } from 'next/cache'
 import { withErrorHandler,
   createSuccessResponse, getErrorMessage } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { transparenciaRedirectService } from '@/lib/services/transparencia-redirect-service'
+import { cacheHelpers } from '@/lib/cache/memory-cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,6 +63,8 @@ export const POST = withAuth(async (request: NextRequest) => {
   })
 
   console.log('[periodos POST] salvo com sucesso:', data.slug)
+  cacheHelpers.invalidateTransparenciaMenu()
+  revalidateTag('transparencia-menu')
   return createSuccessResponse(result, 'Periodos salvos com sucesso')
 }, { permissions: 'config.manage' })
 
@@ -72,5 +76,7 @@ export const DELETE = withAuth(async (request: NextRequest) => {
     return createSuccessResponse(null, 'slug obrigatorio', undefined, 400)
   }
   await transparenciaRedirectService.removePeriodos(slug)
+  cacheHelpers.invalidateTransparenciaMenu()
+  revalidateTag('transparencia-menu')
   return createSuccessResponse(null, 'Periodos removidos')
 }, { permissions: 'config.manage' })
