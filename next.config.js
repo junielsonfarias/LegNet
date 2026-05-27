@@ -16,6 +16,14 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+  // Hotfix Vercel (2026-05-27): isomorphic-dompurify usa jsdom em SSR e
+  // jsdom le browser/default-stylesheet.css via fs em init. Quando bundled
+  // pelo Next, o asset CSS interno nao e copiado e o build falha em
+  // /vercel/path0/browser/default-stylesheet.css ENOENT. Solucao: marcar
+  // ambos como external packages — o Next requer/resolves direto de
+  // node_modules em runtime (mantem assets relativos).
+  // Requer Next.js 15+.
+  serverExternalPackages: ['isomorphic-dompurify', 'jsdom'],
   // Configurações de performance
   experimental: {
     optimizePackageImports: [
