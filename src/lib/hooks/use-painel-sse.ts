@@ -378,20 +378,32 @@ export function usePainelTempoReal(
     }
   }, [estado, adaptivePolling, pollingInterval])
 
+  const pollingAbortRef = useRef<AbortController | null>(null)
+
   // Funcao de polling
   const fetchEstado = useCallback(async () => {
     if (!sessaoId) return
 
+    pollingAbortRef.current?.abort()
+    const controller = new AbortController()
+    pollingAbortRef.current = controller
+
     try {
-      const res = await fetch(`/api/painel/estado?sessaoId=${encodeURIComponent(sessaoId)}`)
+      const res = await fetch(`/api/painel/estado?sessaoId=${encodeURIComponent(sessaoId)}`, {
+        signal: controller.signal
+      })
       if (!res.ok) throw new Error('Erro ao buscar estado')
       const data = await res.json()
+      if (controller.signal.aborted) return
       setEstado(data.data)
       setErro(null)
     } catch (e) {
-      setErro(e instanceof Error ? e : new Error('Erro ao buscar estado'))
+      if (e instanceof Error && e.name === 'AbortError') return
+      if (!controller.signal.aborted) {
+        setErro(e instanceof Error ? e : new Error('Erro ao buscar estado'))
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [sessaoId])
 
@@ -401,7 +413,10 @@ export function usePainelTempoReal(
 
     fetchEstado()
     const interval = setInterval(fetchEstado, intervaloAtual)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      pollingAbortRef.current?.abort()
+    }
   }, [usandoPolling, sessaoId, fetchEstado, intervaloAtual])
 
   // Usar estado do SSE se disponivel

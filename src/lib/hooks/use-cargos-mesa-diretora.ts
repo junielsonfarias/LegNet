@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 
 export interface CargoMesaDiretoraApi {
@@ -34,33 +34,47 @@ export function useCargosMesaDiretora(periodoId?: string): UseCargosMesaDiretora
   const [cargos, setCargos] = useState<CargoMesaDiretoraApi[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchCargos = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
       const params = periodoId ? `?periodoId=${periodoId}` : ''
       const response = await fetch(`/api/cargos-mesa-diretora${params}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        signal: controller.signal
       })
       const data = await response.json()
-      
+
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Erro ao carregar cargos')
       }
-      
-      setCargos(data.data)
+
+      if (!controller.signal.aborted) {
+        setCargos(data.data)
+      }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar cargos'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [periodoId])
 
   useEffect(() => {
     fetchCargos()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchCargos])
 
   const create = useCallback(async (data: CargoMesaDiretoraCreate): Promise<CargoMesaDiretoraApi | null> => {

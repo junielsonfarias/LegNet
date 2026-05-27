@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { withRetry } from '@/lib/utils/retry'
 
@@ -45,33 +45,47 @@ export function usePeriodosLegislatura(legislaturaId?: string): UsePeriodosLegis
   const [periodos, setPeriodos] = useState<PeriodoLegislaturaApi[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchPeriodos = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
       const params = legislaturaId ? `?legislaturaId=${legislaturaId}` : ''
       const response = await fetch(`/api/periodos-legislatura${params}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        signal: controller.signal
       })
       const data = await response.json()
-      
+
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Erro ao carregar períodos')
       }
-      
-      setPeriodos(data.data)
+
+      if (!controller.signal.aborted) {
+        setPeriodos(data.data)
+      }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar períodos'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [legislaturaId])
 
   useEffect(() => {
     fetchPeriodos()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchPeriodos])
 
   const create = useCallback(async (data: PeriodoLegislaturaCreate): Promise<PeriodoLegislaturaApi | null> => {

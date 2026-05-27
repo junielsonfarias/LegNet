@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 
 import { withRetry } from '@/lib/utils/retry'
@@ -70,10 +70,15 @@ export function usePublicTramitacoes(filters?: PublicTramitacaoFilters) {
   const [meta, setMeta] = useState<PublicTramitacaoMeta | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const stableFilters = useStableFilters(filters)
 
   const fetchTramitacoes = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
@@ -91,7 +96,9 @@ export function usePublicTramitacoes(filters?: PublicTramitacaoFilters) {
 
       const response = await withRetry(
         async () => {
-          const res = await fetch(`/api/publico/tramitacoes?${params.toString()}`)
+          const res = await fetch(`/api/publico/tramitacoes?${params.toString()}`, {
+            signal: controller.signal
+          })
           if (!res.ok) throw new Error('Erro ao carregar tramitações')
           return res.json()
         },
@@ -99,6 +106,7 @@ export function usePublicTramitacoes(filters?: PublicTramitacaoFilters) {
         500
       )
 
+      if (controller.signal.aborted) return
       if (response.success) {
         setTramitacoes(response.data?.items ?? response.data ?? [])
         setMeta(response.data?.meta ?? null)
@@ -106,16 +114,22 @@ export function usePublicTramitacoes(filters?: PublicTramitacaoFilters) {
         throw new Error(response.error || 'Erro ao carregar tramitações')
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Não foi possível carregar as tramitações.'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [stableFilters])
 
   useEffect(() => {
     fetchTramitacoes()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchTramitacoes])
 
   return {
@@ -131,6 +145,7 @@ export function usePublicTramitacao(id: string | null) {
   const [tramitacao, setTramitacao] = useState<PublicTramitacaoDetalhe | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchTramitacao = useCallback(async () => {
     if (!id) {
@@ -139,13 +154,19 @@ export function usePublicTramitacao(id: string | null) {
       return
     }
 
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
 
       const response = await withRetry(
         async () => {
-          const res = await fetch(`/api/publico/tramitacoes/${id}`)
+          const res = await fetch(`/api/publico/tramitacoes/${id}`, {
+            signal: controller.signal
+          })
           if (!res.ok) throw new Error('Erro ao carregar tramitação')
           return res.json()
         },
@@ -153,22 +174,29 @@ export function usePublicTramitacao(id: string | null) {
         500
       )
 
+      if (controller.signal.aborted) return
       if (response.success) {
         setTramitacao(response.data)
       } else {
         throw new Error(response.error || 'Erro ao carregar tramitação')
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Não foi possível carregar a tramitação.'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [id])
 
   useEffect(() => {
     fetchTramitacao()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchTramitacao])
 
   return {

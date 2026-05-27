@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 
 export interface BemPatrimonial {
@@ -37,8 +37,13 @@ export function useBensPatrimoniais(filters?: BemPatrimonialFilters) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<any>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchBens = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
@@ -51,9 +56,10 @@ export function useBensPatrimoniais(filters?: BemPatrimonialFilters) {
       params.append('page', (filters?.page || 1).toString())
       params.append('limit', (filters?.limit || 50).toString())
 
-      const response = await fetch(`/api/bens-patrimoniais?${params}`)
+      const response = await fetch(`/api/bens-patrimoniais?${params}`, { signal: controller.signal })
       const result = await response.json()
 
+      if (controller.signal.aborted) return
       if (result.success) {
         setBens(result.data)
         setPagination(result.pagination)
@@ -61,16 +67,22 @@ export function useBensPatrimoniais(filters?: BemPatrimonialFilters) {
         throw new Error(result.error)
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar bens patrimoniais'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [filters?.tipo, filters?.situacao, filters?.descricao, filters?.localizacao, filters?.page, filters?.limit])
 
   useEffect(() => {
     fetchBens()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchBens])
 
   const create = useCallback(async (data: Partial<BemPatrimonial>) => {

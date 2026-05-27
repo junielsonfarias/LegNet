@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/logging/logger'
@@ -37,10 +37,15 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
   const [totalPaginas, setTotalPaginas] = useState(1)
 
   const isAuthenticated = !!session?.user
+  const abortRef = useRef<AbortController | null>(null)
 
   // Buscar favoritos
   const buscarFavoritos = useCallback(async (paginaAtual = 1) => {
     if (!isAuthenticated) return
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
 
     setLoading(true)
     try {
@@ -52,9 +57,10 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
         params.set('tipo', options.tipo)
       }
 
-      const res = await fetch(`/api/favoritos?${params}`)
+      const res = await fetch(`/api/favoritos?${params}`, { signal: controller.signal })
       const data = await res.json()
 
+      if (controller.signal.aborted) return
       if (res.ok) {
         setFavoritos(data.favoritos)
         setTotal(data.total)
@@ -64,9 +70,10 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
         log.error('Erro ao buscar favoritos', undefined, { detail: data.error })
       }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
       log.error('Erro ao buscar favoritos', error)
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [isAuthenticated, options.tipo])
 
@@ -74,6 +81,9 @@ export function useFavoritos(options: UseFavoritosOptions = {}) {
   useEffect(() => {
     if (options.autoLoad !== false && isAuthenticated) {
       buscarFavoritos()
+    }
+    return () => {
+      abortRef.current?.abort()
     }
   }, [buscarFavoritos, options.autoLoad, isAuthenticated])
 
@@ -241,6 +251,7 @@ export function useFavoritoItem(tipoItem: TipoFavorito, itemId: string) {
   const [favorito, setFavorito] = useState<Favorito | null>(null)
 
   const isAuthenticated = !!session?.user
+  const abortRef = useRef<AbortController | null>(null)
 
   // Verificar se está nos favoritos
   const verificar = useCallback(async () => {
@@ -249,22 +260,31 @@ export function useFavoritoItem(tipoItem: TipoFavorito, itemId: string) {
       return
     }
 
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       const params = new URLSearchParams({ tipoItem, itemId })
-      const res = await fetch(`/api/favoritos/check?${params}`)
+      const res = await fetch(`/api/favoritos/check?${params}`, { signal: controller.signal })
       const data = await res.json()
 
+      if (controller.signal.aborted) return
       setIsFavorito(data.favorito)
       setFavorito(data.dados)
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
       log.error('Erro ao verificar favorito', error)
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [isAuthenticated, tipoItem, itemId])
 
   useEffect(() => {
     verificar()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [verificar])
 
   // Toggle

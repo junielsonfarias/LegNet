@@ -39,10 +39,10 @@ interface UseCronometroSincronizadoReturn {
  * Calcula o offset entre hora local e servidor
  * Faz uma requisicao ao servidor para obter a hora e calcula a diferenca
  */
-async function calcularOffsetServidor(): Promise<number> {
+async function calcularOffsetServidor(signal?: AbortSignal): Promise<number> {
   try {
     const inicioRequisicao = Date.now()
-    const response = await fetch('/api/painel/hora-servidor')
+    const response = await fetch('/api/painel/hora-servidor', { signal })
     const fimRequisicao = Date.now()
 
     if (!response.ok) {
@@ -59,6 +59,7 @@ async function calcularOffsetServidor(): Promise<number> {
     // Offset = hora servidor - hora local
     return horaServidorAjustada - Date.now()
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') return 0
     log.warn('Erro ao sincronizar com servidor, usando hora local', { errorDetails: String(error) })
     return 0
   }
@@ -111,11 +112,19 @@ export function useCronometroSincronizado(
 
   // Calcular offset do servidor uma vez ao montar
   useEffect(() => {
-    if (!offsetCalculadoRef.current) {
-      offsetCalculadoRef.current = true
-      calcularOffsetServidor().then(offset => {
+    if (offsetCalculadoRef.current) return
+
+    offsetCalculadoRef.current = true
+    const controller = new AbortController()
+
+    calcularOffsetServidor(controller.signal).then(offset => {
+      if (!controller.signal.aborted) {
         setOffsetServidor(offset)
-      })
+      }
+    })
+
+    return () => {
+      controller.abort()
     }
   }, [])
 
@@ -188,16 +197,23 @@ export function useHoraSincronizada() {
   const offsetCalculadoRef = useRef(false)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     if (!offsetCalculadoRef.current) {
       offsetCalculadoRef.current = true
-      calcularOffsetServidor().then(setOffsetServidor)
+      calcularOffsetServidor(controller.signal).then(offset => {
+        if (!controller.signal.aborted) setOffsetServidor(offset)
+      })
     }
 
     const interval = setInterval(() => {
       setHoraAtual(new Date(Date.now() + offsetServidor))
     }, 1000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      controller.abort()
+    }
   }, [offsetServidor])
 
   return {

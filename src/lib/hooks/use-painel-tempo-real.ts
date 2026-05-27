@@ -141,6 +141,7 @@ export function usePainelTempoReal(
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const mountedRef = useRef(true)
+  const abortRef = useRef<AbortController | null>(null)
 
   const buscarEstado = useCallback(async () => {
     if (!sessaoId) {
@@ -149,8 +150,15 @@ export function usePainelTempoReal(
       return
     }
 
+    // Cancela request em voo (importante para polling rapido)
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
-      const response = await fetch(`/api/painel/estado?sessaoId=${sessaoId}`)
+      const response = await fetch(`/api/painel/estado?sessaoId=${sessaoId}`, {
+        signal: controller.signal
+      })
 
       if (!response.ok) {
         throw new Error('Erro ao buscar estado do painel')
@@ -158,19 +166,20 @@ export function usePainelTempoReal(
 
       const result = await response.json()
 
-      if (mountedRef.current) {
+      if (mountedRef.current && !controller.signal.aborted) {
         setEstado(result.data)
         setUltimaAtualizacao(new Date())
         setError(null)
         setConnected(true)
       }
     } catch (err) {
-      if (mountedRef.current) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      if (mountedRef.current && !controller.signal.aborted) {
         setError(err instanceof Error ? err.message : 'Erro desconhecido')
         setConnected(false)
       }
     } finally {
-      if (mountedRef.current) {
+      if (mountedRef.current && !controller.signal.aborted) {
         setLoading(false)
       }
     }
@@ -204,6 +213,7 @@ export function usePainelTempoReal(
 
     return () => {
       mountedRef.current = false
+      abortRef.current?.abort()
     }
   }, [sessaoId, autoConnect, buscarEstado])
 
@@ -238,13 +248,21 @@ export function usePainelTempoReal(
 export function useSessaoAtiva(intervaloAtualizacao = 5000) {
   const [sessaoAtivaId, setSessaoAtivaId] = useState<string | null>(null)
   const [buscando, setBuscando] = useState(true)
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const buscarSessaoAtiva = async () => {
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+
       try {
-        const response = await fetch('/api/sessoes?status=EM_ANDAMENTO&limit=1')
+        const response = await fetch('/api/sessoes?status=EM_ANDAMENTO&limit=1', {
+          signal: controller.signal
+        })
         if (response.ok) {
           const result = await response.json()
+          if (controller.signal.aborted) return
           if (result.data && result.data.length > 0) {
             setSessaoAtivaId(result.data[0].id)
           } else {
@@ -252,16 +270,20 @@ export function useSessaoAtiva(intervaloAtualizacao = 5000) {
           }
         }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return
         log.error('Erro ao buscar sessao ativa', error)
       } finally {
-        setBuscando(false)
+        if (!controller.signal.aborted) setBuscando(false)
       }
     }
 
     buscarSessaoAtiva()
 
     const interval = setInterval(buscarSessaoAtiva, intervaloAtualizacao)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      abortRef.current?.abort()
+    }
   }, [intervaloAtualizacao])
 
   const painelResult = usePainelTempoReal({
