@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,13 +59,41 @@ const EMPTY_FORM = {
 }
 
 export default function AdminDocumentosPage() {
+  return (
+    <Suspense fallback={<Loader2 className="h-6 w-6 animate-spin" />}>
+      <AdminDocumentosContent />
+    </Suspense>
+  )
+}
+
+function AdminDocumentosContent() {
+  const searchParams = useSearchParams()
+  const tipoInicial = searchParams?.get('tipo') || ''
+
   const [data, setData] = useState<Documento[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtroTipo, setFiltroTipo] = useState<string>('')
+  const [filtroTipo, setFiltroTipo] = useState<string>(tipoInicial)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState({ ...EMPTY_FORM })
+  const [form, setForm] = useState({
+    ...EMPTY_FORM,
+    // Quando vem com ?tipo=RGF, ja preseleciona no formulario
+    tipo: (tipoInicial && TIPOS.find(t => t.value === tipoInicial)
+      ? tipoInicial
+      : EMPTY_FORM.tipo) as (typeof TIPOS)[number]['value'],
+  })
   const [saving, setSaving] = useState(false)
+
+  // Sincroniza filtro quando o searchParams muda (ex: usuario navega de RGF para LDO)
+  useEffect(() => {
+    if (tipoInicial && filtroTipo !== tipoInicial) {
+      setFiltroTipo(tipoInicial)
+      setForm((f) => ({ ...f, tipo: tipoInicial as (typeof TIPOS)[number]['value'] }))
+    }
+  }, [tipoInicial, filtroTipo])
+
+  // Label do tipo atualmente filtrado (para titulo dinamico)
+  const tipoLabel = TIPOS.find((t) => t.value === filtroTipo)?.label || null
 
   const closeForm = () => {
     setShowForm(false)
@@ -159,10 +188,13 @@ export default function AdminDocumentosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6" /> Documentos Oficiais
+            <FileText className="h-6 w-6" />
+            {tipoLabel ? `Documentos: ${tipoLabel}` : 'Documentos Oficiais'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Balancetes, Balancos, Pareceres TCM, Julgamento de Contas, Planejamento Estrategico, Carta de Servicos, LGPD e PAC
+            {tipoLabel
+              ? `Publicar e gerenciar documentos do tipo "${tipoLabel}". Os documentos aparecem em /transparencia/documentos/${filtroTipo.toLowerCase().replace(/_/g, '-')}.`
+              : 'Balancetes, Balancos, Pareceres TCM, Julgamento de Contas, Planejamento Estrategico, Carta de Servicos, LGPD e PAC'}
           </p>
         </div>
         <Button onClick={() => setShowForm(true)} disabled={showForm}>

@@ -125,11 +125,24 @@ const navigationCategories: NavCategory[] = [
       { name: 'Reunioes', href: '/admin/comissoes/reunioes', icon: Calendar, permissions: ['comissao.view'] },
     ]
   },
+  // Categoria reorganizada seguindo as 9 secoes do portal /transparencia
+  // (institucionais, receitas/despesas, RH em categoria propria, licitacoes/contratos,
+  // patrimonio, planejamento, ouvidoria/SIC, LGPD). Documentos Oficiais ganha
+  // submenu com 18 tipos (RGF, LDO, LOA, PPA, PCA, etc.).
   {
     name: 'Transparencia',
     icon: Eye,
     items: [
-      { name: 'Publicar Documentos', href: '/admin/transparencia', icon: Eye, permissions: ['transparencia.view'] },
+      // === Visao geral ===
+      { name: 'Visao Geral / Publicacoes Adm.', href: '/admin/transparencia', icon: Eye, permissions: ['transparencia.view'] },
+      { name: 'Conformidade PNTP', href: '/admin/conformidade-pntp', icon: Shield, permissions: ['dashboard.view'] },
+
+      // === Institucionais (Dim. 2) ===
+      { name: 'Organograma', href: '/admin/organograma', icon: Building2, permissions: ['transparencia.manage'] },
+      { name: 'Agenda Externa', href: '/admin/transparencia/agenda-parlamentar', icon: CalendarDays, permissions: ['transparencia.manage'] },
+      { name: 'Perguntas Frequentes', href: '/admin/transparencia/faq', icon: HelpCircle, permissions: ['transparencia.manage'] },
+
+      // === Receitas e Despesas (Dim. 3, 4, 5) ===
       { name: 'Gestao Fiscal', href: '/admin/gestao-fiscal', icon: DollarSign, permissions: ['transparencia.manage'] },
       { name: 'Receitas', href: '/admin/receitas', icon: TrendingUp, permissions: ['transparencia.manage'] },
       { name: 'Despesas', href: '/admin/despesas', icon: TrendingDown, permissions: ['transparencia.manage'] },
@@ -140,22 +153,53 @@ const navigationCategories: NavCategory[] = [
       { name: 'Cartao Corporativo', href: '/admin/transparencia/cartoes-corporativos', icon: CreditCard, permissions: ['transparencia.manage'] },
       { name: 'Cotas Parlamentar', href: '/admin/transparencia/cotas-parlamentar', icon: Wallet, permissions: ['transparencia.manage'] },
       { name: 'Programas e Acoes', href: '/admin/transparencia/programas-acoes', icon: ClipboardList, permissions: ['transparencia.manage'] },
+
+      // === Licitacoes, Contratos, Convenios e Obras (Dim. 8, 9, 10) ===
       { name: 'Licitacoes', href: '/admin/licitacoes', icon: Gavel, permissions: ['transparencia.view'] },
       { name: 'Contratos', href: '/admin/contratos', icon: FileSpreadsheet, permissions: ['transparencia.manage'] },
       { name: 'Convenios', href: '/admin/convenios', icon: Handshake, permissions: ['transparencia.manage'] },
-      { name: 'Fornecedores Sancionados', href: '/admin/transparencia/fornecedores-sancionados', icon: Shield, permissions: ['transparencia.manage'] },
-      { name: 'Cadastro de Fornecedores', href: '/admin/transparencia/fornecedores', icon: Database, permissions: ['transparencia.manage'] },
-      { name: 'Informacoes Classificadas', href: '/admin/transparencia/documentos-classificados', icon: Lock, permissions: ['transparencia.manage'] },
-      { name: 'Agenda Externa', href: '/admin/transparencia/agenda-parlamentar', icon: CalendarDays, permissions: ['transparencia.manage'] },
-      { name: 'Perguntas Frequentes', href: '/admin/transparencia/faq', icon: HelpCircle, permissions: ['transparencia.manage'] },
-      { name: 'Pesquisas de Satisfacao', href: '/admin/transparencia/pesquisas-satisfacao', icon: Vote, permissions: ['transparencia.manage'] },
       { name: 'Atas de Adesao SRP', href: '/admin/transparencia/atas-adesao-srp', icon: Layers, permissions: ['transparencia.manage'] },
+      { name: 'Cadastro de Fornecedores', href: '/admin/transparencia/fornecedores', icon: Database, permissions: ['transparencia.manage'] },
+      { name: 'Fornecedores Sancionados', href: '/admin/transparencia/fornecedores-sancionados', icon: Shield, permissions: ['transparencia.manage'] },
       { name: 'Obras', href: '/admin/transparencia/obras', icon: HardHat, permissions: ['transparencia.manage'] },
+
+      // === Planejamento e Prestacao de Contas (Dim. 11) — submenu por tipo ===
+      {
+        name: 'Documentos Oficiais (RGF/LDO/LOA/PPA...)',
+        href: '/admin/transparencia/documentos',
+        icon: FileText,
+        permissions: ['transparencia.manage'],
+        submenu: [
+          { name: 'Todos os documentos', href: '/admin/transparencia/documentos', icon: FileText, permissions: ['transparencia.manage'] },
+          { name: 'RGF — Relatorio de Gestao Fiscal', href: '/admin/transparencia/documentos?tipo=RGF', icon: BarChart3, permissions: ['transparencia.manage'] },
+          { name: 'LDO — Lei de Diretrizes Orcam.', href: '/admin/transparencia/documentos?tipo=LDO', icon: FileText, permissions: ['transparencia.manage'] },
+          { name: 'LOA — Lei Orcamentaria Anual', href: '/admin/transparencia/documentos?tipo=LOA', icon: FileText, permissions: ['transparencia.manage'] },
+          { name: 'PPA — Plano Plurianual', href: '/admin/transparencia/documentos?tipo=PPA', icon: FileText, permissions: ['transparencia.manage'] },
+          { name: 'PCA — Plano Anual de Contratacoes', href: '/admin/transparencia/documentos?tipo=PLANO_ANUAL_CONTRATACOES', icon: ClipboardList, permissions: ['transparencia.manage'] },
+          { name: 'Balancete Financeiro', href: '/admin/transparencia/documentos?tipo=BALANCETE_FINANCEIRO', icon: FileSpreadsheet, permissions: ['transparencia.manage'] },
+          { name: 'Balanco Anual', href: '/admin/transparencia/documentos?tipo=BALANCO_ANUAL', icon: BarChart3, permissions: ['transparencia.manage'] },
+          { name: 'Parecer do TCM', href: '/admin/transparencia/documentos?tipo=PARECER_TCM', icon: Gavel, permissions: ['transparencia.manage'] },
+          { name: 'Julgamento das Contas', href: '/admin/transparencia/documentos?tipo=JULGAMENTO_CONTAS_EXECUTIVO', icon: Scale, permissions: ['transparencia.manage'] },
+          { name: 'Relatorio de Gestao', href: '/admin/transparencia/documentos?tipo=RELATORIO_GESTAO', icon: BarChart3, permissions: ['transparencia.manage'] },
+          { name: 'Planejamento Estrategico', href: '/admin/transparencia/documentos?tipo=PLANEJAMENTO_ESTRATEGICO', icon: TrendingUp, permissions: ['transparencia.manage'] },
+          { name: 'Carta de Servicos ao Usuario', href: '/admin/transparencia/documentos?tipo=CARTA_SERVICOS', icon: BookOpen, permissions: ['transparencia.manage'] },
+          { name: 'LGPD e Governo Digital', href: '/admin/transparencia/documentos?tipo=LGPD_GOVERNO_DIGITAL', icon: Shield, permissions: ['transparencia.manage'] },
+          { name: 'Plano de Dados Abertos', href: '/admin/transparencia/documentos?tipo=PLANO_DADOS_ABERTOS', icon: Database, permissions: ['transparencia.manage'] },
+          { name: 'Regulamento da Ouvidoria', href: '/admin/transparencia/documentos?tipo=REGULAMENTO_OUVIDORIA', icon: MessageCircle, permissions: ['transparencia.manage'] },
+          { name: 'Politica de Privacidade', href: '/admin/transparencia/documentos?tipo=POLITICA_PRIVACIDADE', icon: Lock, permissions: ['transparencia.manage'] },
+          { name: 'Regulamento Municipal da LAI', href: '/admin/transparencia/documentos?tipo=REGULAMENTO_LAI', icon: Scale, permissions: ['transparencia.manage'] },
+        ],
+      },
+
+      // === Patrimonio ===
       { name: 'Veiculos', href: '/admin/transparencia/veiculos', icon: Truck, permissions: ['transparencia.manage'] },
-      { name: 'Documentos Oficiais', href: '/admin/transparencia/documentos', icon: FileText, permissions: ['transparencia.manage'] },
+
+      // === Ouvidoria e SIC (Dim. 12, 14) — entradas complementares ao menu Atendimento ===
+      { name: 'Informacoes Classificadas (LAI)', href: '/admin/transparencia/documentos-classificados', icon: Lock, permissions: ['transparencia.manage'] },
+
+      // === LGPD e Governo Digital (Dim. 15) ===
+      { name: 'Pesquisas de Satisfacao', href: '/admin/transparencia/pesquisas-satisfacao', icon: Vote, permissions: ['transparencia.manage'] },
       { name: 'Servicos Online', href: '/admin/transparencia/servicos-online', icon: Globe, permissions: ['transparencia.manage'] },
-      { name: 'Organograma', href: '/admin/organograma', icon: Building2, permissions: ['transparencia.manage'] },
-      { name: 'Conformidade PNTP', href: '/admin/conformidade-pntp', icon: Shield, permissions: ['dashboard.view'] },
     ]
   },
   {

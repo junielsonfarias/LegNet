@@ -1,10 +1,65 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Componente Links Relacionados — série histórica dentro das páginas)
-> **Versao**: 1.30.5
+> **Ultima Atualizacao**: 2026-05-27 (Sidebar admin reorganizado + atalhos por tipo em Documentos Oficiais)
+> **Versao**: 1.30.6
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Sidebar admin reorganizado + atalhos por tipo
+
+Endereçada a queixa "no painel admin não encontrei onde lançar informações em
+/transparencia/documentos/rgf, ajuste o menu do painel admin para ser alocado
+de acordo com as informações na area transparência".
+
+**Causa raiz identificada:**
+
+O RGF (e mais 17 tipos: LDO, LOA, PPA, PCA, balancete, balanço, etc.) era
+lançado em `/admin/transparencia/documentos` (página única que filtra por tipo
+via select). No sidebar antigo, essa página aparecia apenas como
+"Documentos Oficiais" — nome genérico que não dava pistas dos 18 sub-tipos.
+
+**Correções aplicadas:**
+
+1. `src/app/admin/transparencia/documentos/page.tsx` — agora aceita query
+   param `?tipo=RGF`. Preseleciona o filtro + o tipo no formulário de criação.
+   Título e subtítulo ficam dinâmicos ("Documentos: RGF — Relatorio de Gestao
+   Fiscal"). Envelopado em `Suspense` (boundary requerido pelo
+   `useSearchParams` do Next.js).
+
+2. `src/components/admin/admin-sidebar.tsx` — reorganizada a categoria
+   "Transparencia" seguindo as 9 secoes do portal `/transparencia`. Itens
+   agrupados visualmente por ordem:
+   - Visao geral / PNTP
+   - Institucionais (Organograma, Agenda, FAQ)
+   - Receitas e Despesas (9 itens)
+   - Licitacoes, Contratos, Convenios e Obras (7 itens)
+   - Planejamento e Prestacao de Contas (sub-menu com 18 tipos)
+   - Patrimonio (Veiculos)
+   - Ouvidoria/SIC (Informacoes Classificadas)
+   - LGPD (Pesquisas, Servicos Online)
+
+3. `"Documentos Oficiais"` virou item com submenu de 18 atalhos por tipo:
+   `Todos os documentos`, RGF, LDO, LOA, PPA, PCA, Balancete, Balanco,
+   Parecer TCM, Julgamento, Relatorio Gestao, Planejamento Estrategico,
+   Carta Servicos, LGPD, Plano Dados Abertos, Regulamento Ouvidoria,
+   Politica Privacidade, Regulamento LAI. Cada submenu navega direto a
+   `/admin/transparencia/documentos?tipo=<ENUM>`.
+
+**Fluxo prático (depois):**
+
+1. Admin abre sidebar → seção "Transparencia"
+2. Encontra item "Documentos Oficiais (RGF/LDO/LOA/PPA...)" — agora explicito
+3. Expande o submenu, clica em "RGF — Relatorio de Gestao Fiscal"
+4. Cai em `/admin/transparencia/documentos?tipo=RGF` com:
+   - Filtro pré-selecionado em RGF
+   - Lista filtrada de RGFs ja publicados
+   - Botao "Novo Documento" com tipo já em RGF
+   - Titulo da pagina: "Documentos: RGF — Relatorio de Gestao Fiscal"
+
+`npx tsc --noEmit` passou sem erros.
 
 ---
 
