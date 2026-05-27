@@ -291,7 +291,7 @@ export const ITENS_TRANSPARENCIA: ItemTransparencia[] = [
   // =========================================================================
   // SECAO 9 — LGPD e Governo Digital
   // =========================================================================
-  { slug: 'lgpd-info', label: 'LGPD e Governo Digital', secao: 'lgpd', hrefInterno: '/transparencia/documentos/lgpd', icone: 'Shield' },
+  { slug: 'lgpd', label: 'LGPD e Governo Digital', secao: 'lgpd', hrefInterno: '/transparencia/documentos/lgpd', icone: 'Shield' },
   { slug: 'politica-privacidade', label: 'Politica de Privacidade', secao: 'lgpd', hrefInterno: '/transparencia/politica-privacidade', icone: 'Lock', pntp: ['15.2'] },
   { slug: 'encarregado-dados', label: 'Encarregado de Dados (DPO)', secao: 'lgpd', hrefInterno: '/transparencia/encarregado-dados', icone: 'UserCheck', pntp: ['15.1'] },
   { slug: 'dados-abertos', label: 'Dados Abertos', secao: 'lgpd', hrefInterno: '/transparencia/dados-abertos', icone: 'Database', pntp: ['15.4'] },
@@ -308,6 +308,17 @@ export const ITENS_TRANSPARENCIA: ItemTransparencia[] = [
   // com configs ja salvas no banco.
   // =========================================================================
   { slug: 'leis', label: 'Leis Municipais (pagina interna)', secao: 'legislativo', hrefInterno: '/transparencia/leis', icone: 'Scale', ocultoNoMenu: true, descricaoAdmin: 'Pagina /transparencia/leis com listagem completa.' },
+  // Sub-tipos do LDO/LOA/PPA tambem aparecem como item raiz oculto pois cada
+  // um tem pagina propria em /transparencia/documentos/<tipo> que precisa de
+  // slug correspondente no catalogo para que admin (redirect/periodos/links)
+  // tenha efeito ao acessar direto via URL.
+  { slug: 'ldo', label: 'LDO - Lei de Diretrizes Orcamentarias (pagina interna)', secao: 'planejamento', hrefInterno: '/transparencia/documentos/ldo', icone: 'FileText', ocultoNoMenu: true, descricaoAdmin: 'Pagina /transparencia/documentos/ldo. Para multiplos anos use Documentos Oficiais.' },
+  { slug: 'loa', label: 'LOA - Lei Orcamentaria Anual (pagina interna)', secao: 'planejamento', hrefInterno: '/transparencia/documentos/loa', icone: 'FileText', ocultoNoMenu: true },
+  { slug: 'ppa', label: 'PPA - Plano Plurianual (pagina interna)', secao: 'planejamento', hrefInterno: '/transparencia/documentos/ppa', icone: 'FileText', ocultoNoMenu: true },
+  // Tipos de DocumentoTransparencia sem item raiz visivel correspondente
+  // (acessados via /transparencia/documentos/<tipo>). Configuraveis no admin.
+  { slug: 'relatorio-gestao', label: 'Relatorio de Gestao (pagina interna)', secao: 'planejamento', hrefInterno: '/transparencia/documentos/relatorio-gestao', icone: 'BarChart3', ocultoNoMenu: true },
+  { slug: 'regulamento-ouvidoria', label: 'Regulamento da Ouvidoria (pagina interna)', secao: 'ouvidoria-sic', hrefInterno: '/transparencia/documentos/regulamento-ouvidoria', icone: 'BookOpen', ocultoNoMenu: true },
   { slug: 'gestao-fiscal', label: 'Gestao Fiscal (pagina interna)', secao: 'planejamento', hrefInterno: '/transparencia/gestao-fiscal', icone: 'BarChart3', ocultoNoMenu: true, descricaoAdmin: 'Pagina /transparencia/gestao-fiscal com indicadores LRF.' },
   { slug: 'lei-responsabilidade-fiscal', label: 'Lei de Responsabilidade Fiscal (LRF)', secao: 'planejamento', hrefInterno: '/transparencia/lei-responsabilidade-fiscal', icone: 'Scale', ocultoNoMenu: true },
   { slug: 'publicacoes', label: 'Publicacoes Oficiais', secao: 'legislativo', hrefInterno: '/transparencia/publicacoes', icone: 'BookOpen', ocultoNoMenu: true },

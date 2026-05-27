@@ -78,6 +78,21 @@ const TIPO_CONFIG: Record<string, TipoConfig> = {
   },
 }
 
+/**
+ * Para alguns tipos a URL `/transparencia/documentos/<tipo>` usa um slug
+ * diferente do item raiz no catalogo (porque ja existe uma pagina dedicada
+ * com outro slug). Este mapa garante que a configuracao admin tenha efeito
+ * em AMBAS as paginas.
+ *
+ * Ex: admin configura "plano-estrategico" → afeta /transparencia/plano-estrategico
+ * E tambem /transparencia/documentos/planejamento-estrategico.
+ */
+const TIPO_TO_SLUG_CATALOGO: Record<string, string> = {
+  'planejamento-estrategico': 'plano-estrategico',
+  'plano-anual-contratacoes': 'plano-contratacoes-anual',
+  'regulamento-lai': 'marco-normativo-lai',
+}
+
 const MESES_LABELS = [
   '-',
   'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
@@ -105,14 +120,19 @@ export default function DocumentosTipoPage({ params }: { params: Promise<{ tipo:
     )
   }
 
+  // Slug do catalogo bate diretamente com `tipo` da URL (rgf, ldo, loa, ppa,
+  // balancete-financeiro, etc.) — exceto pelos aliases definidos em
+  // TIPO_TO_SLUG_CATALOGO, que compartilham config com a pagina dedicada
+  // correspondente (ex: planejamento-estrategico -> plano-estrategico).
+  const slugCatalogo = TIPO_TO_SLUG_CATALOGO[tipo] || tipo
   return (
-    <TransparenciaPageWrapper slug={`documentos-${tipo}`} nome={config.label}>
-      <DocumentosTipoContent tipo={tipo} config={config} />
+    <TransparenciaPageWrapper slug={slugCatalogo} nome={config.label}>
+      <DocumentosTipoContent tipo={tipo} config={config} slugCatalogo={slugCatalogo} />
     </TransparenciaPageWrapper>
   )
 }
 
-function DocumentosTipoContent({ tipo, config }: { tipo: string; config: TipoConfig }) {
+function DocumentosTipoContent({ tipo, config, slugCatalogo }: { tipo: string; config: TipoConfig; slugCatalogo: string }) {
   const [data, setData] = useState<Doc[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroAnoInicio, setFiltroAnoInicio] = useState('')
@@ -373,7 +393,7 @@ function DocumentosTipoContent({ tipo, config }: { tipo: string; config: TipoCon
       </div>
 
       {/* Links Relacionados (serie historica / sistemas externos) */}
-      <LinksRelacionados slug={`documentos-${tipo}`} />
+      <LinksRelacionados slug={slugCatalogo} />
     </div>
   )
 }

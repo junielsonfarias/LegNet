@@ -1,10 +1,70 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Sidebar admin reorganizado + atalhos por tipo em Documentos Oficiais)
-> **Versao**: 1.30.6
+> **Ultima Atualizacao**: 2026-05-27 (Revisão geral: corrigida inconsistência slug em /documentos/[tipo])
+> **Versao**: 1.30.7
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Revisão: corrigida inconsistência crítica de slugs em /documentos/[tipo]
+
+Revisão sistemática de tudo que foi feito hoje (5 commits anteriores)
+identificou uma inconsistência **crítica** que tornava a configuração admin
+sem efeito real em 17 páginas:
+
+**Bug:** a página `/transparencia/documentos/[tipo]/page.tsx` usava
+`<TransparenciaPageWrapper slug="documentos-${tipo}">` (com prefixo
+`documentos-`). O catálogo registrava esses tipos como `rgf`, `ldo`, `loa`,
+etc. (SEM prefixo). Resultado: admin configurava `rgf` → wrapper buscava
+config para `documentos-rgf` → buraco negro. A página continuava com layout
+padrão mesmo após o admin habilitar redirect ou Links Relacionados.
+
+**Itens afetados:** todos os 17 tipos de `DocumentoTransparencia` — RGF,
+LDO, LOA, PPA, PCA, balancete, balanço, parecer TCM, julgamento, plano
+estratégico, relatório de gestão, carta de serviços, LGPD, plano de dados
+abertos, regulamento ouvidoria, política de privacidade, regulamento LAI.
+
+**Correção:**
+
+1. `src/lib/transparencia/itens-catalogo.ts`:
+   - Item `lgpd-info` renomeado de volta para `lgpd` (a colisão semântica
+     com `SecaoSlug.lgpd` é apenas legibilidade, não há colisão técnica).
+   - Adicionados 5 slugs ocultos para tipos sem item raiz visível
+     correspondente: `ldo`, `loa`, `ppa`, `relatorio-gestao`,
+     `regulamento-ouvidoria`. Todos com `ocultoNoMenu: true`.
+
+2. `src/app/transparencia/documentos/[tipo]/page.tsx`:
+   - `<TransparenciaPageWrapper slug={`documentos-${tipo}`}>` →
+     `<TransparenciaPageWrapper slug={slugCatalogo}>`.
+   - `<LinksRelacionados slug={`documentos-${tipo}`}>` →
+     `<LinksRelacionados slug={slugCatalogo}>`.
+   - Novo mapa `TIPO_TO_SLUG_CATALOGO` resolve 3 aliases:
+     - `planejamento-estrategico` → `plano-estrategico` (compartilha config
+       com a página dedicada `/transparencia/plano-estrategico`)
+     - `plano-anual-contratacoes` → `plano-contratacoes-anual`
+     - `regulamento-lai` → `marco-normativo-lai`
+   - Os demais 14 tipos batem diretamente (slug = tipo da URL).
+
+**Resultado pós-correção:**
+
+- 50 slugs usados em wrappers → 50/50 com correspondência no catálogo
+- 17 tipos de DocumentoTransparencia → 17/17 com slug efetivo no catálogo
+- 0 órfãos detectados
+- Admin agora tem efeito real ao configurar qualquer tipo de documento
+
+**Validações finais:**
+
+| Check | Status |
+|-------|--------|
+| `npx tsc --noEmit` | EXIT 0 |
+| `npx eslint --quiet` | EXIT 0 |
+| Slugs em wrappers sem item no catálogo | 0 órfãos |
+| Tipos de documento com slug efetivo | 17/17 |
+| APIs novas com auth+Zod+revalidateTag | 5/5 |
+| Componentes com cleanup de useEffect | LinksRelacionados ✓ |
+| useSearchParams envolvido em Suspense | ✓ |
 
 ---
 
