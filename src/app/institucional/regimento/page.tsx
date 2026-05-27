@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileText, BookOpen, Scale, Users, Calendar, CheckCircle, Clock, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
+export const revalidate = 3600 // 1h - regimento interno estatico
+
 export default function RegimentoPage() {
   return (
     <div className="min-h-screen bg-gray-50">

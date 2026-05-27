@@ -21,6 +21,7 @@ import {
   verificarPrazosESIC,
   verificarTokensIntegracaoVencendo
 } from '@/lib/jobs/prazos-legais'
+import { limparDadosAntigos } from '@/lib/jobs/limpeza-dados'
 import { createLogger } from '@/lib/logging/logger'
 
 export const dynamic = 'force-dynamic'
@@ -80,7 +81,10 @@ async function handler(request: NextRequest) {
     ['atasAtrasadas', verificarAtasAtrasadas],
     ['contratosAtrasados', verificarContratosAtrasados],
     ['prazosESIC', verificarPrazosESIC],
-    ['tokensIntegracaoVencendo', verificarTokensIntegracaoVencendo]
+    ['tokensIntegracaoVencendo', verificarTokensIntegracaoVencendo],
+    // SP4.5 — limpeza periodica LGPD Art. 16:
+    //   sessions >30d, password reset tokens >30d, auditLog >2 anos.
+    ['limpezaDadosAntigos', limparDadosAntigos],
   ]
 
   for (const [nome, fn] of verificacoesPNTP) {

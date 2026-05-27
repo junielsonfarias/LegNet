@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/logging/logger'
 
@@ -106,34 +106,47 @@ export function useDashboardStats() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchStats = useCallback(async () => {
+    // Cancela request em voo
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch('/api/dashboard/stats')
+      const response = await fetch('/api/dashboard/stats', { signal: controller.signal })
 
       if (!response.ok) {
         throw new Error('Erro ao carregar estatísticas')
       }
 
       const result = await response.json()
+      if (controller.signal.aborted) return
       if (result.success) {
         setStats(result.data)
       } else {
         throw new Error(result.error || 'Erro desconhecido')
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar estatísticas'
-      setError(errorMessage)
-      log.error('Erro ao carregar estatisticas', err)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        log.error('Erro ao carregar estatisticas', err)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     fetchStats()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchStats])
 
   return { stats, loading, error, refetch: fetchStats }
@@ -144,34 +157,48 @@ export function useAtividadesRecentes(limit: number = 10) {
   const [atividades, setAtividades] = useState<AtividadeRecente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchAtividades = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`/api/dashboard/atividades?limit=${limit}`)
+      const response = await fetch(`/api/dashboard/atividades?limit=${limit}`, {
+        signal: controller.signal
+      })
 
       if (!response.ok) {
         throw new Error('Erro ao carregar atividades')
       }
 
       const result = await response.json()
+      if (controller.signal.aborted) return
       if (result.success) {
         setAtividades(result.data)
       } else {
         throw new Error(result.error || 'Erro desconhecido')
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar atividades'
-      setError(errorMessage)
-      log.error('Erro ao carregar atividades', err)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        log.error('Erro ao carregar atividades', err)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [limit])
 
   useEffect(() => {
     fetchAtividades()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchAtividades])
 
   return { atividades, loading, error, refetch: fetchAtividades }
@@ -182,34 +209,48 @@ export function useProximosEventos(limit: number = 10) {
   const [eventos, setEventos] = useState<ProximoEvento[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchEventos = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`/api/dashboard/eventos?limit=${limit}`)
+      const response = await fetch(`/api/dashboard/eventos?limit=${limit}`, {
+        signal: controller.signal
+      })
 
       if (!response.ok) {
         throw new Error('Erro ao carregar eventos')
       }
 
       const result = await response.json()
+      if (controller.signal.aborted) return
       if (result.success) {
         setEventos(result.data)
       } else {
         throw new Error(result.error || 'Erro desconhecido')
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar eventos'
-      setError(errorMessage)
-      log.error('Erro ao carregar eventos', err)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        log.error('Erro ao carregar eventos', err)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [limit])
 
   useEffect(() => {
     fetchEventos()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchEventos])
 
   return { eventos, loading, error, refetch: fetchEventos }

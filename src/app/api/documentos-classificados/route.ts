@@ -11,7 +11,7 @@ const SITUACOES = ['CLASSIFICADA', 'DESCLASSIFICADA'] as const
 
 const QuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(1000).default(500),
+  limit: z.coerce.number().int().min(1).max(500).default(500),
   grau: z.enum(GRAUS).optional(),
   situacao: z.enum(SITUACOES).optional()
 })

@@ -47,13 +47,15 @@ export const useParlamentarDashboard = (id?: string | null): UseParlamentarDashb
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      if (!id) {
-        setDashboard(null)
-        setLoading(false)
-        return
-      }
+    if (!id) {
+      setDashboard(null)
+      setLoading(false)
+      return
+    }
 
+    const controller = new AbortController()
+
+    const fetchDashboard = async () => {
       try {
         setLoading(true)
         setError(null)
@@ -63,7 +65,8 @@ export const useParlamentarDashboard = (id?: string | null): UseParlamentarDashb
           headers: {
             'Content-Type': 'application/json'
           },
-          cache: 'no-store'
+          cache: 'no-store',
+          signal: controller.signal
         })
 
         if (!response.ok) {
@@ -72,6 +75,7 @@ export const useParlamentarDashboard = (id?: string | null): UseParlamentarDashb
         }
 
         const payload = await response.json()
+        if (controller.signal.aborted) return
         if (payload?.success) {
           setDashboard(payload.data)
         } else {
@@ -79,16 +83,25 @@ export const useParlamentarDashboard = (id?: string | null): UseParlamentarDashb
           throw new Error(payload?.error || 'Erro desconhecido')
         }
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
         const message = err instanceof Error ? err.message : 'Erro ao carregar painel do parlamentar'
-        setError(message)
-        setDashboard(null)
-        toast.error(message)
+        if (!controller.signal.aborted) {
+          setError(message)
+          setDashboard(null)
+          toast.error(message)
+        }
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchDashboard()
+
+    return () => {
+      controller.abort()
+    }
   }, [id])
 
   return { dashboard, loading, error }

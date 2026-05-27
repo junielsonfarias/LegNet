@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 
 export type TipoQuorum =
@@ -86,8 +86,13 @@ export function useQuorum(filters?: UseQuorumFilters) {
   const [configuracoes, setConfiguracoes] = useState<ConfiguracaoQuorum[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchConfiguracoes = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
@@ -99,25 +104,33 @@ export function useQuorum(filters?: UseQuorumFilters) {
       const queryString = params.toString()
       const url = `/api/quorum${queryString ? `?${queryString}` : ''}`
 
-      const response = await fetch(url)
+      const response = await fetch(url, { signal: controller.signal })
       const data = await response.json()
 
       if (!response.ok) {
         throw new Error(data.error || 'Erro ao carregar configuracoes de quorum')
       }
 
-      setConfiguracoes(data.data || [])
+      if (!controller.signal.aborted) {
+        setConfiguracoes(data.data || [])
+      }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const message = err instanceof Error ? err.message : 'Erro desconhecido'
-      setError(message)
-      toast.error(message)
+      if (!controller.signal.aborted) {
+        setError(message)
+        toast.error(message)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [filters?.ativo, filters?.aplicacao])
 
   useEffect(() => {
     fetchConfiguracoes()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchConfiguracoes])
 
   const getById = useCallback(async (id: string): Promise<ConfiguracaoQuorum | null> => {

@@ -63,7 +63,9 @@ export default function AdminFornecedoresPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const r = await fetch('/api/fornecedores?limit=1000')
+      // SP4.4 — backend agora limita em 500. Se houver mais que isso na base,
+      // implementar paginacao real (page/total) na UI futura.
+      const r = await fetch('/api/fornecedores?limit=500')
       const j = await r.json()
       setData(j?.data || [])
     } finally {

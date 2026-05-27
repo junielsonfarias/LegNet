@@ -54,7 +54,7 @@ export function useAudienciasAdmin() {
       }
     }
     carregarParlamentares()
-  }, [])
+  }, [carregarAudiencias])
 
   // Filtrar audiencias
   const filteredAudiencias = useCallback(() => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 
 export interface Licitacao {
@@ -37,8 +37,13 @@ export function useLicitacoes(filters?: LicitacaoFilters) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<any>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const fetchLicitacoes = useCallback(async () => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
@@ -51,9 +56,10 @@ export function useLicitacoes(filters?: LicitacaoFilters) {
       params.append('page', (filters?.page || 1).toString())
       params.append('limit', (filters?.limit || 50).toString())
 
-      const response = await fetch(`/api/licitacoes?${params}`)
+      const response = await fetch(`/api/licitacoes?${params}`, { signal: controller.signal })
       const result = await response.json()
 
+      if (controller.signal.aborted) return
       if (result.success) {
         setLicitacoes(result.data)
         setPagination(result.pagination)
@@ -61,16 +67,22 @@ export function useLicitacoes(filters?: LicitacaoFilters) {
         throw new Error(result.error)
       }
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar licitacoes'
-      setError(errorMessage)
-      toast.error(errorMessage)
+      if (!controller.signal.aborted) {
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
   }, [filters?.modalidade, filters?.situacao, filters?.ano, filters?.objeto, filters?.page, filters?.limit])
 
   useEffect(() => {
     fetchLicitacoes()
+    return () => {
+      abortRef.current?.abort()
+    }
   }, [fetchLicitacoes])
 
   const create = useCallback(async (data: Partial<Licitacao>) => {

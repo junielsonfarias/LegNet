@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { use, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,7 @@ export default function DocumentosFaseLicitacaoPage({
   const [interna, setInterna] = useState<DocItem[]>([])
   const [externa, setExterna] = useState<DocItem[]>([])
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const r = await fetch(`/api/licitacoes/${id}/documentos`)
@@ -54,11 +54,11 @@ export default function DocumentosFaseLicitacaoPage({
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     load()
-  }, [id])
+  }, [load])
 
   const handleSave = async () => {
     setSaving(true)

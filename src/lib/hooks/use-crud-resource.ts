@@ -143,8 +143,12 @@ export function useCrudResource<T, TFilters extends object | undefined, TCreate,
     if (autoFetch) {
       fetchData()
     }
-    // Quando filtros mudam, marca a request anterior como obsoleta
+    // Quando filtros mudam, marca a request anterior como obsoleta. Aqui o ref
+    // serve EXATAMENTE como contador mutavel (queremos incrementar o valor
+    // atual no momento do cleanup, nao snapshot no setup) — por isso a
+    // sugestao default do eslint nao se aplica.
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       requestIdRef.current++
     }
   }, [fetchData, autoFetch])

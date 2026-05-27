@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { User, Scale, Users, FileText, CheckCircle, Shield, MessageSquare, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
+export const revalidate = 3600 // 1h - conteudo institucional estatico
+
 export default function PapelVereadorPage() {
   return (
     <div className="min-h-screen bg-gray-50">

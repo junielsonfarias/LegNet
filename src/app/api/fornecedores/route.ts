@@ -11,7 +11,7 @@ const TIPOS_PESSOA = ['PF', 'PJ'] as const
 
 const QuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(1000).default(500),
+  limit: z.coerce.number().int().min(1).max(500).default(500),
   situacao: z.enum(SITUACOES).optional(),
   nome: z.string().optional()
 })

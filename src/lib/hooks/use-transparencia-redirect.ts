@@ -19,11 +19,17 @@ export function useTransparenciaRedirect(slug: string) {
   const [redirected, setRedirected] = useState(false)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const check = async () => {
       try {
-        const res = await fetch(`/api/transparencia/redirecionamentos?slug=${slug}`)
+        const res = await fetch(
+          `/api/transparencia/redirecionamentos?slug=${slug}`,
+          { signal: controller.signal }
+        )
         if (res.ok) {
           const data = await res.json()
+          if (controller.signal.aborted) return
           const config = data.data as RedirectConfig | null
           if (config?.enabled && config?.url) {
             setRedirect(config)
@@ -32,14 +38,19 @@ export function useTransparenciaRedirect(slug: string) {
             setRedirected(true)
           }
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
         // Se falhar, mostra conteúdo interno
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
 
     check()
+
+    return () => {
+      controller.abort()
+    }
   }, [slug])
 
   return { loading, redirect, redirected }

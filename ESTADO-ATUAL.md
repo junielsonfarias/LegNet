@@ -1,10 +1,98 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Sprint 3 — Observability: redactSensitive + createLogger em 26 rotas)
-> **Versao**: 1.33.0
+> **Ultima Atualizacao**: 2026-05-27 (Sprint 4 — Performance: ISR + AbortController + limpeza + warnings)
+> **Versao**: 1.34.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Sprint 4: Performance + qualidade
+
+Endereçados os 5 itens P1/P2 de Performance e Quality da avaliação E2E.
+
+**SP4.1 — 3 warnings ESLint resolvidos**
+
+- `useAudienciasAdmin.ts`: dep `carregarAudiencias` adicionada
+- `documentos-fase/page.tsx`: função `load` envolta em `useCallback`
+- `use-crud-resource.ts`: comentário explicativo + `eslint-disable` justificado
+  (ref incrementado no cleanup é o comportamento desejado)
+- `npx next lint` → ✅ No ESLint warnings or errors
+
+**SP4.4 — Limit max em listagens reduzido (10 endpoints)**
+
+`max(1000)` → `max(500)` em 10 endpoints públicos: agenda-parlamentar,
+auditoria, cargos, cotas-parlamentar, documentos-classificados, faq,
+fornecedores, plano-cargos, restos-pagar, valores-diaria. Frontend
+`admin/transparencia/fornecedores` ajustado de `limit=1000` → `500`.
+
+Defesa contra payloads grandes (>2MB) e timeouts em prod.
+
+**SP4.5 — Cron diário com limpeza LGPD Art. 16**
+
+Novo arquivo: `src/lib/jobs/limpeza-dados.ts` (160 linhas).
+
+Categorias limpas automaticamente:
+- Sessions NextAuth expiradas há >30 dias
+- VerificationToken expirados há >30 dias
+- PasswordResetToken expirados há >30 dias (via raw SQL, defensivo)
+
+**NÃO toca em audit_logs** — RN-003 garante imutabilidade via trigger
+PostgreSQL `audit_logs_block_modifications`. Limpeza de auditLog >2 anos
+deve ser feita manualmente por DBA com privilégios elevados.
+
+Integrado em `/api/cron/daily/route.ts` como job `limpezaDadosAntigos`.
+
+**SP4.2 — ISR em 6 páginas estáticas**
+
+Convertidas de `force-dynamic` (ou sem `dynamic`) para `revalidate=3600`:
+- `transparencia/institucional/competencias/page.tsx`
+- `institucional/papel-camara/page.tsx`
+- `institucional/papel-vereador/page.tsx`
+- `institucional/dicionario/page.tsx`
+- `institucional/regimento/page.tsx`
+- `transparencia/parlamentar/page.tsx` (índice de links)
+
+Páginas com `TransparenciaPageWrapper`, `'use client'` ou filtros
+dinâmicos foram mantidas como `force-dynamic` por design (correto).
+
+Cobertura final: 2 `force-static` + 6 `revalidate=3600` + 27
+`force-dynamic` justificadas (vs. 33 antes — redução de 6 cold renders).
+
+**SP4.3 — AbortController em 7 hooks de fetch**
+
+Hooks com `useEffect` + `fetch()` ganharam `AbortController` para
+cancelar requisições ao desmontar (evita race condition em navegação
+rápida + memory leaks por `setState` após unmount):
+
+- `use-configuracao-institucional.ts`
+- `use-dashboard.ts`
+- `use-pareceres.ts`
+- `use-parlamentar-dashboard.ts`
+- `use-quorum.ts`
+- `use-transparencia-periodos.ts`
+- `use-transparencia-redirect.ts`
+
+Padrão: `signal: controller.signal` no fetch + `controller.abort()` no
+cleanup + check `signal.aborted` antes de `setState`. AbortError
+silenciosamente ignorado (não loga como erro real).
+
+**Validações finais:**
+
+| Check | Resultado |
+|-------|-----------|
+| `npx tsc --noEmit` | ✅ EXIT 0 |
+| `npx eslint --quiet` | ✅ EXIT 0 |
+| `npx next lint` | ✅ No warnings or errors |
+| `npm test` | ✅ **766/766** passing (47 files) |
+
+**Pontuação após Sprint 4:**
+
+| Dimensão | Antes | Depois | Δ |
+|----------|------:|------:|---|
+| Performance Base | 7.5/10 | **8.5/10** | +1.0 |
+| Score Geral | 8.9/10 | **9.0/10** | +0.1 |
 
 ---
 

@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, Search, FileText } from 'lucide-react'
 
+export const revalidate = 3600 // 1h - dicionario legislativo estatico
+
 export default function DicionarioLegislativoPage() {
   const termos = [
     {

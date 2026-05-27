@@ -12,7 +12,7 @@ import {
 // Schema para validação de query params
 const AuditoriaQuerySchema = z.object({
   tipo: z.enum(['eventos', 'recentes', 'erros', 'usuario', 'suspeitos', 'estatisticas', 'relatorios', 'export']).nullish().transform(v => v ?? undefined),
-  limite: z.coerce.number().int().min(1).max(1000).default(50),
+  limite: z.coerce.number().int().min(1).max(500).default(50),
   formato: z.enum(['json', 'csv']).default('json'),
   dataInicio: z.string().datetime().nullish().transform(v => v ?? undefined),
   dataFim: z.string().datetime().nullish().transform(v => v ?? undefined),

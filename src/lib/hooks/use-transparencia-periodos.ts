@@ -13,27 +13,31 @@ export function useTransparenciaPeriodos(slug: string) {
   const [config, setConfig] = useState<ConfiguracaoPeriodos | null>(null)
 
   useEffect(() => {
-    let cancelado = false
+    const controller = new AbortController()
     const fetchConfig = async () => {
       try {
-        const res = await fetch(`/api/transparencia/periodos?slug=${encodeURIComponent(slug)}`)
+        const res = await fetch(
+          `/api/transparencia/periodos?slug=${encodeURIComponent(slug)}`,
+          { signal: controller.signal }
+        )
         if (!res.ok) {
-          if (!cancelado) setLoading(false)
+          if (!controller.signal.aborted) setLoading(false)
           return
         }
         const json = await res.json()
-        if (cancelado) return
+        if (controller.signal.aborted) return
         const data = (json?.data ?? null) as ConfiguracaoPeriodos | null
         setConfig(data)
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
         // silencia - segue sem periodos
       } finally {
-        if (!cancelado) setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
     fetchConfig()
     return () => {
-      cancelado = true
+      controller.abort()
     }
   }, [slug])
 

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 const QuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(1000).default(100),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
   ano: z.coerce.number().int().optional(),
   ativo: z.enum(['true', 'false']).optional()
 })

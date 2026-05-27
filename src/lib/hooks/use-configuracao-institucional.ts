@@ -89,12 +89,13 @@ export function useConfiguracaoInstitucional(): ConfiguracaoCompleta {
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
-    let isMounted = true
+    const controller = new AbortController()
 
     async function fetchData() {
       try {
         const response = await fetch('/api/institucional', {
-          next: { revalidate: 3600 } // Cache por 1 hora
+          next: { revalidate: 3600 }, // Cache por 1 hora
+          signal: controller.signal
         })
 
         if (!response.ok) {
@@ -103,7 +104,7 @@ export function useConfiguracaoInstitucional(): ConfiguracaoCompleta {
 
         const result = await response.json()
 
-        if (isMounted && result.dados) {
+        if (!controller.signal.aborted && result.dados) {
           const { dados } = result
 
           setData({
@@ -136,12 +137,13 @@ export function useConfiguracaoInstitucional(): ConfiguracaoCompleta {
           })
         }
       } catch (err) {
-        if (isMounted) {
+        if (err instanceof Error && err.name === 'AbortError') return
+        if (!controller.signal.aborted) {
           setError(err instanceof Error ? err : new Error('Erro desconhecido'))
           // Manter fallback em caso de erro
         }
       } finally {
-        if (isMounted) {
+        if (!controller.signal.aborted) {
           setLoading(false)
         }
       }
@@ -150,7 +152,7 @@ export function useConfiguracaoInstitucional(): ConfiguracaoCompleta {
     fetchData()
 
     return () => {
-      isMounted = false
+      controller.abort()
     }
   }, [])
 

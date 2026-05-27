@@ -10,7 +10,7 @@ const ABRANGENCIAS = ['MUNICIPAL', 'ESTADUAL', 'NACIONAL', 'INTERNACIONAL'] as c
 
 const QuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(1000).default(500),
+  limit: z.coerce.number().int().min(1).max(500).default(500),
   ano: z.coerce.number().int().optional(),
   abrangencia: z.enum(ABRANGENCIAS).optional()
 })

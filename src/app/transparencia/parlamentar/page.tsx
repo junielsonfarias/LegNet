@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { Users, ClipboardCheck, FileText, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 
+export const revalidate = 3600 // 1h - indice de secoes parlamentares estatico
+
 const secoes = [
   {
     icon: Users,
