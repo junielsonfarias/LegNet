@@ -49,17 +49,18 @@ vi.mock('@/lib/utils', () => ({
   cn: (...args: any[]) => args.filter(Boolean).join(' '),
 }))
 
+// Import dinamico do componente sob teste (mantem teste rapido em ESM)
+import { SkipLinks } from '@/components/ui/skip-link'
+
 describe('Acessibilidade WCAG 2.1 AA', () => {
   describe('SkipLinks', () => {
     it('nao deve ter violacoes de acessibilidade', async () => {
-      const { SkipLinks } = require('@/components/ui/skip-link')
       const { container } = render(React.createElement(SkipLinks))
       const results = await axe(container)
       expect(results).toHaveNoViolations()
     })
 
     it('deve ter role navigation e aria-label', () => {
-      const { SkipLinks } = require('@/components/ui/skip-link')
       const { container } = render(React.createElement(SkipLinks))
       const nav = container.querySelector('[role="navigation"]')
       expect(nav).toBeTruthy()

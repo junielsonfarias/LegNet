@@ -2,6 +2,12 @@ import { defineConfig } from 'vitest/config'
 import path from 'path'
 
 export default defineConfig({
+  esbuild: {
+    // JSX runtime automatic — mesmo de Next.js. Permite que componentes
+    // usem JSX sem `import React from 'react'`. Necessario para o teste de
+    // acessibilidade que renderiza SkipLinks com JSX puro.
+    jsx: 'automatic',
+  },
   test: {
     // Ambiente node por padrao; testes que precisam de DOM (react testing,
     // jest-axe) devem declarar `// @vitest-environment jsdom` no topo do
