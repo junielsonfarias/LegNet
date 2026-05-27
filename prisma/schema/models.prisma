@@ -168,6 +168,10 @@ model Parlamentar {
   bensDeclarados     Json? // Declaracao de bens/patrimonio (PNTP Diamante)
   incompatibilidades Json? // Registro de impedimentos/incompatibilidades legais
 
+  // === LGPD / SP1.5 (2026-05-27) ===
+  cpf     String? // Criptografado via AES-256-GCM (mesmo padrao Servidor). Use src/lib/security/cpf-utils.ts.
+  cpfHash String? @unique // Hash SHA-256 deterministico para busca/uniqueness. Backfill via scripts/backfill-cpf-parlamentar.ts.
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1378,6 +1382,9 @@ model AuditLog {
 
   @@index([entity, createdAt])
   @@index([userId, createdAt])
+  // SP1.6 — indices compostos para trilha por entidade especifica e dashboards por acao
+  @@index([entity, entityId, createdAt])
+  @@index([action, createdAt])
   @@map("audit_logs")
 }
 
@@ -3118,7 +3125,7 @@ model ValorDiariaTabela {
 model Fornecedor {
   id            String   @id @default(cuid())
   nome          String
-  cnpjCpf       String?
+  cnpjCpf       String?  @unique // SP1.4 — unique para evitar cadastros duplicados (CPF/CNPJ)
   tipoPessoa    String   @default("PJ") // PF | PJ
   ramoAtividade String?
   municipio     String?
@@ -3132,6 +3139,7 @@ model Fornecedor {
 
   @@index([situacao])
   @@index([nome])
+  @@index([cnpjCpf])
   @@map("fornecedores")
 }
 

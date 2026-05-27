@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { vi } from "vitest"
 /**
  * Testes de acessibilidade automatizados com jest-axe

@@ -1,10 +1,75 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Revisão geral: corrigida inconsistência slug em /documentos/[tipo])
-> **Versao**: 1.30.7
+> **Ultima Atualizacao**: 2026-05-27 (Sprint 1 — Quick Wins da avaliacao E2E)
+> **Versao**: 1.31.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Sprint 1: 6 Quick Wins da avaliação E2E
+
+Endereçados os 6 itens P0 (Quick Wins) identificados na avaliação ponta a
+ponta. Tempo total da Sprint: ~1.5h.
+
+**SP1.1 — vitest.config.ts capturar `*.test.tsx`** (bug silencioso)
+
+- `vitest.config.ts` agora inclui `*.test.{ts,tsx}` em ambos os globs.
+- Teste de a11y `src/tests/accessibility/components.test.tsx` ganhou
+  diretiva `// @vitest-environment jsdom`. Antes era ignorado em silêncio
+  (vitest não capturava `.tsx`).
+
+**SP1.2 — devDependencies de testes**
+
+- Adicionado `@vitest/coverage-v8` (destrava `npm run test:coverage`).
+- Adicionado `jest-axe` e `jsdom` (necessários para o teste de a11y rodar).
+
+**SP1.3 — `console.log` debug removido de rota admin**
+
+- `src/app/api/transparencia/periodos/route.ts`: 4 `console.log/error` de
+  debug substituídos por `createLogger('api/transparencia/periodos')` com
+  `log.info()` estruturado.
+
+**SP1.4 — Fornecedor.cnpjCpf UNIQUE**
+
+- `prisma/schema/models.prisma`: `cnpjCpf` ganhou `@unique` + `@@index`.
+- Migration SQL idempotente em `scripts/sql/add-sprint1-quick-wins.sql`.
+- Bloco `DO $$` verifica duplicatas antes de aplicar UNIQUE; aborta com
+  mensagem clara se houver.
+
+**SP1.5 — Parlamentar com cpf criptografado + cpfHash UNIQUE**
+
+- `prisma/schema/models.prisma`: 2 novos campos `cpf` (criptografado
+  AES-256-GCM) e `cpfHash String? @unique` (SHA-256 determinístico) —
+  mesmo padrão de Servidor (Fase 1 Q2).
+- `scripts/backfill-cpf-encryption.ts` estendido com nova função
+  `backfillParlamentar()`. Adiciona `parlamentar` ao default de
+  `modelosAlvo`. `install.sh` continua executando o backfill após
+  migrations.
+
+**SP1.6 — AuditLog: índices compostos para trilha por entidade**
+
+- `prisma/schema/models.prisma`: 2 índices novos:
+  - `@@index([entity, entityId, createdAt])` — consulta histórico de uma
+    entidade específica (ex: trilha de auditoria de 1 servidor)
+  - `@@index([action, createdAt])` — dashboards por tipo de ação
+    (LOGIN_FAILED, CREATE, UPDATE, etc.)
+
+**Atualizações de infraestrutura:**
+
+- `install.sh` etapa 5x adicionada — aplica `add-sprint1-quick-wins.sql`
+  antes da reaplicação de ownership.
+- Comentário do passo 5g atualizado para incluir Parlamentar no escopo
+  do backfill.
+
+**Validações:**
+
+| Check | Resultado |
+|-------|-----------|
+| `npx prisma validate` | ✅ schema válido |
+| `npx tsc --noEmit` | ✅ EXIT 0 |
+| `npx eslint --quiet` | ✅ EXIT 0 |
 
 ---
 

@@ -548,6 +548,17 @@ do_update() {
     log "Migration Fase M aplicada (tipo REGULAMENTO_LAI - PNTP 12.5)"
   fi
 
+  # 5x) Sprint 1 (AVALIACAO E2E 2026-05-27):
+  #     - Fornecedor.cnpjCpf UNIQUE + indice
+  #     - Parlamentar.cpf criptografado + cpfHash UNIQUE
+  #     - AuditLog: indices compostos (entity,entityId,createdAt) e (action,createdAt)
+  if [ -f "${INSTALL_DIR}/scripts/sql/add-sprint1-quick-wins.sql" ]; then
+    sudo -u postgres psql camara_legislativo \
+      -f "${INSTALL_DIR}/scripts/sql/add-sprint1-quick-wins.sql" \
+      >> "$LOG_FILE" 2>&1 || warn "add-sprint1-quick-wins.sql retornou aviso - verifique $LOG_FILE"
+    log "Migration Sprint 1 aplicada (CNPJ unique, Parlamentar.cpfHash, AuditLog indices)"
+  fi
+
   # 5f) Reaplicar ownership apos novas migrations criarem objetos
   if [ -f "${INSTALL_DIR}/scripts/sql/fix-table-ownership.sql" ]; then
     sudo -u postgres psql camara_legislativo \
@@ -557,7 +568,8 @@ do_update() {
   fi
 
   # 5g) Backfill de CPF (criptografia + cpfHash) — idempotente; pula registros ja migrados
-  # Cobre Servidor (Fase 1 Q2), ManifestacaoOuvidoria e SolicitacaoESIC (F1.1 Maio/26).
+  # Cobre Servidor (Fase 1 Q2), ManifestacaoOuvidoria e SolicitacaoESIC (F1.1 Maio/26)
+  # e Parlamentar (SP1.5 — AVALIACAO E2E 2026-05-27).
   if [ -f "${INSTALL_DIR}/scripts/backfill-cpf-encryption.ts" ]; then
     info "Rodando backfill de CPF (criptografia + cpfHash)..."
     if ! npx tsx scripts/backfill-cpf-encryption.ts >> "$LOG_FILE" 2>&1; then

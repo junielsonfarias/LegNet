@@ -5,6 +5,7 @@
  *  - Servidor (Fase 1 / C2 — PLANO-CORRECOES-2026-Q2)
  *  - ManifestacaoOuvidoria (F1.1 — PLANO-CORRECOES-MAIO-2026 / RN-166)
  *  - SolicitacaoESIC (F1.1 — PLANO-CORRECOES-MAIO-2026 / RN-166)
+ *  - Parlamentar (SP1.5 — AVALIACAO-E2E-2026-05-27)
  *
  * Para cada modelo:
  *  - Se cpf estiver em texto plano (nao for "iv:tag:cipher"): criptografa
@@ -13,13 +14,14 @@
  *
  * Pre-requisitos:
  *  - ENCRYPTION_KEY definida no .env
- *  - Migrations aplicadas (colunas cpfHash existem nas 3 tabelas)
+ *  - Migrations aplicadas (colunas cpfHash existem nas 4 tabelas)
  *
  * Execucao:
- *   npx tsx scripts/backfill-cpf-encryption.ts                          # roda todos
- *   npx tsx scripts/backfill-cpf-encryption.ts --dry-run                # sem gravar
- *   npx tsx scripts/backfill-cpf-encryption.ts --modelo=servidor        # apenas servidores
- *   npx tsx scripts/backfill-cpf-encryption.ts --modelo=ouvidoria,esic  # subset
+ *   npx tsx scripts/backfill-cpf-encryption.ts                              # roda todos
+ *   npx tsx scripts/backfill-cpf-encryption.ts --dry-run                    # sem gravar
+ *   npx tsx scripts/backfill-cpf-encryption.ts --modelo=servidor            # apenas servidores
+ *   npx tsx scripts/backfill-cpf-encryption.ts --modelo=ouvidoria,esic      # subset
+ *   npx tsx scripts/backfill-cpf-encryption.ts --modelo=parlamentar         # apenas parlamentares
  *
  * Em producao, rodar APOS update.sh aplicar as migrations. Pode rodar varias
  * vezes sem efeito colateral.
@@ -34,7 +36,9 @@ const prisma = new PrismaClient()
 const dryRun = process.argv.includes('--dry-run')
 const modeloArg = process.argv.find((a) => a.startsWith('--modelo='))?.split('=')[1]
 const modelosAlvo = new Set(
-  modeloArg ? modeloArg.split(',').map((m) => m.trim().toLowerCase()) : ['servidor', 'ouvidoria', 'esic'],
+  modeloArg
+    ? modeloArg.split(',').map((m) => m.trim().toLowerCase())
+    : ['servidor', 'ouvidoria', 'esic', 'parlamentar'],
 )
 
 interface Stats {
@@ -220,6 +224,57 @@ async function backfillEsic(): Promise<void> {
   printStats('SolicitacaoESIC', stats)
 }
 
+async function backfillParlamentar(): Promise<void> {
+  console.log(`\n--- Parlamentar ---`)
+  const registros = await prisma.parlamentar.findMany({
+    select: { id: true, nome: true, cpf: true, cpfHash: true },
+  })
+  const stats = makeStats(registros.length)
+  console.log(`Total: ${registros.length}`)
+
+  for (const r of registros) {
+    const plano = prepararMigracao(r.cpf, r.cpfHash)
+    if (plano.acao === 'noCpf') {
+      stats.semCpf++
+      continue
+    }
+    if (plano.acao === 'skip') {
+      stats.pulados++
+      continue
+    }
+    if (plano.acao === 'invalid') {
+      console.warn(`  [INVALIDO] ${r.id} (${r.nome}): CPF "${plano.cpfPuro}" nao e valido`)
+      stats.invalidos++
+      continue
+    }
+
+    if (dryRun) {
+      console.log(`  [DRY-RUN] ${r.id} (${r.nome}): hash ${plano.cpfHash.slice(0, 12)}...`)
+      stats.migrados++
+      continue
+    }
+
+    try {
+      await prisma.parlamentar.update({
+        where: { id: r.id },
+        data: { cpf: plano.cpf, cpfHash: plano.cpfHash },
+      })
+      stats.migrados++
+    } catch (err: unknown) {
+      const e = err as { code?: string; message?: string }
+      if (e?.code === 'P2002') {
+        console.error(`  [DUPLICADO] ${r.id} (${r.nome}): hash colide com outro parlamentar`)
+        stats.duplicados++
+      } else {
+        console.error(`  [ERRO] ${r.id} (${r.nome}):`, e?.message ?? err)
+        stats.invalidos++
+      }
+    }
+  }
+
+  printStats('Parlamentar', stats)
+}
+
 async function main() {
   console.log(`\n=== Backfill de CPF ===`)
   console.log(`Modo:    ${dryRun ? 'DRY-RUN (nao grava)' : 'EXECUCAO REAL'}`)
@@ -228,6 +283,7 @@ async function main() {
   if (modelosAlvo.has('servidor')) await backfillServidor()
   if (modelosAlvo.has('ouvidoria')) await backfillOuvidoria()
   if (modelosAlvo.has('esic')) await backfillEsic()
+  if (modelosAlvo.has('parlamentar')) await backfillParlamentar()
 
   if (dryRun) {
     console.log('\nNenhuma alteracao foi gravada (dry-run).')

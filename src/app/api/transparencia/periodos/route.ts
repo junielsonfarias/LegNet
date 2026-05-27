@@ -2,10 +2,13 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { revalidateTag } from 'next/cache'
 import { withErrorHandler,
-  createSuccessResponse, getErrorMessage } from '@/lib/error-handler'
+  createSuccessResponse } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { transparenciaRedirectService } from '@/lib/services/transparencia-redirect-service'
 import { cacheHelpers } from '@/lib/cache/memory-cache'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/transparencia/periodos')
 
 export const dynamic = 'force-dynamic'
 
@@ -44,16 +47,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 // POST - admin, salva config de periodos
 export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
-  console.log('[periodos POST] body recebido:', JSON.stringify(body))
-  let data
-  try {
-    data = ConfigPeriodosSchema.parse(body)
-  } catch (e) {
-    const zerr = (e as { errors?: unknown }).errors
-    console.error('[periodos POST] Zod falhou:', zerr ?? getErrorMessage(e))
-    throw e
-  }
-  console.log('[periodos POST] validado, salvando slug=', data.slug)
+  const data = ConfigPeriodosSchema.parse(body)
 
   const result = await transparenciaRedirectService.setPeriodos(data.slug, {
     enabled: data.enabled,
@@ -62,9 +56,9 @@ export const POST = withAuth(async (request: NextRequest) => {
     periodos: data.periodos
   })
 
-  console.log('[periodos POST] salvo com sucesso:', data.slug)
   cacheHelpers.invalidateTransparenciaMenu()
   revalidateTag('transparencia-menu')
+  log.info('Periodos salvos', { slug: data.slug, qtd: data.periodos.length })
   return createSuccessResponse(result, 'Periodos salvos com sucesso')
 }, { permissions: 'config.manage' })
 
