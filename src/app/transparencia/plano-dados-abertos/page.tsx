@@ -4,6 +4,7 @@ import {
   Database, ArrowLeft, Target, RefreshCw, FileJson, Scale, ExternalLink,
 } from 'lucide-react'
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +26,7 @@ const periodicidades = [
 
 export default async function PlanoDadosAbertosPage() {
   return (
+    <TransparenciaPageWrapper slug="plano-dados-abertos" nome="Plano de Dados Abertos">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <Link
@@ -152,5 +154,6 @@ export default async function PlanoDadosAbertosPage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

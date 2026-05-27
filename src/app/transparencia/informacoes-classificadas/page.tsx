@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Lock, ArrowLeft, ShieldCheck, FileLock2 } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/informacoes-classificadas')
 
@@ -119,6 +120,7 @@ export default async function InformacoesClassificadasPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="informacoes-classificadas" nome="Informacoes Classificadas">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link
@@ -192,5 +194,6 @@ export default async function InformacoesClassificadasPage() {
         </Card>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

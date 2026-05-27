@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Layers, ArrowLeft, Calendar, Building2, FileText, Download, ExternalLink } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/atas-adesao-srp')
 
@@ -61,6 +62,7 @@ export default async function AtasAdesaoSRPPage() {
   const anos = Array.from(new Set(atas.map((a) => a.ano))).sort((a, b) => b - a)
 
   return (
+    <TransparenciaPageWrapper slug="atas-adesao-srp" nome="Atas de Adesao a SRP">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <Link
@@ -234,5 +236,6 @@ export default async function AtasAdesaoSRPPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

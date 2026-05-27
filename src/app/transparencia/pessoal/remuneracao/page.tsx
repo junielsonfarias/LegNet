@@ -8,6 +8,7 @@ import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
 } from '@/components/ui/table'
 import { DollarSign, Lock } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,7 @@ export default async function RemuneracaoPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="relacao-remuneracao" nome="Relacao Nominal de Remuneracao">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-8">
@@ -105,5 +107,6 @@ export default async function RemuneracaoPage() {
         </Card>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

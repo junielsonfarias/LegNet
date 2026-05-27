@@ -4,6 +4,7 @@ import {
   Target, ArrowLeft, Compass, Eye, ListChecks, Calendar, Scale,
 } from 'lucide-react'
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +44,7 @@ const beneficios = [
 
 export default function PlanoEstrategicoPage() {
   return (
+    <TransparenciaPageWrapper slug="plano-estrategico" nome="Planejamento Estrategico">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <Link
@@ -163,5 +165,6 @@ export default function PlanoEstrategicoPage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

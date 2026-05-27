@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { UserCheck, ArrowLeft, Mail, Phone, Building2, ShieldCheck } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/encarregado-dados')
 
@@ -44,6 +45,7 @@ export default async function EncarregadoDadosPage() {
   ]
 
   return (
+    <TransparenciaPageWrapper slug="encarregado-dados" nome="Encarregado de Dados (DPO)">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link
@@ -104,5 +106,6 @@ export default async function EncarregadoDadosPage() {
         </Card>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { GraduationCap, Calendar, Users, FileText, Loader2, ExternalLink } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 interface Concurso {
   id: string
@@ -29,6 +30,14 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 }
 
 export default function ConcursosPage() {
+  return (
+    <TransparenciaPageWrapper slug="concursos" nome="Concursos e Processos Seletivos">
+      <ConcursosPageContent />
+    </TransparenciaPageWrapper>
+  )
+}
+
+function ConcursosPageContent() {
   const [concursos, setConcursos] = useState<Concurso[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('todos')

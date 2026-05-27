@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent } from '@/components/ui/card'
 import { HelpCircle, ArrowLeft, ChevronDown } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/faq')
 
@@ -39,6 +40,7 @@ export default async function FaqPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="faq" nome="Perguntas Frequentes">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <Link
@@ -98,5 +100,6 @@ export default async function FaqPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

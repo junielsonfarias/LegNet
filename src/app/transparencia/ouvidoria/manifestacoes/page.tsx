@@ -4,6 +4,7 @@ import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare, ArrowLeft, ShieldCheck, Search } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/ouvidoria-manifestacoes')
 
@@ -66,6 +67,7 @@ export default async function ManifestacoesOuvidoriaPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="manifestacoes-realizadas" nome="Manifestacoes Realizadas">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link
@@ -168,5 +170,6 @@ export default async function ManifestacoesOuvidoriaPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

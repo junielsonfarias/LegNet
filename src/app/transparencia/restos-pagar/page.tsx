@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { maskCpfOrCnpj } from '@/lib/security/cpf-utils'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 import { RestosPagarCliente, type RestoPagarPublico } from './restos-pagar-cliente'
 
 const log = createLogger('transparencia/restos-pagar')
@@ -41,5 +42,9 @@ export default async function RestosPagarPublicPage() {
     log.error('Erro ao buscar restos a pagar', error)
   }
 
-  return <RestosPagarCliente data={registros} />
+  return (
+    <TransparenciaPageWrapper slug="restos-pagar" nome="Restos a Pagar">
+      <RestosPagarCliente data={registros} />
+    </TransparenciaPageWrapper>
+  )
 }

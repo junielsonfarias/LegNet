@@ -3,6 +3,7 @@ import { esicService } from '@/lib/services/esic-service'
 import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart3, ArrowLeft, FileSearch, Clock, CheckCircle2, XCircle } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/esic-estatisticas')
 
@@ -44,6 +45,7 @@ export default async function EstatisticasESICPage() {
   const indeferidos = countDe('NEGADO')
 
   return (
+    <TransparenciaPageWrapper slug="estatisticas-esic" nome="Estatisticas do e-SIC">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link
@@ -166,5 +168,6 @@ export default async function EstatisticasESICPage() {
         </Card>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

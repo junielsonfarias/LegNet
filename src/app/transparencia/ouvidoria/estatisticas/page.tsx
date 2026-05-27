@@ -3,6 +3,7 @@ import { ouvidoriaService } from '@/lib/services/ouvidoria-service'
 import { createLogger } from '@/lib/logging/logger'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart3, ArrowLeft, MessageSquare, Clock, CheckCircle2 } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/ouvidoria-estatisticas')
 
@@ -96,6 +97,7 @@ export default async function EstatisticasOuvidoriaPage() {
     .reduce((acc, s) => acc + s.quantidade, 0)
 
   return (
+    <TransparenciaPageWrapper slug="relatorios-ouvidoria" nome="Relatorios da Ouvidoria">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link
@@ -177,5 +179,6 @@ export default async function EstatisticasOuvidoriaPage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

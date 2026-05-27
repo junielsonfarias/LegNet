@@ -11,8 +11,17 @@ import Image from 'next/image';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper';
 
 export default function MesaDiretoraTransparenciaPage() {
+  return (
+    <TransparenciaPageWrapper slug="mesa-diretora" nome="Mesa Diretora">
+      <MesaDiretoraTransparenciaContent />
+    </TransparenciaPageWrapper>
+  );
+}
+
+function MesaDiretoraTransparenciaContent() {
   const { configuracao } = useConfiguracaoInstitucional();
   const [legislaturaFiltro, setLegislaturaFiltro] = useState<string>('');
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Briefcase, ArrowLeft, Loader2, Search } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 interface Cargo {
   id: string
@@ -26,6 +27,14 @@ const formatBRL = (v: number) =>
   Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function CargosPublicPage() {
+  return (
+    <TransparenciaPageWrapper slug="cargos" nome="Relacao de Cargos">
+      <CargosContent />
+    </TransparenciaPageWrapper>
+  )
+}
+
+function CargosContent() {
   const [data, setData] = useState<Cargo[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroTipo, setFiltroTipo] = useState('all')

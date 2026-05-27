@@ -9,6 +9,7 @@ import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
 } from '@/components/ui/table'
 import { Users, Search, Loader2 } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 interface Servidor {
   id: string
@@ -32,6 +33,14 @@ const vinculoLabels: Record<string, string> = {
 }
 
 export default function QuadroPessoalPage() {
+  return (
+    <TransparenciaPageWrapper slug="relacao-remuneracao" nome="Quadro de Pessoal">
+      <QuadroPessoalContent />
+    </TransparenciaPageWrapper>
+  )
+}
+
+function QuadroPessoalContent() {
   const [servidores, setServidores] = useState<Servidor[]>([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')

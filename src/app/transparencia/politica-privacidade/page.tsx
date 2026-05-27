@@ -6,6 +6,7 @@ import {
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/politica-privacidade')
 
@@ -106,6 +107,7 @@ export default async function PoliticaPrivacidadePage() {
   const dpoDesignado = dpoNome.length > 0
 
   return (
+    <TransparenciaPageWrapper slug="politica-privacidade" nome="Politica de Privacidade">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <Link
@@ -280,5 +282,6 @@ export default async function PoliticaPrivacidadePage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

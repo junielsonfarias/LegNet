@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Radio, ArrowLeft, Info, ExternalLink } from 'lucide-react'
 import { TransmissaoAoVivo } from '@/components/transparencia/transmissao-ao-vivo'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 import { getTransmissaoConfig } from '@/lib/services/transmissao-service'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +12,7 @@ export default async function TransmissaoPage() {
   const ativa = cfg.ativa && (cfg.url || cfg.embedHtml)
 
   return (
+    <TransparenciaPageWrapper slug="transmissao" nome="Transmissao das Sessoes">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Link
@@ -104,5 +106,6 @@ export default async function TransmissaoPage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

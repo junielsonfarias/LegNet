@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BookOpen, ArrowLeft, Scale, Clock, MessageSquare, FileSearch } from 'lucide-react'
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,7 @@ const tiposManifestacao = [
 
 export default async function RegulamentacaoOuvidoriaPage() {
   return (
+    <TransparenciaPageWrapper slug="regulamentacao-ouvidoria" nome="Regulamentacao da Ouvidoria">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <Link
@@ -165,5 +167,6 @@ export default async function RegulamentacaoOuvidoriaPage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

@@ -7,6 +7,7 @@ import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
 } from '@/components/ui/table'
 import { Plane, Loader2 } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 interface Diaria {
   id: string
@@ -29,6 +30,14 @@ const meses = [
 ]
 
 export default function DiariasPage() {
+  return (
+    <TransparenciaPageWrapper slug="diarias" nome="Diarias">
+      <DiariasPageContent />
+    </TransparenciaPageWrapper>
+  )
+}
+
+function DiariasPageContent() {
   const [diarias, setDiarias] = useState<Diaria[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)

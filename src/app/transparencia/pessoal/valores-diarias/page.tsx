@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plane, ArrowLeft, Loader2, Search } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 interface ValorDiaria {
   id: string
@@ -19,6 +20,14 @@ const formatBRL = (v: number) =>
   Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function ValoresDiariasPublicPage() {
+  return (
+    <TransparenciaPageWrapper slug="valores-diarias" nome="Valores das Diarias">
+      <ValoresDiariasPublicContent />
+    </TransparenciaPageWrapper>
+  )
+}
+
+function ValoresDiariasPublicContent() {
   const [data, setData] = useState<ValorDiaria[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroAno, setFiltroAno] = useState('all')

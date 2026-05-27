@@ -1,10 +1,65 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Endpoint atômico item-config + unstable_cache multi-instância)
-> **Versao**: 1.30.2
+> **Ultima Atualizacao**: 2026-05-27 (Plano de Cargos + cobertura TransparenciaPageWrapper em 28 páginas adicionais)
+> **Versao**: 1.30.3
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Plano de Cargos + cobertura massiva do wrapper de transparência
+
+Nova página pública `/transparencia/plano-cargos` para listagem dos Planos
+de Cargos (PCCS) e wrap massivo do `TransparenciaPageWrapper` em 28 páginas
+adicionais — garantindo que a configuração admin (URL externa direta /
+sub-itens por período) tenha efeito mesmo quando o usuário acessa a página
+diretamente via URL ou favorito.
+
+**Novos arquivos:**
+
+- `src/app/transparencia/plano-cargos/page.tsx` — listagem pública de PCCS
+  com filtros por ano e separação visual entre planos vigentes e histórico
+  (revogados). Usa `/api/plano-cargos` e envolve em
+  `<TransparenciaPageWrapper slug="plano-cargos" nome="Plano de Cargos">`.
+
+**Catálogo atualizado:**
+
+- `src/lib/transparencia/itens-catalogo.ts` — novo item `plano-cargos` na
+  seção Recursos Humanos, antes de `relacao-remuneracao` e `cargos`.
+
+**Wrapper aplicado em 28 páginas:**
+
+Recursos Humanos: `cargos`, `pessoal/remuneracao`, `pessoal/quadro-pessoal`,
+`pessoal/valores-diarias`, `pessoal/concursos`, `pessoal/diarias`.
+
+Licitações/Contratos: `atas-adesao-srp`, `plano-contratacoes-anual`,
+`fornecedores`.
+
+Planejamento: `plano-estrategico`, `lei-responsabilidade-fiscal`,
+`restos-pagar`.
+
+Atos/Legislativo: `atos` (índice), `legislativo/pautas-comissoes`,
+`transmissao`, `mesa-diretora`, `legislaturas`,
+`institucional/organograma`.
+
+Ouvidoria/SIC: `e-sic/estatisticas`, `e-sic/normativa`, `faq`,
+`informacoes-classificadas`, `ouvidoria/estatisticas`,
+`ouvidoria/manifestacoes`, `ouvidoria/regulamentacao`.
+
+LGPD/GovDigital: `dados-abertos`, `plano-dados-abertos`,
+`encarregado-dados`, `politica-privacidade`, `pesquisas-satisfacao`.
+
+**Cobertura final:**
+
+- 55 de 80 páginas de `/transparencia/**` com `TransparenciaPageWrapper`
+- As 25 sem wrapper são meta-páginas (`page.tsx` home, `busca`, `mapa-do-site`,
+  `conformidade`), sub-rotas `[id]` (detalhe individual), hubs/agregadores
+  (`pessoal/page.tsx`, `parlamentar/page.tsx`), info estática
+  (`institucional/competencias`, `horario-funcionamento`) e sub-relatórios
+  do parlamentar — nenhuma destas precisa de wrapper
+
+`npx tsc --noEmit` passou sem erros.
 
 ---
 

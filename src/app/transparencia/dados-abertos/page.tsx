@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Database, ExternalLink, FileJson, FileSpreadsheet, Loader2 } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 interface Endpoint {
   path: string
@@ -43,6 +44,7 @@ export default function DadosAbertosPage() {
   }, [])
 
   return (
+    <TransparenciaPageWrapper slug="dados-abertos" nome="Dados Abertos">
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">
@@ -151,5 +153,6 @@ export default function DadosAbertosPage() {
         </>
       )}
     </div>
+    </TransparenciaPageWrapper>
   )
 }

@@ -223,6 +223,7 @@ export const ITENS_TRANSPARENCIA: ItemTransparencia[] = [
   // =========================================================================
   // SECAO 4 — Recursos Humanos
   // =========================================================================
+  { slug: 'plano-cargos', label: 'Plano de Cargos, Carreiras e Salarios', secao: 'recursos-humanos', hrefInterno: '/transparencia/plano-cargos', icone: 'Scale', pntp: ['6.3'], descricaoAdmin: 'Documentos legais (PCCS) que organizam a estrutura de cargos. Suporta serie historica via planos revogados/vigentes.' },
   { slug: 'relacao-remuneracao', label: 'Relacao Nominal de Remuneracao', secao: 'recursos-humanos', hrefInterno: '/transparencia/pessoal/remuneracao', icone: 'Users', pntp: ['6.1', '6.2'] },
   { slug: 'cargos', label: 'Relacao de Cargos e Remuneracao', secao: 'recursos-humanos', hrefInterno: '/transparencia/cargos', icone: 'Briefcase', pntp: ['6.3'] },
   { slug: 'estagiarios', label: 'Relacao de Estagiarios', secao: 'recursos-humanos', hrefInterno: '/transparencia/pessoal/estagiarios', icone: 'GraduationCap', pntp: ['6.4'] },

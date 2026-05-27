@@ -4,6 +4,7 @@ import {
   ClipboardList, ArrowLeft, Calendar, FileSpreadsheet, Target, Scale, ExternalLink,
 } from 'lucide-react'
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +26,7 @@ const beneficios = [
 
 export default function PlanoContratacoesAnualPage() {
   return (
+    <TransparenciaPageWrapper slug="plano-contratacoes-anual" nome="Plano Anual de Contratacoes">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <Link
@@ -153,5 +155,6 @@ export default function PlanoContratacoesAnualPage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

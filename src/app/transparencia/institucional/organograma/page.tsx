@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Building2, Loader2, User, Mail, Phone } from 'lucide-react'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 interface Unidade {
   id: string
@@ -84,6 +85,7 @@ export default function OrganogramaPage() {
   }, [])
 
   return (
+    <TransparenciaPageWrapper slug="estrutura-organizacional" nome="Estrutura Organizacional">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-8">
@@ -114,5 +116,6 @@ export default function OrganogramaPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

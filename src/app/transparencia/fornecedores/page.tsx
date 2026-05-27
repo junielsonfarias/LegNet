@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { maskCpfOrCnpj } from '@/lib/security/cpf-utils'
 import { FornecedoresCliente, type FornecedorPublico } from './fornecedores-cliente'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 const log = createLogger('transparencia/fornecedores')
 
@@ -34,5 +35,9 @@ export default async function FornecedoresPublicPage() {
     log.error('Erro ao buscar fornecedores', error)
   }
 
-  return <FornecedoresCliente data={fornecedores} />
+  return (
+    <TransparenciaPageWrapper slug="fornecedores" nome="Cadastro de Fornecedores">
+      <FornecedoresCliente data={fornecedores} />
+    </TransparenciaPageWrapper>
+  )
 }

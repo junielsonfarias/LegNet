@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { transparenciaService } from '@/lib/transparencia-dados-service'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 // Mantido como Server Component - import do service é aceitável no servidor
 // A migração completa para Prisma será feita quando o modelo de dados for definido
@@ -57,6 +58,7 @@ export default async function LeiResponsabilidadeFiscalPage() {
   }
 
   return (
+    <TransparenciaPageWrapper slug="lei-responsabilidade-fiscal" nome="Lei de Responsabilidade Fiscal">
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-camara-primary to-green-600 text-white">
@@ -322,5 +324,6 @@ export default async function LeiResponsabilidadeFiscalPage() {
         </div>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

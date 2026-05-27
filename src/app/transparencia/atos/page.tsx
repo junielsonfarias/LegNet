@@ -35,6 +35,7 @@ import {
   GRUPO_LABEL,
   type AtoTipoConfig,
 } from '@/lib/transparencia/atos-tipos'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 /**
  * Indice /transparencia/atos — hub que consolida os 17 tipos de atos
@@ -120,6 +121,7 @@ export default function AtosIndexPage() {
   }, [filtrados])
 
   return (
+    <TransparenciaPageWrapper slug="documentos-administrativos" nome="Documentos Administrativos">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 pt-6">
         <Breadcrumb items={breadcrumbs} />
@@ -232,5 +234,6 @@ export default function AtosIndexPage() {
         </Card>
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }

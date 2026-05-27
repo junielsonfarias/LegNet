@@ -4,6 +4,7 @@ import {
   CheckCircle2, ArrowLeft, ClipboardList, BarChart3, Calendar, ExternalLink,
 } from 'lucide-react'
 import { pesquisaSatisfacaoService } from '@/lib/services/pesquisa-satisfacao-service'
+import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,7 @@ export default async function PesquisasSatisfacaoPage() {
   const encerradas = pesquisas.filter((p) => !ativas.includes(p))
 
   return (
+    <TransparenciaPageWrapper slug="pesquisas-satisfacao" nome="Pesquisas de Satisfacao">
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Link
@@ -155,5 +157,6 @@ export default async function PesquisasSatisfacaoPage() {
         )}
       </div>
     </div>
+    </TransparenciaPageWrapper>
   )
 }
