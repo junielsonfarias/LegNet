@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { folhaPagamentoDbService } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/rh/folha-pagamento-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +52,12 @@ export const PUT = withAuth(
       observacoes: body.observacoes
     })
 
+    log.info('Folha de pagamento atualizada', {
+      action: 'folha_update',
+      id,
+      situacao: folhaAtualizada.situacao
+    })
+
     return createSuccessResponse(folhaAtualizada, 'Folha de pagamento atualizada com sucesso')
   },
   { permissions: 'financeiro.manage' }
@@ -67,6 +76,12 @@ export const DELETE = withAuth(
     }
 
     await folhaPagamentoDbService.remove(id)
+
+    log.info('Folha de pagamento excluída', {
+      action: 'folha_delete',
+      id,
+      competencia: folhaExistente.competencia
+    })
 
     return createSuccessResponse(null, 'Folha de pagamento excluida com sucesso')
   },

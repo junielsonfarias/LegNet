@@ -4,6 +4,9 @@ import { receitasDbService } from '@/lib/services/receitas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { safeParseQueryParams } from '@/lib/validation/query-schemas'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/receitas')
 
 export const dynamic = 'force-dynamic'
 
@@ -64,6 +67,10 @@ export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
   if (!body.categoria || !body.origem || !body.valorArrecadado) {
+    log.warn('Receita bloqueada por validação', {
+      action: 'receita_validation_failed',
+      motivo: 'campos_obrigatorios_ausentes'
+    })
     throw new ValidationError('Campos obrigatorios nao fornecidos (categoria, origem, valorArrecadado)')
   }
 
@@ -86,6 +93,16 @@ export const POST = withAuth(async (request: NextRequest) => {
     situacao: body.situacao,
     fonteRecurso: body.fonteRecurso,
     observacoes: body.observacoes
+  })
+
+  log.info('Receita criada', {
+    action: 'receita_create',
+    id: novaReceita.id,
+    ano: novaReceita.ano,
+    mes: novaReceita.mes,
+    categoria: novaReceita.categoria,
+    origem: novaReceita.origem,
+    situacao: novaReceita.situacao
   })
 
   return createSuccessResponse(novaReceita, 'Receita criada com sucesso', undefined, 201)

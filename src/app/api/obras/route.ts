@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/transparencia/obras')
 
 export const dynamic = 'force-dynamic'
 
@@ -84,5 +87,12 @@ export const POST = withAuth(async (request: NextRequest) => {
       dataUltimaMedicao: data.dataUltimaMedicao ? new Date(data.dataUltimaMedicao) : null
     }
   })
+  log.info('Obra criada', {
+    action: 'obra_create',
+    id: created.id,
+    situacao: created.situacao,
+    percentualExecucao: created.percentualExecucao
+  })
+
   return createSuccessResponse(created, 'Obra criada', undefined, 201)
 }, { permissions: 'transparencia.manage' })

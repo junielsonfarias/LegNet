@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { licitacoesDbService } from '@/lib/services/licitacoes-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/licitacoes-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -48,6 +51,12 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
+  log.info('Licitação atualizada', {
+    action: 'licitacao_update',
+    id,
+    situacao: licitacaoAtualizada.situacao
+  })
+
   return createSuccessResponse(licitacaoAtualizada, 'Licitacao atualizada com sucesso')
 }, { permissions: 'financeiro.manage' })
 
@@ -63,6 +72,12 @@ export const DELETE = withAuth(async (
   }
 
   await licitacoesDbService.remove(id)
+
+  log.info('Licitação excluída', {
+    action: 'licitacao_delete',
+    id,
+    numero: licitacaoExistente.numero
+  })
 
   return createSuccessResponse(null, 'Licitacao excluida com sucesso')
 }, { permissions: 'financeiro.manage' })

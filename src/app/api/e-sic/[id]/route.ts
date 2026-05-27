@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { esicService } from '@/lib/services/esic-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError, NotFoundError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/lgpd/e-sic-detalhe')
 
 const AcaoESICSchema = z.discriminatedUnion('acao', [
   z.object({
@@ -54,6 +57,11 @@ export const PATCH = withAuth(async (
 
   const parsed = AcaoESICSchema.safeParse(body)
   if (!parsed.success) {
+    log.warn('Ação e-SIC bloqueada por validação', {
+      action: 'esic_action_validation_failed',
+      esicId: id,
+      errors: parsed.error.errors.map(e => e.message)
+    })
     throw new ValidationError(parsed.error.errors.map(e => e.message).join(', '))
   }
 
@@ -78,6 +86,12 @@ export const PATCH = withAuth(async (
       resultado = await esicService.negar(id, data.motivo, data.respondidoPor || session?.user?.name || 'Sistema')
       break
   }
+
+  log.info('Solicitação e-SIC atualizada', {
+    action: `esic_${data.acao}`,
+    id,
+    userId: session?.user?.id
+  })
 
   return createSuccessResponse(
     resultado,

@@ -8,6 +8,9 @@ import {
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { usuarioDbService } from '@/lib/services/usuario-db-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/admin/usuarios-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -56,6 +59,11 @@ export const PUT = withAuth(async (
   if (validatedData.email && validatedData.email !== existing.email) {
     const emailEmUso = await usuarioDbService.checkEmailExists(validatedData.email, id)
     if (emailEmUso) {
+      log.warn('Atualização de usuário bloqueada: email duplicado', {
+        action: 'usuario_update_validation_failed',
+        id,
+        motivo: 'email_duplicado'
+      })
       throw new ValidationError('Email já está em uso por outro usuário')
     }
   }
@@ -64,11 +72,25 @@ export const PUT = withAuth(async (
   if (validatedData.role === 'PARLAMENTAR' && validatedData.parlamentarId) {
     const parlamentarVinculado = await usuarioDbService.checkParlamentarVinculado(validatedData.parlamentarId, id)
     if (parlamentarVinculado) {
+      log.warn('Atualização de usuário bloqueada: parlamentar já vinculado', {
+        action: 'usuario_update_validation_failed',
+        id,
+        motivo: 'parlamentar_ja_vinculado',
+        parlamentarId: validatedData.parlamentarId
+      })
       throw new ValidationError('Este parlamentar já possui um usuário vinculado')
     }
   }
 
   const usuarioAtualizado = await usuarioDbService.update(id, validatedData)
+
+  log.info('Usuário atualizado', {
+    action: 'usuario_update',
+    id,
+    role: usuarioAtualizado.role,
+    ativo: usuarioAtualizado.ativo,
+    senhaAlterada: !!validatedData.password
+  })
 
   return createSuccessResponse(usuarioAtualizado, 'Usuário atualizado com sucesso')
 }, { permissions: 'user.manage' })
@@ -87,6 +109,12 @@ export const DELETE = withAuth(async (
   }
 
   await usuarioDbService.remove(id)
+
+  log.info('Usuário excluído', {
+    action: 'usuario_delete',
+    id,
+    role: existing.role
+  })
 
   return createSuccessResponse(null, 'Usuário excluído com sucesso')
 }, { permissions: 'user.manage' })

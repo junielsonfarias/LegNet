@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { conveniosDbService } from '@/lib/services/convenios-db-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/convenios-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +56,12 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
+  log.info('Convênio atualizado', {
+    action: 'convenio_update',
+    id,
+    situacao: convenioAtualizado.situacao
+  })
+
   return createSuccessResponse(convenioAtualizado, 'Convenio atualizado com sucesso')
 }, { permissions: 'financeiro.manage' })
 
@@ -68,6 +77,12 @@ export const DELETE = withAuth(async (
   }
 
   await conveniosDbService.remove(id)
+
+  log.info('Convênio excluído', {
+    action: 'convenio_delete',
+    id,
+    numero: convenioExistente.numero
+  })
 
   return createSuccessResponse(null, 'Convenio excluido com sucesso')
 }, { permissions: 'financeiro.manage' })

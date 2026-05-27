@@ -6,7 +6,10 @@ import { ouvidoriaService } from '@/lib/services/ouvidoria-service'
 import { classificarManifestacao } from '@/lib/services/ouvidoria-classifier'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 import { enforcePublicCaptcha } from '@/lib/security/captcha-guard'
+import { createLogger } from '@/lib/logging/logger'
 import type { TipoManifestacao, StatusManifestacao } from '@prisma/client'
+
+const log = createLogger('api/lgpd/ouvidoria')
 
 export const dynamic = 'force-dynamic'
 
@@ -58,6 +61,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   enforcePublicCaptcha({ captchaId: data.captchaId, captchaAnswer: data.captchaAnswer })
 
   if (!data.anonimo && (!data.nome || !data.email)) {
+    log.warn('Manifestação ouvidoria bloqueada por validação', {
+      action: 'ouvidoria_validation_failed',
+      motivo: 'campos_obrigatorios_ausentes'
+    })
     throw new ValidationError('Para manifestações não anônimas, nome e email são obrigatórios')
   }
 
@@ -79,6 +86,16 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     assunto: data.assunto,
     descricao: data.descricao,
     setor: data.setor || undefined
+  })
+
+  log.info('Manifestação ouvidoria criada', {
+    action: 'ouvidoria_create',
+    id: manifestacao.id,
+    protocolo: manifestacao.protocolo,
+    tipo: tipoFinal,
+    anonimo: data.anonimo,
+    classificacaoAutomatica: !!classificacao,
+    confianca: classificacao?.confianca
   })
 
   return createSuccessResponse(

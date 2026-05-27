@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/rh/cargos-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -52,6 +55,12 @@ export const PUT = withAuth(async (
     }
   })
 
+  log.info('Cargo atualizado', {
+    action: 'cargo_update',
+    id,
+    tipo: updated.tipo
+  })
+
   return createSuccessResponse(updated, 'Cargo atualizado')
 }, { permissions: 'transparencia.manage' })
 
@@ -61,5 +70,11 @@ export const DELETE = withAuth(async (
 ) => {
   const { id } = await params
   await prisma.cargo.delete({ where: { id } })
+
+  log.info('Cargo removido', {
+    action: 'cargo_delete',
+    id
+  })
+
   return createSuccessResponse(null, 'Cargo removido')
 }, { permissions: 'transparencia.manage' })

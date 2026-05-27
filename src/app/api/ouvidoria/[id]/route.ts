@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { ouvidoriaService } from '@/lib/services/ouvidoria-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, NotFoundError, ValidationError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/lgpd/ouvidoria-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -61,8 +64,19 @@ export const PATCH = withAuth(async (
       break
 
     default:
+      log.warn('Ação ouvidoria inválida bloqueada', {
+        action: 'ouvidoria_action_invalid',
+        id,
+        acaoTentada: body.acao
+      })
       throw new ValidationError('Ação inválida. Use: responder, encaminhar ou concluir')
   }
+
+  log.info('Manifestação ouvidoria atualizada', {
+    action: `ouvidoria_${body.acao}`,
+    id,
+    userId: session?.user?.id
+  })
 
   return createSuccessResponse(
     resultado,

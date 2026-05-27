@@ -5,6 +5,9 @@ import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { sessaoDbService } from '@/lib/services/sessao-db-service'
 import { combineDateAndTimeUTC } from '@/lib/utils/date'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/legislativo/sessoes')
 
 // Configurar para renderização dinâmica
 export const dynamic = 'force-dynamic'
@@ -94,6 +97,10 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
     }
   } catch (error) {
     const zerr = (error as { errors?: Array<{ message?: string }> }).errors
+    log.warn('Sessão bloqueada por validação', {
+      action: 'sessao_validation_failed',
+      motivo: zerr?.[0]?.message || getErrorMessage(error) || 'dados_invalidos'
+    })
     throw new ValidationError(zerr?.[0]?.message || getErrorMessage(error) || 'Dados inválidos')
   }
 
@@ -113,6 +120,15 @@ export const POST = withAuth(async (request: NextRequest, _ctx, session) => {
       legislaturaId: result.legislaturaId,
       periodoId: result.periodoId
     }
+  })
+
+  log.info('Sessão criada', {
+    action: 'sessao_create',
+    id: result.sessao!.id,
+    numero: result.sessao!.numero,
+    tipo: result.sessao!.tipo,
+    status: result.sessao!.status,
+    userId: session?.user?.id
   })
 
   return createSuccessResponse(

@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { despesasDbService } from '@/lib/services/despesas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/despesas-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -57,6 +60,12 @@ export const PUT = withAuth(
       observacoes: body.observacoes
     })
 
+    log.info('Despesa atualizada', {
+      action: 'despesa_update',
+      id,
+      situacao: despesaAtualizada.situacao
+    })
+
     return createSuccessResponse(despesaAtualizada, 'Despesa atualizada com sucesso')
   },
   { permissions: 'financeiro.manage' }
@@ -75,6 +84,12 @@ export const DELETE = withAuth(
     }
 
     await despesasDbService.remove(id)
+
+    log.info('Despesa excluída', {
+      action: 'despesa_delete',
+      id,
+      numeroEmpenho: despesaExistente.numeroEmpenho
+    })
 
     return createSuccessResponse(null, 'Despesa excluida com sucesso')
   },

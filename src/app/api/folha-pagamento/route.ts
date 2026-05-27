@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { folhaPagamentoDbService } from '@/lib/services/servidores-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse, ValidationError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/rh/folha-pagamento')
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +42,10 @@ export const POST = withAuth(
     const body = await request.json()
 
     if (!body.competencia || !body.mes || !body.ano) {
+      log.warn('Folha de pagamento bloqueada por validação', {
+        action: 'folha_validation_failed',
+        motivo: 'campos_obrigatorios_ausentes'
+      })
       throw new ValidationError('Campos obrigatorios nao fornecidos (competencia, mes, ano)')
     }
 
@@ -53,6 +60,15 @@ export const POST = withAuth(
       dataProcessamento: body.dataProcessamento,
       situacao: body.situacao,
       observacoes: body.observacoes
+    })
+
+    log.info('Folha de pagamento criada', {
+      action: 'folha_create',
+      id: novaFolha.id,
+      competencia: novaFolha.competencia,
+      mes: novaFolha.mes,
+      ano: novaFolha.ano,
+      situacao: novaFolha.situacao
     })
 
     return createSuccessResponse(novaFolha, 'Folha de pagamento criada com sucesso', undefined, 201)

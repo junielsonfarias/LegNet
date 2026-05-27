@@ -4,6 +4,9 @@ import { despesasDbService } from '@/lib/services/despesas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { safeParseQueryParams } from '@/lib/validation/query-schemas'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/despesas')
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +77,10 @@ export const POST = withAuth(
     const body = await request.json()
 
     if (!body.numeroEmpenho || !body.credor || !body.valorEmpenhado) {
+      log.warn('Despesa bloqueada por validação', {
+        action: 'despesa_validation_failed',
+        motivo: 'campos_obrigatorios_ausentes'
+      })
       throw new ValidationError('Campos obrigatorios nao fornecidos (numeroEmpenho, credor, valorEmpenhado)')
     }
 
@@ -102,6 +109,15 @@ export const POST = withAuth(
       contratoId: body.contratoId,
       convenioId: body.convenioId,
       observacoes: body.observacoes
+    })
+
+    log.info('Despesa criada', {
+      action: 'despesa_create',
+      id: novaDespesa.id,
+      numeroEmpenho: novaDespesa.numeroEmpenho,
+      ano: novaDespesa.ano,
+      mes: novaDespesa.mes,
+      situacao: novaDespesa.situacao
     })
 
     return createSuccessResponse(novaDespesa, 'Despesa criada com sucesso', undefined, 201)

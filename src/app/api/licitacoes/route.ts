@@ -4,6 +4,9 @@ import { licitacoesDbService } from '@/lib/services/licitacoes-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { safeParseQueryParams } from '@/lib/validation/query-schemas'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/licitacoes')
 
 export const dynamic = 'force-dynamic'
 
@@ -64,6 +67,10 @@ export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
   if (!body.numero || !body.objeto || !body.modalidade || !body.dataAbertura) {
+    log.warn('Licitação bloqueada por validação', {
+      action: 'licitacao_validation_failed',
+      motivo: 'campos_obrigatorios_ausentes'
+    })
     throw new ValidationError('Campos obrigatorios nao fornecidos (numero, objeto, modalidade, dataAbertura)')
   }
 
@@ -82,6 +89,15 @@ export const POST = withAuth(async (request: NextRequest) => {
     unidadeGestora: body.unidadeGestora,
     linkEdital: body.linkEdital,
     observacoes: body.observacoes
+  })
+
+  log.info('Licitação criada', {
+    action: 'licitacao_create',
+    id: novaLicitacao.id,
+    numero: novaLicitacao.numero,
+    ano: novaLicitacao.ano,
+    modalidade: novaLicitacao.modalidade,
+    situacao: novaLicitacao.situacao
   })
 
   return createSuccessResponse(novaLicitacao, 'Licitacao criada com sucesso', undefined, 201)

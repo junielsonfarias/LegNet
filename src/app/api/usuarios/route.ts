@@ -6,6 +6,9 @@ import {
 } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { usuarioDbService } from '@/lib/services/usuario-db-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/admin/usuarios')
 
 export const dynamic = 'force-dynamic'
 
@@ -68,6 +71,10 @@ export const POST = withAuth(async (request: NextRequest) => {
   // Verificar se email já existe
   const emailExists = await usuarioDbService.checkEmailExists(validatedData.email)
   if (emailExists) {
+    log.warn('Criação de usuário bloqueada: email duplicado', {
+      action: 'usuario_validation_failed',
+      motivo: 'email_duplicado'
+    })
     throw new ValidationError('Email já está em uso')
   }
 
@@ -75,11 +82,23 @@ export const POST = withAuth(async (request: NextRequest) => {
   if (validatedData.role === 'PARLAMENTAR' && validatedData.parlamentarId) {
     const parlamentarVinculado = await usuarioDbService.checkParlamentarVinculado(validatedData.parlamentarId)
     if (parlamentarVinculado) {
+      log.warn('Criação de usuário bloqueada: parlamentar já vinculado', {
+        action: 'usuario_validation_failed',
+        motivo: 'parlamentar_ja_vinculado',
+        parlamentarId: validatedData.parlamentarId
+      })
       throw new ValidationError('Este parlamentar já possui um usuário vinculado')
     }
   }
 
   const novoUsuario = await usuarioDbService.create(validatedData)
+
+  log.info('Usuário criado', {
+    action: 'usuario_create',
+    id: novoUsuario.id,
+    role: novoUsuario.role,
+    ativo: novoUsuario.ativo
+  })
 
   return createSuccessResponse(novoUsuario, 'Usuário criado com sucesso')
 }, { permissions: 'user.manage' })

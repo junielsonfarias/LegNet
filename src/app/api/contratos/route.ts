@@ -4,6 +4,9 @@ import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/
 import { withAuth } from '@/lib/auth/permissions'
 import { contratosDbService } from '@/lib/services/contratos-db-service'
 import { safeParseQueryParams } from '@/lib/validation/query-schemas'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/contratos')
 
 export const dynamic = 'force-dynamic'
 
@@ -69,6 +72,10 @@ export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
   if (!body.numero || !body.objeto || !body.contratado || !body.valorTotal || !body.dataAssinatura) {
+    log.warn('Contrato bloqueado por validação', {
+      action: 'contrato_validation_failed',
+      motivo: 'campos_obrigatorios_ausentes'
+    })
     throw new ValidationError('Campos obrigatorios nao fornecidos')
   }
 
@@ -88,6 +95,15 @@ export const POST = withAuth(async (request: NextRequest) => {
     licitacaoId: body.licitacaoId,
     arquivo: body.arquivo,
     observacoes: body.observacoes
+  })
+
+  log.info('Contrato criado', {
+    action: 'contrato_create',
+    id: novoContrato.id,
+    numero: novoContrato.numero,
+    ano: novoContrato.ano,
+    modalidade: novoContrato.modalidade,
+    situacao: novoContrato.situacao
   })
 
   return createSuccessResponse(novoContrato, 'Contrato criado com sucesso', undefined, 201)

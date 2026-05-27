@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/rh/cargos')
 
 export const dynamic = 'force-dynamic'
 
@@ -70,6 +73,13 @@ export const POST = withAuth(async (request: NextRequest) => {
       salarioBase: data.salarioBase,
       observacoes: data.observacoes ?? null
     }
+  })
+
+  log.info('Cargo criado', {
+    action: 'cargo_create',
+    id: created.id,
+    denominacao: created.denominacao,
+    tipo: created.tipo
   })
 
   return createSuccessResponse(created, 'Cargo criado', undefined, 201)

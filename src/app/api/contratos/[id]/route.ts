@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { createSuccessResponse, NotFoundError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { contratosDbService } from '@/lib/services/contratos-db-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/contratos-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +52,12 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
+  log.info('Contrato atualizado', {
+    action: 'contrato_update',
+    id,
+    situacao: contratoAtualizado.situacao
+  })
+
   return createSuccessResponse(contratoAtualizado, 'Contrato atualizado com sucesso')
 }, { permissions: 'financeiro.manage' })
 
@@ -64,6 +73,12 @@ export const DELETE = withAuth(async (
   }
 
   await contratosDbService.remove(id)
+
+  log.info('Contrato excluído', {
+    action: 'contrato_delete',
+    id,
+    numero: contratoExistente.numero
+  })
 
   return createSuccessResponse(null, 'Contrato excluido com sucesso')
 }, { permissions: 'financeiro.manage' })

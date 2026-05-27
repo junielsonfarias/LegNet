@@ -2,7 +2,10 @@ import { NextRequest } from 'next/server'
 import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { conveniosDbService } from '@/lib/services/convenios-db-service'
+import { createLogger } from '@/lib/logging/logger'
 import type { SituacaoConvenio } from '@prisma/client'
+
+const log = createLogger('api/financeiro/convenios')
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +50,10 @@ export const POST = withAuth(async (request: NextRequest) => {
   const body = await request.json()
 
   if (!body.numero || !body.convenente || !body.orgaoConcedente || !body.objeto || !body.valorTotal) {
+    log.warn('Convênio bloqueado por validação', {
+      action: 'convenio_validation_failed',
+      motivo: 'campos_obrigatorios_ausentes'
+    })
     throw new ValidationError('Campos obrigatorios nao fornecidos')
   }
 
@@ -70,6 +77,14 @@ export const POST = withAuth(async (request: NextRequest) => {
     fonteRecurso: body.fonteRecurso,
     arquivo: body.arquivo,
     observacoes: body.observacoes
+  })
+
+  log.info('Convênio criado', {
+    action: 'convenio_create',
+    id: novoConvenio.id,
+    numero: novoConvenio.numero,
+    ano: novoConvenio.ano,
+    situacao: novoConvenio.situacao
   })
 
   return createSuccessResponse(novoConvenio, 'Convenio criado com sucesso', undefined, 201)

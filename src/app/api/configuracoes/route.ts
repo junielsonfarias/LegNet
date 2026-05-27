@@ -5,6 +5,9 @@ import { withAuth } from '@/lib/auth/permissions'
 import { logAudit } from '@/lib/audit'
 import { configuracaoDbService } from '@/lib/services/configuracao-db-service'
 import { cacheHelpers } from '@/lib/cache/memory-cache'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/admin/configuracoes')
 
 export const dynamic = 'force-dynamic'
 
@@ -52,6 +55,12 @@ export const PUT = withAuth(async (request: NextRequest, _ctx, session) => {
     entity: 'ConfiguracaoInstitucional',
     entityId: configuracao.id,
     metadata: validatedData
+  })
+
+  log.info('Configurações institucionais atualizadas', {
+    action: 'configuracao_update',
+    id: configuracao.id,
+    userId: session?.user?.id
   })
 
   return createSuccessResponse(configuracao, 'Configurações atualizadas com sucesso')

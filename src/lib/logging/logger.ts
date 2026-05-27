@@ -50,12 +50,144 @@ export interface LogEntry {
   }
 }
 
+// =============================================================================
+// REDAÇÃO DE DADOS SENSÍVEIS (LGPD)
+// =============================================================================
+//
+// Mascara automaticamente campos sensíveis em LogContext antes de serializar
+// para JSON ou imprimir no console. Protege contra acidente de log de CPF,
+// senhas, tokens JWT, secrets etc.
+//
+// Chaves redatadas (case-insensitive, substring match):
+//   cpf, cnpj, password, senha, token, secret, key (com excecoes),
+//   authorization, bearer, apikey, jwt, hash (preserva primeiros 8 chars),
+//   email (mostra "f***@dom"), telefone (preserva últimos 4),
+//   cookie, sessionId
+//
+// Valores que parecem CPF/CNPJ no formato livre tambem sao mascarados.
+
+const SENSITIVE_KEY_PATTERNS = [
+  /^cpf$/i,
+  /cpfHash$/i,
+  /^cnpj/i,
+  /password/i,
+  /senha/i,
+  /^token$/i,
+  /accessToken/i,
+  /refreshToken/i,
+  /sessionToken/i,
+  /secret/i,
+  /authorization/i,
+  /bearer/i,
+  /apiKey/i,
+  /^jwt$/i,
+  /encryptionKey/i,
+  /^cookie$/i,
+  /^email$/i,
+  /^telefone$/i,
+  /^phone$/i,
+]
+
+const CPF_REGEX = /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/
+const CNPJ_REGEX = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const JWT_REGEX = /^ey[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
+
+/**
+ * Mascara um valor sensivel. Quando o nome da chave indica o tipo (cpf, email,
+ * cnpj), aplica a mascara especifica. Para chaves genericamente sensiveis
+ * (password, secret, token, telefone), retorna [REDACTED] mantendo apenas
+ * o tamanho original para fins de auditoria.
+ */
+function maskValue(key: string, value: unknown): unknown {
+  if (value == null) return value
+  if (typeof value !== 'string') {
+    if (typeof value === 'number' || typeof value === 'boolean') return '[REDACTED]'
+    if (Array.isArray(value)) return value.map((v) => maskValue(key, v))
+    if (typeof value === 'object') return redactSensitive(value as Record<string, unknown>)
+    return '[REDACTED]'
+  }
+  if (value.length === 0) return value
+
+  const lk = key.toLowerCase()
+
+  // CPF/CNPJ — mascara especifica preservando os 2 ultimos digitos
+  if (lk === 'cpf' || lk === 'documento' || lk.includes('cpfcpf')) {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length === 11) return `***.***.***-${digits.slice(-2)}`
+    if (digits.length === 14) return `**.***.***/****-${digits.slice(-2)}`
+  }
+  if (lk.startsWith('cnpj') || lk === 'cnpjcpf') {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length === 14) return `**.***.***/****-${digits.slice(-2)}`
+    if (digits.length === 11) return `***.***.***-${digits.slice(-2)}`
+  }
+  // Email
+  if (lk === 'email') {
+    const [local, domain] = value.split('@')
+    if (local && domain) return `${local[0] || '*'}***@${domain}`
+    return '[REDACTED]'
+  }
+  // Hash (preserva primeiros 8 chars para correlacao em auditoria)
+  if (lk.endsWith('hash')) {
+    return `${value.slice(0, 8)}...[+${Math.max(0, value.length - 8)} chars]`
+  }
+  // Demais (password, senha, token, secret, key, telefone, phone, cookie, etc.):
+  // retorna REDACTED.
+  return '[REDACTED]'
+}
+
+/**
+ * Verifica se a chave bate com algum padrao sensivel.
+ */
+function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_KEY_PATTERNS.some((rx) => rx.test(key))
+}
+
+/**
+ * Aplica redacao recursiva em um objeto/array. Nao muta o original.
+ * Exportado para testes e uso direto em outras camadas.
+ */
+export function redactSensitive<T>(input: T): T {
+  if (input == null) return input
+  if (Array.isArray(input)) {
+    return input.map((item) => redactSensitive(item)) as unknown as T
+  }
+  if (typeof input !== 'object') return input
+
+  const obj = input as Record<string, unknown>
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (isSensitiveKey(key)) {
+      out[key] = maskValue(key, value)
+    } else if (value !== null && typeof value === 'object') {
+      out[key] = redactSensitive(value)
+    } else if (typeof value === 'string') {
+      // Heuristica: valor "solto" em chave neutra que ainda parece sensivel
+      if (CPF_REGEX.test(value)) {
+        out[key] = maskValue('cpf', value)
+      } else if (CNPJ_REGEX.test(value)) {
+        out[key] = maskValue('cnpj', value)
+      } else if (JWT_REGEX.test(value)) {
+        out[key] = `${value.slice(0, 8)}...[REDACTED]`
+      } else {
+        out[key] = value
+      }
+    } else {
+      out[key] = value
+    }
+  }
+  return out as T
+}
+
 // Configuração do logger
 interface LoggerConfig {
   minLevel: LogLevel
   enableConsole: boolean
   enableStructured: boolean
   pretty: boolean
+  /** Se true (padrao), aplica redactSensitive em todo LogContext. */
+  redact: boolean
 }
 
 // Configuração padrão baseada no ambiente
@@ -63,7 +195,8 @@ const defaultConfig: LoggerConfig = {
   minLevel: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   enableConsole: true,
   enableStructured: process.env.NODE_ENV === 'production',
-  pretty: process.env.NODE_ENV !== 'production'
+  pretty: process.env.NODE_ENV !== 'production',
+  redact: true,
 }
 
 class Logger {
@@ -103,11 +236,12 @@ class Logger {
   private log(level: LogLevel, message: string, context?: LogContext, error?: Error): void {
     if (!this.isLevelEnabled(level)) return
 
+    const merged = { ...this.context, ...context }
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       message,
-      context: { ...this.context, ...context }
+      context: this.config.redact ? redactSensitive(merged) : merged,
     }
 
     if (error) {

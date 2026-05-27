@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/transparencia/obras-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -58,6 +61,13 @@ export const PUT = withAuth(async (
       dataUltimaMedicao: data.dataUltimaMedicao ? new Date(data.dataUltimaMedicao) : undefined
     }
   })
+  log.info('Obra atualizada', {
+    action: 'obra_update',
+    id,
+    situacao: updated.situacao,
+    percentualExecucao: updated.percentualExecucao
+  })
+
   return createSuccessResponse(updated, 'Obra atualizada')
 }, { permissions: 'transparencia.manage' })
 
@@ -67,5 +77,11 @@ export const DELETE = withAuth(async (
 ) => {
   const { id } = await params
   await prisma.obra.delete({ where: { id } })
+
+  log.info('Obra removida', {
+    action: 'obra_delete',
+    id
+  })
+
   return createSuccessResponse(null, 'Obra removida')
 }, { permissions: 'transparencia.manage' })

@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server'
 import { receitasDbService } from '@/lib/services/receitas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, NotFoundError } from '@/lib/error-handler'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/financeiro/receitas-detalhe')
 
 export const dynamic = 'force-dynamic'
 
@@ -50,6 +53,12 @@ export const PUT = withAuth(async (
     observacoes: body.observacoes
   })
 
+  log.info('Receita atualizada', {
+    action: 'receita_update',
+    id,
+    situacao: receitaAtualizada.situacao
+  })
+
   return createSuccessResponse(receitaAtualizada, 'Receita atualizada com sucesso')
 }, { permissions: 'financeiro.manage' })
 
@@ -65,6 +74,12 @@ export const DELETE = withAuth(async (
   }
 
   await receitasDbService.remove(id)
+
+  log.info('Receita excluída', {
+    action: 'receita_delete',
+    id,
+    numero: receitaExistente.numero
+  })
 
   return createSuccessResponse(null, 'Receita excluida com sucesso')
 }, { permissions: 'financeiro.manage' })

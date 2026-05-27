@@ -5,7 +5,10 @@ import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
 import { enforceRateLimit } from '@/lib/middleware/rate-limit'
 import { enforcePublicCaptcha } from '@/lib/security/captcha-guard'
+import { createLogger } from '@/lib/logging/logger'
 import type { StatusESIC } from '@prisma/client'
+
+const log = createLogger('api/lgpd/e-sic')
 
 const CriarSolicitacaoSchema = z.object({
   nome: z.string().min(2).max(200).trim(),
@@ -60,6 +63,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   const parsed = CriarSolicitacaoSchema.safeParse(body)
   if (!parsed.success) {
+    log.warn('Solicitação e-SIC bloqueada por validação', {
+      action: 'esic_validation_failed',
+      errors: parsed.error.errors.map(e => e.message)
+    })
     throw new ValidationError(parsed.error.errors.map(e => e.message).join(', '))
   }
 
@@ -69,6 +76,13 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   // Remove campos de captcha antes de persistir (nao fazem parte do modelo)
   const { captchaId: _cId, captchaAnswer: _cA, ...payload } = parsed.data
   const solicitacao = await esicService.create(payload)
+
+  log.info('Solicitação e-SIC criada', {
+    action: 'esic_create',
+    id: solicitacao.id,
+    protocolo: solicitacao.protocolo,
+    temCpf: !!payload.cpf
+  })
 
   return createSuccessResponse(
     {

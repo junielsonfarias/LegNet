@@ -9,6 +9,9 @@ import {
 import { withAuth } from '@/lib/auth/permissions'
 import { gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 import { proposicaoDbService } from '@/lib/services/proposicao-db-service'
+import { createLogger } from '@/lib/logging/logger'
+
+const log = createLogger('api/legislativo/proposicoes-detalhe')
 
 // Configurar para renderizacao dinamica
 export const dynamic = 'force-dynamic'
@@ -83,6 +86,11 @@ export const PUT = withAuth(async (
     )
 
     if (duplicateCheck) {
+      log.warn('Atualização de proposição bloqueada: duplicata', {
+        action: 'proposicao_update_validation_failed',
+        id: existingProposicao.id,
+        motivo: 'duplicata_tipo_numero_ano'
+      })
       throw new ConflictError('Já existe uma proposição deste tipo com este número e ano')
     }
   }
@@ -127,6 +135,16 @@ export const PUT = withAuth(async (
     autorId: validatedData.autorId
   })
 
+  log.info('Proposição atualizada', {
+    action: 'proposicao_update',
+    id: updatedProposicao.id,
+    tipo: updatedProposicao.tipo,
+    numero: updatedProposicao.numero,
+    ano: updatedProposicao.ano,
+    status: updatedProposicao.status,
+    slugAlterado: !!newSlug
+  })
+
   return createSuccessResponse(
     updatedProposicao,
     'Proposição atualizada com sucesso'
@@ -149,6 +167,14 @@ export const DELETE = withAuth(async (
   }
 
   await proposicaoDbService.remove(existingProposicao.id)
+
+  log.info('Proposição excluída', {
+    action: 'proposicao_delete',
+    id: existingProposicao.id,
+    tipo: existingProposicao.tipo,
+    numero: existingProposicao.numero,
+    ano: existingProposicao.ano
+  })
 
   return createSuccessResponse(
     null,
