@@ -1,10 +1,104 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-27 (Sprint 1 — Quick Wins da avaliacao E2E)
-> **Versao**: 1.31.0
+> **Ultima Atualizacao**: 2026-05-27 (Sprint 2 — Testes Críticos PNTP + RBAC + E2E CI)
+> **Versao**: 1.32.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-27 — Sprint 2: Testes críticos PNTP + RBAC + E2E no CI
+
+Endereçados os 5 itens P1 prioritários da avaliação E2E. Sprint executada
+em paralelo com 4 agents especializados.
+
+**Resultado final: 737 testes passing** (vs 581 antes da Sprint 2,
++156 testes novos — incremento de 27%).
+
+**SP2.1 — Testes de Despesas e Receitas (essenciais PNTP)**
+
+Novos arquivos:
+- `src/tests/services/despesas-db-service.test.ts` — **18 testes**
+  (PNTP 4.1, 4.2, 4.3 — essenciais Diamante)
+- `src/tests/services/receitas-db-service.test.ts` — **21 testes**
+  (PNTP 3.1 — essencial Diamante)
+
+Cobertura: `list()` com 7+ combinações de filtros, `paginate()` com
+clamp de limit 100 + skip correto, `create()` com defaults e situações.
+
+**SP2.2 + SP2.3 — Testes e-SIC e Ouvidoria (LGPD/RN-166)**
+
+Novos arquivos:
+- `src/tests/services/esic-service.test.ts` — **22 testes**
+- `src/tests/services/ouvidoria-service.test.ts` — **22 testes**
+
+Cobertura crítica de LGPD:
+- `encryptCpf` + `hashCpf` chamados quando há CPF
+- CPF nulo/inválido NÃO dispara criptografia
+- `getByProtocolo` oculta `cpf`/`cpfHash` na resposta pública
+- Anonimato na Ouvidoria: NÃO persiste nome/email/CPF
+- `gerarProtocolo` único + incremental
+- `calcularPrazoResposta` 20 dias úteis e-SIC, 15d ELOGIO, 30d
+  RECLAMACAO/DENUNCIA (Lei 13.460)
+- `criarRecurso` instâncias 1/2/3+ (LAI Art. 15-16)
+
+**SP2.4 — Testes NextAuth + RBAC**
+
+Novo arquivo:
+- `src/tests/auth/permissions.test.ts` — **73 testes**
+
+Cobertura RBAC completa para todas as 7 roles:
+- ADMIN tem ≥40 permissões (acesso total)
+- SECRETARIA tem gestão legislativa mas NÃO painel.manage/votacao.manage
+- OPERADOR tem painel/votação/presença mas NÃO config/user.manage
+- AUXILIAR_LEGISLATIVO tem proposição/tramitação mas NÃO sessão.manage
+- EDITOR tem publicação/parlamentar mas NÃO config/user/audit
+- PARLAMENTAR tem só `.view`
+- USER tem leitura básica
+- LGPD: `financeiro-detalhe.view` (CPF puro) restrito a ADMIN/SECRETARIA
+- Invariantes: apenas ADMIN tem `audit.manage` e `integration.manage`
+- Fallback: role inexistente recebe permissões de USER (DEFAULT_ROLE)
+
+**SP2.5 — E2E smoke no CI**
+
+Arquivo alterado:
+- `.github/workflows/ci-tests.yml` — novo job `e2e-smoke` (+86 linhas)
+
+Características:
+- Roda após `tests` job (`needs: test`)
+- Postgres 15 como service com healthcheck (`pg_isready`)
+- Setup completo: Node 20, npm ci, prisma generate, db push, seed,
+  Playwright chromium, build, smoke
+- Bloqueia PR em falha (sem `continue-on-error`)
+- Upload de artifact `playwright-report` + `test-results` em falha
+- 12 variáveis de ambiente configuradas (mesmas do `.env.example`)
+- Sem necessidade de secrets externos no GitHub
+
+**Validações finais:**
+
+| Check | Resultado |
+|-------|-----------|
+| `npx tsc --noEmit` | ✅ EXIT 0 |
+| `npx eslint --quiet` | ✅ EXIT 0 |
+| `npm test` | ✅ **737/737** passing (46 files) |
+| `npx prisma validate` | ✅ schema válido |
+
+**Impacto na avaliação E2E:**
+
+| Gap P1 | Status anterior | Status agora |
+|--------|-----------------|--------------|
+| Zero testes em `/api/despesas`, `/api/receitas` | 🔴 P1 | ✅ resolvido |
+| Zero testes em fluxo e-SIC + Ouvidoria | 🔴 P1 | ✅ resolvido |
+| Zero testes em NextAuth/RBAC | 🔴 P1 | ✅ resolvido |
+| E2E Playwright não roda no CI | 🔴 P1 | ✅ resolvido |
+
+**Pontuação após Sprint 2:**
+
+| Dimensão | Antes | Depois | Δ |
+|----------|------:|------:|---|
+| Testes | 7.0/10 | **8.5/10** | +1.5 |
+| Score Geral | 8.4/10 | **8.7/10** | +0.3 |
 
 ---
 
