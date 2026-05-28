@@ -141,23 +141,37 @@ export function isProduction(): boolean {
 }
 
 /**
- * QW-3: Em producao, Upstash Redis e OBRIGATORIO para rate-limit distribuido.
- * Sem Redis, multiplas replicas (Vercel) nao sincronizam contadores e o
- * rate-limit em memoria nao tem garantia de cleanup. Chame esta funcao no
- * bootstrap (ex.: `instrumentation.ts` ou primeira chamada de API).
+ * QW-3: Em producao multi-replica, Upstash Redis e necessario para rate-limit
+ * distribuido (Vercel, k8s replicas). Em single-instance (VPS com PM2 fork
+ * mode), o fallback em memoria funciona — basta declarar a intencao via
+ * `ALLOW_MEMORY_RATELIMIT=true` no .env de producao.
  *
- * Em dev/test, retorna sem erro (fallback memoria e aceitavel).
+ * Comportamento:
+ *  - dev/test:                   retorna sem erro (fallback memoria OK)
+ *  - prod + Redis configurado:   OK
+ *  - prod + ALLOW_MEMORY_RATELIMIT=true: warn no log, continua (fallback memoria)
+ *  - prod sem Redis e sem flag:  ERRO fatal (default seguro para Vercel)
  */
 export function assertRedisInProduction(): void {
   if (process.env.NODE_ENV !== 'production') return
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  if (!url || !token) {
-    throw new Error(
-      'UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN sao obrigatorios em ' +
-      'producao para rate-limit distribuido. Configure no .env de producao.'
+  if (url && token) return
+
+  // Opt-out explicito para single-instance (VPS PM2 fork)
+  if (process.env.ALLOW_MEMORY_RATELIMIT === 'true') {
+    log.warn(
+      'Rate-limit em memoria habilitado em producao (ALLOW_MEMORY_RATELIMIT=true). ' +
+      'OK para single-instance (PM2 fork); em multi-replica configure Upstash Redis.'
     )
+    return
   }
+
+  throw new Error(
+    'UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN sao obrigatorios em ' +
+    'producao para rate-limit distribuido. Em single-instance (VPS PM2), ' +
+    'defina ALLOW_MEMORY_RATELIMIT=true no .env para usar fallback memoria.'
+  )
 }
 
 /**
