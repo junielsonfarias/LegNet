@@ -91,7 +91,10 @@ const SENSITIVE_KEY_PATTERNS = [
 const CPF_REGEX = /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/
 const CNPJ_REGEX = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const JWT_REGEX = /^ey[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/
+// QW-5: JWT obrigatoriamente com 3 segmentos base64url (header.payload.signature)
+// e header decodificavel iniciando com {"alg":... -> base64url comeca com "eyJ".
+// Tamanhos minimos derivam de payloads validos (header >=8, payload >=16, sig >=16).
+const JWT_REGEX = /^eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}$/
 
 /**
  * Mascara um valor sensivel. Quando o nome da chave indica o tipo (cpf, email,

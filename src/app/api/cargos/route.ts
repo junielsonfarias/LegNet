@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { createLogger } from '@/lib/logging/logger'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 const log = createLogger('api/rh/cargos')
 
@@ -11,8 +12,8 @@ export const dynamic = 'force-dynamic'
 
 const TIPOS = ['EFETIVO', 'COMISSIONADO', 'FUNCAO_GRATIFICADA', 'ELETIVO'] as const
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+// QW-6: usa PaginationSchema central com override de limit max para listagens grandes
+const QuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(500).default(500),
   planoCargosId: z.string().optional(),
   tipo: z.enum(TIPOS).optional(),

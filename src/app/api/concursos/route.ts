@@ -10,6 +10,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const where: Record<string, unknown> = {}
   if (status) where.status = status
 
-  const concursos = await prisma.concurso.findMany({ where, orderBy: { dataPublicacao: 'desc' } })
+  // QW-7: limite defensivo anti payload >2MB em endpoint publico
+  const concursos = await prisma.concurso.findMany({ where, orderBy: { dataPublicacao: 'desc' }, take: 500 })
   return createSuccessResponse(concursos)
 })

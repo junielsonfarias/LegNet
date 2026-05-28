@@ -44,14 +44,20 @@ export function useSessoesState() {
   // Tipos de expediente do banco
   const [tiposExpediente, setTiposExpediente] = useState<Array<{ value: string; label: string }>>([])
   useEffect(() => {
-    fetch('/api/tipos-expediente?ativo=true')
+    // P0-3: AbortController evita setState apos desmonte
+    const controller = new AbortController()
+    fetch('/api/tipos-expediente?ativo=true', { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
+        if (controller.signal.aborted) return
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {
           setTiposExpediente(data.data.map((t: any) => ({ value: t.id, label: t.nome })))
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (err?.name === 'AbortError') return
+      })
+    return () => controller.abort()
   }, [])
   const PAUTA_SECOES = tiposExpediente.length > 0 ? tiposExpediente : PAUTA_SECOES_FALLBACK
 

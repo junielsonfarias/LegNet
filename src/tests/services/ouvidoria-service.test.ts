@@ -202,6 +202,38 @@ describe('ouvidoriaService.create (RN-166 LGPD + Lei 13.460)', () => {
     )
   })
 
+  it('P0-2 (LGPD Art 8): anonimo=true descarta nome/email/telefone/cpf mesmo se enviados', async () => {
+    // Cenario hostil: usuario marca anonimo=true mas envia PII no payload.
+    // O service DEVE descartar tudo (em vez de salvar e apenas ocultar no GET).
+    await ouvidoriaService.create({
+      anonimo: true,
+      nome: 'Joao da Silva',
+      email: 'joao@example.com',
+      telefone: '91999999999',
+      cpf: '12345678909',
+      tipo: 'DENUNCIA' as never,
+      assunto: 'Denuncia anonima',
+      descricao: 'Detalhes',
+    })
+
+    // PII nao deve ser nem criptografada (CPF normalizado para undefined antes)
+    expect(encryptCpf).not.toHaveBeenCalled()
+    expect(hashCpf).not.toHaveBeenCalled()
+
+    expect(prisma.manifestacaoOuvidoria.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          anonimo: true,
+          nome: null,        // P0-2: zerada apesar de enviada
+          email: null,       // P0-2: zerada apesar de enviada
+          telefone: null,    // P0-2: zerada apesar de enviada
+          cpf: null,         // P0-2: zerada apesar de enviada
+          cpfHash: null,     // P0-2: zerada apesar de enviada
+        }),
+      })
+    )
+  })
+
   it('prioridade customizada e respeitada (default NORMAL)', async () => {
     await ouvidoriaService.create({
       tipo: 'DENUNCIA' as never,

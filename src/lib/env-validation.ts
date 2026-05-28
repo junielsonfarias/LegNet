@@ -48,6 +48,19 @@ const envSchema = z.object({
     .optional()
     .describe('Chave publica anonima do Supabase'),
 
+  // Rate-limit distribuido (Upstash Redis) - obrigatorio em producao
+  // ver assertRedisInProduction()
+  UPSTASH_REDIS_REST_URL: z
+    .string()
+    .url()
+    .optional()
+    .describe('URL REST do Upstash Redis (rate-limit distribuido)'),
+
+  UPSTASH_REDIS_REST_TOKEN: z
+    .string()
+    .optional()
+    .describe('Token do Upstash Redis (rate-limit distribuido)'),
+
   // Ambiente
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
@@ -125,6 +138,26 @@ export function getEnv(): EnvConfig {
  */
 export function isProduction(): boolean {
   return getEnv().NODE_ENV === 'production'
+}
+
+/**
+ * QW-3: Em producao, Upstash Redis e OBRIGATORIO para rate-limit distribuido.
+ * Sem Redis, multiplas replicas (Vercel) nao sincronizam contadores e o
+ * rate-limit em memoria nao tem garantia de cleanup. Chame esta funcao no
+ * bootstrap (ex.: `instrumentation.ts` ou primeira chamada de API).
+ *
+ * Em dev/test, retorna sem erro (fallback memoria e aceitavel).
+ */
+export function assertRedisInProduction(): void {
+  if (process.env.NODE_ENV !== 'production') return
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) {
+    throw new Error(
+      'UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN sao obrigatorios em ' +
+      'producao para rate-limit distribuido. Configure no .env de producao.'
+    )
+  }
 }
 
 /**

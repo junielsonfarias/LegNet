@@ -7,7 +7,7 @@ import { TransparenciaPageWrapper } from '@/components/transparencia/transparenc
 
 const log = createLogger('transparencia/encarregado-dados')
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // QW-4: ISR 1h - dado institucional do DPO
 
 const CHAVES = [
   'lgpd_encarregado_nome',

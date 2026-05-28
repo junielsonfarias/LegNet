@@ -168,12 +168,13 @@ export function useProposicoesState(): UseProposicoesStateReturn {
 
   const hasProcessedEditRef = useRef(false)
 
-  // Carregadores
-  const loadTiposProposicao = useCallback(async () => {
+  // Carregadores (P0-3: aceitam AbortSignal opcional para cancelar em desmonte)
+  const loadTiposProposicao = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoadingTiposProposicao(true)
-      const response = await fetch('/api/tipos-proposicao?ativo=true')
+      const response = await fetch('/api/tipos-proposicao?ativo=true', { signal })
       const result = await response.json()
+      if (signal?.aborted) return
       if (result.success && result.data) {
         setTiposProposicao(result.data)
       } else {
@@ -181,17 +182,19 @@ export function useProposicoesState(): UseProposicoesStateReturn {
         toast.error('Não foi possível carregar os tipos de proposição')
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return
       log.error('Erro ao carregar tipos de proposição', error)
       toast.error('Erro ao carregar tipos de proposição')
     } finally {
-      setLoadingTiposProposicao(false)
+      if (!signal?.aborted) setLoadingTiposProposicao(false)
     }
   }, [])
 
-  const loadTiposTramitacao = useCallback(async () => {
+  const loadTiposTramitacao = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch('/api/configuracoes/tipos-tramitacao?ativo=true')
+      const response = await fetch('/api/configuracoes/tipos-tramitacao?ativo=true', { signal })
       const result = await response.json()
+      if (signal?.aborted) return
       if (result.success && result.data) {
         // Mapear para o formato esperado pelo componente
         const tipos = result.data.map((t: any) => ({
@@ -208,14 +211,16 @@ export function useProposicoesState(): UseProposicoesStateReturn {
         log.error('Erro ao carregar tipos de tramitação', result.error)
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return
       log.error('Erro ao carregar tipos de tramitação', error)
     }
   }, [])
 
-  const loadTiposOrgaos = useCallback(async () => {
+  const loadTiposOrgaos = useCallback(async (signal?: AbortSignal) => {
     try {
-      const response = await fetch('/api/configuracoes/unidades-tramitacao?ativo=true')
+      const response = await fetch('/api/configuracoes/unidades-tramitacao?ativo=true', { signal })
       const result = await response.json()
+      if (signal?.aborted) return
       if (result.success && result.data) {
         // Mapear para o formato esperado pelo componente
         const unidades = result.data.map((u: any) => ({
@@ -231,6 +236,7 @@ export function useProposicoesState(): UseProposicoesStateReturn {
         log.error('Erro ao carregar unidades de tramitação', result.error)
       }
     } catch (error) {
+      if ((error as Error)?.name === 'AbortError') return
       log.error('Erro ao carregar unidades de tramitação', error)
     }
   }, [])
@@ -247,11 +253,14 @@ export function useProposicoesState(): UseProposicoesStateReturn {
   }, [])
 
   // Efeito para carregar dados iniciais
+  // P0-3: AbortController aborta requests em flight quando o componente desmonta
   useEffect(() => {
-    void loadTiposProposicao()
-    void loadTiposTramitacao()
-    void loadTiposOrgaos()
+    const controller = new AbortController()
+    void loadTiposProposicao(controller.signal)
+    void loadTiposTramitacao(controller.signal)
+    void loadTiposOrgaos(controller.signal)
     void loadTramitacoes()
+    return () => controller.abort()
   }, [loadTiposProposicao, loadTiposTramitacao, loadTiposOrgaos, loadTramitacoes])
 
   // Efeito para processar parâmetro de edição na URL

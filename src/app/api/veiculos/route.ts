@@ -3,13 +3,13 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
 
 const SITUACOES = ['ATIVO', 'INATIVO', 'ALIENADO', 'EM_MANUTENCAO', 'SINISTRADO'] as const
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+const QuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   situacao: z.enum(SITUACOES).optional(),
   busca: z.string().optional()

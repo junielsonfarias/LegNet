@@ -5,7 +5,7 @@ import { TransmissaoAoVivo } from '@/components/transparencia/transmissao-ao-viv
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 import { getTransmissaoConfig } from '@/lib/services/transmissao-service'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 600 // QW-4: ISR 10min - config de link de transmissao
 
 export default async function TransmissaoPage() {
   const cfg = await getTransmissaoConfig()

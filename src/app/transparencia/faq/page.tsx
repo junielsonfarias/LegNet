@@ -7,7 +7,7 @@ import { TransparenciaPageWrapper } from '@/components/transparencia/transparenc
 
 const log = createLogger('transparencia/faq')
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 600 // QW-4: ISR 10min - FAQ atualizado pela secretaria
 
 interface Pergunta {
   id: string

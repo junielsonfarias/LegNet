@@ -3,32 +3,34 @@ import { z } from 'zod'
 import { createSuccessResponse, ValidationError, withErrorHandler } from '@/lib/error-handler'
 import { withAuth } from '@/lib/auth/permissions'
 import { contratosDbService } from '@/lib/services/contratos-db-service'
-import { safeParseQueryParams } from '@/lib/validation/query-schemas'
+import {
+  safeParseQueryParams,
+  PaginationSchema,
+  FinanceiroFilterBaseSchema,
+} from '@/lib/validation/query-schemas'
 import { createLogger } from '@/lib/logging/logger'
 
 const log = createLogger('api/financeiro/contratos')
 
 export const dynamic = 'force-dynamic'
 
-// Schema de validação para query params de contratos
-// Enums devem corresponder ao schema Prisma
-const ContratoQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-  modalidade: z.enum(['CONTRATO_ORIGINAL', 'ADITIVO', 'APOSTILAMENTO', 'RESCISAO']).nullish().transform(v => v ?? undefined),
-  situacao: z.enum(['VIGENTE', 'ENCERRADO', 'RESCINDIDO', 'SUSPENSO']).nullish().transform(v => v ?? undefined),
-  ano: z.coerce.number().int().min(2000).max(2100).optional(),
-  contratado: z.string().nullish().transform(v => v ?? undefined),
-  objeto: z.string().nullish().transform(v => v ?? undefined),
-  licitacaoId: z.string().nullish().transform(v => v ?? undefined),
-  dataInicio: z.string().nullish().transform(v => v ?? undefined),
-  dataFim: z.string().nullish().transform(v => v ?? undefined),
-  valorMinimo: z.coerce.number().min(0).optional(),
-  valorMaximo: z.coerce.number().min(0).optional()
-}).refine(
-  data => !data.valorMinimo || !data.valorMaximo || data.valorMinimo <= data.valorMaximo,
-  { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
-)
+// P2-C: estende schemas centrais (PaginationSchema + FinanceiroFilterBaseSchema)
+// com campos especificos de contrato. Enums stritos mapeam para Prisma.
+const ContratoQuerySchema = PaginationSchema
+  .merge(FinanceiroFilterBaseSchema)
+  .extend({
+    modalidade: z.enum(['CONTRATO_ORIGINAL', 'ADITIVO', 'APOSTILAMENTO', 'RESCISAO']).nullish().transform(v => v ?? undefined),
+    situacao: z.enum(['VIGENTE', 'ENCERRADO', 'RESCINDIDO', 'SUSPENSO']).nullish().transform(v => v ?? undefined),
+    ano: z.coerce.number().int().min(2000).max(2100).optional(),
+    contratado: z.string().nullish().transform(v => v ?? undefined),
+    objeto: z.string().nullish().transform(v => v ?? undefined),
+    licitacaoId: z.string().nullish().transform(v => v ?? undefined),
+    dataInicio: z.string().nullish().transform(v => v ?? undefined),
+    dataFim: z.string().nullish().transform(v => v ?? undefined),
+  }).refine(
+    data => !data.valorMinimo || !data.valorMaximo || data.valorMinimo <= data.valorMaximo,
+    { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
+  )
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)

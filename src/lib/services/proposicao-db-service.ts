@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma, type StatusProposicao, type ResultadoVotacao } from '@prisma/client'
 import { isSlugProposicao, parseSlugProposicao, gerarSlugProposicao } from '@/lib/utils/proposicao-slug'
 import { ValidationError } from '@/lib/error-handler'
+import { notDeleted } from '@/lib/services/soft-delete'
 
 /**
  * Transicoes de status permitidas para proposicoes
@@ -102,7 +103,8 @@ export const proposicaoDbService = {
   ) {
     const page = Math.max(1, options.page ?? 1)
     const limit = Math.min(500, Math.max(1, options.limit ?? 50))
-    const where: Record<string, unknown> = {}
+    // P0-4: oculta proposicoes com soft delete por padrao
+    const where: Record<string, unknown> = { ...notDeleted() }
 
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
@@ -388,7 +390,7 @@ export const proposicaoDbService = {
     if (filters.ano) where.ano = filters.ano
 
     return prisma.proposicao.findMany({
-      where,
+      where: { ...where, ...notDeleted() }, // P0-4: oculta soft-deleted
       orderBy: { dataApresentacao: 'desc' },
       take: filters.limit || 50,
       include: {

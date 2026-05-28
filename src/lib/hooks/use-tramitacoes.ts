@@ -50,17 +50,19 @@ export function useTramitacoes(filters?: TramitacaoFilters): UseTramitacoesRetur
 
   const stableFilters = useStableFilters(filters)
 
-  const fetchTramitacoes = useCallback(async () => {
+  // P0-3: aceita signal opcional para cancelar request em flight no cleanup
+  const fetchTramitacoes = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoading(true)
       setError(null)
 
       const response = await withRetry(
-        () => tramitacoesApi.list(stableFilters as TramitacaoFilters),
+        () => tramitacoesApi.list(stableFilters as TramitacaoFilters, { signal }),
         3,
         1000
       )
 
+      if (signal?.aborted) return
       setTramitacoes(response.data)
       setMeta({
         total: response.total ?? response.meta?.total,
@@ -69,16 +71,19 @@ export function useTramitacoes(filters?: TramitacaoFilters): UseTramitacoesRetur
         totalPages: response.meta?.totalPages
       })
     } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar tramitações'
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }, [stableFilters])
 
   useEffect(() => {
-    fetchTramitacoes()
+    const controller = new AbortController()
+    fetchTramitacoes(controller.signal)
+    return () => controller.abort()
   }, [fetchTramitacoes])
 
   const create = useCallback(async (payload: TramitacaoCreate): Promise<TramitacaoApi | null> => {
@@ -201,22 +206,27 @@ export function useTramitacao(id: string | null) {
       return
     }
 
+    // P0-3: AbortController cancela request ao desmontar/mudar id
+    const controller = new AbortController()
     const fetchTramitacao = async () => {
       try {
         setLoading(true)
         setError(null)
-        const data = await tramitacoesApi.getById(id)
+        const data = await tramitacoesApi.getById(id, { signal: controller.signal })
+        if (controller.signal.aborted) return
         setTramitacao(data)
       } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return
         const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar tramitação'
         setError(errorMessage)
         toast.error(errorMessage)
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
 
     fetchTramitacao()
+    return () => controller.abort()
   }, [id])
 
   const refetch = useCallback(async () => {
@@ -390,29 +400,34 @@ export function useTramitacaoDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchDashboard = useCallback(async () => {
+  // P0-3: aceita signal para cancelar no cleanup
+  const fetchDashboard = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoading(true)
       setError(null)
 
       const data = await withRetry(
-        () => tramitacoesApi.getDashboard(),
+        () => tramitacoesApi.getDashboard({ signal }),
         3,
         1000
       )
 
+      if (signal?.aborted) return
       setDashboard(data)
     } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return
       const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar dashboard de tramitação'
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchDashboard()
+    const controller = new AbortController()
+    fetchDashboard(controller.signal)
+    return () => controller.abort()
   }, [fetchDashboard])
 
   return {

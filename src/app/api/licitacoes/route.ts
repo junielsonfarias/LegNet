@@ -3,30 +3,32 @@ import { z } from 'zod'
 import { licitacoesDbService } from '@/lib/services/licitacoes-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
-import { safeParseQueryParams } from '@/lib/validation/query-schemas'
+import {
+  safeParseQueryParams,
+  PaginationSchema,
+  FinanceiroFilterBaseSchema,
+} from '@/lib/validation/query-schemas'
 import { createLogger } from '@/lib/logging/logger'
 
 const log = createLogger('api/financeiro/licitacoes')
 
 export const dynamic = 'force-dynamic'
 
-// Schema de validação para query params de licitações
-// Enums devem corresponder ao schema Prisma
-const LicitacaoQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-  modalidade: z.enum(['PREGAO_ELETRONICO', 'PREGAO_PRESENCIAL', 'CONCORRENCIA', 'TOMADA_DE_PRECOS', 'CONVITE', 'CONCURSO', 'LEILAO', 'DISPENSA', 'INEXIGIBILIDADE']).nullish().transform(v => v ?? undefined),
-  situacao: z.enum(['EM_ANDAMENTO', 'HOMOLOGADA', 'ADJUDICADA', 'REVOGADA', 'ANULADA', 'DESERTA', 'FRACASSADA', 'SUSPENSA']).nullish().transform(v => v ?? undefined),
-  ano: z.coerce.number().int().min(2000).max(2100).optional(),
-  objeto: z.string().nullish().transform(v => v ?? undefined),
-  dataInicio: z.string().nullish().transform(v => v ?? undefined),
-  dataFim: z.string().nullish().transform(v => v ?? undefined),
-  valorMinimo: z.coerce.number().min(0).optional(),
-  valorMaximo: z.coerce.number().min(0).optional()
-}).refine(
-  data => !data.valorMinimo || !data.valorMaximo || data.valorMinimo <= data.valorMaximo,
-  { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
-)
+// P2-C: estende schemas centrais (PaginationSchema + FinanceiroFilterBaseSchema)
+// com campos especificos de licitacao. Enums stritos mapeam para Prisma.
+const LicitacaoQuerySchema = PaginationSchema
+  .merge(FinanceiroFilterBaseSchema)
+  .extend({
+    modalidade: z.enum(['PREGAO_ELETRONICO', 'PREGAO_PRESENCIAL', 'CONCORRENCIA', 'TOMADA_DE_PRECOS', 'CONVITE', 'CONCURSO', 'LEILAO', 'DISPENSA', 'INEXIGIBILIDADE']).nullish().transform(v => v ?? undefined),
+    situacao: z.enum(['EM_ANDAMENTO', 'HOMOLOGADA', 'ADJUDICADA', 'REVOGADA', 'ANULADA', 'DESERTA', 'FRACASSADA', 'SUSPENSA']).nullish().transform(v => v ?? undefined),
+    ano: z.coerce.number().int().min(2000).max(2100).optional(),
+    objeto: z.string().nullish().transform(v => v ?? undefined),
+    dataInicio: z.string().nullish().transform(v => v ?? undefined),
+    dataFim: z.string().nullish().transform(v => v ?? undefined),
+  }).refine(
+    data => !data.valorMinimo || !data.valorMaximo || data.valorMinimo <= data.valorMaximo,
+    { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
+  )
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)

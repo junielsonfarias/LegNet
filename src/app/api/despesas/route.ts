@@ -3,34 +3,37 @@ import { z } from 'zod'
 import { despesasDbService } from '@/lib/services/despesas-db-service'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
-import { safeParseQueryParams } from '@/lib/validation/query-schemas'
+import {
+  safeParseQueryParams,
+  PaginationSchema,
+  FinanceiroFilterBaseSchema,
+} from '@/lib/validation/query-schemas'
 import { createLogger } from '@/lib/logging/logger'
 
 const log = createLogger('api/financeiro/despesas')
 
 export const dynamic = 'force-dynamic'
 
-// Schema de validação para query params de despesas
-// Enums devem corresponder ao schema Prisma
-const DespesaQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-  situacao: z.enum(['EMPENHADA', 'LIQUIDADA', 'PAGA', 'ANULADA', 'PARCIALMENTE_PAGA']).nullish().transform(v => v ?? undefined),
-  ano: z.coerce.number().int().min(2000).max(2100).optional(),
-  mes: z.coerce.number().int().min(1).max(12).optional(),
-  credor: z.string().nullish().transform(v => v ?? undefined),
-  elemento: z.string().nullish().transform(v => v ?? undefined),
-  funcao: z.string().nullish().transform(v => v ?? undefined),
-  programa: z.string().nullish().transform(v => v ?? undefined),
-  licitacaoId: z.string().nullish().transform(v => v ?? undefined),
-  contratoId: z.string().nullish().transform(v => v ?? undefined),
-  convenioId: z.string().nullish().transform(v => v ?? undefined),
-  valorMinimo: z.coerce.number().min(0).optional(),
-  valorMaximo: z.coerce.number().min(0).optional()
-}).refine(
-  data => !data.valorMinimo || !data.valorMaximo || data.valorMinimo <= data.valorMaximo,
-  { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
-)
+// P2-C: estende schemas centrais (PaginationSchema + FinanceiroFilterBaseSchema)
+// com campos especificos de despesa. Situacao tem enum stricto que mapeia
+// para Prisma.
+const DespesaQuerySchema = PaginationSchema
+  .merge(FinanceiroFilterBaseSchema)
+  .extend({
+    situacao: z.enum(['EMPENHADA', 'LIQUIDADA', 'PAGA', 'ANULADA', 'PARCIALMENTE_PAGA']).nullish().transform(v => v ?? undefined),
+    ano: z.coerce.number().int().min(2000).max(2100).optional(),
+    mes: z.coerce.number().int().min(1).max(12).optional(),
+    credor: z.string().nullish().transform(v => v ?? undefined),
+    elemento: z.string().nullish().transform(v => v ?? undefined),
+    funcao: z.string().nullish().transform(v => v ?? undefined),
+    programa: z.string().nullish().transform(v => v ?? undefined),
+    licitacaoId: z.string().nullish().transform(v => v ?? undefined),
+    contratoId: z.string().nullish().transform(v => v ?? undefined),
+    convenioId: z.string().nullish().transform(v => v ?? undefined),
+  }).refine(
+    data => !data.valorMinimo || !data.valorMaximo || data.valorMinimo <= data.valorMaximo,
+    { message: 'valorMinimo deve ser menor ou igual a valorMaximo' }
+  )
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)

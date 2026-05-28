@@ -7,7 +7,7 @@ import { DocumentosOficiais } from '@/components/transparencia/documentos-oficia
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 import { LinksRelacionados } from '@/components/transparencia/links-relacionados'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // QW-4: ISR 1h - plano estrategico institucional
 
 const elementos = [
   {

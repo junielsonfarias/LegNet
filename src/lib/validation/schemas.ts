@@ -1,5 +1,67 @@
 import { z } from 'zod'
 
+// =============================================================================
+// VALIDATION CENTRAL - PADRAO DE USO (QW-6)
+// =============================================================================
+//
+// USAR estes schemas em vez de definir z.object({...}) inline nas rotas.
+// Padrao:
+//   import { CpfSchema, PaginationSchema, nullableString } from '@/lib/validation/schemas'
+//
+// HELPERS reutilizaveis:
+//   - CpfSchema, CnpjSchema, EmailSchema, TelefoneBrSchema
+//   - AnoMesSchema (filtros financeiros)
+//   - nullableString(min?, max?) - cria z.string()...nullish().transform()
+//   - emptyStringToUndefined - preprocessor que vira '' em undefined
+//
+// QUERIES por modulo: ver src/lib/validation/query-schemas.ts
+// =============================================================================
+
+// =============================================================================
+// HELPERS REUTILIZAVEIS (LGPD + DRY)
+// =============================================================================
+
+/** CPF brasileiro: aceita "123.456.789-00" ou "12345678900", normaliza para 11 digitos */
+export const CpfSchema = z.string()
+  .transform((v) => v.replace(/\D/g, ''))
+  .refine((v) => v.length === 11, 'CPF deve conter 11 digitos')
+
+/** CNPJ brasileiro: aceita "12.345.678/0001-99" ou "12345678000199", normaliza para 14 digitos */
+export const CnpjSchema = z.string()
+  .transform((v) => v.replace(/\D/g, ''))
+  .refine((v) => v.length === 14, 'CNPJ deve conter 14 digitos')
+
+/** Email validado com mensagem em pt-BR */
+export const EmailSchema = z.string().email('Email deve ser valido')
+
+/** Telefone brasileiro: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX */
+export const TelefoneBrSchema = z.string()
+  .regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$/, 'Telefone deve estar no formato (XX) XXXXX-XXXX')
+
+/** Filtro Ano + Mes (transparencia financeira) */
+export const AnoMesSchema = z.object({
+  ano: z.coerce.number().int().min(2000).max(2100).default(new Date().getFullYear()),
+  mes: z.coerce.number().int().min(1).max(12).optional(),
+})
+
+/** Preprocessor: trata '' como undefined antes de validar */
+export const emptyStringToUndefined = (val: unknown) => (val === '' ? undefined : val)
+
+/**
+ * Cria schema de string nullish que normaliza null/undefined/'' para undefined.
+ * Reduz o boilerplate `.nullish().transform(v => v ?? undefined)` repetido em rotas.
+ */
+export function nullableString(opts?: { min?: number; max?: number }) {
+  let s = z.string()
+  if (opts?.min !== undefined) s = s.min(opts.min)
+  if (opts?.max !== undefined) s = s.max(opts.max)
+  return z.preprocess(emptyStringToUndefined, s.nullish().transform((v) => v ?? undefined))
+}
+
+// =============================================================================
+// SCHEMAS DE ENTIDADES
+// =============================================================================
+
 // Schemas de validação para APIs
 
 // Schema para Parlamentar

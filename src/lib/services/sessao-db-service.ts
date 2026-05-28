@@ -10,6 +10,7 @@ import {
 } from '@/lib/utils/sessoes-utils'
 import { combineDateAndTimeUTC } from '@/lib/utils/date'
 import { ValidationError, ConflictError } from '@/lib/error-handler'
+import { notDeleted } from '@/lib/services/soft-delete'
 
 // ---- Types ----
 
@@ -256,7 +257,8 @@ export const sessaoDbService = {
     const limit = Math.min(100, Math.max(1, options.limit ?? 50))
     const skip = (page - 1) * limit
 
-    const where: Record<string, unknown> = {}
+    // P0-4: oculta sessoes com soft delete por padrao
+    const where: Record<string, unknown> = { ...notDeleted() }
 
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
@@ -305,7 +307,8 @@ export const sessaoDbService = {
     to?: Date
     limit?: number
   }) {
-    const where: Record<string, unknown> = {}
+    // P0-4: oculta sessoes com soft delete na API publica de integracoes
+    const where: Record<string, unknown> = { ...notDeleted() }
     if (filters.status) where.status = filters.status
     if (filters.tipo) where.tipo = filters.tipo
     if (filters.from || filters.to) {

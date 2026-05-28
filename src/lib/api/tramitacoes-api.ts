@@ -232,7 +232,9 @@ class TramitacoesApiService {
     return data.data
   }
 
-  async list(filters?: TramitacaoFilters): Promise<{ data: TramitacaoApi[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number }; total?: number }> {
+  // BL-2: methods GET aceitam options.signal para cancelar requests em flight
+  // ao desmontar o componente (P0-3 helper useAbortController)
+  async list(filters?: TramitacaoFilters, options?: { signal?: AbortSignal }): Promise<{ data: TramitacaoApi[]; meta?: { total?: number; page?: number; limit?: number; totalPages?: number }; total?: number }> {
     const params = new URLSearchParams()
 
     if (filters?.proposicaoId) params.append('proposicaoId', filters.proposicaoId)
@@ -251,7 +253,8 @@ class TramitacoesApiService {
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: options?.signal,
     })
 
     const responseData: ApiResponse<TramitacaoApi[]> = await response.json()
@@ -267,11 +270,12 @@ class TramitacoesApiService {
     }
   }
 
-  async getById(id: string): Promise<TramitacaoApi> {
+  async getById(id: string, options?: { signal?: AbortSignal }): Promise<TramitacaoApi> {
     const response = await fetch(`${this.baseUrl}/${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: options?.signal,
     })
     return this.handleResponse<TramitacaoApi>(response)
   }
@@ -368,11 +372,12 @@ class TramitacoesApiService {
     }
   }
 
-  async getDashboard(): Promise<TramitacaoDashboardApi> {
+  async getDashboard(options?: { signal?: AbortSignal }): Promise<TramitacaoDashboardApi> {
     const response = await fetch(`${this.baseUrl}/dashboard`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: options?.signal,
     })
     return this.handleResponse<TramitacaoDashboardApi>(response)
   }
@@ -415,7 +420,7 @@ class TramitacaoRegrasApiService {
     return data.data
   }
 
-  async list(filters?: { ativo?: boolean }): Promise<TramitacaoRegraApi[]> {
+  async list(filters?: { ativo?: boolean }, options?: { signal?: AbortSignal }): Promise<TramitacaoRegraApi[]> {
     const params = new URLSearchParams()
     if (filters?.ativo !== undefined) params.append('ativo', String(filters.ativo))
 
@@ -423,16 +428,18 @@ class TramitacaoRegrasApiService {
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: options?.signal,
     })
     return this.handleResponse<TramitacaoRegraApi[]>(response)
   }
 
-  async getById(id: string): Promise<TramitacaoRegraApi> {
+  async getById(id: string, options?: { signal?: AbortSignal }): Promise<TramitacaoRegraApi> {
     const response = await fetch(`${this.baseUrl}/${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store'
+      cache: 'no-store',
+      signal: options?.signal,
     })
     return this.handleResponse<TramitacaoRegraApi>(response)
   }

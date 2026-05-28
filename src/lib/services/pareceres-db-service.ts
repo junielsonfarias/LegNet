@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import type { TipoVoto, TipoParecer } from '@prisma/client'
+import { notDeleted } from '@/lib/services/soft-delete'
 
 export interface ParecerFilters {
   comissaoId?: string
@@ -42,7 +43,8 @@ const defaultInclude = {
 }
 
 const buildWhereClause = (filters: ParecerFilters = {}) => {
-  const where: Record<string, unknown> = {}
+  // P0-4: oculta pareceres com soft delete por padrao
+  const where: Record<string, unknown> = { ...notDeleted() }
   if (filters.comissaoId) where.comissaoId = filters.comissaoId
   if (filters.proposicaoId) where.proposicaoId = filters.proposicaoId
   if (filters.relatorId) where.relatorId = filters.relatorId

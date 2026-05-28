@@ -32,12 +32,20 @@ export const GET = withAuth(withErrorHandler(async (request: NextRequest) => {
   return createSuccessResponse(result.data, 'Manifestações carregadas', result.pagination.total)
 }))
 
+// P0-2 (LGPD Art. 8 - acuracia): se CPF informado, validar formato (11 digitos).
+// Nao se valida posse (verificacao por SMS/email fica para Sprint dedicada).
+// Em modo anonimo, o service descarta toda PII (ver ouvidoria-service.ts).
 const ManifestacaoSchema = z.object({
   anonimo: z.boolean().default(false),
   nome: z.string().nullish(),
   email: z.string().email().nullish(),
   telefone: z.string().nullish(),
-  cpf: z.string().nullish(),
+  cpf: z.string()
+    .nullish()
+    .refine(
+      (v) => !v || /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(v.trim()),
+      'CPF deve estar no formato XXX.XXX.XXX-XX ou 11 digitos'
+    ),
   // Fase 5 / M10: tipo opcional. Se ausente ou 'AUTO', classificador heuristico
   // sugere baseado em assunto+descricao. Operador pode revisar depois.
   tipo: z.string().nullish(),
@@ -66,6 +74,19 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       motivo: 'campos_obrigatorios_ausentes'
     })
     throw new ValidationError('Para manifestações não anônimas, nome e email são obrigatórios')
+  }
+
+  // P0-2: audita tentativa de enviar PII em modo anonimo (descartada pelo service)
+  if (data.anonimo && (data.nome || data.email || data.cpf || data.telefone)) {
+    log.warn('PII enviada em manifestacao anonima foi descartada pelo service', {
+      action: 'ouvidoria_anon_pii_stripped',
+      campos: [
+        data.nome ? 'nome' : null,
+        data.email ? 'email' : null,
+        data.cpf ? 'cpf' : null,
+        data.telefone ? 'telefone' : null,
+      ].filter(Boolean).join(',')
+    })
   }
 
   // Fase 5 / M10: classificacao automatica quando tipo nao informado ou 'AUTO'

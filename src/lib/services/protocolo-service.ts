@@ -7,6 +7,7 @@
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { generateSecureCode } from '@/lib/utils/secure-id'
+import { protectCpfCnpj, readCpfCnpj, hashCpfCnpj } from '@/lib/security/protocolo-utils'
 import type {
   TipoProtocolo,
   SituacaoProtocolo,
@@ -105,14 +106,19 @@ export async function criarProtocolo(
   const numero = await gerarNumeroProtocolo(ano)
   const etiquetaCodigo = gerarCodigoEtiqueta(numero, ano)
 
+  // P0-6 (LGPD): CPF criptografado em repouso quando PESSOA_FISICA; CNPJ texto plano
+  const tipoRemetente = input.tipoRemetente || 'PESSOA_FISICA'
+  const cpfCnpjProtegido = protectCpfCnpj(input.cpfCnpjRemetente, tipoRemetente)
+
   const protocolo = await prisma.protocolo.create({
     data: {
       numero,
       ano,
       tipo: input.tipo,
       nomeRemetente: input.nomeRemetente,
-      cpfCnpjRemetente: input.cpfCnpjRemetente,
-      tipoRemetente: input.tipoRemetente || 'PESSOA_FISICA',
+      cpfCnpjRemetente: cpfCnpjProtegido.stored,
+      cpfCnpjRemetenteHash: cpfCnpjProtegido.hash,
+      tipoRemetente,
       enderecoRemetente: input.enderecoRemetente,
       telefoneRemetente: input.telefoneRemetente,
       emailRemetente: input.emailRemetente,

@@ -4,7 +4,7 @@ import { BookOpen, ArrowLeft, Scale, Clock, MessageSquare, FileSearch } from 'lu
 import { DocumentosOficiais } from '@/components/transparencia/documentos-oficiais'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // QW-4: ISR 1h - regulamentacao da ouvidoria
 
 const baseLegal = [
   {

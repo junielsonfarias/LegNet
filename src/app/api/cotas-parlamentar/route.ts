@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,8 +14,8 @@ const DocumentoSchema = z.object({
   url: z.string().url()
 })
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+// P2-C: usa PaginationSchema central com override de limit max (cotas tem volume baixo)
+const QuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(500).default(50),
   ano: z.coerce.number().int().optional(),
   anoInicio: z.coerce.number().int().optional(),

@@ -3,13 +3,14 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
 
 const TIPOS = ['COMPROMISSO', 'REUNIAO', 'EVENTO', 'VIAGEM', 'AUDIENCIA'] as const
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+// BL-3: usa PaginationSchema central (overrride limit max p/ listagens grandes)
+const QuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(500).default(500),
   parlamentarId: z.string().optional(),
   tipo: z.enum(TIPOS).optional()

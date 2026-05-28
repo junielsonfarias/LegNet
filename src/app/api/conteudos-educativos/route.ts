@@ -22,9 +22,11 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   if (publicado === 'true') where.publicado = true
   if (categoria) where.categoria = categoria
 
+  // QW-7: limite defensivo anti payload >2MB em endpoint publico
   const conteudos = await prisma.conteudoEducativo.findMany({
     where,
     orderBy: [{ categoria: 'asc' }, { ordem: 'asc' }],
+    take: 500,
   })
 
   return createSuccessResponse(conteudos)

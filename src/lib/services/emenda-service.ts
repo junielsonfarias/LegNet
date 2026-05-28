@@ -5,6 +5,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
+import { notDeleted } from '@/lib/services/soft-delete'
 import type {
   TipoEmenda,
   StatusEmenda,
@@ -176,7 +177,8 @@ export async function listarEmendasProposicao(
   proposicaoId: string,
   turno?: number
 ) {
-  const where: Record<string, unknown> = { proposicaoId }
+  // P0-4: oculta emendas com soft delete por padrao
+  const where: Record<string, unknown> = { proposicaoId, ...notDeleted() }
 
   if (turno) {
     where.turnoApresentacao = turno
@@ -208,7 +210,8 @@ export async function listarEmendas(
   page: number = 1,
   limit: number = 20
 ) {
-  const where: Record<string, unknown> = {}
+  // P0-4: oculta emendas com soft delete por padrao
+  const where: Record<string, unknown> = { ...notDeleted() }
 
   if (filtros.proposicaoId) {
     where.proposicaoId = filtros.proposicaoId

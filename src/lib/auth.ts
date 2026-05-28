@@ -141,8 +141,8 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       if (user) {
         token.role = user.role
-        token.parlamentarId = (user as any).parlamentarId
-        token.twoFactorEnabled = (user as any).twoFactorEnabled ?? false
+        token.parlamentarId = user.parlamentarId ?? null
+        token.twoFactorEnabled = user.twoFactorEnabled ?? false
         token.globalTwoFactorEnabled = await is2FAEnabledGlobally()
       }
       // Quando o cliente chama useSession().update(), faz re-fetch do user.
@@ -167,9 +167,9 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.sub!
-        session.user.role = token.role as string
-        ;(session.user as any).parlamentarId = token.parlamentarId
-        ;(session.user as any).twoFactorEnabled = Boolean(token.twoFactorEnabled)
+        session.user.role = token.role
+        session.user.parlamentarId = token.parlamentarId ?? null
+        session.user.twoFactorEnabled = Boolean(token.twoFactorEnabled)
       }
       return session
     }

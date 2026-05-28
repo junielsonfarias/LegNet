@@ -451,14 +451,22 @@ export function usePainelState(): UsePainelStateReturn {
   }, [sessaoSelecionada, carregarDados])
 
   // Auto-refresh
+  // P0-3: AbortController garante que fetches em flight sao cancelados ao
+  // desmontar; sem isso, o setInterval pode disparar carregarDados durante
+  // o unmount e causar setState em componente morto (memory leak).
   useEffect(() => {
     if (!autoRefresh || !sessaoSelecionada) return
 
+    const controller = new AbortController()
     const interval = setInterval(() => {
+      if (controller.signal.aborted) return
       carregarDados()
     }, 10000)
 
-    return () => clearInterval(interval)
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+    }
   }, [autoRefresh, sessaoSelecionada, carregarDados])
 
   // Cronômetro da sessão

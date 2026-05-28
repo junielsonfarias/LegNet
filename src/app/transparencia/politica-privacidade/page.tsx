@@ -10,7 +10,7 @@ import { TransparenciaPageWrapper } from '@/components/transparencia/transparenc
 
 const log = createLogger('transparencia/politica-privacidade')
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // QW-4: ISR 1h - documento institucional muda raramente
 
 const CHAVES_DPO = [
   'lgpd_encarregado_nome',

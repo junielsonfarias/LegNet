@@ -3,14 +3,15 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { createSuccessResponse } from '@/lib/error-handler'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
 
 const GRAUS = ['RESERVADA', 'SECRETA', 'ULTRASSECRETA'] as const
 const SITUACOES = ['CLASSIFICADA', 'DESCLASSIFICADA'] as const
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+// BL-3: usa PaginationSchema central
+const QuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(500).default(500),
   grau: z.enum(GRAUS).optional(),
   situacao: z.enum(SITUACOES).optional()

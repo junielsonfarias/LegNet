@@ -78,7 +78,7 @@ export default function TramitationDashboardPage() {
             Monitoramento em tempo real dos fluxos de tramitação legislativa.
           </p>
         </div>
-        <Button variant="outline" onClick={refetch}>
+        <Button variant="outline" onClick={() => refetch()}>
           <RefreshCw className="mr-2 h-4 w-4" />
           Atualizar
         </Button>

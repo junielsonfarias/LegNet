@@ -12,12 +12,17 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const where: Record<string, unknown> = { ano }
   if (mes) where.mes = mes
 
-  const diarias = await prisma.diaria.findMany({
-    where,
-    orderBy: [{ mes: 'desc' }, { dataInicio: 'desc' }],
-  })
+  // QW-7: limite defensivo anti payload >2MB; total calculado via aggregate (todos os registros)
+  const [diarias, totalAgg] = await Promise.all([
+    prisma.diaria.findMany({
+      where,
+      orderBy: [{ mes: 'desc' }, { dataInicio: 'desc' }],
+      take: 500,
+    }),
+    prisma.diaria.aggregate({ where, _sum: { valorTotal: true } }),
+  ])
 
-  const total = diarias.reduce((acc, d) => acc + Number(d.valorTotal), 0)
+  const total = Number(totalAgg._sum.valorTotal ?? 0)
 
   return createSuccessResponse(diarias, undefined, total)
 })

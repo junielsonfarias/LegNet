@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { createLogger } from '@/lib/logging/logger'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 const log = createLogger('api/transparencia/obras')
 
@@ -11,8 +12,7 @@ export const dynamic = 'force-dynamic'
 
 const SITUACOES = ['PLANEJADA', 'EM_ANDAMENTO', 'PARALISADA', 'CONCLUIDA', 'CANCELADA'] as const
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+const QuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   situacao: z.enum(SITUACOES).optional(),
   busca: z.string().optional()

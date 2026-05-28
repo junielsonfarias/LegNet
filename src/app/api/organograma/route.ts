@@ -4,9 +4,11 @@ import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 export const dynamic = 'force-dynamic'
 
 export const GET = withErrorHandler(async () => {
+  // QW-7: limite defensivo anti payload >2MB em endpoint publico
   const unidades = await prisma.unidadeOrganizacional.findMany({
     where: { ativo: true },
     orderBy: { ordem: 'asc' },
+    take: 500,
   })
 
   const map = new Map<string, Record<string, unknown>>()

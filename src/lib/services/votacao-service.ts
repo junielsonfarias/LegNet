@@ -11,6 +11,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
+import { notDeleted } from '@/lib/services/soft-delete'
 import type { TipoVoto, Prisma } from '@prisma/client'
 import {
   getConfiguracaoTurno,
@@ -358,9 +359,9 @@ export async function apurarResultado(
   tipoQuorum: TipoQuorum = 'SIMPLES',
   totalMembros: number
 ): Promise<ApuracaoResult> {
-  // Busca todos os votos da proposição
+  // Busca todos os votos da proposição (P0-4: ignora votos soft-deleted para preservar apuracao correta)
   const votos = await prisma.votacao.findMany({
-    where: { proposicaoId }
+    where: { proposicaoId, ...notDeleted() }
   })
 
   const votosSim = votos.filter(v => v.voto === 'SIM').length
@@ -457,7 +458,7 @@ export async function listarVotosProposicao(
   dataVoto: Date
 }>> {
   const votos = await prisma.votacao.findMany({
-    where: { proposicaoId },
+    where: { proposicaoId, ...notDeleted() }, // P0-4: lista publica nao mostra votos deletados
     include: {
       parlamentar: {
         select: {
@@ -567,11 +568,12 @@ export async function apurarResultadoPorTurno(
   tipoQuorum: TipoQuorum = 'SIMPLES',
   totalMembros: number
 ): Promise<ApuracaoResult> {
-  // Busca todos os votos da proposição no turno especificado
+  // Busca todos os votos da proposição no turno especificado (P0-4: ignora deletados)
   const votos = await prisma.votacao.findMany({
     where: {
       proposicaoId,
-      turno
+      turno,
+      ...notDeleted()
     }
   })
 
@@ -635,7 +637,8 @@ export async function listarVotosProposicaoPorTurno(
   const votos = await prisma.votacao.findMany({
     where: {
       proposicaoId,
-      turno
+      turno,
+      ...notDeleted() // P0-4: lista publica de turno nao mostra deletados
     },
     include: {
       parlamentar: {

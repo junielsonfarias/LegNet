@@ -44,6 +44,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
   @@map("accounts")
 }
 
@@ -53,6 +54,7 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 
   @@map("sessions")
 }
@@ -270,6 +272,9 @@ model Sessao {
   @@index([data])
   @@index([periodoId])
   @@index([sessaoAprovacaoAtaId])
+  // P0-4: soft delete - filtrar com { where: { deletedAt: null } } nos services
+  deletedAt DateTime?
+  @@index([deletedAt])
   @@map("sessoes")
 }
 
@@ -418,6 +423,7 @@ model PresencaOrdemDia {
 
   @@unique([sessaoId, parlamentarId])
   @@index([sessaoId, presente])
+  @@index([parlamentarId])
   @@map("presencas_ordem_dia")
 }
 
@@ -471,6 +477,7 @@ model NotificacaoMulticanal {
   updatedAt    DateTime @updatedAt
 
   token ApiToken? @relation(fields: [tokenId], references: [id])
+  @@index([tokenId])
 
   @@map("notificacoes_multicanal")
 }
@@ -522,6 +529,7 @@ model PresencaSessao {
   parlamentar Parlamentar @relation(fields: [parlamentarId], references: [id], onDelete: Cascade)
 
   @@unique([sessaoId, parlamentarId])
+  @@index([parlamentarId])
   @@map("presencas_sessao")
 }
 
@@ -581,6 +589,10 @@ model Proposicao {
   @@index([ano, tipo])
   @@index([dataApresentacao])
   @@index([sessaoVotacaoId])
+  @@index([sessaoId])
+  // P0-4: soft delete - filtrar com { where: { deletedAt: null } } nos services
+  deletedAt DateTime?
+  @@index([deletedAt])
   @@map("proposicoes")
 }
 
@@ -696,6 +708,9 @@ model Votacao {
   @@index([proposicaoId, turno])
   @@index([parlamentarId])
   @@index([sessaoId])
+  // P0-4: soft delete - filtrar com { where: { deletedAt: null } } nos services
+  deletedAt DateTime?
+  @@index([deletedAt])
   @@map("votacoes")
 }
 
@@ -819,6 +834,11 @@ model Emenda {
   @@index([autorId])
   @@index([status])
   @@index([sessaoVotacaoId])
+  @@index([parecerRelatorId])
+  @@index([emendaAglutinadaId])
+  // P0-4: soft delete - filtrar com { where: { deletedAt: null } } nos services
+  deletedAt DateTime?
+  @@index([deletedAt])
   @@map("emendas")
 }
 
@@ -994,6 +1014,7 @@ model PresencaReuniaoComissao {
 
   @@unique([reuniaoId, membroComissaoId])
   @@index([reuniaoId])
+  @@index([membroComissaoId])
   @@map("presenca_reuniao_comissao")
 }
 
@@ -1014,6 +1035,8 @@ model Bancada {
 
   @@index([partido])
   @@index([ativa])
+  @@index([liderId])
+  @@index([viceLiderId])
   @@map("bancadas")
 }
 
@@ -1041,6 +1064,8 @@ model HistoricoParticipacao {
   periodo     PeriodoLegislatura? @relation(fields: [periodoId], references: [id], onDelete: Cascade)
 
   @@index([parlamentarId, tipo])
+  @@index([legislaturaId])
+  @@index([periodoId])
   @@map("historico_participacoes")
 }
 
@@ -1176,6 +1201,7 @@ model MesaDiretora {
 
   periodo PeriodoLegislatura   @relation(fields: [periodoId], references: [id], onDelete: Cascade)
   membros MembroMesaDiretora[]
+  @@index([periodoId])
 
   @@map("mesas_diretora")
 }
@@ -1220,6 +1246,7 @@ model Mandato {
   @@unique([parlamentarId, legislaturaId])
   @@index([ativo, legislaturaId])
   @@index([dataInicio])
+  @@index([legislaturaId])
   @@map("mandatos")
 }
 
@@ -1311,7 +1338,7 @@ model PautaItem {
   proposicao      Proposicao?         @relation(fields: [proposicaoId], references: [id], onDelete: Cascade)
   sessaoAtual     PautaSessao?        @relation("SessaoItemAtual")
   destaques       DestaquePautaItem[]
-  parecer         Parecer?            @relation(fields: [parecerId], references: [id], onDelete: Cascade)
+  parecer         Parecer?            @relation(fields: [parecerId], references: [id], onDelete: SetNull) // P0-5: preserva PautaItem historico mesmo se Parecer for removido
   relator         Parlamentar?        @relation("PautaItemRelator", fields: [relatorId], references: [id], onDelete: SetNull)
   sessaoAtaOrigem Sessao?             @relation("AtaOrigemPauta", fields: [sessaoAtaOrigemId], references: [id], onDelete: SetNull)
   oficio          Oficio?             @relation("OficioPautaItem", fields: [oficioId], references: [id], onDelete: SetNull)
@@ -1324,6 +1351,7 @@ model PautaItem {
   @@index([relatorId])
   @@index([sessaoAtaOrigemId])
   @@index([oficioId])
+  @@index([proposicaoId])
   @@map("pauta_itens")
 }
 
@@ -1443,6 +1471,7 @@ model TramitacaoTipo {
   unidadeResponsavel TramitacaoUnidade?     @relation("TramitacaoTipoUnidadeResponsavel", fields: [unidadeResponsavelId], references: [id])
   tramitacoes        Tramitacao[]
   etapas             RegraTramitacaoEtapa[]
+  @@index([unidadeResponsavelId])
 
   @@map("tramitacao_tipos")
 }
@@ -1553,6 +1582,8 @@ model RegraTramitacaoEtapa {
   unidade        TramitacaoUnidade? @relation(fields: [unidadeId], references: [id])
 
   @@index([regraId, ordem])
+  @@index([tipoTramitacaoId])
+  @@index([unidadeId])
   @@map("regras_tramitacao_etapas")
 }
 
@@ -1610,6 +1641,7 @@ model FluxoTramitacaoEtapa {
 
   @@unique([fluxoId, ordem])
   @@index([fluxoId])
+  @@index([unidadeId])
   @@map("fluxo_tramitacao_etapas")
 }
 
@@ -1661,6 +1693,7 @@ model LicitacaoDocumento {
   dataUpload  DateTime @default(now())
 
   licitacao Licitacao @relation(fields: [licitacaoId], references: [id], onDelete: Cascade)
+  @@index([licitacaoId])
 
   @@map("licitacoes_documentos")
 }
@@ -1698,6 +1731,8 @@ model Contrato {
   @@index([contratado])
   @@index([vigenciaFim])
   @@index([dataPublicacao])
+  @@index([licitacaoId])
+  @@index([contratoOrigemId])
   @@map("contratos")
 }
 
@@ -2046,6 +2081,7 @@ model OrdemPagamento {
   @@index([ano, mes])
   @@index([credor])
   @@index([ordemCronologica])
+  @@index([despesaId])
   @@map("ordens_pagamento")
 }
 
@@ -2104,6 +2140,7 @@ model Obra {
   contrato Contrato? @relation(fields: [contratoId], references: [id], onDelete: SetNull)
 
   @@index([situacao])
+  @@index([contratoId])
   @@map("obras")
 }
 
@@ -2277,6 +2314,9 @@ model Parecer {
   @@index([reuniaoId])
   @@index([status])
   @@index([dataDistribuicao])
+  // P0-4: soft delete - filtrar com { where: { deletedAt: null } } nos services
+  deletedAt DateTime?
+  @@index([deletedAt])
   @@map("pareceres")
 }
 
@@ -2292,6 +2332,7 @@ model VotoParecerComissao {
   parlamentar Parlamentar @relation("VotoParecerComissao", fields: [parlamentarId], references: [id])
 
   @@unique([parecerId, parlamentarId]) // Um parlamentar so vota uma vez por parecer
+  @@index([parlamentarId])
   @@map("votos_parecer_comissao")
 }
 
@@ -2385,8 +2426,12 @@ model Protocolo {
 
   // Remetente
   nomeRemetente     String
-  cpfCnpjRemetente  String?
-  tipoRemetente     TipoRemetente @default(PESSOA_FISICA)
+  // P0-6: CPF criptografado (AES-256-GCM) quando PESSOA_FISICA; CNPJ texto plano
+  // (publico). Hash deterministico para busca/uniqueness. Use src/lib/security/
+  // protocolo-utils.ts para criar/ler com seguranca.
+  cpfCnpjRemetente     String?
+  cpfCnpjRemetenteHash String?
+  tipoRemetente        TipoRemetente @default(PESSOA_FISICA)
   enderecoRemetente String?
   telefoneRemetente String?
   emailRemetente    String?
@@ -2423,6 +2468,7 @@ model Protocolo {
   @@index([tipo])
   @@index([dataRecebimento])
   @@index([prioridade])
+  @@index([cpfCnpjRemetenteHash]) // P0-6: busca por CPF/CNPJ sem decriptar
   @@map("protocolos")
 }
 
@@ -2657,6 +2703,7 @@ model RespostaConsulta {
   pergunta     PerguntaConsulta     @relation(fields: [perguntaId], references: [id], onDelete: Cascade)
 
   @@unique([participacaoId, perguntaId])
+  @@index([perguntaId])
   @@map("respostas_consulta")
 }
 
@@ -3333,5 +3380,6 @@ model AudienciaPublica {
   @@index([status])
   @@index([dataHora])
   @@index([tipo])
+  @@index([parlamentarId])
   @@map("audiencias_publicas")
 }

@@ -151,9 +151,15 @@ export const ouvidoriaService = {
     const ano = new Date().getFullYear()
     const { protocolo, numero } = await ouvidoriaService.gerarProtocolo(ano)
     const prazoResposta = ouvidoriaService.calcularPrazoResposta(data.tipo)
+    const isAnonimo = data.anonimo ?? false
+
+    // P0-2 / LGPD Art. 8 (acuracia): em manifestacao anonima, NAO persistir
+    // nenhum dado identificavel - nem mesmo o hash de CPF (impossibilita
+    // associacao posterior). Antes desta correcao, anonimo=true salvava
+    // tudo silenciosamente e apenas ocultava no GET publico.
+    const cpfNormalizado = isAnonimo ? undefined : data.cpf?.trim()
 
     // RN-166 (LGPD): CPF criptografado em repouso + hash deterministico para busca
-    const cpfNormalizado = data.cpf?.trim()
     const cpfStorage = cpfNormalizado && isValidCpfFormat(cpfNormalizado)
       ? { cpf: encryptCpf(cpfNormalizado), cpfHash: hashCpf(cpfNormalizado) }
       : { cpf: null, cpfHash: null }
@@ -163,10 +169,11 @@ export const ouvidoriaService = {
         protocolo,
         ano,
         numero,
-        anonimo: data.anonimo ?? false,
-        nome: data.nome ?? null,
-        email: data.email ?? null,
-        telefone: data.telefone ?? null,
+        anonimo: isAnonimo,
+        // P0-2: PII zerada em modo anonimo
+        nome: isAnonimo ? null : (data.nome ?? null),
+        email: isAnonimo ? null : (data.email ?? null),
+        telefone: isAnonimo ? null : (data.telefone ?? null),
         cpf: cpfStorage.cpf,
         cpfHash: cpfStorage.cpfHash,
         tipo: data.tipo,

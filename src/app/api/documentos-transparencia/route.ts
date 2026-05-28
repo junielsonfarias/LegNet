@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/auth/permissions'
 import { withErrorHandler, createSuccessResponse, ValidationError } from '@/lib/error-handler'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,8 +27,7 @@ const TIPOS = [
   'REGULAMENTO_LAI'
 ] as const
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+const QuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   tipo: z.enum(TIPOS).optional(),
   ano: z.coerce.number().int().optional(),

@@ -7,6 +7,7 @@ import {
 import { withAuth } from '@/lib/auth/permissions'
 import { usuarioDbService } from '@/lib/services/usuario-db-service'
 import { createLogger } from '@/lib/logging/logger'
+import { PaginationSchema } from '@/lib/validation/query-schemas'
 
 const log = createLogger('api/admin/usuarios')
 
@@ -22,8 +23,7 @@ const CreateUsuarioSchema = z.object({
 })
 
 // Schema para query params de listagem
-const ListUsuariosQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
+const ListUsuariosQuerySchema = PaginationSchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   role: z.enum(['ADMIN', 'EDITOR', 'USER', 'PARLAMENTAR', 'OPERADOR', 'SECRETARIA', 'AUXILIAR_LEGISLATIVO']).nullish().transform(v => v ?? undefined),
   ativo: z.coerce.boolean().optional(),
