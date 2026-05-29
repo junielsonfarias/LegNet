@@ -786,11 +786,19 @@ export async function getDashboard() {
 
 // Tipos e constantes importados de ./tramitacao-types
 
+// Tipos de proposicao que dispensam passagem pela CLJ
+const TIPOS_DISPENSADOS_CLJ = ['REQUERIMENTO', 'MOCAO', 'VOTO_PESAR', 'VOTO_APLAUSO', 'INDICACAO']
+
 /**
  * RN-030: Valida se proposição deve passar pela CLJ
+ *
+ * @param proposicaoId - ID da proposição a validar
+ * @param modo - 'enforce' (default) bloqueia se nao passou pela CLJ;
+ *               'warning' apenas alerta (comportamento legado)
  */
 export async function validarPassagemCLJ(
-  proposicaoId: string
+  proposicaoId: string,
+  modo: 'enforce' | 'warning' = 'enforce'
 ): Promise<ValidationResult> {
   const errors: string[] = []
   const warnings: string[] = []
@@ -813,9 +821,7 @@ export async function validarPassagemCLJ(
   }
 
   // Tipos que dispensam CLJ
-  const tiposDispensadosCLJ = ['REQUERIMENTO', 'MOCAO', 'VOTO_PESAR', 'VOTO_APLAUSO']
-
-  if (tiposDispensadosCLJ.includes(proposicao.tipo)) {
+  if (TIPOS_DISPENSADOS_CLJ.includes(proposicao.tipo)) {
     return { valid: true, errors, warnings, rule: 'RN-030' }
   }
 
@@ -828,6 +834,7 @@ export async function validarPassagemCLJ(
   })
 
   if (!cljComissao) {
+    // Sem CLJ cadastrada no sistema: apenas warning para nao quebrar setups novos
     warnings.push('RN-030: Comissão de Legislação e Justiça não encontrada no sistema.')
     return { valid: true, errors, warnings, rule: 'RN-030' }
   }
@@ -840,21 +847,29 @@ export async function validarPassagemCLJ(
     }
   })
 
-  if (unidadeCLJ) {
-    const passouPelaCLJ = proposicao.tramitacoes.some(
-      t => t.unidadeId === unidadeCLJ.id
-    )
+  // Se nao existe unidade CLJ, nao da pra validar passagem
+  if (!unidadeCLJ) {
+    warnings.push('RN-030: Unidade de tramitação CLJ não cadastrada — passagem não pôde ser validada.')
+    return { valid: true, errors, warnings, rule: 'RN-030' }
+  }
 
-    if (!passouPelaCLJ) {
-      warnings.push(
-        'RN-030: Proposição ainda não tramitou pela CLJ. ' +
-        'A passagem pela Comissão de Legislação e Justiça é obrigatória.'
-      )
+  const passouPelaCLJ = proposicao.tramitacoes.some(
+    t => t.unidadeId === unidadeCLJ.id
+  )
+
+  if (!passouPelaCLJ) {
+    const msg =
+      'RN-030: Proposição ' + proposicao.tipo + ' deve passar pela CLJ antes de avançar. ' +
+      'A passagem pela Comissão de Legislação e Justiça é obrigatória.'
+    if (modo === 'enforce') {
+      errors.push(msg)
+    } else {
+      warnings.push(msg)
     }
   }
 
   return {
-    valid: true, // Aviso, não erro bloqueante
+    valid: errors.length === 0,
     errors,
     warnings,
     rule: 'RN-030'

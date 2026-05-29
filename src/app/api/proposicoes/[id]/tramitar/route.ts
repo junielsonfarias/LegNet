@@ -13,7 +13,8 @@ import {
   obterEtapaAtual,
   tramitarParaAguardandoPauta,
   findProposicaoBasic,
-  updateProposicaoStatus
+  updateProposicaoStatus,
+  validarPassagemCLJ
 } from '@/lib/services/tramitacao-service'
 
 // Schema de validacao
@@ -33,7 +34,14 @@ const TramitarSchema = z.object({
     'REJEITADO',
     'APROVADO_COM_EMENDAS',
     'ARQUIVADO'
-  ]).optional()
+  ]).optional(),
+  /**
+   * RN-030: ADMIN pode dispensar passagem pela CLJ informando motivo
+   * (minimo 20 caracteres). Auditado.
+   */
+  overrideCLJ: z.object({
+    motivo: z.string().min(20, 'Motivo do override deve ter ao menos 20 caracteres')
+  }).optional()
 })
 
 /**
@@ -62,12 +70,42 @@ export const POST = withAuth(async (
     throw new ValidationError(payload.error.issues[0]?.message ?? 'Dados inválidos')
   }
 
-  const { acao, observacoes, parecer, resultado } = payload.data
+  const { acao, observacoes, parecer, resultado, overrideCLJ } = payload.data
 
   // Obtem IP do cliente
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || request.headers.get('x-real-ip')
     || 'unknown'
+
+  // RN-030: Validacao da passagem obrigatoria pela CLJ
+  // Bloqueia apenas quando avancando para pauta (AGUARDANDO_PAUTA)
+  // ADMIN pode dispensar com motivo justificado (overrideCLJ)
+  if (acao === 'AGUARDANDO_PAUTA') {
+    if (overrideCLJ) {
+      if (session.user.role !== 'ADMIN') {
+        throw new ValidationError(
+          'RN-030: Apenas usuarios ADMIN podem dispensar a passagem pela CLJ.'
+        )
+      }
+      await logAudit({
+        request,
+        session,
+        action: 'RN030_OVERRIDE_CLJ',
+        entity: 'Proposicao',
+        entityId: proposicaoId,
+        metadata: {
+          proposicaoId,
+          proposicaoNumero: `${proposicao.numero}/${proposicao.ano}`,
+          motivo: overrideCLJ.motivo
+        }
+      })
+    } else {
+      const cljCheck = await validarPassagemCLJ(proposicaoId, 'enforce')
+      if (!cljCheck.valid) {
+        throw new ValidationError(cljCheck.errors.join('; '))
+      }
+    }
+  }
 
   // Executa acao conforme solicitado
   if (acao === 'AGUARDANDO_PAUTA') {
