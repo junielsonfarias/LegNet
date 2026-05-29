@@ -737,7 +737,52 @@ export async function findPautaItemParaVotacao(proposicaoId: string, sessaoId: s
 }
 
 /**
+ * P0-4: Valida se parlamentar tem mandato ativo na legislatura da sessao.
+ *
+ * RN-061: votacao so e valida quando exercida por parlamentar com mandato
+ * ativo. Sem esta verificacao, suplente sem posse efetiva ou parlamentar
+ * cassado pode votar se estiver presente.
+ *
+ * Comportamento:
+ * - Sessao sem legislaturaId: retorna valido (compat com setups antigos)
+ * - Parlamentar com Mandato.ativo=true na legislatura: valido
+ * - Caso contrario: invalido + motivo
+ */
+export async function validarMandatoAtivo(
+  parlamentarId: string,
+  sessaoId: string
+): Promise<{ valido: boolean; motivo?: string }> {
+  const sessao = await prisma.sessao.findUnique({
+    where: { id: sessaoId },
+    select: { legislaturaId: true }
+  })
+
+  if (!sessao?.legislaturaId) return { valido: true }
+
+  const mandato = await prisma.mandato.findFirst({
+    where: {
+      parlamentarId,
+      legislaturaId: sessao.legislaturaId,
+      ativo: true
+    },
+    select: { id: true }
+  })
+
+  if (!mandato) {
+    return {
+      valido: false,
+      motivo: 'RN-061: Parlamentar sem mandato ativo nesta legislatura nao pode votar.'
+    }
+  }
+
+  return { valido: true }
+}
+
+/**
  * Upsert de voto individual com includes completos
+ *
+ * P0-4: bloqueia voto de parlamentar sem mandato ativo na legislatura
+ * da sessao. Lança Error com motivo (RN-061).
  */
 export async function upsertVotoIndividual(data: {
   proposicaoId: string
@@ -746,6 +791,11 @@ export async function upsertVotoIndividual(data: {
   turno: number
   sessaoId: string
 }) {
+  const mandato = await validarMandatoAtivo(data.parlamentarId, data.sessaoId)
+  if (!mandato.valido) {
+    throw new Error(mandato.motivo)
+  }
+
   return prisma.votacao.upsert({
     where: {
       proposicaoId_parlamentarId_turno: {

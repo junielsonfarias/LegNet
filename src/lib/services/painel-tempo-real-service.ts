@@ -20,6 +20,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
+import { validarMandatoAtivo } from '@/lib/services/votacao-service'
 
 const logger = createLogger('painel-tempo-real')
 
@@ -477,6 +478,18 @@ export async function registrarVoto(
 
     const votoExistente = estado.votacaoAtiva.votosIndividuais.find(v => v.parlamentarId === parlamentarId)
     if (!votoExistente) {
+      return false
+    }
+
+    // P0-4: parlamentar deve ter mandato ativo na legislatura da sessao
+    const mandato = await validarMandatoAtivo(parlamentarId, sessaoId)
+    if (!mandato.valido) {
+      logger.warn('Voto rejeitado: mandato inativo', {
+        action: 'registrar_voto_mandato',
+        sessaoId,
+        parlamentarId,
+        motivo: mandato.motivo
+      })
       return false
     }
 
