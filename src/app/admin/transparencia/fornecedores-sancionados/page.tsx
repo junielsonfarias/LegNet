@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { Shield, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { Shield, ShieldX, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
 
@@ -211,7 +212,12 @@ export default function AdminFornecedoresSancionadosPage() {
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : data.length === 0 ? (
-            <p className="text-center py-12 text-muted-foreground">Nenhuma sancao cadastrada.</p>
+            <EmptyState
+              as="plain"
+              icon={ShieldX}
+              title="Nenhuma sanção cadastrada"
+              description="Cadastre fornecedores sancionados administrativamente conforme Lei 8.666/93 e Lei 14.133/21."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

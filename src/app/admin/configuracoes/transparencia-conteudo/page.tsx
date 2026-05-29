@@ -13,6 +13,7 @@ import {
   GripVertical, ExternalLink, Monitor, FileText, Globe, ArrowUp, ArrowDown,
   FolderOpen, Eye, X, Settings2
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface Item {
@@ -257,14 +258,15 @@ export default function TransparenciaConteudoPage() {
 
       {/* Lista de categorias */}
       {categorias.length === 0 && !showNewCat && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <FolderOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-gray-500">Nenhuma categoria cadastrada</h3>
-            <p className="text-sm text-gray-400 mb-4">Crie categorias para organizar os documentos do portal de transparência.</p>
-            <Button onClick={() => setShowNewCat(true)}><Plus className="h-4 w-4 mr-2" />Criar primeira categoria</Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={FolderOpen}
+          title="Nenhuma categoria cadastrada"
+          description="Crie categorias para organizar os documentos do portal de transparência."
+          action={{
+            label: 'Criar primeira categoria',
+            onClick: () => setShowNewCat(true),
+          }}
+        />
       )}
 
       {categorias.map((cat, catIndex) => (

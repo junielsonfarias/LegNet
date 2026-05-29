@@ -15,6 +15,7 @@ import {
   Plus, Search, Edit, Trash2, CheckCircle, XCircle, Building, Users, Gavel,
   Settings, Archive, FileText, Briefcase, HelpCircle, Loader2, RefreshCw
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 // Tipos
@@ -500,23 +501,17 @@ export default function UnidadesTramitacaoPage() {
 
       {/* Estado vazio */}
       {!loading && filteredUnidades.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Building className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhuma unidade encontrada</h3>
-            <p className="text-gray-500 mb-4">
-              {searchTerm || tipoFilter !== 'TODOS'
-                ? 'Tente ajustar os filtros de busca'
-                : 'Clique em "Nova Unidade" para criar a primeira'}
-            </p>
-            {!searchTerm && tipoFilter === 'TODOS' && (
-              <Button onClick={() => setIsModalOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Unidade
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Building}
+          title="Nenhuma unidade encontrada"
+          description={searchTerm || tipoFilter !== 'TODOS'
+            ? 'Tente ajustar os filtros de busca.'
+            : 'Cadastre as unidades de tramitação (Secretaria, CLJ, Plenário, etc).'}
+          action={!searchTerm && tipoFilter === 'TODOS' ? {
+            label: 'Nova Unidade',
+            onClick: () => setIsModalOpen(true),
+          } : undefined}
+        />
       )}
 
       {/* Modal de Cadastro/Edição */}

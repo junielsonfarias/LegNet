@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Lock, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface DocumentoClassificado {
@@ -314,9 +315,12 @@ export default function AdminDocumentosClassificadosPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : data.length === 0 ? (
-            <p className="text-center py-12 text-muted-foreground">
-              Nenhum documento classificado registrado.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={Lock}
+              title="Nenhum documento classificado registrado"
+              description="Cadastre os documentos com grau de sigilo (reservado, secreto, ultrassecreto) conforme LAI Art. 24."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

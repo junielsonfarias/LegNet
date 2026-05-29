@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Banknote, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { Banknote, DollarSign, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface RestoPagar {
@@ -292,9 +293,12 @@ export default function AdminRestosPagarPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : data.length === 0 ? (
-            <p className="text-center py-12 text-muted-foreground">
-              Nenhum resto a pagar cadastrado.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={DollarSign}
+              title="Nenhum resto a pagar cadastrado"
+              description="Cadastre os Restos a Pagar (processados e não processados) para transparência fiscal."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

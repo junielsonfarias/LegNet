@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { FileText, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
 
@@ -301,7 +302,12 @@ function AdminDocumentosContent() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : data.length === 0 ? (
-            <p className="text-center py-12 text-muted-foreground">Nenhum documento cadastrado.</p>
+            <EmptyState
+              as="plain"
+              icon={FileText}
+              title="Nenhum documento cadastrado"
+              description="Cadastre os documentos oficiais (balanço, RGF, parecer TCM, LRF, etc) para o portal de transparência."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

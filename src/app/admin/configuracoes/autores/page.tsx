@@ -26,6 +26,7 @@ import {
   XCircle,
   Search
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 // Tipos
@@ -473,11 +474,12 @@ export default function AutoresPage() {
 
               {/* Lista de autores */}
               {autoresFiltrados.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <UserCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Nenhum autor cadastrado</p>
-                  <p className="text-sm">Clique em &quot;Novo Autor&quot; para adicionar</p>
-                </div>
+                <EmptyState
+                  as="plain"
+                  icon={UserCircle}
+                  title="Nenhum autor cadastrado"
+                  description='Clique em "Novo Autor" para adicionar autores externos (Executivo, Comissões, Cidadãos).'
+                />
               ) : (
                 <div className="space-y-2">
                   {autoresFiltrados.map(autor => (
@@ -584,11 +586,12 @@ export default function AutoresPage() {
             </CardHeader>
             <CardContent>
               {tiposAutor.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Nenhum tipo de autor cadastrado</p>
-                  <p className="text-sm">Clique em &quot;Criar Tipos Padrao&quot; para iniciar</p>
-                </div>
+                <EmptyState
+                  as="plain"
+                  icon={Building2}
+                  title="Nenhum tipo de autor cadastrado"
+                  description='Clique em "Criar Tipos Padrão" para iniciar com os tipos comuns (Executivo, Parlamentar, Comissão, Cidadão).'
+                />
               ) : (
                 <div className="space-y-2">
                   {tiposAutor.map(tipo => (

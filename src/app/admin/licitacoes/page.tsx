@@ -15,8 +15,10 @@ import {
   Calendar,
   DollarSign,
   Loader2,
-  X
+  X,
+  Gavel
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useLicitacoes, Licitacao } from '@/lib/hooks/use-licitacoes'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
@@ -405,9 +407,12 @@ export default function LicitacoesAdminPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredLicitacoes.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhuma licitacao encontrada
-              </p>
+              <EmptyState
+                as="plain"
+                icon={Gavel}
+                title="Nenhuma licitação encontrada"
+                description={searchTerm ? 'Tente ajustar a busca.' : 'Cadastre o primeiro procedimento licitatório.'}
+              />
             ) : (
               filteredLicitacoes.map(licitacao => (
                 <Card key={licitacao.id} className="p-4">

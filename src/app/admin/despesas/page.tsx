@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { TrendingDown, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useDespesas, Despesa } from '@/lib/hooks/use-despesas'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { useContratos } from '@/lib/hooks/use-contratos'
@@ -225,7 +226,12 @@ export default function DespesasAdminPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredDespesas.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Nenhuma despesa encontrada</p>
+              <EmptyState
+                as="plain"
+                icon={DollarSign}
+                title="Nenhuma despesa encontrada"
+                description={searchTerm ? 'Tente ajustar a busca.' : 'Cadastre a primeira despesa.'}
+              />
             ) : (
               filteredDespesas.map(despesa => (
                 <Card key={despesa.id} className="p-4">

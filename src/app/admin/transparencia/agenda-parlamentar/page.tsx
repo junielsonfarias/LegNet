@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { CalendarDays, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface Agenda {
@@ -280,9 +281,12 @@ export default function AdminAgendaParlamentarPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : data.length === 0 ? (
-            <p className="text-center py-12 text-muted-foreground">
-              Nenhum compromisso cadastrado.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={CalendarDays}
+              title="Nenhum compromisso cadastrado"
+              description="Cadastre os compromissos da agenda parlamentar pública (reuniões, audiências, eventos)."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

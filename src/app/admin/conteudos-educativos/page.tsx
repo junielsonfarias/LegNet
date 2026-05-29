@@ -14,6 +14,7 @@ import {
   DialogDescription, DialogFooter
 } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, Loader2, Eye, EyeOff, BookOpen } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface ConteudoEducativo {
@@ -215,7 +216,12 @@ export default function ConteudosEducativosAdminPage() {
           {loading ? (
             <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
           ) : conteudos.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhum conteudo encontrado</p>
+            <EmptyState
+              as="plain"
+              icon={BookOpen}
+              title="Nenhum conteúdo encontrado"
+              description="Cadastre o primeiro conteúdo educativo da Câmara."
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>

@@ -18,6 +18,7 @@ import {
   Loader2,
   FileText
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useMesaDiretora } from '@/lib/hooks/use-mesa-diretora'
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas'
 import Link from 'next/link'
@@ -399,19 +400,13 @@ export default function HistoricoMesaDiretoraPage() {
               )
             })
         ) : (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Nenhuma mesa diretora encontrada
-              </h3>
-              <p className="text-gray-600">
-                {searchTerm || filterLegislatura !== 'all' || filterPeriodo !== 'all' || filterAtiva !== 'all'
-                  ? 'Tente ajustar os filtros de busca.'
-                  : 'Nenhuma mesa diretora foi cadastrada ainda.'}
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={History}
+            title="Nenhuma mesa diretora encontrada"
+            description={searchTerm || filterLegislatura !== 'all' || filterPeriodo !== 'all' || filterAtiva !== 'all'
+              ? 'Tente ajustar os filtros de busca.'
+              : 'Nenhuma mesa diretora foi cadastrada ainda. Acesse a página de Mesa Diretora para criar.'}
+          />
         )}
       </div>
     </div>

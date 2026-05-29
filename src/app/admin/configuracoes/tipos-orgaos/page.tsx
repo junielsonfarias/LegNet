@@ -25,6 +25,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 type TipoUnidade = 'COMISSAO' | 'MESA_DIRETORA' | 'PLENARIO' | 'PREFEITURA' | 'SECRETARIA' | 'GABINETE' | 'ARQUIVO' | 'PROTOCOLO' | 'ASSESSORIA' | 'OUTROS'
@@ -296,12 +297,11 @@ export default function TiposOrgaosPage() {
       )}
 
       {!loading && unidades.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Nenhuma unidade cadastrada</p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Building2}
+          title="Nenhuma unidade cadastrada"
+          description="Cadastre os tipos de órgãos da Câmara (executivo, judiciário, ministério público, etc)."
+        />
       )}
 
       {/* Modal de Cadastro/Edição */}

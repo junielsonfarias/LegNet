@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Briefcase, Plus, Loader2, Trash2, Save, X, Pencil, FileText } from 'lucide-react'
+import { Briefcase, Users, Plus, Loader2, Trash2, Save, X, Pencil, FileText } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface Plano {
@@ -318,9 +319,12 @@ export default function AdminPlanoCargosPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : planos.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground text-sm">
-              Nenhum plano cadastrado.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={Briefcase}
+              title="Nenhum plano cadastrado"
+              description="Cadastre o Plano de Cargos, Carreiras e Salários (PCCS) da Câmara."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -477,9 +481,12 @@ export default function AdminPlanoCargosPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : cargos.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground text-sm">
-              Nenhum cargo cadastrado.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={Users}
+              title="Nenhum cargo cadastrado"
+              description="Cadastre os cargos do PCCS com classe, padrão, vencimento e quantitativo."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

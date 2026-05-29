@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
+import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building, Handshake } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useConvenios, Convenio } from '@/lib/hooks/use-convenios'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
@@ -177,7 +178,12 @@ export default function ConveniosAdminPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredConvenios.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Nenhum convenio encontrado</p>
+              <EmptyState
+                as="plain"
+                icon={Handshake}
+                title="Nenhum convênio encontrado"
+                description={searchTerm ? 'Tente ajustar a busca.' : 'Cadastre o primeiro convênio.'}
+              />
             ) : (
               filteredConvenios.map(convenio => (
                 <Card key={convenio.id} className="p-4">

@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -813,23 +814,17 @@ export default function ComissoesAdminPage() {
       </div>
 
       {filteredComissoes.length === 0 && !loading && (
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Nenhuma comissão encontrada
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Comece cadastrando a primeira comissão.'}
-            </p>
-            {!searchTerm && (
-              <Button onClick={() => setShowForm(true)} className="flex items-center gap-2 mx-auto">
-                <Plus className="h-4 w-4" />
-                Nova Comissão
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="Nenhuma comissão encontrada"
+          description={searchTerm
+            ? 'Tente ajustar os filtros de busca.'
+            : 'Cadastre a primeira comissão (CLJ, CFO, comissões temáticas).'}
+          action={!searchTerm ? {
+            label: 'Nova Comissão',
+            onClick: () => setShowForm(true),
+          } : undefined}
+        />
       )}
     </div>
   )

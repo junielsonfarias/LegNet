@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Plus, Edit, Trash2, Vote, Settings2, Info, Loader2 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   useQuorum,
   type ConfiguracaoQuorum,
@@ -211,11 +212,12 @@ export default function QuorumConfigPage() {
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             </div>
           ) : configuracoes.length === 0 ? (
-            <div className="text-center py-12">
-              <Settings2 className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-              <p className="text-gray-500">Nenhuma configuracao de quorum cadastrada.</p>
-              <p className="text-sm text-gray-400 mt-1">Clique em &ldquo;Nova Configuracao&rdquo; para adicionar.</p>
-            </div>
+            <EmptyState
+              as="plain"
+              icon={Settings2}
+              title="Nenhuma configuração de quórum cadastrada"
+              description='Clique em "Nova Configuração" para adicionar uma configuração de quórum (maioria simples, absoluta, qualificada).'
+            />
           ) : (
             <div className="space-y-4">
               {configuracoes.map((config) => (

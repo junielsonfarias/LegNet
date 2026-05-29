@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plane, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { Plane, DollarSign, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface ValorDiaria {
@@ -243,9 +244,12 @@ export default function AdminValoresDiariaPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : data.length === 0 ? (
-            <p className="text-center py-12 text-muted-foreground">
-              Nenhum valor cadastrado.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={DollarSign}
+              title="Nenhum valor cadastrado"
+              description="Cadastre os valores de diárias por categoria (dentro do Estado, fora do Estado, fora do país)."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
