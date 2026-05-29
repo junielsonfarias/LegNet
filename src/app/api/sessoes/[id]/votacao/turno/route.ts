@@ -40,10 +40,13 @@ const IniciarTurnoSchema = z.object({
   turno: z.number().min(1).max(2)
 })
 
+// P0-5: APROVADA/REJEITADA/EMPATE/SEM_QUORUM sao SEMPRE calculados server-side
+// a partir das contagens reais. Cliente pode opcionalmente forcar ADIADA
+// (decisao administrativa, nao resultado da votacao em si).
 const FinalizarTurnoSchema = z.object({
   itemId: z.string(),
   turno: z.number().min(1).max(2),
-  resultado: z.enum(['APROVADA', 'REJEITADA', 'EMPATE', 'SEM_QUORUM', 'ADIADA']).nullish().transform(v => v ?? undefined)
+  adiada: z.boolean().optional()
 })
 
 /**
@@ -202,7 +205,7 @@ export const PUT = withAuth(async (
   const sessaoId = await resolverSessaoId(rawId)
   const body = await request.json()
 
-  const { itemId, turno, resultado: resultadoManual } = FinalizarTurnoSchema.parse(body)
+  const { itemId, turno, adiada } = FinalizarTurnoSchema.parse(body)
 
   // Verificar sessão
   const sessao = await obterSessaoParaControle(sessaoId)
@@ -247,11 +250,16 @@ export const PUT = withAuth(async (
     totalPresentes
   )
 
-  // Determinar resultado final
-  const resultadoFinal = resultadoManual || (
-    resultadoQuorum.aprovado ? 'APROVADA' :
-    contagemVotos.resultado === 'EMPATE' ? 'EMPATE' : 'REJEITADA'
-  )
+  // P0-5: resultado SEMPRE calculado server-side. Unico override permitido
+  // e ADIADA (decisao administrativa, nao resultado da votacao).
+  const resultadoFinal: 'APROVADA' | 'REJEITADA' | 'EMPATE' | 'SEM_QUORUM' | 'ADIADA' =
+    adiada
+      ? 'ADIADA'
+      : (resultadoQuorum.aprovado
+          ? 'APROVADA'
+          : contagemVotos.resultado === 'EMPATE'
+            ? 'EMPATE'
+            : 'REJEITADA')
 
   // Registrar votação agrupada
   await registrarVotacaoAgrupada(

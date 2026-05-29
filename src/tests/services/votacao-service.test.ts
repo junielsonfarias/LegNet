@@ -50,7 +50,8 @@ import {
   deveSerVotacaoNominal,
   verificarDoisTurnos,
   validarMandatoAtivo,
-  upsertVotoIndividual
+  upsertVotoIndividual,
+  calcularResultadoVotacao
 } from '@/lib/services/votacao-service'
 
 describe('calcularQuorum', () => {
@@ -266,6 +267,41 @@ describe('validarMandatoAtivo (P0-4 / RN-061)', () => {
 
     expect(result.valido).toBe(true)
     expect(mockPrisma.mandato.findFirst).not.toHaveBeenCalled()
+  })
+})
+
+describe('calcularResultadoVotacao (P0-5 anti-tamper)', () => {
+  it('sim > nao retorna APROVADA', () => {
+    expect(calcularResultadoVotacao({ sim: 5, nao: 3 })).toBe('APROVADA')
+  })
+
+  it('nao > sim retorna REJEITADA', () => {
+    expect(calcularResultadoVotacao({ sim: 3, nao: 5 })).toBe('REJEITADA')
+  })
+
+  it('sim === nao retorna EMPATE', () => {
+    expect(calcularResultadoVotacao({ sim: 5, nao: 5 })).toBe('EMPATE')
+  })
+
+  it('abstencao nao afeta APROVADA/REJEITADA', () => {
+    expect(calcularResultadoVotacao({ sim: 5, nao: 3, abstencao: 10 })).toBe('APROVADA')
+    expect(calcularResultadoVotacao({ sim: 3, nao: 5, abstencao: 10 })).toBe('REJEITADA')
+  })
+
+  it('total < quorumNecessario retorna SEM_QUORUM', () => {
+    expect(calcularResultadoVotacao({ sim: 2, nao: 1, abstencao: 0, quorumNecessario: 5 })).toBe('SEM_QUORUM')
+  })
+
+  it('quorum atingido permite cálculo normal', () => {
+    expect(calcularResultadoVotacao({ sim: 3, nao: 2, abstencao: 0, quorumNecessario: 5 })).toBe('APROVADA')
+  })
+
+  it('numeros negativos sao zerados defensivamente', () => {
+    expect(calcularResultadoVotacao({ sim: -5, nao: 0 })).toBe('EMPATE')
+  })
+
+  it('inputs nao-inteiros sao truncados defensivamente', () => {
+    expect(calcularResultadoVotacao({ sim: 5.9, nao: 3.1 })).toBe('APROVADA')
   })
 })
 

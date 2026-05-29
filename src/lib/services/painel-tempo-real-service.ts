@@ -22,7 +22,7 @@ import { NextRequest } from 'next/server'
 import type { Session } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
-import { validarMandatoAtivo } from '@/lib/services/votacao-service'
+import { validarMandatoAtivo, calcularResultadoVotacao } from '@/lib/services/votacao-service'
 import { logAudit } from '@/lib/audit'
 
 const logger = createLogger('painel-tempo-real')
@@ -607,13 +607,10 @@ export async function finalizarVotacao(sessaoId: string): Promise<VotacaoAtiva |
   estado.votacaoAtiva.status = 'FECHADA'
 
   const { sim, nao, abstencao, ausente } = estado.votacaoAtiva.votos
-  if (sim > nao) {
-    estado.votacaoAtiva.resultado = 'APROVADA'
-  } else if (nao > sim) {
-    estado.votacaoAtiva.resultado = 'REJEITADA'
-  } else {
-    estado.votacaoAtiva.resultado = 'EMPATE'
-  }
+  // P0-5: resultado SEMPRE calculado server-side via utility puro
+  const resultadoCalculado = calcularResultadoVotacao({ sim, nao, abstencao })
+  estado.votacaoAtiva.resultado =
+    resultadoCalculado === 'SEM_QUORUM' ? 'EMPATE' : resultadoCalculado
 
   const proposicaoId = estado.votacaoAtiva.proposicaoId
   const turno = estado.votacaoAtiva.turno

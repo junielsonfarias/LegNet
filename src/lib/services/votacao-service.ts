@@ -409,6 +409,39 @@ export async function apurarResultado(
 }
 
 /**
+ * P0-5: Calcula resultado de votacao a partir das contagens (server-side puro).
+ *
+ * Anti-tamper: NUNCA confiar em 'resultado' enviado pelo cliente. Endpoints
+ * que persistem VotacaoAgrupada DEVEM usar esta funcao para derivar o valor.
+ *
+ * Regras:
+ * - sim > nao -> APROVADA
+ * - nao > sim -> REJEITADA
+ * - sim === nao -> EMPATE
+ *
+ * Quando `quorumNecessario` e informado e (sim+nao+abstencao) < quorum,
+ * retorna SEM_QUORUM. Caso contrario nao avalia quorum.
+ */
+export function calcularResultadoVotacao(args: {
+  sim: number
+  nao: number
+  abstencao?: number
+  quorumNecessario?: number
+}): 'APROVADA' | 'REJEITADA' | 'EMPATE' | 'SEM_QUORUM' {
+  const sim = Math.max(0, args.sim | 0)
+  const nao = Math.max(0, args.nao | 0)
+  const abstencao = Math.max(0, (args.abstencao ?? 0) | 0)
+  const totalVotos = sim + nao + abstencao
+
+  if (args.quorumNecessario != null && totalVotos < args.quorumNecessario) {
+    return 'SEM_QUORUM'
+  }
+  if (sim > nao) return 'APROVADA'
+  if (nao > sim) return 'REJEITADA'
+  return 'EMPATE'
+}
+
+/**
  * Atualiza resultado da proposição após votação
  */
 export async function atualizarResultadoProposicao(
