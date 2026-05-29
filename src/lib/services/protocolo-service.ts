@@ -165,7 +165,8 @@ export async function criarProtocolo(
     id: protocolo.id,
     numero: protocolo.numero,
     ano,
-    etiquetaCodigo: protocolo.etiquetaCodigo
+    // etiquetaCodigo e nullable no schema mas sempre setado no create acima
+    etiquetaCodigo: protocolo.etiquetaCodigo ?? ''
   }
 }
 

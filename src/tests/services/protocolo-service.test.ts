@@ -40,7 +40,7 @@ vi.mock('@/lib/prisma', () => {
       $transaction: vi.fn((arg: unknown) => {
         // Suporta callback async (advisory lock + read + create)
         if (typeof arg === 'function') {
-          const tx = {
+          const txMock = {
             $queryRaw: vi.fn().mockResolvedValue([]),
             protocolo: {
               findFirst: protocoloFindFirst,
@@ -48,7 +48,8 @@ vi.mock('@/lib/prisma', () => {
             }
           }
           // Serializa transacoes (simula pg_advisory_xact_lock)
-          const result = txQueue.then(() => (arg as (tx: typeof tx) => Promise<unknown>)(tx))
+          const callback = arg as (tx: unknown) => Promise<unknown>
+          const result = txQueue.then(() => callback(txMock))
           txQueue = result.catch(() => undefined)
           return result
         }
