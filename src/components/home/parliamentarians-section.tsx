@@ -128,11 +128,11 @@ function MesaCard({ p }: { p: Parlamentar }) {
 
           {/* Partido */}
           {p.partido && (
-            <span className="text-xs text-gray-400 mt-1.5">{p.partido}</span>
+            <span className="text-xs text-gray-600 mt-1.5">{p.partido}</span>
           )}
 
-          {/* CTA hover */}
-          <div className="mt-auto pt-3 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-gray-500">
+          {/* CTA — sempre visivel (mobile-friendly) */}
+          <div className="mt-auto pt-3 text-xs font-medium opacity-70 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-gray-700">
             Ver perfil <ArrowRight className="h-3 w-3" />
           </div>
         </div>
@@ -153,8 +153,8 @@ function VereadorCard({ p }: { p: Parlamentar }) {
         <p className="font-semibold text-gray-800 text-sm truncate" title={p.apelido || p.nome}>
           {p.apelido || p.nome}
         </p>
-        <p className="text-xs text-gray-400 mt-0.5">{p.partido}</p>
-        <div className="mt-2 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--municipal-primary)' }}>
+        <p className="text-xs text-gray-600 mt-0.5">{p.partido}</p>
+        <div className="mt-2 text-xs font-medium opacity-80 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--municipal-primary)' }}>
           Ver perfil
         </div>
       </div>
@@ -291,7 +291,7 @@ export function ParliamentariansSection() {
               </div>
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-gray-900">Mesa Diretora</h3>
-                <p className="text-[11px] sm:text-xs text-gray-400">Legislatura atual</p>
+                <p className="text-[11px] sm:text-xs text-gray-600">Legislatura atual</p>
               </div>
             </div>
 
@@ -346,7 +346,7 @@ export function ParliamentariansSection() {
         {/* Vereadores - Carrossel */}
         {todosParaCarrossel.length > 0 && (
           <div>
-            <h3 className="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Todos os Vereadores</h3>
+            <h3 className="text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">Todos os Vereadores</h3>
             <MarqueeCarousel vereadores={todosParaCarrossel} />
           </div>
         )}
