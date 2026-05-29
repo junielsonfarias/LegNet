@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import {
   Layers, Loader2, Plus, Trash2, ArrowLeft, Save, X, ExternalLink, FileText,
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface DocumentoItem {
@@ -369,9 +370,12 @@ export default function AdminAtasAdesaoSRPPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : lista.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Nenhuma ata cadastrada ainda.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={FileText}
+              title="Nenhuma ata cadastrada"
+              description="Cadastre as Atas de Adesão SRP (Sistema de Registro de Preços) para transparência."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

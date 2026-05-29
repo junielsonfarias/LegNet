@@ -38,6 +38,7 @@ import {
   ChevronRight,
   FileCheck
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -387,15 +388,11 @@ export default function ReunioesComissaoPage() {
       {/* Lista de Reunioes */}
       <div className="grid gap-4">
         {reunioesFiltradas.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">Nenhuma reuniao encontrada</h3>
-              <p className="mt-1 text-gray-500">
-                Agende uma nova reuniao para comecar
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Calendar}
+            title="Nenhuma reunião encontrada"
+            description="Agende uma nova reunião de comissão para começar."
+          />
         ) : (
           reunioesFiltradas.map(reuniao => (
             <Link key={reuniao.id} href={`/admin/comissoes/reunioes/${reuniao.id}`}>

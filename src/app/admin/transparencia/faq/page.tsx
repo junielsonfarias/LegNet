@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { HelpCircle, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 interface Pergunta {
@@ -201,9 +202,12 @@ export default function AdminFaqPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : data.length === 0 ? (
-            <p className="text-center py-12 text-muted-foreground">
-              Nenhuma pergunta cadastrada.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={HelpCircle}
+              title="Nenhuma pergunta cadastrada"
+              description="Cadastre as perguntas frequentes para o portal de transparência."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

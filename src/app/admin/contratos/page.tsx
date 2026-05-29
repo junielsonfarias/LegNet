@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useContratos, Contrato } from '@/lib/hooks/use-contratos'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { toast } from 'sonner'
@@ -200,7 +201,12 @@ export default function ContratosAdminPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredContratos.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Nenhum contrato encontrado</p>
+              <EmptyState
+                as="plain"
+                icon={FileText}
+                title="Nenhum contrato encontrado"
+                description={searchTerm ? 'Tente ajustar a busca.' : 'Cadastre o primeiro contrato administrativo.'}
+              />
             ) : (
               filteredContratos.map(contrato => (
                 <Card key={contrato.id} className="p-4">

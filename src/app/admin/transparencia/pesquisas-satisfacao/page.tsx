@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  CheckCircle2, Loader2, Plus, Trash2, ArrowLeft, Save, X, BarChart3, ExternalLink,
+  CheckCircle2, Loader2, Plus, Trash2, ArrowLeft, Save, X, BarChart3, ExternalLink, ClipboardCheck,
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 type Tipo = 'ESCALA_1_5' | 'SIM_NAO' | 'TEXTO' | 'MULTIPLA_ESCOLHA'
@@ -373,9 +374,12 @@ export default function AdminPesquisasSatisfacaoPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : lista.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Nenhuma pesquisa cadastrada ainda.
-            </p>
+            <EmptyState
+              as="plain"
+              icon={ClipboardCheck}
+              title="Nenhuma pesquisa cadastrada"
+              description="Crie pesquisas de satisfação para o cidadão avaliar os serviços da Câmara."
+            />
           ) : (
             <div className="space-y-2">
               {lista.map((p) => (

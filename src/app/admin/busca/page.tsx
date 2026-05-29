@@ -23,6 +23,7 @@ import {
   Clock,
   SlidersHorizontal
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -396,23 +397,20 @@ export default function BuscaPage() {
 
           {/* Sem resultados */}
           {!loading && query.length >= 2 && resultados.length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
-              <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhum resultado encontrado
-              </h3>
-              <p className="text-gray-500 mb-4">
-                Nao encontramos resultados para &quot;{query}&quot;.
-              </p>
-              <div className="text-sm text-gray-500">
-                <p>Sugestoes:</p>
+            <EmptyState
+              icon={Search}
+              title="Nenhum resultado encontrado"
+              description={`Não encontramos resultados para "${query}".`}
+            >
+              <div className="text-sm text-muted-foreground">
+                <p>Sugestões:</p>
                 <ul className="mt-2 space-y-1">
                   <li>Verifique a ortografia</li>
-                  <li>Tente termos mais genericos</li>
+                  <li>Tente termos mais genéricos</li>
                   <li>Remova alguns filtros</li>
                 </ul>
               </div>
-            </div>
+            </EmptyState>
           )}
 
           {/* Lista de resultados */}

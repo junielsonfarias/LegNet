@@ -19,7 +19,9 @@ import {
   X,
   Users,
   Calculator,
+  Wallet,
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useFolhaPagamento, FolhaPagamento } from '@/lib/hooks/use-servidores'
 import { toast } from 'sonner'
 
@@ -403,9 +405,12 @@ export default function FolhaPagamentoAdminPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredFolhas.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                Nenhuma folha de pagamento encontrada
-              </p>
+              <EmptyState
+                as="plain"
+                icon={Wallet}
+                title="Nenhuma folha de pagamento encontrada"
+                description={searchTerm ? 'Tente ajustar a busca.' : 'Importe a primeira folha de pagamento do mês.'}
+              />
             ) : (
               filteredFolhas.map(folha => (
                 <Card key={folha.id} className="p-4">

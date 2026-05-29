@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, Plus } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useAudienciasAdmin } from './hooks/useAudienciasAdmin'
 import {
   AudienciasStats,
@@ -114,17 +115,13 @@ export default function AudienciasPublicasAdminPage() {
       </div>
 
       {audienciasFiltradas.length === 0 && (
-        <Card className="camara-card">
-          <CardContent className="p-12 text-center">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma audiencia encontrada</h3>
-            <p className="text-gray-600">
-              {searchTerm || filterStatus !== 'all' || filterTipo !== 'all'
-                ? 'Tente ajustar os filtros de busca.'
-                : 'Nao ha audiencias cadastradas.'}
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="Nenhuma audiência encontrada"
+          description={searchTerm || filterStatus !== 'all' || filterTipo !== 'all'
+            ? 'Tente ajustar os filtros de busca.'
+            : 'Não há audiências cadastradas. Use o botão acima para criar a primeira.'}
+        />
       )}
     </div>
   )

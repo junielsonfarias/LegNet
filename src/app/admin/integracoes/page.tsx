@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Zap
 } from "lucide-react"
+import { EmptyState } from "@/components/ui/empty-state"
 import { toast } from "sonner"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -205,9 +206,12 @@ export default function IntegracoesPage() {
               <RefreshCw className="h-4 w-4 animate-spin" /> Carregando tokens...
             </div>
           ) : tokens.length === 0 ? (
-            <div className="rounded-md border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
-              Nenhum token cadastrado. Clique em &quot;Novo Token&quot; para gerar o primeiro.
-            </div>
+            <EmptyState
+              as="plain"
+              icon={Key}
+              title="Nenhum token cadastrado"
+              description='Clique em "Novo Token" para gerar o primeiro token de integração com APIs externas.'
+            />
           ) : (
             <div className="space-y-4">
               {tokens.map((token) => (

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Package, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, MapPin, Building2 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useBensPatrimoniais, BemPatrimonial } from '@/lib/hooks/use-bens-patrimoniais'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
@@ -171,7 +172,12 @@ export default function BensPatrimoniaisAdminPage() {
         <CardContent>
           <div className="space-y-4">
             {filteredBens.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Nenhum bem encontrado</p>
+              <EmptyState
+                as="plain"
+                icon={Package}
+                title="Nenhum bem encontrado"
+                description={searchTerm ? 'Tente ajustar a busca.' : 'Cadastre o primeiro bem patrimonial.'}
+              />
             ) : (
               filteredBens.map(bem => (
                 <Card key={bem.id} className="p-4">

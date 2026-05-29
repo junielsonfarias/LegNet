@@ -25,6 +25,7 @@ import {
   RefreshCw,
   Settings
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 
 // Tipos
@@ -299,21 +300,16 @@ export default function FluxosTramitacaoPage() {
       </div>
 
       {fluxos.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-center py-12">
-            <GitBranch className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              Nenhum fluxo configurado
-            </h3>
-            <p className="text-gray-500 mb-4">
-              Clique no botao acima para criar os fluxos padrao para cada tipo de proposicao.
-            </p>
-            <Button onClick={criarFluxosPadrao}>
-              <Settings className="h-4 w-4 mr-2" />
-              Criar Fluxos Padrao
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={GitBranch}
+          title="Nenhum fluxo configurado"
+          description="Configure os fluxos de tramitação por tipo de proposição (PL passa pela CLJ, CFO se houver despesa, etc)."
+          action={{
+            label: 'Criar Fluxos Padrão',
+            onClick: criarFluxosPadrao,
+            icon: Settings,
+          }}
+        />
       ) : (
         <div className="space-y-4">
           {fluxos.map((fluxo) => (
