@@ -288,20 +288,46 @@ export default function TransparenciaConteudoPage() {
               </div>
 
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => moveCategoriaUp(catIndex)} disabled={catIndex === 0}>
-                  <ArrowUp className="h-3 w-3" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => moveCategoriaUp(catIndex)}
+                  disabled={catIndex === 0}
+                  aria-label={`Mover categoria ${cat.nome} para cima`}
+                >
+                  <ArrowUp className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => moveCategoriaDown(catIndex)} disabled={catIndex === categorias.length - 1}>
-                  <ArrowDown className="h-3 w-3" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => moveCategoriaDown(catIndex)}
+                  disabled={catIndex === categorias.length - 1}
+                  aria-label={`Mover categoria ${cat.nome} para baixo`}
+                >
+                  <ArrowDown className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
-                  setCatForm({ nome: cat.nome, descricao: cat.descricao, icone: cat.icone, ativa: cat.ativa })
-                  setEditingCat(editingCat === cat.id ? null : cat.id)
-                }}>
-                  <Edit className="h-3 w-3" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => {
+                    setCatForm({ nome: cat.nome, descricao: cat.descricao, icone: cat.icone, ativa: cat.ativa })
+                    setEditingCat(editingCat === cat.id ? null : cat.id)
+                  }}
+                  aria-label={`Editar categoria ${cat.nome}`}
+                >
+                  <Edit className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => deleteCategoria(cat.id)}>
-                  <Trash2 className="h-3 w-3" />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => deleteCategoria(cat.id)}
+                  aria-label={`Excluir categoria ${cat.nome}`}
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -353,14 +379,34 @@ export default function TransparenciaConteudoPage() {
 
                     <div className="flex items-center gap-1 shrink-0">
                       <Switch checked={item.ativo} onCheckedChange={() => toggleItemAtivo(cat.id, item.id)} />
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveItemUp(cat.id, itemIndex)} disabled={itemIndex === 0}>
-                        <ArrowUp className="h-3 w-3" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => moveItemUp(cat.id, itemIndex)}
+                        disabled={itemIndex === 0}
+                        aria-label={`Mover item ${item.titulo} para cima`}
+                      >
+                        <ArrowUp className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveItemDown(cat.id, itemIndex, cat.itens.length)} disabled={itemIndex === cat.itens.length - 1}>
-                        <ArrowDown className="h-3 w-3" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => moveItemDown(cat.id, itemIndex, cat.itens.length)}
+                        disabled={itemIndex === cat.itens.length - 1}
+                        aria-label={`Mover item ${item.titulo} para baixo`}
+                      >
+                        <ArrowDown className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => deleteItem(cat.id, item.id)}>
-                        <Trash2 className="h-3 w-3" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-9 w-9"
+                        onClick={() => deleteItem(cat.id, item.id)}
+                        aria-label={`Excluir item ${item.titulo}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

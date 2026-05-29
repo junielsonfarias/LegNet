@@ -40,7 +40,9 @@
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 210 40% 96%;
     --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
+    /* WCAG AA: #DC2626 (0 72.2% 50.6%) tem 5.2:1 vs branco — passa AA.
+       Antes era #EF4444 (0 84.2% 60.2%) com apenas 3.60:1 — falhava AA */
+    --destructive: 0 72.2% 50.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
@@ -684,5 +686,93 @@ html[data-reduced-motion="true"] *::after {
 @media (prefers-color-scheme: dark) {
   html:not(.light):not([data-theme="light"]) {
     color-scheme: dark;
+  }
+}
+
+/* ===== FORCED COLORS MODE (Windows High Contrast) =====
+   Garante bordas/foco visiveis quando o SO sobrescreve as cores.
+   Usa system colors (CanvasText, LinkText, ButtonText, Highlight)
+   que respeitam o tema escolhido pelo usuario. */
+@media (forced-colors: active) {
+  *,
+  *::before,
+  *::after {
+    border-color: CanvasText !important;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    forced-color-adjust: none;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid CanvasText !important;
+    outline-offset: 2px !important;
+  }
+
+  a {
+    color: LinkText;
+    text-decoration: underline;
+  }
+
+  a:visited {
+    color: VisitedText;
+  }
+
+  /* Estado disabled: respeitar GrayText do sistema */
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    color: GrayText !important;
+    border-color: GrayText !important;
+  }
+}
+
+/* ===== PRINT GLOBAL =====
+   Esconde elementos de navegacao/UI nao-essenciais ao imprimir.
+   Componentes podem usar `.no-print` para opt-in adicional. */
+@media print {
+  .no-print,
+  nav,
+  header button,
+  header a[role="button"],
+  footer button,
+  [data-print="hide"],
+  aside.sidebar,
+  .toast-container,
+  [class*="sticky"] {
+    display: none !important;
+  }
+
+  /* Forca cores legiveis em impressao */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555;
+  }
+
+  /* Evita quebra dentro de cards/tabelas */
+  table, .card, [data-print="keep"] {
+    break-inside: avoid;
+  }
+
+  /* Liberar overflow para impressao completa */
+  * {
+    overflow: visible !important;
   }
 }

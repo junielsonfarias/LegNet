@@ -129,7 +129,7 @@ export function HighlightsSection() {
                   <p className="text-sm text-gray-700 line-clamp-2 group-hover:text-camara-primary transition-colors">
                     {prop.titulo || prop.ementa || 'Sem titulo'}
                   </p>
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-gray-600 mt-2">
                     {formatDateShort(prop.dataApresentacao)}
                   </p>
                 </CardContent>

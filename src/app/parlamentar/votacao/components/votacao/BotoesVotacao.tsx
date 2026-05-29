@@ -17,30 +17,33 @@ export function BotoesVotacao({ onVotar, votando }: BotoesVotacaoProps) {
         <Button
           onClick={() => onVotar('SIM')}
           disabled={votando}
-          className="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white h-16 sm:h-20 md:h-24 text-base sm:text-lg md:text-xl font-bold rounded-lg sm:rounded-xl shadow-lg shadow-green-600/20 transition-all active:scale-95 sm:hover:scale-105"
+          aria-label="Votar SIM"
+          className="bg-green-600 hover:bg-green-500 active:bg-green-700 text-white h-16 sm:h-20 md:h-24 text-base sm:text-lg md:text-xl font-bold rounded-lg sm:rounded-xl shadow-lg shadow-green-600/20 transition-all active:scale-95 sm:hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <div className="flex flex-col items-center gap-1 sm:gap-2">
-            <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8" />
+            <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8" aria-hidden="true" />
             <span>SIM</span>
           </div>
         </Button>
         <Button
           onClick={() => onVotar('NAO')}
           disabled={votando}
-          className="bg-red-600 hover:bg-red-500 active:bg-red-700 text-white h-16 sm:h-20 md:h-24 text-base sm:text-lg md:text-xl font-bold rounded-lg sm:rounded-xl shadow-lg shadow-red-600/20 transition-all active:scale-95 sm:hover:scale-105"
+          aria-label="Votar NAO"
+          className="bg-red-600 hover:bg-red-500 active:bg-red-700 text-white h-16 sm:h-20 md:h-24 text-base sm:text-lg md:text-xl font-bold rounded-lg sm:rounded-xl shadow-lg shadow-red-600/20 transition-all active:scale-95 sm:hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <div className="flex flex-col items-center gap-1 sm:gap-2">
-            <XCircle className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8" />
+            <XCircle className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8" aria-hidden="true" />
             <span>NÃO</span>
           </div>
         </Button>
         <Button
           onClick={() => onVotar('ABSTENCAO')}
           disabled={votando}
-          className="bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700 text-white h-16 sm:h-20 md:h-24 text-base sm:text-lg md:text-xl font-bold rounded-lg sm:rounded-xl shadow-lg shadow-yellow-600/20 transition-all active:scale-95 sm:hover:scale-105"
+          aria-label="Votar ABSTENCAO"
+          className="bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-700 text-white h-16 sm:h-20 md:h-24 text-base sm:text-lg md:text-xl font-bold rounded-lg sm:rounded-xl shadow-lg shadow-yellow-600/20 transition-all active:scale-95 sm:hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <div className="flex flex-col items-center gap-1 sm:gap-2">
-            <MinusCircle className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8" />
+            <MinusCircle className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8" aria-hidden="true" />
             <span>ABST.</span>
           </div>
         </Button>

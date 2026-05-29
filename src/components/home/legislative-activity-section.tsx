@@ -102,7 +102,7 @@ function ProposicaoItem({ prop }: { prop: Proposicao }) {
           {prop.titulo || prop.ementa || 'Sem titulo'}
         </p>
       </div>
-      <span className="text-xs text-gray-400 shrink-0 hidden md:block">
+      <span className="text-xs text-gray-600 shrink-0 hidden md:block">
         {formatDateShort(prop.dataApresentacao)}
       </span>
     </Link>
@@ -159,7 +159,7 @@ function VotacaoItem({ votacao }: { votacao: Votacao }) {
         >
           {votacao.resultado?.replace(/_/g, ' ') || 'PENDENTE'}
         </Badge>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-600">
           {formatDateShort(votacao.data || votacao.createdAt)}
         </span>
       </div>
@@ -279,7 +279,7 @@ export function LegislativeActivitySection() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-14 flex items-center justify-center text-xs text-gray-400">Sem dados</div>
+                <div className="h-14 flex items-center justify-center text-xs text-gray-600">Sem dados</div>
               )}
             </div>
 
@@ -391,7 +391,7 @@ export function LegislativeActivitySection() {
               ) : (
                 <div className="text-center py-12">
                   <FileText className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-400">Nenhuma proposicao recente</p>
+                  <p className="text-sm text-gray-600">Nenhuma proposicao recente</p>
                 </div>
               )}
             </TabsContent>
@@ -417,7 +417,7 @@ export function LegislativeActivitySection() {
               ) : (
                 <div className="text-center py-12">
                   <Vote className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-400">Nenhuma votacao registrada</p>
+                  <p className="text-sm text-gray-600">Nenhuma votacao registrada</p>
                 </div>
               )}
             </TabsContent>
@@ -443,7 +443,7 @@ export function LegislativeActivitySection() {
               ) : (
                 <div className="text-center py-12">
                   <Clock className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-400">Nenhuma proposicao em tramitacao</p>
+                  <p className="text-sm text-gray-600">Nenhuma proposicao em tramitacao</p>
                 </div>
               )}
             </TabsContent>

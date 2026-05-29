@@ -182,7 +182,7 @@ export function LatestNews() {
 
                   {/* Texto */}
                   <div className="flex-1 p-3 sm:p-4 flex flex-col justify-center min-w-0">
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-1.5">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mb-1.5">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {timeAgo(noticia.createdAt)}
@@ -198,7 +198,7 @@ export function LatestNews() {
                       {noticia.titulo}
                     </h4>
                     {noticia.resumo && (
-                      <p className="text-xs text-gray-400 mt-1 line-clamp-1 hidden md:block">{noticia.resumo}</p>
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-1 hidden md:block">{noticia.resumo}</p>
                     )}
                   </div>
                 </div>
