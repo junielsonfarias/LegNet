@@ -69,16 +69,17 @@ export interface FiltrosProtocolo {
 }
 
 /**
- * Gera número sequencial de protocolo para o ano
+ * Gera lock ID deterministico para protocolo+ano (mesmo algoritmo do
+ * codigo-sequencial-service para compatibilidade)
  */
-async function gerarNumeroProtocolo(ano: number): Promise<number> {
-  const ultimoProtocolo = await prisma.protocolo.findFirst({
-    where: { ano },
-    orderBy: { numero: 'desc' },
-    select: { numero: true }
-  })
-
-  return (ultimoProtocolo?.numero || 0) + 1
+function getProtocoloLockId(ano: number): number {
+  const str = `protocolo::${ano}`
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
 }
 
 /**
@@ -93,6 +94,10 @@ function gerarCodigoEtiqueta(numero: number, ano: number): string {
 
 /**
  * Cria novo protocolo
+ *
+ * P0-3: read do ultimo numero + create estao na MESMA transacao,
+ * protegidos por pg_advisory_xact_lock para serializar criacoes
+ * concorrentes do mesmo ano. Resolve race condition do findFirst+1.
  */
 export async function criarProtocolo(
   input: CriarProtocoloInput
@@ -103,50 +108,64 @@ export async function criarProtocolo(
   etiquetaCodigo: string
 }> {
   const ano = new Date().getFullYear()
-  const numero = await gerarNumeroProtocolo(ano)
-  const etiquetaCodigo = gerarCodigoEtiqueta(numero, ano)
 
   // P0-6 (LGPD): CPF criptografado em repouso quando PESSOA_FISICA; CNPJ texto plano
   const tipoRemetente = input.tipoRemetente || 'PESSOA_FISICA'
   const cpfCnpjProtegido = protectCpfCnpj(input.cpfCnpjRemetente, tipoRemetente)
+  const lockId = getProtocoloLockId(ano)
 
-  const protocolo = await prisma.protocolo.create({
-    data: {
-      numero,
-      ano,
-      tipo: input.tipo,
-      nomeRemetente: input.nomeRemetente,
-      cpfCnpjRemetente: cpfCnpjProtegido.stored,
-      cpfCnpjRemetenteHash: cpfCnpjProtegido.hash,
-      tipoRemetente,
-      enderecoRemetente: input.enderecoRemetente,
-      telefoneRemetente: input.telefoneRemetente,
-      emailRemetente: input.emailRemetente,
-      assunto: input.assunto,
-      descricao: input.descricao,
-      tipoDocumento: input.tipoDocumento,
-      numeroDocOrigem: input.numeroDocOrigem,
-      prazoResposta: input.prazoResposta,
-      prioridade: input.prioridade || 'NORMAL',
-      sigiloso: input.sigiloso || false,
-      etiquetaCodigo,
-      situacao: 'ABERTO'
-    }
+  // Tudo numa transacao com advisory lock para impedir numeros duplicados
+  const protocolo = await prisma.$transaction(async (tx) => {
+    // Advisory lock liberado no fim da transacao (xact_lock)
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(${lockId}::bigint)`
+
+    const ultimo = await tx.protocolo.findFirst({
+      where: { ano },
+      orderBy: { numero: 'desc' },
+      select: { numero: true }
+    })
+
+    const numero = (ultimo?.numero ?? 0) + 1
+    const etiquetaCodigo = gerarCodigoEtiqueta(numero, ano)
+
+    return tx.protocolo.create({
+      data: {
+        numero,
+        ano,
+        tipo: input.tipo,
+        nomeRemetente: input.nomeRemetente,
+        cpfCnpjRemetente: cpfCnpjProtegido.stored,
+        cpfCnpjRemetenteHash: cpfCnpjProtegido.hash,
+        tipoRemetente,
+        enderecoRemetente: input.enderecoRemetente,
+        telefoneRemetente: input.telefoneRemetente,
+        emailRemetente: input.emailRemetente,
+        assunto: input.assunto,
+        descricao: input.descricao,
+        tipoDocumento: input.tipoDocumento,
+        numeroDocOrigem: input.numeroDocOrigem,
+        prazoResposta: input.prazoResposta,
+        prioridade: input.prioridade || 'NORMAL',
+        sigiloso: input.sigiloso || false,
+        etiquetaCodigo,
+        situacao: 'ABERTO'
+      }
+    })
   })
 
   logger.info('Protocolo criado', {
     action: 'criar_protocolo',
     id: protocolo.id,
-    numero,
+    numero: protocolo.numero,
     ano,
     tipo: input.tipo
   })
 
   return {
     id: protocolo.id,
-    numero,
+    numero: protocolo.numero,
     ano,
-    etiquetaCodigo
+    etiquetaCodigo: protocolo.etiquetaCodigo
   }
 }
 
