@@ -20,7 +20,8 @@ test.describe('@smoke fluxos críticos', () => {
   test('login renderiza formulário acessível', async ({ page }) => {
     await page.goto('/login')
     await expect(page.getByLabel(/email|usuário/i)).toBeVisible()
-    await expect(page.getByLabel(/senha/i)).toBeVisible()
+    // O botao "mostrar/ocultar senha" tambem casa /senha/i — restringir ao input
+    await expect(page.locator('input#password')).toBeVisible()
     await expect(page.getByRole('button', { name: /entrar|login|acessar/i })).toBeVisible()
   })
 
