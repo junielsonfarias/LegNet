@@ -25,6 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/admin/page-header'
 import { 
   Users, 
   Plus, 
@@ -271,19 +273,14 @@ export default function UsuariosPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <Users className="h-8 w-8 text-blue-600" />
-            Gerenciamento de Usuários
-          </h1>
-          <p className="text-gray-600">Gerencie usuários e suas permissões</p>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Novo Usuário
-        </Button>
-      </div>
+      <PageHeader
+        icon={Users}
+        title="Gerenciamento de Usuários"
+        subtitle="Gerencie usuários e suas permissões"
+        onNewClick={() => setIsModalOpen(true)}
+        newLabel="Novo Usuário"
+        newIcon={UserPlus}
+      />
 
       {/* Filtros */}
       <Card>
@@ -330,12 +327,18 @@ export default function UsuariosPage() {
       {/* Lista de Usuários */}
       <div className="grid gap-4">
         {filteredUsuarios.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Nenhum usuário encontrado</p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Users}
+            title="Nenhum usuário encontrado"
+            description={searchTerm || roleFilter !== 'TODOS'
+              ? 'Tente ajustar os filtros para ver mais resultados.'
+              : 'Cadastre o primeiro usuário do sistema.'}
+            action={!searchTerm && roleFilter === 'TODOS' ? {
+              label: 'Novo usuário',
+              onClick: () => setIsModalOpen(true),
+              icon: Plus,
+            } : undefined}
+          />
         ) : (
           filteredUsuarios.map((usuario) => (
             <Card key={usuario.id}>

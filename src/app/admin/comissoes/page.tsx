@@ -6,6 +6,7 @@ const log = createLogger('admin/comissoes')
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +36,7 @@ import { useComissoes } from '@/lib/hooks/use-comissoes'
 import { toast } from 'sonner'
 
 export default function ComissoesAdminPage() {
+  const confirm = useConfirm()
   const {
     comissoes: comissoesApi,
     loading: loadingComissoes,
@@ -270,9 +272,13 @@ export default function ComissoesAdminPage() {
   }
 
   const handleRemoveMembro = async (comissaoId: string, membroId: string) => {
-    if (!confirm('Deseja remover este parlamentar da comissão?')) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Remover membro da comissão?',
+      description: 'O parlamentar será removido desta comissão. Esta ação pode ser revertida cadastrando-o novamente.',
+      variant: 'destructive',
+      confirmLabel: 'Remover',
+    })
+    if (!ok) return
 
     const sucesso = await removeMember(comissaoId, membroId)
     if (sucesso) {
@@ -292,15 +298,21 @@ export default function ComissoesAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta comissão?')) {
-      try {
-        await remove(id)
-        await refetch()
-        toast.success('Comissão excluída com sucesso')
-      } catch (error) {
-        log.error('Erro ao excluir comissão', error)
-        toast.error('Erro ao excluir comissão. Verifique se não há dependências.')
-      }
+    const ok = await confirm({
+      title: 'Excluir comissão?',
+      description: 'Esta ação não pode ser desfeita. Reuniões, pareceres e membros vinculados serão afetados.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+
+    try {
+      await remove(id)
+      await refetch()
+      toast.success('Comissão excluída com sucesso')
+    } catch (error) {
+      log.error('Erro ao excluir comissão', error)
+      toast.error('Erro ao excluir comissão. Verifique se não há dependências.')
     }
   }
 

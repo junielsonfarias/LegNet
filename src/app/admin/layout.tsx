@@ -1,5 +1,6 @@
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { AdminSidebarMobile } from '@/components/admin/admin-sidebar-mobile'
+import { AdminBottomNavigation } from '@/components/admin/admin-bottom-navigation'
 import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { AdminSearch } from '@/components/admin/admin-search'
 import { AdminHeaderActions } from '@/components/admin/admin-header-actions'
@@ -13,6 +14,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { OnboardingTour } from '@/components/admin/onboarding-tour'
 import { SessionTimeoutGuard } from '@/components/admin/session-timeout-guard'
+import { ConfirmDialogProvider } from '@/lib/hooks/use-confirm-dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,6 +80,7 @@ export default async function AdminLayout({
   }
 
   return (
+    <ConfirmDialogProvider>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar Desktop - escondida em mobile, fixa na tela */}
@@ -200,10 +203,13 @@ export default async function AdminLayout({
             </div>
           </header>
 
-          {/* Conteudo principal */}
-          <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          {/* Conteudo principal — pb-20 lg:pb-6 reserva espaco para bottom nav em mobile */}
+          <main className="flex-1 p-4 lg:p-6 overflow-auto pb-20 lg:pb-6">
             {children}
           </main>
+
+          {/* Bottom navigation para mobile (<lg) — desktop usa sidebar */}
+          <AdminBottomNavigation />
 
           {/* Sessao segura: auto-logout por inatividade */}
           <SessionTimeoutGuard />
@@ -224,5 +230,6 @@ export default async function AdminLayout({
         </div>
       </div>
     </div>
+    </ConfirmDialogProvider>
   )
 }
