@@ -28,19 +28,19 @@ test.describe('@smoke fluxos críticos', () => {
   test('portal transparência carrega índice', async ({ page }) => {
     const response = await page.goto('/transparencia')
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.locator('main, body')).toBeVisible()
+    await expect(page.locator('body')).toBeVisible()
   })
 
   test('listagem de proposições carrega', async ({ page }) => {
     const response = await page.goto('/legislativo/proposicoes')
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.locator('main, body')).toBeVisible()
+    await expect(page.locator('body')).toBeVisible()
   })
 
   test('listagem de parlamentares carrega', async ({ page }) => {
     const response = await page.goto('/parlamentares')
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.locator('main, body')).toBeVisible()
+    await expect(page.locator('body')).toBeVisible()
   })
 
   test('rota protegida /admin redireciona para login', async ({ page }) => {
