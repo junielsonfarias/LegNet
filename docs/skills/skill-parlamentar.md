@@ -1,5 +1,25 @@
 # Skill: Area do Parlamentar
 
+> **Ultima atualizacao**: 2026-05-29 (Sprint P0-Legislativo)
+
+## Sprint P0-Legislativo (2026-05-29)
+
+### Voto pelo celular: audit + mandato + anti-tamper
+
+- **Audit (RN-003)**: POST `/api/sessoes/[id]/votacao` agora gera AuditLog
+  em todo voto (`VOTO_REGISTRADO` ou `VOTO_RETROATIVO`). Antes, so
+  retroativo era logado.
+- **Mandato (RN-061)**: parlamentar com `Mandato.ativo=false` na
+  legislatura da sessao recebe `403 Parlamentar nao possui mandato ativo`.
+- **Anti-tamper (P0-5)**: cliente nao consegue mais forcar resultado
+  via body. Tudo derivado server-side.
+
+Tela `/parlamentar/votacao` chama `POST /api/sessoes/[id]/votacao` com
+`{proposicaoId, parlamentarId, voto}`. Sem mudanca no payload do
+cliente — apenas garantias backend novas.
+
+---
+
 ## Visao Geral
 
 A Area do Parlamentar e o modulo dedicado aos vereadores, onde podem acessar seu dashboard pessoal, participar de votacoes eletronicas, acompanhar sua producao legislativa e visualizar estatisticas de presenca e participacao. O acesso e controlado conforme o estado da sessao.

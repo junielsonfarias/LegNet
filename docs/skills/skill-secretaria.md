@@ -1,5 +1,25 @@
 # Skill: Secretaria
 
+> **Ultima atualizacao**: 2026-05-29 (Sprint P0-Legislativo)
+
+## Sprint P0-Legislativo (2026-05-29)
+
+### Protocolo com advisory lock (P0-3)
+
+`criarProtocolo()` em `protocolo-service.ts` agora envolve **lock + read
++ create** em UMA transacao Prisma com `pg_advisory_xact_lock`. Numero
+sequencial garantidamente unico mesmo em alta concorrencia (criacoes
+simultâneas serializadas pelo PostgreSQL).
+
+Lock ID: `hash deterministico('protocolo::{ano}')`. Liberado
+automaticamente ao fim da transacao (xact_lock).
+
+**Verificacao em producao**: rodar 10x curl paralelos contra
+`/api/protocolo` no mesmo segundo — todos devem retornar numeros
+sequenciais distintos.
+
+---
+
 ## Visao Geral
 
 O modulo da Secretaria gerencia as operacoes administrativas do processo legislativo, incluindo protocolo de proposicoes, composicao de pautas, controle de tramitacao, notificacoes de prazo, geracao de atas e relatorios de producao legislativa.

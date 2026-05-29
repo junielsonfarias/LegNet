@@ -1,8 +1,8 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-05-11
-> **Versao Analisada**: 1.9.3
+> **Ultima Atualizacao**: 2026-05-29 (Sprint P0-Legislativo: ERR-048..052)
+> **Versao Analisada**: 1.39.0
 
 ---
 
@@ -14,6 +14,16 @@
 | Alta | 6 | 6 Corrigidos |
 | Media | 10 | 10 Corrigidos |
 | Baixa | 6 | Pendente (melhorias opcionais) |
+
+### Correções Aplicadas em 2026-05-29 (Sprint P0-Legislativo — hardening fluxo)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-048 | RN-030 (CLJ obrigatória) não era enforced: `validarPassagemCLJ()` retornava `valid:true` mesmo sem CLJ — apenas warning. Endpoint `/api/proposicoes/[id]/tramitar` nem chamava. Proposições PL/PR/PDL podiam ir direto à pauta sem parecer CLJ. | Função reescrita com parâmetro `modo: 'enforce' \| 'warning'`. Endpoint chama `validarPassagemCLJ(id, 'enforce')` antes de AGUARDANDO_PAUTA. ADMIN pode dispensar via payload `{overrideCLJ:{motivo}}` (motivo ≥ 20 chars), auditado em `AuditLog`. Commit `26e1d35`. |
+| ERR-049 | Voto individual em `/api/painel/votacao` e `/api/sessoes/[id]/votacao` não gerava AuditLog. Quebra RN-003 (rastreabilidade) e RN-061 (auditoria de votação nominal). Voto pelo celular do parlamentar sem IP/user-agent registrado. | `registrarVoto()` aceita `auditContext` opcional; endpoints propagam `{request, session}`. `/api/sessoes/[id]/votacao` distingue `VOTO_REGISTRADO` (regular) de `VOTO_RETROATIVO` em todos os votos. Commit `43c64c2`. |
+| ERR-050 | `gerarNumeroProtocolo` usava `findFirst+1` sem lock — race condition em criações concorrentes podia duplicar números. | `criarProtocolo` agora envolve `pg_advisory_xact_lock + findFirst + create` em UMA transação Prisma. Lock ID determinístico por ano. Commit `9a53d12`. |
+| ERR-051 | Voto individual não re-validava `Mandato.ativo` na legislatura da sessão. Parlamentar com mandato encerrado podia votar se ainda estivesse em `PresencaSessao`. | Novo helper `validarMandatoAtivo()` chamado em `upsertVotoIndividual` (throw) e `registrarVoto` (return false + log.warn). Commit `5b64150`. |
+| ERR-052 | PUT `/api/sessoes/[id]/votacao/turno` aceitava `resultado` do body e usava direto (vetor de tampering — cliente podia forçar APROVADA/REJEITADA). Idem `finalizarVotacao` em alguns paths. | Novo utility puro `calcularResultadoVotacao()` e enforcement: schema do endpoint só aceita `{itemId, turno, adiada?}`. Resultado SEMPRE derivado server-side. Commit `9180ddb`. |
 
 ### Correções Aplicadas em 2026-05-11 (CSP duplicado, INTERNAL_API_SECRET + install.sh hardening)
 

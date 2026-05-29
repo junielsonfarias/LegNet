@@ -67,6 +67,14 @@ REGRA RN-003: RASTREABILIDADE
 Todo ato DEVE ser registrado com data, hora, usuario e IP.
 Nenhuma informacao pode ser excluida, apenas inativada.
 
+**Implementacao (Sprint P0-Legislativo 2026-05-29):**
+- Voto individual: POST /api/sessoes/[id]/votacao e POST /api/painel/votacao
+  chamam logAudit({action: 'VOTO_REGISTRADO' ou 'VOTO_RETROATIVO',
+  entity: 'Votacao', metadata: {sessaoId, proposicaoId, parlamentarId,
+  voto, turno, IP, user-agent}). AuditLog imutavel grava no banco.
+- Tramitacao: POST /api/proposicoes/[id]/tramitar audita transicoes e
+  override RN-030 (action='RN030_OVERRIDE_CLJ' com motivo).
+
 REGRA RN-004: INTEGRIDADE
 Documentos oficiais NAO PODEM ser alterados apos publicacao.
 Alteracoes geram nova versao com historico preservado.
@@ -248,6 +256,16 @@ Comissao de Legislacao e Justica (CLJ) para analise de:
 - Legalidade
 - Tecnica legislativa
 - Regimentalidade
+
+**Enforcement (Sprint P0-Legislativo 2026-05-29):**
+- validarPassagemCLJ(proposicaoId, modo='enforce') em tramitacao-service
+  retorna valid=false e bloqueia avanco para AGUARDANDO_PAUTA se nao
+  houver tramitacao registrada pela CLJ.
+- Tipos dispensados: REQUERIMENTO, MOCAO, VOTO_PESAR, VOTO_APLAUSO, INDICACAO.
+- Modo 'warning' (legado) apenas alerta.
+- Override: usuario ADMIN pode dispensar via payload {overrideCLJ:{motivo}}
+  com motivo >= 20 caracteres. Override e auditado (RN030_OVERRIDE_CLJ).
+- Endpoint: POST /api/proposicoes/[id]/tramitar quando acao=AGUARDANDO_PAUTA.
 
 REGRA RN-031: DISTRIBUICAO POR MATERIA
 Apos a CLJ, proposicoes DEVEM ser distribuidas as comissoes tematicas
@@ -547,6 +565,19 @@ A votacao DEVE ser nominal nos seguintes casos:
 - Cassacao de mandato
 - Quando requerida por qualquer vereador
 - Quando houver empate em votacao simbolica
+
+**Garantias de integridade (Sprint P0-Legislativo 2026-05-29):**
+
+- **Mandato ativo**: validarMandatoAtivo(parlamentarId, sessaoId) em
+  votacao-service verifica Mandato.ativo=true na legislatura da sessao.
+  Chamada em upsertVotoIndividual e em registrarVoto (painel-tempo-real).
+  Bloqueia voto de parlamentar com mandato encerrado/inativo.
+
+- **Resultado server-side**: calcularResultadoVotacao({sim,nao,abstencao,
+  quorumNecessario}) em votacao-service e a UNICA fonte de verdade para
+  resultado. Endpoints (incluindo PUT /api/sessoes/[id]/votacao/turno)
+  NUNCA aceitam 'resultado' do body. Override aceito apenas para 'ADIADA'
+  via flag {adiada:true} (decisao administrativa, nao da votacao).
 
 REGRA RN-062: DECLARACAO DE VOTO
 Apos a votacao, parlamentares PODEM declarar voto:

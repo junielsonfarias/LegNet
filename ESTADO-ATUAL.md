@@ -1,10 +1,67 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-28 (Sprint 5 + Backlog tecnico — score 9.2 → 9.3/10)
-> **Versao**: 1.38.0
+> **Ultima Atualizacao**: 2026-05-29 (Sprint P0-Legislativo — hardening fluxo end-to-end)
+> **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+
+---
+
+## 2026-05-29 — Sprint P0-Legislativo: 5 fixes criticos do fluxo
+
+Auditoria end-to-end do fluxo legislativo (proposicao -> protocolo ->
+tramitacao -> comissao -> pauta -> sessao -> votacao -> painel) identificou
+5 vetores P0 com enforcement frágil ou ausente. Todos corrigidos com testes.
+
+**P0-1 — Enforcement RN-030 (CLJ obrigatória)** — commit `26e1d35`
+
+- `validarPassagemCLJ(proposicaoId, modo='enforce')` agora bloqueia
+  proposições PL/PR/PDL/PLC/ELO sem tramitação registrada pela CLJ.
+- POST `/api/proposicoes/[id]/tramitar` chama enforcement antes de
+  AGUARDANDO_PAUTA. Override permitido apenas para ADMIN via
+  `{overrideCLJ: {motivo}}` (motivo ≥ 20 chars), auditado em AuditLog.
+- 7 testes novos.
+
+**P0-2 — Audit log do voto individual (RN-003)** — commit `43c64c2`
+
+- `registrarVoto()` aceita `auditContext: {request, session}` opcional.
+- POST `/api/painel/votacao` e POST `/api/sessoes/[id]/votacao` propagam
+  request+session para registrar `VOTO_REGISTRADO` em AuditLog
+  (IP, user-agent, payload completo). Antes, só `VOTO_RETROATIVO`
+  gerava log.
+- 3 testes novos.
+
+**P0-3 — Advisory lock no Protocolo** — commit `9a53d12`
+
+- `criarProtocolo()` envolve advisory lock + leitura + create em UMA
+  transação Prisma (`pg_advisory_xact_lock(lockId)`). Antes, `findFirst+1`
+  sem lock duplicava números em concorrência.
+- Lock ID derivado de hash determinístico `protocolo::{ano}`.
+- 2 testes novos (concorrência 10x serializada).
+
+**P0-4 — Validação de mandato ativo no voto (RN-061)** — commit `5b64150`
+
+- Novo helper `validarMandatoAtivo(parlamentarId, sessaoId)`.
+- `upsertVotoIndividual()` lança erro RN-061 antes do upsert.
+- `registrarVoto()` (painel-tempo-real) retorna false + log.warn.
+- Bloqueia voto de parlamentar com Mandato.ativo=false na legislatura
+  da sessão.
+- 6 testes novos.
+
+**P0-5 — Resultado calculado server-side (anti-tamper)** — commit `9180ddb`
+
+- Novo utility puro `calcularResultadoVotacao({sim,nao,abstencao,quorum})`
+  centraliza derivação do resultado (APROVADA/REJEITADA/EMPATE/SEM_QUORUM).
+- `finalizarVotacao()` refatorado para usar o utility.
+- PUT `/api/sessoes/[id]/votacao/turno` tinha vetor de tampering: aceitava
+  `resultado` do body e usava direto. Schema agora aceita apenas
+  `{itemId, turno, adiada?}`. Override administrativo permitido apenas
+  para `ADIADA`.
+- 8 testes novos.
+
+**Total**: 26 testes novos, 906/906 passando.
+**Branch**: `feature/p0-legislativo-fluxo-2026-05` (aguarda push/PR).
 
 ---
 
