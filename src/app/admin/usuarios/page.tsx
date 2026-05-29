@@ -9,6 +9,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import { 
   Users, 
   Plus, 
@@ -49,6 +65,8 @@ export default function UsuariosPage() {
   const [roleFilter, setRoleFilter] = useState<string>('TODOS')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUsuario, setEditingUsuario] = useState<Usuario | null>(null)
+  // QWv9: AlertDialog para confirmacao de exclusao (substitui confirm() nativo)
+  const [pendingDelete, setPendingDelete] = useState<Usuario | null>(null)
   const { parlamentares } = useParlamentares()
   
   const [formData, setFormData] = useState<{
@@ -149,24 +167,28 @@ export default function UsuariosPage() {
     setIsModalOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    // Impedir auto-exclusão
-    if (session?.user?.id === id) {
+  // Solicita confirmacao via AlertDialog (QWv9)
+  const requestDelete = (usuario: Usuario) => {
+    // Impedir auto-exclusao
+    if (session?.user?.id === usuario.id) {
       toast.error('Voce nao pode excluir seu proprio usuario')
       return
     }
 
-    // Impedir exclusão do último admin
+    // Impedir exclusao do ultimo admin
     const admins = usuarios.filter(u => u.role === 'ADMIN' && u.ativo)
-    const userToDelete = usuarios.find(u => u.id === id)
-    if (userToDelete?.role === 'ADMIN' && admins.length <= 1) {
+    if (usuario.role === 'ADMIN' && admins.length <= 1) {
       toast.error('Nao e possivel excluir o unico administrador do sistema')
       return
     }
 
-    if (!confirm('Tem certeza que deseja excluir este usuario?')) {
-      return
-    }
+    setPendingDelete(usuario)
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    const id = pendingDelete.id
+    setPendingDelete(null)
 
     try {
       await usuariosApi.delete(id)
@@ -384,10 +406,11 @@ export default function UsuariosPage() {
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="destructive"
                       size="sm"
-                      className="min-h-[44px] text-red-600 hover:text-red-700"
-                      onClick={() => handleDelete(usuario.id)}
+                      className="min-h-[44px]"
+                      onClick={() => requestDelete(usuario)}
+                      aria-label={`Excluir usuário ${usuario.name || usuario.email}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -399,17 +422,15 @@ export default function UsuariosPage() {
         )}
       </div>
 
-      {/* Modal de Criação/Edição */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-sm sm:max-w-lg md:max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>
-                {editingUsuario ? 'Editar Usuário' : 'Novo Usuário'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Modal de Criação/Edição — Dialog padronizado (QWv8) */}
+      <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="sm:max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingUsuario ? 'Editar Usuário' : 'Novo Usuário'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="name">Nome</Label>
                   <Input
@@ -507,19 +528,40 @@ export default function UsuariosPage() {
                   <Label htmlFor="ativo">Usuário ativo</Label>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={handleClose}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">
-                    {editingUsuario ? 'Atualizar' : 'Criar'}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {editingUsuario ? 'Atualizar' : 'Criar'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog para confirmacao de exclusao (QWv9 — substitui confirm() nativo) */}
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDelete && (
+                <>
+                  Tem certeza que deseja excluir <strong>{pendingDelete.name || pendingDelete.email}</strong>?
+                  Esta ação não pode ser desfeita.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

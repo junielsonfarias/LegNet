@@ -28,6 +28,16 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import {
   FileSignature,
   ArrowLeft,
   User,
@@ -80,6 +90,8 @@ export default function EmendaDetalhePage() {
   const [emenda, setEmenda] = useState<EmendaApi | null>(null)
   const [loading, setLoading] = useState(true)
   const [showParecerDialog, setShowParecerDialog] = useState(false)
+  // QWv9: AlertDialog para confirmar acoes destrutivas
+  const [confirmAction, setConfirmAction] = useState<null | 'retirar' | 'prejudicar'>(null)
   const [parecer, setParecer] = useState({
     comissao: '',
     tipo: '' as 'FAVORAVEL' | 'CONTRARIO' | 'FAVORAVEL_COM_RESSALVAS' | '',
@@ -163,8 +175,6 @@ export default function EmendaDetalhePage() {
   }
 
   const handleRetirar = async () => {
-    if (!confirm('Deseja retirar esta emenda?')) return
-
     try {
       const response = await fetch(`/api/emendas/${emendaId}?acao=retirar`, {
         method: 'POST',
@@ -186,8 +196,6 @@ export default function EmendaDetalhePage() {
   }
 
   const handlePrejudicar = async () => {
-    if (!confirm('Deseja marcar esta emenda como prejudicada?')) return
-
     try {
       const response = await fetch(`/api/emendas/${emendaId}?acao=prejudicar`, {
         method: 'POST',
@@ -572,7 +580,7 @@ export default function EmendaDetalhePage() {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={handlePrejudicar}
+                    onClick={() => setConfirmAction('prejudicar')}
                   >
                     <AlertTriangle className="mr-2 h-4 w-4" />
                     Prejudicar
@@ -580,7 +588,7 @@ export default function EmendaDetalhePage() {
                   <Button
                     variant="outline"
                     className="w-full text-orange-600 hover:text-orange-700"
-                    onClick={handleRetirar}
+                    onClick={() => setConfirmAction('retirar')}
                   >
                     <History className="mr-2 h-4 w-4" />
                     Retirar
@@ -640,6 +648,37 @@ export default function EmendaDetalhePage() {
           )}
         </div>
       </div>
+
+      {/* AlertDialog para confirmar Retirar/Prejudicar (QWv9 — substitui confirm()) */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === 'retirar' && 'Retirar emenda?'}
+              {confirmAction === 'prejudicar' && 'Marcar emenda como prejudicada?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === 'retirar' &&
+                'A emenda será retirada da tramitação. Esta ação pode ser revertida pela Secretaria.'}
+              {confirmAction === 'prejudicar' &&
+                'A emenda será marcada como prejudicada e não será mais considerada na votação.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const action = confirmAction
+                setConfirmAction(null)
+                if (action === 'retirar') await handleRetirar()
+                if (action === 'prejudicar') await handlePrejudicar()
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
