@@ -18,11 +18,24 @@
  * O servico funciona corretamente sem essas otimizacoes, apenas com latencia maior.
  */
 
+import { NextRequest } from 'next/server'
+import type { Session } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
 import { validarMandatoAtivo } from '@/lib/services/votacao-service'
+import { logAudit } from '@/lib/audit'
 
 const logger = createLogger('painel-tempo-real')
+
+/**
+ * Contexto opcional de auditoria para registrar voto individual
+ * em AuditLog (RN-003 rastreabilidade). Passado pelos endpoints
+ * que tem acesso a request/session.
+ */
+export interface VotoAuditContext {
+  request: NextRequest | Request
+  session?: Session | null
+}
 
 // Tipos para o painel em tempo real
 export interface EstadoSessao {
@@ -454,11 +467,16 @@ export async function iniciarVotacao(
 /**
  * Registra voto de um parlamentar
  * Usa lock para evitar race conditions em votos simultâneos
+ *
+ * P0-2 (RN-003): auditContext opcional grava AuditLog com IP, user-agent
+ * e session. Endpoints que tem request/session DEVEM passar para
+ * preservar rastreabilidade do voto individual.
  */
 export async function registrarVoto(
   sessaoId: string,
   parlamentarId: string,
-  voto: 'SIM' | 'NAO' | 'ABSTENCAO'
+  voto: 'SIM' | 'NAO' | 'ABSTENCAO',
+  auditContext?: VotoAuditContext
 ): Promise<boolean> {
   // Tentar adquirir lock para evitar race conditions
   if (!acquireVoteLock(sessaoId, parlamentarId)) {
@@ -533,6 +551,26 @@ export async function registrarVoto(
       parlamentarId,
       voto
     })
+
+    // P0-2 / RN-003: audit log com IP, user-agent e session
+    if (auditContext) {
+      const proposicaoId = estado.votacaoAtiva.proposicaoId
+      const turno = estado.votacaoAtiva.turno
+      await logAudit({
+        request: auditContext.request,
+        session: auditContext.session,
+        action: 'VOTO_REGISTRADO',
+        entity: 'Votacao',
+        entityId: `${proposicaoId}:${parlamentarId}:${turno}`,
+        metadata: {
+          proposicaoId,
+          parlamentarId,
+          voto,
+          turno,
+          sessaoId
+        }
+      })
+    }
 
     return true
   } catch (error) {

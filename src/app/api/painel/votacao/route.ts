@@ -46,8 +46,11 @@ const VotacaoVotarSchema = VotacaoBaseSchema.extend({
 /**
  * POST - Controle de votação (iniciar, finalizar, votar)
  * SEGURANÇA: Requer permissão votacao.manage
+ *
+ * P0-2: votos individuais sao auditados em AuditLog via auditContext
+ * passado para registrarVoto.
  */
-export const POST = withAuth(async (request: NextRequest) => {
+export const POST = withAuth(async (request: NextRequest, session) => {
   const body = await request.json()
 
   // Validação inicial para determinar a ação
@@ -86,7 +89,10 @@ export const POST = withAuth(async (request: NextRequest) => {
         throw new ValidationError(validation.error.errors[0].message)
       }
       const { parlamentarId, voto } = validation.data
-      const votoRegistrado = await registrarVoto(sessaoId, parlamentarId, voto)
+      const votoRegistrado = await registrarVoto(sessaoId, parlamentarId, voto, {
+        request,
+        session
+      })
       if (!votoRegistrado) {
         throw new ValidationError('Erro ao registrar voto. Votação pode estar fechada ou parlamentar não encontrado.')
       }
