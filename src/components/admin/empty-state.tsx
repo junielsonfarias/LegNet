@@ -1,10 +1,14 @@
+/**
+ * @deprecated Use `@/components/ui/empty-state` em vez disso.
+ * Mantido aqui apenas para retrocompatibilidade. A API antiga
+ * (onCreateClick + createLabel) e mapeada para a nova (action).
+ */
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { FileText, Plus, LucideIcon } from 'lucide-react'
+import { EmptyState as UIEmptyState } from '@/components/ui/empty-state'
+import type { LucideIcon } from 'lucide-react'
 
-interface EmptyStateProps {
+interface LegacyEmptyStateProps {
   icon?: LucideIcon
   title: string
   description?: string
@@ -13,25 +17,18 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon: Icon = FileText,
+  icon,
   title,
   description,
   onCreateClick,
   createLabel = 'Criar',
-}: EmptyStateProps) {
+}: LegacyEmptyStateProps) {
   return (
-    <Card>
-      <CardContent className="text-center py-12">
-        <Icon className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-        <h3 className="text-lg font-semibold mb-1">{title}</h3>
-        {description && <p className="text-sm text-muted-foreground mb-4">{description}</p>}
-        {onCreateClick && (
-          <Button onClick={onCreateClick} className="mt-2">
-            <Plus className="h-4 w-4 mr-2" />
-            {createLabel}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <UIEmptyState
+      icon={icon}
+      title={title}
+      description={description}
+      action={onCreateClick ? { label: createLabel, onClick: onCreateClick } : undefined}
+    />
   )
 }

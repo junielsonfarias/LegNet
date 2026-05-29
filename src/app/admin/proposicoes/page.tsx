@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { FileText, Plus, ChevronLeft, ChevronRight, FileCheck } from 'lucide-react'
 import { ProposicoesListSkeleton } from '@/components/skeletons/proposicao-skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useProposicoesState } from './_hooks/use-proposicoes-state'
 import { useProposicoesPagination } from './_hooks/use-proposicoes-pagination'
 import { useProposicaoStatusDetalhado } from './_hooks/use-proposicao-status-detalhado'
@@ -242,15 +243,15 @@ function ProposicoesContent() {
 
         {/* Estado vazio */}
         {filteredProposicoes.length === 0 && (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-            <FileText className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-1">Nenhuma proposição encontrada</h3>
-            <p className="text-gray-500">
-              {searchTerm || statusFilter !== 'TODOS' || tipoFilter !== 'TODOS' || anoFilter !== 'TODOS' || autorFilter !== 'TODOS'
-                ? 'Tente ajustar os filtros de busca'
-                : 'Clique em "Nova Proposição" para criar a primeira'}
-            </p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="Nenhuma proposição encontrada"
+            description={
+              searchTerm || statusFilter !== 'TODOS' || tipoFilter !== 'TODOS' || anoFilter !== 'TODOS' || autorFilter !== 'TODOS'
+                ? 'Tente ajustar os filtros de busca para ver mais resultados.'
+                : 'Cadastre a primeira proposição da legislatura. Projetos de lei, requerimentos, moções, etc.'
+            }
+          />
         )}
       </div>
 

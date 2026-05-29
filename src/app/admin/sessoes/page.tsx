@@ -25,6 +25,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { SessoesListSkeleton } from '@/components/skeletons/sessao-skeleton'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export default function SessoesAdminPage() {
   const { sessoes, loading, create, update, remove } = useSessoes()
@@ -539,23 +540,18 @@ export default function SessoesAdminPage() {
       </div>
 
       {filteredSessoes.length === 0 && !loading && (
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Nenhuma sessão encontrada
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Comece cadastrando a primeira sessão.'}
-            </p>
-            {!searchTerm && (
-              <Button onClick={() => setShowForm(true)} className="flex items-center gap-2 mx-auto">
-                <Plus className="h-4 w-4" />
-                Nova Sessão
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Calendar}
+          title="Nenhuma sessão encontrada"
+          description={searchTerm
+            ? 'Tente ajustar os filtros de busca para ver mais resultados.'
+            : 'Comece cadastrando a primeira sessão plenária da legislatura.'}
+          action={!searchTerm ? {
+            label: 'Nova Sessão',
+            onClick: () => setShowForm(true),
+            icon: Plus,
+          } : undefined}
+        />
       )}
     </div>
   )
