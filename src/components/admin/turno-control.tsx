@@ -11,10 +11,22 @@ import {
   Clock,
   Vote,
   ArrowRight,
-  Info
+  Info,
+  PauseCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/logging/logger'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
 
 const log = createLogger('turno-control')
 
@@ -104,26 +116,31 @@ export function TurnoControl({
     }
   }
 
-  const finalizarTurno = async (turno: number, resultado?: string) => {
+  /**
+   * Adia votação do turno atual (decisão administrativa).
+   * P0-5: backend não aceita mais resultado APROVADA/REJEITADA do cliente,
+   * apenas a flag `adiada: true` como override administrativo.
+   */
+  const adiarTurno = async (turno: number) => {
     try {
       setExecutando(true)
       const response = await fetch(`/api/sessoes/${sessaoId}/votacao/turno`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId, turno, resultado })
+        body: JSON.stringify({ itemId, turno, adiada: true })
       })
 
       const data = await response.json()
       if (data.success) {
-        toast.success(data.data.mensagem || `${turno}º turno finalizado`)
+        toast.success(`Votação do ${turno}º turno adiada`)
         await carregarTurnoInfo()
         onTurnoFinalizado?.()
       } else {
-        toast.error(data.error || 'Erro ao finalizar turno')
+        toast.error(data.error || 'Erro ao adiar votação')
       }
     } catch (error) {
-      log.error('Erro ao finalizar turno', error)
-      toast.error('Erro ao finalizar turno')
+      log.error('Erro ao adiar turno', error)
+      toast.error('Erro ao adiar votação')
     } finally {
       setExecutando(false)
     }
@@ -318,6 +335,46 @@ export function TurnoControl({
               <AlertCircle className="h-4 w-4" />
               {turnoInfo.motivoSegundoTurno}
             </div>
+          )}
+
+          {/* Botao adiar votacao do turno atual (P0-5: override administrativo)
+              - 1o turno: disponivel se ainda nao foi votado
+              - 2o turno: disponivel se 1o foi aprovado e 2o ainda nao foi votado */}
+          {((turnoInfo.turnoAtual === 1 && !turnoInfo.resultadoTurno1) ||
+            (turnoInfo.turnoAtual === 2 && !turnoInfo.resultadoTurno2)) && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={executando}
+                  className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                >
+                  <PauseCircle className="mr-2 h-4 w-4" />
+                  Adiar votação
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Adiar votação do {turnoInfo.turnoAtual}º turno?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A decisão de adiar é administrativa (do Presidente da Mesa).
+                    O item será marcado como ADIADO e poderá ser pautado em sessão
+                    futura. Esta ação será registrada em auditoria.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => adiarTurno(turnoInfo.turnoAtual)}
+                    className="bg-yellow-600 hover:bg-yellow-700"
+                  >
+                    Confirmar adiamento
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       </CardContent>

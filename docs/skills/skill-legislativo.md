@@ -1,6 +1,43 @@
 # Skill: Processo Legislativo
 
-> **Ultima atualizacao**: 2026-05-14 (Fase 4 do PLANO-CORRECOES-MAIO-2026)
+> **Ultima atualizacao**: 2026-05-29 (Sprint P0-Legislativo — RN-030 enforce + override admin)
+
+## Sprint P0-Legislativo (2026-05-29)
+
+### P0-1 — Enforcement RN-030 (CLJ obrigatoria)
+
+Local: `src/lib/services/tramitacao-service.ts:validarPassagemCLJ` +
+`src/app/api/proposicoes/[id]/tramitar/route.ts`.
+
+```ts
+// Bloqueio padrao (enforce)
+const cljCheck = await validarPassagemCLJ(proposicaoId, 'enforce')
+if (!cljCheck.valid) throw new ValidationError(cljCheck.errors.join('; '))
+
+// Modo legado (warning, retrocompat)
+const cljCheck = await validarPassagemCLJ(proposicaoId, 'warning')
+```
+
+Tipos dispensados: REQUERIMENTO, MOCAO, VOTO_PESAR, VOTO_APLAUSO, INDICACAO.
+
+**Override admin**: payload `{overrideCLJ: {motivo: string(>=20)}}`. Apenas
+`session.user.role === 'ADMIN'` pode usar. Override gera AuditLog
+`action='RN030_OVERRIDE_CLJ'`.
+
+### P0-5 — Resultado de votacao server-side
+
+NUNCA aceitar `resultado` do body em endpoints que persistam
+`VotacaoAgrupada`/`Votacao`. Usar utility puro:
+
+```ts
+import { calcularResultadoVotacao } from '@/lib/services/votacao-service'
+const resultado = calcularResultadoVotacao({ sim, nao, abstencao, quorumNecessario })
+// 'APROVADA' | 'REJEITADA' | 'EMPATE' | 'SEM_QUORUM'
+```
+
+Unica excecao aceita do cliente: `adiada: true` (decisao administrativa).
+
+---
 
 ## Visao Geral
 

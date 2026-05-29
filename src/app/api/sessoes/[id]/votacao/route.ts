@@ -304,25 +304,25 @@ export const POST = withErrorHandler(async (
     })
   })
 
-  // RN-078: Registrar auditoria para voto retroativo
-  if (isRetroativo) {
-    if (session?.user) {
-      await logAudit({
-        request,
-        session,
-        action: 'VOTO_RETROATIVO',
-        entity: 'Votacao',
-        entityId: voto.id,
-        metadata: {
-          sessaoId,
-          proposicaoId: validatedData.proposicaoId,
-          parlamentarId: validatedData.parlamentarId,
-          voto: validatedData.voto,
-          proposicao: `${proposicao.numero}/${proposicao.ano}`,
-          timestamp: new Date().toISOString()
-        }
-      })
-    }
+  // P0-2 / RN-003: audit log de todo voto persistido (IP + user-agent + session)
+  // RN-078: distingue VOTO_RETROATIVO de VOTO_REGISTRADO via action
+  if (session?.user) {
+    await logAudit({
+      request,
+      session,
+      action: isRetroativo ? 'VOTO_RETROATIVO' : 'VOTO_REGISTRADO',
+      entity: 'Votacao',
+      entityId: voto.id,
+      metadata: {
+        sessaoId,
+        proposicaoId: validatedData.proposicaoId,
+        parlamentarId: validatedData.parlamentarId,
+        voto: validatedData.voto,
+        turno: turnoAtual,
+        proposicao: `${proposicao.numero}/${proposicao.ano}`,
+        timestamp: new Date().toISOString()
+      }
+    })
   }
 
   return createSuccessResponse(voto, 'Voto registrado com sucesso')

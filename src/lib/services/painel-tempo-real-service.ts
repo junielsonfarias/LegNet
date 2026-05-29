@@ -18,10 +18,24 @@
  * O servico funciona corretamente sem essas otimizacoes, apenas com latencia maior.
  */
 
+import { NextRequest } from 'next/server'
+import type { Session } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { createLogger } from '@/lib/logging/logger'
+import { validarMandatoAtivo, calcularResultadoVotacao } from '@/lib/services/votacao-service'
+import { logAudit } from '@/lib/audit'
 
 const logger = createLogger('painel-tempo-real')
+
+/**
+ * Contexto opcional de auditoria para registrar voto individual
+ * em AuditLog (RN-003 rastreabilidade). Passado pelos endpoints
+ * que tem acesso a request/session.
+ */
+export interface VotoAuditContext {
+  request: NextRequest | Request
+  session?: Session | null
+}
 
 // Tipos para o painel em tempo real
 export interface EstadoSessao {
@@ -453,11 +467,16 @@ export async function iniciarVotacao(
 /**
  * Registra voto de um parlamentar
  * Usa lock para evitar race conditions em votos simultâneos
+ *
+ * P0-2 (RN-003): auditContext opcional grava AuditLog com IP, user-agent
+ * e session. Endpoints que tem request/session DEVEM passar para
+ * preservar rastreabilidade do voto individual.
  */
 export async function registrarVoto(
   sessaoId: string,
   parlamentarId: string,
-  voto: 'SIM' | 'NAO' | 'ABSTENCAO'
+  voto: 'SIM' | 'NAO' | 'ABSTENCAO',
+  auditContext?: VotoAuditContext
 ): Promise<boolean> {
   // Tentar adquirir lock para evitar race conditions
   if (!acquireVoteLock(sessaoId, parlamentarId)) {
@@ -477,6 +496,18 @@ export async function registrarVoto(
 
     const votoExistente = estado.votacaoAtiva.votosIndividuais.find(v => v.parlamentarId === parlamentarId)
     if (!votoExistente) {
+      return false
+    }
+
+    // P0-4: parlamentar deve ter mandato ativo na legislatura da sessao
+    const mandato = await validarMandatoAtivo(parlamentarId, sessaoId)
+    if (!mandato.valido) {
+      logger.warn('Voto rejeitado: mandato inativo', {
+        action: 'registrar_voto_mandato',
+        sessaoId,
+        parlamentarId,
+        motivo: mandato.motivo
+      })
       return false
     }
 
@@ -521,6 +552,26 @@ export async function registrarVoto(
       voto
     })
 
+    // P0-2 / RN-003: audit log com IP, user-agent e session
+    if (auditContext) {
+      const proposicaoId = estado.votacaoAtiva.proposicaoId
+      const turno = estado.votacaoAtiva.turno
+      await logAudit({
+        request: auditContext.request,
+        session: auditContext.session,
+        action: 'VOTO_REGISTRADO',
+        entity: 'Votacao',
+        entityId: `${proposicaoId}:${parlamentarId}:${turno}`,
+        metadata: {
+          proposicaoId,
+          parlamentarId,
+          voto,
+          turno,
+          sessaoId
+        }
+      })
+    }
+
     return true
   } catch (error) {
     logger.error('Erro ao registrar voto', {
@@ -556,13 +607,10 @@ export async function finalizarVotacao(sessaoId: string): Promise<VotacaoAtiva |
   estado.votacaoAtiva.status = 'FECHADA'
 
   const { sim, nao, abstencao, ausente } = estado.votacaoAtiva.votos
-  if (sim > nao) {
-    estado.votacaoAtiva.resultado = 'APROVADA'
-  } else if (nao > sim) {
-    estado.votacaoAtiva.resultado = 'REJEITADA'
-  } else {
-    estado.votacaoAtiva.resultado = 'EMPATE'
-  }
+  // P0-5: resultado SEMPRE calculado server-side via utility puro
+  const resultadoCalculado = calcularResultadoVotacao({ sim, nao, abstencao })
+  estado.votacaoAtiva.resultado =
+    resultadoCalculado === 'SEM_QUORUM' ? 'EMPATE' : resultadoCalculado
 
   const proposicaoId = estado.votacaoAtiva.proposicaoId
   const turno = estado.votacaoAtiva.turno

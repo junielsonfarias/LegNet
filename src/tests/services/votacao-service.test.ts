@@ -1,10 +1,19 @@
-import { vi } from "vitest"
+import { vi, beforeEach } from "vitest"
+
+const { mockPrisma } = vi.hoisted(() => ({
+  mockPrisma: {
+    sessao: { findUnique: vi.fn() },
+    mandato: { findFirst: vi.fn() },
+    votacao: { upsert: vi.fn() }
+  }
+}))
+
 vi.mock('@/lib/logging/logger', () => ({
   createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 
 vi.mock('@/lib/prisma', () => ({
-  prisma: {}
+  prisma: mockPrisma
 }))
 
 vi.mock('@/lib/services/turno-service', () => ({
@@ -39,7 +48,10 @@ vi.mock('@/lib/services/turno-service', () => ({
 import {
   calcularQuorum,
   deveSerVotacaoNominal,
-  verificarDoisTurnos
+  verificarDoisTurnos,
+  validarMandatoAtivo,
+  upsertVotoIndividual,
+  calcularResultadoVotacao
 } from '@/lib/services/votacao-service'
 
 describe('calcularQuorum', () => {
@@ -206,5 +218,130 @@ describe('verificarDoisTurnos', () => {
 
     expect(resultado.requer).toBe(false)
     expect(resultado.config.totalTurnos).toBe(1)
+  })
+})
+
+describe('validarMandatoAtivo (P0-4 / RN-061)', () => {
+  beforeEach(() => {
+    mockPrisma.sessao.findUnique.mockReset()
+    mockPrisma.mandato.findFirst.mockReset()
+  })
+
+  it('valido quando sessao tem legislaturaId e parlamentar tem mandato ativo', async () => {
+    mockPrisma.sessao.findUnique.mockResolvedValue({ legislaturaId: 'leg-1' })
+    mockPrisma.mandato.findFirst.mockResolvedValue({ id: 'm-1' })
+
+    const result = await validarMandatoAtivo('parl-1', 'sess-1')
+
+    expect(result.valido).toBe(true)
+    expect(mockPrisma.mandato.findFirst).toHaveBeenCalledWith({
+      where: { parlamentarId: 'parl-1', legislaturaId: 'leg-1', ativo: true },
+      select: { id: true }
+    })
+  })
+
+  it('invalido quando parlamentar nao tem mandato ativo na legislatura', async () => {
+    mockPrisma.sessao.findUnique.mockResolvedValue({ legislaturaId: 'leg-1' })
+    mockPrisma.mandato.findFirst.mockResolvedValue(null)
+
+    const result = await validarMandatoAtivo('parl-1', 'sess-1')
+
+    expect(result.valido).toBe(false)
+    expect(result.motivo).toMatch(/RN-061/)
+    expect(result.motivo).toMatch(/mandato ativo/)
+  })
+
+  it('valido por compatibilidade quando sessao nao tem legislaturaId', async () => {
+    mockPrisma.sessao.findUnique.mockResolvedValue({ legislaturaId: null })
+
+    const result = await validarMandatoAtivo('parl-1', 'sess-1')
+
+    expect(result.valido).toBe(true)
+    expect(mockPrisma.mandato.findFirst).not.toHaveBeenCalled()
+  })
+
+  it('valido quando sessao nao existe (defensivo)', async () => {
+    mockPrisma.sessao.findUnique.mockResolvedValue(null)
+
+    const result = await validarMandatoAtivo('parl-1', 'inexistente')
+
+    expect(result.valido).toBe(true)
+    expect(mockPrisma.mandato.findFirst).not.toHaveBeenCalled()
+  })
+})
+
+describe('calcularResultadoVotacao (P0-5 anti-tamper)', () => {
+  it('sim > nao retorna APROVADA', () => {
+    expect(calcularResultadoVotacao({ sim: 5, nao: 3 })).toBe('APROVADA')
+  })
+
+  it('nao > sim retorna REJEITADA', () => {
+    expect(calcularResultadoVotacao({ sim: 3, nao: 5 })).toBe('REJEITADA')
+  })
+
+  it('sim === nao retorna EMPATE', () => {
+    expect(calcularResultadoVotacao({ sim: 5, nao: 5 })).toBe('EMPATE')
+  })
+
+  it('abstencao nao afeta APROVADA/REJEITADA', () => {
+    expect(calcularResultadoVotacao({ sim: 5, nao: 3, abstencao: 10 })).toBe('APROVADA')
+    expect(calcularResultadoVotacao({ sim: 3, nao: 5, abstencao: 10 })).toBe('REJEITADA')
+  })
+
+  it('total < quorumNecessario retorna SEM_QUORUM', () => {
+    expect(calcularResultadoVotacao({ sim: 2, nao: 1, abstencao: 0, quorumNecessario: 5 })).toBe('SEM_QUORUM')
+  })
+
+  it('quorum atingido permite cálculo normal', () => {
+    expect(calcularResultadoVotacao({ sim: 3, nao: 2, abstencao: 0, quorumNecessario: 5 })).toBe('APROVADA')
+  })
+
+  it('numeros negativos sao zerados defensivamente', () => {
+    expect(calcularResultadoVotacao({ sim: -5, nao: 0 })).toBe('EMPATE')
+  })
+
+  it('inputs nao-inteiros sao truncados defensivamente', () => {
+    expect(calcularResultadoVotacao({ sim: 5.9, nao: 3.1 })).toBe('APROVADA')
+  })
+})
+
+describe('upsertVotoIndividual (P0-4 enforcement)', () => {
+  beforeEach(() => {
+    mockPrisma.sessao.findUnique.mockReset()
+    mockPrisma.mandato.findFirst.mockReset()
+    mockPrisma.votacao.upsert.mockReset()
+  })
+
+  it('lanca erro quando parlamentar nao tem mandato ativo', async () => {
+    mockPrisma.sessao.findUnique.mockResolvedValue({ legislaturaId: 'leg-1' })
+    mockPrisma.mandato.findFirst.mockResolvedValue(null)
+
+    await expect(
+      upsertVotoIndividual({
+        proposicaoId: 'p-1',
+        parlamentarId: 'parl-1',
+        voto: 'SIM',
+        turno: 1,
+        sessaoId: 'sess-1'
+      })
+    ).rejects.toThrow(/RN-061/)
+
+    expect(mockPrisma.votacao.upsert).not.toHaveBeenCalled()
+  })
+
+  it('persiste voto quando parlamentar tem mandato ativo', async () => {
+    mockPrisma.sessao.findUnique.mockResolvedValue({ legislaturaId: 'leg-1' })
+    mockPrisma.mandato.findFirst.mockResolvedValue({ id: 'm-1' })
+    mockPrisma.votacao.upsert.mockResolvedValue({ id: 'v-1' })
+
+    await upsertVotoIndividual({
+      proposicaoId: 'p-1',
+      parlamentarId: 'parl-1',
+      voto: 'SIM',
+      turno: 1,
+      sessaoId: 'sess-1'
+    })
+
+    expect(mockPrisma.votacao.upsert).toHaveBeenCalledTimes(1)
   })
 })

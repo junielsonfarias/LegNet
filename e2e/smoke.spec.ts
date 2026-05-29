@@ -20,26 +20,27 @@ test.describe('@smoke fluxos críticos', () => {
   test('login renderiza formulário acessível', async ({ page }) => {
     await page.goto('/login')
     await expect(page.getByLabel(/email|usuário/i)).toBeVisible()
-    await expect(page.getByLabel(/senha/i)).toBeVisible()
+    // O botao "mostrar/ocultar senha" tambem casa /senha/i — restringir ao input
+    await expect(page.locator('input#password')).toBeVisible()
     await expect(page.getByRole('button', { name: /entrar|login|acessar/i })).toBeVisible()
   })
 
   test('portal transparência carrega índice', async ({ page }) => {
     const response = await page.goto('/transparencia')
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.locator('main, body')).toBeVisible()
+    await expect(page.locator('body')).toBeVisible()
   })
 
   test('listagem de proposições carrega', async ({ page }) => {
     const response = await page.goto('/legislativo/proposicoes')
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.locator('main, body')).toBeVisible()
+    await expect(page.locator('body')).toBeVisible()
   })
 
   test('listagem de parlamentares carrega', async ({ page }) => {
     const response = await page.goto('/parlamentares')
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.locator('main, body')).toBeVisible()
+    await expect(page.locator('body')).toBeVisible()
   })
 
   test('rota protegida /admin redireciona para login', async ({ page }) => {

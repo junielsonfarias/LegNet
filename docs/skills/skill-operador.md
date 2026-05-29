@@ -1,5 +1,39 @@
 # Skill: Painel do Operador
 
+> **Ultima atualizacao**: 2026-05-29 (Sprint P0-Legislativo)
+
+## Sprint P0-Legislativo (2026-05-29)
+
+### Audit log do voto (P0-2 / RN-003)
+
+`registrarVoto(sessaoId, parlamentarId, voto, auditContext?)` em
+`painel-tempo-real-service.ts`. Endpoints devem passar
+`{request, session}` para gerar `AuditLog` com IP + user-agent.
+
+```ts
+// POST /api/painel/votacao
+const ok = await registrarVoto(sessaoId, parlamentarId, voto, { request, session })
+```
+
+POST `/api/sessoes/[id]/votacao` audita tanto voto regular
+(`VOTO_REGISTRADO`) quanto retroativo (`VOTO_RETROATIVO`).
+
+### Mandato ativo no voto (P0-4 / RN-061)
+
+`validarMandatoAtivo(parlamentarId, sessaoId)` chamada em todo voto
+individual (`upsertVotoIndividual` e `registrarVoto`). Parlamentar com
+`Mandato.ativo=false` na legislatura da sessão e bloqueado.
+
+### Resultado anti-tamper (P0-5)
+
+Painel publico e admin nao devem confiar em `resultado` enviado pelo
+cliente. `finalizarVotacao()` deriva server-side via
+`calcularResultadoVotacao({sim,nao,abstencao})`. PUT `/votacao/turno`
+aceita apenas `{itemId, turno, adiada?}` — override administrativo
+para ADIADA, nunca para APROVADA/REJEITADA.
+
+---
+
 ## Visao Geral
 
 O Painel do Operador e a interface central para controle de sessoes legislativas em tempo real. Permite gerenciar presenca, votacoes, cronometros de oradores e transmissao ao vivo. O operador controla todo o fluxo da sessao desde a abertura ate o encerramento.

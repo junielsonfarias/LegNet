@@ -8,32 +8,57 @@ beforeAll(() => {
   }
 })
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    protocolo: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      count: vi.fn().mockResolvedValue(0),
-      update: vi.fn(),
-      delete: vi.fn(),
-      groupBy: vi.fn().mockResolvedValue([]),
+vi.mock('@/lib/prisma', () => {
+  const protocoloFindFirst = vi.fn()
+  const protocoloCreate = vi.fn()
+  // Fila serial que simula advisory lock do PostgreSQL
+  let txQueue: Promise<unknown> = Promise.resolve()
+
+  return {
+    prisma: {
+      protocolo: {
+        create: protocoloCreate,
+        findFirst: protocoloFindFirst,
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
+        update: vi.fn(),
+        delete: vi.fn(),
+        groupBy: vi.fn().mockResolvedValue([]),
+      },
+      protocoloAnexo: {
+        create: vi.fn(),
+        delete: vi.fn(),
+      },
+      protocoloTramitacao: {
+        create: vi.fn(),
+      },
+      proposicao: {
+        findFirst: vi.fn(),
+        create: vi.fn(),
+      },
+      $transaction: vi.fn((arg: unknown) => {
+        // Suporta callback async (advisory lock + read + create)
+        if (typeof arg === 'function') {
+          const txMock = {
+            $queryRaw: vi.fn().mockResolvedValue([]),
+            protocolo: {
+              findFirst: protocoloFindFirst,
+              create: protocoloCreate
+            }
+          }
+          // Serializa transacoes (simula pg_advisory_xact_lock)
+          const callback = arg as (tx: unknown) => Promise<unknown>
+          const result = txQueue.then(() => callback(txMock))
+          txQueue = result.catch(() => undefined)
+          return result
+        }
+        // Fallback: array de promises
+        return Promise.all(arg as unknown[])
+      }),
     },
-    protocoloAnexo: {
-      create: vi.fn(),
-      delete: vi.fn(),
-    },
-    protocoloTramitacao: {
-      create: vi.fn(),
-    },
-    proposicao: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-    },
-    $transaction: vi.fn((arr: unknown[]) => Promise.all(arr)),
-  },
-}))
+  }
+})
 
 vi.mock('@/lib/utils/secure-id', () => ({
   generateSecureCode: vi.fn(() => 'ABCD1234'),
@@ -58,12 +83,13 @@ describe('criarProtocolo (P0-6 - CPF/CNPJ protegido)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     prisma.protocolo.findFirst.mockResolvedValue(null)
-    prisma.protocolo.create.mockResolvedValue({
-      id: 'p-1',
-      numero: 1,
+    // Mock create retorna os dados conforme passados (P0-3 calcula numero dentro da tx)
+    prisma.protocolo.create.mockImplementation(async ({ data }: { data: { numero: number; etiquetaCodigo: string } }) => ({
+      id: `p-${data.numero}`,
+      numero: data.numero,
       ano: 2026,
-      etiquetaCodigo: 'PROT2026000011ABCD1234',
-    })
+      etiquetaCodigo: data.etiquetaCodigo,
+    }))
   })
 
   it('P0-6: PESSOA_FISICA com CPF -> stored criptografado + hash gerado', async () => {
@@ -232,10 +258,50 @@ describe('criarProtocolo (P0-6 - CPF/CNPJ protegido)', () => {
     })
 
     expect(result).toMatchObject({
-      id: 'p-1',
       numero: 1,
       ano: 2026,
       etiquetaCodigo: expect.stringMatching(/^PROT/),
     })
+  })
+
+  // P0-3: advisory lock + read + create na MESMA transacao
+  it('P0-3: 10 criacoes concorrentes geram 10 numeros sequenciais unicos', async () => {
+    // Persistencia in-memory que respeita a serializacao do mock $transaction
+    const persistidos: number[] = []
+    prisma.protocolo.findFirst.mockImplementation(async () => {
+      if (persistidos.length === 0) return null
+      return { numero: Math.max(...persistidos) }
+    })
+    prisma.protocolo.create.mockImplementation(async ({ data }: { data: { numero: number; etiquetaCodigo: string } }) => {
+      persistidos.push(data.numero)
+      return { id: `p-${data.numero}`, numero: data.numero, ano: 2026, etiquetaCodigo: data.etiquetaCodigo }
+    })
+
+    const results = await Promise.all(
+      Array.from({ length: 10 }, () => criarProtocolo({
+        tipo: 'ENTRADA',
+        nomeRemetente: 'Concorrente',
+        assunto: 'Teste',
+      }))
+    )
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(10)
+    const numeros = results.map(r => r.numero).sort((a, b) => a - b)
+    expect(new Set(numeros).size).toBe(10) // todos unicos
+    expect(numeros).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+  })
+
+  it('P0-3: $transaction recebe callback assincrono (advisory lock + read + create)', async () => {
+    prisma.protocolo.findFirst.mockResolvedValue({ numero: 5 })
+
+    await criarProtocolo({
+      tipo: 'ENTRADA',
+      nomeRemetente: 'Teste',
+      assunto: 'Lock check',
+    })
+
+    // Verifica que $transaction foi chamada com callback (nao com array)
+    const [callbackArg] = (prisma.$transaction as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(typeof callbackArg).toBe('function')
   })
 })
