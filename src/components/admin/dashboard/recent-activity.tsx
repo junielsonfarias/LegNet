@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { UserRole } from '@prisma/client'
+import { Button } from '@/components/ui/button'
 import {
   FileText,
   Vote,
@@ -134,9 +135,9 @@ export function RecentActivity({ userRole, activities = [] }: RecentActivityProp
         })}
       </div>
       {activities.length > 5 && (
-        <button className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 font-medium">
+        <Button variant="ghost" size="sm" className="w-full mt-4">
           Ver todas as atividades
-        </button>
+        </Button>
       )}
       {activities.length === 0 && (
         <div className="text-center py-8 text-gray-400">

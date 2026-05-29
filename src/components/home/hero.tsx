@@ -155,7 +155,12 @@ function QuickAccessCards() {
 export function Hero() {
   const { configuracao } = useConfiguracaoInstitucional()
   const [searchQuery, setSearchQuery] = useState('')
-  const [stats, setStats] = useState({ vereadores: 0, sessoes: 0, materias: 0 })
+  // null = ainda carregando (mostra '—'), number = pronto (anima 0->value)
+  const [stats, setStats] = useState<{ vereadores: number | null; sessoes: number | null; materias: number | null }>({
+    vereadores: null,
+    sessoes: null,
+    materias: null
+  })
 
   useEffect(() => {
     const fetchStat = async (url: string): Promise<number> => {
@@ -294,22 +299,34 @@ export function Hero() {
           {/* Numeros/Estatisticas */}
           <div className="flex items-center justify-center gap-8 md:gap-16">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">
-                <AnimatedNumber value={stats.vereadores} />
+              <div className="text-3xl md:text-4xl font-bold text-white" aria-live="polite">
+                {stats.vereadores === null ? (
+                  <span className="opacity-60" aria-label="Carregando">—</span>
+                ) : (
+                  <AnimatedNumber value={stats.vereadores} />
+                )}
               </div>
               <div className="text-xs md:text-sm text-white/60 mt-1">Vereadores</div>
             </div>
             <div className="w-px h-10 bg-white/20" />
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">
-                <AnimatedNumber value={stats.sessoes} />
+              <div className="text-3xl md:text-4xl font-bold text-white" aria-live="polite">
+                {stats.sessoes === null ? (
+                  <span className="opacity-60" aria-label="Carregando">—</span>
+                ) : (
+                  <AnimatedNumber value={stats.sessoes} />
+                )}
               </div>
               <div className="text-xs md:text-sm text-white/60 mt-1">Sessoes</div>
             </div>
             <div className="w-px h-10 bg-white/20" />
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">
-                <AnimatedNumber value={stats.materias} />
+              <div className="text-3xl md:text-4xl font-bold text-white" aria-live="polite">
+                {stats.materias === null ? (
+                  <span className="opacity-60" aria-label="Carregando">—</span>
+                ) : (
+                  <AnimatedNumber value={stats.materias} />
+                )}
               </div>
               <div className="text-xs md:text-sm text-white/60 mt-1">Materias</div>
             </div>

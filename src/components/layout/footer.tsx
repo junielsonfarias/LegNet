@@ -91,8 +91,8 @@ export function Footer() {
         {/* Separador mobile */}
         <div className="border-t border-white/10 mb-6 md:hidden" />
 
-        {/* Links em 3 colunas no mobile, 4 no desktop */}
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-4 md:gap-8">
+        {/* Links: 2 cols em <sm, 3 cols em sm, 4 cols em md+ — melhor legibilidade em telas pequenas */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-8">
           {/* Info da Câmara (só desktop) */}
           <div className="hidden md:block space-y-4">
             <h3 className="text-lg font-semibold text-camara-primary">

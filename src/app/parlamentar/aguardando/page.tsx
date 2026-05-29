@@ -130,8 +130,8 @@ export default function AguardandoPresencaPage() {
       <div className="text-center space-y-8 max-w-lg">
         {/* Ícone animado */}
         <div className="relative">
-          <div className="w-32 h-32 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto border-4 border-yellow-500/30">
-            <Users className="h-16 w-16 text-yellow-400" />
+          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto border-4 border-yellow-500/30">
+            <Users className="h-12 w-12 sm:h-16 sm:w-16 text-yellow-400" />
           </div>
           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
             <div className="flex items-center gap-1.5 bg-yellow-500/20 px-3 py-1 rounded-full border border-yellow-500/30">
