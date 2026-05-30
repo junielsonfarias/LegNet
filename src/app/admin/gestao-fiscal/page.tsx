@@ -19,6 +19,7 @@ import {
   Download
 } from 'lucide-react'
 import { RedirectConfig } from '@/components/admin/redirect-config'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 // Dados inicializados vazios - substituir por chamadas de API
 const mockReceitas: any[] = []
@@ -26,6 +27,7 @@ const mockReceitas: any[] = []
 const mockDespesas: any[] = []
 
 export default function GestaoFiscalAdminPage() {
+  const confirm = useConfirm()
   const [receitas, setReceitas] = useState(mockReceitas)
   const [despesas, setDespesas] = useState(mockDespesas)
   const [activeTab, setActiveTab] = useState<'receitas' | 'despesas'>('receitas')
@@ -111,13 +113,18 @@ export default function GestaoFiscalAdminPage() {
     setShowForm(true)
   }
 
-  const handleDelete = (id: number) => {
-    if (confirm('Tem certeza que deseja excluir este item?')) {
-      if (activeTab === 'receitas') {
-        setReceitas(prev => prev.filter(r => r.id !== id))
-      } else {
-        setDespesas(prev => prev.filter(d => d.id !== id))
-      }
+  const handleDelete = async (id: number) => {
+    const ok = await confirm({
+      title: 'Excluir item?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    if (activeTab === 'receitas') {
+      setReceitas(prev => prev.filter(r => r.id !== id))
+    } else {
+      setDespesas(prev => prev.filter(d => d.id !== id))
     }
   }
 

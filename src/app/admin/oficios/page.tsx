@@ -12,6 +12,7 @@ import {
   Calendar, User, FileText, CheckCircle, XCircle, ExternalLink
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 interface Oficio {
   id: string
@@ -26,6 +27,7 @@ interface Oficio {
 }
 
 export default function OficiosPage() {
+  const confirm = useConfirm()
   const [oficios, setOficios] = useState<Oficio[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -115,7 +117,13 @@ export default function OficiosPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja excluir este ofício?')) return
+    const ok = await confirm({
+      title: 'Excluir ofício?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
     try {
       const res = await fetch(`/api/oficios/${id}`, { method: 'DELETE' })
       const result = await res.json()

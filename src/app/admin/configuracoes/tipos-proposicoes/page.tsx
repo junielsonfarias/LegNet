@@ -40,6 +40,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { QuorumConfigForm } from '@/components/admin/quorum-config-form'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 // Lazy loading do editor pesado de fluxo de tramitação
 const FluxoTramitacaoEditor = dynamic(
@@ -93,6 +94,7 @@ const CODIGOS_SUGERIDOS = [
 ]
 
 export default function TiposProposicoesPage() {
+  const confirm = useConfirm()
   const [tipos, setTipos] = useState<TipoProposicaoConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -239,9 +241,13 @@ export default function TiposProposicoesPage() {
   }
 
   const handleDelete = async (tipo: TipoProposicaoConfig) => {
-    if (!confirm(`Tem certeza que deseja excluir o tipo "${tipo.nome}"?`)) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Excluir tipo de proposição?',
+      description: `O tipo "${tipo.nome}" será excluído. Proposições já criadas com este tipo serão mantidas.`,
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(`/api/tipos-proposicao/${tipo.id}`, {
@@ -263,9 +269,12 @@ export default function TiposProposicoesPage() {
   }
 
   const handlePopularTipos = async () => {
-    if (!confirm('Deseja popular os tipos de proposicao com os dados padrao? Isso ira criar os tipos iniciais recomendados.')) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Popular tipos de proposição com dados padrão?',
+      description: 'Serão criados os tipos iniciais recomendados (PL, PLC, PR, PDL, REQ, MOC, IND, VP, VA, EMD). Tipos já existentes serão preservados.',
+      confirmLabel: 'Popular',
+    })
+    if (!ok) return
 
     try {
       setSaving(true)

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { FileText, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
 
@@ -68,6 +69,7 @@ export default function AdminDocumentosPage() {
 }
 
 function AdminDocumentosContent() {
+  const confirm = useConfirm()
   const searchParams = useSearchParams()
   const tipoInicial = searchParams?.get('tipo') || ''
 
@@ -176,7 +178,13 @@ function AdminDocumentosContent() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remover este documento?')) return
+    const ok = await confirm({
+      title: 'Remover documento?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Remover',
+    })
+    if (!ok) return
     const r = await fetch(`/api/documentos-transparencia/${id}`, { method: 'DELETE' })
     if (r.ok) {
       toast.success('Removido')

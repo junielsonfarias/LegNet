@@ -11,6 +11,7 @@ import {
   Layers, Loader2, Plus, Trash2, ArrowLeft, Save, X, ExternalLink, FileText,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 interface DocumentoItem {
@@ -69,6 +70,7 @@ function dataDoISO(s: string | null) {
 }
 
 export default function AdminAtasAdesaoSRPPage() {
+  const confirm = useConfirm()
   const [lista, setLista] = useState<AtaItem[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<string | null>(null)
@@ -171,7 +173,13 @@ export default function AdminAtasAdesaoSRPPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remover esta ata? Esta acao nao pode ser desfeita.')) return
+    const ok = await confirm({
+      title: 'Remover ata?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Remover',
+    })
+    if (!ok) return
     try {
       const r = await fetch(`/api/atas-adesao-srp/${id}`, { method: 'DELETE' })
       if (r.ok) {

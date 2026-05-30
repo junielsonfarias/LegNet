@@ -54,6 +54,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { EmendaApi, CriarEmendaInput } from '@/lib/api/emendas-api'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 const TIPO_LABELS: Record<string, string> = {
   'ADITIVA': 'Aditiva',
@@ -104,6 +105,7 @@ interface Parlamentar {
 }
 
 export default function EmendasProposicaoPage() {
+  const confirm = useConfirm()
   const params = useParams()
   const router = useRouter()
   const proposicaoId = params.id as string
@@ -215,7 +217,12 @@ export default function EmendasProposicaoPage() {
   }
 
   const handleRetirar = async (emendaId: string) => {
-    if (!confirm('Deseja retirar esta emenda?')) return
+    const ok = await confirm({
+      title: 'Retirar emenda?',
+      description: 'A emenda será marcada como RETIRADA e não participará da votação.',
+      confirmLabel: 'Retirar',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(`/api/emendas/${emendaId}?acao=retirar`, {

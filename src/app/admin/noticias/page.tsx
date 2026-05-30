@@ -24,10 +24,12 @@ import {
   Image as ImageIcon
 } from 'lucide-react'
 import { useNoticias } from '@/lib/hooks/use-noticias'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
 
 export default function NoticiasAdminPage() {
+  const confirm = useConfirm()
   const { noticias, loading, create, update, remove } = useNoticias()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -140,11 +142,16 @@ export default function NoticiasAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta noticia?')) {
-      const sucesso = await remove(id)
-      if (sucesso) {
-        toast.success('Noticia excluida com sucesso')
-      }
+    const ok = await confirm({
+      title: 'Excluir notícia?',
+      description: 'A notícia será removida do portal público.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    const sucesso = await remove(id)
+    if (sucesso) {
+      toast.success('Notícia excluída com sucesso')
     }
   }
 

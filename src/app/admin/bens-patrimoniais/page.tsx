@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Package, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, MapPin, Building2 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { useBensPatrimoniais, BemPatrimonial } from '@/lib/hooks/use-bens-patrimoniais'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
@@ -17,6 +18,7 @@ const tipos = ['MOVEL', 'IMOVEL']
 const situacoes = ['EM_USO', 'DISPONIVEL', 'CEDIDO', 'BAIXADO', 'EM_MANUTENCAO']
 
 export default function BensPatrimoniaisAdminPage() {
+  const confirm = useConfirm()
   const { bens, loading, create, update, remove } = useBensPatrimoniais()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -78,13 +80,18 @@ export default function BensPatrimoniaisAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este bem?')) {
-      try {
-        await remove(id)
-        toast.success('Bem excluido com sucesso')
-      } catch (error: any) {
-        toast.error(error?.message || 'Erro ao excluir bem patrimonial')
-      }
+    const ok = await confirm({
+      title: 'Excluir bem patrimonial?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    try {
+      await remove(id)
+      toast.success('Bem excluído com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao excluir bem patrimonial')
     }
   }
 

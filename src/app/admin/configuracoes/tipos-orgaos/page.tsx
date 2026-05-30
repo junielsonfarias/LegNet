@@ -26,6 +26,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 type TipoUnidade = 'COMISSAO' | 'MESA_DIRETORA' | 'PLENARIO' | 'PREFEITURA' | 'SECRETARIA' | 'GABINETE' | 'ARQUIVO' | 'PROTOCOLO' | 'ASSESSORIA' | 'OUTROS'
@@ -54,6 +55,7 @@ const TIPOS_LABELS: Record<TipoUnidade, string> = {
 }
 
 export default function TiposOrgaosPage() {
+  const confirm = useConfirm()
   const [unidades, setUnidades] = useState<Unidade[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -141,7 +143,13 @@ export default function TiposOrgaosPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta unidade?')) return
+    const ok = await confirm({
+      title: 'Excluir unidade de tramitação?',
+      description: 'Proposições que dependem desta unidade poderão perder a referência.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const res = await fetch(`/api/configuracoes/unidades-tramitacao/${id}`, {

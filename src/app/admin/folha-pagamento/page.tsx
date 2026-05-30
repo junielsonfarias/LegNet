@@ -22,6 +22,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { useFolhaPagamento, FolhaPagamento } from '@/lib/hooks/use-servidores'
 import { toast } from 'sonner'
 
@@ -42,6 +43,7 @@ const meses = [
 ]
 
 export default function FolhaPagamentoAdminPage() {
+  const confirm = useConfirm()
   const { folhas, loading, create, update, remove } = useFolhaPagamento()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -131,7 +133,13 @@ export default function FolhaPagamentoAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta folha de pagamento?')) {
+    const ok = await confirm({
+      title: 'Excluir folha de pagamento?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (ok) {
       try {
         await remove(id)
         toast.success('Folha excluida com sucesso')

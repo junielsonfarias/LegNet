@@ -19,6 +19,7 @@ import {
   Gavel
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { useLicitacoes, Licitacao } from '@/lib/hooks/use-licitacoes'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
@@ -53,6 +54,7 @@ const tiposLicitacao = [
 ]
 
 export default function LicitacoesAdminPage() {
+  const confirm = useConfirm()
   const { licitacoes, loading, create, update, remove } = useLicitacoes()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -153,7 +155,13 @@ export default function LicitacoesAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta licitacao?')) {
+    const ok = await confirm({
+      title: 'Excluir licitação?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (ok) {
       try {
         await remove(id)
         toast.success('Licitacao excluida com sucesso')

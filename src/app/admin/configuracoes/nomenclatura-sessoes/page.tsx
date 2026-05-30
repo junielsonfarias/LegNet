@@ -29,8 +29,10 @@ import {
 import { nomenclaturaSessoesService } from '@/lib/nomenclatura-sessoes-service'
 import { ConfiguracaoNomenclatura, TipoSessaoNomenclatura, ElementoTemplate } from '@/lib/types/nomenclatura-sessoes'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 export default function NomenclaturaSessoesPage() {
+  const confirm = useConfirm()
   const [configuracao, setConfiguracao] = useState<ConfiguracaoNomenclatura | null>(null)
   const [loading, setLoading] = useState(true)
   const [previewTitulo, setPreviewTitulo] = useState('')
@@ -133,11 +135,16 @@ export default function NomenclaturaSessoesPage() {
     })
   }
 
-  const resetarNumeracao = () => {
-    if (confirm('Tem certeza que deseja resetar toda a numeração? Esta ação não pode ser desfeita.')) {
-      nomenclaturaSessoesService.resetarNumeracao()
-      toast.success('Numeração resetada com sucesso!')
-    }
+  const resetarNumeracao = async () => {
+    const ok = await confirm({
+      title: 'Resetar numeração de sessões?',
+      description: 'TODA a numeração será zerada. Sessões existentes manterão seus números, mas novas sessões começarão de 1. Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Resetar tudo',
+    })
+    if (!ok) return
+    nomenclaturaSessoesService.resetarNumeracao()
+    toast.success('Numeração resetada com sucesso!')
   }
 
   if (loading) {

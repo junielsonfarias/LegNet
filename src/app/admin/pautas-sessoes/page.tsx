@@ -35,6 +35,7 @@ import { AdminBreadcrumbs } from '@/components/admin/admin-breadcrumbs'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 interface Sessao {
   id: string
@@ -86,6 +87,7 @@ interface Pauta {
 }
 
 export default function PautasSessoesAdminPage() {
+  const confirm = useConfirm()
   const [pautas, setPautas] = useState<Pauta[]>([])
   const [sessoesDisponiveis, setSessoesDisponiveis] = useState<Sessao[]>([])
   const [loading, setLoading] = useState(true)
@@ -214,9 +216,13 @@ export default function PautasSessoesAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta pauta? Esta acao nao pode ser desfeita.')) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Excluir pauta?',
+      description: 'A pauta e seus itens serão removidos. Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(`/api/pautas/${id}`, {

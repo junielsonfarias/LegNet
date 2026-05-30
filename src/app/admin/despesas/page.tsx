@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { TrendingDown, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { useDespesas, Despesa } from '@/lib/hooks/use-despesas'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { useContratos } from '@/lib/hooks/use-contratos'
@@ -19,6 +20,7 @@ import { RedirectConfig } from '@/components/admin/redirect-config'
 const situacoes = ['EMPENHADO', 'LIQUIDADO', 'PAGO', 'ANULADO', 'INSCRITA_RP']
 
 export default function DespesasAdminPage() {
+  const confirm = useConfirm()
   const { despesas, loading, create, update, remove } = useDespesas()
   const { licitacoes } = useLicitacoes()
   const { contratos } = useContratos()
@@ -94,13 +96,18 @@ export default function DespesasAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta despesa?')) {
-      try {
-        await remove(id)
-        toast.success('Despesa excluida com sucesso')
-      } catch (error: any) {
-        toast.error(error?.message || 'Erro ao excluir despesa')
-      }
+    const ok = await confirm({
+      title: 'Excluir despesa?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    try {
+      await remove(id)
+      toast.success('Despesa excluída com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao excluir despesa')
     }
   }
 

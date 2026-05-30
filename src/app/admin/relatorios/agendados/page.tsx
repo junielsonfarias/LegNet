@@ -54,6 +54,7 @@ import {
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 interface RelatorioAgendado {
   id: string
@@ -105,6 +106,7 @@ const DIAS_SEMANA = [
 ]
 
 export default function RelatoriosAgendadosPage() {
+  const confirm = useConfirm()
   const [relatorios, setRelatorios] = useState<RelatorioAgendado[]>([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
@@ -197,7 +199,13 @@ export default function RelatoriosAgendadosPage() {
   }
 
   async function removerRelatorio(id: string) {
-    if (!confirm('Deseja realmente remover este relatorio?')) return
+    const ok = await confirm({
+      title: 'Remover relatório agendado?',
+      description: 'O agendamento será cancelado. Histórico de execuções anteriores será mantido.',
+      variant: 'destructive',
+      confirmLabel: 'Remover',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(`/api/relatorios/agendados/${id}`, {

@@ -28,8 +28,10 @@ import {
 import { configuracoesService } from '@/lib/configuracoes-service'
 import { ConfiguracaoUsuario } from '@/lib/types/configuracoes'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 export default function UsuariosPage() {
+  const confirm = useConfirm()
   const [usuarios, setUsuarios] = useState<ConfiguracaoUsuario[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -128,7 +130,13 @@ export default function UsuariosPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este usuário?')) {
+    const ok = await confirm({
+      title: 'Excluir usuário?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (ok) {
       try {
         const sucesso = configuracoesService.deleteUsuario(id)
         if (sucesso) {
