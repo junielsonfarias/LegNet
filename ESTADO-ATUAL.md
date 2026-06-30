@@ -123,6 +123,20 @@ não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
 - 11 parlamentares · 4 comissões · mesa diretora
 - **~1597 arquivos, 2,3 GB** em `public/uploads/`
 
+### Vínculo Ata/Pauta ↔ Sessão (2026-06-30)
+Importador `25-atas-historicas.ts`: os 453 posts da categoria "Pautas e Atas
+das Sessões" (227 atas + 211 pautas, 2016–2023) foram agrupados por (data,
+tipo) e vinculados a sessões. Onde não havia `Sessao` (histórico pré-2024),
+foi **criada a sessão** (status CONCLUIDA, finalizada), ligando `arquivoAta` e
+`arquivoPauta` (PDFs do acervo local). Parser de data PT-BR tolera dia com
+ordinal ("01º de janeiro").
+- **453 posts → 196 sessões reais + 15 placeholders** ("SEM PAUTAS E ATAS EM…"
+  = meses sem sessão, excluídos).
+- **271 sessões** agora (75 CR2 + 196 históricas), **253 com ata**, cobrindo
+  2016–2025. Tipos: 258 ordinárias, 8 extraordinárias, 5 solenes.
+- Idempotente (id `wpsessao-<data>-<tipo>`); sem sobreposição com as sessões
+  CR2 (2024–2025).
+
 ### Melhoria de qualidade end-to-end (2026-06-30)
 Análise de qualidade do projeto: **0 erros TS, 0 warnings ESLint, 906 testes
 passando** (base saudável). Melhorias aplicadas:
