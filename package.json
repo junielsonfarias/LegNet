@@ -24,6 +24,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-2025": "tsx prisma/seed-dados-2025.ts",
     "db:seed-ruropolis": "tsx prisma/seed-ruropolis.ts",
+    "db:import-antigos": "tsx prisma/importers/index.ts",
+    "db:import-antigos:apply": "tsx prisma/importers/index.ts --apply",
     "db:migrate-mock": "tsx prisma/migrate-from-mock.ts",
     "db:limpar": "tsx scripts/limpar-dados-camara.ts",
     "db:limpar:confirm": "tsx scripts/limpar-dados-camara.ts --confirm",

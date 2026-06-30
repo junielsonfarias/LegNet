@@ -99,6 +99,9 @@ logs/
 public/uploads/*
 !public/uploads/.gitkeep
 
+# Backup do site antigo (dump SQL + CSVs com dados pessoais - NUNCA commitar)
+docs/backup antigo/
+
 # Cache
 .cache/
 .turbo/
