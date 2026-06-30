@@ -123,6 +123,25 @@ não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
 - 11 parlamentares · 4 comissões · mesa diretora
 - **~1597 arquivos, 2,3 GB** em `public/uploads/`
 
+### Melhoria de qualidade end-to-end (2026-06-30)
+Análise de qualidade do projeto: **0 erros TS, 0 warnings ESLint, 906 testes
+passando** (base saudável). Melhorias aplicadas:
+- **Testes do código novo**: `src/tests/importers/normalize.test.ts` (25 testes)
+  cobrindo os casos-limite reais da migração (datas Bubble, `splitNumeroAno`,
+  `parseDecimal` BR, placeholders, CSV multilinha). Total: **931 testes**.
+- **Robustez da tela de aprovação**: estado de erro com "Tentar novamente"
+  (não mostra mais "Tudo revisado!" em falha de carregamento) + guarda
+  `Array.isArray` em `documentos`.
+- **Brasão versionado**: exceção no `.gitignore` para `public/uploads/logos/`
+  (assets institucionais fixos, reproduzíveis sem re-extrair o backup).
+- **Segurança de dependências**: `npm audit fix` reduzia 19→8 vulns, mas o
+  bump do vitest/vite (DEV) quebrava o parse de JSX nos testes → revertido
+  (estado verde restaurado). Vulns restantes são DEV (vitest/vite/jsdom/ws —
+  sem impacto em produção). `next`/`nodemailer` (produção) exigem upgrade
+  coordenado com o deploy — RECOMENDADO, não forçado.
+- **CI**: já existe e é maduro (`ci-tests.yml` lint+types+test+build,
+  `security-audit.yml`, `go-no-go.yml`) — cobre os novos testes.
+
 ### Páginas WordPress — Grupos 1 e 2 (2026-06-30)
 Auditoria página-a-página das 84 páginas WP (`post_type=page`) achou dado único
 não migrado. Implementados `23-paginas-wp.ts` e `24-institucional-paginas.ts`:

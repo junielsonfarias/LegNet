@@ -44,20 +44,34 @@ export default function RevisaoAprovacaoPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [revisados, setRevisados] = useState(0)
+  const [erro, setErro] = useState(false)
 
-  useEffect(() => {
+  const carregar = useCallback(() => {
+    setLoading(true)
+    setErro(false)
     fetch('/api/proposicoes?entradaRetroativa=true&status=APRESENTADA&limit=500')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('http ' + r.status)
+        return r.json()
+      })
       .then((d) => setLista(Array.isArray(d?.data) ? d.data : []))
-      .catch(() => toast.error('Falha ao carregar proposições'))
+      .catch(() => {
+        setErro(true)
+        toast.error('Falha ao carregar proposições')
+      })
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    carregar()
+  }, [carregar])
 
   const atual = lista[idx]
   const pdfUrl = useMemo(() => {
     if (!atual) return null
-    const local = atual.documentos?.find((d) => d.url?.startsWith('/uploads/'))
-    return local?.url ?? atual.documentos?.[0]?.url ?? atual.urlDocumento ?? null
+    const docs = Array.isArray(atual.documentos) ? atual.documentos : []
+    const local = docs.find((d) => d?.url?.startsWith('/uploads/'))
+    return local?.url ?? docs[0]?.url ?? atual.urlDocumento ?? null
   }, [atual])
 
   const avancar = useCallback(() => setIdx((i) => i + 1), [])
@@ -103,6 +117,15 @@ export default function RevisaoAprovacaoPage() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Carregando proposições…
+      </div>
+    )
+  }
+
+  if (erro) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
+        <p className="text-muted-foreground">Não foi possível carregar as proposições.</p>
+        <Button onClick={carregar} variant="outline">Tentar novamente</Button>
       </div>
     )
   }
