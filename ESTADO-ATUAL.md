@@ -1,11 +1,215 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-06-30 (Ambiente DEV: banco PostgreSQL local em Docker)
+> **Ultima Atualizacao**: 2026-06-30 (Import dados antigos: análise + Fase 0)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-06-30 — Importação de dados do site antigo: análise + Fase 0
+
+Análise do backup em `docs/backup antigo/` para migrar dados até 2025 ao novo
+sistema. Identificadas 3 fontes: dump WordPress (`banco de dados.sql`), export
+estruturado do Portal CR2/Bubble (34 CSVs) e 2,5 GB de arquivos (2.030 PDFs).
+
+**Decisões aprovadas**: importar tudo (P0→P3); limpar seed Rurópolis e importar
+só Chaves; re-hospedar todos os PDFs no storage local; posts WP como documentos
+legislativos categorizados; corte até 2025-12-31.
+
+**Storage (investigado)**: o sistema grava uploads no **filesystem local**
+(`public/uploads/<pasta>/` via `src/app/api/upload/route.ts`), não no Supabase
+Storage. Estratégia de import: gravar PDFs direto nessas pastas (allowlist em
+`src/lib/security/file-validation.ts`).
+
+**Fase 0 (entregue)**: mapeamento coluna→campo + tabelas de conversão de enums
+com valores reais (Parlamentares=11, Matérias=121, Normas=25, Sessões=75).
+Encoding confirmado UTF-8. Documentos:
+- `docs/PLANO-IMPORTACAO-DADOS-ANTIGOS.md` (plano geral)
+- `docs/import-antigo/01-dicionario-colunas.md` (dicionário/mapeamento)
+
+**Decisões P0 adicionais**: Portarias/Atos (WP) → `DocumentoTransparencia`/
+`Publicacao`; Manifestações → importar com CPF criptografado.
+
+**Fase 1 (P0 — APLICADO no banco DEV local)**: importadores em
+`prisma/importers/` (lib de CSV/datas/arquivos + reset + 7 importadores +
+orquestrador). Storage = `public/uploads/<pasta>/`. Scripts:
+`npm run db:import-antigos` (dry-run, padrão) e `db:import-antigos:apply`.
+`--reset` limpa todas as tabelas preservando auth/admin (guard: só localhost).
+
+**Resultado do apply (`--apply --reset`, 2026-06-30)** — banco DEV local:
+- 11 parlamentares (8 c/ foto) + 11 mandatos + 11 filiações
+- Mesa Diretora (4 membros) + 4 comissões (12 membros)
+- 10 normas jurídicas (duplicatas reais coladas; 12 placeholders ignorados)
+- **121 proposições** (94 REQ, 15 PL, 6 IND, 2 PR, 2 PIN, 2 MOC) — 107 c/ autor
+- 75 sessões (28 atas + 29 pautas re-hospedadas)
+- Arquivos baixados do CDN Bubble: ~151 PDFs/imagens em `public/uploads/`
+- Admin preservado (login `admin@camararuropolis.com` — renomear p/ Chaves)
+
+**Correção de fidelidade**: a fonte CR2 reusa números (3 requerimentos distintos
+como "010/2025"); o importador desambigua o `numero` (sufixo -2/-3) preservando
+todas as matérias e o número oficial no título.
+
+**Config institucional (08-config.ts)**: o `--reset` limpa as tabelas de
+config que o app usa (header/footer/home). Adicionado passo `config` (roda por
+padrão) que recria as `configuracao` com dados REAIS de Chaves (nome, endereço
+Av. Independência s/n Centro, tel (91) 9 8170-6528, e-mail, horário, presidente
+José Orlando Pinho Martins, legislatura 2025/2028) + 5 tipos de expediente.
+APIs validadas no dev server: `/api/parlamentares` e `/api/sessoes` retornam
+dados; `/api/noticias` vazio (chega na P3/WordPress).
+
+**Limitação conhecida**: ~45 arquivos não baixaram — são links Google Drive
+"/view" (não-diretos); os PDFs no CDN Bubble vieram OK. Tratar Drive depois.
+Erros de CSP/VLibras/hydration no console são ruído pré-existente do widget de
+acessibilidade — não relacionados ao import.
+
+**Fase 1 — P1 Transparência (APLICADO, 2026-06-30)**: importadores
+`10-licitacoes`, `11-contratos`, `12-diarias` (+ valores-diária + cotas),
+`13-concursos-obras` (+ convênios). Resultado no banco DEV:
+- Licitações: 16 · Contratos: 18 · Diárias: 32 (15 c/ parlamentar)
+- Valores-diária: 6 · Cotas parlamentar: 4 (declarações PNTP)
+- Concursos/Obras/Convênios: 0 reais (eram só placeholders "Não houve...")
+- +234 arquivos baixados. APIs `/api/licitacoes` e `/api/contratos` OK;
+  `/api/diarias` filtra por ano atual (2026) por padrão — dados de 2025
+  aparecem com `?ano=2025` (comportamento normal, não é bug).
+- 14 nomes de diárias não casados (ex-vereadores/servidores/grafia divergente)
+  — diária importada com nome preservado, só FK nula. Logados p/ revisão.
+
+**Fase 1 — P2/P3 (APLICADO, 2026-06-30)**: importadores `14-manifestacoes`
+(ouvidoria), `15-agenda`, `16-noticias-wp`. Resultado no banco DEV:
+- Manifestações ouvidoria: 5 — **CPF criptografado** (AES-256-GCM via
+  `cpf-utils`, formato `iv:authTag:ciphertext` + cpfHash) — LGPD OK.
+- Agenda externa (compromissos): 17
+- Notícias (WordPress, categoria "Notícias"): 13 — `/api/noticias` OK
+  (home news populada). JSON extraído p/ `docs/backup antigo/wp-noticias.json`.
+- Adicionado `loadEnv()` no orquestrador (garante `ENCRYPTION_KEY`).
+- `/api/ouvidoria` exige autenticação (dados pessoais restritos — correto).
+
+**MIGRAÇÃO CR2 COMPLETA (P0→P3)** no banco DEV local. Resumo geral:
+11 parlamentares · 4 comissões · mesa · 10 normas · 121 proposições ·
+75 sessões · 18 licitações · 18 contratos · 32 diárias · 4 cotas · 6 valores
+diária · 5 manifestações · 17 agenda · 13 notícias · ~625 arquivos (504 MB).
+
+**Revisão de integridade (2026-06-30)**: corte temporal OK (0 datas >2025);
+encoding UTF-8 íntegro; 0 proposições sem ementa/título; 77/77 PDFs de
+proposições existem em disco; CPF round-trip OK (descriptografa válido).
+Bug de fidelidade encontrado e corrigido: licitações também reusavam números
+na fonte (001/2025, 007/2025) — aplicada desambiguação (16→18, sem perda).
+
+**Fase 2 — Complemento histórico WordPress (APLICADO, 2026-06-30)**:
+importador `17-wordpress.ts` — 954 posts (1977–2025) roteados por categoria:
+- **339 proposições** históricas (Requerimentos/PLs/Indicações) — `wp-prop-*`
+- **68 normas** históricas (Leis/Resoluções/Decretos) — `wp-norma-*`
+- **532 publicações** (`Publicacao`): 453 atas/pautas · 26 atos presidência ·
+  23 publicações oficiais · 18 editais · 11 portarias · 1 lei — `wp-pub-*`
+- 15 ignorados (Notícias já importadas / Vereadores)
+- PDFs do acervo local: 2018 extraídos do zip; **515/515 publicações e
+  337 proposições WP com arquivo resolvido em disco** (só 1 link quebrado).
+- Dedup vs CR2 por chave natural (tipo,numero,ano) c/ sufixo histórico `-h<id>`.
+
+**Lição (encoding)**: o `unzip` do Git Bash não casa wildcards neste zip e o
+.NET ZipArchive corrompe nomes acentuados (zip gravado em CP1252). Solução:
+extrair via PowerShell + resolver arquivos por **chave normalizada sem
+não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
+`docs/backup antigo/wp-uploads/` (gitignored); JSONs `wp-posts.json` /
+`wp-noticias.json` no mesmo dir.
+
+### TOTAIS FINAIS (banco DEV local) — migração CR2 + WordPress
+- **460 proposições** · **78 normas** · **532 publicações** · 75 sessões
+- 18 licitações · 18 contratos · 32 diárias · 4 cotas · 6 valores-diária
+- 5 manifestações (CPF cifrado) · 17 agenda · 13 notícias
+- 11 parlamentares · 4 comissões · mesa diretora
+- **~1597 arquivos, 2,3 GB** em `public/uploads/`
+
+### Migração 100% — importadores faltantes (2026-06-30)
+Auditoria backup×banco×tela identificou ~11 CSVs não migrados (~41 registros
+reais). Implementados `21-documentos-transparencia.ts` e
+`22-pesquisa-institucional.ts`:
+- **20 Documentos administrativos** → `Publicacao` (Portarias/Atos, categoria
+  "Documentos Administrativos") · **2 Regulamentação** → `Publicacao`
+- **10 DocumentoTransparencia**: balanço/relatórios anuais (3),
+  Plano de contratação anual, Planejamento estratégico, Relação nominal de
+  remuneração (link externo preservado)
+- **1 Pesquisa de satisfação** + 3 respostas reconstruídas → `PesquisaSatisfacao`
+- **1 UnidadeOrganizacional** (raiz, da Estrutura organizacional)
+- **7 chaves de Configuracao** (SIC/Ouvidoria/LGPD: responsável, e-mail, telefone)
+- Novos documentos com texto extraído (busca por palavra-chave OK, ex.: "nomeação").
+**CSVs restantes sem registro** (despesas, servidores/estagiários,
+fornecedores/prestadores, licitantes, RGF, serviços online) têm **0 registros
+reais na fonte** (só placeholders/links externos) — nada a migrar.
+**Migração agora cobre 100% dos dados reais do backup.**
+
+### Pendências resolvidas: download Drive + tela de aprovação manual (2026-06-30)
+**1) Download Google Drive** (`20-drive.ts` + `downloadDrive` em files.ts):
+baixa via `uc?export=download&id=ID&confirm=t`, re-hospeda local e substitui a
+URL externa. **135 arquivos baixados (0 falhas)** → 0 links Drive restantes;
+sessões: 68/75 ata + pauta agora locais; +6 proposições pesquisáveis após OCR.
+As 52 proposições ainda sem texto são scans de baixíssima qualidade (OCR não lê
+nem a 300 DPI) — pesquisáveis por título/número/ementa.
+
+**2) Tela de aprovação manual** (`/admin/proposicoes/revisao-aprovacao`):
+revisão um-a-um das proposições históricas `entradaRetroativa=true &
+status=APRESENTADA` (238 itens). Mostra o PDF em iframe + dados; botões
+Aprovar/Rejeitar/Arquivar/Pular (atalhos A/R/X/S) chamam
+`PUT /api/proposicoes/[id] { status }`. Link "Revisar Aprovações" adicionado ao
+cabeçalho de `/admin/proposicoes`. Rota protegida (`proposicao.manage`).
+
+### OCR concluído — busca por conteúdo + aprovação recuperada (2026-06-30)
+Tesseract 5.4 (idioma `por` via tessdata_fast) + Poppler instalados; importador
+`19-ocr.ts` (pdftoppm 300 DPI → tesseract). Batch completo:
+- **Proposições pesquisáveis: 402/460** · **Leis/Normas: 66/78** ·
+  **Publicações/Atas: 509/532** (resto = links Google Drive ou scans ruins).
+- Busca global por conteúdo validada: "ambulância", "poço artesiano",
+  "merenda", "iluminação", "tributação", "orçamento" (33), "saúde" (33) →
+  retornam proposições e leis pelo texto OCR.
+- **Aprovação recuperada do PDF escaneado**: 339 proposições WP eram todas
+  APRESENTADA; o OCR leu os carimbos "APROVADO POR/EM UNANIMIDADE" →
+  **115 marcadas APROVADA** (detecção refinada p/ exigir o carimbo, evitando
+  falso positivo de "aprovado" no corpo do pedido). Status do CR2 preservado.
+- Status final proposições: CR2 96 aprovada/14 apresentada/9 tramitação/2
+  rejeitada; WP 115 aprovada/224 apresentada. **Total aprovadas: 211.**
+- Campos de busca: `pdftotext` para PDFs digitais + OCR para scans, gravando
+  `Proposicao.texto`, `NormaJuridica.texto`, `Publicacao.conteudo` (marcador
+  `<!--ocr-->`). Idempotente/resumível (pula registros já com texto).
+
+### Extração de texto p/ busca + análise de aprovação (2026-06-30)
+Importador `18-extrair-texto.ts` (pdftotext) popula `Proposicao.texto`,
+`NormaJuridica.texto`, `Publicacao.conteudo` → busca global por palavra-chave
+(`/api/busca/global` já consulta esses campos; validado: "subsídio" → 6 normas).
+**Resultado**: PDFs digitais OK (13 normas, 21 publicações, 1 proposição), mas
+**proposições e atas são quase todas SCANS** (413 proposições + 494 publicações
+sem camada de texto) → busca por conteúdo nelas exige **OCR** (tesseract +
+rasterizador NÃO instalados no ambiente; só `pdftotext` disponível).
+
+**Aprovação das proposições**: CR2 (121) tem status real de `situacaoMateria`
+(96 aprovadas, 2 rejeitadas, 9 em tramitação, 14 apresentadas). Colunas CR2
+`VOTACAO`/`TRAMITACAO` estão **vazias** (0/121). WordPress (339) = todas
+`APRESENTADA` — **não há campo de status na fonte**; o indício de aprovação,
+quando existe, está **dentro do PDF escaneado** → recuperável só via OCR.
+
+### Reconciliação fonte × sistema (2026-06-30) — SEM perda de registros
+Todas as linhas das fontes conferem (importadas, placeholder ignorado, ou fora
+do corte 2025). Ex.: Diárias 38 = 32 importadas + 2 de 2026 + 4 com nome
+mascarado (`***`). Normas CR2 25 = 10 + 12 placeholder + 3 dedup. Licitações
+24 = 18 + 5 placeholder + 1 de 2026. WordPress 954 = 339+68+532(+1 clash)+15
+ignorados. As únicas lacunas eram de ARQUIVO (registro sempre presente).
+
+**RESOLVIDO — preservação de links Google Drive (2026-06-30)**: `acquireRemote`
+agora detecta URLs não-baixáveis (Google Drive/Docs/"/view") e as PRESERVA como
+**link externo** (`external: true`) em vez de descartar. 141 links preservados.
+Cobertura após o fix: ata **68/75** (40 via Drive), pauta **69/75**,
+proposições CR2 **121/121**, licitações **18/18**, normas CR2 **10/10**.
+Os poucos restantes sem anexo são registros que não tinham link na fonte.
+
+**Pendente (opcional)**: 1 link WP quebrado; vincular autoria via entidade
+`Autor`; extrair texto integral dos PDFs p/ `NormaJuridica.texto`; revisar 14
+nomes de diárias não casados; reescrever URLs de imagens das notícias WP
+(apontam p/ domínio antigo). Container `camara_mysql_tmp` pode ser removido
+(dados já extraídos p/ JSON). Obs.: links Google Drive preservados ficam
+acessíveis ao usuário, mas dependem do compartilhamento do Drive permanecer
+ativo — re-hospedagem definitiva exigiria a API do Drive com autenticação.
 
 ---
 
