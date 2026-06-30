@@ -74,9 +74,14 @@ export async function importConfig(ctx: ImportContext, refs: NucleoRefs): Promis
   // exibido no portal (/api/institucional → header, hero, footer).
   ctx.stats.bump('config_institucional')
   if (!ctx.dryRun) {
+    const LOGO = '/uploads/logos/logo-cm-chaves.png'
+    const BRASAO = '/uploads/logos/brasao-chaves.png'
     await ctx.prisma.configuracaoInstitucional.upsert({
       where: { slug: 'principal' },
-      update: { nomeCasa: 'Câmara Municipal de Chaves', sigla: 'CMC', email: email?.split(',')[0].trim(), telefone, enderecoCidade: 'Chaves', enderecoEstado: 'PA' },
+      update: {
+        nomeCasa: 'Câmara Municipal de Chaves', sigla: 'CMC', email: email?.split(',')[0].trim(), telefone,
+        enderecoCidade: 'Chaves', enderecoEstado: 'PA', logoUrl: BRASAO, brasaoUrl: BRASAO, faviconUrl: BRASAO,
+      },
       create: {
         slug: 'principal',
         nomeCasa: 'Câmara Municipal de Chaves',
@@ -88,9 +93,14 @@ export async function importConfig(ctx: ImportContext, refs: NucleoRefs): Promis
         enderecoCidade: 'Chaves',
         enderecoEstado: 'PA',
         tipoEnte: 'CAMARA_MUNICIPAL',
+        logoUrl: BRASAO,
+        brasaoUrl: BRASAO,
+        faviconUrl: BRASAO,
         descricao: 'Portal Institucional da Câmara Municipal de Chaves — Transparência, Democracia e Cidadania.',
       },
     })
+    // logo completo (brasão + nome) disponível em LOGO para usos que precisem
+    void LOGO
   }
 
   ctx.log(`    ✔ ${configs.length} configurações + ${TIPOS_EXPEDIENTE.length} tipos de expediente + identidade institucional`)
