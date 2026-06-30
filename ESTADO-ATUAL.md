@@ -123,6 +123,21 @@ não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
 - 11 parlamentares · 4 comissões · mesa diretora
 - **~1597 arquivos, 2,3 GB** em `public/uploads/`
 
+### Páginas WordPress — Grupos 1 e 2 (2026-06-30)
+Auditoria página-a-página das 84 páginas WP (`post_type=page`) achou dado único
+não migrado. Implementados `23-paginas-wp.ts` e `24-institucional-paginas.ts`:
+- **Grupo 1 — 534 documentos históricos** (pré-2024, fora dos CSVs do CR2):
+  Diárias até 2023 (225), Folhas de Pagamento incl. xlsx (128+43), Balancetes
+  (50), Votações Nominais (43), RGF até 2023 (23), Programas e Ações (23),
+  Controle Interno, Convênios 2023, etc. → 244 `DocumentoTransparencia` +
+  290 `Publicacao`, com PDFs/planilhas re-hospedados (xlsx extraídos via
+  stream-copy do .NET, contornando validação de nome).
+- **Grupo 2 — institucional**: 10 `PerguntaFrequente` (FAQ parseado),
+  4 `TransparenciaConteudo` (Competências, O Município, Estrutura
+  Organizacional, Política de Cookies/LGPD).
+- **Grupo 3** (~62 páginas de navegação/shortcode/vazias): descartado
+  (redundante com a estrutura nativa).
+
 ### Migração 100% — importadores faltantes (2026-06-30)
 Auditoria backup×banco×tela identificou ~11 CSVs não migrados (~41 registros
 reais). Implementados `21-documentos-transparencia.ts` e

@@ -37,12 +37,14 @@ import { importOcr } from './19-ocr'
 import { importDrive } from './20-drive'
 import { importDocumentosTransparencia } from './21-documentos-transparencia'
 import { importPesquisaInstitucional } from './22-pesquisa-institucional'
+import { importPaginasWp } from './23-paginas-wp'
+import { importInstitucionalPaginas } from './24-institucional-paginas'
 
 const ALL_PHASES = [
   'config', 'parlamentares', 'mesa', 'comissoes', 'normas', 'proposicoes', 'sessoes',
   'licitacoes', 'contratos', 'diarias', 'concursos-obras',
   'manifestacoes', 'agenda', 'noticias', 'documentos', 'institucional',
-  'wordpress', 'drive', 'texto', 'ocr',
+  'wordpress', 'paginas-wp', 'institucional-paginas', 'drive', 'texto', 'ocr',
 ] as const
 
 function parseArgs() {
@@ -111,6 +113,8 @@ async function main() {
   if (selected('documentos', only)) await importDocumentosTransparencia(ctx)
   if (selected('institucional', only)) await importPesquisaInstitucional(ctx)
   if (selected('wordpress', only)) await importWordpress(ctx)
+  if (selected('paginas-wp', only)) await importPaginasWp(ctx)
+  if (selected('institucional-paginas', only)) await importInstitucionalPaginas(ctx)
   if (selected('drive', only)) await importDrive(ctx)
   if (selected('texto', only)) await importExtrairTexto(ctx)
   if (selected('ocr', only)) await importOcr(ctx)
