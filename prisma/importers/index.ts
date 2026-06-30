@@ -40,6 +40,7 @@ import { importPesquisaInstitucional } from './22-pesquisa-institucional'
 import { importPaginasWp } from './23-paginas-wp'
 import { importInstitucionalPaginas } from './24-institucional-paginas'
 import { importAtasHistoricas } from './25-atas-historicas'
+import { importCruzamentoPauta } from './26-cruzamento-pauta'
 
 const ALL_PHASES = [
   'config', 'parlamentares', 'mesa', 'comissoes', 'normas', 'proposicoes', 'sessoes',
@@ -117,6 +118,7 @@ async function main() {
   if (selected('paginas-wp', only)) await importPaginasWp(ctx)
   if (selected('institucional-paginas', only)) await importInstitucionalPaginas(ctx)
   if (selected('atas-historicas', only)) await importAtasHistoricas(ctx)
+  if (selected('cruzamento-pauta', only)) await importCruzamentoPauta(ctx)
   if (selected('drive', only)) await importDrive(ctx)
   if (selected('texto', only)) await importExtrairTexto(ctx)
   if (selected('ocr', only)) await importOcr(ctx)
