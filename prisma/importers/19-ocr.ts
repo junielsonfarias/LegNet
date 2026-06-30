@@ -174,5 +174,39 @@ export async function importOcr(ctx: ImportContext): Promise<void> {
     if (done % 20 === 0) ctx.log(`    ... ${done} PDFs processados (total)`)
   }
 
+  // 4. Sessões — texto da ATA em Sessao.ata. Reaproveita o OCR de uma
+  //    Publicacao de mesmo arquivo; senão, OCR direto. Habilita o cruzamento
+  //    pauta/ata/votação/presença por sessão.
+  ctx.log('  → atas de sessões')
+  const sessoes = await ctx.prisma.sessao.findMany({
+    where: { ata: null, arquivoAta: { not: null } },
+    select: { id: true, arquivoAta: true },
+  })
+  for (const s of sessoes) {
+    if (done >= limit) break
+    let texto = ''
+    // reaproveita texto OCR de Publicacao com o mesmo arquivo
+    const pub = await ctx.prisma.publicacao.findFirst({
+      where: { arquivo: s.arquivoAta, conteudo: { contains: '<!--ocr-->' } },
+      select: { conteudo: true },
+    })
+    if (pub?.conteudo) {
+      const i = pub.conteudo.indexOf('<!--ocr-->')
+      texto = i >= 0 ? pub.conteudo.slice(i + '<!--ocr-->'.length).trim() : ''
+      if (texto) ctx.stats.bump('sessao_ata_reuso')
+    }
+    if (!texto) {
+      const file = localPath(s.arquivoAta)
+      if (!file) continue
+      texto = ocrPdf(ctx, file)
+      done++
+      if (texto) ctx.stats.bump('sessao_ata_ocr')
+    }
+    if (!texto) { ctx.stats.bump('sessao_ata_vazia'); continue }
+    if (!ctx.dryRun) {
+      await ctx.prisma.sessao.update({ where: { id: s.id }, data: { ata: texto } })
+    }
+  }
+
   ctx.log(`    ✔ OCR concluído — ${done} PDFs processados`)
 }
