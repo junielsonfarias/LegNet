@@ -70,5 +70,28 @@ export async function importConfig(ctx: ImportContext, refs: NucleoRefs): Promis
     ctx.stats.bump('tipos_expediente')
   }
 
-  ctx.log(`    ✔ ${configs.length} configurações + ${TIPOS_EXPEDIENTE.length} tipos de expediente`)
+  // ConfiguracaoInstitucional (slug 'principal') — fonte do nome/identidade
+  // exibido no portal (/api/institucional → header, hero, footer).
+  ctx.stats.bump('config_institucional')
+  if (!ctx.dryRun) {
+    await ctx.prisma.configuracaoInstitucional.upsert({
+      where: { slug: 'principal' },
+      update: { nomeCasa: 'Câmara Municipal de Chaves', sigla: 'CMC', email: email?.split(',')[0].trim(), telefone, enderecoCidade: 'Chaves', enderecoEstado: 'PA' },
+      create: {
+        slug: 'principal',
+        nomeCasa: 'Câmara Municipal de Chaves',
+        sigla: 'CMC',
+        email: email?.split(',')[0].trim() ?? null,
+        telefone: telefone,
+        enderecoLogradouro: endereco,
+        enderecoBairro: 'Centro',
+        enderecoCidade: 'Chaves',
+        enderecoEstado: 'PA',
+        tipoEnte: 'CAMARA_MUNICIPAL',
+        descricao: 'Portal Institucional da Câmara Municipal de Chaves — Transparência, Democracia e Cidadania.',
+      },
+    })
+  }
+
+  ctx.log(`    ✔ ${configs.length} configurações + ${TIPOS_EXPEDIENTE.length} tipos de expediente + identidade institucional`)
 }
