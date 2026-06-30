@@ -123,6 +123,19 @@ não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
 - 11 parlamentares · 4 comissões · mesa diretora
 - **~1597 arquivos, 2,3 GB** em `public/uploads/`
 
+### Fluxo documental: texto de atas + cruzamento pauta→proposição (2026-06-30)
+- **Texto das atas** (`19-ocr.ts`, 4ª seção): `Sessao.ata` populado em **252/253**
+  sessões (184 reaproveitando OCR de `Publicacao`, 68 OCR direto). Base p/
+  cruzar votação/presença.
+- **18 sessões sem ata**: investigadas — genuinamente ausentes na fonte
+  (7 CR2 com `ataSessao` vazio; 11 históricas que só publicaram pauta).
+- **Etapa 1 — Pauta → Proposições** (`26-cruzamento-pauta.ts`): extrai
+  referências de matéria do OCR da pauta, casa com `Proposicao` e cria
+  `PautaSessao` + `PautaItem`. Resultado: **74 pautas → 176 itens, 150
+  proposições vinculadas a sessão** (45% de match; 397 refs apontam p/ matérias
+  fora do sistema). Próximo: Etapa 2 (votação) e Etapa 3 (presença) a partir do
+  texto da ata.
+
 ### Vínculo Ata/Pauta ↔ Sessão (2026-06-30)
 Importador `25-atas-historicas.ts`: os 453 posts da categoria "Pautas e Atas
 das Sessões" (227 atas + 211 pautas, 2016–2023) foram agrupados por (data,
