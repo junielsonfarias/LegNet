@@ -1,10 +1,50 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-29 (Sprint P0-Legislativo — hardening fluxo end-to-end)
+> **Ultima Atualizacao**: 2026-06-30 (Ambiente DEV: banco PostgreSQL local em Docker)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
-> **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+> **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
+> **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-06-30 — Ambiente DEV: banco PostgreSQL local em Docker
+
+O desenvolvimento local deixou de usar o banco Supabase (cloud) e passou a
+usar um PostgreSQL local em container Docker. Isola o dev da base de
+producao e remove a dependencia de rede/Supabase para rodar a aplicacao.
+
+**Infra**
+
+- `docker-compose.yml`: servico `postgres` (postgres:15-alpine), container
+  `camara_postgres`, banco `camara_legislativo_db`, user `postgres` /
+  senha `camara2026`. Mapeamento de porta ajustado para **`5433:5432`** no
+  host (a 5432 ja era usada por outro container local).
+- Removido o atributo `version` (obsoleto no Docker Compose v2).
+
+**Configuracao (.env e .env.local)**
+
+- `DATABASE_URL` e `DIRECT_URL` agora apontam para
+  `postgresql://postgres:camara2026@localhost:5433/camara_legislativo_db`.
+- As URLs do Supabase foram preservadas comentadas em ambos os arquivos
+  para retorno rapido (descomentar Supabase + comentar local).
+
+**Provisionamento**
+
+- `npm run db:push` aplicou o schema Prisma ao banco local → 131 tabelas.
+- `npm run db:seed` populou os dados iniciais (admin, legislatura 2025/2028,
+  11 parlamentares, mesa diretora, 4 comissoes, 3 sessoes, configuracoes).
+
+**Comandos do dia a dia**
+
+- Subir banco: `docker compose up -d`
+- Parar: `docker compose stop`
+- Resetar (apaga volume): `docker compose down -v` + `db:push` + `db:seed`
+- Voltar ao Supabase: descomentar as linhas Supabase em `.env`/`.env.local`
+
+**Arquivos afetados**: `docker-compose.yml`, `.env`, `.env.local`,
+`.env.example` (documentacao da opcao local).
 
 ---
 

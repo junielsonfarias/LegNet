@@ -1,8 +1,16 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-05-29 (Sprint P0-Legislativo: ERR-048..052)
+> **Ultima Atualizacao**: 2026-06-30 (Ambiente DEV local Docker: ERR-053)
 > **Versao Analisada**: 1.39.0
+
+---
+
+### Correções Aplicadas em 2026-06-30 (Ambiente DEV: banco PostgreSQL local em Docker)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-053 | `docker compose up -d` falhava com `Bind for 0.0.0.0:5432 failed: port is already allocated` ao subir o `camara_postgres`. A porta padrao 5432 do host ja estava em uso por outro container PostgreSQL local (`sispat_postgres`). | Mapeamento de porta do `docker-compose.yml` alterado de `5432:5432` para `5433:5432` (host:container). `DATABASE_URL`/`DIRECT_URL` em `.env` e `.env.local` ajustados para `localhost:5433`. Atributo `version` (obsoleto no Compose v2) removido. |
 
 ---
 
