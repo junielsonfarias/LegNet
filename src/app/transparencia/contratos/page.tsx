@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useAnoPadrao } from '@/components/ui/filtro-ano'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -61,6 +62,7 @@ export default function ContratosPage() {
     const anosSet = new Set(contratos.map(c => c.ano.toString()))
     return Array.from(anosSet).sort((a, b) => parseInt(b) - parseInt(a))
   }, [contratos])
+  useAnoPadrao(anos, filtroAno, setFiltroAno) // padrão: ano atual → mais recente com dados
 
   const modalidades = useMemo(() => {
     const modalidadesSet = new Set(contratos.map(c => c.modalidade).filter(Boolean))

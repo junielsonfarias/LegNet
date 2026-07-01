@@ -42,6 +42,22 @@ export function useFiltroAno<T>(itens: T[], getAno: (item: T) => number | null |
   return { ano, setAno, anosDisponiveis, filtrar }
 }
 
+/**
+ * Aplica o ano padrão (atual → mais recente com dados) UMA VEZ a um filtro de
+ * ano baseado em string ('all' | 'YYYY'), para páginas que já têm esse estado
+ * (licitações, contratos, diárias). Não reaplica após o usuário alterar.
+ */
+export function useAnoPadrao(anos: Array<number | string>, filtroAno: string, setFiltroAno: (s: string) => void) {
+  const [aplicado, setAplicado] = useState(false)
+  useEffect(() => {
+    if (aplicado || anos.length === 0 || filtroAno !== 'all') return
+    const atual = String(new Date().getFullYear())
+    const anosStr = anos.map(String)
+    setFiltroAno(anosStr.includes(atual) ? atual : anosStr[0])
+    setAplicado(true)
+  }, [anos, aplicado, filtroAno, setFiltroAno])
+}
+
 interface FiltroAnoProps {
   ano: AnoSelecionado | null
   setAno: (a: AnoSelecionado) => void
