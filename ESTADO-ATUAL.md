@@ -1,11 +1,30 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (3º code-review — 37 simplificado p/ aditivo)
+> **Ultima Atualizacao**: 2026-07-01 (4º code-review — invariante status↔resultado)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — 4ª rodada de code-review — invariante status↔resultado
+
+Confirmou que a cadeia 06→27→37→42 está correta (42 nunca escreve
+`Proposicao.resultado`, não corrompe). Achou 1 bug determinístico (MÉDIA) + BAIXA:
+- **MÉDIA**: promoção de status guardada por `status==='APRESENTADA'` → matéria
+  EM_TRAMITACAO (ou outro pré-voto) com `resultado=APROVADA` ficava com status não
+  promovido (viola invariante). Corrigido em `27`/`37`: promove QUALQUER estado
+  pré-voto; pós-voto (SANCIONADA/VETADA/etc.) não é sobrescrito.
+- **BAIXA #1**: `aprovacaoColetivaMateria` só olhava 60 chars ANTES → "aprovada por
+  unanimidade a ata anterior" (contexto depois) escapava. Adicionada janela
+  POSTERIOR → 2 sessões falso-positivas desqualificadas.
+- BAIXA restantes (42 nomes do preâmbulo, 42 findFirst desambiguado) = trade-offs
+  documentados, sem impacto em `Proposicao.resultado`.
+
+Dados re-derivados limpos + sync do status. **Invariante A/B = 0/0** · 392 c/
+resultado · 0 dup/órfãos · 37 idempotente · 931 testes.
 
 ---
 
