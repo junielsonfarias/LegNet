@@ -48,6 +48,7 @@ export default function SessoesPage() {
   const [tipoFilter, setTipoFilter] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [anoFilter, setAnoFilter] = useState<number | null>(null)
+  const [anoPadraoAplicado, setAnoPadraoAplicado] = useState(false)
   const [sessoes, setSessoes] = useState<SessaoPublica[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -98,6 +99,14 @@ export default function SessoesPage() {
   
   // Anos únicos
   const anos = Array.from(new Set(sessoes.map(s => new Date(s.data).getFullYear()))).sort((a, b) => b - a)
+
+  // Padrão: aplica o ano atual (ou o mais recente com dados) uma única vez.
+  useEffect(() => {
+    if (anoPadraoAplicado || anos.length === 0) return
+    const anoAtual = new Date().getFullYear()
+    setAnoFilter(anos.includes(anoAtual) ? anoAtual : anos[0])
+    setAnoPadraoAplicado(true)
+  }, [anos, anoPadraoAplicado])
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const filteredSessoes = useMemo(() => {

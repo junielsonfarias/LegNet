@@ -69,6 +69,7 @@ export default function NormasPublicPage() {
   const [busca, setBusca] = useState('')
   const [filtroTipo, setFiltroTipo] = useState<string>('all')
   const [filtroAno, setFiltroAno] = useState<string>('all')
+  const [anoPadraoAplicado, setAnoPadraoAplicado] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -76,13 +77,12 @@ export default function NormasPublicPage() {
     try {
       setLoading(true)
       const params = new URLSearchParams()
-      params.set('page', page.toString())
-      params.set('limit', '12')
+      params.set('page', '1')
+      params.set('limit', '500') // acervo pequeno: carrega tudo p/ filtrar client-side por ano
       params.set('situacao', 'VIGENTE') // Por padrao, mostrar apenas vigentes
 
       if (busca) params.set('busca', busca)
       if (filtroTipo && filtroTipo !== 'all') params.set('tipo', filtroTipo)
-      if (filtroAno && filtroAno !== 'all') params.set('ano', filtroAno)
 
       const response = await fetch(`/api/normas?${params.toString()}`)
       if (!response.ok) throw new Error('Erro ao carregar dados')
@@ -90,7 +90,7 @@ export default function NormasPublicPage() {
 
       if (data.success) {
         setNormas(data.data.normas)
-        setTotalPages(data.data.totalPages)
+        setTotalPages(1)
       } else {
         toast.error(data.error || 'Erro ao carregar normas')
       }
@@ -100,18 +100,23 @@ export default function NormasPublicPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, busca, filtroTipo, filtroAno])
+  }, [busca, filtroTipo])
 
   useEffect(() => {
     carregarNormas()
   }, [carregarNormas])
 
-  // Gerar lista de anos
-  const anos: number[] = []
-  const anoAtual = new Date().getFullYear()
-  for (let i = anoAtual; i >= anoAtual - 30; i--) {
-    anos.push(i)
-  }
+  // Anos com dados (desc) + padrão inteligente (ano atual → mais recente com dados)
+  const anos = Array.from(new Set(normas.map(n => n.ano).filter(a => a > 1900))).sort((a, b) => b - a)
+  useEffect(() => {
+    if (anoPadraoAplicado || anos.length === 0) return
+    const atual = new Date().getFullYear()
+    setFiltroAno(anos.includes(atual) ? String(atual) : String(anos[0]))
+    setAnoPadraoAplicado(true)
+  }, [anos, anoPadraoAplicado])
+
+  // Filtro de ano client-side.
+  const normasFiltradas = filtroAno === 'all' ? normas : normas.filter(n => String(n.ano) === filtroAno)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -198,7 +203,7 @@ export default function NormasPublicPage() {
           <div className="flex items-center justify-center py-12">
             <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-camara-primary" />
           </div>
-        ) : normas.length === 0 ? (
+        ) : normasFiltradas.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-gray-500">
               <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -208,7 +213,7 @@ export default function NormasPublicPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {normas.map((norma) => (
+            {normasFiltradas.map((norma) => (
               <Card key={norma.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
