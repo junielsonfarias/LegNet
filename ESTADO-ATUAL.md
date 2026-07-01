@@ -1,11 +1,33 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Autoria + votação por aprovação coletiva)
+> **Ultima Atualizacao**: 2026-07-01 (Autoria via OCR + presença exibida na UI)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Autoria via texto OCR + presença exibida ao cidadão
+
+**Autoria ampliada** (`36-autoria-materias`): passou a varrer o TEXTO OCR
+completo do PDF (não só a ementa) — o autor aparece na assinatura/corpo. Novo
+`melhorAutor()` agrega o melhor score entre todas as ocorrências do marcador
+"vereador X". Proposições com autor **268 → 416 (61%)** (+148, incl. históricos
+Alexandre Abdon, Israel Louzeiro, Marilene Carmona).
+
+**Presença na UI pública**: nova seção "Presença / Frequência" em
+`/legislativo/sessoes/[numero]` lista presentes/ausentes (com partido e
+justificativa). `sessao-db-service.listInclude.presencas` passou a incluir o
+parlamentar (nome/apelido/partido) — a página pública usa o endpoint de lista
+(público). Os 2703 registros de presença em 256 sessões agora são visíveis.
+Autor/resultado já eram exibidos nas páginas de proposição (detalhe e listagem).
+
+**Limite conhecido (pré-existente)**: a página de sessão resolve a URL por
+`numero` (que se repete entre anos) sobre a lista paginada (100). Sessões antigas
+homônimas podem não ser endereçáveis — refator de rota (numero→id) fica como
+melhoria futura.
 
 ---
 
