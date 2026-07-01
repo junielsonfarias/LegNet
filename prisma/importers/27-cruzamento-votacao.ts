@@ -12,6 +12,11 @@
  */
 import type { ImportContext } from './lib/runner'
 
+// Estados PRÉ-voto: podem ser promovidos ao resultado (APROVADA/REJEITADA).
+// Os demais (APROVADA/REJEITADA já resolvidos; RETIRADA/ADIADA/ARQUIVADA/VETADA/
+// SANCIONADA/PROMULGADA — pós-voto) não são sobrescritos pelo resultado.
+const PRE_VOTO = new Set(['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA', 'EM_DISCUSSAO', 'EM_VOTACAO'])
+
 const SIGLA: Record<string, string> = {
   REQUERIMENTO: 'requerimento', PROJETO_LEI: 'projeto de lei',
   PROJETO_RESOLUCAO: 'projeto de resolu', INDICACAO: 'indica', MOCAO: 'mo[çc][ãa]o',
@@ -86,8 +91,10 @@ export async function importCruzamentoVotacao(ctx: ImportContext): Promise<void>
         resultado: resultado as never,
         sessaoVotacaoId: sessao.id,
         dataVotacao: sessao.data,
-        ...(pr.status === 'APRESENTADA' && resultado === 'APROVADA' ? { status: 'APROVADA' as never } : {}),
-        ...(pr.status === 'APRESENTADA' && resultado === 'REJEITADA' ? { status: 'REJEITADA' as never } : {}),
+        // Promove o status a partir de QUALQUER estado pré-voto (não só
+        // APRESENTADA) → mantém a coerência status↔resultado. Estados pós-voto
+        // (SANCIONADA/VETADA/PROMULGADA/RETIRADA/ARQUIVADA) não são sobrescritos.
+        ...(PRE_VOTO.has(pr.status) ? { status: resultado as never } : {}),
       },
     })
   }

@@ -20,6 +20,8 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
 const RE_UNANIME = /aprovad[ao]s?\s+(?:por\s+)?(?:unanimidade|maioria)/g
 const RE_CONTEXTO_ATA = /\bata\b|a\s+mesma|leitura|sess[ãa]o\s+anterior|redig/
 const RE_RESSALVA = /rejeitad|indeferid|reprovad|retirad[ao]\s+de\s+pauta|adiad|vista\b|baixad[ao]\s+em\s+dilig/
+// Estados pré-voto promovíveis ao resultado (ver 27-cruzamento-votacao).
+const PRE_VOTO = new Set(['APRESENTADA', 'EM_TRAMITACAO', 'AGUARDANDO_PAUTA', 'EM_PAUTA', 'EM_DISCUSSAO', 'EM_VOTACAO'])
 
 /** Sessão tem aprovação por unanimidade de MATÉRIA (não da ata) e sem ressalva? */
 function aprovacaoColetivaMateria(ata: string): boolean {
@@ -28,7 +30,12 @@ function aprovacaoColetivaMateria(ata: string): boolean {
   RE_UNANIME.lastIndex = 0
   let m: RegExpExecArray | null
   while ((m = RE_UNANIME.exec(a)) !== null) {
-    if (!RE_CONTEXTO_ATA.test(a.slice(Math.max(0, m.index - 60), m.index))) return true
+    const fim = m.index + m[0].length
+    // Exclui contexto de ATA tanto ANTES ("a ata... foi aprovada") quanto DEPOIS
+    // ("aprovada por unanimidade a ata da sessão anterior").
+    const antes = a.slice(Math.max(0, m.index - 60), m.index)
+    const depois = a.slice(fim, fim + 30)
+    if (!RE_CONTEXTO_ATA.test(antes) && !RE_CONTEXTO_ATA.test(depois)) return true
   }
   return false
 }
@@ -69,7 +76,7 @@ export async function importVotacaoColetiva(ctx: ImportContext): Promise<void> {
       propAtualizada.add(pr.id)
       await ctx.prisma.proposicao.update({
         where: { id: pr.id },
-        data: { resultado: 'APROVADA' as never, sessaoVotacaoId: sessao.id, dataVotacao: sessao.data, ...(pr.status === 'APRESENTADA' ? { status: 'APROVADA' as never } : {}) },
+        data: { resultado: 'APROVADA' as never, sessaoVotacaoId: sessao.id, dataVotacao: sessao.data, ...(PRE_VOTO.has(pr.status) ? { status: 'APROVADA' as never } : {}) },
       })
     }
   }
