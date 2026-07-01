@@ -168,7 +168,10 @@ export async function importOcr(ctx: ImportContext): Promise<void> {
     if (!ctx.dryRun) {
       await ctx.prisma.proposicao.update({
         where: { id: p.id },
-        data: novoStatus ? { texto, status: novoStatus as never } : data,
+        // Carimbo de decisão plenária define status E resultado juntos (mantém
+        // o invariante status↔resultado). O OCR roda depois do 27/37, então é a
+        // única fonte de resultado p/ aprovações "só-carimbo" (sem pauta/ata).
+        data: novoStatus ? { texto, status: novoStatus as never, resultado: novoStatus as never } : data,
       })
     }
     if (done % 20 === 0) ctx.log(`    ... ${done} PDFs processados`)
