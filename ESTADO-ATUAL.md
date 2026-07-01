@@ -1,11 +1,32 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Central de Revisão da Migração no admin)
+> **Ultima Atualizacao**: 2026-07-01 (Code-review do dia + 4 correções)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Code-review do trabalho do dia + correções
+
+Revisão do diff do dia (27 commits) por agente de code-review adversarial +
+verificação de qualidade: **tsc 0 erros · ESLint 0 · 931 testes passando · banco
+íntegro**. O review achou 4 bugs (0 ALTA), todos corrigidos:
+- **MÉDIA — `RE_COLETIVA[2]` amplo demais** (`37-votacao-coletiva`): o padrão
+  "aprovado por unanimidade" sem escopo casava o PREÂMBULO da ata (aprovação da
+  ata da sessão anterior), marcando matérias APROVADA falsamente. Descoberto que
+  os padrões escopados casavam 0 sessões (atas de Chaves aprovam inline junto à
+  matéria). Reescrito **ciente de contexto** (exclui contexto de leitura/ata) +
+  **auto-correção** que reverteu 40 marcações falsas SEM evidência (preservando
+  CR2-catalogadas, voto nominal e resultado adjacente). Resultado 380→350.
+- **MÉDIA — formulário de voto nominal** mostrava só vereadores inativos →
+  quebrava p/ PLs 2024-2025. Agora mostra todos (ativos primeiro).
+- **BAIXA — busca "sem-resultado"**: `OR` da busca sobrescrevia o `OR` do filtro
+  "tem sessão" → trocado por `AND`.
+- **BAIXA — merge em 38/41**: guarda defensiva (pula merge se o perdedor tiver
+  votação/tramitação/emenda) contra perda silenciosa em cascade.
 
 ---
 
