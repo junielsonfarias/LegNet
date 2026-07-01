@@ -49,16 +49,16 @@ function toYouTubeEmbed(url: string): string | null {
 
 export default function SessaoDetailPage() {
   const params = useParams()
-  const numero = params?.numero as string | undefined
+  const idParam = params?.id as string | undefined
   const [sessao, setSessao] = useState<SessaoApi | null>(null)
   const [proposicoes, setProposicoes] = useState<ProposicaoApi[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingProposicoes, setLoadingProposicoes] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Buscar sessão pelo número
+  // Buscar sessão por ID (rota nova) — com compatibilidade para URLs antigas por número
   useEffect(() => {
-    if (!numero) {
+    if (!idParam) {
       setLoading(false)
       return
     }
@@ -67,24 +67,21 @@ export default function SessaoDetailPage() {
       try {
         setLoading(true)
         setError(null)
-        
-        // Converter número da URL para número (remove zeros à esquerda)
-        const numeroBusca = parseInt(numero, 10)
-        
-        if (isNaN(numeroBusca)) {
-          setError('Número de sessão inválido')
-          setLoading(false)
-          return
-        }
-        
-        // Buscar as sessões (limite máximo) e encontrar pelo número
-        const { data: sessoes } = await sessoesApi.getAll({ limit: 100 })
 
-        // Buscar por número (mais recente primeiro, já que o número se repete entre anos)
-        const sessaoEncontrada = sessoes.find(s => s.numero === numeroBusca)
-        
+        let sessaoEncontrada: SessaoApi | null = null
+        if (/^\d+$/.test(idParam)) {
+          // Compatibilidade: URL antiga por número. O número se repete entre anos,
+          // então pega a mais recente na lista (limite máximo).
+          const numeroBusca = parseInt(idParam, 10)
+          const { data: sessoes } = await sessoesApi.getAll({ limit: 100 })
+          sessaoEncontrada = sessoes.find((s) => s.numero === numeroBusca) || null
+        } else {
+          // Rota nova por ID único — detalhe completo via endpoint público.
+          sessaoEncontrada = await sessoesApi.getPublicById(idParam)
+        }
+
         if (!sessaoEncontrada) {
-          setError(`Sessão número ${numero} não encontrada`)
+          setError('Sessão não encontrada')
         } else {
           setSessao(sessaoEncontrada)
         }
@@ -97,7 +94,7 @@ export default function SessaoDetailPage() {
     }
 
     fetchSessao()
-  }, [numero])
+  }, [idParam])
 
   // Buscar proposições relacionadas à sessão
   useEffect(() => {
@@ -139,12 +136,12 @@ export default function SessaoDetailPage() {
     }
   }, [proposicoes])
 
-  if (!numero) {
+  if (!idParam) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-red-600 mb-4">Número da sessão não fornecido</p>
+            <p className="text-red-600 mb-4">Identificador da sessão não fornecido</p>
             <Button asChild>
               <Link href="/legislativo/sessoes">
                 <ArrowLeft className="h-4 w-4 mr-2" />

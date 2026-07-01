@@ -818,7 +818,7 @@ export default function ProposicaoDetalhePage() {
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-0.5">Sessao de Apresentacao</p>
                       <Link
-                        href={`/legislativo/sessoes/${proposicao.sessao.numero}`}
+                        href={`/legislativo/sessoes/${proposicao.sessao.id || proposicao.sessao.numero}`}
                         className="text-sm font-medium text-camara-primary hover:underline"
                       >
                         {proposicao.sessao.numero}ª Sessao - {new Date(proposicao.sessao.data).toLocaleDateString('pt-BR')}
@@ -830,7 +830,7 @@ export default function ProposicaoDetalhePage() {
                     <div>
                       <p className="text-xs text-gray-500 uppercase tracking-wider mb-0.5">Sessao de Votacao</p>
                       <Link
-                        href={`/legislativo/sessoes/${proposicao.sessaoVotacao.numero}`}
+                        href={`/legislativo/sessoes/${proposicao.sessaoVotacao.id || proposicao.sessaoVotacao.numero}`}
                         className="text-sm font-medium text-camara-primary hover:underline"
                       >
                         {proposicao.sessaoVotacao.numero}ª Sessao - {new Date(proposicao.sessaoVotacao.data).toLocaleDateString('pt-BR')}
@@ -850,7 +850,7 @@ export default function ProposicaoDetalhePage() {
                           <div key={pi.id} className="text-sm">
                             {pi.pauta?.sessao ? (
                               <Link
-                                href={`/legislativo/sessoes/${pi.pauta.sessao.numero}`}
+                                href={`/legislativo/sessoes/${pi.pauta.sessao.id || pi.pauta.sessao.numero}`}
                                 className="text-camara-primary hover:underline"
                               >
                                 {pi.pauta.sessao.numero}ª Sessao - {new Date(pi.pauta.sessao.data).toLocaleDateString('pt-BR')}

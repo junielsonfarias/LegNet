@@ -451,7 +451,7 @@ export default function SessoesPage() {
                         </Button>
                       )}
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/legislativo/sessoes/${sessao.numero}`}>
+                        <Link href={`/legislativo/sessoes/${sessao.id}`}>
                           <FileText className="h-4 w-4 mr-2" />
                           Detalhes
                         </Link>
