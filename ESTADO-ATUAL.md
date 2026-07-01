@@ -1,11 +1,37 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (2ª rodada de auditoria — veredito SIM/COMPLETA)
+> **Ultima Atualizacao**: 2026-07-01 (Deep-dive nos itens "irrecuperáveis" — voto nominal recuperado)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Deep-dive dedicado nos itens "irrecuperáveis"
+
+Análise focada apenas no material que a auditoria rotulou "limite de fonte",
+para separar o realmente perdido do recuperável-com-esforço.
+
+**RECUPERADO** (a auditoria havia julgado irrecuperável):
+- **Voto nominal individual** (`42-votacao-nominal`): existem 10 documentos
+  "APURAÇÃO DO PROCESSO DE VOTAÇÃO NOMINAL"/"LISTA DE VOTAÇÕES". Extraídos **36
+  votos individuais** em 4 matérias (PL 005/009/010/011-2024, unânimes) →
+  `Votacao` 0→36 + 3 `VotacaoAgrupada`. A página lê `proposicao.votacoes`, então
+  o placar SIM/NÃO por vereador agora aparece nessas matérias.
+
+**CONFIRMADO irrecuperável — com prova técnica** (não é falha de migração):
+- **Imagens de notícias** (`43-noticias-imagens`): o dump SQL bruto TEM os
+  metadados (`_thumbnail_id`→`_wp_attached_file`); o importador os parseia, mas
+  as 13 notícias (editais/convocações) apontam TODAS para o placeholder
+  institucional "sem-imagem-cm-chaves.jpg" — **não há foto real**.
+- **3 APURAÇÃO 2023** (PL 002/003/004): votos são checkmarks manuscritos não
+  capturados pelo OCR (aggregate já em `Proposicao.resultado`).
+- **4 links de folha de pagamento**: apontam para portais externos
+  (governotransparente/fenix) — o dado vive em outro sistema.
+- **260 proposições sem autor**: posts WP não nomeiam o autor no título/ementa/texto.
+- **LEI 418**: dupla numeração no documento oficial (ambígua na fonte).
 
 ---
 
