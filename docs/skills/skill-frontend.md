@@ -370,6 +370,24 @@ export { Button, buttonVariants }
 | Navigation Menu | `ui/navigation-menu.tsx` | NavigationMenu |
 | Breadcrumb | `ui/breadcrumb.tsx` | - |
 | Accordion | `ui/accordion.tsx` | Accordion |
+| **FiltroAno** | `ui/filtro-ano.tsx` | - (select nativo) |
+
+### FiltroAno — filtro de ano reutilizável (listagens públicas)
+
+`src/components/ui/filtro-ano.tsx`. Padrão de UX: aplica **o ano atual por padrão**;
+se o ano corrente não tiver registros, cai para o ano mais recente COM dados (nunca
+abre vazio). Usado em proposições, normas, sessões, atas, pautas-sessoes,
+publicações, licitações, contratos, diárias, gestão-fiscal e no perfil do parlamentar.
+
+- `useFiltroAno<T>(itens, getAno)` → `{ ano, setAno, anosDisponiveis, filtrar }`.
+  Deriva os anos (desc) e controla o estado com o padrão inteligente. Use quando a
+  página carrega os itens e filtra client-side.
+- `useAnoPadrao(anos, filtroAno, setFiltroAno)` → aplica o padrão UMA vez a páginas
+  que já têm um filtro por string (`'all' | 'YYYY'`). Não reaplica após o usuário mudar.
+- `<FiltroAno ano setAno anos />` → select acessível com "Todos os anos".
+
+> **Atenção**: derive a lista de anos de uma fonte SEM o filtro de ano aplicado;
+> caso contrário, ao selecionar um ano o dropdown colapsa para só aquele ano.
 
 ---
 

@@ -1,11 +1,49 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (5º code-review — invariante por construção (19-ocr))
-> **Versao**: 1.39.0
+> **Ultima Atualizacao**: 2026-07-01 (filtros de ano + grafia canônica de numeração)
+> **Versao**: 1.40.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Filtros de ano (padrão inteligente) + padronização de grafia
+
+Melhoria de UX de pesquisa e organização do acervo migrado, em resposta ao pedido
+de "filtro de ano onde for necessário, aplicando por padrão o ano atual".
+
+**Componente reutilizável** — `src/components/ui/filtro-ano.tsx`:
+- `useFiltroAno<T>(itens, getAno)`: deriva anos com dados (desc), controla o ano e
+  aplica o padrão **ano atual → mais recente com dados** (nunca abre vazio).
+- `useAnoPadrao(anos, filtroAno, setFiltroAno)`: aplica o mesmo padrão UMA vez a
+  páginas que já tinham filtro por string (`'all' | 'YYYY'`).
+- `<FiltroAno>`: select acessível (label sr-only, ícone) com "Todos os anos".
+
+**Páginas com filtro de ano (padrão = ano corrente, fallback ao mais recente)**:
+- Legislativo: proposições, normas, sessões, **atas**, **pautas-sessoes**.
+- Transparência: licitações, contratos, **diárias** (API ganhou `?anos=true` p/
+  anos distintos), **gestão-fiscal/RGF** (anos dinâmicos, exercício corrente).
+- Transparência: **publicações** (anos carregados uma vez de forma estável p/ o
+  dropdown não colapsar; padrão aplicado na carga inicial).
+- Área do parlamentar (`/parlamentares/[slug]`): aba **Produção** filtra as
+  proposições por ano (extrai o ano de `data` dd/mm/yyyy com fallback a `numero`).
+- Cuidado aplicado onde o `anos` derivava do conjunto já filtrado (atas, publicações):
+  a lista de anos passou a vir de fonte SEM filtro de ano, senão colapsaria.
+
+**Grafia canônica de numeração** (`legislative-labels.ts`):
+- `padNumero` (zero-pad 3 dígitos), `formatNumeroAno` ("nº 012/2024"),
+  `formatSessaoTitulo` ("Sessão Ordinária nº 012/2024"), `formatMateriaTitulo`.
+- Corrigida a mistura antes existente (`No`/`N°`/`nº` sem zero-padding) nas páginas
+  públicas de **atas**, **leis** e no endpoint `/api/publico/pautas-sessoes`.
+
+**Verificação da página do vereador**: `/parlamentares/[slug]` resolve por
+`apelidoSlug` OU `id`; `/api/parlamentares` retorna todos (ativos e históricos)
+quando sem `ativo`, então links de autor histórico (por id) abrem o perfil completo
+(`/api/parlamentares/[id]/perfil`). Confirmado abrindo com todas as abas.
+
+tsc 0 · eslint 0 nos arquivos alterados.
 
 ---
 
