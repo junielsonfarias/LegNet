@@ -123,6 +123,19 @@ não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
 - 11 parlamentares · 4 comissões · mesa diretora
 - **~1597 arquivos, 2,3 GB** em `public/uploads/`
 
+### FLUXO DOCUMENTAL COMPLETO (Etapas 1-3, 2026-06-30)
+Ciclo sessão → pauta → matéria → votação → presença, com ata em texto:
+- **Etapa 2 — Votação** (`27-cruzamento-votacao.ts`): resultado por matéria do
+  texto da ata + status conhecido → 70 votações resolvidas; 59 proposições com
+  `sessaoVotacaoId` + `resultado` + `dataVotacao`.
+- **Etapa 3 — Presença** (`28-cruzamento-presenca.ts`): chamada nominal da ata
+  → `PresencaSessao`. Conservador (só registra citados; ausência só com
+  marcador explícito). 28 sessões com chamada legível → 280 registros
+  (235 presentes, 45 ausências). Sessões históricas (vereadores de legislaturas
+  anteriores não cadastrados) não geram presença — limitação de dados.
+- **Fluxo navegável**: Sessão(271) → Pauta(74)+Matérias(176)+Votação(70) ·
+  Ata(252 texto) · Presença(28 sessões).
+
 ### Fluxo documental: texto de atas + cruzamento pauta→proposição (2026-06-30)
 - **Texto das atas** (`19-ocr.ts`, 4ª seção): `Sessao.ata` populado em **252/253**
   sessões (184 reaproveitando OCR de `Publicacao`, 68 OCR direto). Base p/

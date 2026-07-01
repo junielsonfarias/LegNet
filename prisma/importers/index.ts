@@ -42,6 +42,7 @@ import { importInstitucionalPaginas } from './24-institucional-paginas'
 import { importAtasHistoricas } from './25-atas-historicas'
 import { importCruzamentoPauta } from './26-cruzamento-pauta'
 import { importCruzamentoVotacao } from './27-cruzamento-votacao'
+import { importCruzamentoPresenca } from './28-cruzamento-presenca'
 
 const ALL_PHASES = [
   'config', 'parlamentares', 'mesa', 'comissoes', 'normas', 'proposicoes', 'sessoes',
@@ -121,6 +122,7 @@ async function main() {
   if (selected('atas-historicas', only)) await importAtasHistoricas(ctx)
   if (selected('cruzamento-pauta', only)) await importCruzamentoPauta(ctx)
   if (selected('cruzamento-votacao', only)) await importCruzamentoVotacao(ctx)
+  if (selected('cruzamento-presenca', only)) await importCruzamentoPresenca(ctx)
   if (selected('drive', only)) await importDrive(ctx)
   if (selected('texto', only)) await importExtrairTexto(ctx)
   if (selected('ocr', only)) await importOcr(ctx)
