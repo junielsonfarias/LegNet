@@ -11,7 +11,7 @@ import {
   Loader2, BookOpen, ArrowLeft, Eye, X
 } from 'lucide-react'
 import Link from 'next/link'
-import { formatDateBR, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
+import { formatDateBR, formatSessaoTitulo, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
 import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 import { createLogger } from '@/lib/logging/logger'
 import { useAnoPadrao } from '@/components/ui/filtro-ano'
@@ -155,7 +155,7 @@ export default function AtasPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">
-                          Sessao {SESSAO_TIPO[sessao.tipo] || sessao.tipo} No {sessao.numero}
+                          {formatSessaoTitulo(sessao)}
                         </h3>
                         <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
