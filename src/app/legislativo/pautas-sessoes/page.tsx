@@ -24,6 +24,7 @@ import {
   PlayCircle
 } from 'lucide-react'
 import { createLogger } from '@/lib/logging/logger'
+import { FiltroAno, useFiltroAno } from '@/components/ui/filtro-ano'
 
 const log = createLogger('legislativo/pautas-sessoes')
 
@@ -122,16 +123,24 @@ export default function PautasSessoesPublicPage() {
     carregarDados()
   }, [carregarDados])
 
+  // Filtro de ano (padrão: ano atual → mais recente com dados)
+  const { ano, setAno, anosDisponiveis } = useFiltroAno(
+    pautas,
+    (p) => (p.data ? new Date(p.data).getFullYear() : undefined)
+  )
+
   // Filtrar pautas
   const filteredPautas = pautas.filter(pauta => {
-    const matchesSearch = !searchTerm || 
+    const matchesSearch = !searchTerm ||
       pauta.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       pauta.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
     const matchesStatus = filterStatus === 'all' || pauta.status === filterStatus
     const matchesTipo = filterTipo === 'all' || pauta.tipo === filterTipo
+    const matchesAno = ano === 'todos' || ano === null ||
+      (pauta.data && new Date(pauta.data).getFullYear() === ano)
 
-    return matchesSearch && matchesStatus && matchesTipo
+    return matchesSearch && matchesStatus && matchesTipo && matchesAno
   })
 
   // Toggle expansão de pauta
@@ -355,13 +364,21 @@ export default function PautasSessoesPublicPage() {
                 </Select>
               </div>
 
+              <div>
+                <Label htmlFor="ano">Ano</Label>
+                <div className="mt-1">
+                  <FiltroAno ano={ano} setAno={setAno} anos={anosDisponiveis} className="w-full [&>select]:w-full" />
+                </div>
+              </div>
+
               <div className="flex items-end">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setSearchTerm('')
                     setFilterStatus('all')
                     setFilterTipo('all')
+                    setAno('todos')
                   }}
                   className="w-full"
                 >
