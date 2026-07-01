@@ -1,11 +1,35 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Presença CR2 + limpeza vereadores + matérias 2021-2023)
+> **Ultima Atualizacao**: 2026-07-01 (Votação/presença completas após novas matérias)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Votação (Etapa 2) e Presença (Etapa 3) re-cruzadas
+
+Após reconstruir 180 matérias e ligar 388 itens de pauta, os cruzamentos de
+votação (`27`) e presença (`28`) foram re-rodados para completar o fluxo.
+
+**Correção**: `27` passou a usar o grupo numérico inicial (`"001-2"`→1) na busca
+da ata — consistente com `26`, evita perder o match das matérias desambiguadas.
+
+**Precedência da fonte primária (`28`)**: as folhas assinadas (30/31) são a
+fonte PRIMÁRIA de presença; a narrativa da ata NUNCA rebaixa `presente=true` já
+gravado — só cria registros novos ou faz upgrade (false→true). Evita que ruído
+de OCR da ata apague presença confirmada por assinatura. O `28` agora também casa
+com os vereadores históricos 2021-2024 (cadastrados por 29/30), então atas
+legíveis de anos anteriores passam a gerar presença.
+
+**Resultados** (banco DEV):
+- Votação: proposições c/ resultado **59 → 66** · PautaItem c/ resultado **70 → 87**
+  (19 pela ata, 68 pelo status). Matérias reconstruídas ganharam resultado onde a
+  ata era explícita.
+- Presença: **1029 → 2703 registros** (2455 presentes) · sessões com presença
+  **124 → 256** · cobertura homogênea 2016-2025 (sem downgrade da fonte primária).
 
 ---
 

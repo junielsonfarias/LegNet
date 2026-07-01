@@ -7,9 +7,14 @@
  * de atas ilegíveis. Detecta ausência ("ausente/faltou/justificou") na janela
  * ao redor do nome; caso contrário marca presente.
  *
- * Nota: só casa com os parlamentares CADASTRADOS (legislatura atual). Sessões
- * históricas (vereadores de legislaturas anteriores não cadastrados) não geram
- * presença — limitação de dados, não do parser.
+ * Nota: casa com TODOS os parlamentares cadastrados (inclui os históricos
+ * 2021-2024, cadastrados pelos importadores 29/30). Assim atas legíveis de
+ * 2021-2023 também geram presença.
+ *
+ * PRECEDÊNCIA: as folhas oficiais assinadas (importadores 30/31) são a fonte
+ * PRIMÁRIA de presença. Este cruzamento (narrativa da ata) NUNCA rebaixa um
+ * `presente=true` já registrado — só cria registros novos ou faz upgrade
+ * (false→true). Evita que ruído de OCR da ata apague presença confirmada.
  */
 import type { ImportContext } from './lib/runner'
 
@@ -54,11 +59,19 @@ export async function importCruzamentoPresenca(ctx: ImportContext): Promise<void
       const win = t.slice(Math.max(0, pos - 40), pos + k.full.length + 60)
       const presente = !/ausente|faltou|justificou|justificad|aus[êe]ncia/.test(win)
       if (presente) presentes++; else ausentes++
-      await ctx.prisma.presencaSessao.upsert({
+      // Precedência da folha oficial: não rebaixa presente=true já registrado.
+      const existente = await ctx.prisma.presencaSessao.findUnique({
         where: { sessaoId_parlamentarId: { sessaoId: s.id, parlamentarId: k.id } },
-        update: { presente },
-        create: { sessaoId: s.id, parlamentarId: k.id, presente },
+        select: { id: true, presente: true },
       })
+      if (existente) {
+        if (!existente.presente && presente) {
+          await ctx.prisma.presencaSessao.update({ where: { id: existente.id }, data: { presente: true } })
+        }
+        // existente.presente=true → preserva (fonte primária); não sobrescreve
+      } else {
+        await ctx.prisma.presencaSessao.create({ data: { sessaoId: s.id, parlamentarId: k.id, presente } })
+      }
     }
   }
 

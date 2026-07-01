@@ -47,7 +47,8 @@ export async function importCruzamentoVotacao(ctx: ImportContext): Promise<void>
     const pr = it.proposicao
     const sessao = it.pauta?.sessao
     if (!pr || !sessao) continue
-    const num = parseInt((pr.numero || '').replace(/\D/g, ''), 10)
+    // Grupo numérico inicial: "001-2" (desambiguada) → 1, não 12.
+    const num = parseInt((pr.numero || '').match(/^\s*\d+/)?.[0] || '', 10)
 
     // 1) resultado explícito na ata
     let resultado: 'APROVADA' | 'REJEITADA' | null = null
