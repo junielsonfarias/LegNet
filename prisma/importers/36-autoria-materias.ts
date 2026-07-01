@@ -22,8 +22,45 @@ function tokens(nome: string): string[] {
   return norm(nome).split(' ').filter((t) => t.length >= 3 && !STOP.has(t))
 }
 
-// Marcador de autoria + captura do trecho de nome que o segue.
-const MARKER = /\b(?:de\s+autoria\s+d[oae]s?|autoria\s+d[oae]s?|do\s+vereador|da\s+vereadora|vereador[ao]?|ver[º°ªao'"”.]{0,3}\.?)\s+([A-Za-zÁÉÍÓÚÂÊÃÕáéíóúâêãõ][^\n]{2,60})/i
+// Marcador de autoria + captura do trecho de nome que o segue (global: varre
+// todas as ocorrências no texto — ementa, título e OCR completo do PDF).
+const MARKER = /\b(?:de\s+autoria\s+d[oae]s?|autoria\s+d[oae]s?|do\s+vereador|da\s+vereadora|vereador[ao]?|ver[º°ªao'"”.]{0,3}\.?)\s+([A-Za-zÁÉÍÓÚÂÊÃÕáéíóúâêãõ][^\n]{2,60})/gi
+
+/**
+ * Melhor autor para um texto: varre TODAS as ocorrências do marcador, pontua
+ * cada parlamentar pelo maior nº de tokens de nome numa janela, e resolve
+ * empate preferindo o ativo. Retorna null (sem match) ou { ambiguous } (empate
+ * irresolvível) ou { id }.
+ */
+function melhorAutor(
+  haystack: string,
+  roster: { id: string; ativo: boolean; toks: Set<string> }[]
+): { id?: string; ambiguous?: boolean } | null {
+  const scores = new Map<string, number>()
+  let m: RegExpExecArray | null
+  MARKER.lastIndex = 0
+  let houveMarcador = false
+  while ((m = MARKER.exec(haystack)) !== null) {
+    const trecho = recortaNome(m[1])
+    if (/poder\s+executivo|prefeit|mesa\s+diretora|comiss[ãa]o/i.test(trecho)) continue
+    const wtoks = new Set(tokens(trecho))
+    if (wtoks.size === 0) continue
+    houveMarcador = true
+    for (const r of roster) {
+      let s = 0
+      for (const t of r.toks) if (wtoks.has(t)) s++
+      if (s >= 2 && s > (scores.get(r.id) || 0)) scores.set(r.id, s)
+    }
+  }
+  if (!houveMarcador) return null
+  if (scores.size === 0) return { ambiguous: false } // marcador presente mas sem match no roster
+  const max = Math.max(...scores.values())
+  const top = [...scores.entries()].filter(([, s]) => s === max).map(([id]) => id)
+  if (top.length === 1) return { id: top[0] }
+  const ativos = top.filter((id) => roster.find((r) => r.id === id)?.ativo)
+  if (ativos.length === 1) return { id: ativos[0] }
+  return { ambiguous: true }
+}
 
 /** Recorta o trecho do nome: até "(", verbo de pedido, ":" ou fim. */
 function recortaNome(bruto: string): string {
@@ -41,44 +78,24 @@ export async function importAutoriaMaterias(ctx: ImportContext): Promise<void> {
 
   const props = await ctx.prisma.proposicao.findMany({
     where: { autorId: null, autorEntidadeId: null },
-    select: { id: true, tipo: true, numero: true, ano: true, ementa: true, titulo: true },
+    select: { id: true, tipo: true, numero: true, ano: true, ementa: true, titulo: true, texto: true },
   })
 
-  let comMarcador = 0, casados = 0, ambiguos = 0, semMatch = 0, executivo = 0
+  let casados = 0, ambiguos = 0, semMatch = 0
   const atribuicoes: { id: string; autorId: string }[] = []
 
   for (const pr of props) {
-    const texto = `${pr.ementa || ''} ${pr.titulo || ''}`
-    const m = texto.match(MARKER)
-    if (!m) { semMatch++; continue }
-    comMarcador++
-    const trecho = recortaNome(m[1])
-    if (/poder\s+executivo|prefeit|mesa\s+diretora|comiss/i.test(trecho)) { executivo++; continue }
-    const wtoks = new Set(tokens(trecho))
-    if (wtoks.size === 0) { semMatch++; continue }
-
-    // Pontua cada parlamentar por tokens em comum.
-    let best: { id: string; score: number; ativo: boolean } | null = null
-    let secondScore = 0
-    for (const r of roster) {
-      let score = 0
-      for (const t of r.toks) if (wtoks.has(t)) score++
-      if (!best || score > best.score || (score === best.score && r.ativo && !best.ativo)) {
-        if (best && score === best.score && r.id !== best.id) secondScore = score
-        else if (best) secondScore = Math.max(secondScore, best.score)
-        best = { id: r.id, score, ativo: r.ativo }
-      } else if (score > secondScore) {
-        secondScore = score
-      }
-    }
-    // Exige >= 2 tokens e vantagem sobre o segundo colocado (evita ambiguidade).
-    if (!best || best.score < 2) { semMatch++; continue }
-    if (best.score === secondScore) { ambiguos++; continue }
-    atribuicoes.push({ id: pr.id, autorId: best.id })
+    // Busca no texto do PDF (OCR) além de ementa+título — o autor costuma
+    // aparecer na assinatura/corpo mesmo quando a ementa não o nomeia.
+    const haystack = `${pr.ementa || ''} ${pr.titulo || ''} ${pr.texto || ''}`
+    const r = melhorAutor(haystack, roster)
+    if (!r) { semMatch++; continue }
+    if (r.ambiguous || !r.id) { ambiguos++; continue }
+    atribuicoes.push({ id: pr.id, autorId: r.id })
     casados++
   }
 
-  ctx.log(`    ${props.length} sem autor · ${comMarcador} c/ marcador · ${casados} casados · ${ambiguos} ambíguos · ${executivo} executivo/mesa · ${semMatch} sem match`)
+  ctx.log(`    ${props.length} sem autor · ${casados} casados · ${ambiguos} ambíguos/sem match no roster · ${semMatch} sem marcador`)
   ctx.stats.bump('autoria_casada', casados)
 
   if (ctx.dryRun) {
