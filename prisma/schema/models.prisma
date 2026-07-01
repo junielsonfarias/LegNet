@@ -591,6 +591,10 @@ model Proposicao {
   @@index([dataApresentacao])
   @@index([sessaoVotacaoId])
   @@index([sessaoId])
+  // Central de Revisão da Migração: anotação livre do revisor sobre dados
+  // incompletos/não identificados (autor/resultado preenchidos nos campos reais).
+  revisaoObservacao String? @db.Text
+  revisadoEm        DateTime?
   // P0-4: soft delete - filtrar com { where: { deletedAt: null } } nos services
   deletedAt DateTime?
   @@index([deletedAt])
@@ -1091,6 +1095,10 @@ model Publicacao {
   autorId       String?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+
+  // Central de Revisão da Migração (arquivos/registros não identificados)
+  revisaoObservacao String?   @db.Text
+  revisadoEm        DateTime?
 
   categoria        CategoriaPublicacao? @relation(fields: [categoriaId], references: [id], onDelete: SetNull)
   autorParlamentar Parlamentar?         @relation(fields: [autorId], references: [id], onDelete: SetNull)
