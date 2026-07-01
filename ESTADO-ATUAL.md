@@ -32,6 +32,10 @@ própria `Matérias.csv` do CR2 não catalogou (111→157). Import CR2 estava in
 - Todas as 29 sessões de 2025 e 14 de 2024 (as com matéria) agora com itens de pauta.
 - Após re-cruzamento de votação (27): proposições c/ resultado **66 → 140**.
 - **Cobertura de pauta agora completa 2016-2025.**
+- **Guarda de OCR** (`normalizaNumeroMateria`): número de matéria >= 1000 é o
+  número do ITEM da pauta grudado pelo OCR ("1."+"420"→"1420") — normaliza para
+  os 3 últimos dígitos (1420→420) e descarta o não-plausível. Corrige o artefato
+  encontrado na verificação do banco (REQUERIMENTO 1420/2025 → 420/2025).
 
 ---
 

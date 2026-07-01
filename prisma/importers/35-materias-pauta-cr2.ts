@@ -26,6 +26,18 @@ const localPath = (u: string | null | undefined): string | null => {
   return existsSync(p) ? p : null
 }
 
+/**
+ * Corrige o número de matéria contra ruído de OCR. Nesta câmara os números são
+ * de 1-3 dígitos (máx ~420/ano por tipo); um valor >= 1000 é o número do ITEM
+ * da pauta grudado no número da matéria pelo OCR (ex.: "1." + "420" → "1420").
+ * Mantém apenas os 3 últimos dígitos. Retorna 0 (ref descartada) se o resultado
+ * não for plausível.
+ */
+function normalizaNumeroMateria(nInt: number): number {
+  const n = nInt >= 1000 ? nInt % 1000 : nInt
+  return n > 0 && n < 1000 ? n : 0
+}
+
 export async function importMateriasPautaCr2(ctx: ImportContext): Promise<void> {
   ctx.log('▶ Matérias/itens de pauta a partir dos PDFs de pauta CR2 (2024-2025)')
 
@@ -65,7 +77,9 @@ export async function importMateriasPautaCr2(ctx: ImportContext): Promise<void> 
     while ((m = re.exec(txt)) !== null) {
       const tm = TIPO_MATERIA[m[1].toLowerCase().replace(/\s+/g, ' ')]
       if (!tm) continue
-      const nInt = parseInt(m[2], 10), ano = parseInt(m[3], 10)
+      const nInt = normalizaNumeroMateria(parseInt(m[2], 10))
+      const ano = parseInt(m[3], 10)
+      if (nInt === 0) { ctx.stats.bump('pauta_cr2_numero_descartado'); continue }
       const k = `${tm}|${nInt}|${ano}`
       if (vistos.has(k)) continue
       vistos.add(k)
