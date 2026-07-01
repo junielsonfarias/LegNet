@@ -22,7 +22,7 @@ function isPlaceholder(s: string | null | undefined): boolean {
     /\bn[ãa]o\s+houve(ram|m)?\b/.test(t) ||
     /^declara/.test(t) ||
     /declaramos que n[ãa]o/.test(t) ||
-    /^sem\s+(projetos?|requerimentos?|indica|mo[çc]|resolu|normas?|leis?|decretos?)/.test(t) ||
+    /^sem\s+(projetos?|requerimentos?|indica|mo[çc]|resolu|normas?|leis?|decretos?|pautas?|atas?|portarias)/.test(t) ||
     // Cabeçalho de categoria-ano (página-índice do WordPress, não é ato real):
     // "RESOLUÇÕES 2014", "DECRETOS 2020", "PROJETOS DE LEI 2021", "MOÇÕES 2019".
     /^(indica[çc][õo]es|requerimentos|projetos de lei|mo[çc][õo]es|resolu[çc][õo]es|decretos?|leis?|portarias)\s+(de\s+)?(19|20)\d{2}\s*$/.test(t)
@@ -75,12 +75,25 @@ export async function importLimpezaPlaceholders(ctx: ImportContext): Promise<voi
   const normasRemover = normas.filter((x) => isPlaceholder(x.ementa))
   for (const x of normasRemover) ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}remover NORMA ${x.tipo} ${x.numero}/${x.ano} — "${(x.ementa || '').slice(0, 45)}"`)
 
+  // Publicações placeholder ("SEM PAUTAS E ATAS EM JANEIRO/2018" = mês sem sessão),
+  // sem arquivo e sem conteúdo real — não são publicações.
+  const pubs = await ctx.prisma.publicacao.findMany({ select: { id: true, tipo: true, titulo: true, arquivo: true, conteudo: true } })
+  const pubsRemover = pubs.filter((x) => {
+    if (!isPlaceholder(x.titulo)) return false
+    const semArquivo = !x.arquivo
+    const semConteudo = !x.conteudo || x.conteudo.replace(/<[^>]*>/g, '').trim().length < 40
+    return semArquivo && semConteudo
+  })
+  for (const x of pubsRemover) ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}remover PUBLICACAO ${x.tipo} — "${(x.titulo || '').slice(0, 50)}"`)
+
   ctx.stats.bump('placeholders_proposicoes', remover.length)
   ctx.stats.bump('placeholders_normas', normasRemover.length)
+  ctx.stats.bump('placeholders_publicacoes', pubsRemover.length)
 
   if (ctx.dryRun) return
 
   for (const x of remover) await ctx.prisma.proposicao.delete({ where: { id: x.id } })
   for (const x of normasRemover) await ctx.prisma.normaJuridica.delete({ where: { id: x.id } })
-  ctx.log(`    ✔ removidas ${remover.length} proposições + ${normasRemover.length} normas placeholder`)
+  for (const x of pubsRemover) await ctx.prisma.publicacao.delete({ where: { id: x.id } })
+  ctx.log(`    ✔ removidas ${remover.length} proposições + ${normasRemover.length} normas + ${pubsRemover.length} publicações placeholder`)
 }

@@ -21,7 +21,10 @@ import type { ImportContext } from './lib/runner'
 const norm = (s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ')
 
-const MIN_CITADOS = 8 // threshold: ata precisa citar >= 8 dos parlamentares
+// threshold: ata precisa citar >= N dos parlamentares. Default 8 (conservador);
+// baixe via PRESENCA_MIN_CITADOS para capturar sessões extraordinárias/pequenas
+// que citam menos vereadores (mantém a filosofia: só marca presença de citados).
+const MIN_CITADOS = parseInt(process.env.PRESENCA_MIN_CITADOS || '8', 10)
 
 export async function importCruzamentoPresenca(ctx: ImportContext): Promise<void> {
   ctx.log('▶ Cruzamento Presença (chamada nominal → PresencaSessao)')
