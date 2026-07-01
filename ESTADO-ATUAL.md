@@ -1,11 +1,28 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Gap 2024-2025 fechado via pautas CR2 OCR)
+> **Ultima Atualizacao**: 2026-07-01 (Autoria das matérias extraída da ementa)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Autoria das matérias extraída da ementa/pauta
+
+Novo `36-autoria-materias.ts` (fase `--only=autoria`): as ementas trazem o autor
+no início ("Vereadora ROSILETE DIAS MACIEL (Requer...)", "de autoria do vereador
+João Amaral", "DA VEREADORA KARINA SANTOS"). Extrai o trecho após o marcador de
+autoria e casa com o roster por **sobreposição de tokens** (exige ≥2 tokens
+significativos = primeiro nome + sobrenome, evita falso-positivo em sobrenomes
+comuns). Descarta autor "Poder Executivo/Mesa". Idempotente (só preenche autorId
+nulo).
+
+**Resultado**: proposições com autor **107 → 268** (+161). Cobre tanto os atuais
+quanto os históricos (Tiburço Leitão 26, Karina Soares 17) nas matérias de
+2021-2023 reconstruídas. Por ano: 2021:53 · 2022:27 · 2023:32 · 2025:139.
+As 414 restantes não nomeiam o autor no texto (posts WP antigos) — limite de fonte.
 
 ---
 

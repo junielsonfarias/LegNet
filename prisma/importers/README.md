@@ -48,6 +48,7 @@ em `public/uploads/<pasta>/`.
 | `33-materias-pauta.ts` | Reconstrói matérias 2021-2023 faltantes (da pauta OCR) |
 | `34-limpeza-placeholders.ts` | Remove placeholders/entradas mal-parseadas do WP |
 | `35-materias-pauta-cr2.ts` | OCR das pautas CR2 2024-2025 → matérias + itens |
+| `36-autoria-materias.ts` | Extrai autor da ementa/pauta → `autorId` |
 | `lib/csv.ts` | Parser CSV (RFC 4180, células multilinha) |
 | `lib/normalize.ts` | Datas Bubble, número/ano, nomes, placeholders |
 | `lib/files.ts` | Download CDN + re-hospedagem + magic bytes |
