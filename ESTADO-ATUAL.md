@@ -1,11 +1,37 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Auditoria multi-agente + correção de normas/datas)
+> **Ultima Atualizacao**: 2026-07-01 (Pendências MÉDIA da auditoria aplicadas)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Pendências MÉDIA da auditoria (completude recuperável)
+
+Aplicadas as correções MÉDIA levantadas pela auditoria multi-agente:
+- **Presença de 4 sessões** com ata mas <8 citações (extraordinárias/pequenas):
+  `28` ganhou threshold configurável (`PRESENCA_MIN_CITADOS=4`) → 2019-02-25,
+  2021-07-03, 2021-08-27, 2022-09-13 (7,4,7,5 presenças). Sessões com presença
+  256→**260**, registros 2703→**2726**.
+- **9 publicações-placeholder** ("SEM PAUTAS E ATAS EM JANEIRO/2018") removidas
+  via `34` estendido. Publicações 844→**835**.
+- **OCR bleed em 22 ementas** reconstruídas (2021-2023) truncado no marcador de
+  seção da pauta (`39-limpa-ementas`, `--only=limpa-ementas`). 0 bleed restante.
+- **RGF 2024-2025 (gap real)**: os RGF do banco iam só até 2023 (scraping WP);
+  os 5 do `RGF.csv` (CR2) nunca importados. `40-rgf-cr2` (`--only=rgf-cr2`)
+  importou os 5 (PDFs baixados). RGF agora **2016-2025 contínuo**.
+
+**Não-ação justificada**: dedup de publicações por título é arriscado (2 dos 5
+"pares" são documentos distintos com título genérico igual — listas de votação de
+PLs diferentes); diárias com FK nula são de servidores (não-parlamentares); 6
+normas com texto curto não têm PDF local para OCR; 125 itens 2025 sem votação são
+operacionais. Todos limite de fonte.
+
+**Estado final**: 679 proposições · 59 normas · 835 publicações · 260 sessões com
+presença (2726 reg.) · 35 RGF · **0 duplicatas · 0 datas futuras**.
 
 ---
 
