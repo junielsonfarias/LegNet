@@ -46,6 +46,7 @@ em `public/uploads/<pasta>/`.
 | `32-limpeza-vereadores.ts` | Normaliza nomes + mescla duplicatas de OCR |
 | `26-cruzamento-pauta.ts` | Pauta→Proposição (cria PautaItem, liga à sessão) |
 | `33-materias-pauta.ts` | Reconstrói matérias 2021-2023 faltantes (da pauta OCR) |
+| `34-limpeza-placeholders.ts` | Remove placeholders/entradas mal-parseadas do WP |
 | `lib/csv.ts` | Parser CSV (RFC 4180, células multilinha) |
 | `lib/normalize.ts` | Datas Bubble, número/ano, nomes, placeholders |
 | `lib/files.ts` | Download CDN + re-hospedagem + magic bytes |

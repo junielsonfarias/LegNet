@@ -1,11 +1,38 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Votação/presença completas após novas matérias)
+> **Ultima Atualizacao**: 2026-07-01 (Auditoria por ano + limpeza de placeholders)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Auditoria de migração por ano + limpeza de placeholders
+
+Auditoria completa da migração ano a ano (2016-2025) cruzando sessões,
+proposições, normas, presença e votação.
+
+**Resultados OK**: cobertura de todos os anos 2016-2025 em todas as entidades ·
+corte 2025 respeitado (0 dados >2025) · 0 referências órfãs (proposição→sessão,
+PautaItem→proposição) · 0 duplicatas por chave natural · 0 ementa/título vazios.
+
+**Correção encontrada e aplicada** (`34-limpeza-placeholders.ts`,
+`--only=limpeza-placeholders`): o import original do WordPress (17) havia
+transformado 6 placeholders/cabeçalhos em Proposicao e 1 em Norma, com números
+de OCR absurdos (5778, 6388, 7277, 5768) — ex.: "SEM PROJETOS DE LEI EM
+NOVEMBRO/2021", "INDICAÇÕES 2021", "Declaramos que não houveram...". Também 2
+matérias mal-datadas (PL "401/2006" e "5958/2014") que duplicavam matérias
+corretas já existentes. Removidos com guarda de vínculos (só apaga sem
+PautaItem/Votação). **Proposições 640→634 · Normas 78→77.**
+
+**Limitação de fonte documentada (2024)**: as matérias de 2024 são esparsas (11)
+porque a `Matérias legislativas.csv` do CR2 só passou a catalogar matérias em
+2025 (109). As 40 sessões de 2024 têm o PDF da pauta (`arquivoPauta`), mas as
+pautas CR2 de 2024-2025 NÃO passam pelo cruzamento (26/33 leem só `Publicacao`
+titulada "PAUTA", que existe apenas para 2016-2023 do WP). Recuperar matérias de
+2024 exigiria OCR dos PDFs de pauta CR2 — tarefa separada (ver pendências).
 
 ---
 
