@@ -81,8 +81,11 @@ export async function importLimpezaPlaceholders(ctx: ImportContext): Promise<voi
   const pubsRemover = pubs.filter((x) => {
     if (!isPlaceholder(x.titulo)) return false
     const semArquivo = !x.arquivo
-    const semConteudo = !x.conteudo || x.conteudo.replace(/<[^>]*>/g, '').trim().length < 40
-    return semArquivo && semConteudo
+    // Aviso de "mês sem sessão" tem conteúdo curto (às vezes com a justificativa,
+    // ex.: "...por causa da pandemia" ~70 ch). Sem arquivo + título placeholder
+    // = não é publicação real.
+    const conteudoCurto = !x.conteudo || x.conteudo.replace(/<[^>]*>/g, '').trim().length < 120
+    return semArquivo && conteudoCurto
   })
   for (const x of pubsRemover) ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}remover PUBLICACAO ${x.tipo} — "${(x.titulo || '').slice(0, 50)}"`)
 

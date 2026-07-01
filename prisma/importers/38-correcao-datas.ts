@@ -25,19 +25,31 @@ export async function importCorrecaoDatas(ctx: ImportContext): Promise<void> {
   ctx.log('▶ Correção de ano/número (WordPress mal-datados) + Lei Orgânica')
 
   // ---- NORMAS (só WordPress: wp-norma-*, afetadas pelo bug) ----
-  const normas = await ctx.prisma.normaJuridica.findMany({ select: { id: true, tipo: true, numero: true, ano: true, ementa: true, texto: true } })
+  const normas = await ctx.prisma.normaJuridica.findMany({ select: { id: true, tipo: true, numero: true, ano: true, ementa: true, texto: true, data: true } })
   const normaKey = new Set(normas.map((n) => `${n.tipo}|${n.numero}|${n.ano}`))
   let nCorr = 0, nMerged = 0
   for (const n of normas) {
     if (!n.id.startsWith('wp-norma-')) continue
-    const ref = refNumAno(n.ementa || '')
-    if (!ref || ref.ano === n.ano || !plausivel(ref.ano)) continue
-    const novaKey = `${n.tipo}|${n.numero}|${ref.ano}`
+    // Ano correto: preferir o "Nº NNN/AAAA" da ementa (número oficial). Se não
+    // houver esse padrão E for lei ORÇAMENTÁRIA (LDO/LOA/PPA) — onde o bug pegava
+    // o ano do exercício em vez do de aprovação — usar o ano do campo `data`
+    // (data de aprovação, autoritativa). Fora desses casos, não mexe (evita
+    // corromper normas cuja data de publicação difere legitimamente do ano).
+    const em = n.ementa || ''
+    const ref = refNumAno(em)
+    let alvoAno = n.ano
+    if (ref && plausivel(ref.ano)) alvoAno = ref.ano
+    else if (/\b(LDO|LOA|PPA|or[çc]ament|exerc[íi]cio)\b/i.test(em) && n.data) {
+      const dy = n.data.getUTCFullYear()
+      if (plausivel(dy)) alvoAno = dy
+    }
+    if (alvoAno === n.ano || !plausivel(alvoAno)) continue
+    const novaKey = `${n.tipo}|${n.numero}|${alvoAno}`
     if (normaKey.has(novaKey)) {
       // Colisão = a norma correta já existe → esta é duplicata mal-datada. Mescla texto (se maior) e remove.
-      ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}[norma] duplicata ${n.tipo} ${n.numero}/${n.ano} → mesclada em ${ref.ano}`)
+      ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}[norma] duplicata ${n.tipo} ${n.numero}/${n.ano} → mesclada em ${alvoAno}`)
       if (!ctx.dryRun) {
-        const win = await ctx.prisma.normaJuridica.findFirst({ where: { tipo: n.tipo as never, numero: n.numero, ano: ref.ano }, select: { id: true, texto: true } })
+        const win = await ctx.prisma.normaJuridica.findFirst({ where: { tipo: n.tipo as never, numero: n.numero, ano: alvoAno }, select: { id: true, texto: true } })
         if (win) {
           if ((n.texto || '').length > (win.texto || '').length) await ctx.prisma.normaJuridica.update({ where: { id: win.id }, data: { texto: n.texto } })
           await ctx.prisma.normaJuridica.delete({ where: { id: n.id } })
@@ -45,8 +57,8 @@ export async function importCorrecaoDatas(ctx: ImportContext): Promise<void> {
       }
       nMerged++; continue
     }
-    ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}[norma] ${n.tipo} ${n.numero}: ano ${n.ano} → ${ref.ano}`)
-    if (!ctx.dryRun) await ctx.prisma.normaJuridica.update({ where: { id: n.id }, data: { ano: ref.ano } })
+    ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}[norma] ${n.tipo} ${n.numero}: ano ${n.ano} → ${alvoAno}`)
+    if (!ctx.dryRun) await ctx.prisma.normaJuridica.update({ where: { id: n.id }, data: { ano: alvoAno } })
     normaKey.delete(`${n.tipo}|${n.numero}|${n.ano}`); normaKey.add(novaKey)
     nCorr++
   }
