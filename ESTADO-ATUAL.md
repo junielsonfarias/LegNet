@@ -1,11 +1,29 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Deep-dive nos itens "irrecuperáveis" — voto nominal recuperado)
+> **Ultima Atualizacao**: 2026-07-01 (Central de Revisão da Migração no admin)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Central de Revisão da Migração (admin)
+
+Nova área `/admin/revisao-migracao` para **completar manualmente** o material que
+a migração automática não identificou — evitando perda de informação. Preenche os
+CAMPOS REAIS (refletem no portal público) + observação do revisor.
+- **Schema**: `revisaoObservacao`/`revisadoEm` em `Proposicao` e `Publicacao`.
+- **API**: `GET /api/admin/revisao-migracao?categoria=` (lista + contadores),
+  `PATCH` (salva autor/resultado/observação), `POST .../votacao` (voto nominal).
+  Permissão `tramitacao.view`/`manage`.
+- **4 categorias**: (1) proposições sem autor (260) — seletor de parlamentar +
+  link PDF; (2) sem resultado (82 com sessão) — define Aprovada/Rejeitada; (3)
+  votação nominal manual (3 docs APURAÇÃO 2023 com marca manuscrita) — voto por
+  vereador → `Votacao`+`VotacaoAgrupada`; (4) não identificados (pubs sem
+  categoria / link externo) — campo de identificação.
+- Menu: item "Revisão da Migração" na seção Legislativo do admin.
 
 ---
 
