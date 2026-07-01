@@ -1,11 +1,25 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (2º code-review — 6 correções nas correções + re-derivação limpa)
+> **Ultima Atualizacao**: 2026-07-01 (3º code-review — 37 simplificado p/ aditivo)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — 3ª rodada de code-review — `37` simplificado para aditivo
+
+Confirmou A/C/D/F/06 corretas. Achou 3 resíduos, TODOS na lógica de reversão do
+`37`: (1) reset de status só cobria APROVADA (REJEITADA ficava inconsistente);
+(2) revert por-item anulava `Proposicao.resultado` com evidência em outra sessão;
+(3) `catalogadaCr2` não cobria reconstruídas do `35` (string "pauta CR2" ≠
+"Portal CR2"). **Correção de fundo: REMOVIDA a reversão** — era um band-aid para o
+bug anterior do próprio `37`; com a detecção ciente de contexto e os dados já
+re-derivados, virou no-op que só carregava esses bugs. O `37` ficou **puramente
+aditivo** (marca aprovação coletiva em itens sem resultado; nunca altera resultado
+de 27/42). 392 c/ resultado · 0 inconsistência (ambas direções) · idempotente.
 
 ---
 
