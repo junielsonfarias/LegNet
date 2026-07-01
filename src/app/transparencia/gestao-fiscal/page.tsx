@@ -35,9 +35,10 @@ export default function GestaoFiscalPage() {
     setHoraAtualizacao(new Date().toLocaleTimeString('pt-BR'))
   }, [])
 
+  const anoCorrente = new Date().getFullYear()
   const [filtros, setFiltros] = useState({
     tipo: '',
-    ano: '',
+    ano: String(anoCorrente), // padrão: exercício corrente
     status: '',
     titulo: '',
     dataInicio: '',
@@ -65,7 +66,8 @@ export default function GestaoFiscalPage() {
     'Arquivado'
   ]
 
-  const anos = [2025, 2024, 2023, 2022, 2021]
+  // Exercícios: ano corrente e os 5 anteriores (dinâmico, não congela em 2025).
+  const anos = Array.from({ length: 6 }, (_, i) => anoCorrente - i)
 
   const handleFiltroChange = (campo: string, valor: string) => {
     setFiltros(prev => ({
@@ -125,7 +127,7 @@ export default function GestaoFiscalPage() {
   const limparFiltros = () => {
     setFiltros({
       tipo: '',
-      ano: '',
+      ano: String(anoCorrente),
       status: '',
       titulo: '',
       dataInicio: '',

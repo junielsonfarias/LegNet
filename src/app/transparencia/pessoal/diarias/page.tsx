@@ -42,17 +42,27 @@ function DiariasPageContent() {
   const [diarias, setDiarias] = useState<Diaria[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState('2026')
+  const [ano, setAno] = useState('')
   const [mes, setMes] = useState('todos')
-  const [currentYear, setCurrentYear] = useState(2026)
+  const [anos, setAnos] = useState<string[]>([])
 
+  // Anos com dados (desc) + padrão inteligente: ano atual → mais recente com dados.
   useEffect(() => {
-    const year = new Date().getFullYear()
-    setCurrentYear(year)
-    setAno(year.toString())
+    fetch('/api/diarias?anos=true')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          const lista: string[] = json.data.map((a: number) => String(a))
+          setAnos(lista)
+          const atual = String(new Date().getFullYear())
+          setAno(lista.includes(atual) ? atual : (lista[0] ?? atual))
+        }
+      })
+      .catch(console.error)
   }, [])
 
   useEffect(() => {
+    if (!ano) return
     setLoading(true)
     const params = new URLSearchParams({ ano })
     if (mes !== 'todos') params.set('mes', mes)
@@ -68,7 +78,6 @@ function DiariasPageContent() {
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [ano, mes])
-  const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
 
   return (
     <div className="min-h-screen bg-gray-50">
