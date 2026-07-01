@@ -36,7 +36,11 @@ async function listarCategoria(categoria: string, page: number, limit: number, q
     return { items, total }
   }
   if (categoria === 'sem-resultado') {
-    const where = { deletedAt: null, resultado: null, OR: [{ sessaoId: { not: null } }, { sessaoVotacaoId: { not: null } }], ...(q ? busca : {}) }
+    // AND para não deixar a busca (que usa OR) sobrescrever o filtro "tem sessão".
+    const where = {
+      deletedAt: null, resultado: null,
+      AND: [{ OR: [{ sessaoId: { not: null } }, { sessaoVotacaoId: { not: null } }] }, ...(q ? [busca] : [])],
+    }
     const [items, total] = await Promise.all([
       prisma.proposicao.findMany({ where, select: PROP_SELECT, orderBy: [{ ano: 'desc' }, { numero: 'asc' }], skip, take: limit }),
       prisma.proposicao.count({ where }),

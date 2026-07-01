@@ -41,6 +41,13 @@ export async function importNormalizaNumeros(ctx: ImportContext): Promise<void> 
         preservados++
         continue
       }
+      if (!ctx.dryRun) {
+        // Guarda: não deletar o perdedor com filhos que cascateiam (votação/
+        // tramitação/emenda) — evita perda silenciosa em re-execução fora de ordem.
+        const c = await ctx.prisma.proposicao.findUnique({ where: { id: pr.id }, select: { _count: { select: { votacoes: true, votacoesAgrupadas: true, tramitacoes: true, emendas: true } } } })
+        const vinc = c ? c._count.votacoes + c._count.votacoesAgrupadas + c._count.tramitacoes + c._count.emendas : 0
+        if (vinc > 0) { ctx.warn(`[merge stub] PULADO (${vinc} vínculos): ${pr.tipo} ${pr.numero}/${pr.ano} — revisar manualmente`); continue }
+      }
       ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}[merge stub] ${pr.tipo} ${pr.numero}/${pr.ano} → ${padded}/${pr.ano}`)
       if (!ctx.dryRun) {
         const win = await ctx.prisma.proposicao.findFirst({ where: { tipo: pr.tipo, numero: padded, ano: pr.ano }, select: { id: true, texto: true, documentos: true } })

@@ -218,9 +218,9 @@ function VotacaoNominalCard({ it, parlamentares, saving, onSalvar }: { it: Nomin
       <CardContent className="space-y-2">
         <p className="text-xs text-gray-500">Marque o voto de cada vereador conforme o documento de apuração (marca manuscrita).</p>
         <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1">
-          {parlamentares.filter((x) => !x.ativo).map((x) => (
+          {[...parlamentares].sort((a, b) => Number(b.ativo) - Number(a.ativo) || a.nome.localeCompare(b.nome)).map((x) => (
             <div key={x.id} className="flex items-center justify-between gap-2 text-sm border-b border-gray-100 py-1">
-              <span className="truncate">{x.nome}</span>
+              <span className="truncate">{x.nome}{x.ativo ? '' : ' (hist.)'}</span>
               <select value={votos[x.id] || ''} onChange={(e) => setVotos((v) => ({ ...v, [x.id]: e.target.value }))} className="rounded border border-gray-300 px-2 py-1 text-xs">
                 <option value="">—</option>
                 {VOTOS.map((v) => <option key={v} value={v}>{v}</option>)}

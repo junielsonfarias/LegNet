@@ -81,6 +81,13 @@ export async function importCorrecaoDatas(ctx: ImportContext): Promise<void> {
     if (propKey.has(novaKey)) {
       // Colisão = a matéria correta já existe → esta é duplicata mal-datada.
       // Transfere texto/documentos (se o correto não tiver) e remove a duplicata.
+      if (!ctx.dryRun) {
+        // Guarda: não deletar o perdedor se ele tiver filhos que cascateiam
+        // (Votacao/VotacaoAgrupada/Tramitacao/Emenda) — evita perda silenciosa.
+        const c = await ctx.prisma.proposicao.findUnique({ where: { id: pr.id }, select: { _count: { select: { votacoes: true, votacoesAgrupadas: true, tramitacoes: true, emendas: true } } } })
+        const vinc = c ? c._count.votacoes + c._count.votacoesAgrupadas + c._count.tramitacoes + c._count.emendas : 0
+        if (vinc > 0) { ctx.warn(`[prop] merge PULADO (${vinc} vínculos de votação/tramitação): ${pr.tipo} ${pr.numero}/${pr.ano} — revisar manualmente`); continue }
+      }
       ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}[prop] duplicata ${pr.tipo} ${pr.numero}/${pr.ano} → mesclada em ${numeroCorrigido}/${ref.ano}`)
       if (!ctx.dryRun) {
         const win = await ctx.prisma.proposicao.findFirst({ where: { tipo: pr.tipo, numero: numeroCorrigido, ano: ref.ano }, select: { id: true, texto: true, documentos: true } })
