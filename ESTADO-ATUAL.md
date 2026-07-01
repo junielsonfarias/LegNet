@@ -1,11 +1,37 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (filtros de ano + grafia canônica de numeração)
-> **Versao**: 1.40.0
+> **Ultima Atualizacao**: 2026-07-01 (auditoria de páginas/links do frontend)
+> **Versao**: 1.40.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Auditoria de páginas e links do frontend
+
+Varredura completa: **269 páginas + 321 rotas de API**. Verificação estática de
+todos os links internos (96 `href=` JSX + 258 `href:`/`url:`/`path:` de objetos) e
+das navegações `router.push`/`redirect` contra a tabela real de rotas.
+
+**Saúde**: `tsc --noEmit` = 0; build passou lint/types e coletou 285 páginas; home
+`/` renderizou HTTP 200 em dev. Sem regressão de código.
+
+**4 links quebrados (404) encontrados e corrigidos**:
+- `/admin/login` → `/login` (tela "Fazer Login" do parlamentar).
+- `/transparencia/pessoal/folha-pagamento` → `/transparencia/folha-pagamento` (card Pessoal).
+- `/ajuda` (menu do header admin) → **criada** `src/app/ajuda/page.tsx` (Central de
+  Ajuda: guia rápido + FAQ/Ouvidoria/e-SIC/Transparência).
+- `/regulamentacao/cotas-parlamentar` → `/legislativo/normas` (botão "Regulamentação").
+
+**Nota de ambiente**: o `next build` local falhou em pontos DIFERENTES entre execuções
+(worker webpack) por contenção de recursos — havia 3 servidores Next simultâneos
+(portas 3000/3001/3002, ~5.6 GB). Não é falha de código (TS/ESLint limpos, home 200,
+app em produção). Recomendado build limpo com os outros servidores parados.
+
+Falsos positivos descartados: ~20 "links" em `api-docs`/`api-tests` são caminhos de
+endpoints de API documentados, não navegação.
 
 ---
 
