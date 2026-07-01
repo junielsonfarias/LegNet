@@ -447,7 +447,7 @@ export default function SessaoDetailPage() {
               </Card>
 
               {/* Links Rápidos */}
-              {(sessao.ata || sessao.arquivoAta || sessao.urlTransmissao || sessao.urlVideo || sessao.urlAudio) && (
+              {(sessao.ata || sessao.arquivoAta || sessao.arquivoPresenca || sessao.urlTransmissao || sessao.urlVideo || sessao.urlAudio) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Documentos e Mídias</CardTitle>
@@ -472,6 +472,14 @@ export default function SessaoDetailPage() {
                         <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer">
                           <Download className="h-4 w-4 mr-2 text-green-600" />
                           Baixar Ata (PDF)
+                        </a>
+                      </Button>
+                    )}
+                    {sessao.arquivoPresenca && (
+                      <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                        <a href={sessao.arquivoPresenca} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-4 w-4 mr-2 text-amber-600" />
+                          Baixar Folha de Presença (PDF)
                         </a>
                       </Button>
                     )}

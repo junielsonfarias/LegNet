@@ -28,14 +28,39 @@ const MIN_CHARS = 120
 const TESSDATA_DIR = process.env.TESSDATA_DIR || ''
 const TESS_LANG_ARGS = TESSDATA_DIR ? ['--tessdata-dir', TESSDATA_DIR] : []
 
+/** Localiza binários do poppler instalados via winget (caminho versionado). */
+function wingetBins(name: string): string[] {
+  try {
+    const base = path.join(os.homedir(), 'AppData', 'Local', 'Microsoft', 'WinGet', 'Packages')
+    const out: string[] = []
+    for (const pkg of readdirSync(base)) {
+      if (!/Poppler|Tesseract/i.test(pkg)) continue
+      const pkgDir = path.join(base, pkg)
+      for (const sub of readdirSync(pkgDir)) {
+        for (const rel of [['Library', 'bin'], ['bin'], []]) {
+          out.push(path.join(pkgDir, sub, ...rel, `${name}.exe`))
+        }
+      }
+    }
+    return out
+  } catch {
+    return []
+  }
+}
+
 function bin(name: string): string {
-  // tenta PATH; senão, locais comuns de instalação winget
+  // Override explícito por env (reprodutível em máquinas diferentes)
+  const envOverride =
+    name === 'tesseract' ? process.env.TESSERACT_BIN : name === 'pdftoppm' ? process.env.POPPLER_BIN : ''
+  if (envOverride) return envOverride
+  // tenta PATH; senão, locais comuns de instalação (Program Files + winget)
   const candidates = [
     name,
     `C:/Program Files/Tesseract-OCR/${name}.exe`,
     `C:/Program Files/poppler/Library/bin/${name}.exe`,
     `C:/Program Files/poppler/bin/${name}.exe`,
     `/mingw64/bin/${name}.exe`,
+    ...wingetBins(name),
   ]
   for (const c of candidates) {
     try {
@@ -49,7 +74,26 @@ function bin(name: string): string {
 let TESS = 'tesseract'
 let PDFTOPPM = 'pdftoppm'
 
-function ocrPdf(ctx: ImportContext, file: string): string {
+/**
+ * Resolve e valida os binários de OCR (tesseract + pdftoppm) e o idioma `por`.
+ * Exportado para reuso por outros importadores (ex.: folhas de presença CR2).
+ * Retorna false (com aviso) se o tesseract não estiver disponível.
+ */
+export function ensureOcrBins(ctx: ImportContext): boolean {
+  TESS = bin('tesseract')
+  PDFTOPPM = bin('pdftoppm')
+  try {
+    const langs = execFileSync(TESS, ['--list-langs', ...TESS_LANG_ARGS], { timeout: 10000 }).toString()
+    if (!/\bpor\b/.test(langs)) ctx.warn('idioma "por" do tesseract não encontrado — OCR usará default (qualidade menor)')
+  } catch {
+    ctx.warn('tesseract não encontrado no PATH nem nos locais padrão — OCR indisponível.')
+    return false
+  }
+  mkdirSync(TMP, { recursive: true })
+  return true
+}
+
+export function ocrPdf(ctx: ImportContext, file: string): string {
   const work = path.join(TMP, 'job')
   try { rmSync(work, { recursive: true, force: true }) } catch { /* */ }
   mkdirSync(work, { recursive: true })
@@ -95,16 +139,7 @@ const REJEICAO_RE = /rejeitad[oa]\s*(por|p\/|em|pela)\b|rejeitad[oa][^.\n]{0,40}
 
 export async function importOcr(ctx: ImportContext): Promise<void> {
   ctx.log('▶ OCR de PDFs escaneados')
-  TESS = bin('tesseract'); PDFTOPPM = bin('pdftoppm')
-  // valida idioma por
-  try {
-    const langs = execFileSync(TESS, ['--list-langs', ...TESS_LANG_ARGS], { timeout: 10000 }).toString()
-    if (!/\bpor\b/.test(langs)) ctx.warn('idioma "por" do tesseract não encontrado — OCR usará default (qualidade menor)')
-  } catch {
-    ctx.warn('tesseract não encontrado no PATH nem nos locais padrão — abortando OCR.')
-    return
-  }
-  mkdirSync(TMP, { recursive: true })
+  if (!ensureOcrBins(ctx)) return
 
   const limit = parseInt(process.env.OCR_LIMIT || '0', 10) || Infinity
   let done = 0

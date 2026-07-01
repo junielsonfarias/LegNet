@@ -1,11 +1,46 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-06-30 (Import dados antigos: análise + Fase 0)
+> **Ultima Atualizacao**: 2026-07-01 (Presença oficial CR2 2024-2025 + folha na sessão)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Presença oficial CR2 2024-2025 (folhas assinadas) + exibição na sessão
+
+Fechada a presença de **2024-2025 por fonte primária**: as folhas de
+presença/frequência assinadas do Portal CR2 (coluna `listPresencaSessao` de
+`Sessões.csv`), que estavam como links não baixados.
+
+**Novo importador `31-folhas-cr2-presenca.ts`** (fase `--only=folhas-cr2`):
+- 65 folhas no CSV (40 Google Drive + 25 CDN Bubble). Casa folha→sessão pela
+  MESMA derivação de `07-sessoes` (numero+data+tipo) — desambigua 2 sessões no
+  mesmo dia. Baixa/re-hospeda o PDF em `public/uploads/presenca-cr2/`.
+- **Novo campo `Sessao.arquivoPresenca`** (schema) liga a sessão à sua folha
+  oficial. `db:push` aplicado no banco DEV local.
+- Presença **CONSERVADORA** por OCR (reuso de `19-ocr` via `ocrPdf`/
+  `ensureOcrBins`): só presença CONFIRMADA por assinatura. No formato 2025
+  (coluna de PARTIDO entre nome e assinatura) os nomes de partido/cabeçalho são
+  removidos antes de medir o ruído — evita falso-positivo. Ausência não inferida.
+
+**Resultado (apply 2026-07-01, banco DEV local)**:
+- **64 folhas anexadas** (25 Bubble + 39 Drive baixadas · 0 link externo · 1 sem
+  sessão correspondente) → 64 sessões com `arquivoPresenca`.
+- **450 presenças confirmadas** em 64 sessões (2024: 337 · 2025: 320 no total).
+- **Presença total: 663 → 1029** · sessões com presença: **84 → 124**.
+
+**Frontend**: a página pública `/legislativo/sessoes/[numero]` agora oferece
+"Baixar Folha de Presença (PDF)" no card "Documentos e Mídias" (ao lado da ata).
+`SessaoApi.arquivoPresenca` adicionado; a API já retornava o scalar (usa
+`include`, não `select`). Pendente: campo editável no admin (validador de
+update-sessao).
+
+**Infra OCR (reprodutível)**: `19-ocr.ts` agora localiza poppler/tesseract do
+winget e honra `TESSERACT_BIN`/`POPPLER_BIN`/`TESSDATA_DIR`. `por.traineddata`
+(tessdata_fast) requerido para OCR PT-BR.
 
 ---
 

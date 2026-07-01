@@ -13,6 +13,7 @@ export interface SessaoApi {
   ata: string | null
   arquivoAta?: string | null
   arquivoAtaAssinada?: string | null
+  arquivoPresenca?: string | null
   statusAta?: 'PENDENTE' | 'APROVADA' | 'REJEITADA' | null
   dataPublicacaoAta?: string | null
   sessaoAprovacaoAtaId?: string | null

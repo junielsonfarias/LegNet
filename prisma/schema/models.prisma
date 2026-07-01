@@ -237,6 +237,7 @@ model Sessao {
   urlTransmissao       String? // Link da transmissão ao vivo
   arquivoPauta         String? // URL do PDF da pauta publicada
   arquivoAta           String? // URL do PDF da ata aprovada
+  arquivoPresenca      String? // URL do PDF da folha de presença/frequência assinada (fonte oficial)
   // === CAMPOS DE APROVAÇÃO DA ATA ===
   statusAta            StatusAta? // null = sem ata; PENDENTE = aguardando aprovação na próxima sessão
   sessaoAprovacaoAtaId String? // Sessão N+1 que aprovou/rejeitou esta ata
