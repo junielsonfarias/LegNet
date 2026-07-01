@@ -49,6 +49,7 @@ import { importFolhasCr2Presenca } from './31-folhas-cr2-presenca'
 import { importLimpezaVereadores } from './32-limpeza-vereadores'
 import { importMateriasPauta } from './33-materias-pauta'
 import { importLimpezaPlaceholders } from './34-limpeza-placeholders'
+import { importMateriasPautaCr2 } from './35-materias-pauta-cr2'
 
 const ALL_PHASES = [
   'config', 'parlamentares', 'mesa', 'comissoes', 'normas', 'proposicoes', 'sessoes',
@@ -135,6 +136,7 @@ async function main() {
   if (selected('limpeza-vereadores', only)) await importLimpezaVereadores(ctx)
   if (selected('materias-pauta', only)) await importMateriasPauta(ctx)
   if (selected('limpeza-placeholders', only)) await importLimpezaPlaceholders(ctx)
+  if (selected('materias-pauta-cr2', only)) await importMateriasPautaCr2(ctx)
   if (selected('drive', only)) await importDrive(ctx)
   if (selected('texto', only)) await importExtrairTexto(ctx)
   if (selected('ocr', only)) await importOcr(ctx)

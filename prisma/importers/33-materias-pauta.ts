@@ -16,7 +16,7 @@ import type { ImportContext } from './lib/runner'
 import { parseDataPt, tipoSessao, TIPO_MATERIA, TIPO_LABEL, makeRefRe } from './26-cruzamento-pauta'
 
 /** Extrai a ementa: texto após a referência até o próximo ITEM/seção (cap 400). */
-function extractEmenta(txt: string, afterIdx: number): string {
+export function extractEmenta(txt: string, afterIdx: number): string {
   let seg = txt.slice(afterIdx, afterIdx + 500)
   // Para no próximo item/seção OU na próxima referência de matéria (evita
   // que a ementa "vaze" para o item seguinte quando não há marcador "ITEM").

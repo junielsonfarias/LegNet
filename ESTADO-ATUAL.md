@@ -1,11 +1,37 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Auditoria por ano + limpeza de placeholders)
+> **Ultima Atualizacao**: 2026-07-01 (Gap 2024-2025 fechado via pautas CR2 OCR)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Gap 2024-2025 fechado: matérias/pautas dos PDFs CR2 (OCR)
+
+Novo `35-materias-pauta-cr2.ts` (fase `--only=materias-pauta-cr2`) faz OCR dos 69
+PDFs de pauta do CR2 (`Sessao.arquivoPauta`, 2024-2025) — que nunca viraram
+`Publicacao "PAUTA"` e por isso escapavam do cruzamento 26/33. Extrai referências
++ ementa, reconstrói matérias faltantes (entradaRetroativa + motivo CR2) e cria
+PautaSessao + PautaItem ligando à sessão. Idempotente; requer OCR (env
+`TESSERACT_BIN`/`POPPLER_BIN`/`TESSDATA_DIR`).
+
+**Verdade sobre 2024 (confirmada pelo OCR)**: 26 das 40 pautas de 2024 dizem
+literalmente "SEM MATÉRIAS PARA DELIBERAÇÕES" — 2024 teve produção legislativa
+formal mínima no registro digital. NÃO era falha de migração. Só +2 matérias reais
+recuperadas para 2024 (11→13).
+
+**Ganho colateral em 2025**: as pautas referenciavam 46 matérias de 2025 que a
+própria `Matérias.csv` do CR2 não catalogou (111→157). Import CR2 estava incompleto.
+
+**Resultados**:
+- **48 matérias reconstruídas** (46 de 2025 + 2 de 2024) · **181 itens de pauta**.
+- Proposições **634 → 682** · PautaItem **388 → 569** · PautaSessao 135 → 153.
+- Todas as 29 sessões de 2025 e 14 de 2024 (as com matéria) agora com itens de pauta.
+- Após re-cruzamento de votação (27): proposições c/ resultado **66 → 140**.
+- **Cobertura de pauta agora completa 2016-2025.**
 
 ---
 
