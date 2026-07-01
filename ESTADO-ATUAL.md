@@ -1,6 +1,6 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Autoria via OCR + presença exibida na UI)
+> **Ultima Atualizacao**: 2026-07-01 (Rota pública de sessão por ID + presença na UI)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
@@ -24,10 +24,13 @@ parlamentar (nome/apelido/partido) — a página pública usa o endpoint de list
 (público). Os 2703 registros de presença em 256 sessões agora são visíveis.
 Autor/resultado já eram exibidos nas páginas de proposição (detalhe e listagem).
 
-**Limite conhecido (pré-existente)**: a página de sessão resolve a URL por
-`numero` (que se repete entre anos) sobre a lista paginada (100). Sessões antigas
-homônimas podem não ser endereçáveis — refator de rota (numero→id) fica como
-melhoria futura.
+**Rota de sessão refatorada para ID** (resolve o limite acima): novo endpoint
+público `GET /api/publico/sessoes/[id]` (somente leitura) retorna o detalhe
+completo (presenças com parlamentar, pauta/itens, proposições). A rota
+`/legislativo/sessoes/[numero]` virou `[id]`; a página busca por id via
+`getPublicById` (compatibilidade: param numérico cai no lookup antigo por número).
+Links atualizados (listagem, favoritos, página de proposição). Agora TODAS as 271
+sessões são endereçáveis por URL única. Testado: endpoint retorna presenças.
 
 ---
 
