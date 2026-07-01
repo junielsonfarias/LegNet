@@ -44,6 +44,8 @@ em `public/uploads/<pasta>/`.
 | `30-folhas-presenca.ts` | Presença por folhas WordPress (2023-2024) |
 | `31-folhas-cr2-presenca.ts` | Presença + folha oficial CR2 (2024-2025) |
 | `32-limpeza-vereadores.ts` | Normaliza nomes + mescla duplicatas de OCR |
+| `26-cruzamento-pauta.ts` | Pauta→Proposição (cria PautaItem, liga à sessão) |
+| `33-materias-pauta.ts` | Reconstrói matérias 2021-2023 faltantes (da pauta OCR) |
 | `lib/csv.ts` | Parser CSV (RFC 4180, células multilinha) |
 | `lib/normalize.ts` | Datas Bubble, número/ano, nomes, placeholders |
 | `lib/files.ts` | Download CDN + re-hospedagem + magic bytes |

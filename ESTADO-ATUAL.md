@@ -1,11 +1,39 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Presença CR2 2024-2025 + limpeza de vereadores)
+> **Ultima Atualizacao**: 2026-07-01 (Presença CR2 + limpeza vereadores + matérias 2021-2023)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Cobertura da pauta 2021-2023: matérias reconstruídas (Etapa 1)
+
+Investigação da baixa cobertura do cruzamento pauta→proposição (`26`, antes 45%):
+o gargalo NÃO era o algoritmo, e sim **dado de origem faltando** — as matérias de
+2021-2023 constavam nas pautas oficiais mas nunca foram exportadas pelo Portal CR2
+(sistema tinha 17/3/1 proposições nesses anos). As refs "casadas em outro ano"
+eram colisões de número (matérias distintas), casá-las seria incorreto.
+
+**Correções seguras no `26-cruzamento-pauta.ts`**:
+- Normalização de número por grupo inicial (`"001-2"`→1, não 12) — elimina
+  mis-indexação e match espúrio das 26 matérias com número desambiguado.
+- Regex passou a reconhecer "Projeto de Decreto". Helpers exportados p/ reuso.
+
+**Novo `33-materias-pauta.ts`** (fase `--only=materias-pauta`, idempotente):
+reconstrói as matérias faltantes a partir do texto OCR da própria pauta (a ementa
+vem logo após a referência). Proveniência: `entradaRetroativa=true` +
+`motivoRetroativo="...reconstruída da pauta OCR..."` (distinta da "Importação
+histórica CR2"). Corte da ementa para no próximo item/seção/referência.
+- **180 matérias criadas** (2016:23·2017-2019 esparsos·**2021:94·2022:36·2023:45**),
+  todas com ementa e **180/180 vinculadas à sessão** de apresentação.
+
+**Resultado do cruzamento (re-rodado)**: itens de pauta **176 → 388** · pautas
+com sessão **74 → 135** · **referências não casadas 397 → 0** (100% das refs
+extraíveis agora casam). As matérias aparecem no acervo público com o marcador
+de proveniência (sem PDF/autor originais — mesma limitação das históricas CR2).
 
 ---
 

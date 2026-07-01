@@ -16,24 +16,34 @@ const MESES: Record<string, number> = {
   janeiro: 1, fevereiro: 2, março: 3, marco: 3, abril: 4, maio: 5, junho: 6,
   julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
 }
-function parseDataPt(t: string): Date | null {
+export function parseDataPt(t: string): Date | null {
   const m = t.toLowerCase().match(/(\d{1,2})[ºª°]?\s+de\s+([a-zç]+)\s+de\s+((?:19|20)\d{2})/)
   if (!m || !MESES[m[2]]) return null
   return new Date(Date.UTC(parseInt(m[3], 10), MESES[m[2]] - 1, parseInt(m[1], 10), 12, 0, 0))
 }
-function tipoSessao(t: string): string {
+export function tipoSessao(t: string): string {
   t = t.toLowerCase()
   if (t.includes('extraordin')) return 'EXTRAORDINARIA'
   if (t.includes('solene')) return 'SOLENE'
   if (t.includes('especial')) return 'ESPECIAL'
   return 'ORDINARIA'
 }
-const TIPO_MATERIA: Record<string, string> = {
+export const TIPO_MATERIA: Record<string, string> = {
   requerimento: 'REQUERIMENTO', 'projeto de lei': 'PROJETO_LEI',
   'projeto de resolução': 'PROJETO_RESOLUCAO', 'projeto de resolucao': 'PROJETO_RESOLUCAO',
+  'projeto de decreto': 'PROJETO_DECRETO',
   indicação: 'INDICACAO', indicacao: 'INDICACAO', moção: 'MOCAO', mocao: 'MOCAO',
 }
-const REF_RE = /\b(requerimento|projeto de lei|projeto de resolu[çc][ãa]o|indica[çc][ãa]o|mo[çc][ãa]o)\s*(?:n[ºo°.]*\s*)?(\d{1,4})\s*[\/\-]\s*((?:19|20)\d{2})/gi
+/** Rótulo humano do tipo de matéria (para títulos). */
+export const TIPO_LABEL: Record<string, string> = {
+  REQUERIMENTO: 'Requerimento', PROJETO_LEI: 'Projeto de Lei',
+  PROJETO_RESOLUCAO: 'Projeto de Resolução', PROJETO_DECRETO: 'Projeto de Decreto Legislativo',
+  INDICACAO: 'Indicação', MOCAO: 'Moção',
+}
+/** Cria uma nova instância do regex de referências (evita compartilhar lastIndex). */
+export const makeRefRe = () =>
+  /\b(requerimento|projeto de lei|projeto de resolu[çc][ãa]o|projeto de decreto|indica[çc][ãa]o|mo[çc][ãa]o)\s*(?:n[ºo°.]*\s*)?(\d{1,4})\s*[\/\-]\s*((?:19|20)\d{2})/gi
+const REF_RE = makeRefRe()
 
 export async function importCruzamentoPauta(ctx: ImportContext): Promise<void> {
   ctx.log('▶ Cruzamento Pauta → Proposições')
@@ -42,8 +52,14 @@ export async function importCruzamentoPauta(ctx: ImportContext): Promise<void> {
   const props = await ctx.prisma.proposicao.findMany({ select: { id: true, tipo: true, numero: true, ano: true, titulo: true } })
   const idx = new Map<string, { id: string; titulo: string }>()
   for (const p of props) {
-    const n = parseInt((p.numero || '').replace(/\D/g, ''), 10)
-    if (!isNaN(n)) idx.set(`${p.tipo}|${n}|${p.ano}`, { id: p.id, titulo: p.titulo })
+    // Usa APENAS o grupo numérico inicial: "001-2" (matéria desambiguada por
+    // reúso de número) → 1, não 12. Evita mis-indexação e match espúrio.
+    const n = parseInt((p.numero || '').match(/^\s*\d+/)?.[0] || '', 10)
+    if (isNaN(n)) continue
+    const key = `${p.tipo}|${n}|${p.ano}`
+    // A matéria primária (número sem sufixo) tem prioridade sobre a desambiguada.
+    const isSuffixed = /^\s*\d+\s*-/.test(p.numero || '')
+    if (!idx.has(key) || !isSuffixed) idx.set(key, { id: p.id, titulo: p.titulo })
   }
 
   const pautas = await ctx.prisma.publicacao.findMany({
