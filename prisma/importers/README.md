@@ -43,6 +43,7 @@ em `public/uploads/<pasta>/`.
 | `19-ocr.ts` | OCR de PDFs (exporta `ocrPdf`/`ensureOcrBins` p/ reuso) |
 | `30-folhas-presenca.ts` | Presença por folhas WordPress (2023-2024) |
 | `31-folhas-cr2-presenca.ts` | Presença + folha oficial CR2 (2024-2025) |
+| `32-limpeza-vereadores.ts` | Normaliza nomes + mescla duplicatas de OCR |
 | `lib/csv.ts` | Parser CSV (RFC 4180, células multilinha) |
 | `lib/normalize.ts` | Datas Bubble, número/ano, nomes, placeholders |
 | `lib/files.ts` | Download CDN + re-hospedagem + magic bytes |

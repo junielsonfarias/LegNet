@@ -1,11 +1,29 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Presença oficial CR2 2024-2025 + folha na sessão)
+> **Ultima Atualizacao**: 2026-07-01 (Presença CR2 2024-2025 + limpeza de vereadores)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Limpeza de vereadores históricos (nomes + duplicatas)
+
+Importador `32-limpeza-vereadores.ts` (fase `--only=limpeza-vereadores`,
+idempotente) corrige o ruído de OCR dos importadores 28/29/30:
+- **3 nomes normalizados** (partido grudado extraído p/ campo `partido`):
+  "Delson Mendes Rodriguesdo Pp"→"Delson Mendes Rodrigues" (PP); "Katiany Galvao
+  Damasceno Cruz do Pcdob"→"...Cruz" (PCdoB); "Raimundo Aparecido Almeida de
+  Miranda Docpp"→"...Miranda" (PP).
+- **3 duplicatas mescladas** (mesma pessoa, 2 registros): "Cantidiopinheiro
+  Pereira"→"Cantidio Pinheiro Pereira"; "Pedro Steiner"→"Pedro Mauricio Franco
+  Steiner"; "Denis de Paula Nogueira" inativo → o registro ATIVO (MDB). Mescla
+  reatribui presenças/mandatos não conflitantes ao vencedor; conflitantes saem
+  no cascade. **16 presenças reatribuídas, sem perda.**
+- Resultado: **39 → 36 parlamentares** · 0 nomes duplicados · 0 nomes ruidosos ·
+  presença total preservada (1029). Denis (ativo) consolidado em 45 presenças.
 
 ---
 
