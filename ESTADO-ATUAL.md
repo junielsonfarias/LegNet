@@ -1,11 +1,35 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Code-review do dia + 4 correções)
+> **Ultima Atualizacao**: 2026-07-01 (2º code-review — 6 correções nas correções + re-derivação limpa)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — 2ª rodada de code-review (revisão das próprias correções)
+
+A reescrita do `37` (para corrigir o bug #2 do 1º review) foi submetida a um novo
+code-review, que pegou **6 regressões** — corrigidas:
+- **A** — `resultadoAdjacente()` usava menos palavras-resultado que o `27` (faltava
+  `deferid/indeferid/reprovad`) → revertia resultado válido. Alinhado ao `27`.
+- **C** — regex sem fronteira à esquerda casava nº de outra matéria ("5" em
+  "15/2024"). Adicionado `(?<!\d)`.
+- **D** — `propVista` compartilhado marcar/reverter + sem `orderBy` → resultado
+  não-determinístico. Reescrito com decisão por PROPOSIÇÃO (`propQualifica`).
+- **E** — reversão não resetava `status` → `status=APROVADA` com `resultado=null`.
+  Agora reseta.
+- **F** — guarda de merge (38/41) não contava `pareceres` (cascade). Adicionado.
+- **06-proposicoes** — passou a gravar `resultado` derivado do `situacaoMateria`
+  (coerência status↔resultado p/ matérias CR2 fora de pauta).
+
+**Re-derivação limpa** (a versão bugada havia contaminado dados): reset da votação
+das WP/reconstruídas + re-run `27` (ata autoritativa) + `37` corrigido + sync
+resultado←status das 30 CR2 fora de pauta. Estado final: **392 proposições c/
+resultado · 0 inconsistência status/resultado · 0 duplicatas/órfãos · 37
+idempotente (0/0) · tsc/eslint 0 · 931 testes**.
 
 ---
 
