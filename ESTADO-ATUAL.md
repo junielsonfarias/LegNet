@@ -1,11 +1,27 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Autoria das matérias extraída da ementa)
+> **Ultima Atualizacao**: 2026-07-01 (Autoria + votação por aprovação coletiva)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Votação por aprovação coletiva da ata (Etapa 2b)
+
+Novo `37-votacao-coletiva.ts` (fase `--only=votacao-coletiva`): muitas atas não
+registram resultado matéria a matéria, mas trazem a aprovação em bloco da ordem
+do dia ("aprovada por unanimidade"). Isso é declaração FACTUAL da ata (não
+inferência). Marca APROVADA os itens ainda sem resultado das sessões cuja ata tem
+aprovação coletiva **E não** tem ressalva (rejeição/adiamento/vista/retirada). As
+sessões com qualquer ressalva ficam para revisão manual.
+
+**Resultado**: 77 sessões elegíveis · proposições c/ resultado **140 → 382**
+(APROVADA 379, REJEITADA 3) · PautaItem c/ resultado **188 → 444** (78%). Restam
+125 itens sem resultado (sessões sem aprovação coletiva / sem ata). Fecha a
+pendência #5.
 
 ---
 
