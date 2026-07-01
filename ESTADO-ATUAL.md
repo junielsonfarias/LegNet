@@ -123,6 +123,20 @@ não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
 - 11 parlamentares · 4 comissões · mesa diretora
 - **~1597 arquivos, 2,3 GB** em `public/uploads/`
 
+### PRESENÇA — folhas oficiais 2023-2024 (`30-folhas-presenca.ts`, 2026-06-30)
+Fonte primária: **43 folhas de presença WordPress** (roster impresso 2021-2024 +
+assinatura). Casa folha→sessão por **data no título** (25 datas, 1 sem sessão).
+- **Presença CONSERVADORA**: só registra presença CONFIRMADA (assinatura OCR
+  detectada, ≥4 letras). Ausência NÃO é inferida (OCR não distingue falta de
+  assinatura ilegível — auditoria mostrou 41% de falso-ausente).
+- Resultado: **256 presenças confirmadas → 19 sessões** (2023: 14, 2024: 5),
+  anos que antes tinham ZERO presença.
+- **8 vereadores 2021-2024** cadastrados (ativo=false) + mandatos: Ademilton
+  Macedo, Eliézio Nobre, Karina Soares, Raimundo Feitosa, Robson Cunha, Ronaldo
+  Pinho, Teodoro Macedo, Tiburço Leitão.
+- **Cobertura total de presença: 65 → 84 sessões** · parlamentares 31 → 39
+  (28 históricos) · 663 registros.
+
 ### FLUXO DOCUMENTAL COMPLETO (Etapas 1-3, 2026-06-30)
 Ciclo sessão → pauta → matéria → votação → presença, com ata em texto:
 - **Etapa 2 — Votação** (`27-cruzamento-votacao.ts`): resultado por matéria do
