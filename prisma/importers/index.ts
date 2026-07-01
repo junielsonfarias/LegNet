@@ -56,6 +56,7 @@ import { importCorrecaoDatas } from './38-correcao-datas'
 import { importLimpaEmentas } from './39-limpa-ementas'
 import { importRgfCr2 } from './40-rgf-cr2'
 import { importNormalizaNumeros } from './41-normaliza-numeros'
+import { importVotacaoNominal } from './42-votacao-nominal'
 
 const ALL_PHASES = [
   'config', 'parlamentares', 'mesa', 'comissoes', 'normas', 'proposicoes', 'sessoes',
@@ -149,6 +150,7 @@ async function main() {
   if (selected('limpa-ementas', only)) await importLimpaEmentas(ctx)
   if (selected('rgf-cr2', only)) await importRgfCr2(ctx)
   if (selected('normaliza-numeros', only)) await importNormalizaNumeros(ctx)
+  if (selected('votacao-nominal', only)) await importVotacaoNominal(ctx)
   if (selected('drive', only)) await importDrive(ctx)
   if (selected('texto', only)) await importExtrairTexto(ctx)
   if (selected('ocr', only)) await importOcr(ctx)
