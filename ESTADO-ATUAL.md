@@ -1,11 +1,42 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Pendências MÉDIA da auditoria aplicadas)
+> **Ultima Atualizacao**: 2026-07-01 (2ª rodada de auditoria — veredito SIM/COMPLETA)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — 2ª rodada de auditoria (7 agentes) — VEREDITO SIM/COMPLETA
+
+Re-executados os 7 agentes (6 domínio + sintetizador) sobre o estado corrigido.
+**Placar: 5 SIM + 1 PARCIAL** (era 3/3 na 1ª rodada) → após os fixes abaixo,
+**veredito global final: SIM (migração correta e completa)**.
+
+O re-áudito, olhando o estado já corrigido com mais profundidade, achou resíduos
+que foram sanados:
+- **Normas**: 4 leis orçamentárias (LDO/LOA/PPA) mal-datadas por data por extenso
+  (sem "/AAAA" na ementa) → `38` estendido usa `data.getUTCFullYear()` gated por
+  marcador orçamentário (LEI 283→2013, 320→2015, 352/365→2016). LEI 418 ambígua
+  (dupla numeração no documento) preservada.
+- **Proposições**: `41-normaliza-numeros` (novo) padroniza número wp-prop p/ 3
+  dígitos (286) e mescla 3 stubs REQUERIMENTO idênticos — **preservando 9 PLs
+  distintos** que reusam número (ementa diferente → NÃO mescla). Proposições→676.
+- **Publicações**: limiar do placeholder 40→120 ch remove +7 avisos "SEM PAUTAS E
+  ATAS EM [mês]" residuais. Publicações→828.
+
+**Sintetizador (final)**: 0 órfãos em 12 checagens referenciais, 0 duplicatas de
+chave, 0 datas futuras. Matriz ano a ano 2016-2025 consistente. Resíduo é
+**exclusivamente limite de fonte**: LEI 418 ambígua, PL 014/2024 apresentado em
+2025 (real), acervo pré-2016, e voto nominal individual inexistente (atas só têm
+resultado agregado, preservado em `Proposicao.resultado`). **0 item corrigível
+pendente.**
+
+**Estado final**: 676 proposições · 59 normas · 828 publicações · 271 sessões
+(260 c/ presença, 2726 reg.) · 35 RGF (2016-2025) · **0 órfãos · 0 duplicatas ·
+0 datas futuras**.
 
 ---
 
