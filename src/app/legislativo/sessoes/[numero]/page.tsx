@@ -77,10 +77,10 @@ export default function SessaoDetailPage() {
           return
         }
         
-        // Buscar todas as sessões e encontrar pelo número
-        const { data: sessoes } = await sessoesApi.getAll()
-        
-        // Buscar por número
+        // Buscar as sessões (limite máximo) e encontrar pelo número
+        const { data: sessoes } = await sessoesApi.getAll({ limit: 100 })
+
+        // Buscar por número (mais recente primeiro, já que o número se repete entre anos)
         const sessaoEncontrada = sessoes.find(s => s.numero === numeroBusca)
         
         if (!sessaoEncontrada) {
@@ -512,6 +512,53 @@ export default function SessaoDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Seção de Presença / Frequência */}
+          {sessao.presencas && sessao.presencas.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-camara-primary" />
+                  Presença / Frequência
+                  <span className="text-sm font-normal text-gray-500">
+                    ({sessao.presencas.filter((p) => p.presente).length} presentes de {sessao.presencas.length})
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {[...sessao.presencas]
+                    .sort((a, b) => Number(b.presente) - Number(a.presente) || a.parlamentar.nome.localeCompare(b.parlamentar.nome))
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${
+                          p.presente ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                        }`}
+                      >
+                        {p.presente ? (
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 shrink-0 text-red-500" />
+                        )}
+                        <span className="truncate text-gray-800">
+                          {p.parlamentar.apelido || p.parlamentar.nome}
+                          {p.parlamentar.partido && (
+                            <span className="text-gray-400"> ({p.parlamentar.partido})</span>
+                          )}
+                          {!p.presente && p.justificativa && (
+                            <span className="block text-xs text-gray-500">Justificada: {p.justificativa}</span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+                <p className="mt-3 text-xs text-gray-400">
+                  Fonte: folha de presença oficial e/ou ata da sessão.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Seção de Proposições */}
           {loadingProposicoes ? (

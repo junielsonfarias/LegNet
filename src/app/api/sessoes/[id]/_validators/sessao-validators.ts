@@ -143,7 +143,8 @@ export const sessaoIncludeFull = {
         select: {
           id: true,
           nome: true,
-          apelido: true
+          apelido: true,
+          partido: true
         }
       }
     }
@@ -207,7 +208,8 @@ export const sessaoIncludeOperator = {
           id: true,
           nome: true,
           apelido: true,
-          foto: true
+          foto: true,
+          partido: true
         }
       }
     }

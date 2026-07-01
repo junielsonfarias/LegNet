@@ -67,7 +67,13 @@ const listInclude = {
     }
   },
   presencas: {
-    select: { id: true, presente: true, parlamentarId: true }
+    select: {
+      id: true,
+      presente: true,
+      justificativa: true,
+      parlamentarId: true,
+      parlamentar: { select: { id: true, nome: true, apelido: true, partido: true } }
+    }
   },
   mesaSessao: {
     include: {
