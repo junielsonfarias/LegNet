@@ -22,8 +22,10 @@ function isPlaceholder(s: string | null | undefined): boolean {
     /\bn[ãa]o\s+houve(ram|m)?\b/.test(t) ||
     /^declara/.test(t) ||
     /declaramos que n[ãa]o/.test(t) ||
-    /^sem\s+(projetos?|requerimentos?|indica|mo[çc]|normas?|leis?|decretos?)/.test(t) ||
-    /^(indica[çc][õo]es|requerimentos|projetos de lei|mo[çc][õo]es)\s+20\d{2}\s*$/.test(t)
+    /^sem\s+(projetos?|requerimentos?|indica|mo[çc]|resolu|normas?|leis?|decretos?)/.test(t) ||
+    // Cabeçalho de categoria-ano (página-índice do WordPress, não é ato real):
+    // "RESOLUÇÕES 2014", "DECRETOS 2020", "PROJETOS DE LEI 2021", "MOÇÕES 2019".
+    /^(indica[çc][õo]es|requerimentos|projetos de lei|mo[çc][õo]es|resolu[çc][õo]es|decretos?|leis?|portarias)\s+(de\s+)?(19|20)\d{2}\s*$/.test(t)
   )
 }
 

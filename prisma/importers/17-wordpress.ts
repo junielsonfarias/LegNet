@@ -63,9 +63,15 @@ function pickRoute(cats: string | null): Route | null {
 }
 
 function parseNumAno(titulo: string, postYear: number): { numero: string | null; ano: number } {
+  // Preferência: o ano COLADO ao número oficial ("Nº 388/2019"). Evita pegar o
+  // ano do exercício em leis orçamentárias ("LEI Nº 388/2019 ... LOA 2020").
+  const numAno = titulo.match(/N[ºo°]\s*0*(\d+)\s*[\/-]\s*((?:19|20)\d{2})/i)
+  if (numAno) return { numero: numAno[1], ano: parseInt(numAno[2], 10) }
+  // Fallback: número sem ano adjacente → primeiro ano do título (mais próximo do
+  // número que o último) ou o ano do post.
   const num = titulo.match(/N[ºo°]\s*0*(\d+)/i)
   const years = titulo.match(/(?:19|20)\d{2}/g)
-  const ano = years ? parseInt(years[years.length - 1], 10) : postYear
+  const ano = years ? parseInt(years[0], 10) : postYear
   return { numero: num ? num[1] : null, ano }
 }
 

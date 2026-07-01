@@ -52,6 +52,7 @@ import { importLimpezaPlaceholders } from './34-limpeza-placeholders'
 import { importMateriasPautaCr2 } from './35-materias-pauta-cr2'
 import { importAutoriaMaterias } from './36-autoria-materias'
 import { importVotacaoColetiva } from './37-votacao-coletiva'
+import { importCorrecaoDatas } from './38-correcao-datas'
 
 const ALL_PHASES = [
   'config', 'parlamentares', 'mesa', 'comissoes', 'normas', 'proposicoes', 'sessoes',
@@ -141,6 +142,7 @@ async function main() {
   if (selected('materias-pauta-cr2', only)) await importMateriasPautaCr2(ctx)
   if (selected('autoria', only)) await importAutoriaMaterias(ctx)
   if (selected('votacao-coletiva', only)) await importVotacaoColetiva(ctx)
+  if (selected('correcao-datas', only)) await importCorrecaoDatas(ctx)
   if (selected('drive', only)) await importDrive(ctx)
   if (selected('texto', only)) await importExtrairTexto(ctx)
   if (selected('ocr', only)) await importOcr(ctx)
