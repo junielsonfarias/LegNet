@@ -107,9 +107,13 @@ export async function importProposicoes(
 
     const arquivos = await acquireDocs(ctx, docs, 'proposicoes')
 
+    // Resultado da votação derivado da situação catalogada (situacaoMateria).
+    // Mantém coerência status↔resultado mesmo p/ matérias fora de qualquer pauta.
+    const resultado = status === 'APROVADA' || status === 'REJEITADA' ? status : null
+
     await ctx.prisma.proposicao.upsert({
       where: { tipo_numero_ano: { tipo: tipo.code, numero, ano } },
-      update: { ementa, status: status as never, titulo, documentos: arquivos, autorId },
+      update: { ementa, status: status as never, titulo, documentos: arquivos, autorId, resultado: resultado as never },
       create: {
         numero,
         ano,
@@ -117,6 +121,7 @@ export async function importProposicoes(
         titulo,
         ementa,
         status: status as never,
+        resultado: resultado as never,
         dataApresentacao,
         documentos: arquivos,
         autorId,

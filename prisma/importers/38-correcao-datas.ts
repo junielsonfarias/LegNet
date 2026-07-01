@@ -84,8 +84,8 @@ export async function importCorrecaoDatas(ctx: ImportContext): Promise<void> {
       if (!ctx.dryRun) {
         // Guarda: não deletar o perdedor se ele tiver filhos que cascateiam
         // (Votacao/VotacaoAgrupada/Tramitacao/Emenda) — evita perda silenciosa.
-        const c = await ctx.prisma.proposicao.findUnique({ where: { id: pr.id }, select: { _count: { select: { votacoes: true, votacoesAgrupadas: true, tramitacoes: true, emendas: true } } } })
-        const vinc = c ? c._count.votacoes + c._count.votacoesAgrupadas + c._count.tramitacoes + c._count.emendas : 0
+        const c = await ctx.prisma.proposicao.findUnique({ where: { id: pr.id }, select: { _count: { select: { votacoes: true, votacoesAgrupadas: true, tramitacoes: true, emendas: true, pareceres: true } } } })
+        const vinc = c ? c._count.votacoes + c._count.votacoesAgrupadas + c._count.tramitacoes + c._count.emendas + c._count.pareceres : 0
         if (vinc > 0) { ctx.warn(`[prop] merge PULADO (${vinc} vínculos de votação/tramitação): ${pr.tipo} ${pr.numero}/${pr.ano} — revisar manualmente`); continue }
       }
       ctx.log(`    ${ctx.dryRun ? '[dry] ' : ''}[prop] duplicata ${pr.tipo} ${pr.numero}/${pr.ano} → mesclada em ${numeroCorrigido}/${ref.ano}`)
