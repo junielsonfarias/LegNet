@@ -1,11 +1,26 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (4º code-review — invariante status↔resultado)
+> **Ultima Atualizacao**: 2026-07-01 (5º code-review — invariante por construção (19-ocr))
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — 5ª rodada de code-review — invariante garantido por construção
+
+Confirmou o fix do 4º review (`27`/`37` PRE_VOTO) **correto e completo**. Achou 1
+bug MÉDIA FORA dos arquivos revisados: `19-ocr` roda DEPOIS de 27/37 e, ao detectar
+o carimbo "APROVADO POR UNANIMIDADE", gravava `status` sem `resultado` → matéria
+só-carimbo (sem pauta) ficava `status=APROVADA, resultado=null` num full-run limpo
+(mascarado só pelo sync manual). **Corrigido na fonte**: `19-ocr` grava status E
+resultado juntos. Agora TODOS os writers (06/17/19/27/33/35/37/42) mantêm o
+invariante status↔resultado **por construção** — full-run limpo fica consistente
+sem sync manual. Caveat BAIXA (operacional, não corrigido): `--only=proposicoes`
+isolado após full-run reseta resultado do 06; a via canônica é a cadeia completa.
+Invariante A/B=0/0 · 931 testes · tsc/eslint 0.
 
 ---
 
