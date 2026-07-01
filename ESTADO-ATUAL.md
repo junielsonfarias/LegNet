@@ -1,11 +1,41 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (Rota pública de sessão por ID + presença na UI)
+> **Ultima Atualizacao**: 2026-07-01 (Auditoria multi-agente + correção de normas/datas)
 > **Versao**: 1.39.0
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Auditoria multi-agente (7 agentes) + correções
+
+Executada auditoria de migração com **6 agentes de domínio em paralelo**
+(proposições, normas, transparência, fluxo documental, parlamentares, publicações)
++ **1 sintetizador** (cruzamento entre frentes + confirmação ano a ano).
+
+**Vereditos**: parlamentares SIM · proposições SIM · publicações SIM · normas
+PARCIAL · transparência PARCIAL · fluxo PARCIAL. **Consistência entre frentes:
+perfeita** (0 órfãos em prop↔sessão↔autor↔pauta↔presença, 0 datas futuras,
+cobertura contínua 2016-2025). O sintetizador concentrou os defeitos em NORMAS.
+
+**Correções aplicadas (ALTA prioridade)**:
+- **Bug `parseNumAno` (17-wordpress)**: usava o último ano do título → em leis
+  orçamentárias pegava o exercício ("LEI Nº 388/2019 … LOA 2020"→2020). Corrigido
+  na fonte (prefere o ano colado ao número oficial).
+- **16 normas-índice do WP** ("RESOLUÇÕES 2014", "SEM RESOLUÇÕES EM 2018") não são
+  atos → removidas via `34` estendido. Normas 77→61.
+- **`38-correcao-datas` (novo, `--only=correcao-datas`)**: 23 normas + 13
+  proposições com ano/número reprocessados do "Nº NNN/AAAA"; 3 proposições + 1
+  norma duplicadas mal-datadas mescladas na versão correta (texto/PDF preservados);
+  Lei Orgânica duplicada unificada. Normas 59 · Proposições 679.
+- Resultado: **0 mal-datadas, 0 números corrompidos, 0 duplicatas, 0 datas futuras.**
+
+**MÉDIA pendente** (não bloqueante): 4 sessões com ata mas sem presença extraída
+(2019-02-25, 2021-07-03, 2021-08-27, 2022-09-13); verificar RGF CR2 vs WP; OCR
+bleed em ementas 2023; 9 publicações vazias + 5 pares duplicados; imagens de
+notícias. `VotacaoAgrupada` vazia é inócua (UI lê `proposicao.resultado`).
 
 ---
 
