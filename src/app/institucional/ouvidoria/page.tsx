@@ -64,7 +64,7 @@ export default function OuvidoriaPage() {
       })
       const json = await res.json()
       if (json.success) {
-        setResultado({ protocolo: json.protocolo })
+        setResultado({ protocolo: json.data?.protocolo })
         setFormData({ nome: '', email: '', telefone: '', cpf: '', tipo: '', assunto: '', descricao: '', setor: '' })
         setAnonimo(false)
       } else {

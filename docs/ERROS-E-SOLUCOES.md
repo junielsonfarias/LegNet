@@ -1,8 +1,37 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-07-02 (Perfil de parlamentar sem apelido: spinner infinito — ERR-058)
+> **Ultima Atualizacao**: 2026-07-02 (Auditoria integração front↔back público, Tier 1 — ERR-059)
 > **Versao Analisada**: 1.39.0
+
+---
+
+### Correções Aplicadas em 2026-07-02 (Auditoria de integração frontend↔backend do site público — Tier 1)
+
+Auditoria (3 agentes + prova de runtime com dev server) da integração de cada página
+pública com suas APIs. ~30 achados; **Tier 1 corrigido** (contrato/envelope, cap de
+limit, rota pública, 2 crashes). Verificado: 11/11 páginas afetadas = HTTP 200,
+endpoints que davam 400/401 = 200, diagnostics 0.
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-059 | **(A) Envelope de resposta lido errado** → páginas vazias/protocolo em branco: `calendario` (page + `calendario-legislativo.tsx`) lia `data.eventos` mas API dá `createSuccessResponse({eventos})` = `data.data.eventos`; `institucional/e-sic` e `institucional/ouvidoria` liam `json.protocolo` mas API dá `json.data.protocolo` (protocolo em branco + link `?protocolo=undefined`); `use-public-tramitacoes` lia `response.data.meta` mas `createSuccessResponse` põe `meta` no topo → sem paginação. **(B) `limit>100` → HTTP 400**: schemas de `programas-acoes`, `cartoes-corporativos`, `ordem-pagamentos`, `documentos-transparencia` capavam `limit` em `max(100)` mas as páginas pedem 200/500. **(C) Página pública em rota autenticada → 401**: `transparencia/pessoal/{terceirizados,estagiarios}` chamavam `/api/servidores` (exige login). **(D) Crashes**: `legislativo/pautas-sessoes` lia `pauta.expediente.length`/`.ordemDoDia` mas API dá `itens[]` (tela branca com pautas); `busca` com filtro de ano enviava data sem hora (schema exige `datetime()`) → ValidationError → crash em `resultado.resultados.length`. | (A) Ler `data.data.eventos`/`json.data.protocolo`/`response.meta`. (B) Cap elevado para `max(500)` nos 4 schemas. (C) Trocado para `/api/publico/servidores` (aceita `vinculo`, resposta idêntica). (D) `pautas-sessoes`: normaliza `itens`→`expediente`/`ordemDoDia` por `secao` no carregamento (deriva nº/título da proposição); `busca`: envia ISO `datetime()` + guarda `setResultado` contra resposta de erro. |
+
+**Backlog (Tier 2/3, NÃO corrigido — pendente de decisão):**
+- **Tier 2 (dados incompletos / shape):** teto de 50 registros nas listagens financeiras
+  (`despesas/receitas/convenios/licitacoes/contratos/folha/bens-*` chamam hooks sem
+  `limit`; default 50 → totais/PNTP subestimados) e teto 10 em `noticias` (paginação
+  falsa); `sessoes/[id]` busca proposições com limit 50 (sessões antigas sem matérias);
+  shape divergente pós-envelope em `dados-abertos` (presenças `status` vs `presente`;
+  atas `dataInicio/titulo`; votações granularidade voto-a-voto vs agregado);
+  `latest-news` lê `imagemUrl` (API dá `imagem`) + `?destaque` ignorado; filtros mortos
+  (`parlamentares/vereadores` manda `numero` compara com `"2025-2028"`; `legislativo/sessoes`
+  `'Realizada'` vs `'CONCLUIDA'`; `mesa-diretora` filtro não usado); cards de stats
+  divergentes (audiências `concluidas/especiais`; pautas-sessoes `rascunhos/aprovadas`).
+- **Tier 3 (conteúdo mock/estático):** `legislativo/pautas` (dados fictícios), 
+  `legislativo/legislatura` (estática 2021-2024), `parlamentares/comparativo` e
+  `[slug]/perfil-completo` (zerados, não consomem APIs reais), `/participacao`
+  (persistência em memória; POST exige permissão → 401 silencioso com toast de sucesso).
 
 ---
 

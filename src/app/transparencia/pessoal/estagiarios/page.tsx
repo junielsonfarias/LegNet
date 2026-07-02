@@ -24,7 +24,7 @@ export default function EstagiariosPage() {
   const [busca, setBusca] = useState('')
 
   useEffect(() => {
-    fetch('/api/servidores?vinculo=ESTAGIARIO&limit=200')
+    fetch('/api/publico/servidores?vinculo=ESTAGIARIO&limit=200')
       .then(r => r.json())
       .then(j => setData(j?.data || []))
       .catch(() => setData([]))

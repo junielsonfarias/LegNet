@@ -58,6 +58,7 @@ import { importRgfCr2 } from './40-rgf-cr2'
 import { importNormalizaNumeros } from './41-normaliza-numeros'
 import { importVotacaoNominal } from './42-votacao-nominal'
 import { importNoticiasImagens } from './43-noticias-imagens'
+import { importApelidos } from './44-apelidos'
 
 const ALL_PHASES = [
   'config', 'parlamentares', 'mesa', 'comissoes', 'normas', 'proposicoes', 'sessoes',
@@ -153,6 +154,7 @@ async function main() {
   if (selected('normaliza-numeros', only)) await importNormalizaNumeros(ctx)
   if (selected('votacao-nominal', only)) await importVotacaoNominal(ctx)
   if (selected('noticias-imagens', only)) await importNoticiasImagens(ctx)
+  if (selected('apelidos', only)) await importApelidos(ctx)
   if (selected('drive', only)) await importDrive(ctx)
   if (selected('texto', only)) await importExtrairTexto(ctx)
   if (selected('ocr', only)) await importOcr(ctx)

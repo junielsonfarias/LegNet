@@ -109,7 +109,7 @@ export function usePublicTramitacoes(filters?: PublicTramitacaoFilters) {
       if (controller.signal.aborted) return
       if (response.success) {
         setTramitacoes(response.data?.items ?? response.data ?? [])
-        setMeta(response.data?.meta ?? null)
+        setMeta(response.meta ?? response.data?.meta ?? null)
       } else {
         throw new Error(response.error || 'Erro ao carregar tramitações')
       }

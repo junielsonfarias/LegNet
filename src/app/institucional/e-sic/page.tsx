@@ -58,7 +58,7 @@ export default function ESicPage() {
       })
       const json = await res.json()
       if (json.success) {
-        setResultado({ protocolo: json.protocolo, prazoResposta: json.prazoResposta })
+        setResultado({ protocolo: json.data?.protocolo, prazoResposta: json.data?.prazoResposta })
         setFormData({ nome: '', email: '', cpf: '', telefone: '', tipoSolicitante: '', assunto: '', descricao: '', orgao: '', formaResposta: '' })
       } else {
         const msg = json.error || 'Erro ao enviar solicitacao.'
