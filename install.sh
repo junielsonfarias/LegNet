@@ -849,7 +849,8 @@ collect_data() {
   echo -e "${BOLD}Responda as perguntas abaixo para configurar o sistema:${NC}\n"
 
   # Nome da Camara
-  read -rp "$(echo -e ${CYAN}Nome da Camara Municipal${NC} [ex: Camara Municipal de Sua Cidade]: )" CAMARA_NOME < /dev/tty
+  # Modo nao-interativo: cada prompt so pergunta se a variavel NAO vier do ambiente.
+  [ -n "${CAMARA_NOME:-}" ] || read -rp "$(echo -e ${CYAN}Nome da Camara Municipal${NC} [ex: Camara Municipal de Sua Cidade]: )" CAMARA_NOME < /dev/tty
   CAMARA_NOME="${CAMARA_NOME:-Camara Municipal}"
 
   # Dominio ou IP
@@ -858,7 +859,7 @@ collect_data() {
   echo -e "  Exemplos: ${BOLD}camara.suacidade.gov.br${NC} ou ${BOLD}187.77.252.170${NC}"
   echo -e "  ${YELLOW}NAO inclua http:// ou https:// nem barra final.${NC}"
   echo ""
-  read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN < /dev/tty
+  [ -n "${SITE_DOMAIN:-}" ] || read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN < /dev/tty
   while [ -z "$SITE_DOMAIN" ]; do
     warn "Dominio ou IP e obrigatorio!"
     read -rp "$(echo -e ${CYAN}Dominio ou IP${NC}: )" SITE_DOMAIN < /dev/tty
@@ -881,11 +882,12 @@ collect_data() {
 
   # Email admin
   echo ""
-  read -rp "$(echo -e ${CYAN}Email do administrador${NC} [ex: admin@camara.gov.br]: )" ADMIN_EMAIL < /dev/tty
+  [ -n "${ADMIN_EMAIL:-}" ] || read -rp "$(echo -e ${CYAN}Email do administrador${NC} [ex: admin@camara.gov.br]: )" ADMIN_EMAIL < /dev/tty
   ADMIN_EMAIL="${ADMIN_EMAIL:-admin@${SITE_DOMAIN}}"
 
-  # Senha admin
+  # Senha admin (pulada se ADMIN_PASSWORD vier do ambiente)
   echo ""
+  if [ -z "${ADMIN_PASSWORD:-}" ]; then
   while true; do
     read -srp "$(echo -e ${CYAN}Senha do administrador${NC} [minimo 8 caracteres]: )" ADMIN_PASSWORD < /dev/tty
     echo ""
@@ -901,6 +903,7 @@ collect_data() {
     fi
     break
   done
+  fi
 
   # Senha banco de dados
   echo ""
@@ -910,25 +913,25 @@ collect_data() {
 
   # Email SSL
   echo ""
-  read -rp "$(echo -e ${CYAN}Email para certificado SSL${NC} [${ADMIN_EMAIL}]: )" SSL_EMAIL < /dev/tty
+  [ -n "${SSL_EMAIL:-}" ] || read -rp "$(echo -e ${CYAN}Email para certificado SSL${NC} [${ADMIN_EMAIL}]: )" SSL_EMAIL < /dev/tty
   SSL_EMAIL="${SSL_EMAIL:-$ADMIN_EMAIL}"
 
-  # Identidade Visual
-  select_identity
+  # Identidade Visual (pulada se as cores vierem do ambiente)
+  [ -n "${COR_PRIMARIA:-}" ] || select_identity
 
   # Redis
   echo ""
-  read -rp "$(echo -e ${CYAN}Instalar Redis para rate limiting?${NC} [s/N]: )" INSTALL_REDIS < /dev/tty
+  [ -n "${INSTALL_REDIS:-}" ] || read -rp "$(echo -e ${CYAN}Instalar Redis para rate limiting?${NC} [s/N]: )" INSTALL_REDIS < /dev/tty
   INSTALL_REDIS="${INSTALL_REDIS,,}"
 
   # Repositorio
   echo ""
-  read -rp "$(echo -e ${CYAN}URL do repositorio Git${NC} [${REPO_URL}]: )" CUSTOM_REPO < /dev/tty
+  [ -n "${CUSTOM_REPO:-}" ] || [ "${CAMARA_UNATTENDED:-}" = "1" ] || read -rp "$(echo -e ${CYAN}URL do repositorio Git${NC} [${REPO_URL}]: )" CUSTOM_REPO < /dev/tty
   REPO_URL="${CUSTOM_REPO:-$REPO_URL}"
 
   # Diretorio de instalacao
   echo ""
-  read -rp "$(echo -e ${CYAN}Diretorio de instalacao${NC} [${INSTALL_DIR}]: )" CUSTOM_DIR < /dev/tty
+  [ -n "${CUSTOM_DIR:-}" ] || [ "${CAMARA_UNATTENDED:-}" = "1" ] || read -rp "$(echo -e ${CYAN}Diretorio de instalacao${NC} [${INSTALL_DIR}]: )" CUSTOM_DIR < /dev/tty
   INSTALL_DIR="${CUSTOM_DIR:-$INSTALL_DIR}"
 
   # Gerar secrets
@@ -957,7 +960,7 @@ collect_data() {
   echo -e "  ${BOLD}Repositorio:${NC}  $REPO_URL"
   echo ""
 
-  read -rp "$(echo -e ${YELLOW}Tudo correto? Iniciar instalacao?${NC} [S/n]: )" CONFIRM < /dev/tty
+  if [ "${CAMARA_UNATTENDED:-}" = "1" ]; then CONFIRM="s"; else read -rp "$(echo -e ${YELLOW}Tudo correto? Iniciar instalacao?${NC} [S/n]: )" CONFIRM < /dev/tty; fi
   if [ "${CONFIRM,,}" = "n" ]; then
     warn "Instalacao cancelada pelo usuario"
     exit 0
@@ -1112,7 +1115,7 @@ clone_repository() {
 
   if [ -d "$INSTALL_DIR" ]; then
     warn "Diretorio $INSTALL_DIR ja existe"
-    read -rp "$(echo -e ${YELLOW}Deseja remover e clonar novamente?${NC} [s/N]: )" OVERWRITE < /dev/tty
+    if [ "${CAMARA_UNATTENDED:-}" = "1" ]; then OVERWRITE="${OVERWRITE:-n}"; else read -rp "$(echo -e ${YELLOW}Deseja remover e clonar novamente?${NC} [s/N]: )" OVERWRITE < /dev/tty; fi
     if [ "${OVERWRITE,,}" = "s" ]; then
       rm -rf "$INSTALL_DIR"
     else
@@ -1130,6 +1133,8 @@ create_env() {
   header "GERANDO ARQUIVO DE CONFIGURACAO (.env)"
 
   # SITE_URL ja definido em collect_data()
+  # ENCRYPTION_KEY: usa a do ambiente (necessaria p/ decifrar dados migrados) ou gera nova.
+  ENCRYPTION_KEY="${ENCRYPTION_KEY:-$(generate_secret 32)}"
 
   cat > "${INSTALL_DIR}/.env" << ENVEOF
 # ============================================================================
@@ -1155,6 +1160,7 @@ NEXT_PUBLIC_APP_URL="${SITE_URL}"
 
 # --- Seguranca ---
 INTERNAL_API_SECRET="${INTERNAL_API_SECRET}"
+ENCRYPTION_KEY="${ENCRYPTION_KEY}"
 NODE_ENV="production"
 LOG_LEVEL="info"
 
@@ -1358,7 +1364,7 @@ configure_ssl() {
   info "Certifique-se de que o DNS do dominio aponta para este servidor!"
   echo ""
 
-  read -rp "$(echo -e ${YELLOW}O DNS do dominio ja esta apontando para este servidor?${NC} [S/n]: )" DNS_OK < /dev/tty
+  if [ "${CAMARA_UNATTENDED:-}" = "1" ]; then DNS_OK="s"; else read -rp "$(echo -e ${YELLOW}O DNS do dominio ja esta apontando para este servidor?${NC} [S/n]: )" DNS_OK < /dev/tty; fi
   if [ "${DNS_OK,,}" = "n" ]; then
     warn "SSL sera configurado depois. Para ativar SSL manualmente, execute:"
     echo -e "  ${BOLD}sudo certbot --nginx -d ${SITE_DOMAIN} --email ${SSL_EMAIL} --agree-tos --non-interactive${NC}"

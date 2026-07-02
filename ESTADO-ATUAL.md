@@ -1,11 +1,28 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (limpeza repo p/ produção: -22MB PDF + export-ignore)
-> **Versao**: 1.40.10
+> **Ultima Atualizacao**: 2026-07-02 (instalação VPS automática/não-interativa + orquestrador)
+> **Versao**: 1.40.11
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Instalação VPS automática (não-interativa)
+
+Para instalar em produção sem interação (VPS Debian 13/KingHost testado no pré-flight:
+swap + PostgreSQL 17 nativo + Node 20):
+- **`install.sh` ganhou modo não-interativo** (aditivo, `CAMARA_UNATTENDED=1`): cada
+  prompt do `collect_data` só pergunta se a variável não vier do ambiente (SITE_DOMAIN,
+  CAMARA_NOME, ADMIN_EMAIL, ADMIN_PASSWORD, SSL_EMAIL, COR_*, INSTALL_REDIS) + CONFIRM/
+  DNS_OK/OVERWRITE forçados. Passa a gravar `ENCRYPTION_KEY` no `.env` (do ambiente,
+  necessária p/ decifrar dados migrados, ou gerada). O fluxo interativo fica intacto.
+- **`scripts/instalar-producao.sh`** (orquestrador): pré-flight (swap/PG/Node) →
+  install.sh unattended → restore do seed (`--yes`) → define admin (email/senha) →
+  pm2 restart + health. Um comando via `curl | bash` com 3 vars (ADMIN_EMAIL,
+  ADMIN_PASSWORD, ENCRYPTION_KEY).
+- `restore-dados-producao.sh` ganhou `--yes`/`RESTORE_YES=1`. Sintaxe validada (`bash -n`).
 
 ---
 
