@@ -1,8 +1,20 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-07-02 (Item de pauta exibia número OCR errado — ERR-062)
+> **Ultima Atualizacao**: 2026-07-02 (Validação ponta a ponta: 14 páginas + 5 ações admin — ERR-063)
 > **Versao Analisada**: 1.39.0
+
+---
+
+### Correções Aplicadas em 2026-07-02 (Validação ponta a ponta — 4 agentes + runtime)
+
+Validação de todo o sistema (4 agentes por domínio + tsc + crawl). Dados íntegros
+(0 órfãos/duplicatas/datas futuras). Corrigidas 14 páginas + 5 ações admin (ERR-063).
+tsc 0; 16/16 páginas afetadas → 200.
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-063 | **(A) Envelope `{dados}` lido como `json.data`** (páginas vazias): `transparencia/legislativo/presencas` e `.../atas`, `transparencia/parlamentar/{relatorio,producao,presencas,indenizatoria}`. **(B) `limit>100`→400**: `/api/normas` (página de legislação vazia). **(C) Página pública→rota autenticada→401**: `transparencia/folha-pagamento`. **(D) Paginação (só 1ª página)**: `/legislativo/sessoes` e `/atas` (100/271), API `pautas-sessoes` (50/153). **(E) Filtro label×enum**: `/legislativo/sessoes` "Realizadas"='Realizada' vs `CONCLUIDA`. **(F) Ano padrão fixo em 2026** (sem dados) em várias. **(G) Shape divergente** em presenças/atas (`presente`/`numero`/`data` vs `status`/`titulo`/`dataInicio`). **(H) Páginas stub**: `parlamentares/comparativo` (métricas 0), `transparencia/gestao-fiscal` (259 docs ocultos), `legislativo/legislatura` (estática "2021-2024" + composição/realizações fabricadas), `perfil-completo` (zeros). **(I) 5 fetch admin p/ rotas inexistentes (404)**: prazos-urgencia, fluxos-tramitacao, normas compilar, protocolo tramitar/arquivar. | (A) Ler `json.dados`. (B) cap `max(500)`. (C) novo `/api/publico/folha-pagamento` + repontar página aos endpoints públicos. (D) elevar caps dados-abertos (presencas 5000, sessoes 500) e API pautas `take:500`; frontends buscam tudo e filtram client-side. (E) filtro usa `CONCLUIDA`/`AGENDADA`. (F) ano padrão = mais recente com dados (derivado). (G) normalização de shape no carregamento. (H) comparativo→`/api/dados-abertos/parlamentares/estatisticas`; gestao-fiscal→`/api/documentos-transparencia`; legislatura→dados reais (período/contagens/partidos) + links; perfil-completo→redirect para `[slug]`. (I) protocolo/normas usam `POST ?acao=...` (path corrigido no frontend); fluxos-tramitacao→`/api/admin/configuracoes/unidades-tramitacao`; novo `/api/admin/configuracoes/tramitacao` (config chave-valor) p/ prazos. Limites de fonte (não-bugs): 260/676 sem autor, 36 votos nominais, teto-50 dos hooks financeiros (Tier 2). |
 
 ---
 

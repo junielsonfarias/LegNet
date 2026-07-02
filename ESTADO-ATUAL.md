@@ -1,11 +1,31 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (item de pauta exibia número OCR errado — ERR-062)
-> **Versao**: 1.40.7
+> **Ultima Atualizacao**: 2026-07-02 (validação ponta a ponta: 14 páginas + 5 ações admin — ERR-063)
+> **Versao**: 1.40.8
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Validação ponta a ponta + correções (ERR-063)
+
+Validação de todo o sistema com **4 agentes por domínio** (Legislativo, Transparência,
+Parlamentares, Admin/Dados) + `tsc` + crawl de runtime. **Dados íntegros** (0 órfãos,
+0 duplicatas, 0 datas futuras, presença coerente com mandato). Correções recentes
+(ERR-058/059/060/061/062) confirmadas sem regressão.
+
+**Corrigidas 14 páginas + 5 ações admin** (ERR-063), por causa-raiz: envelope `{dados}`
+(6 páginas transparência/parlamentar), `limit>100`→400 (`/api/normas`), rota autenticada
+em página pública (`folha-pagamento` → novo `/api/publico/folha-pagamento`), paginação
+(sessões/atas/pautas), filtro label×enum (sessões), ano padrão inteligente, shape de
+presenças/atas, stubs reconectados a dados reais (comparativo, gestão-fiscal, legislatura,
+perfil-completo→redirect) e 5 rotas admin (paths `?acao=` corrigidos + novo endpoint de
+config de prazos). **Verificado: tsc 0 · 16/16 páginas afetadas → 200.**
+
+Limites de fonte (não-bugs, backlog): 260/676 proposições sem autor, 36 votos nominais,
+teto-50 dos hooks financeiros (Tier 2, não observável com o volume atual).
 
 ---
 
