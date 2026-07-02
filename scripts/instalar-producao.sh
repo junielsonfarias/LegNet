@@ -41,11 +41,27 @@ export COR_SECUNDARIA="${COR_SECUNDARIA:-#3b82f6}"
 export COR_ACENTO="${COR_ACENTO:-#059669}"
 export ADMIN_EMAIL ADMIN_PASSWORD ENCRYPTION_KEY
 export CAMARA_UNATTENDED=1
+# Como tratar uma instalacao JA existente (o install.sh detecta sozinho):
+#   update    (padrao) -> atualiza codigo/schema, PRESERVA banco/config/dados
+#   reinstall           -> APAGA tudo e instala do zero (repopula com o seed)
+export AUTO_INSTALL_MODE="${AUTO_INSTALL_MODE:-update}"
 SEED_FILE="${SEED_FILE:-/root/camara-seed.sql.gz}"
 INSTALL_DIR="/opt/camara"
 DB_NAME="camara_legislativo"
 
 [ "$(id -u)" = "0" ] || die "Rode como root (sudo)."
+
+# Detecta ANTES do install.sh se ja existe uma instalacao, para decidir se o seed
+# deve ser (re)carregado. Regra: instalacao nova ou reinstall -> popula o seed;
+# atualizacao de uma instalacao existente -> NAO mexe nos dados (a menos de RESTORE_SEED=1).
+PREEXISTING=0
+[ -f "$INSTALL_DIR/package.json" ] && PREEXISTING=1
+if [ "$PREEXISTING" = "1" ] && [ "$AUTO_INSTALL_MODE" != "reinstall" ] && [ "${RESTORE_SEED:-0}" != "1" ]; then
+  DO_RESTORE=0
+else
+  DO_RESTORE=1
+fi
+[ "$PREEXISTING" = "1" ] && echo -e "  ${YELLOW}! Instalacao existente detectada — modo: ${AUTO_INSTALL_MODE} (restore do seed: $([ "$DO_RESTORE" = 1 ] && echo SIM || echo NAO))${NC}"
 
 # ---- 1. Pré-flight ----
 step "1/5 Pré-flight (swap + PostgreSQL + Node + base)"
@@ -72,23 +88,34 @@ ok "app provisionado em $INSTALL_DIR"
 
 # ---- 3. Restore do seed ----
 step "3/5 Restaurando os dados migrados (seed)"
-mkdir -p "$INSTALL_DIR/deploy"
-if [ -f "$SEED_FILE" ]; then
-  cp "$SEED_FILE" "$INSTALL_DIR/deploy/camara-seed.sql.gz"
-fi
-if [ -f "$INSTALL_DIR/deploy/camara-seed.sql.gz" ]; then
-  bash "$INSTALL_DIR/scripts/restore-dados-producao.sh" --yes || die "restore falhou"
+if [ "$DO_RESTORE" != "1" ]; then
+  echo -e "  ${YELLOW}! Atualizacao de instalacao existente — dados PRESERVADOS (nao recarreguei o seed).${NC}"
+  echo -e "  ${YELLOW}  Para forcar a recarga do seed: RESTORE_SEED=1 ...  |  para instalar do zero: AUTO_INSTALL_MODE=reinstall${NC}"
 else
-  echo -e "  ${YELLOW}! Seed não encontrado em $SEED_FILE — pulei o restore (base ficará vazia).${NC}"
+  mkdir -p "$INSTALL_DIR/deploy"
+  if [ -f "$SEED_FILE" ]; then
+    cp "$SEED_FILE" "$INSTALL_DIR/deploy/camara-seed.sql.gz"
+  fi
+  if [ -f "$INSTALL_DIR/deploy/camara-seed.sql.gz" ]; then
+    bash "$INSTALL_DIR/scripts/restore-dados-producao.sh" --yes || die "restore falhou"
+  else
+    echo -e "  ${YELLOW}! Seed não encontrado em $SEED_FILE — pulei o restore (base ficará vazia).${NC}"
+  fi
 fi
 
 # ---- 4. Admin (email/senha do config) ----
+# So (re)define o admin quando recarregamos o seed (usuarios vieram do DEV).
+# Numa atualizacao, o admin de producao e preservado.
 step "4/5 Definindo o administrador"
 cd "$INSTALL_DIR"
-HASH=$(node -e "console.log(require('bcryptjs').hashSync(process.argv[1],12))" "$ADMIN_PASSWORD")
-sudo -u postgres psql -d "$DB_NAME" -c \
-  "UPDATE users SET email='$ADMIN_EMAIL', password='$HASH', ativo=true WHERE role='ADMIN';" >/dev/null 2>&1 \
-  && ok "admin = $ADMIN_EMAIL" || echo -e "  ${YELLOW}! não foi possível atualizar o admin (verifique manualmente)${NC}"
+if [ "$DO_RESTORE" != "1" ]; then
+  echo -e "  ${YELLOW}! Atualizacao — admin de producao preservado (nao alterei email/senha).${NC}"
+else
+  HASH=$(node -e "console.log(require('bcryptjs').hashSync(process.argv[1],12))" "$ADMIN_PASSWORD")
+  sudo -u postgres psql -d "$DB_NAME" -c \
+    "UPDATE users SET email='$ADMIN_EMAIL', password='$HASH', ativo=true WHERE role='ADMIN';" >/dev/null 2>&1 \
+    && ok "admin = $ADMIN_EMAIL" || echo -e "  ${YELLOW}! não foi possível atualizar o admin (verifique manualmente)${NC}"
+fi
 
 # ---- 5. Restart + validação ----
 step "5/5 Reiniciando e validando"

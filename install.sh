@@ -244,6 +244,24 @@ detect_existing_installation() {
   echo -e "  ${CYAN}Aplicacao:${NC}    ${pm2_status}"
   echo -e "  ${CYAN}Banco:${NC}        ${db_status}"
   echo ""
+
+  # Modo nao-interativo (CAMARA_UNATTENDED=1): escolhe via AUTO_INSTALL_MODE,
+  # sem prompt. Padrao "update" (preserva banco/config/dados). Para apagar tudo
+  # e reinstalar do zero, exporte AUTO_INSTALL_MODE=reinstall.
+  if [ "${CAMARA_UNATTENDED:-}" = "1" ]; then
+    case "${AUTO_INSTALL_MODE:-update}" in
+      reinstall|clean|fresh)
+        INSTALL_MODE="reinstall"
+        warn "Nao-interativo: REINSTALACAO LIMPA (AUTO_INSTALL_MODE=reinstall) — APAGA todos os dados"
+        ;;
+      *)
+        INSTALL_MODE="update"
+        log "Nao-interativo: ATUALIZACAO (AUTO_INSTALL_MODE=update, padrao) — preserva banco/config/dados"
+        ;;
+    esac
+    return
+  fi
+
   echo -e "  Escolha uma opcao:"
   echo ""
   echo -e "  ${GREEN}1)${NC} ${BOLD}Atualizar${NC} - Atualiza o codigo e recompila"
