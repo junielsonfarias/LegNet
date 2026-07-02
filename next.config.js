@@ -11,10 +11,16 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // F1.5 (PLANO-CORRECOES-MAIO-2026): ESLint volta a rodar no build.
-  // Warnings nao quebram o build; erros quebram. Validado em 2026-05-14.
+  // Deploy self-hosted VPS (2026-07-02): o ESLint NAO roda no `next build`.
+  // Motivo: em produção o plugin @typescript-eslint (transitivo de
+  // eslint-config-next) nao e registrado, e os comentarios
+  // `eslint-disable @typescript-eslint/no-explicit-any` no codigo apontam para
+  // uma regra "nao encontrada" -> ESLint aborta o build (site nao sobe).
+  // O type-check do TypeScript CONTINUA rodando no build (nao afetado por isto).
+  // Lint permanece disponivel em dev/CI via `npm run lint`.
+  // (Antes: F1.5 mantinha ignoreDuringBuilds:false, validado so na Vercel.)
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   // Hotfix Vercel (2026-05-27): isomorphic-dompurify usa jsdom em SSR e
   // jsdom le browser/default-stylesheet.css via fs em init. Quando bundled

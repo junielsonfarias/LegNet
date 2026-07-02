@@ -1,11 +1,31 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (deploy VPS com UM comando da máquina DEV: deploy-vps.sh)
-> **Versao**: 1.40.13
+> **Ultima Atualizacao**: 2026-07-02 (fix: build VPS falhava no ESLint — ignoreDuringBuilds)
+> **Versao**: 1.40.14
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Fix: build no VPS falhava no ESLint (site não subia)
+
+1ª execução do deploy no VPS Debian 13 (KingHost) revelou 2 pontos:
+- O VPS **já tinha** instalação antiga (v1.0.0, banco com dados) → entrou em modo
+  ATUALIZAÇÃO (correto: preservou os dados; NÃO carregou o seed migrado ainda).
+- **Build do Next.js falhava** (site fora do ar, health HTTP 000). Causa: o
+  `next build` compilava OK (68s), mas o passo de ESLint abortava com
+  `Definition for rule '@typescript-eslint/no-explicit-any' was not found` —
+  em produção o plugin @typescript-eslint (transitivo de eslint-config-next) não
+  é registrado, e os comentários `eslint-disable @typescript-eslint/...` no código
+  apontam para regra inexistente. **Fix**: `next.config.js` →
+  `eslint.ignoreDuringBuilds: true` (o type-check do TS continua no build; lint
+  segue em dev/CI via `npm run lint`). Ver `docs/ERROS-E-SOLUCOES.md`.
+- Também guardado o prompt de identidade visual do `do_update` sob
+  `CAMARA_UNATTENDED=1` (não trava mais em atualizações automáticas).
+- Próximo passo: reinstalação limpa (`AUTO_INSTALL_MODE=reinstall`) para subir o
+  build corrigido + carregar o seed migrado.
 
 ---
 
