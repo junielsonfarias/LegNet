@@ -37,6 +37,20 @@ export function PwaRegister() {
           // Silencioso; SW e progressivo, nao bloqueia o app
           console.warn('[PWA] Falha ao registrar service worker:', err)
         })
+    } else {
+      // Dev: remove SW/caches herdados de um build de producao (ou do site
+      // publico) para evitar que o SW "grude" e sirva 503 Offline aos assets
+      // _next/static quando o dev server esta fora do ar. Ver ERROS-E-SOLUCOES.
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => regs.forEach((reg) => reg.unregister()))
+        .catch(() => {})
+      if ('caches' in window) {
+        caches
+          .keys()
+          .then((keys) => keys.forEach((key) => caches.delete(key)))
+          .catch(() => {})
+      }
     }
 
     // Captura prompt de instalacao
