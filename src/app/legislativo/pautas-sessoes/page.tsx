@@ -110,13 +110,16 @@ export default function PautasSessoesPublicPage() {
         // A API pública devolve cada pauta com `itens[]` (campo `secao`); o layout
         // espera `expediente[]` e `ordemDoDia[]`. Normaliza aqui para não quebrar
         // (pauta.expediente.length) e derivar número/título da proposição.
+        // Quando há proposição vinculada, usa o NÚMERO e a EMENTA canônicos dela —
+        // o `titulo` do item vem do OCR da pauta e pode ter número errado
+        // (ex.: "Requerimento nº 1420/2025" para o REQUERIMENTO 420/2025). ERR-062.
         const pautasNorm = (result.data.pautas || []).map((p: any) => {
           const itens = (p.itens || []).map((it: any) => ({
             ...it,
             numero: it.proposicao
               ? `${it.proposicao.tipo} ${it.proposicao.numero}/${it.proposicao.ano}`
               : it.numero,
-            titulo: it.titulo || it.proposicao?.ementa || 'Item da pauta',
+            titulo: it.proposicao?.ementa || it.titulo || 'Item da pauta',
           }))
           return {
             ...p,
