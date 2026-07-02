@@ -23,7 +23,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const parlamentarId = searchParams.get('parlamentar') || undefined
   const sessaoId = searchParams.get('sessao') || undefined
   const page = parseInt(searchParams.get('page') || '1')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 5000)
 
   const { dados, total } = await dadosAbertosService.getPresencas(
     { ano, parlamentarId, sessaoId },

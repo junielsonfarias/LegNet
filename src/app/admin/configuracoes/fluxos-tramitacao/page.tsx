@@ -109,7 +109,7 @@ export default function FluxosTramitacaoPage() {
 
   const loadUnidades = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/tramitacao/unidades')
+      const response = await fetch('/api/admin/configuracoes/unidades-tramitacao')
       const data = await response.json()
       if (data.success) {
         setUnidades(data.data)

@@ -46,10 +46,15 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       }
     },
     orderBy: { sessao: { data: 'desc' } },
-    take: 50
+    take: 500
   })
 
-  let resultado = pautas.map(mapPauta)
+  const mapeadas = pautas.map(mapPauta)
+  // Contagem por tipo de sessão (antes do filtro de busca) para os KPIs da tela.
+  const ordinarias = mapeadas.filter(p => p.tipo === 'ORDINARIA').length
+  const extraordinarias = mapeadas.filter(p => p.tipo === 'EXTRAORDINARIA').length
+
+  let resultado = mapeadas
 
   // Filtro de busca
   if (search) {
@@ -70,7 +75,9 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     stats: {
       total: totalPautas,
       publicadas,
-      pendentes: totalPautas - publicadas
+      pendentes: totalPautas - publicadas,
+      ordinarias,
+      extraordinarias
     }
   }), { maxAge: 60, swr: 300 })
 })

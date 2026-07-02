@@ -18,29 +18,46 @@ interface Sessao {
 }
 
 export default function AtasPage() {
-  const [sessoes, setSessoes] = useState<Sessao[]>([])
+  const [todas, setTodas] = useState<Sessao[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState('2026')
-  const [currentYear, setCurrentYear] = useState(2026)
-
-  useEffect(() => {
-    const year = new Date().getFullYear()
-    setCurrentYear(year)
-    setAno(year.toString())
-  }, [])
+  const [ano, setAno] = useState('')
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/dados-abertos/sessoes?ano=${ano}`)
+    // /api/dados-abertos/sessoes usa envelope { dados } e traz `numero/tipo/data/
+    // arquivoAta` (sem `titulo`/`dataInicio`/`ataUrl`). Normaliza e busca tudo (271).
+    fetch('/api/dados-abertos/sessoes?limit=500')
       .then((res) => res.json())
       .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
-        setSessoes(data)
+        const raw = json.dados ?? json.data ?? (Array.isArray(json) ? json : [])
+        const norm: Sessao[] = raw.map((s: {
+          id: string; numero?: number; tipo: string; data?: string
+          ata?: string | null; arquivoAta?: string | null; status: string
+        }) => ({
+          id: s.id,
+          titulo: `Sessão nº ${s.numero ?? '—'}`,
+          tipo: s.tipo,
+          dataInicio: s.data ?? '',
+          ata: null,
+          ataUrl: s.arquivoAta ?? null,
+          status: s.status,
+        }))
+        setTodas(norm)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [ano])
-  const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
+  }, [])
+
+  const anoDe = (s: Sessao) => (s.dataInicio ? new Date(s.dataInicio).getFullYear() : undefined)
+  const anos = Array.from(new Set(todas.map(anoDe).filter((a): a is number => !!a)))
+    .sort((a, b) => b - a)
+    .map(String)
+
+  useEffect(() => {
+    if (!ano && anos.length > 0) setAno(anos[0])
+  }, [anos, ano])
+
+  const sessoes = ano ? todas.filter((s) => String(anoDe(s)) === ano) : todas
 
   return (
     <div className="min-h-screen bg-gray-50">

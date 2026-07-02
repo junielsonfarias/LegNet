@@ -27,37 +27,57 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 }
 
 export default function PresencasLegislativoPage() {
-  const [presencas, setPresencas] = useState<Presenca[]>([])
+  const [todas, setTodas] = useState<Presenca[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState('2026')
-  const [currentYear, setCurrentYear] = useState(2026)
-
-  useEffect(() => {
-    const year = new Date().getFullYear()
-    setCurrentYear(year)
-    setAno(year.toString())
-  }, [])
+  const [ano, setAno] = useState('')
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/dados-abertos/presencas?ano=${ano}`)
+    // /api/dados-abertos/presencas devolve { dados } com 1 registro por presença
+    // (campos `presente:boolean`, `sessao:{numero,tipo,data}`). Normaliza para o
+    // shape da tela e busca tudo (cap 5000) p/ derivar os anos com dados.
+    fetch('/api/dados-abertos/presencas?limit=5000')
       .then((res) => res.json())
       .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
-        setPresencas(data)
+        const raw = json.dados ?? json.data ?? (Array.isArray(json) ? json : [])
+        const norm: Presenca[] = raw.map((p: {
+          id: string
+          presente?: boolean
+          justificativa?: string | null
+          parlamentar?: { nome?: string }
+          sessao?: { numero?: number; tipo?: string; data?: string }
+        }) => ({
+          id: p.id,
+          parlamentarNome: p.parlamentar?.nome,
+          sessao: p.sessao
+            ? { titulo: `Sessão nº ${p.sessao.numero ?? '—'}`, dataInicio: p.sessao.data ?? '', tipo: p.sessao.tipo }
+            : undefined,
+          status: p.presente ? 'PRESENTE' : (p.justificativa ? 'AUSENTE_JUSTIFICADO' : 'AUSENTE'),
+        }))
+        setTodas(norm)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [ano])
-  const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
+  }, [])
 
-  // Agrupar por sessao
+  const anoDe = (p: Presenca) => (p.sessao?.dataInicio ? new Date(p.sessao.dataInicio).getFullYear() : undefined)
+  const anos = Array.from(new Set(todas.map(anoDe).filter((a): a is number => !!a)))
+    .sort((a, b) => b - a)
+    .map(String)
+
+  useEffect(() => {
+    if (!ano && anos.length > 0) setAno(anos[0])
+  }, [anos, ano])
+
+  const presencas = ano ? todas.filter((p) => String(anoDe(p)) === ano) : todas
+
+  // Agrupar por sessao (chave = título + data, para não fundir sessões de anos diferentes)
   const sessoes = new Map<string, { titulo: string; data: string; presencas: Presenca[] }>()
   presencas.forEach((p) => {
-    const sessaoKey = p.sessao?.titulo || p.sessaoTitulo || 'Sessao'
+    const sessaoKey = `${p.sessao?.titulo || 'Sessão'}|${p.sessao?.dataInicio || ''}`
     if (!sessoes.has(sessaoKey)) {
       sessoes.set(sessaoKey, {
-        titulo: sessaoKey,
+        titulo: p.sessao?.titulo || 'Sessão',
         data: p.sessao?.dataInicio || p.sessaoData || '',
         presencas: [],
       })

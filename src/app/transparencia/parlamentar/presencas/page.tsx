@@ -34,45 +34,59 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 }
 
 export default function PresencasPage() {
-  const [presencas, setPresencas] = useState<Presenca[]>([])
+  const [todas, setTodas] = useState<Presenca[]>([])
   const [parlamentares, setParlamentares] = useState<Parlamentar[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState('2026')
+  const [ano, setAno] = useState('')
   const [parlamentarId, setParlamentarId] = useState('todos')
-  const [currentYear, setCurrentYear] = useState(2026)
-
-  useEffect(() => {
-    const year = new Date().getFullYear()
-    setCurrentYear(year)
-    setAno(year.toString())
-  }, [])
 
   useEffect(() => {
     fetch('/api/dados-abertos/parlamentares')
       .then((res) => res.json())
-      .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
-        setParlamentares(data)
-      })
+      .then((json) => setParlamentares(json.dados ?? json.data ?? (Array.isArray(json) ? json : [])))
       .catch(console.error)
   }, [])
 
   useEffect(() => {
     setLoading(true)
-    const params = new URLSearchParams({ ano })
-    if (parlamentarId !== 'todos') params.set('parlamentarId', parlamentarId)
-
-    fetch(`/api/dados-abertos/presencas?${params}`)
+    // Envelope { dados }; normaliza shape (presente:boolean, sessao:{numero,data}).
+    fetch('/api/dados-abertos/presencas?limit=5000')
       .then((res) => res.json())
       .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
-        setPresencas(data)
+        const raw = json.dados ?? json.data ?? (Array.isArray(json) ? json : [])
+        const norm: Presenca[] = raw.map((p: {
+          id: string
+          presente?: boolean
+          justificativa?: string | null
+          parlamentar?: { id?: string; nome?: string }
+          sessao?: { id?: string; numero?: number; data?: string }
+        }) => ({
+          id: p.id,
+          parlamentarId: p.parlamentar?.id ?? '',
+          parlamentarNome: p.parlamentar?.nome,
+          sessaoId: p.sessao?.id ?? '',
+          sessao: p.sessao ? { titulo: `Sessão nº ${p.sessao.numero ?? '—'}`, dataInicio: p.sessao.data ?? '' } : undefined,
+          status: p.presente ? 'PRESENTE' : (p.justificativa ? 'AUSENTE_JUSTIFICADO' : 'AUSENTE'),
+        }))
+        setTodas(norm)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [ano, parlamentarId])
+  }, [])
 
-  const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
+  const anoDe = (p: Presenca) => (p.sessao?.dataInicio ? new Date(p.sessao.dataInicio).getFullYear() : undefined)
+  const anos = Array.from(new Set(todas.map(anoDe).filter((a): a is number => !!a)))
+    .sort((a, b) => b - a)
+    .map(String)
+
+  useEffect(() => {
+    if (!ano && anos.length > 0) setAno(anos[0])
+  }, [anos, ano])
+
+  const presencas = todas.filter((p) =>
+    (!ano || String(anoDe(p)) === ano) &&
+    (parlamentarId === 'todos' || p.parlamentarId === parlamentarId)
+  )
 
   // Resumo por parlamentar
   const resumo = new Map<string, { presente: number; ausente: number; justificado: number; total: number }>()

@@ -64,7 +64,7 @@ export function useDespesas(filters?: DespesaFilters) {
       if (filters?.credor) params.append('credor', filters.credor)
       if (filters?.funcao) params.append('funcao', filters.funcao)
       params.append('page', (filters?.page || 1).toString())
-      params.append('limit', (filters?.limit || 50).toString())
+      params.append('limit', (filters?.limit || 500).toString())
 
       const response = await fetch(`/api/despesas?${params}`, { signal: controller.signal })
       const result = await response.json()

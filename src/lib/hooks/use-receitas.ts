@@ -58,7 +58,7 @@ export function useReceitas(filters?: ReceitaFilters) {
       if (filters?.ano) params.append('ano', filters.ano.toString())
       if (filters?.mes) params.append('mes', filters.mes.toString())
       params.append('page', (filters?.page || 1).toString())
-      params.append('limit', (filters?.limit || 50).toString())
+      params.append('limit', (filters?.limit || 500).toString())
 
       const response = await fetch(`/api/receitas?${params}`, { signal: controller.signal })
       const result = await response.json()

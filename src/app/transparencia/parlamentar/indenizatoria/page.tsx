@@ -49,7 +49,7 @@ export default function IndenizatoriaPage() {
     fetch('/api/dados-abertos/parlamentares')
       .then((res) => res.json())
       .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
+        const data = json.dados ?? json.data ?? (Array.isArray(json) ? json : [])
         setParlamentares(data)
       })
       .catch(console.error)

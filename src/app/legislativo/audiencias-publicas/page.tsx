@@ -83,6 +83,7 @@ interface AudienciaPublica {
 interface AudienciasStats {
   total: number
   agendadas: number
+  realizadas: number
   concluidas: number
   canceladas: number
   ordinarias: number
@@ -95,6 +96,7 @@ export default function AudienciasPublicasPublicPage() {
   const [stats, setStats] = useState<AudienciasStats>({
     total: 0,
     agendadas: 0,
+    realizadas: 0,
     concluidas: 0,
     canceladas: 0,
     ordinarias: 0,
@@ -280,8 +282,8 @@ export default function AudienciasPublicasPublicPage() {
               <div className="flex items-center">
                 <CheckCircle className="h-8 w-8 text-green-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Concluídas</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.concluidas}</p>
+                  <p className="text-sm font-medium text-gray-600">Realizadas</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.realizadas}</p>
                 </div>
               </div>
             </CardContent>
@@ -292,8 +294,8 @@ export default function AudienciasPublicasPublicPage() {
               <div className="flex items-center">
                 <AlertCircle className="h-8 w-8 text-purple-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Especiais</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.especiais}</p>
+                  <p className="text-sm font-medium text-gray-600">Canceladas</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.canceladas}</p>
                 </div>
               </div>
             </CardContent>

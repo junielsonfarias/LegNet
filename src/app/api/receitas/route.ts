@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 // Enums devem corresponder ao schema Prisma
 const ReceitaQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
+  limit: z.coerce.number().int().min(1).max(500).default(10),
   categoria: z.enum(['RECEITA_CORRENTE', 'RECEITA_CAPITAL', 'RECEITA_INTRAORCAMENTARIA']).nullish().transform(v => v ?? undefined),
   origem: z.enum(['TRIBUTARIA', 'CONTRIBUICOES', 'PATRIMONIAL', 'SERVICOS', 'TRANSFERENCIAS', 'OUTRAS']).nullish().transform(v => v ?? undefined),
   situacao: z.enum(['PREVISTA', 'ARRECADADA', 'PARCIALMENTE_ARRECADADA', 'CANCELADA']).nullish().transform(v => v ?? undefined),

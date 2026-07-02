@@ -54,7 +54,7 @@ export function useBensPatrimoniais(filters?: BemPatrimonialFilters) {
       if (filters?.descricao) params.append('descricao', filters.descricao)
       if (filters?.localizacao) params.append('localizacao', filters.localizacao)
       params.append('page', (filters?.page || 1).toString())
-      params.append('limit', (filters?.limit || 50).toString())
+      params.append('limit', (filters?.limit || 500).toString())
 
       const response = await fetch(`/api/bens-patrimoniais?${params}`, { signal: controller.signal })
       const result = await response.json()

@@ -58,7 +58,7 @@ export default function SessoesPage() {
   const fetchSessoes = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/dados-abertos/sessoes?limit=100')
+      const response = await fetch('/api/dados-abertos/sessoes?limit=500')
       if (!response.ok) throw new Error('Erro ao carregar dados')
       const result = await response.json()
 
@@ -320,17 +320,17 @@ export default function SessoesPage() {
                   
                   <div className="w-px h-6 bg-gray-300 mx-1"></div>
                   
-                  <Button 
-                    variant={statusFilter === 'Realizada' ? "default" : "outline"} 
+                  <Button
+                    variant={statusFilter === 'CONCLUIDA' ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setStatusFilter(statusFilter === 'Realizada' ? null : 'Realizada')}
+                    onClick={() => setStatusFilter(statusFilter === 'CONCLUIDA' ? null : 'CONCLUIDA')}
                   >
                     Realizadas
                   </Button>
-                  <Button 
-                    variant={statusFilter === 'Agendada' ? "default" : "outline"} 
+                  <Button
+                    variant={statusFilter === 'AGENDADA' ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setStatusFilter(statusFilter === 'Agendada' ? null : 'Agendada')}
+                    onClick={() => setStatusFilter(statusFilter === 'AGENDADA' ? null : 'AGENDADA')}
                   >
                     Agendadas
                   </Button>

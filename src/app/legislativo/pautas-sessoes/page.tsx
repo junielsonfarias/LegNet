@@ -489,12 +489,16 @@ export default function PautasSessoesPublicPage() {
                                           {item.numero}
                                         </Badge>
                                       )}
-                                      <Badge className={getCategoriaColor(item.categoria)}>
-                                        {getCategoriaLabel(item.categoria)}
-                                      </Badge>
-                                      <Badge className={getPrioridadeColor(item.prioridade)}>
-                                        {item.prioridade}
-                                      </Badge>
+                                      {item.categoria && (
+                                        <Badge className={getCategoriaColor(item.categoria)}>
+                                          {getCategoriaLabel(item.categoria)}
+                                        </Badge>
+                                      )}
+                                      {item.prioridade && (
+                                        <Badge className={getPrioridadeColor(item.prioridade)}>
+                                          {item.prioridade}
+                                        </Badge>
+                                      )}
                                     </div>
                                     <h5 className="font-medium text-gray-900 mb-1">{item.titulo}</h5>
                                     {item.descricao && (
@@ -541,12 +545,16 @@ export default function PautasSessoesPublicPage() {
                                           {item.numero}
                                         </Badge>
                                       )}
-                                      <Badge className={getCategoriaColor(item.categoria)}>
-                                        {getCategoriaLabel(item.categoria)}
-                                      </Badge>
-                                      <Badge className={getPrioridadeColor(item.prioridade)}>
-                                        {item.prioridade}
-                                      </Badge>
+                                      {item.categoria && (
+                                        <Badge className={getCategoriaColor(item.categoria)}>
+                                          {getCategoriaLabel(item.categoria)}
+                                        </Badge>
+                                      )}
+                                      {item.prioridade && (
+                                        <Badge className={getPrioridadeColor(item.prioridade)}>
+                                          {item.prioridade}
+                                        </Badge>
+                                      )}
                                     </div>
                                     <h5 className="font-medium text-gray-900 mb-1">{item.titulo}</h5>
                                     {item.descricao && (

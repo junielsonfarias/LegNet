@@ -212,8 +212,10 @@ export default function EditarNormaPage() {
 
   async function handleCompilar() {
     try {
-      const response = await fetch(`/api/normas/${normaId}/compilar`, {
-        method: 'POST'
+      const response = await fetch(`/api/normas/${normaId}?acao=compilar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       })
 
       const data = await response.json()
