@@ -6,7 +6,7 @@ const log = createLogger('admin/proposicoes')
 import { Suspense, useMemo } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, ChevronLeft, ChevronRight, FileCheck } from 'lucide-react'
+import { FileText, Plus, ChevronLeft, ChevronRight, FileCheck, ClipboardCheck } from 'lucide-react'
 import { ProposicoesListSkeleton } from '@/components/skeletons/proposicao-skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { useProposicoesState } from './_hooks/use-proposicoes-state'
@@ -195,6 +195,12 @@ function ProposicoesContent() {
           <p className="text-gray-600 mt-1">Gerencie as proposições legislativas</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/proposicoes/revisao-aprovacao">
+              <ClipboardCheck className="h-4 w-4 mr-2" />
+              Revisar Aprovações
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link href="/admin/proposicoes/publicacao-direta">
               <FileCheck className="h-4 w-4 mr-2" />

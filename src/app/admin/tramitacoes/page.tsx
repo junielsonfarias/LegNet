@@ -66,6 +66,7 @@ interface TipoOrgao {
   sigla?: string | null
 }
 import { formatDateOnly } from '@/lib/utils/date'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 import {
   STATUS_CONFIG,
@@ -92,6 +93,7 @@ const defaultCreateForm: TramitacaoCreate = {
 }
 
 export default function TramitacoesAdminPage() {
+  const confirm = useConfirm()
   const [filters, setFilters] = useState<TramitacaoFilters>(defaultFilters)
   const {
     tramitacoes,
@@ -240,7 +242,13 @@ export default function TramitacoesAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Confirma a remoção desta tramitação?')) return
+    const ok = await confirm({
+      title: 'Remover tramitação?',
+      description: 'A entrada de tramitação será removida do histórico da proposição.',
+      variant: 'destructive',
+      confirmLabel: 'Remover',
+    })
+    if (!ok) return
     const success = await remove(id)
     if (success) {
       toast.success('Tramitação removida')

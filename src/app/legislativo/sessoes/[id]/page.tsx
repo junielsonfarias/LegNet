@@ -49,16 +49,16 @@ function toYouTubeEmbed(url: string): string | null {
 
 export default function SessaoDetailPage() {
   const params = useParams()
-  const numero = params?.numero as string | undefined
+  const idParam = params?.id as string | undefined
   const [sessao, setSessao] = useState<SessaoApi | null>(null)
   const [proposicoes, setProposicoes] = useState<ProposicaoApi[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingProposicoes, setLoadingProposicoes] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Buscar sessão pelo número
+  // Buscar sessão por ID (rota nova) — com compatibilidade para URLs antigas por número
   useEffect(() => {
-    if (!numero) {
+    if (!idParam) {
       setLoading(false)
       return
     }
@@ -67,24 +67,21 @@ export default function SessaoDetailPage() {
       try {
         setLoading(true)
         setError(null)
-        
-        // Converter número da URL para número (remove zeros à esquerda)
-        const numeroBusca = parseInt(numero, 10)
-        
-        if (isNaN(numeroBusca)) {
-          setError('Número de sessão inválido')
-          setLoading(false)
-          return
+
+        let sessaoEncontrada: SessaoApi | null = null
+        if (/^\d+$/.test(idParam)) {
+          // Compatibilidade: URL antiga por número. O número se repete entre anos,
+          // então pega a mais recente na lista (limite máximo).
+          const numeroBusca = parseInt(idParam, 10)
+          const { data: sessoes } = await sessoesApi.getAll({ limit: 100 })
+          sessaoEncontrada = sessoes.find((s) => s.numero === numeroBusca) || null
+        } else {
+          // Rota nova por ID único — detalhe completo via endpoint público.
+          sessaoEncontrada = await sessoesApi.getPublicById(idParam)
         }
-        
-        // Buscar todas as sessões e encontrar pelo número
-        const { data: sessoes } = await sessoesApi.getAll()
-        
-        // Buscar por número
-        const sessaoEncontrada = sessoes.find(s => s.numero === numeroBusca)
-        
+
         if (!sessaoEncontrada) {
-          setError(`Sessão número ${numero} não encontrada`)
+          setError('Sessão não encontrada')
         } else {
           setSessao(sessaoEncontrada)
         }
@@ -97,7 +94,7 @@ export default function SessaoDetailPage() {
     }
 
     fetchSessao()
-  }, [numero])
+  }, [idParam])
 
   // Buscar proposições relacionadas à sessão
   useEffect(() => {
@@ -139,12 +136,12 @@ export default function SessaoDetailPage() {
     }
   }, [proposicoes])
 
-  if (!numero) {
+  if (!idParam) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-red-600 mb-4">Número da sessão não fornecido</p>
+            <p className="text-red-600 mb-4">Identificador da sessão não fornecido</p>
             <Button asChild>
               <Link href="/legislativo/sessoes">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -447,7 +444,7 @@ export default function SessaoDetailPage() {
               </Card>
 
               {/* Links Rápidos */}
-              {(sessao.ata || sessao.arquivoAta || sessao.urlTransmissao || sessao.urlVideo || sessao.urlAudio) && (
+              {(sessao.ata || sessao.arquivoAta || sessao.arquivoPresenca || sessao.urlTransmissao || sessao.urlVideo || sessao.urlAudio) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Documentos e Mídias</CardTitle>
@@ -472,6 +469,14 @@ export default function SessaoDetailPage() {
                         <a href={sessao.arquivoAta} target="_blank" rel="noopener noreferrer">
                           <Download className="h-4 w-4 mr-2 text-green-600" />
                           Baixar Ata (PDF)
+                        </a>
+                      </Button>
+                    )}
+                    {sessao.arquivoPresenca && (
+                      <Button asChild variant="outline" size="sm" className="w-full justify-start">
+                        <a href={sessao.arquivoPresenca} target="_blank" rel="noopener noreferrer">
+                          <Download className="h-4 w-4 mr-2 text-amber-600" />
+                          Baixar Folha de Presença (PDF)
                         </a>
                       </Button>
                     )}
@@ -504,6 +509,53 @@ export default function SessaoDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Seção de Presença / Frequência */}
+          {sessao.presencas && sessao.presencas.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-camara-primary" />
+                  Presença / Frequência
+                  <span className="text-sm font-normal text-gray-500">
+                    ({sessao.presencas.filter((p) => p.presente).length} presentes de {sessao.presencas.length})
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {[...sessao.presencas]
+                    .sort((a, b) => Number(b.presente) - Number(a.presente) || a.parlamentar.nome.localeCompare(b.parlamentar.nome))
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${
+                          p.presente ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                        }`}
+                      >
+                        {p.presente ? (
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 shrink-0 text-red-500" />
+                        )}
+                        <span className="truncate text-gray-800">
+                          {p.parlamentar.apelido || p.parlamentar.nome}
+                          {p.parlamentar.partido && (
+                            <span className="text-gray-400"> ({p.parlamentar.partido})</span>
+                          )}
+                          {!p.presente && p.justificativa && (
+                            <span className="block text-xs text-gray-500">Justificada: {p.justificativa}</span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+                <p className="mt-3 text-xs text-gray-400">
+                  Fonte: folha de presença oficial e/ou ata da sessão.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Seção de Proposições */}
           {loadingProposicoes ? (

@@ -174,7 +174,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR" translate="no" suppressHydrationWarning>
       <head>
-        {themeCSS && <style dangerouslySetInnerHTML={{ __html: themeCSS }} />}
+        {themeCSS ? <style dangerouslySetInnerHTML={{ __html: themeCSS }} /> : null}
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>

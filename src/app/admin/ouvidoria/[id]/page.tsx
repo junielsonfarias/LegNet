@@ -15,6 +15,7 @@ import {
   Star, MessageSquare
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 interface ManifestacaoOuvidoria {
   id: string
@@ -102,6 +103,7 @@ const setores = [
 ]
 
 export default function OuvidoriaDetailPage() {
+  const confirm = useConfirm()
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
@@ -168,10 +170,14 @@ export default function OuvidoriaDetailPage() {
     handleAction('encaminhar', { setor })
   }
 
-  const handleConcluir = () => {
-    if (confirm('Confirma a conclusao desta manifestacao?')) {
-      handleAction('concluir', {})
-    }
+  const handleConcluir = async () => {
+    const ok = await confirm({
+      title: 'Concluir manifestação?',
+      description: 'A manifestação será marcada como concluída e poderá ser encerrada para auditoria.',
+      confirmLabel: 'Concluir',
+    })
+    if (!ok) return
+    handleAction('concluir', {})
   }
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString('pt-BR')

@@ -6,6 +6,17 @@ export const dynamic = 'force-dynamic'
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
+
+  // Modo "anos disponíveis": lista os anos com registros (desc) p/ filtro dinâmico.
+  if (searchParams.get('anos') === 'true') {
+    const distintos = await prisma.diaria.findMany({
+      distinct: ['ano'],
+      select: { ano: true },
+      orderBy: { ano: 'desc' },
+    })
+    return createSuccessResponse(distintos.map((d) => d.ano))
+  }
+
   const ano = searchParams.get('ano') ? parseInt(searchParams.get('ano')!) : new Date().getFullYear()
   const mes = searchParams.get('mes') ? parseInt(searchParams.get('mes')!) : undefined
 

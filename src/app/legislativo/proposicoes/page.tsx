@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { FiltroAno, useFiltroAno } from '@/components/ui/filtro-ano'
 import { FileText, Search, Calendar, User, Eye, Download, Filter, Loader2, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -94,6 +95,9 @@ export default function ProposicoesPage() {
     [proposicoes]
   )
 
+  // Filtro de ano (padrão: ano atual → mais recente com dados)
+  const { ano, setAno, anosDisponiveis } = useFiltroAno(proposicoes, (p) => p.ano)
+
   // Filtrar proposições
   const filteredProposicoes = useMemo(() => {
     return proposicoes.filter(p => {
@@ -106,10 +110,11 @@ export default function ProposicoesPage() {
 
       const matchesTipo = !tipoFilter || p.tipo === tipoFilter
       const matchesStatus = !statusFilter || p.status === statusFilter
+      const matchesAno = ano === 'todos' || ano === null || p.ano === ano
 
-      return matchesSearch && matchesTipo && matchesStatus
+      return matchesSearch && matchesTipo && matchesStatus && matchesAno
     })
-  }, [proposicoes, searchTerm, tipoFilter, statusFilter])
+  }, [proposicoes, searchTerm, tipoFilter, statusFilter, ano])
 
   // Paginação
   const ITEMS_PER_PAGE = 50
@@ -121,7 +126,7 @@ export default function ProposicoesPage() {
   }, [filteredProposicoes, currentPage])
 
   // Resetar página ao mudar filtros
-  useEffect(() => { setCurrentPage(1) }, [searchTerm, tipoFilter, statusFilter])
+  useEffect(() => { setCurrentPage(1) }, [searchTerm, tipoFilter, statusFilter, ano])
 
   const getTipoBadge = (tipo: string) => {
     const tipoConfig: Record<string, { label: string; className: string }> = {
@@ -240,6 +245,7 @@ export default function ProposicoesPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
+                  <FiltroAno ano={ano} setAno={setAno} anos={anosDisponiveis} />
                   <Button
                     variant="outline"
                     onClick={fetchProposicoes}

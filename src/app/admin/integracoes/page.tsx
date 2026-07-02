@@ -13,6 +13,7 @@ import {
   Zap
 } from "lucide-react"
 import { EmptyState } from "@/components/ui/empty-state"
+import { useConfirm } from "@/lib/hooks/use-confirm-dialog"
 import { toast } from "sonner"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,6 +47,7 @@ const createInitialFormState = (): TokenFormState => ({
 })
 
 export default function IntegracoesPage() {
+  const confirm = useConfirm()
   const {
     tokens,
     loading,
@@ -144,9 +146,14 @@ export default function IntegracoesPage() {
   }
 
   const handleDelete = async (tokenId: string) => {
-    if (confirm('Tem certeza que deseja excluir este token de integração?')) {
-      await remove(tokenId)
-    }
+    const ok = await confirm({
+      title: 'Excluir token de integração?',
+      description: 'O token será revogado imediatamente. APIs que usam este token deixarão de funcionar.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    await remove(tokenId)
   }
 
   return (

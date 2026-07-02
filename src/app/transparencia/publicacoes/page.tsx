@@ -44,6 +44,8 @@ export default function PublicacoesPage() {
   const [filtros, setFiltros] = useState<FiltrosPublicacoes>({})
   const [carregando, setCarregando] = useState(true)
   const [publicacoes, setPublicacoes] = useState<Publicacao[]>([])
+  // Anos com dados estáveis (não dependem do filtro atual, para o dropdown não colapsar).
+  const [anosComDados, setAnosComDados] = useState<number[]>([])
   const [categorias, setCategorias] = useState<CategoriaPublicacao[]>([])
   const [estatisticas, setEstatisticas] = useState({
     total: 0,
@@ -74,10 +76,6 @@ export default function PublicacoesPage() {
     return Array.from(tipos)
   }, [publicacoes])
 
-  const anosDisponiveis = useMemo(() => {
-    const anos = new Set(publicacoes.map(publicacao => publicacao.ano))
-    return Array.from(anos).sort((a, b) => b - a)
-  }, [publicacoes])
 
   const carregarCategorias = useCallback(async () => {
     try {
@@ -132,8 +130,30 @@ export default function PublicacoesPage() {
     carregarCategorias()
   }, [carregarCategorias])
 
+  // Carrega os anos com dados uma única vez (independente dos filtros) e aplica
+  // o padrão: ano atual → mais recente com dados. Dispara a listagem inicial já
+  // filtrada por esse ano.
   useEffect(() => {
-    carregarPublicacoes()
+    let ativo = true
+    publicacoesApi
+      .list({ publicada: true, limit: 500 })
+      .then(({ data }) => {
+        if (!ativo) return
+        const anos = Array.from(new Set(data.map(p => p.ano))).sort((a, b) => b - a)
+        setAnosComDados(anos)
+        const atual = new Date().getFullYear()
+        const padrao = anos.includes(atual) ? atual : anos[0]
+        if (padrao != null) {
+          setFiltros(prev => ({ ...prev, ano: String(padrao) }))
+          carregarPublicacoes({ ano: String(padrao) })
+        } else {
+          carregarPublicacoes({})
+        }
+      })
+      .catch(() => carregarPublicacoes({}))
+    return () => {
+      ativo = false
+    }
   }, [carregarPublicacoes])
 
   const aplicarFiltros = useCallback(() => {
@@ -258,7 +278,7 @@ export default function PublicacoesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos</SelectItem>
-                  {anosDisponiveis.map(ano => (
+                  {anosComDados.map(ano => (
                     <SelectItem key={ano} value={String(ano)}>
                       {ano}
                     </SelectItem>

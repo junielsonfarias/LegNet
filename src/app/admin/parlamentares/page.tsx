@@ -22,8 +22,10 @@ import {
 import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { ParlamentarApi } from '@/lib/api/parlamentares-api'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 export default function ParlamentaresPage() {
+  const confirm = useConfirm()
   const router = useRouter()
   const [filtros, setFiltros] = useState({
     busca: '',
@@ -68,41 +70,54 @@ export default function ParlamentaresPage() {
 
   // Handler para desativar parlamentar (soft delete)
   const handleDelete = async (id: string) => {
-    if (confirm('Deseja desativar este parlamentar? Ele ficara como inativo mas seus dados serao mantidos.')) {
-      const sucesso = await remove(id)
-      if (sucesso) {
-        toast.success('Parlamentar desativado com sucesso')
-      } else {
-        toast.error('Erro ao desativar parlamentar')
-      }
+    const ok = await confirm({
+      title: 'Desativar parlamentar?',
+      description: 'O parlamentar ficará marcado como inativo, mas seus dados (mandatos, votos, proposições) serão preservados.',
+      confirmLabel: 'Desativar',
+    })
+    if (!ok) return
+    const sucesso = await remove(id)
+    if (sucesso) {
+      toast.success('Parlamentar desativado com sucesso')
+    } else {
+      toast.error('Erro ao desativar parlamentar')
     }
   }
 
   // Handler para excluir permanentemente
   const handleHardDelete = async (id: string, nome: string) => {
-    if (confirm(`ATENCAO: Deseja EXCLUIR PERMANENTEMENTE o parlamentar "${nome}"? Esta acao nao pode ser desfeita.`)) {
-      try {
-        const res = await fetch(`/api/parlamentares/${id}?permanent=true`, { method: 'DELETE' })
-        const data = await res.json()
-        if (res.ok && data.success !== false) {
-          toast.success('Parlamentar excluido permanentemente')
-          refetch()
-        } else {
-          toast.error(data.error || 'Erro ao excluir parlamentar')
-        }
-      } catch {
-        toast.error('Erro ao excluir parlamentar')
+    const ok = await confirm({
+      title: 'Excluir PERMANENTEMENTE?',
+      description: `Confirma exclusão definitiva de "${nome}"? Todos os dados associados (mandatos, votos, proposições) serão removidos. Esta ação NÃO PODE ser desfeita.`,
+      variant: 'destructive',
+      confirmLabel: 'Excluir permanentemente',
+    })
+    if (!ok) return
+    try {
+      const res = await fetch(`/api/parlamentares/${id}?permanent=true`, { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok && data.success !== false) {
+        toast.success('Parlamentar excluído permanentemente')
+        refetch()
+      } else {
+        toast.error(data.error || 'Erro ao excluir parlamentar')
       }
+    } catch {
+      toast.error('Erro ao excluir parlamentar')
     }
   }
 
   // Handler para reativar parlamentar
   const handleReativar = async (id: string) => {
-    if (confirm('Deseja reativar este parlamentar?')) {
-      const resultado = await update(id, { ativo: true })
-      if (resultado) {
-        toast.success('Parlamentar reativado com sucesso')
-      }
+    const ok = await confirm({
+      title: 'Reativar parlamentar?',
+      description: 'O parlamentar voltará a aparecer como ativo nas listas e poderá ter mandato vinculado.',
+      confirmLabel: 'Reativar',
+    })
+    if (!ok) return
+    const resultado = await update(id, { ativo: true })
+    if (resultado) {
+      toast.success('Parlamentar reativado com sucesso')
     }
   }
 

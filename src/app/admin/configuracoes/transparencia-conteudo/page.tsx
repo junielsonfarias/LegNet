@@ -14,6 +14,7 @@ import {
   FolderOpen, Eye, X, Settings2
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 interface Item {
@@ -44,6 +45,7 @@ const ICONES = [
 ]
 
 export default function TransparenciaConteudoPage() {
+  const confirm = useConfirm()
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -117,8 +119,14 @@ export default function TransparenciaConteudoPage() {
     setEditingCat(null)
   }
 
-  const deleteCategoria = (id: string) => {
-    if (!confirm('Excluir esta categoria e todos os seus itens?')) return
+  const deleteCategoria = async (id: string) => {
+    const ok = await confirm({
+      title: 'Excluir categoria?',
+      description: 'A categoria e TODOS os seus itens serão excluídos. Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir tudo',
+    })
+    if (!ok) return
     const updated = categorias.filter(c => c.id !== id)
     saveAll(updated)
   }

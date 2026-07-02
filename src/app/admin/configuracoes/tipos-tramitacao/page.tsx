@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 interface TipoTramitacao {
   id: string
@@ -49,6 +50,7 @@ interface FormData {
 }
 
 export default function TiposTramitacaoPage() {
+  const confirm = useConfirm()
   const [tipos, setTipos] = useState<TipoTramitacao[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -150,9 +152,13 @@ export default function TiposTramitacaoPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este tipo de tramitação?')) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Excluir tipo de tramitação?',
+      description: 'Tramitações existentes que usam este tipo serão afetadas.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(`/api/configuracoes/tipos-tramitacao/${id}`, {

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Plus, Edit, Trash2, Vote, Settings2, Info, Loader2 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import {
   useQuorum,
   type ConfiguracaoQuorum,
@@ -82,6 +83,7 @@ const initialFormData: FormData = {
 }
 
 export default function QuorumConfigPage() {
+  const confirm = useConfirm()
   const { configuracoes, loading, refetch, create, update, remove } = useQuorum()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState<ConfiguracaoQuorum | null>(null)
@@ -146,9 +148,14 @@ export default function QuorumConfigPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta configuracao de quorum?')) {
-      await remove(id)
-    }
+    const ok = await confirm({
+      title: 'Excluir configuração de quórum?',
+      description: 'A configuração será removida. Tipos de proposição que dependem dela usarão a configuração padrão.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    await remove(id)
   }
 
   const handleClose = () => {

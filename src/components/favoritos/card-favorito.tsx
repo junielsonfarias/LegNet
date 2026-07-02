@@ -70,7 +70,7 @@ function getUrlItem(tipo: TipoFavorito, item: any): string {
     case 'PROPOSICAO':
       return `/legislativo/proposicoes/${item?.id}`
     case 'SESSAO':
-      return `/legislativo/sessoes/${item?.numero || item?.id}`
+      return `/legislativo/sessoes/${item?.id || item?.numero}`
     case 'PARLAMENTAR':
       return `/parlamentares/${item?.id}`
     case 'COMISSAO':

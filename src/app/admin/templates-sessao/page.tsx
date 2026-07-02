@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react"
 import { toast } from "sonner"
+import { useConfirm } from "@/lib/hooks/use-confirm-dialog"
 
 import {
   useSessaoTemplates,
@@ -73,6 +74,7 @@ interface TemplateFormData {
 }
 
 export default function TemplatesSessaoPage() {
+  const confirm = useConfirm()
   const [tipoFiltro, setTipoFiltro] = useState<UseSessaoTemplatesOptions["tipo"] | "TODOS">("TODOS")
   const [apenasAtivos, setApenasAtivos] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -292,9 +294,13 @@ export default function TemplatesSessaoPage() {
   }
 
   const handleDelete = async (templateId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este template?")) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Excluir template de sessão?',
+      description: 'O template será removido. Sessões futuras não poderão usá-lo como base.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
     try {
       await remove(templateId)
     } catch (err) {

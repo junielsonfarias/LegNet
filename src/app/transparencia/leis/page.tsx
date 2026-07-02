@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { PDFModal } from '@/components/pdf'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+import { formatMateriaTitulo, formatNumeroAno } from '@/lib/utils/legislative-labels'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 import { createLogger } from '@/lib/logging/logger'
 
@@ -84,7 +85,7 @@ export default function LeisPage() {
         for (const n of normas) {
           items.push({
             id: n.id,
-            titulo: `${n.tipo === 'LEI_COMPLEMENTAR' ? 'Lei Complementar' : 'Lei'} No ${n.numero}/${n.ano}`,
+            titulo: formatMateriaTitulo(n.tipo === 'LEI_COMPLEMENTAR' ? 'Lei Complementar' : 'Lei', n.numero, n.ano),
             descricao: n.ementa,
             tipo: 'LEI',
             numero: String(n.numero),
@@ -308,7 +309,7 @@ export default function LeisPage() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
                         <CardTitle className="text-xl font-semibold text-gray-900">
-                          Lei Nº {lei.numero}/{lei.ano}
+                          Lei {formatNumeroAno(lei.numero, lei.ano)}
                         </CardTitle>
                         <Badge className="bg-green-100 text-green-800">Vigente</Badge>
                       </div>

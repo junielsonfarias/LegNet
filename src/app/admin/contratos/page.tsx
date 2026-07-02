@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { useContratos, Contrato } from '@/lib/hooks/use-contratos'
 import { useLicitacoes } from '@/lib/hooks/use-licitacoes'
 import { toast } from 'sonner'
@@ -28,6 +29,7 @@ const modalidades = [
 const situacoes = ['VIGENTE', 'ENCERRADO', 'RESCINDIDO', 'SUSPENSO', 'EM_EXECUCAO']
 
 export default function ContratosAdminPage() {
+  const confirm = useConfirm()
   const { contratos, loading, create, update, remove } = useContratos()
   const { licitacoes } = useLicitacoes()
   const [searchTerm, setSearchTerm] = useState('')
@@ -91,13 +93,18 @@ export default function ContratosAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este contrato?')) {
-      try {
-        await remove(id)
-        toast.success('Contrato excluido com sucesso')
-      } catch (error: any) {
-        toast.error(error?.message || 'Erro ao excluir contrato')
-      }
+    const ok = await confirm({
+      title: 'Excluir contrato?',
+      description: 'Esta ação não pode ser desfeita. O contrato e seus aditivos serão removidos.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    try {
+      await remove(id)
+      toast.success('Contrato excluído com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao excluir contrato')
     }
   }
 

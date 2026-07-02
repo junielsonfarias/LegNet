@@ -179,7 +179,7 @@ export default function CotasParlamentarPublicPage() {
         <div className="bg-white rounded-lg border shadow-sm">
           {/* Acoes no topo */}
           <div className="flex flex-col sm:flex-row justify-end gap-2 p-4 border-b">
-            <Link href="/regulamentacao/cotas-parlamentar" target="_blank" rel="noopener noreferrer">
+            <Link href="/legislativo/normas" target="_blank" rel="noopener noreferrer">
               <Button className="bg-camara-primary hover:bg-camara-primary/90">
                 Regulamentacao
               </Button>

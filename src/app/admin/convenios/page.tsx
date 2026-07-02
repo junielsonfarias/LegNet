@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Building, Handshake } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { useConvenios, Convenio } from '@/lib/hooks/use-convenios'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
@@ -15,6 +16,7 @@ import { RedirectConfig } from '@/components/admin/redirect-config'
 const situacoes = ['EM_EXECUCAO', 'CONCLUIDO', 'PRESTACAO_CONTAS', 'SUSPENSO', 'CANCELADO']
 
 export default function ConveniosAdminPage() {
+  const confirm = useConfirm()
   const { convenios, loading, create, update, remove } = useConvenios()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -83,13 +85,18 @@ export default function ConveniosAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este convenio?')) {
-      try {
-        await remove(id)
-        toast.success('Convenio excluido com sucesso')
-      } catch (error: any) {
-        toast.error(error?.message || 'Erro ao excluir convenio')
-      }
+    const ok = await confirm({
+      title: 'Excluir convênio?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    try {
+      await remove(id)
+      toast.success('Convênio excluído com sucesso')
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao excluir convênio')
     }
   }
 

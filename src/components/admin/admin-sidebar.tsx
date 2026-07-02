@@ -22,6 +22,7 @@ import {
   DollarSign,
   Layers,
   ClipboardList,
+  ClipboardCheck,
   Megaphone,
   MessageCircle,
   Info,
@@ -112,6 +113,7 @@ const navigationCategories: NavCategory[] = [
       { name: 'Protocolo', href: '/admin/protocolo', icon: FileInput, permissions: ['tramitacao.view'] },
       { name: 'Normas Juridicas', href: '/admin/normas', icon: Scale, permissions: ['transparencia.view'] },
       { name: 'Oficios', href: '/admin/oficios', icon: Mail, permissions: ['sessao.manage'] },
+      { name: 'Revisao da Migracao', href: '/admin/revisao-migracao', icon: ClipboardCheck, permissions: ['tramitacao.view'] },
     ]
   },
   {

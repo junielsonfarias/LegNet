@@ -26,8 +26,10 @@ import Link from 'next/link'
 import { SessoesListSkeleton } from '@/components/skeletons/sessao-skeleton'
 import { gerarSlugSessao } from '@/lib/utils/sessoes-utils'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 export default function SessoesAdminPage() {
+  const confirm = useConfirm()
   const { sessoes, loading, create, update, remove } = useSessoes()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -192,11 +194,16 @@ export default function SessoesAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta sessão?')) {
-      const sucesso = await remove(id)
-      if (sucesso) {
-        toast.success('Sessão excluída com sucesso')
-      }
+    const ok = await confirm({
+      title: 'Excluir sessão?',
+      description: 'Esta ação não pode ser desfeita. A sessão e seus dados (presença, votação, pauta) serão removidos.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    const sucesso = await remove(id)
+    if (sucesso) {
+      toast.success('Sessão excluída com sucesso')
     }
   }
 

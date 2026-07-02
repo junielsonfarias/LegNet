@@ -16,6 +16,7 @@ import {
   Settings, Archive, FileText, Briefcase, HelpCircle, Loader2, RefreshCw
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 // Tipos
@@ -98,6 +99,7 @@ const TIPOS_CONFIG: Record<TipoUnidade, { label: string; color: string; icon: Re
 }
 
 export default function UnidadesTramitacaoPage() {
+  const confirm = useConfirm()
   const [unidades, setUnidades] = useState<UnidadeTramitacao[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -208,9 +210,13 @@ export default function UnidadesTramitacaoPage() {
   }
 
   const handleDelete = async (unidade: UnidadeTramitacao) => {
-    if (!confirm(`Tem certeza que deseja excluir a unidade "${unidade.nome}"?`)) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Excluir unidade de tramitação?',
+      description: `A unidade "${unidade.nome}" será excluída. Proposições em tramitação por esta unidade poderão ser afetadas.`,
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(`/api/admin/configuracoes/unidades-tramitacao?id=${unidade.id}`, {

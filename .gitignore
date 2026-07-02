@@ -98,6 +98,12 @@ logs/
 # Uploads (arquivos enviados por usuarios)
 public/uploads/*
 !public/uploads/.gitkeep
+# Excecao: brasao/logo institucional sao assets fixos (versionados)
+!public/uploads/logos/
+!public/uploads/logos/*
+
+# Backup do site antigo (dump SQL + CSVs com dados pessoais - NUNCA commitar)
+docs/backup antigo/
 
 # Cache
 .cache/

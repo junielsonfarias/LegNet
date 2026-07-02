@@ -21,8 +21,10 @@ import { useCargosMesaDiretora } from '@/lib/hooks/use-cargos-mesa-diretora'
 import { toast } from 'sonner'
 import type { MesaDiretoraApi } from '@/lib/api/mesa-diretora-api'
 import { formatDateOnly } from '@/lib/utils/date'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 export default function MesaDiretoraAdminPage() {
+  const confirm = useConfirm()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterLegislatura, setFilterLegislatura] = useState('all')
   const [filterPeriodo, setFilterPeriodo] = useState('all')
@@ -250,9 +252,14 @@ export default function MesaDiretoraAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta mesa diretora?')) {
-      await remove(id)
-    }
+    const ok = await confirm({
+      title: 'Excluir mesa diretora?',
+      description: 'A mesa diretora e seus membros vinculados serão removidos.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    await remove(id)
   }
 
   const handleClose = () => {

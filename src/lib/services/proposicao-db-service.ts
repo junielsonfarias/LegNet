@@ -304,14 +304,17 @@ export const proposicaoDbService = {
   },
 
   async update(id: string, data: ProposicaoUpdateData) {
-    // Validar transicao de status se status esta sendo alterado
+    // Validar transicao de status se status esta sendo alterado.
+    // Excecao: entrada retroativa (digitalizacao de proposicoes ja decididas)
+    // pula a maquina de estados — o status final e informado diretamente,
+    // coerente com o bypass de RN-020/RN-030/RN-032 ja aplicado a esses casos.
     if (data.status !== undefined) {
       const current = await prisma.proposicao.findUnique({
         where: { id },
-        select: { status: true }
+        select: { status: true, entradaRetroativa: true }
       })
 
-      if (current && data.status !== current.status) {
+      if (current && !current.entradaRetroativa && data.status !== current.status) {
         const currentStatus = current.status as string
         const allowed = VALID_STATUS_TRANSITIONS[currentStatus]
 

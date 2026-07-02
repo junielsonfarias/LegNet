@@ -15,8 +15,10 @@ import { ParecerForm } from './components/ParecerForm'
 import { ParecerCard } from './components/ParecerCard'
 import { VotacaoDialog } from './components/VotacaoDialog'
 import { DetalhesDialog } from './components/DetalhesDialog'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 export default function PareceresAdminPage() {
+  const confirm = useConfirm()
   const [filters, setFilters] = useState<{
     comissaoId?: string
     status?: string
@@ -67,9 +69,14 @@ export default function PareceresAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este parecer?')) {
-      await remove(id)
-    }
+    const ok = await confirm({
+      title: 'Excluir parecer?',
+      description: 'Esta ação não pode ser desfeita. Votos vinculados também serão removidos.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
+    await remove(id)
   }
 
   const handleOpenVotacao = async (parecer: Parecer) => {
@@ -103,21 +110,33 @@ export default function PareceresAdminPage() {
   }
 
   const handleEnviarParaVotacao = async (parecer: Parecer) => {
-    if (confirm('Enviar parecer para votacao na comissao?')) {
-      await enviarParaVotacao(parecer.id)
-    }
+    const ok = await confirm({
+      title: 'Enviar parecer para votação?',
+      description: 'O parecer será disponibilizado para votação dos membros da comissão.',
+      confirmLabel: 'Enviar',
+    })
+    if (!ok) return
+    await enviarParaVotacao(parecer.id)
   }
 
   const handleEmitirParecer = async (parecer: Parecer) => {
-    if (confirm('Emitir parecer oficialmente?')) {
-      await emitirParecer(parecer.id)
-    }
+    const ok = await confirm({
+      title: 'Emitir parecer oficialmente?',
+      description: 'O parecer será marcado como EMITIDO e poderá ser vinculado à pauta de sessão.',
+      confirmLabel: 'Emitir',
+    })
+    if (!ok) return
+    await emitirParecer(parecer.id)
   }
 
   const handleArquivar = async (parecer: Parecer) => {
-    if (confirm('Arquivar este parecer?')) {
-      await arquivar(parecer.id)
-    }
+    const ok = await confirm({
+      title: 'Arquivar parecer?',
+      description: 'O parecer será marcado como arquivado e não aparecerá nas listas ativas.',
+      confirmLabel: 'Arquivar',
+    })
+    if (!ok) return
+    await arquivar(parecer.id)
   }
 
   const handleOpenDetalhes = (parecer: Parecer) => {

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Edit, Trash2, BookOpen, Loader2, Clock, GripVertical } from 'lucide-react'
 import { toast } from 'sonner'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 interface TipoExpediente {
   id: string
@@ -44,6 +45,7 @@ interface FormData {
 }
 
 export default function TiposExpedientePage() {
+  const confirm = useConfirm()
   const [tipos, setTipos] = useState<TipoExpediente[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -142,9 +144,13 @@ export default function TiposExpedientePage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este tipo de expediente?')) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Excluir tipo de expediente?',
+      description: 'Itens de pauta que usam este tipo poderão perder a referência.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(`/api/tipos-expediente/${id}`, {

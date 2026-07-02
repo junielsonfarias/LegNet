@@ -27,6 +27,7 @@ import {
   Search
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 // Tipos
@@ -98,6 +99,7 @@ const TIPOS_AUTOR_PADRAO = [
 ]
 
 export default function AutoresPage() {
+  const confirm = useConfirm()
   // Estados
   const [tiposAutor, setTiposAutor] = useState<TipoAutor[]>([])
   const [autores, setAutores] = useState<Autor[]>([])
@@ -240,7 +242,13 @@ export default function AutoresPage() {
   }
 
   const handleDeleteTipo = async (tipo: TipoAutor) => {
-    if (!confirm(`Deseja excluir o tipo "${tipo.nome}"?`)) return
+    const ok = await confirm({
+      title: 'Excluir tipo de autor?',
+      description: `O tipo "${tipo.nome}" será excluído. Autores que dependem deste tipo precisarão ser reassociados.`,
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const res = await fetch(`/api/tipos-autor/${tipo.id}`, { method: 'DELETE' })
@@ -329,7 +337,13 @@ export default function AutoresPage() {
   }
 
   const handleDeleteAutor = async (autor: Autor) => {
-    if (!confirm(`Deseja excluir o autor "${autor.nome}"?`)) return
+    const ok = await confirm({
+      title: 'Excluir autor?',
+      description: `O autor "${autor.nome}" será excluído. Proposições já vinculadas serão mantidas.`,
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const res = await fetch(`/api/autores/${autor.id}`, { method: 'DELETE' })

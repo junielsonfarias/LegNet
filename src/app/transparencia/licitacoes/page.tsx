@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, Suspense } from 'react'
+import { useAnoPadrao } from '@/components/ui/filtro-ano'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -71,6 +72,7 @@ function LicitacoesContent() {
     const anosSet = new Set(licitacoes.map(l => l.ano.toString()))
     return Array.from(anosSet).sort((a, b) => parseInt(b) - parseInt(a))
   }, [licitacoes])
+  useAnoPadrao(anos, filtroAno, setFiltroAno) // padrão: ano atual → mais recente com dados
 
   const modalidades = useMemo(() => {
     const modalidadesSet = new Set(licitacoes.map(l => l.modalidade))

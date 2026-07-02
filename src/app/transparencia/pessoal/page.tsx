@@ -24,7 +24,7 @@ const secoes = [
     icon: FileText,
     title: 'Folha de Pagamento',
     description: 'Consulte a folha de pagamento mensal da Camara.',
-    href: '/transparencia/pessoal/folha-pagamento',
+    href: '/transparencia/folha-pagamento',
     color: 'text-blue-600',
     bgColor: 'bg-blue-100',
   },

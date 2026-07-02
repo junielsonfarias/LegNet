@@ -26,6 +26,7 @@ import {
   Settings
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 // Tipos
@@ -70,6 +71,7 @@ const TIPO_PROPOSICAO_LABELS: Record<string, string> = {
 }
 
 export default function FluxosTramitacaoPage() {
+  const confirm = useConfirm()
   const [fluxos, setFluxos] = useState<Fluxo[]>([])
   const [unidades, setUnidades] = useState<Unidade[]>([])
   const [loading, setLoading] = useState(true)
@@ -198,7 +200,13 @@ export default function FluxosTramitacaoPage() {
   }
 
   const handleDeleteEtapa = async (fluxoId: string, etapaId: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta etapa?')) return
+    const ok = await confirm({
+      title: 'Excluir etapa do fluxo?',
+      description: 'A etapa será removida do fluxo de tramitação. Proposições em andamento podem ser afetadas.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (!ok) return
 
     try {
       const response = await fetch(

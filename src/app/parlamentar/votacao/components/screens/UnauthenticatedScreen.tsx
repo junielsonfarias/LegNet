@@ -12,7 +12,7 @@ export function UnauthenticatedScreen() {
             Você precisa estar logado para acessar esta página
           </p>
           <Button asChild size="sm" className="sm:size-default">
-            <a href="/admin/login">Fazer Login</a>
+            <a href="/login">Fazer Login</a>
           </Button>
         </CardContent>
       </Card>

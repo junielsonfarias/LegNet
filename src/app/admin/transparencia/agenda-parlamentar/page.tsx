@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { CalendarDays, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 interface Agenda {
@@ -50,6 +51,7 @@ const EMPTY_FORM = {
 }
 
 export default function AdminAgendaParlamentarPage() {
+  const confirm = useConfirm()
   const [data, setData] = useState<Agenda[]>([])
   const [parlamentares, setParlamentares] = useState<Parlamentar[]>([])
   const [loading, setLoading] = useState(true)
@@ -148,7 +150,13 @@ export default function AdminAgendaParlamentarPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remover este compromisso?')) return
+    const ok = await confirm({
+      title: 'Remover compromisso?',
+      description: 'O compromisso será removido da agenda pública.',
+      variant: 'destructive',
+      confirmLabel: 'Remover',
+    })
+    if (!ok) return
     const r = await fetch(`/api/agenda-parlamentar/${id}`, { method: 'DELETE' })
     if (r.ok) {
       toast.success('Removido')

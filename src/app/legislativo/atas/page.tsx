@@ -11,9 +11,10 @@ import {
   Loader2, BookOpen, ArrowLeft, Eye, X
 } from 'lucide-react'
 import Link from 'next/link'
-import { formatDateBR, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
+import { formatDateBR, formatSessaoTitulo, SESSAO_TIPO } from '@/lib/utils/legislative-labels'
 import { sanitizeRichHtml } from '@/lib/utils/sanitize-html'
 import { createLogger } from '@/lib/logging/logger'
+import { useAnoPadrao } from '@/components/ui/filtro-ano'
 
 const log = createLogger('legislativo/atas')
 
@@ -49,10 +50,6 @@ export default function AtasPage() {
       if (data.dados) {
         let items = data.dados as SessaoAta[]
 
-        if (filtroAno !== 'all') {
-          items = items.filter(s => new Date(s.data).getFullYear() === parseInt(filtroAno))
-        }
-
         if (busca) {
           const term = busca.toLowerCase()
           items = items.filter(s =>
@@ -69,13 +66,20 @@ export default function AtasPage() {
     } finally {
       setLoading(false)
     }
-  }, [filtroTipo, filtroAno, busca])
+  }, [filtroTipo, busca])
 
   useEffect(() => {
     fetchAtas()
   }, [fetchAtas])
 
+  // Anos derivados do conjunto SEM filtro de ano (para não colapsar o dropdown).
   const anos = Array.from(new Set(sessoes.map(s => new Date(s.data).getFullYear()))).sort((a, b) => b - a)
+  useAnoPadrao(anos, filtroAno, setFiltroAno)
+
+  // Filtro de ano aplicado só na exibição.
+  const sessoesFiltradas = filtroAno === 'all'
+    ? sessoes
+    : sessoes.filter(s => new Date(s.data).getFullYear() === parseInt(filtroAno))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -124,9 +128,9 @@ export default function AtasPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-blue-600">{sessoes.length}</p><p className="text-xs text-muted-foreground">Total</p></CardContent></Card>
-          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-green-600">{sessoes.filter(s => s.ata || s.arquivoAta).length}</p><p className="text-xs text-muted-foreground">Com Ata</p></CardContent></Card>
-          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-yellow-600">{sessoes.filter(s => !s.ata && !s.arquivoAta).length}</p><p className="text-xs text-muted-foreground">Pendentes</p></CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-blue-600">{sessoesFiltradas.length}</p><p className="text-xs text-muted-foreground">Total</p></CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-green-600">{sessoesFiltradas.filter(s => s.ata || s.arquivoAta).length}</p><p className="text-xs text-muted-foreground">Com Ata</p></CardContent></Card>
+          <Card><CardContent className="pt-4 pb-3 px-4"><p className="text-2xl font-bold text-yellow-600">{sessoesFiltradas.filter(s => !s.ata && !s.arquivoAta).length}</p><p className="text-xs text-muted-foreground">Pendentes</p></CardContent></Card>
         </div>
 
         {/* Lista */}
@@ -134,14 +138,14 @@ export default function AtasPage() {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-camara-primary" />
           </div>
-        ) : sessoes.length === 0 ? (
+        ) : sessoesFiltradas.length === 0 ? (
           <Card><CardContent className="text-center py-12">
             <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">Nenhuma sessao concluida encontrada</p>
           </CardContent></Card>
         ) : (
           <div className="space-y-3">
-            {sessoes.map(sessao => (
+            {sessoesFiltradas.map(sessao => (
               <Card key={sessao.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="py-4 px-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -151,7 +155,7 @@ export default function AtasPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">
-                          Sessao {SESSAO_TIPO[sessao.tipo] || sessao.tipo} No {sessao.numero}
+                          {formatSessaoTitulo(sessao)}
                         </h3>
                         <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                           <span className="flex items-center gap-1">

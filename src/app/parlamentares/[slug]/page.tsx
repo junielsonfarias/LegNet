@@ -17,8 +17,22 @@ import { useParlamentares } from '@/lib/hooks/use-parlamentares'
 import { slugify } from '@/lib/utils'
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
 import { createLogger } from '@/lib/logging/logger'
+import { FiltroAno, useFiltroAno } from '@/components/ui/filtro-ano'
 
 const log = createLogger('parlamentares')
+
+/**
+ * Extrai o ano de uma matéria. `data` vem como "dd/mm/yyyy" (pt-BR) e `numero`
+ * como "numero/ano"; usa a data e cai para o número quando a data está vazia.
+ */
+function anoDaMateria(m: { data: string; numero: string }): number | null {
+  const partesData = m.data?.split('/')
+  if (partesData && partesData.length === 3 && /^\d{4}$/.test(partesData[2])) {
+    return Number(partesData[2])
+  }
+  const anoNumero = m.numero?.split('/')[1]
+  return anoNumero && /^\d{4}$/.test(anoNumero) ? Number(anoNumero) : null
+}
 
 interface PerfilParlamentar {
   id: string
@@ -170,6 +184,13 @@ export default function ParlamentarPerfilPage() {
     ]
   }, [perfil])
 
+  // Filtro de ano das proposições (padrão: ano atual → mais recente com dados).
+  // Chamado antes dos early returns; usa lista vazia enquanto o perfil carrega.
+  const { ano: anoMateria, setAno: setAnoMateria, anosDisponiveis: anosMaterias } = useFiltroAno(
+    perfil?.ultimasMaterias ?? [],
+    anoDaMateria
+  )
+
   // Loading state
   if (loading) {
     return (
@@ -208,6 +229,11 @@ export default function ParlamentarPerfilPage() {
   }
 
   if (!perfil) return null
+
+  // Proposições filtradas pelo ano selecionado (padrão aplicado pelo hook).
+  const materiasFiltradas = anoMateria === 'todos' || anoMateria === null
+    ? perfil.ultimasMaterias
+    : perfil.ultimasMaterias.filter(m => anoDaMateria(m) === anoMateria)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -496,14 +522,22 @@ export default function ParlamentarPerfilPage() {
             {perfil.ultimasMaterias.length > 0 ? (
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="flex items-center text-camara-primary">
-                    <FileText className="mr-2 h-6 w-6" />
-                    Últimas Proposições ({perfil.ultimasMaterias.length})
-                  </CardTitle>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <CardTitle className="flex items-center text-camara-primary">
+                      <FileText className="mr-2 h-6 w-6" />
+                      Últimas Proposições ({materiasFiltradas.length})
+                    </CardTitle>
+                    <FiltroAno ano={anoMateria} setAno={setAnoMateria} anos={anosMaterias} />
+                  </div>
                 </CardHeader>
                 <CardContent>
+                  {materiasFiltradas.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      Nenhuma proposição no ano selecionado.
+                    </p>
+                  ) : (
                   <div className="space-y-4">
-                    {perfil.ultimasMaterias.map((materia) => (
+                    {materiasFiltradas.map((materia) => (
                       <div key={materia.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 mb-2">
                           <div className="flex-1">
@@ -537,6 +571,7 @@ export default function ParlamentarPerfilPage() {
                       </div>
                     ))}
                   </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (

@@ -119,6 +119,51 @@ export function getStatusInfo(status: string, map: Record<string, { label: strin
   return map[status] || { label: status, color: 'bg-gray-100 text-gray-800' }
 }
 
+// === PADRONIZACAO DE GRAFIA (numeracao oficial) ===
+// Grafia canonica adotada em todo o sistema:
+//   - Abreviacao de "numero": "nº" (n minusculo + indicador ordinal º)
+//   - Numero preenchido com zeros a esquerda ate 3 digitos: 001, 012, 123
+//   - Ano completo apos barra: "nº 012/2024"
+// Evita a mistura observada no acervo ("No", "N°", "nº", sem zero-padding).
+
+/** Preenche o numero com zeros a esquerda (padrao 3 digitos). Aceita string/number. */
+export function padNumero(numero: string | number | null | undefined, digitos = 3): string {
+  const limpo = String(numero ?? '').trim()
+  // Se ja tiver caracteres nao numericos (ex.: "001-A"), preserva como veio.
+  if (!/^\d+$/.test(limpo)) return limpo
+  return limpo.padStart(digitos, '0')
+}
+
+/** Formata "nº 012/2024" a partir de numero + ano (grafia canonica). */
+export function formatNumeroAno(numero: string | number | null | undefined, ano?: number | string | null): string {
+  const base = `nº ${padNumero(numero)}`
+  return ano ? `${base}/${ano}` : base
+}
+
+/**
+ * Rotulo canonico de uma sessao: "Sessão Ordinária nº 012/2024".
+ * `ano` opcional (derivado da data quando ausente).
+ */
+export function formatSessaoTitulo(sessao: {
+  tipo?: string | null
+  numero: string | number | null | undefined
+  data?: string | Date | null
+  ano?: number | null
+}): string {
+  const tipoLabel = sessao.tipo ? (SESSAO_TIPO[sessao.tipo] ?? sessao.tipo) : ''
+  const ano = sessao.ano ?? (sessao.data ? new Date(sessao.data).getFullYear() : undefined)
+  const prefixo = tipoLabel ? `Sessão ${tipoLabel}` : 'Sessão'
+  return `${prefixo} ${formatNumeroAno(sessao.numero, ano)}`
+}
+
+/**
+ * Rotulo canonico de uma proposicao/norma: "Projeto de Lei nº 012/2024".
+ * `tipoLabel` ja deve vir legivel (use PROPOSICAO/NORMA maps antes de chamar).
+ */
+export function formatMateriaTitulo(tipoLabel: string, numero: string | number | null | undefined, ano?: number | string | null): string {
+  return `${tipoLabel} ${formatNumeroAno(numero, ano)}`.trim()
+}
+
 /** Formata data para pt-BR */
 export function formatDateBR(date: string | Date | null | undefined): string {
   if (!date) return '-'

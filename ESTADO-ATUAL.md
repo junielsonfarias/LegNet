@@ -1,10 +1,850 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-05-29 (Sprint P0-Legislativo — hardening fluxo end-to-end)
-> **Versao**: 1.39.0
+> **Ultima Atualizacao**: 2026-07-01 (auditoria de páginas/links do frontend)
+> **Versao**: 1.40.1
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
-> **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1)
+> **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
+> **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-01 — Auditoria de páginas e links do frontend
+
+Varredura completa: **269 páginas + 321 rotas de API**. Verificação estática de
+todos os links internos (96 `href=` JSX + 258 `href:`/`url:`/`path:` de objetos) e
+das navegações `router.push`/`redirect` contra a tabela real de rotas.
+
+**Saúde**: `tsc --noEmit` = 0; build passou lint/types e coletou 285 páginas; home
+`/` renderizou HTTP 200 em dev. Sem regressão de código.
+
+**4 links quebrados (404) encontrados e corrigidos**:
+- `/admin/login` → `/login` (tela "Fazer Login" do parlamentar).
+- `/transparencia/pessoal/folha-pagamento` → `/transparencia/folha-pagamento` (card Pessoal).
+- `/ajuda` (menu do header admin) → **criada** `src/app/ajuda/page.tsx` (Central de
+  Ajuda: guia rápido + FAQ/Ouvidoria/e-SIC/Transparência).
+- `/regulamentacao/cotas-parlamentar` → `/legislativo/normas` (botão "Regulamentação").
+
+**Nota de ambiente**: o `next build` local falhou em pontos DIFERENTES entre execuções
+(worker webpack) por contenção de recursos — havia 3 servidores Next simultâneos
+(portas 3000/3001/3002, ~5.6 GB). Não é falha de código (TS/ESLint limpos, home 200,
+app em produção). Recomendado build limpo com os outros servidores parados.
+
+Falsos positivos descartados: ~20 "links" em `api-docs`/`api-tests` são caminhos de
+endpoints de API documentados, não navegação.
+
+---
+
+## 2026-07-01 — Filtros de ano (padrão inteligente) + padronização de grafia
+
+Melhoria de UX de pesquisa e organização do acervo migrado, em resposta ao pedido
+de "filtro de ano onde for necessário, aplicando por padrão o ano atual".
+
+**Componente reutilizável** — `src/components/ui/filtro-ano.tsx`:
+- `useFiltroAno<T>(itens, getAno)`: deriva anos com dados (desc), controla o ano e
+  aplica o padrão **ano atual → mais recente com dados** (nunca abre vazio).
+- `useAnoPadrao(anos, filtroAno, setFiltroAno)`: aplica o mesmo padrão UMA vez a
+  páginas que já tinham filtro por string (`'all' | 'YYYY'`).
+- `<FiltroAno>`: select acessível (label sr-only, ícone) com "Todos os anos".
+
+**Páginas com filtro de ano (padrão = ano corrente, fallback ao mais recente)**:
+- Legislativo: proposições, normas, sessões, **atas**, **pautas-sessoes**.
+- Transparência: licitações, contratos, **diárias** (API ganhou `?anos=true` p/
+  anos distintos), **gestão-fiscal/RGF** (anos dinâmicos, exercício corrente).
+- Transparência: **publicações** (anos carregados uma vez de forma estável p/ o
+  dropdown não colapsar; padrão aplicado na carga inicial).
+- Área do parlamentar (`/parlamentares/[slug]`): aba **Produção** filtra as
+  proposições por ano (extrai o ano de `data` dd/mm/yyyy com fallback a `numero`).
+- Cuidado aplicado onde o `anos` derivava do conjunto já filtrado (atas, publicações):
+  a lista de anos passou a vir de fonte SEM filtro de ano, senão colapsaria.
+
+**Grafia canônica de numeração** (`legislative-labels.ts`):
+- `padNumero` (zero-pad 3 dígitos), `formatNumeroAno` ("nº 012/2024"),
+  `formatSessaoTitulo` ("Sessão Ordinária nº 012/2024"), `formatMateriaTitulo`.
+- Corrigida a mistura antes existente (`No`/`N°`/`nº` sem zero-padding) nas páginas
+  públicas de **atas**, **leis** e no endpoint `/api/publico/pautas-sessoes`.
+
+**Verificação da página do vereador**: `/parlamentares/[slug]` resolve por
+`apelidoSlug` OU `id`; `/api/parlamentares` retorna todos (ativos e históricos)
+quando sem `ativo`, então links de autor histórico (por id) abrem o perfil completo
+(`/api/parlamentares/[id]/perfil`). Confirmado abrindo com todas as abas.
+
+tsc 0 · eslint 0 nos arquivos alterados.
+
+---
+
+## 2026-07-01 — 5ª rodada de code-review — invariante garantido por construção
+
+Confirmou o fix do 4º review (`27`/`37` PRE_VOTO) **correto e completo**. Achou 1
+bug MÉDIA FORA dos arquivos revisados: `19-ocr` roda DEPOIS de 27/37 e, ao detectar
+o carimbo "APROVADO POR UNANIMIDADE", gravava `status` sem `resultado` → matéria
+só-carimbo (sem pauta) ficava `status=APROVADA, resultado=null` num full-run limpo
+(mascarado só pelo sync manual). **Corrigido na fonte**: `19-ocr` grava status E
+resultado juntos. Agora TODOS os writers (06/17/19/27/33/35/37/42) mantêm o
+invariante status↔resultado **por construção** — full-run limpo fica consistente
+sem sync manual. Caveat BAIXA (operacional, não corrigido): `--only=proposicoes`
+isolado após full-run reseta resultado do 06; a via canônica é a cadeia completa.
+Invariante A/B=0/0 · 931 testes · tsc/eslint 0.
+
+---
+
+## 2026-07-01 — 4ª rodada de code-review — invariante status↔resultado
+
+Confirmou que a cadeia 06→27→37→42 está correta (42 nunca escreve
+`Proposicao.resultado`, não corrompe). Achou 1 bug determinístico (MÉDIA) + BAIXA:
+- **MÉDIA**: promoção de status guardada por `status==='APRESENTADA'` → matéria
+  EM_TRAMITACAO (ou outro pré-voto) com `resultado=APROVADA` ficava com status não
+  promovido (viola invariante). Corrigido em `27`/`37`: promove QUALQUER estado
+  pré-voto; pós-voto (SANCIONADA/VETADA/etc.) não é sobrescrito.
+- **BAIXA #1**: `aprovacaoColetivaMateria` só olhava 60 chars ANTES → "aprovada por
+  unanimidade a ata anterior" (contexto depois) escapava. Adicionada janela
+  POSTERIOR → 2 sessões falso-positivas desqualificadas.
+- BAIXA restantes (42 nomes do preâmbulo, 42 findFirst desambiguado) = trade-offs
+  documentados, sem impacto em `Proposicao.resultado`.
+
+Dados re-derivados limpos + sync do status. **Invariante A/B = 0/0** · 392 c/
+resultado · 0 dup/órfãos · 37 idempotente · 931 testes.
+
+---
+
+## 2026-07-01 — 3ª rodada de code-review — `37` simplificado para aditivo
+
+Confirmou A/C/D/F/06 corretas. Achou 3 resíduos, TODOS na lógica de reversão do
+`37`: (1) reset de status só cobria APROVADA (REJEITADA ficava inconsistente);
+(2) revert por-item anulava `Proposicao.resultado` com evidência em outra sessão;
+(3) `catalogadaCr2` não cobria reconstruídas do `35` (string "pauta CR2" ≠
+"Portal CR2"). **Correção de fundo: REMOVIDA a reversão** — era um band-aid para o
+bug anterior do próprio `37`; com a detecção ciente de contexto e os dados já
+re-derivados, virou no-op que só carregava esses bugs. O `37` ficou **puramente
+aditivo** (marca aprovação coletiva em itens sem resultado; nunca altera resultado
+de 27/42). 392 c/ resultado · 0 inconsistência (ambas direções) · idempotente.
+
+---
+
+## 2026-07-01 — 2ª rodada de code-review (revisão das próprias correções)
+
+A reescrita do `37` (para corrigir o bug #2 do 1º review) foi submetida a um novo
+code-review, que pegou **6 regressões** — corrigidas:
+- **A** — `resultadoAdjacente()` usava menos palavras-resultado que o `27` (faltava
+  `deferid/indeferid/reprovad`) → revertia resultado válido. Alinhado ao `27`.
+- **C** — regex sem fronteira à esquerda casava nº de outra matéria ("5" em
+  "15/2024"). Adicionado `(?<!\d)`.
+- **D** — `propVista` compartilhado marcar/reverter + sem `orderBy` → resultado
+  não-determinístico. Reescrito com decisão por PROPOSIÇÃO (`propQualifica`).
+- **E** — reversão não resetava `status` → `status=APROVADA` com `resultado=null`.
+  Agora reseta.
+- **F** — guarda de merge (38/41) não contava `pareceres` (cascade). Adicionado.
+- **06-proposicoes** — passou a gravar `resultado` derivado do `situacaoMateria`
+  (coerência status↔resultado p/ matérias CR2 fora de pauta).
+
+**Re-derivação limpa** (a versão bugada havia contaminado dados): reset da votação
+das WP/reconstruídas + re-run `27` (ata autoritativa) + `37` corrigido + sync
+resultado←status das 30 CR2 fora de pauta. Estado final: **392 proposições c/
+resultado · 0 inconsistência status/resultado · 0 duplicatas/órfãos · 37
+idempotente (0/0) · tsc/eslint 0 · 931 testes**.
+
+---
+
+## 2026-07-01 — Code-review do trabalho do dia + correções
+
+Revisão do diff do dia (27 commits) por agente de code-review adversarial +
+verificação de qualidade: **tsc 0 erros · ESLint 0 · 931 testes passando · banco
+íntegro**. O review achou 4 bugs (0 ALTA), todos corrigidos:
+- **MÉDIA — `RE_COLETIVA[2]` amplo demais** (`37-votacao-coletiva`): o padrão
+  "aprovado por unanimidade" sem escopo casava o PREÂMBULO da ata (aprovação da
+  ata da sessão anterior), marcando matérias APROVADA falsamente. Descoberto que
+  os padrões escopados casavam 0 sessões (atas de Chaves aprovam inline junto à
+  matéria). Reescrito **ciente de contexto** (exclui contexto de leitura/ata) +
+  **auto-correção** que reverteu 40 marcações falsas SEM evidência (preservando
+  CR2-catalogadas, voto nominal e resultado adjacente). Resultado 380→350.
+- **MÉDIA — formulário de voto nominal** mostrava só vereadores inativos →
+  quebrava p/ PLs 2024-2025. Agora mostra todos (ativos primeiro).
+- **BAIXA — busca "sem-resultado"**: `OR` da busca sobrescrevia o `OR` do filtro
+  "tem sessão" → trocado por `AND`.
+- **BAIXA — merge em 38/41**: guarda defensiva (pula merge se o perdedor tiver
+  votação/tramitação/emenda) contra perda silenciosa em cascade.
+
+---
+
+## 2026-07-01 — Central de Revisão da Migração (admin)
+
+Nova área `/admin/revisao-migracao` para **completar manualmente** o material que
+a migração automática não identificou — evitando perda de informação. Preenche os
+CAMPOS REAIS (refletem no portal público) + observação do revisor.
+- **Schema**: `revisaoObservacao`/`revisadoEm` em `Proposicao` e `Publicacao`.
+- **API**: `GET /api/admin/revisao-migracao?categoria=` (lista + contadores),
+  `PATCH` (salva autor/resultado/observação), `POST .../votacao` (voto nominal).
+  Permissão `tramitacao.view`/`manage`.
+- **4 categorias**: (1) proposições sem autor (260) — seletor de parlamentar +
+  link PDF; (2) sem resultado (82 com sessão) — define Aprovada/Rejeitada; (3)
+  votação nominal manual (3 docs APURAÇÃO 2023 com marca manuscrita) — voto por
+  vereador → `Votacao`+`VotacaoAgrupada`; (4) não identificados (pubs sem
+  categoria / link externo) — campo de identificação.
+- Menu: item "Revisão da Migração" na seção Legislativo do admin.
+
+---
+
+## 2026-07-01 — Deep-dive dedicado nos itens "irrecuperáveis"
+
+Análise focada apenas no material que a auditoria rotulou "limite de fonte",
+para separar o realmente perdido do recuperável-com-esforço.
+
+**RECUPERADO** (a auditoria havia julgado irrecuperável):
+- **Voto nominal individual** (`42-votacao-nominal`): existem 10 documentos
+  "APURAÇÃO DO PROCESSO DE VOTAÇÃO NOMINAL"/"LISTA DE VOTAÇÕES". Extraídos **36
+  votos individuais** em 4 matérias (PL 005/009/010/011-2024, unânimes) →
+  `Votacao` 0→36 + 3 `VotacaoAgrupada`. A página lê `proposicao.votacoes`, então
+  o placar SIM/NÃO por vereador agora aparece nessas matérias.
+
+**CONFIRMADO irrecuperável — com prova técnica** (não é falha de migração):
+- **Imagens de notícias** (`43-noticias-imagens`): o dump SQL bruto TEM os
+  metadados (`_thumbnail_id`→`_wp_attached_file`); o importador os parseia, mas
+  as 13 notícias (editais/convocações) apontam TODAS para o placeholder
+  institucional "sem-imagem-cm-chaves.jpg" — **não há foto real**.
+- **3 APURAÇÃO 2023** (PL 002/003/004): votos são checkmarks manuscritos não
+  capturados pelo OCR (aggregate já em `Proposicao.resultado`).
+- **4 links de folha de pagamento**: apontam para portais externos
+  (governotransparente/fenix) — o dado vive em outro sistema.
+- **260 proposições sem autor**: posts WP não nomeiam o autor no título/ementa/texto.
+- **LEI 418**: dupla numeração no documento oficial (ambígua na fonte).
+
+---
+
+## 2026-07-01 — 2ª rodada de auditoria (7 agentes) — VEREDITO SIM/COMPLETA
+
+Re-executados os 7 agentes (6 domínio + sintetizador) sobre o estado corrigido.
+**Placar: 5 SIM + 1 PARCIAL** (era 3/3 na 1ª rodada) → após os fixes abaixo,
+**veredito global final: SIM (migração correta e completa)**.
+
+O re-áudito, olhando o estado já corrigido com mais profundidade, achou resíduos
+que foram sanados:
+- **Normas**: 4 leis orçamentárias (LDO/LOA/PPA) mal-datadas por data por extenso
+  (sem "/AAAA" na ementa) → `38` estendido usa `data.getUTCFullYear()` gated por
+  marcador orçamentário (LEI 283→2013, 320→2015, 352/365→2016). LEI 418 ambígua
+  (dupla numeração no documento) preservada.
+- **Proposições**: `41-normaliza-numeros` (novo) padroniza número wp-prop p/ 3
+  dígitos (286) e mescla 3 stubs REQUERIMENTO idênticos — **preservando 9 PLs
+  distintos** que reusam número (ementa diferente → NÃO mescla). Proposições→676.
+- **Publicações**: limiar do placeholder 40→120 ch remove +7 avisos "SEM PAUTAS E
+  ATAS EM [mês]" residuais. Publicações→828.
+
+**Sintetizador (final)**: 0 órfãos em 12 checagens referenciais, 0 duplicatas de
+chave, 0 datas futuras. Matriz ano a ano 2016-2025 consistente. Resíduo é
+**exclusivamente limite de fonte**: LEI 418 ambígua, PL 014/2024 apresentado em
+2025 (real), acervo pré-2016, e voto nominal individual inexistente (atas só têm
+resultado agregado, preservado em `Proposicao.resultado`). **0 item corrigível
+pendente.**
+
+**Estado final**: 676 proposições · 59 normas · 828 publicações · 271 sessões
+(260 c/ presença, 2726 reg.) · 35 RGF (2016-2025) · **0 órfãos · 0 duplicatas ·
+0 datas futuras**.
+
+---
+
+## 2026-07-01 — Pendências MÉDIA da auditoria (completude recuperável)
+
+Aplicadas as correções MÉDIA levantadas pela auditoria multi-agente:
+- **Presença de 4 sessões** com ata mas <8 citações (extraordinárias/pequenas):
+  `28` ganhou threshold configurável (`PRESENCA_MIN_CITADOS=4`) → 2019-02-25,
+  2021-07-03, 2021-08-27, 2022-09-13 (7,4,7,5 presenças). Sessões com presença
+  256→**260**, registros 2703→**2726**.
+- **9 publicações-placeholder** ("SEM PAUTAS E ATAS EM JANEIRO/2018") removidas
+  via `34` estendido. Publicações 844→**835**.
+- **OCR bleed em 22 ementas** reconstruídas (2021-2023) truncado no marcador de
+  seção da pauta (`39-limpa-ementas`, `--only=limpa-ementas`). 0 bleed restante.
+- **RGF 2024-2025 (gap real)**: os RGF do banco iam só até 2023 (scraping WP);
+  os 5 do `RGF.csv` (CR2) nunca importados. `40-rgf-cr2` (`--only=rgf-cr2`)
+  importou os 5 (PDFs baixados). RGF agora **2016-2025 contínuo**.
+
+**Não-ação justificada**: dedup de publicações por título é arriscado (2 dos 5
+"pares" são documentos distintos com título genérico igual — listas de votação de
+PLs diferentes); diárias com FK nula são de servidores (não-parlamentares); 6
+normas com texto curto não têm PDF local para OCR; 125 itens 2025 sem votação são
+operacionais. Todos limite de fonte.
+
+**Estado final**: 679 proposições · 59 normas · 835 publicações · 260 sessões com
+presença (2726 reg.) · 35 RGF · **0 duplicatas · 0 datas futuras**.
+
+---
+
+## 2026-07-01 — Auditoria multi-agente (7 agentes) + correções
+
+Executada auditoria de migração com **6 agentes de domínio em paralelo**
+(proposições, normas, transparência, fluxo documental, parlamentares, publicações)
++ **1 sintetizador** (cruzamento entre frentes + confirmação ano a ano).
+
+**Vereditos**: parlamentares SIM · proposições SIM · publicações SIM · normas
+PARCIAL · transparência PARCIAL · fluxo PARCIAL. **Consistência entre frentes:
+perfeita** (0 órfãos em prop↔sessão↔autor↔pauta↔presença, 0 datas futuras,
+cobertura contínua 2016-2025). O sintetizador concentrou os defeitos em NORMAS.
+
+**Correções aplicadas (ALTA prioridade)**:
+- **Bug `parseNumAno` (17-wordpress)**: usava o último ano do título → em leis
+  orçamentárias pegava o exercício ("LEI Nº 388/2019 … LOA 2020"→2020). Corrigido
+  na fonte (prefere o ano colado ao número oficial).
+- **16 normas-índice do WP** ("RESOLUÇÕES 2014", "SEM RESOLUÇÕES EM 2018") não são
+  atos → removidas via `34` estendido. Normas 77→61.
+- **`38-correcao-datas` (novo, `--only=correcao-datas`)**: 23 normas + 13
+  proposições com ano/número reprocessados do "Nº NNN/AAAA"; 3 proposições + 1
+  norma duplicadas mal-datadas mescladas na versão correta (texto/PDF preservados);
+  Lei Orgânica duplicada unificada. Normas 59 · Proposições 679.
+- Resultado: **0 mal-datadas, 0 números corrompidos, 0 duplicatas, 0 datas futuras.**
+
+**MÉDIA pendente** (não bloqueante): 4 sessões com ata mas sem presença extraída
+(2019-02-25, 2021-07-03, 2021-08-27, 2022-09-13); verificar RGF CR2 vs WP; OCR
+bleed em ementas 2023; 9 publicações vazias + 5 pares duplicados; imagens de
+notícias. `VotacaoAgrupada` vazia é inócua (UI lê `proposicao.resultado`).
+
+---
+
+## 2026-07-01 — Autoria via texto OCR + presença exibida ao cidadão
+
+**Autoria ampliada** (`36-autoria-materias`): passou a varrer o TEXTO OCR
+completo do PDF (não só a ementa) — o autor aparece na assinatura/corpo. Novo
+`melhorAutor()` agrega o melhor score entre todas as ocorrências do marcador
+"vereador X". Proposições com autor **268 → 416 (61%)** (+148, incl. históricos
+Alexandre Abdon, Israel Louzeiro, Marilene Carmona).
+
+**Presença na UI pública**: nova seção "Presença / Frequência" em
+`/legislativo/sessoes/[numero]` lista presentes/ausentes (com partido e
+justificativa). `sessao-db-service.listInclude.presencas` passou a incluir o
+parlamentar (nome/apelido/partido) — a página pública usa o endpoint de lista
+(público). Os 2703 registros de presença em 256 sessões agora são visíveis.
+Autor/resultado já eram exibidos nas páginas de proposição (detalhe e listagem).
+
+**Rota de sessão refatorada para ID** (resolve o limite acima): novo endpoint
+público `GET /api/publico/sessoes/[id]` (somente leitura) retorna o detalhe
+completo (presenças com parlamentar, pauta/itens, proposições). A rota
+`/legislativo/sessoes/[numero]` virou `[id]`; a página busca por id via
+`getPublicById` (compatibilidade: param numérico cai no lookup antigo por número).
+Links atualizados (listagem, favoritos, página de proposição). Agora TODAS as 271
+sessões são endereçáveis por URL única. Testado: endpoint retorna presenças.
+
+---
+
+## 2026-07-01 — Votação por aprovação coletiva da ata (Etapa 2b)
+
+Novo `37-votacao-coletiva.ts` (fase `--only=votacao-coletiva`): muitas atas não
+registram resultado matéria a matéria, mas trazem a aprovação em bloco da ordem
+do dia ("aprovada por unanimidade"). Isso é declaração FACTUAL da ata (não
+inferência). Marca APROVADA os itens ainda sem resultado das sessões cuja ata tem
+aprovação coletiva **E não** tem ressalva (rejeição/adiamento/vista/retirada). As
+sessões com qualquer ressalva ficam para revisão manual.
+
+**Resultado**: 77 sessões elegíveis · proposições c/ resultado **140 → 382**
+(APROVADA 379, REJEITADA 3) · PautaItem c/ resultado **188 → 444** (78%). Restam
+125 itens sem resultado (sessões sem aprovação coletiva / sem ata). Fecha a
+pendência #5.
+
+---
+
+## 2026-07-01 — Autoria das matérias extraída da ementa/pauta
+
+Novo `36-autoria-materias.ts` (fase `--only=autoria`): as ementas trazem o autor
+no início ("Vereadora ROSILETE DIAS MACIEL (Requer...)", "de autoria do vereador
+João Amaral", "DA VEREADORA KARINA SANTOS"). Extrai o trecho após o marcador de
+autoria e casa com o roster por **sobreposição de tokens** (exige ≥2 tokens
+significativos = primeiro nome + sobrenome, evita falso-positivo em sobrenomes
+comuns). Descarta autor "Poder Executivo/Mesa". Idempotente (só preenche autorId
+nulo).
+
+**Resultado**: proposições com autor **107 → 268** (+161). Cobre tanto os atuais
+quanto os históricos (Tiburço Leitão 26, Karina Soares 17) nas matérias de
+2021-2023 reconstruídas. Por ano: 2021:53 · 2022:27 · 2023:32 · 2025:139.
+As 414 restantes não nomeiam o autor no texto (posts WP antigos) — limite de fonte.
+
+---
+
+## 2026-07-01 — Gap 2024-2025 fechado: matérias/pautas dos PDFs CR2 (OCR)
+
+Novo `35-materias-pauta-cr2.ts` (fase `--only=materias-pauta-cr2`) faz OCR dos 69
+PDFs de pauta do CR2 (`Sessao.arquivoPauta`, 2024-2025) — que nunca viraram
+`Publicacao "PAUTA"` e por isso escapavam do cruzamento 26/33. Extrai referências
++ ementa, reconstrói matérias faltantes (entradaRetroativa + motivo CR2) e cria
+PautaSessao + PautaItem ligando à sessão. Idempotente; requer OCR (env
+`TESSERACT_BIN`/`POPPLER_BIN`/`TESSDATA_DIR`).
+
+**Verdade sobre 2024 (confirmada pelo OCR)**: 26 das 40 pautas de 2024 dizem
+literalmente "SEM MATÉRIAS PARA DELIBERAÇÕES" — 2024 teve produção legislativa
+formal mínima no registro digital. NÃO era falha de migração. Só +2 matérias reais
+recuperadas para 2024 (11→13).
+
+**Ganho colateral em 2025**: as pautas referenciavam 46 matérias de 2025 que a
+própria `Matérias.csv` do CR2 não catalogou (111→157). Import CR2 estava incompleto.
+
+**Resultados**:
+- **48 matérias reconstruídas** (46 de 2025 + 2 de 2024) · **181 itens de pauta**.
+- Proposições **634 → 682** · PautaItem **388 → 569** · PautaSessao 135 → 153.
+- Todas as 29 sessões de 2025 e 14 de 2024 (as com matéria) agora com itens de pauta.
+- Após re-cruzamento de votação (27): proposições c/ resultado **66 → 140**.
+- **Cobertura de pauta agora completa 2016-2025.**
+- **Guarda de OCR** (`normalizaNumeroMateria`): número de matéria >= 1000 é o
+  número do ITEM da pauta grudado pelo OCR ("1."+"420"→"1420") — normaliza para
+  os 3 últimos dígitos (1420→420) e descarta o não-plausível. Corrige o artefato
+  encontrado na verificação do banco (REQUERIMENTO 1420/2025 → 420/2025).
+
+---
+
+## 2026-07-01 — Auditoria de migração por ano + limpeza de placeholders
+
+Auditoria completa da migração ano a ano (2016-2025) cruzando sessões,
+proposições, normas, presença e votação.
+
+**Resultados OK**: cobertura de todos os anos 2016-2025 em todas as entidades ·
+corte 2025 respeitado (0 dados >2025) · 0 referências órfãs (proposição→sessão,
+PautaItem→proposição) · 0 duplicatas por chave natural · 0 ementa/título vazios.
+
+**Correção encontrada e aplicada** (`34-limpeza-placeholders.ts`,
+`--only=limpeza-placeholders`): o import original do WordPress (17) havia
+transformado 6 placeholders/cabeçalhos em Proposicao e 1 em Norma, com números
+de OCR absurdos (5778, 6388, 7277, 5768) — ex.: "SEM PROJETOS DE LEI EM
+NOVEMBRO/2021", "INDICAÇÕES 2021", "Declaramos que não houveram...". Também 2
+matérias mal-datadas (PL "401/2006" e "5958/2014") que duplicavam matérias
+corretas já existentes. Removidos com guarda de vínculos (só apaga sem
+PautaItem/Votação). **Proposições 640→634 · Normas 78→77.**
+
+**Limitação de fonte documentada (2024)**: as matérias de 2024 são esparsas (11)
+porque a `Matérias legislativas.csv` do CR2 só passou a catalogar matérias em
+2025 (109). As 40 sessões de 2024 têm o PDF da pauta (`arquivoPauta`), mas as
+pautas CR2 de 2024-2025 NÃO passam pelo cruzamento (26/33 leem só `Publicacao`
+titulada "PAUTA", que existe apenas para 2016-2023 do WP). Recuperar matérias de
+2024 exigiria OCR dos PDFs de pauta CR2 — tarefa separada (ver pendências).
+
+---
+
+## 2026-07-01 — Votação (Etapa 2) e Presença (Etapa 3) re-cruzadas
+
+Após reconstruir 180 matérias e ligar 388 itens de pauta, os cruzamentos de
+votação (`27`) e presença (`28`) foram re-rodados para completar o fluxo.
+
+**Correção**: `27` passou a usar o grupo numérico inicial (`"001-2"`→1) na busca
+da ata — consistente com `26`, evita perder o match das matérias desambiguadas.
+
+**Precedência da fonte primária (`28`)**: as folhas assinadas (30/31) são a
+fonte PRIMÁRIA de presença; a narrativa da ata NUNCA rebaixa `presente=true` já
+gravado — só cria registros novos ou faz upgrade (false→true). Evita que ruído
+de OCR da ata apague presença confirmada por assinatura. O `28` agora também casa
+com os vereadores históricos 2021-2024 (cadastrados por 29/30), então atas
+legíveis de anos anteriores passam a gerar presença.
+
+**Resultados** (banco DEV):
+- Votação: proposições c/ resultado **59 → 66** · PautaItem c/ resultado **70 → 87**
+  (19 pela ata, 68 pelo status). Matérias reconstruídas ganharam resultado onde a
+  ata era explícita.
+- Presença: **1029 → 2703 registros** (2455 presentes) · sessões com presença
+  **124 → 256** · cobertura homogênea 2016-2025 (sem downgrade da fonte primária).
+
+---
+
+## 2026-07-01 — Cobertura da pauta 2021-2023: matérias reconstruídas (Etapa 1)
+
+Investigação da baixa cobertura do cruzamento pauta→proposição (`26`, antes 45%):
+o gargalo NÃO era o algoritmo, e sim **dado de origem faltando** — as matérias de
+2021-2023 constavam nas pautas oficiais mas nunca foram exportadas pelo Portal CR2
+(sistema tinha 17/3/1 proposições nesses anos). As refs "casadas em outro ano"
+eram colisões de número (matérias distintas), casá-las seria incorreto.
+
+**Correções seguras no `26-cruzamento-pauta.ts`**:
+- Normalização de número por grupo inicial (`"001-2"`→1, não 12) — elimina
+  mis-indexação e match espúrio das 26 matérias com número desambiguado.
+- Regex passou a reconhecer "Projeto de Decreto". Helpers exportados p/ reuso.
+
+**Novo `33-materias-pauta.ts`** (fase `--only=materias-pauta`, idempotente):
+reconstrói as matérias faltantes a partir do texto OCR da própria pauta (a ementa
+vem logo após a referência). Proveniência: `entradaRetroativa=true` +
+`motivoRetroativo="...reconstruída da pauta OCR..."` (distinta da "Importação
+histórica CR2"). Corte da ementa para no próximo item/seção/referência.
+- **180 matérias criadas** (2016:23·2017-2019 esparsos·**2021:94·2022:36·2023:45**),
+  todas com ementa e **180/180 vinculadas à sessão** de apresentação.
+
+**Resultado do cruzamento (re-rodado)**: itens de pauta **176 → 388** · pautas
+com sessão **74 → 135** · **referências não casadas 397 → 0** (100% das refs
+extraíveis agora casam). As matérias aparecem no acervo público com o marcador
+de proveniência (sem PDF/autor originais — mesma limitação das históricas CR2).
+
+---
+
+## 2026-07-01 — Limpeza de vereadores históricos (nomes + duplicatas)
+
+Importador `32-limpeza-vereadores.ts` (fase `--only=limpeza-vereadores`,
+idempotente) corrige o ruído de OCR dos importadores 28/29/30:
+- **3 nomes normalizados** (partido grudado extraído p/ campo `partido`):
+  "Delson Mendes Rodriguesdo Pp"→"Delson Mendes Rodrigues" (PP); "Katiany Galvao
+  Damasceno Cruz do Pcdob"→"...Cruz" (PCdoB); "Raimundo Aparecido Almeida de
+  Miranda Docpp"→"...Miranda" (PP).
+- **3 duplicatas mescladas** (mesma pessoa, 2 registros): "Cantidiopinheiro
+  Pereira"→"Cantidio Pinheiro Pereira"; "Pedro Steiner"→"Pedro Mauricio Franco
+  Steiner"; "Denis de Paula Nogueira" inativo → o registro ATIVO (MDB). Mescla
+  reatribui presenças/mandatos não conflitantes ao vencedor; conflitantes saem
+  no cascade. **16 presenças reatribuídas, sem perda.**
+- Resultado: **39 → 36 parlamentares** · 0 nomes duplicados · 0 nomes ruidosos ·
+  presença total preservada (1029). Denis (ativo) consolidado em 45 presenças.
+
+---
+
+## 2026-07-01 — Presença oficial CR2 2024-2025 (folhas assinadas) + exibição na sessão
+
+Fechada a presença de **2024-2025 por fonte primária**: as folhas de
+presença/frequência assinadas do Portal CR2 (coluna `listPresencaSessao` de
+`Sessões.csv`), que estavam como links não baixados.
+
+**Novo importador `31-folhas-cr2-presenca.ts`** (fase `--only=folhas-cr2`):
+- 65 folhas no CSV (40 Google Drive + 25 CDN Bubble). Casa folha→sessão pela
+  MESMA derivação de `07-sessoes` (numero+data+tipo) — desambigua 2 sessões no
+  mesmo dia. Baixa/re-hospeda o PDF em `public/uploads/presenca-cr2/`.
+- **Novo campo `Sessao.arquivoPresenca`** (schema) liga a sessão à sua folha
+  oficial. `db:push` aplicado no banco DEV local.
+- Presença **CONSERVADORA** por OCR (reuso de `19-ocr` via `ocrPdf`/
+  `ensureOcrBins`): só presença CONFIRMADA por assinatura. No formato 2025
+  (coluna de PARTIDO entre nome e assinatura) os nomes de partido/cabeçalho são
+  removidos antes de medir o ruído — evita falso-positivo. Ausência não inferida.
+
+**Resultado (apply 2026-07-01, banco DEV local)**:
+- **64 folhas anexadas** (25 Bubble + 39 Drive baixadas · 0 link externo · 1 sem
+  sessão correspondente) → 64 sessões com `arquivoPresenca`.
+- **450 presenças confirmadas** em 64 sessões (2024: 337 · 2025: 320 no total).
+- **Presença total: 663 → 1029** · sessões com presença: **84 → 124**.
+
+**Frontend**: a página pública `/legislativo/sessoes/[numero]` agora oferece
+"Baixar Folha de Presença (PDF)" no card "Documentos e Mídias" (ao lado da ata).
+`SessaoApi.arquivoPresenca` adicionado; a API já retornava o scalar (usa
+`include`, não `select`). Pendente: campo editável no admin (validador de
+update-sessao).
+
+**Infra OCR (reprodutível)**: `19-ocr.ts` agora localiza poppler/tesseract do
+winget e honra `TESSERACT_BIN`/`POPPLER_BIN`/`TESSDATA_DIR`. `por.traineddata`
+(tessdata_fast) requerido para OCR PT-BR.
+
+---
+
+## 2026-06-30 — Importação de dados do site antigo: análise + Fase 0
+
+Análise do backup em `docs/backup antigo/` para migrar dados até 2025 ao novo
+sistema. Identificadas 3 fontes: dump WordPress (`banco de dados.sql`), export
+estruturado do Portal CR2/Bubble (34 CSVs) e 2,5 GB de arquivos (2.030 PDFs).
+
+**Decisões aprovadas**: importar tudo (P0→P3); limpar seed Rurópolis e importar
+só Chaves; re-hospedar todos os PDFs no storage local; posts WP como documentos
+legislativos categorizados; corte até 2025-12-31.
+
+**Storage (investigado)**: o sistema grava uploads no **filesystem local**
+(`public/uploads/<pasta>/` via `src/app/api/upload/route.ts`), não no Supabase
+Storage. Estratégia de import: gravar PDFs direto nessas pastas (allowlist em
+`src/lib/security/file-validation.ts`).
+
+**Fase 0 (entregue)**: mapeamento coluna→campo + tabelas de conversão de enums
+com valores reais (Parlamentares=11, Matérias=121, Normas=25, Sessões=75).
+Encoding confirmado UTF-8. Documentos:
+- `docs/PLANO-IMPORTACAO-DADOS-ANTIGOS.md` (plano geral)
+- `docs/import-antigo/01-dicionario-colunas.md` (dicionário/mapeamento)
+
+**Decisões P0 adicionais**: Portarias/Atos (WP) → `DocumentoTransparencia`/
+`Publicacao`; Manifestações → importar com CPF criptografado.
+
+**Fase 1 (P0 — APLICADO no banco DEV local)**: importadores em
+`prisma/importers/` (lib de CSV/datas/arquivos + reset + 7 importadores +
+orquestrador). Storage = `public/uploads/<pasta>/`. Scripts:
+`npm run db:import-antigos` (dry-run, padrão) e `db:import-antigos:apply`.
+`--reset` limpa todas as tabelas preservando auth/admin (guard: só localhost).
+
+**Resultado do apply (`--apply --reset`, 2026-06-30)** — banco DEV local:
+- 11 parlamentares (8 c/ foto) + 11 mandatos + 11 filiações
+- Mesa Diretora (4 membros) + 4 comissões (12 membros)
+- 10 normas jurídicas (duplicatas reais coladas; 12 placeholders ignorados)
+- **121 proposições** (94 REQ, 15 PL, 6 IND, 2 PR, 2 PIN, 2 MOC) — 107 c/ autor
+- 75 sessões (28 atas + 29 pautas re-hospedadas)
+- Arquivos baixados do CDN Bubble: ~151 PDFs/imagens em `public/uploads/`
+- Admin preservado (login `admin@camararuropolis.com` — renomear p/ Chaves)
+
+**Correção de fidelidade**: a fonte CR2 reusa números (3 requerimentos distintos
+como "010/2025"); o importador desambigua o `numero` (sufixo -2/-3) preservando
+todas as matérias e o número oficial no título.
+
+**Config institucional (08-config.ts)**: o `--reset` limpa as tabelas de
+config que o app usa (header/footer/home). Adicionado passo `config` (roda por
+padrão) que recria as `configuracao` com dados REAIS de Chaves (nome, endereço
+Av. Independência s/n Centro, tel (91) 9 8170-6528, e-mail, horário, presidente
+José Orlando Pinho Martins, legislatura 2025/2028) + 5 tipos de expediente.
+APIs validadas no dev server: `/api/parlamentares` e `/api/sessoes` retornam
+dados; `/api/noticias` vazio (chega na P3/WordPress).
+
+**Limitação conhecida**: ~45 arquivos não baixaram — são links Google Drive
+"/view" (não-diretos); os PDFs no CDN Bubble vieram OK. Tratar Drive depois.
+Erros de CSP/VLibras/hydration no console são ruído pré-existente do widget de
+acessibilidade — não relacionados ao import.
+
+**Fase 1 — P1 Transparência (APLICADO, 2026-06-30)**: importadores
+`10-licitacoes`, `11-contratos`, `12-diarias` (+ valores-diária + cotas),
+`13-concursos-obras` (+ convênios). Resultado no banco DEV:
+- Licitações: 16 · Contratos: 18 · Diárias: 32 (15 c/ parlamentar)
+- Valores-diária: 6 · Cotas parlamentar: 4 (declarações PNTP)
+- Concursos/Obras/Convênios: 0 reais (eram só placeholders "Não houve...")
+- +234 arquivos baixados. APIs `/api/licitacoes` e `/api/contratos` OK;
+  `/api/diarias` filtra por ano atual (2026) por padrão — dados de 2025
+  aparecem com `?ano=2025` (comportamento normal, não é bug).
+- 14 nomes de diárias não casados (ex-vereadores/servidores/grafia divergente)
+  — diária importada com nome preservado, só FK nula. Logados p/ revisão.
+
+**Fase 1 — P2/P3 (APLICADO, 2026-06-30)**: importadores `14-manifestacoes`
+(ouvidoria), `15-agenda`, `16-noticias-wp`. Resultado no banco DEV:
+- Manifestações ouvidoria: 5 — **CPF criptografado** (AES-256-GCM via
+  `cpf-utils`, formato `iv:authTag:ciphertext` + cpfHash) — LGPD OK.
+- Agenda externa (compromissos): 17
+- Notícias (WordPress, categoria "Notícias"): 13 — `/api/noticias` OK
+  (home news populada). JSON extraído p/ `docs/backup antigo/wp-noticias.json`.
+- Adicionado `loadEnv()` no orquestrador (garante `ENCRYPTION_KEY`).
+- `/api/ouvidoria` exige autenticação (dados pessoais restritos — correto).
+
+**MIGRAÇÃO CR2 COMPLETA (P0→P3)** no banco DEV local. Resumo geral:
+11 parlamentares · 4 comissões · mesa · 10 normas · 121 proposições ·
+75 sessões · 18 licitações · 18 contratos · 32 diárias · 4 cotas · 6 valores
+diária · 5 manifestações · 17 agenda · 13 notícias · ~625 arquivos (504 MB).
+
+**Revisão de integridade (2026-06-30)**: corte temporal OK (0 datas >2025);
+encoding UTF-8 íntegro; 0 proposições sem ementa/título; 77/77 PDFs de
+proposições existem em disco; CPF round-trip OK (descriptografa válido).
+Bug de fidelidade encontrado e corrigido: licitações também reusavam números
+na fonte (001/2025, 007/2025) — aplicada desambiguação (16→18, sem perda).
+
+**Fase 2 — Complemento histórico WordPress (APLICADO, 2026-06-30)**:
+importador `17-wordpress.ts` — 954 posts (1977–2025) roteados por categoria:
+- **339 proposições** históricas (Requerimentos/PLs/Indicações) — `wp-prop-*`
+- **68 normas** históricas (Leis/Resoluções/Decretos) — `wp-norma-*`
+- **532 publicações** (`Publicacao`): 453 atas/pautas · 26 atos presidência ·
+  23 publicações oficiais · 18 editais · 11 portarias · 1 lei — `wp-pub-*`
+- 15 ignorados (Notícias já importadas / Vereadores)
+- PDFs do acervo local: 2018 extraídos do zip; **515/515 publicações e
+  337 proposições WP com arquivo resolvido em disco** (só 1 link quebrado).
+- Dedup vs CR2 por chave natural (tipo,numero,ano) c/ sufixo histórico `-h<id>`.
+
+**Lição (encoding)**: o `unzip` do Git Bash não casa wildcards neste zip e o
+.NET ZipArchive corrompe nomes acentuados (zip gravado em CP1252). Solução:
+extrair via PowerShell + resolver arquivos por **chave normalizada sem
+não-ASCII** (`acquireLocal`/`normKey`), imune ao encoding. PDFs extraídos p/
+`docs/backup antigo/wp-uploads/` (gitignored); JSONs `wp-posts.json` /
+`wp-noticias.json` no mesmo dir.
+
+### TOTAIS FINAIS (banco DEV local) — migração CR2 + WordPress
+- **460 proposições** · **78 normas** · **532 publicações** · 75 sessões
+- 18 licitações · 18 contratos · 32 diárias · 4 cotas · 6 valores-diária
+- 5 manifestações (CPF cifrado) · 17 agenda · 13 notícias
+- 11 parlamentares · 4 comissões · mesa diretora
+- **~1597 arquivos, 2,3 GB** em `public/uploads/`
+
+### PRESENÇA — folhas oficiais 2023-2024 (`30-folhas-presenca.ts`, 2026-06-30)
+Fonte primária: **43 folhas de presença WordPress** (roster impresso 2021-2024 +
+assinatura). Casa folha→sessão por **data no título** (25 datas, 1 sem sessão).
+- **Presença CONSERVADORA**: só registra presença CONFIRMADA (assinatura OCR
+  detectada, ≥4 letras). Ausência NÃO é inferida (OCR não distingue falta de
+  assinatura ilegível — auditoria mostrou 41% de falso-ausente).
+- Resultado: **256 presenças confirmadas → 19 sessões** (2023: 14, 2024: 5),
+  anos que antes tinham ZERO presença.
+- **8 vereadores 2021-2024** cadastrados (ativo=false) + mandatos: Ademilton
+  Macedo, Eliézio Nobre, Karina Soares, Raimundo Feitosa, Robson Cunha, Ronaldo
+  Pinho, Teodoro Macedo, Tiburço Leitão.
+- **Cobertura total de presença: 65 → 84 sessões** · parlamentares 31 → 39
+  (28 históricos) · 663 registros.
+
+### FLUXO DOCUMENTAL COMPLETO (Etapas 1-3, 2026-06-30)
+Ciclo sessão → pauta → matéria → votação → presença, com ata em texto:
+- **Etapa 2 — Votação** (`27-cruzamento-votacao.ts`): resultado por matéria do
+  texto da ata + status conhecido → 70 votações resolvidas; 59 proposições com
+  `sessaoVotacaoId` + `resultado` + `dataVotacao`.
+- **Etapa 3 — Presença** (`28-cruzamento-presenca.ts`): chamada nominal da ata
+  → `PresencaSessao`. Conservador (só registra citados; ausência só com
+  marcador explícito). 28 sessões com chamada legível → 280 registros
+  (235 presentes, 45 ausências). Sessões históricas (vereadores de legislaturas
+  anteriores não cadastrados) não geram presença — limitação de dados.
+- **Fluxo navegável**: Sessão(271) → Pauta(74)+Matérias(176)+Votação(70) ·
+  Ata(252 texto) · Presença(28 sessões).
+
+### Fluxo documental: texto de atas + cruzamento pauta→proposição (2026-06-30)
+- **Texto das atas** (`19-ocr.ts`, 4ª seção): `Sessao.ata` populado em **252/253**
+  sessões (184 reaproveitando OCR de `Publicacao`, 68 OCR direto). Base p/
+  cruzar votação/presença.
+- **18 sessões sem ata**: investigadas — genuinamente ausentes na fonte
+  (7 CR2 com `ataSessao` vazio; 11 históricas que só publicaram pauta).
+- **Etapa 1 — Pauta → Proposições** (`26-cruzamento-pauta.ts`): extrai
+  referências de matéria do OCR da pauta, casa com `Proposicao` e cria
+  `PautaSessao` + `PautaItem`. Resultado: **74 pautas → 176 itens, 150
+  proposições vinculadas a sessão** (45% de match; 397 refs apontam p/ matérias
+  fora do sistema). Próximo: Etapa 2 (votação) e Etapa 3 (presença) a partir do
+  texto da ata.
+
+### Vínculo Ata/Pauta ↔ Sessão (2026-06-30)
+Importador `25-atas-historicas.ts`: os 453 posts da categoria "Pautas e Atas
+das Sessões" (227 atas + 211 pautas, 2016–2023) foram agrupados por (data,
+tipo) e vinculados a sessões. Onde não havia `Sessao` (histórico pré-2024),
+foi **criada a sessão** (status CONCLUIDA, finalizada), ligando `arquivoAta` e
+`arquivoPauta` (PDFs do acervo local). Parser de data PT-BR tolera dia com
+ordinal ("01º de janeiro").
+- **453 posts → 196 sessões reais + 15 placeholders** ("SEM PAUTAS E ATAS EM…"
+  = meses sem sessão, excluídos).
+- **271 sessões** agora (75 CR2 + 196 históricas), **253 com ata**, cobrindo
+  2016–2025. Tipos: 258 ordinárias, 8 extraordinárias, 5 solenes.
+- Idempotente (id `wpsessao-<data>-<tipo>`); sem sobreposição com as sessões
+  CR2 (2024–2025).
+
+### Melhoria de qualidade end-to-end (2026-06-30)
+Análise de qualidade do projeto: **0 erros TS, 0 warnings ESLint, 906 testes
+passando** (base saudável). Melhorias aplicadas:
+- **Testes do código novo**: `src/tests/importers/normalize.test.ts` (25 testes)
+  cobrindo os casos-limite reais da migração (datas Bubble, `splitNumeroAno`,
+  `parseDecimal` BR, placeholders, CSV multilinha). Total: **931 testes**.
+- **Robustez da tela de aprovação**: estado de erro com "Tentar novamente"
+  (não mostra mais "Tudo revisado!" em falha de carregamento) + guarda
+  `Array.isArray` em `documentos`.
+- **Brasão versionado**: exceção no `.gitignore` para `public/uploads/logos/`
+  (assets institucionais fixos, reproduzíveis sem re-extrair o backup).
+- **Segurança de dependências**: `npm audit fix` reduzia 19→8 vulns, mas o
+  bump do vitest/vite (DEV) quebrava o parse de JSX nos testes → revertido
+  (estado verde restaurado). Vulns restantes são DEV (vitest/vite/jsdom/ws —
+  sem impacto em produção). `next`/`nodemailer` (produção) exigem upgrade
+  coordenado com o deploy — RECOMENDADO, não forçado.
+- **CI**: já existe e é maduro (`ci-tests.yml` lint+types+test+build,
+  `security-audit.yml`, `go-no-go.yml`) — cobre os novos testes.
+
+### Páginas WordPress — Grupos 1 e 2 (2026-06-30)
+Auditoria página-a-página das 84 páginas WP (`post_type=page`) achou dado único
+não migrado. Implementados `23-paginas-wp.ts` e `24-institucional-paginas.ts`:
+- **Grupo 1 — 534 documentos históricos** (pré-2024, fora dos CSVs do CR2):
+  Diárias até 2023 (225), Folhas de Pagamento incl. xlsx (128+43), Balancetes
+  (50), Votações Nominais (43), RGF até 2023 (23), Programas e Ações (23),
+  Controle Interno, Convênios 2023, etc. → 244 `DocumentoTransparencia` +
+  290 `Publicacao`, com PDFs/planilhas re-hospedados (xlsx extraídos via
+  stream-copy do .NET, contornando validação de nome).
+- **Grupo 2 — institucional**: 10 `PerguntaFrequente` (FAQ parseado),
+  4 `TransparenciaConteudo` (Competências, O Município, Estrutura
+  Organizacional, Política de Cookies/LGPD).
+- **Grupo 3** (~62 páginas de navegação/shortcode/vazias): descartado
+  (redundante com a estrutura nativa).
+
+### Migração 100% — importadores faltantes (2026-06-30)
+Auditoria backup×banco×tela identificou ~11 CSVs não migrados (~41 registros
+reais). Implementados `21-documentos-transparencia.ts` e
+`22-pesquisa-institucional.ts`:
+- **20 Documentos administrativos** → `Publicacao` (Portarias/Atos, categoria
+  "Documentos Administrativos") · **2 Regulamentação** → `Publicacao`
+- **10 DocumentoTransparencia**: balanço/relatórios anuais (3),
+  Plano de contratação anual, Planejamento estratégico, Relação nominal de
+  remuneração (link externo preservado)
+- **1 Pesquisa de satisfação** + 3 respostas reconstruídas → `PesquisaSatisfacao`
+- **1 UnidadeOrganizacional** (raiz, da Estrutura organizacional)
+- **7 chaves de Configuracao** (SIC/Ouvidoria/LGPD: responsável, e-mail, telefone)
+- Novos documentos com texto extraído (busca por palavra-chave OK, ex.: "nomeação").
+**CSVs restantes sem registro** (despesas, servidores/estagiários,
+fornecedores/prestadores, licitantes, RGF, serviços online) têm **0 registros
+reais na fonte** (só placeholders/links externos) — nada a migrar.
+**Migração agora cobre 100% dos dados reais do backup.**
+
+### Pendências resolvidas: download Drive + tela de aprovação manual (2026-06-30)
+**1) Download Google Drive** (`20-drive.ts` + `downloadDrive` em files.ts):
+baixa via `uc?export=download&id=ID&confirm=t`, re-hospeda local e substitui a
+URL externa. **135 arquivos baixados (0 falhas)** → 0 links Drive restantes;
+sessões: 68/75 ata + pauta agora locais; +6 proposições pesquisáveis após OCR.
+As 52 proposições ainda sem texto são scans de baixíssima qualidade (OCR não lê
+nem a 300 DPI) — pesquisáveis por título/número/ementa.
+
+**2) Tela de aprovação manual** (`/admin/proposicoes/revisao-aprovacao`):
+revisão um-a-um das proposições históricas `entradaRetroativa=true &
+status=APRESENTADA` (238 itens). Mostra o PDF em iframe + dados; botões
+Aprovar/Rejeitar/Arquivar/Pular (atalhos A/R/X/S) chamam
+`PUT /api/proposicoes/[id] { status }`. Link "Revisar Aprovações" adicionado ao
+cabeçalho de `/admin/proposicoes`. Rota protegida (`proposicao.manage`).
+
+### OCR concluído — busca por conteúdo + aprovação recuperada (2026-06-30)
+Tesseract 5.4 (idioma `por` via tessdata_fast) + Poppler instalados; importador
+`19-ocr.ts` (pdftoppm 300 DPI → tesseract). Batch completo:
+- **Proposições pesquisáveis: 402/460** · **Leis/Normas: 66/78** ·
+  **Publicações/Atas: 509/532** (resto = links Google Drive ou scans ruins).
+- Busca global por conteúdo validada: "ambulância", "poço artesiano",
+  "merenda", "iluminação", "tributação", "orçamento" (33), "saúde" (33) →
+  retornam proposições e leis pelo texto OCR.
+- **Aprovação recuperada do PDF escaneado**: 339 proposições WP eram todas
+  APRESENTADA; o OCR leu os carimbos "APROVADO POR/EM UNANIMIDADE" →
+  **115 marcadas APROVADA** (detecção refinada p/ exigir o carimbo, evitando
+  falso positivo de "aprovado" no corpo do pedido). Status do CR2 preservado.
+- Status final proposições: CR2 96 aprovada/14 apresentada/9 tramitação/2
+  rejeitada; WP 115 aprovada/224 apresentada. **Total aprovadas: 211.**
+- Campos de busca: `pdftotext` para PDFs digitais + OCR para scans, gravando
+  `Proposicao.texto`, `NormaJuridica.texto`, `Publicacao.conteudo` (marcador
+  `<!--ocr-->`). Idempotente/resumível (pula registros já com texto).
+
+### Extração de texto p/ busca + análise de aprovação (2026-06-30)
+Importador `18-extrair-texto.ts` (pdftotext) popula `Proposicao.texto`,
+`NormaJuridica.texto`, `Publicacao.conteudo` → busca global por palavra-chave
+(`/api/busca/global` já consulta esses campos; validado: "subsídio" → 6 normas).
+**Resultado**: PDFs digitais OK (13 normas, 21 publicações, 1 proposição), mas
+**proposições e atas são quase todas SCANS** (413 proposições + 494 publicações
+sem camada de texto) → busca por conteúdo nelas exige **OCR** (tesseract +
+rasterizador NÃO instalados no ambiente; só `pdftotext` disponível).
+
+**Aprovação das proposições**: CR2 (121) tem status real de `situacaoMateria`
+(96 aprovadas, 2 rejeitadas, 9 em tramitação, 14 apresentadas). Colunas CR2
+`VOTACAO`/`TRAMITACAO` estão **vazias** (0/121). WordPress (339) = todas
+`APRESENTADA` — **não há campo de status na fonte**; o indício de aprovação,
+quando existe, está **dentro do PDF escaneado** → recuperável só via OCR.
+
+### Reconciliação fonte × sistema (2026-06-30) — SEM perda de registros
+Todas as linhas das fontes conferem (importadas, placeholder ignorado, ou fora
+do corte 2025). Ex.: Diárias 38 = 32 importadas + 2 de 2026 + 4 com nome
+mascarado (`***`). Normas CR2 25 = 10 + 12 placeholder + 3 dedup. Licitações
+24 = 18 + 5 placeholder + 1 de 2026. WordPress 954 = 339+68+532(+1 clash)+15
+ignorados. As únicas lacunas eram de ARQUIVO (registro sempre presente).
+
+**RESOLVIDO — preservação de links Google Drive (2026-06-30)**: `acquireRemote`
+agora detecta URLs não-baixáveis (Google Drive/Docs/"/view") e as PRESERVA como
+**link externo** (`external: true`) em vez de descartar. 141 links preservados.
+Cobertura após o fix: ata **68/75** (40 via Drive), pauta **69/75**,
+proposições CR2 **121/121**, licitações **18/18**, normas CR2 **10/10**.
+Os poucos restantes sem anexo são registros que não tinham link na fonte.
+
+**Pendente (opcional)**: 1 link WP quebrado; vincular autoria via entidade
+`Autor`; extrair texto integral dos PDFs p/ `NormaJuridica.texto`; revisar 14
+nomes de diárias não casados; reescrever URLs de imagens das notícias WP
+(apontam p/ domínio antigo). Container `camara_mysql_tmp` pode ser removido
+(dados já extraídos p/ JSON). Obs.: links Google Drive preservados ficam
+acessíveis ao usuário, mas dependem do compartilhamento do Drive permanecer
+ativo — re-hospedagem definitiva exigiria a API do Drive com autenticação.
+
+---
+
+## 2026-06-30 — Ambiente DEV: banco PostgreSQL local em Docker
+
+O desenvolvimento local deixou de usar o banco Supabase (cloud) e passou a
+usar um PostgreSQL local em container Docker. Isola o dev da base de
+producao e remove a dependencia de rede/Supabase para rodar a aplicacao.
+
+**Infra**
+
+- `docker-compose.yml`: servico `postgres` (postgres:15-alpine), container
+  `camara_postgres`, banco `camara_legislativo_db`, user `postgres` /
+  senha `camara2026`. Mapeamento de porta ajustado para **`5433:5432`** no
+  host (a 5432 ja era usada por outro container local).
+- Removido o atributo `version` (obsoleto no Docker Compose v2).
+
+**Configuracao (.env e .env.local)**
+
+- `DATABASE_URL` e `DIRECT_URL` agora apontam para
+  `postgresql://postgres:camara2026@localhost:5433/camara_legislativo_db`.
+- As URLs do Supabase foram preservadas comentadas em ambos os arquivos
+  para retorno rapido (descomentar Supabase + comentar local).
+
+**Provisionamento**
+
+- `npm run db:push` aplicou o schema Prisma ao banco local → 131 tabelas.
+- `npm run db:seed` populou os dados iniciais (admin, legislatura 2025/2028,
+  11 parlamentares, mesa diretora, 4 comissoes, 3 sessoes, configuracoes).
+
+**Comandos do dia a dia**
+
+- Subir banco: `docker compose up -d`
+- Parar: `docker compose stop`
+- Resetar (apaga volume): `docker compose down -v` + `db:push` + `db:seed`
+- Voltar ao Supabase: descomentar as linhas Supabase em `.env`/`.env.local`
+
+**Arquivos afetados**: `docker-compose.yml`, `.env`, `.env.local`,
+`.env.example` (documentacao da opcao local).
 
 ---
 

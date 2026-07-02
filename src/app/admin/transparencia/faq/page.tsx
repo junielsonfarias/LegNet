@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { HelpCircle, Plus, Loader2, Trash2, Save, X, Pencil } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 
 interface Pergunta {
@@ -28,6 +29,7 @@ const EMPTY_FORM = {
 }
 
 export default function AdminFaqPage() {
+  const confirm = useConfirm()
   const [data, setData] = useState<Pergunta[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -103,7 +105,13 @@ export default function AdminFaqPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remover esta pergunta?')) return
+    const ok = await confirm({
+      title: 'Remover pergunta?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Remover',
+    })
+    if (!ok) return
     const r = await fetch(`/api/faq/${id}`, { method: 'DELETE' })
     if (r.ok) {
       toast.success('Removida')

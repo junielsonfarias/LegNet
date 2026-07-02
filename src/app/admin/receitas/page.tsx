@@ -10,12 +10,14 @@ import { TrendingUp, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, 
 import { useReceitas, Receita } from '@/lib/hooks/use-receitas'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 
 const categorias = ['CORRENTE', 'CAPITAL', 'INTRA_ORCAMENTARIA']
 const origens = ['TRIBUTARIA', 'CONTRIBUICOES', 'PATRIMONIAL', 'AGROPECUARIA', 'INDUSTRIAL', 'SERVICOS', 'TRANSFERENCIAS', 'OUTRAS']
 const situacoes = ['PREVISTA', 'ARRECADADA', 'CANCELADA']
 
 export default function ReceitasAdminPage() {
+  const confirm = useConfirm()
   const { receitas, loading, create, update, remove } = useReceitas()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -83,7 +85,13 @@ export default function ReceitasAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta receita?')) {
+    const ok = await confirm({
+      title: 'Excluir receita?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (ok) {
       try {
         await remove(id)
         toast.success('Receita excluida com sucesso')

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Users, Plus, Edit, Trash2, Search, Calendar, DollarSign, Loader2, X, Briefcase } from 'lucide-react'
 import { useServidores, Servidor } from '@/lib/hooks/use-servidores'
+import { useConfirm } from '@/lib/hooks/use-confirm-dialog'
 import { toast } from 'sonner'
 import { RedirectConfig } from '@/components/admin/redirect-config'
 
@@ -15,6 +16,7 @@ const situacoes = ['ATIVO', 'INATIVO', 'AFASTADO', 'LICENCA', 'FERIAS', 'CEDIDO'
 const vinculos = ['EFETIVO', 'COMISSIONADO', 'TEMPORARIO', 'ESTAGIARIO', 'TERCEIRIZADO']
 
 export default function ServidoresAdminPage() {
+  const confirm = useConfirm()
   const { servidores, loading, create, update, remove } = useServidores()
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -86,10 +88,16 @@ export default function ServidoresAdminPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este servidor?')) {
+    const ok = await confirm({
+      title: 'Excluir servidor?',
+      description: 'Esta ação não pode ser desfeita.',
+      variant: 'destructive',
+      confirmLabel: 'Excluir',
+    })
+    if (ok) {
       try {
         await remove(id)
-        toast.success('Servidor excluido com sucesso')
+        toast.success('Servidor excluído com sucesso')
       } catch (error: any) {
         toast.error(error?.message || 'Erro ao excluir servidor')
       }

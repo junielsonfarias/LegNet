@@ -13,6 +13,7 @@ export interface SessaoApi {
   ata: string | null
   arquivoAta?: string | null
   arquivoAtaAssinada?: string | null
+  arquivoPresenca?: string | null
   statusAta?: 'PENDENTE' | 'APROVADA' | 'REJEITADA' | null
   dataPublicacaoAta?: string | null
   sessaoAprovacaoAtaId?: string | null
@@ -151,6 +152,17 @@ class SessoesApiService {
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
+    })
+
+    return this.handleResponse<SessaoApi>(response)
+  }
+
+  /** Detalhe completo por ID via endpoint PÚBLICO (não exige autenticação). */
+  async getPublicById(id: string): Promise<SessaoApi> {
+    const response = await fetch(`/api/publico/sessoes/${id}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',
     })
 

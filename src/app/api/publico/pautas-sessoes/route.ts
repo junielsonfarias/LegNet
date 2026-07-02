@@ -7,6 +7,7 @@ import { NextRequest } from 'next/server'
 import { withErrorHandler, createSuccessResponse } from '@/lib/error-handler'
 import { prisma } from '@/lib/prisma'
 import { withPublicCache } from '@/lib/http-cache'
+import { formatSessaoTitulo } from '@/lib/utils/legislative-labels'
 
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
@@ -79,7 +80,7 @@ function mapPauta(pauta: any) {
   return {
     id: pauta.id,
     sessaoId: pauta.sessaoId,
-    titulo: sessao ? `Sessao ${sessao.tipo === 'ORDINARIA' ? 'Ordinaria' : sessao.tipo === 'EXTRAORDINARIA' ? 'Extraordinaria' : sessao.tipo} No ${sessao.numero}` : 'Pauta',
+    titulo: sessao ? formatSessaoTitulo(sessao) : 'Pauta',
     descricao: pauta.observacoes,
     data: sessao?.data?.toISOString() || null,
     tipo: sessao?.tipo || 'ORDINARIA',
