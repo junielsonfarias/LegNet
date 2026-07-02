@@ -21,7 +21,29 @@ presenças · 36 votações).
 - Domínio apontando para o IP do VPS (para o SSL do install.sh).
 - O arquivo `deploy/camara-seed.sql.gz` gerado na máquina DEV (ver "Regerar o seed").
 
-## Passo a passo
+## ⚡ Instalação AUTOMÁTICA (um comando faz tudo)
+
+Pré-flight + install + restore do seed + admin + restart, **sem interação**.
+
+**1) Envie o seed** (da máquina DEV):
+```bash
+scp deploy/camara-seed.sql.gz root@<IP-do-VPS>:/root/camara-seed.sql.gz
+```
+**2) No VPS (root)**, rode com as 3 variáveis obrigatórias:
+```bash
+export ADMIN_EMAIL="voce@dominio.gov.br" \
+       ADMIN_PASSWORD="SuaSenhaForte123" \
+       ENCRYPTION_KEY="<mesma chave do .env DEV>"
+# opcionais: SITE_DOMAIN (padrão siscam.vps-kinghost.net), CAMARA_NOME, SSL_EMAIL
+curl -fsSL https://raw.githubusercontent.com/junielsonfarias/LegNet/main/scripts/instalar-producao.sh | bash
+```
+Ao final: site em `https://$SITE_DOMAIN`, login `$ADMIN_EMAIL`. O `install.sh` roda
+não-interativo (`CAMARA_UNATTENDED=1`); o fluxo manual abaixo segue funcionando
+normalmente **sem** essas variáveis.
+
+---
+
+## Passo a passo MANUAL (alternativa)
 
 ### 1. Código no VPS
 

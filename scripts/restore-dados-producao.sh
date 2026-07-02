@@ -20,6 +20,10 @@ set -euo pipefail
 
 INSTALL_DIR="${INSTALL_DIR:-/opt/camara}"
 DB_NAME="${DB_NAME:-camara_legislativo}"
+
+# Modo nao-interativo: --yes como 1o argumento OU RESTORE_YES=1 no ambiente.
+ASSUME_YES="${RESTORE_YES:-0}"
+if [ "${1:-}" = "--yes" ] || [ "${1:-}" = "-y" ]; then ASSUME_YES=1; shift; fi
 SEED="${1:-$INSTALL_DIR/deploy/camara-seed.sql.gz}"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
@@ -42,9 +46,11 @@ fi
 
 echo -e "  ${CYAN}Seed:${NC}   $SEED  ($(du -h "$SEED" | cut -f1))"
 echo -e "  ${CYAN}Banco:${NC}  $DB_NAME (PostgreSQL local)"
-echo -en "  Isto irá APAGAR os dados atuais de '$DB_NAME' e recarregar do seed. Continuar? [s/N]: "
-read -r resp
-case "$resp" in s|S|sim|Sim) ;; *) warn "Cancelado."; exit 0;; esac
+if [ "$ASSUME_YES" != "1" ]; then
+  echo -en "  Isto irá APAGAR os dados atuais de '$DB_NAME' e recarregar do seed. Continuar? [s/N]: "
+  read -r resp
+  case "$resp" in s|S|sim|Sim) ;; *) warn "Cancelado."; exit 0;; esac
+fi
 
 log "Truncando tabelas e carregando dados (FK desligada na sessão)..."
 
