@@ -31,6 +31,19 @@ interface Votacao {
   totalAbstencao?: number
 }
 
+// Votação SEM roll-call nominal: apenas o resultado agregado da proposição
+// (a fonte CR2 só tem "situacaoMateria"; nomes/contagens não existem).
+interface DemaisVotacao {
+  id: string
+  titulo: string
+  ano: number
+  tipo: string
+  resultado: string
+  data: string | null
+  ementa: string
+  autor: string | null
+}
+
 const votoConfig: Record<string, { label: string; className: string }> = {
   SIM: { label: 'Sim', className: 'bg-green-100 text-green-800 hover:bg-green-100' },
   NAO: { label: 'Nao', className: 'bg-red-100 text-red-800 hover:bg-red-100' },
@@ -38,30 +51,114 @@ const votoConfig: Record<string, { label: string; className: string }> = {
 }
 
 export default function VotacoesNominaisPage() {
-  const [votacoes, setVotacoes] = useState<Votacao[]>([])
+  const [todasVotacoes, setTodasVotacoes] = useState<Votacao[]>([])
+  const [demais, setDemais] = useState<DemaisVotacao[]>([])
   const [loading, setLoading] = useState(true)
-  const [ano, setAno] = useState('2026')
+  const [ano, setAno] = useState<string>('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [currentYear, setCurrentYear] = useState(2026)
-
-  useEffect(() => {
-    const year = new Date().getFullYear()
-    setCurrentYear(year)
-    setAno(year.toString())
-  }, [])
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/dados-abertos/votacoes?ano=${ano}`)
-      .then((res) => res.json())
-      .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
-        setVotacoes(data)
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [ano])
-  const anos = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
+    ;(async () => {
+      try {
+        // 1) Votações NOMINAIS: /api/dados-abertos/votacoes devolve { dados } com
+        // UMA linha por voto individual → agregamos por proposição (votos[] +
+        // totais + resultado), que é o formato que a tela renderiza.
+        const jVotos = await fetch('/api/dados-abertos/votacoes?limit=1000').then((r) => r.json())
+        const votos: Array<{
+          id: string
+          voto: string
+          parlamentar?: { nome?: string }
+          proposicao?: { id: string; tipo: string; numero: number; ano: number; ementa: string }
+          sessao?: { numero?: number; data?: string }
+        }> = Array.isArray(jVotos?.dados) ? jVotos.dados : []
+
+        const mapa = new Map<string, Votacao>()
+        for (const v of votos) {
+          const chave = v.proposicao?.id ?? v.id
+          if (!mapa.has(chave)) {
+            mapa.set(chave, {
+              id: chave,
+              proposicao: v.proposicao,
+              sessao: v.sessao
+                ? { titulo: `Sessão ${v.sessao.numero ?? ''}`.trim(), dataInicio: v.sessao.data ?? '' }
+                : undefined,
+              votos: [],
+              totalSim: 0,
+              totalNao: 0,
+              totalAbstencao: 0,
+            })
+          }
+          const grupo = mapa.get(chave)!
+          grupo.votos!.push({ parlamentarNome: v.parlamentar?.nome, voto: v.voto })
+          if (v.voto === 'SIM') grupo.totalSim!++
+          else if (v.voto === 'NAO') grupo.totalNao!++
+          else grupo.totalAbstencao!++
+        }
+        setTodasVotacoes(
+          Array.from(mapa.values()).map((g) => ({
+            ...g,
+            resultado: (g.totalSim ?? 0) > (g.totalNao ?? 0) ? 'APROVADA' : 'REJEITADA',
+          }))
+        )
+
+        // 2) DEMAIS votações: proposições COM resultado e SEM voto nominal (a
+        // fonte só tem o resultado agregado). A API pagina em 100 → varremos tudo.
+        const props: Array<Record<string, unknown>> = []
+        let page = 1
+        let paginas = 1
+        do {
+          const jp = await fetch(`/api/dados-abertos/proposicoes?limit=100&page=${page}`).then((r) => r.json())
+          if (Array.isArray(jp?.dados)) props.push(...jp.dados)
+          paginas = jp?.metadados?.paginas ?? 1
+          page++
+        } while (page <= paginas)
+
+        const demaisList: DemaisVotacao[] = props
+          .filter((p) => p.resultado && ((p.total_votacoes as number) ?? 0) === 0)
+          .map((p) => ({
+            id: p.id as string,
+            titulo: `${p.tipo} ${p.numero}/${p.ano}`,
+            ano: p.ano as number,
+            tipo: p.tipo as string,
+            resultado: p.resultado as string,
+            data: (p.data_votacao as string) ?? null,
+            ementa: (p.ementa as string) ?? '',
+            autor: ((p.autor as { apelido?: string; nome?: string })?.apelido
+              ?? (p.autor as { nome?: string })?.nome) ?? null,
+          }))
+          .sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
+        setDemais(demaisList)
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [])
+
+  // Anos com dados (desc) das DUAS fontes; padrão = mais recente com dados.
+  const anos = Array.from(
+    new Set(
+      [
+        ...todasVotacoes.map((v) => v.proposicao?.ano),
+        ...demais.map((d) => d.ano),
+      ].filter((a): a is number => !!a)
+    )
+  )
+    .sort((a, b) => b - a)
+    .map(String)
+
+  useEffect(() => {
+    if (!ano && anos.length > 0) setAno(anos[0])
+  }, [anos, ano])
+
+  const votacoes = ano
+    ? todasVotacoes.filter((v) => String(v.proposicao?.ano) === ano)
+    : todasVotacoes
+  const demaisFiltradas = ano
+    ? demais.filter((d) => String(d.ano) === ano)
+    : demais
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,8 +205,11 @@ export default function VotacoesNominaisPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Vote className="h-5 w-5" />
-              Votacoes ({votacoes.length})
+              Votações Nominais ({votacoes.length})
             </CardTitle>
+            <p className="text-sm text-gray-500 mt-1">
+              Votações com o registro de voto de cada parlamentar.
+            </p>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -117,7 +217,7 @@ export default function VotacoesNominaisPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-camara-primary" />
               </div>
             ) : votacoes.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">Nenhuma votacao encontrada.</p>
+              <p className="text-center text-gray-500 py-8">Nenhuma votação nominal registrada neste ano.</p>
             ) : (
               <div className="space-y-3">
                 {votacoes.map((v) => (
@@ -179,6 +279,56 @@ export default function VotacoesNominaisPage() {
                         </Table>
                         </div>
                       </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Demais votações: resultado agregado (a fonte CR2 não tem voto nominal
+            individual nem contagem — só a situação aprovado/rejeitado). */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Vote className="h-5 w-5" />
+              Demais Votações ({demaisFiltradas.length})
+            </CardTitle>
+            <p className="text-sm text-gray-500 mt-1">
+              Proposições votadas cujo resultado foi registrado, sem detalhamento do voto individual na fonte.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-camara-primary" />
+              </div>
+            ) : demaisFiltradas.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">Nenhuma votação neste ano.</p>
+            ) : (
+              <div className="space-y-2">
+                {demaisFiltradas.map((d) => (
+                  <div key={d.id} className="border rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-medium text-gray-900">{d.titulo}</span>
+                      <Badge className={d.resultado === 'APROVADA' || d.resultado === 'APROVADO'
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                        : 'bg-red-100 text-red-800 hover:bg-red-100'
+                      }>
+                        {d.resultado}
+                      </Badge>
+                      {d.data && (
+                        <span className="text-sm text-gray-500">
+                          {new Date(d.data).toLocaleDateString('pt-BR')}
+                        </span>
+                      )}
+                    </div>
+                    {d.ementa && (
+                      <p className="text-sm text-gray-500 truncate max-w-3xl">{d.ementa}</p>
+                    )}
+                    {d.autor && (
+                      <p className="text-xs text-gray-400 mt-1">Autor: {d.autor}</p>
                     )}
                   </div>
                 ))}
