@@ -1,11 +1,52 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (auditoria integração front↔back público, Tier 1)
-> **Versao**: 1.40.4
+> **Ultima Atualizacao**: 2026-07-02 (item de pauta exibia número OCR errado — ERR-062)
+> **Versao**: 1.40.7
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Votações nominais públicas (ERR-061)
+
+`/transparencia/legislativo/votacoes-nominais` estava **sempre vazia** por 3 problemas
+sobrepostos: (1) envelope (`json.data` vs `{dados}`), (2) shape (API dá votos
+individuais achatados; a tela espera votações agregadas com `votos[]`/totais/resultado),
+(3) ano padrão fixo no ano atual (2026) enquanto os votos são de 2024. Refatorado o
+carregamento: busca todos os votos, **agrega por proposição** (votos[] + totais +
+resultado), e ano padrão = mais recente com dados. Resultado: **4 votações
+nominais de 2024** (PROJETO_LEI 005/009/010/011, APROVADAS por unanimidade; 36 votos
+inferidos das atas pelo importador `42-votacao-nominal`).
+
+**Enriquecimento (híbrido):** análise do backup confirmou que a fonte CR2 NÃO tem mais
+voto nominal (coluna `VOTACAO` 100% vazia; só `situacaoMateria`). Mas o banco já tinha
+**392 proposições com resultado** (390 aprovadas, 2 rejeitadas, 2016-2025) que a página
+não mostrava. Adicionada a seção **"Demais Votações"**: os **388** resultados agregados
+(sem roll-call) — proposição, resultado, data, ementa, autor — paginando `/api/dados-abertos/proposicoes`
+(7 págs) e filtrando `resultado && total_votacoes===0`. Ano padrão passou p/ **2025**
+(mais recente com dados). Página total: **4 nominais + 388 agregadas = 392** votações
+(era 4). Página 200, diagnostics 0.
+
+---
+
+## 2026-07-02 — Perfil do parlamentar: % de presença e total de matérias (ERR-060)
+
+Análise de `/parlamentares/cristiani-santos` (página ↔ banco ↔ backup CR2). Dados
+básicos/biografia/partido/cargo/comissões/proposições conferem (banco = 14 matérias,
+superset do backup = 7). **2 bugs de cálculo** corrigidos + varredura do mesmo padrão:
+
+- **P1 (presença):** `getPerfil` dividia a presença por TODAS as 271 sessões
+  (2016-2025) → 10,33% para uma vereadora de 2025. Corrigido para o **período de
+  mandato** → **28/35 = 80%**.
+- **P2 (matérias):** total reusava a lista com `take:10` → travava em 10. Corrigido
+  para `count` real → **14** (distribuição agora ~100%, era 140%).
+- **Mesmo denominador corrigido em:** rota pública `/api/publico/relatorio-parlamentar/[id]`
+  (dava 100%), `getDashboard` + `dashboard-utils` (param `totalOverride`) e
+  `analytics-service` (por parlamentar ∩ período).
+- Pendente relacionado: `relatorio-agendado-service` (Excel admin, registros próprios);
+  data gap `numeroVotos=0` (365 só na bio). Diagnostics 0; relatório público = 80%.
 
 ---
 
