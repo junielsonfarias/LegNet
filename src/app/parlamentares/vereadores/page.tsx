@@ -27,6 +27,7 @@ import Image from 'next/image';
 import { useParlamentares } from '@/lib/hooks/use-parlamentares';
 import { useLegislaturas } from '@/lib/hooks/use-legislaturas';
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional';
+import { slugify } from '@/lib/utils';
 
 export default function VereadoresPage() {
   const { configuracao } = useConfiguracaoInstitucional();
@@ -423,7 +424,7 @@ export default function VereadoresPage() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1"
-                      onClick={() => window.open(`/parlamentares/${vereador.apelido.toLowerCase().replace(/\s+/g, '-')}`, '_blank')}
+                      onClick={() => window.open(`/parlamentares/${slugify(vereador.apelido || vereador.nome) || vereador.id}`, '_blank')}
                     >
                       <User className="h-4 w-4 mr-1" />
                       Perfil
@@ -432,7 +433,7 @@ export default function VereadoresPage() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1"
-                      onClick={() => window.open(`/parlamentares/${vereador.apelido.toLowerCase().replace(/\s+/g, '-')}/perfil-completo`, '_blank')}
+                      onClick={() => window.open(`/parlamentares/${slugify(vereador.apelido || vereador.nome) || vereador.id}/perfil-completo`, '_blank')}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       Completo
