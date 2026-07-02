@@ -939,7 +939,13 @@ collect_data() {
   SSL_EMAIL="${SSL_EMAIL:-$ADMIN_EMAIL}"
 
   # Identidade Visual (pulada se as cores vierem do ambiente)
-  [ -n "${COR_PRIMARIA:-}" ] || select_identity
+  if [ -n "${COR_PRIMARIA:-}" ]; then
+    # Cores vieram do ambiente (modo automatico): define TEMA_NOME p/ nao quebrar
+    # o resumo (set -u) ao pular o select_identity.
+    TEMA_NOME="${TEMA_NOME:-Personalizado}"
+  else
+    select_identity
+  fi
 
   # Redis
   echo ""
@@ -975,7 +981,7 @@ collect_data() {
   echo -e "  ${BOLD}Dominio/IP:${NC}   $SITE_DOMAIN"
   echo -e "  ${BOLD}URL:${NC}          $SITE_URL"
   echo -e "  ${BOLD}Email Admin:${NC}  $ADMIN_EMAIL"
-  echo -e "  ${BOLD}Tema:${NC}         $TEMA_NOME ($COR_PRIMARIA / $COR_SECUNDARIA / $COR_ACENTO)"
+  echo -e "  ${BOLD}Tema:${NC}         ${TEMA_NOME:-Personalizado} ($COR_PRIMARIA / $COR_SECUNDARIA / $COR_ACENTO)"
   echo -e "  ${BOLD}Banco:${NC}        PostgreSQL local ($DB_NAME)"
   echo -e "  ${BOLD}Redis:${NC}        $([ "$INSTALL_REDIS" = "s" ] && echo 'Sim' || echo 'Nao')"
   echo -e "  ${BOLD}Diretorio:${NC}    $INSTALL_DIR"
@@ -1636,7 +1642,7 @@ URL: ${SITE_URL}
 Email Admin: ${ADMIN_EMAIL}
 
 Identidade Visual:
-  Tema: ${TEMA_NOME}
+  Tema: ${TEMA_NOME:-Personalizado}
   Primaria: ${COR_PRIMARIA}
   Secundaria: ${COR_SECUNDARIA}
   Acento: ${COR_ACENTO}

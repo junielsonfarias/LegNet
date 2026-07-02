@@ -6,6 +6,14 @@
 
 ---
 
+### Correções Aplicadas em 2026-07-02 (Reinstalação automática: `TEMA_NOME: unbound variable`)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-065 | Na reinstalação limpa automática (`AUTO_INSTALL_MODE=reinstall`), após apagar a instalação antiga, a instalação nova abortava no resumo de configuração com `install.sh: line 978: TEMA_NOME: unbound variable`. O script roda com `set -uo pipefail` (nounset). No modo automático as cores vêm do ambiente (`COR_PRIMARIA` etc.), então o `select_identity` — única função que define `TEMA_NOME` — é **pulado** (linha 942: `[ -n "${COR_PRIMARIA:-}" ] || select_identity`); mas o resumo (linha 978) e a mensagem final (linha 1639) usavam `$TEMA_NOME` **sem valor padrão** → erro fatal. Efeito colateral grave: a instalação antiga já havia sido removida, deixando o VPS sem `/opt/camara` (backup de emergência do banco preservado em `/opt/backups/emergency-*`). | No `install.sh`, ao pular `select_identity` (cores do ambiente), define `TEMA_NOME="${TEMA_NOME:-Personalizado}"`; e os dois usos passaram a `${TEMA_NOME:-Personalizado}` (blindagem contra `set -u`). Varredura dos demais `read` interativos e de `CUSTOM_REPO`/`CUSTOM_DIR`: todos já guardados/com fallback — `TEMA_NOME` era o único landmine. `bash -n` OK. |
+
+---
+
 ### Correções Aplicadas em 2026-07-02 (Build no VPS falhava no ESLint)
 
 | ID | Problema | Solução |
