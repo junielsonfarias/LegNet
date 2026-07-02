@@ -21,9 +21,31 @@ presenças · 36 votações).
 - Domínio apontando para o IP do VPS (para o SSL do install.sh).
 - O arquivo `deploy/camara-seed.sql.gz` gerado na máquina DEV (ver "Regerar o seed").
 
-## ⚡ Instalação AUTOMÁTICA (um comando faz tudo)
+## ⚡⚡ Instalação com UM comando (da sua máquina) — RECOMENDADO
 
-Pré-flight + install + restore do seed + admin + restart, **sem interação**.
+O `scripts/deploy-vps.sh` faz **tudo de uma vez**, da sua máquina DEV: lê a
+`ENCRYPTION_KEY` do `.env` local (automático), envia o seed por `scp` e dispara a
+instalação no VPS por `ssh`. Sem os 3 passos manuais.
+
+**Configure uma vez** (arquivo git-ignored, guarda a senha):
+```bash
+cp deploy/deploy.config.example deploy/deploy.config
+# edite ADMIN_EMAIL, ADMIN_PASSWORD, VPS_HOST, VPS_USER
+```
+**Rode** (no Git Bash / WSL / Linux / macOS, na raiz do projeto):
+```bash
+bash scripts/deploy-vps.sh
+```
+- `ssh`/`scp` pedirão a senha do VPS (a menos que você use chave SSH).
+- Reinstalar do zero: `AUTO_INSTALL_MODE=reinstall bash scripts/deploy-vps.sh`.
+- Requisitos locais: `ssh`, `scp`, `curl` (já vêm no Git Bash e no Windows 11).
+
+---
+
+## ⚡ Instalação AUTOMÁTICA (rodando direto no VPS)
+
+Caso prefira executar no próprio VPS. Pré-flight + install + restore do seed +
+admin + restart, **sem interação**.
 
 **1) Envie o seed** (da máquina DEV):
 ```bash

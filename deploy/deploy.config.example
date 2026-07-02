@@ -1,0 +1,31 @@
+# ============================================================================
+# Config do deploy automático (scripts/deploy-vps.sh)
+#
+# Copie para deploy/deploy.config e preencha. O arquivo deploy/deploy.config
+# é git-ignored (contém senha) — NUNCA será commitado.
+#
+#   cp deploy/deploy.config.example deploy/deploy.config
+#   # edite os valores abaixo
+#   bash scripts/deploy-vps.sh
+# ============================================================================
+
+# --- Admin do sistema (criado/definido na instalação) ---
+ADMIN_EMAIL="voce@dominio.gov.br"
+ADMIN_PASSWORD="TroqueEstaSenhaForte123"
+
+# --- VPS de destino ---
+VPS_HOST="177.153.50.104"
+VPS_USER="root"
+
+# --- Opcionais ---
+# ENCRYPTION_KEY: se omitido, é lido automaticamente do .env local (recomendado).
+# ENCRYPTION_KEY=""
+
+# Domínio e nome (têm padrão no instalador):
+# SITE_DOMAIN="siscam.vps-kinghost.net"
+# CAMARA_NOME="Câmara Municipal de Chaves"
+
+# Como tratar instalação já existente no VPS:
+#   update    (padrão) -> atualiza código, PRESERVA banco/config/dados
+#   reinstall           -> APAGA tudo e reinstala do zero (repopula o seed)
+# AUTO_INSTALL_MODE="update"
