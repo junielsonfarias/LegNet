@@ -238,10 +238,10 @@ export default function DetalhesProtocoloPage() {
     }
 
     try {
-      const response = await fetch(`/api/protocolo/${protocoloId}/tramitar`, {
+      const response = await fetch(`/api/protocolo/${protocoloId}?acao=tramitar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tramitacao)
+        body: JSON.stringify({ unidadeOrigem: 'ATUAL', ...tramitacao })
       })
 
       const data = await response.json()
@@ -262,8 +262,10 @@ export default function DetalhesProtocoloPage() {
 
   async function handleArquivar() {
     try {
-      const response = await fetch(`/api/protocolo/${protocoloId}/arquivar`, {
-        method: 'POST'
+      const response = await fetch(`/api/protocolo/${protocoloId}?acao=arquivar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       })
 
       const data = await response.json()
