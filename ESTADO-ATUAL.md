@@ -1,11 +1,24 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (instalação automática detecta existente: update vs reinstall)
-> **Versao**: 1.40.12
+> **Ultima Atualizacao**: 2026-07-02 (deploy VPS com UM comando da máquina DEV: deploy-vps.sh)
+> **Versao**: 1.40.13
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Deploy VPS com UM comando (da máquina DEV)
+
+Para eliminar os 3 passos manuais (pegar chave, scp do seed, ssh+curl), criado o
+orquestrador **local** `scripts/deploy-vps.sh` (roda na máquina DEV, não no VPS):
+- Lê a `ENCRYPTION_KEY` do `.env` local automaticamente (não exibe o segredo).
+- Envia `deploy/camara-seed.sql.gz` por `scp` e dispara `instalar-producao.sh` no
+  VPS por `ssh` — passando ADMIN_EMAIL/ADMIN_PASSWORD/ENCRYPTION_KEY/AUTO_INSTALL_MODE.
+- Config em `deploy/deploy.config` (novo `.example`; **git-ignored** — tem senha).
+- Uso: `cp deploy/deploy.config.example deploy/deploy.config` (editar) → `bash scripts/deploy-vps.sh`.
+- Requisitos locais: ssh/scp/curl (já no Git Bash e Windows 11). Sintaxe `bash -n` OK.
 
 ---
 
