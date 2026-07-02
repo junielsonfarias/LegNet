@@ -36,8 +36,19 @@ export const GET = withErrorHandler(async (
     },
   })
 
-  const totalSessoes = presencas.length
   const presentes = presencas.filter((p) => p.presente).length
+  // Denominador = sessões CONCLUIDA no período de mandato ∩ ano (ERR-060), não
+  // presencas.length (que daria 100% quando ausências não são registradas).
+  const mandato = parlamentar.mandatos[0]
+  const gteCand = [mandato?.dataInicio ?? null, new Date(`${ano}-01-01`)]
+    .filter((d): d is Date => !!d)
+  const lteCand = [mandato?.dataFim ?? null, new Date(`${ano}-12-31T23:59:59.999Z`)]
+    .filter((d): d is Date => !!d)
+  const gte = new Date(Math.max(...gteCand.map((d) => d.getTime())))
+  const lte = new Date(Math.min(...lteCand.map((d) => d.getTime())))
+  const totalSessoes = await prisma.sessao.count({
+    where: { status: 'CONCLUIDA', data: { gte, lte } },
+  })
 
   // Votos - Votacao model has voto field with TipoVoto enum
   const votos = await prisma.votacao.findMany({

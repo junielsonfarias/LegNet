@@ -15,11 +15,14 @@ export interface VotacaoResumo {
 }
 
 export const calcularPresencaResumo = (
-  presencas: Array<{ presente: boolean; justificativa?: string | null }>
+  presencas: Array<{ presente: boolean; justificativa?: string | null }>,
+  // Denominador opcional: total de sessões do período de mandato (ERR-060). Sem
+  // ele, cai em presencas.length — que dá 100% quando ausências não são gravadas.
+  totalOverride?: number
 ): PresencaResumo => {
-  const total = presencas.length
   const presentes = presencas.filter(p => p.presente).length
-  const ausentes = total - presentes
+  const total = totalOverride ?? presencas.length
+  const ausentes = Math.max(0, total - presentes)
   const justificadas = presencas.filter(p => !p.presente && !!p.justificativa).length
   const percentualPresenca = total === 0 ? 0 : Math.round((presentes / total) * 100)
 

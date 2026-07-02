@@ -408,16 +408,19 @@ export async function calcularMetricasParlamentares(
             }
           }
         }
+      },
+      mandatos: {
+        select: { dataInicio: true, dataFim: true }
       }
     }
   })
 
-  // Total de sessões e votações no período
-  const totalSessoes = await prisma.sessao.count({
-    where: {
-      data: { gte: inicio, lte: fim },
-      status: 'CONCLUIDA'
-    }
+  // Datas das sessões CONCLUIDA do período — o denominador de presença é POR
+  // parlamentar, restrito ao período de mandato dele dentro de [inicio, fim]
+  // (ERR-060), não uma contagem global igual para todos.
+  const sessoesPeriodo = await prisma.sessao.findMany({
+    where: { data: { gte: inicio, lte: fim }, status: 'CONCLUIDA' },
+    select: { data: true }
   })
 
   const totalVotacoes = await prisma.proposicao.count({
@@ -434,6 +437,17 @@ export async function calcularMetricasParlamentares(
     ).length
     const presencaSessoes = p.presencas.filter(pr => pr.presente).length
     const participacaoVotacoes = p.votacoes.length
+
+    // Denominador restrito ao período de mandato do parlamentar dentro de [inicio, fim].
+    const mInicios = (p.mandatos ?? []).map(m => m.dataInicio).filter((d): d is Date => !!d)
+    const mFins = (p.mandatos ?? []).map(m => m.dataFim).filter((d): d is Date => !!d)
+    const efInicio = mInicios.length
+      ? new Date(Math.max(inicio.getTime(), Math.min(...mInicios.map(d => d.getTime()))))
+      : inicio
+    const efFim = mFins.length
+      ? new Date(Math.min(fim.getTime(), Math.max(...mFins.map(d => d.getTime()))))
+      : fim
+    const totalSessoes = sessoesPeriodo.filter(s => s.data >= efInicio && s.data <= efFim).length
 
     return {
       parlamentarId: p.id,

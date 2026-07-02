@@ -1,8 +1,39 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-07-02 (Auditoria integração front↔back público, Tier 1 — ERR-059)
+> **Ultima Atualizacao**: 2026-07-02 (Item de pauta exibia número OCR errado — ERR-062)
 > **Versao Analisada**: 1.39.0
+
+---
+
+### Correções Aplicadas em 2026-07-02 (Item de pauta com número de OCR errado)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-062 | Em `/legislativo/pautas-sessoes`, um item mostrava **"Requerimento nº 1420/2025"** ao lado do badge correto **"REQUERIMENTO 420/2025"** — o OCR da pauta leu "420" como "1420". O banco está correto (proposição `numero=420`, `titulo="Requerimento nº 420/2025"`); o "1420" vinha do campo `pauta_itens.titulo` (transcrição OCR do PDF). A normalização da página preferia esse título de OCR (`it.titulo \|\| proposicao.ementa`) sobre os dados canônicos da proposição vinculada. Sistêmico: **393 itens** de pauta têm proposição vinculada + título OCR com "nº <número>" — qualquer um pode ter erro de leitura. | Na normalização de itens (`pautas-sessoes/page.tsx`), quando há proposição vinculada, o texto passou a usar a **ementa canônica** dela (`proposicao.ementa \|\| it.titulo`), e o número já vinha do badge canônico (`tipo numero/ano` da proposição). Assim os 393 itens exibem número/descrição corretos, ignorando erros de OCR. O valor OCR permanece no banco (útil para itens SEM proposição vinculada), mas não é mais exibido quando há a fonte canônica. Página 200, diagnostics 0. **Varredura de alcance:** dos 393 itens com número no título OCR, **só 1 divergia** (este 420→1420); 0 proposições com `numero` de 4+ dígitos; 0 itens sem proposição com número suspeito → **caso único** no acervo. O registro DEV foi corrigido (`UPDATE pauta_itens SET titulo='Requerimento nº 420/2025'`), mas por ser dado transiente a proteção durável é o fix de código. |
+
+---
+
+### Correções Aplicadas em 2026-07-02 (Votações nominais — `/transparencia/legislativo/votacoes-nominais`)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-061 | Página **sempre vazia** e, mesmo carregando, com formato/ano errados. **3 problemas sobrepostos:** (1) **envelope** — lia `json.success ? json.data : ...` mas `/api/dados-abertos/votacoes` devolve `{dados}` (sem `success`) → `[]`; (2) **shape** — a API devolve UMA linha por voto individual, mas a tela espera votações AGREGADAS (`votos[]`, `totalSim/Nao/Abstencao`, `resultado`); (3) **ano padrão** — iniciava em `new Date().getFullYear()` (2026), mas todos os votos nominais são de **2024** → abria vazia. Dados reais: 36 votos → 4 votações (PROJETO_LEI 005/009/010/011 de 2024, todas APROVADA por unanimidade), inferidos pelo importador `42-votacao-nominal` das atas ("aprovado por unanimidade"). | Refatorado o carregamento: busca todos os votos (`?limit=1000`, lê `json.dados`), **agrega por proposição** em votações (votos[] + totais + resultado derivado de SIM>NAO), e deriva o **ano padrão = mais recente com dados** (→ 2024). O render já suportava o shape `Votacao`. Verificado: página 200, 4 votações agregadas, diagnostics 0. |
+
+---
+
+### Correções Aplicadas em 2026-07-02 (Perfil do parlamentar: % de presença e total de matérias)
+
+Análise de `/parlamentares/cristiani-santos` comparando página ↔ banco ↔ backup CR2.
+Dados básicos, biografia, partido (PT), cargo (Vice-Presidente), comissões e proposições
+conferem (banco tem 14 matérias, superset do backup=7 — extras recuperadas de pauta OCR).
+Dois bugs de CÁLCULO encontrados e a varredura por "mesmo erro em outros lugares".
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-060 | **P1 — % de presença com denominador global.** `parlamentarDbService.getPerfil` calculava `totalSessoes = sessao.count({status:'CONCLUIDA'})` = TODAS as 271 sessões (2016-2025), dividindo a presença de uma vereadora de 2025 por sessões que não eram dela → **10,33%** (28/271) em vez de ~80% (28/35). Afetava todos os parlamentares. **P2 — total de matérias limitado a 10.** `materiasAutor = parlamentar.proposicoes.length`, mas `proposicoes` tinha `take:10` → total travado em 10 (real=14) e distribuição somando >100%. **Mesmo padrão de denominador em mais lugares:** rota pública `/api/publico/relatorio-parlamentar/[id]` (`totalSessoes = presencas.length` → 100%), `getDashboard` + `dashboard-utils.calcularPresencaResumo` (registros próprios → 100%), `analytics-service` (contagem global de sessões do período igual p/ todos → subestima quem entrou no meio). | **P1:** denominador = sessões CONCLUIDA no **período de mandato** do parlamentar (`mandato.dataInicio..dataFim`), consistente em todos os pontos. **P2:** `materiasAutor = proposicao.count({where:{autorId}})` real. Rota pública, `getDashboard`/`dashboard-utils` (novo param opcional `totalOverride`) e `analytics-service` (denominador por mandato ∩ período, por parlamentar) alinhados. Verificado: perfil e relatório público agora **28/35 = 80%**, matérias **14**, distribuição ~100%. Diagnostics 0. |
+
+**Ainda pendente (relacionado, não corrigido):** `relatorio-agendado-service.gerarRelatorioPresencaParlamentar` (relatório Excel agendado, admin) usa `presentes/(presentes+ausentes)` = registros próprios → 100% quando ausências não são gravadas (escopo anual, menor visibilidade). Data gap: `mandato.numeroVotos=0` (os 365 votos da Cristiani estão só no texto da bio do CR2, não em campo estruturado). Votos nominais individuais inexistem na fonte.
 
 ---
 
