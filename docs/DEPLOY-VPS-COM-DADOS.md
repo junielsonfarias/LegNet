@@ -24,10 +24,22 @@ presenças · 36 votações).
 ## Passo a passo
 
 ### 1. Código no VPS
+
+O `install.sh`/`setup-app.sh` já usa **`git clone --depth 1`** (shallow — sem
+histórico, sem os 22 MB de PDFs antigos que não estão mais no HEAD):
 ```bash
-sudo git clone <repo> /opt/camara
+sudo git clone --depth 1 <repo> /opt/camara
 cd /opt/camara
 ```
+
+**Deploy enxuto (opcional, ainda menor):** o `.gitattributes` marca `docs/`,
+testes, `prisma/importers/`, `.github/`, `.claude/` etc. como `export-ignore`.
+Para levar só o necessário (sem docs, sem `.git`), use `git archive`:
+```bash
+git -C <repo-local> archive --format=tar main | sudo tar -x -C /opt/camara
+# (ou, no servidor:  git archive --remote=<repo> main | tar -x -C /opt/camara)
+```
+> O app **não lê `docs/` em runtime nem em build** — é seguro não enviá-lo.
 
 ### 2. Configurar o `.env`
 ```bash
