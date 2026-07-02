@@ -1,0 +1,31 @@
+# ============================================================================
+# export-ignore: caminhos EXCLUÍDOS do tarball de produção (git archive).
+# O app NÃO lê docs/ nem executa os itens abaixo em runtime/build.
+# Mantidos no repositório (para o time), mas fora do deploy de produção.
+#
+# Deploy enxuto de produção:
+#   git archive --format=tar main | tar -x -C /opt/camara
+# ============================================================================
+docs/                       export-ignore
+.github/                    export-ignore
+.claude/                    export-ignore
+prisma/importers/           export-ignore
+src/tests/                  export-ignore
+e2e/                        export-ignore
+load-tests/                 export-ignore
+**/*.test.ts                export-ignore
+**/*.test.tsx               export-ignore
+**/*.spec.ts                export-ignore
+playwright.config.ts        export-ignore
+vitest.config.ts            export-ignore
+.vscode/                    export-ignore
+
+# Scripts de uso apenas em desenvolvimento (manual/screenshots/auditoria)
+scripts/build-manual.sh                 export-ignore
+scripts/gerar-manual-pdf.sh             export-ignore
+scripts/gerar-manual-pdf.js             export-ignore
+scripts/gerar-placeholders-manual.js    export-ignore
+scripts/capturar-screenshots-manual.js  export-ignore
+scripts/manual-capturas-config.js       export-ignore
+scripts/manual-volumes.js               export-ignore
+scripts/security-audit.js               export-ignore

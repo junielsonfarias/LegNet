@@ -1,11 +1,28 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (deploy VPS com dados migrados — pg_dump seed + runbook)
-> **Versao**: 1.40.9
+> **Ultima Atualizacao**: 2026-07-02 (limpeza repo p/ produção: -22MB PDF + export-ignore)
+> **Versao**: 1.40.10
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Limpeza do repositório para produção
+
+Análise do que vai ao Git (e daí à produção via clone). O app **não lê `docs/` em
+runtime nem em build** → dispensável em produção. Ações:
+- **Removido** `docs/PNTP/Cartilha-PNTP-2026.pdf` (**22 MB**, cartilha externa não
+  referenciada — inflava todo clone) + legado (`docs/cm-chaves-limpo.json`,
+  `prisma/migrate-chaves.ts`, `scripts/migrar-dados-chaves.sh`, substituídos pelos
+  importadores + seed).
+- **`.gitattributes` com `export-ignore`** (`docs/`, `.github/`, `.claude/`,
+  `prisma/importers/`, `src/tests/`, `e2e/`, `load-tests/`, testes, scripts-dev) →
+  deploy enxuto via `git archive` (só o necessário; docs seguem no repo p/ o time).
+- Runbook atualizado com `git clone --depth 1` (já usado pelo `setup-app.sh`) e a
+  opção `git archive`. Verificado: archive exclui docs/importers/testes (=0) e mantém
+  src/prisma/scripts(lib+sql+restore)/configs/public.
 
 ---
 
