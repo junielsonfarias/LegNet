@@ -334,9 +334,32 @@ export const parlamentarDbService = {
 
     if (!parlamentar) return null
 
+    // Denominador de presença = sessões CONCLUIDA DENTRO do período de mandato do
+    // parlamentar, não todas as sessões históricas (ERR-060). Assim uma vereadora
+    // de 2025 não é medida contra as sessões de 2016-2024.
+    const mandatoInicios = parlamentar.mandatos
+      .map(m => m.dataInicio)
+      .filter((d): d is Date => !!d)
+    const mandatoFins = parlamentar.mandatos
+      .map(m => m.dataFim)
+      .filter((d): d is Date => !!d)
+    const mandatoInicio = mandatoInicios.length
+      ? new Date(Math.min(...mandatoInicios.map(d => d.getTime())))
+      : null
+    const mandatoFim = mandatoFins.length
+      ? new Date(Math.max(...mandatoFins.map(d => d.getTime())))
+      : null
+
     // Calcular estatísticas
-    const [totalSessoes, totalProposicoes, proposicoesPorTipo, proposicoesPorStatus] = await Promise.all([
-      prisma.sessao.count({ where: { status: 'CONCLUIDA' } }),
+    const [totalSessoes, materiasAutor, totalProposicoes, proposicoesPorTipo, proposicoesPorStatus] = await Promise.all([
+      prisma.sessao.count({
+        where: mandatoInicio
+          ? { status: 'CONCLUIDA', data: { gte: mandatoInicio, ...(mandatoFim ? { lte: mandatoFim } : {}) } }
+          : { status: 'CONCLUIDA' }
+      }),
+      // Total REAL de matérias por autor (a lista `proposicoes` acima tem take:10,
+      // então NÃO serve como total — ERR-060).
+      prisma.proposicao.count({ where: { autorId: id } }),
       prisma.proposicao.count(),
       prisma.proposicao.groupBy({
         by: ['tipo'],
@@ -355,7 +378,6 @@ export const parlamentarDbService = {
       ? Math.round((sessoesPresente / totalSessoes) * 100 * 100) / 100
       : 0
 
-    const materiasAutor = parlamentar.proposicoes.length
     const percentualMaterias = totalProposicoes > 0
       ? Math.round((materiasAutor / totalProposicoes) * 100 * 100) / 100
       : 0
@@ -560,8 +582,24 @@ export const parlamentarDbService = {
       })
     ])
 
+    // Denominador de presença = sessões CONCLUIDA no período de mandato (ERR-060),
+    // consistente com getPerfil. Sem isso, o dashboard mostraria ~100%.
+    const dInicios = (parlamentar.mandatos as Array<{ dataInicio: Date | null }>)
+      .map(m => m.dataInicio).filter((d): d is Date => !!d)
+    const dFins = (parlamentar.mandatos as Array<{ dataFim: Date | null }>)
+      .map(m => m.dataFim).filter((d): d is Date => !!d)
+    const dGte = dInicios.length ? new Date(Math.min(...dInicios.map(d => d.getTime()))) : null
+    const dLte = dFins.length ? new Date(Math.max(...dFins.map(d => d.getTime()))) : null
+    const totalSessoesMandato = await prisma.sessao.count({
+      where: {
+        status: 'CONCLUIDA',
+        ...(dGte ? { data: { gte: dGte, ...(dLte ? { lte: dLte } : {}) } } : {}),
+      },
+    })
+
     const presencaResumo = calcularPresencaResumo(
-      presencas.map(p => ({ presente: p.presente, justificativa: p.justificativa }))
+      presencas.map(p => ({ presente: p.presente, justificativa: p.justificativa })),
+      totalSessoesMandato
     )
 
     const votacaoResumo = calcularVotacaoResumo(
