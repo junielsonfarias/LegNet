@@ -46,11 +46,28 @@ export default function GestaoFiscalPage() {
   })
   const [pesquisando, setPesquisando] = useState(false)
 
-  const documentos: any[] = []
-
-  const [resultados, setResultados] = useState(documentos)
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [documentos, setDocumentos] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [resultados, setResultados] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const indicadores: any[] = []
+
+  // Documentos fiscais REAIS (a página era um stub vazio). Fonte:
+  // documentos_transparencia (RGF, Relatório de Gestão, Balancete, LDO/LOA/PPA). ERR-063.
+  useEffect(() => {
+    const FISCAIS = ['BALANCETE_FINANCEIRO', 'RELATORIO_GESTAO', 'RGF', 'LDO', 'LOA', 'PPA']
+    fetch('/api/documentos-transparencia?status=publicado&limit=500')
+      .then((r) => r.json())
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then((j) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const docs = ((j.data ?? j.dados ?? []) as any[]).filter((d) => FISCAIS.includes(d.tipo))
+        setDocumentos(docs)
+        setResultados(docs)
+      })
+      .catch(() => {})
+  }, [])
 
   const tiposDocumento = [
     'LDO - Lei de Diretrizes Orçamentárias',

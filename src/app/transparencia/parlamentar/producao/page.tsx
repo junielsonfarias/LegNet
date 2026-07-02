@@ -38,7 +38,7 @@ export default function ProducaoPage() {
     fetch('/api/dados-abertos/parlamentares')
       .then((res) => res.json())
       .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
+        const data = json.dados ?? json.data ?? (Array.isArray(json) ? json : [])
         setParlamentares(data)
       })
       .catch(console.error)
@@ -52,7 +52,7 @@ export default function ProducaoPage() {
     fetch(`/api/dados-abertos/proposicoes?${params}`)
       .then((res) => res.json())
       .then((json) => {
-        const data = json.success ? json.data : (Array.isArray(json) ? json : [])
+        const data = json.dados ?? json.data ?? (Array.isArray(json) ? json : [])
         setProposicoes(data)
       })
       .catch(console.error)

@@ -24,9 +24,8 @@ export default function RelatorioListaPage() {
     fetch('/api/dados-abertos/parlamentares')
       .then((res) => res.json())
       .then((json) => {
-        if (json.success) setParlamentares(json.data)
-        else if (Array.isArray(json.data)) setParlamentares(json.data)
-        else if (Array.isArray(json)) setParlamentares(json)
+        // /api/dados-abertos/* usa envelope { dados, metadados }
+        setParlamentares(json.dados ?? json.data ?? (Array.isArray(json) ? json : []))
       })
       .catch(console.error)
       .finally(() => setLoading(false))

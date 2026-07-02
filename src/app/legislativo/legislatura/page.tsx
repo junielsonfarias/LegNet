@@ -1,12 +1,53 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, Users, FileText, CheckCircle, Clock, Building, Award, BarChart3 } from 'lucide-react'
+import { Calendar, Users, FileText, Building, BarChart3, CheckCircle, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-institucional'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Any = any
 
 export default function LegislaturaPage() {
   const { configuracao } = useConfiguracaoInstitucional()
+  const [dados, setDados] = useState<{
+    anoInicio?: number; anoFim?: number; numero?: number
+    vereadores: number; leis?: number; sessoes?: number
+    partidos: Array<{ partido: string; total: number }>
+  } | null>(null)
+
+  // Página era 100% estática (dados fabricados). Agora deriva do banco. ERR-063.
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/legislaturas?limit=20').then((r) => r.json()).catch(() => null),
+      fetch('/api/parlamentares?ativo=true&limit=100').then((r) => r.json()).catch(() => null),
+      fetch('/api/dados-abertos/sessoes?limit=1').then((r) => r.json()).catch(() => null),
+      fetch('/api/normas?limit=1').then((r) => r.json()).catch(() => null),
+    ]).then(([legs, parl, sess, norm]: Any[]) => {
+      const listaLeg = (legs?.data ?? legs?.dados ?? legs?.data?.legislaturas ?? []) as Any[]
+      const atual = Array.isArray(listaLeg) && listaLeg.length
+        ? [...listaLeg].sort((a, b) => (b.anoInicio || 0) - (a.anoInicio || 0))[0]
+        : null
+      const vers = (parl?.data ?? parl?.dados ?? []) as Any[]
+      const mapa = new Map<string, number>()
+      vers.forEach((v) => { const p = v.partido || 'Sem partido'; mapa.set(p, (mapa.get(p) || 0) + 1) })
+      const partidos = Array.from(mapa.entries())
+        .map(([partido, total]) => ({ partido, total }))
+        .sort((a, b) => b.total - a.total)
+      setDados({
+        anoInicio: atual?.anoInicio, anoFim: atual?.anoFim, numero: atual?.numero,
+        vereadores: vers.length,
+        leis: norm?.total ?? norm?.data?.total ?? norm?.metadados?.total,
+        sessoes: sess?.metadados?.total ?? sess?.total,
+        partidos,
+      })
+    })
+  }, [])
+
+  const periodo = dados?.anoInicio && dados?.anoFim ? `${dados.anoInicio}-${dados.anoFim}` : '—'
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-12">
@@ -27,14 +68,15 @@ export default function LegislaturaPage() {
             <CardHeader>
               <CardTitle className="text-2xl font-semibold text-camara-primary flex items-center">
                 <Calendar className="h-6 w-6 mr-2" />
-                Legislatura 2021-2024
+                Legislatura {periodo}
               </CardTitle>
             </CardHeader>
             <CardContent className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed mb-4">
-                A atual legislatura da {configuracao?.nomeCasa || 'Câmara Municipal'} teve início 
-                em 1º de janeiro de 2021 e se estende até 31 de dezembro de 2024. 
-                Esta é a 17ª legislatura desde a criação do município.
+                A atual legislatura da {configuracao?.nomeCasa || 'Câmara Municipal'}
+                {dados?.anoInicio ? ` teve início em 1º de janeiro de ${dados.anoInicio}` : ''}
+                {dados?.anoFim ? ` e se estende até 31 de dezembro de ${dados.anoFim}` : ''}
+                {dados?.numero ? `. Esta é a ${dados.numero}ª legislatura desde a criação do município` : ''}.
               </p>
               <p className="text-gray-700 leading-relaxed">
                 Durante este período, os vereadores eleitos trabalham em prol do 
@@ -56,7 +98,7 @@ export default function LegislaturaPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-camara-primary/10 flex items-center justify-center">
                   <Users className="h-8 w-8 text-camara-primary" />
                 </div>
-                <h3 className="text-3xl font-bold text-camara-primary mb-2">11</h3>
+                <h3 className="text-3xl font-bold text-camara-primary mb-2">{dados?.vereadores ?? '—'}</h3>
                 <p className="text-sm text-gray-600">Vereadores Eleitos</p>
               </CardContent>
             </Card>
@@ -66,8 +108,8 @@ export default function LegislaturaPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
                   <FileText className="h-8 w-8 text-green-600" />
                 </div>
-                <h3 className="text-3xl font-bold text-green-600 mb-2">247</h3>
-                <p className="text-sm text-gray-600">Leis Aprovadas</p>
+                <h3 className="text-3xl font-bold text-green-600 mb-2">{dados?.leis ?? '—'}</h3>
+                <p className="text-sm text-gray-600">Normas Jurídicas</p>
               </CardContent>
             </Card>
 
@@ -76,7 +118,7 @@ export default function LegislaturaPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
                   <Calendar className="h-8 w-8 text-purple-600" />
                 </div>
-                <h3 className="text-3xl font-bold text-purple-600 mb-2">156</h3>
+                <h3 className="text-3xl font-bold text-purple-600 mb-2">{dados?.sessoes ?? '—'}</h3>
                 <p className="text-sm text-gray-600">Sessões Realizadas</p>
               </CardContent>
             </Card>
@@ -86,8 +128,8 @@ export default function LegislaturaPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
                   <BarChart3 className="h-8 w-8 text-orange-600" />
                 </div>
-                <h3 className="text-3xl font-bold text-orange-600 mb-2">89%</h3>
-                <p className="text-sm text-gray-600">Presença Média</p>
+                <h3 className="text-3xl font-bold text-orange-600 mb-2">{dados?.partidos.length ?? '—'}</h3>
+                <p className="text-sm text-gray-600">Partidos</p>
               </CardContent>
             </Card>
           </div>
@@ -130,43 +172,19 @@ export default function LegislaturaPage() {
                   A atual legislatura é composta por vereadores de diferentes partidos políticos:
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <h4 className="font-semibold text-red-900 mb-2">Partido dos Trabalhadores (PT)</h4>
-                    <p className="text-2xl font-bold text-red-600">3</p>
-                    <p className="text-sm text-red-700">vereadores</p>
+                {dados && dados.partidos.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {dados.partidos.map((p) => (
+                      <div key={p.partido} className="p-4 bg-camara-primary/5 rounded-lg">
+                        <h4 className="font-semibold text-camara-primary mb-2">{p.partido}</h4>
+                        <p className="text-2xl font-bold text-camara-primary">{p.total}</p>
+                        <p className="text-sm text-camara-primary">{p.total === 1 ? 'vereador' : 'vereadores'}</p>
+                      </div>
+                    ))}
                   </div>
-
-                  <div className="p-4 bg-camara-primary/5 rounded-lg">
-                    <h4 className="font-semibold text-camara-primary mb-2">Partido Social Democrático (PSD)</h4>
-                    <p className="text-2xl font-bold text-camara-primary">2</p>
-                    <p className="text-sm text-camara-primary">vereadores</p>
-                  </div>
-
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <h4 className="font-semibold text-green-900 mb-2">Partido Verde (PV)</h4>
-                    <p className="text-2xl font-bold text-green-600">2</p>
-                    <p className="text-sm text-green-700">vereadores</p>
-                  </div>
-
-                  <div className="p-4 bg-purple-50 rounded-lg">
-                    <h4 className="font-semibold text-purple-900 mb-2">Partido Liberal (PL)</h4>
-                    <p className="text-2xl font-bold text-purple-600">2</p>
-                    <p className="text-sm text-purple-700">vereadores</p>
-                  </div>
-
-                  <div className="p-4 bg-orange-50 rounded-lg">
-                    <h4 className="font-semibold text-orange-900 mb-2">Partido Republicano (PR)</h4>
-                    <p className="text-2xl font-bold text-orange-600">1</p>
-                    <p className="text-sm text-orange-700">vereador</p>
-                  </div>
-
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Outros</h4>
-                    <p className="text-2xl font-bold text-gray-600">1</p>
-                    <p className="text-sm text-gray-700">vereador</p>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">Carregando composição partidária...</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -181,62 +199,14 @@ export default function LegislaturaPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Lei do Orçamento Participativo</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Implementação do orçamento participativo, permitindo maior envolvimento 
-                      da população nas decisões orçamentárias do município.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Código de Proteção Animal</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Criação de legislação específica para proteção e bem-estar dos animais 
-                      no município, estabelecendo políticas públicas de controle populacional.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Lei de Incentivo à Cultura</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Estabelecimento de mecanismos de fomento à cultura local, incluindo 
-                      incentivos fiscais e editais públicos para projetos culturais.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Plano Municipal de Saneamento</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Aprovação do Plano Municipal de Saneamento Básico, estabelecendo 
-                      diretrizes para o desenvolvimento sustentável do município.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Transparência Digital</h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Implementação de sistema de transparência digital, garantindo 
-                      acesso público às informações sobre a gestão municipal.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-gray-700 leading-relaxed mb-4">
+                As leis, decretos e resoluções aprovados nesta legislatura estão
+                disponíveis na íntegra na base de normas jurídicas da Câmara
+                {dados?.leis ? ` (${dados.leis} normas)` : ''}.
+              </p>
+              <Button asChild>
+                <Link href="/legislativo/normas">Ver normas jurídicas</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -312,22 +282,14 @@ export default function LegislaturaPage() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-semibold text-gray-900 mb-2">Próximos Eventos</h5>
-                  <div className="space-y-2 text-sm text-gray-700">
-                    <div className="flex items-center justify-between">
-                      <span>Reunião da Mesa Diretora</span>
-                      <span className="text-camara-primary font-medium">15/01/2024</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Sessão Ordinária</span>
-                      <span className="text-camara-primary font-medium">20/01/2024</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Audiência Pública - Orçamento 2024</span>
-                      <span className="text-camara-primary font-medium">25/01/2024</span>
-                    </div>
+                <div className="bg-gray-50 p-4 rounded-lg flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <Clock className="h-4 w-4 text-camara-primary" />
+                    <span>Consulte a agenda oficial de sessões e eventos.</span>
                   </div>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/calendario">Abrir calendário</Link>
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -347,13 +309,17 @@ export default function LegislaturaPage() {
                 histórico completo da legislatura.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg">
-                  <Users className="h-5 w-5 mr-2" />
-                  Ver Vereadores
+                <Button asChild size="lg">
+                  <Link href="/parlamentares/vereadores">
+                    <Users className="h-5 w-5 mr-2" />
+                    Ver Vereadores
+                  </Link>
                 </Button>
-                <Button size="lg" variant="outline">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Proposições
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/legislativo/proposicoes">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Proposições
+                  </Link>
                 </Button>
               </div>
             </CardContent>

@@ -36,28 +36,32 @@ export default function ComparativoPage() {
   const carregarComparativo = async () => {
     try {
       setLoading(true)
-      // Buscar parlamentares da API real
-      const response = await fetch('/api/parlamentares?ativo=true')
+      // Estatísticas reais por parlamentar (sessões presentes + matérias)
+      const response = await fetch('/api/dados-abertos/parlamentares/estatisticas')
       const data = await response.json()
+      const lista: Array<{ id: string; nome: string; apelido?: string; partido?: string; sessoes: number; materias: number }> =
+        data.dados ?? data.data ?? []
 
-      if (data.success && data.data) {
-        // Gerar comparativo com dados reais (estatísticas zeradas por enquanto)
-        const parlamentaresComparativos = data.data.map((p: any, index: number) => ({
+      if (lista.length > 0) {
+        const ordenados = [...lista].sort((a, b) => (b.materias + b.sessoes) - (a.materias + a.sessoes))
+        const parlamentaresComparativos = ordenados.map((p, index) => ({
           id: p.id,
           nome: p.apelido || p.nome,
           partido: p.partido || 'Sem partido',
           ranking: index + 1,
-          pontuacao: 0, // TODO: Calcular com dados reais
+          pontuacao: p.materias + p.sessoes,
           dados: {
-            proposicoes: 0,
+            proposicoes: p.materias,
             aprovacoes: 0,
-            presenca: 0,
+            presenca: p.sessoes,
             participacao: 0
           }
         }))
 
         const agora = new Date()
         const inicioAno = new Date(agora.getFullYear(), 0, 1)
+        const n = lista.length
+        const media = (arr: number[]) => Math.round(arr.reduce((s, v) => s + v, 0) / n)
 
         setComparativo({
           periodo: {
@@ -66,9 +70,9 @@ export default function ComparativoPage() {
           },
           parlamentares: parlamentaresComparativos,
           metricas: {
-            mediaProposicoes: 0,
+            mediaProposicoes: media(lista.map(p => p.materias)),
             mediaAprovacoes: 0,
-            mediaPresenca: 0,
+            mediaPresenca: media(lista.map(p => p.sessoes)),
             mediaParticipacao: 0
           },
           geradoEm: agora

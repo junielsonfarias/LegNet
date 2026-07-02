@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { TransparenciaPageWrapper } from '@/components/transparencia/transparencia-page-wrapper'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,7 +22,9 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
-import { useServidores, useFolhaPagamento } from '@/lib/hooks/use-servidores'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Any = any
 
 const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   ATIVO: { color: 'bg-green-100 text-green-800', icon: <UserCheck className="h-4 w-4" /> },
@@ -36,14 +38,25 @@ const situacaoConfig: Record<string, { color: string; icon: React.ReactNode }> =
 }
 
 export default function FolhaPagamentoPage() {
-  const { servidores, loading: loadingServidores } = useServidores()
-  const { folhas, loading: loadingFolhas } = useFolhaPagamento()
+  // Página PÚBLICA: consome os endpoints públicos (não os autenticados
+  // /api/servidores e /api/folha-pagamento, que davam 401 ao cidadão). ERR-063.
+  const [servidores, setServidores] = useState<Any[]>([])
+  const [folhas, setFolhas] = useState<Any[]>([])
+  const [loading, setLoading] = useState(true)
   const [filtroSituacao, setFiltroSituacao] = useState('all')
   const [filtroVinculo, setFiltroVinculo] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [abaSelecionada, setAbaSelecionada] = useState<'servidores' | 'folhas'>('servidores')
 
-  const loading = loadingServidores || loadingFolhas
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/publico/servidores?limit=200').then((r) => r.json()).then((j) => j.data ?? []),
+      fetch('/api/publico/folha-pagamento?limit=200').then((r) => r.json()).then((j) => j.data ?? []),
+    ])
+      .then(([s, f]) => { setServidores(s); setFolhas(f) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
   const vinculos = useMemo(() => {
     const vinculosSet = new Set(servidores.map(s => s.vinculo))

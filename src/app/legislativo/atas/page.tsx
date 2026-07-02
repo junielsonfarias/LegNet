@@ -40,7 +40,7 @@ export default function AtasPage() {
   const fetchAtas = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ limit: '100', status: 'CONCLUIDA' })
+      const params = new URLSearchParams({ limit: '500', status: 'CONCLUIDA' })
       if (filtroTipo !== 'all') params.set('tipo', filtroTipo)
 
       const res = await fetch(`/api/dados-abertos/sessoes?${params}`)

@@ -23,7 +23,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const tipo = searchParams.get('tipo') || undefined
   const status = searchParams.get('status') || undefined
   const page = parseInt(searchParams.get('page') || '1')
-  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 500)
 
   const { dados, total } = await dadosAbertosService.getSessoes(
     { ano, tipo, status },
