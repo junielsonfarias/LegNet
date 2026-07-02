@@ -137,8 +137,11 @@ export default function ParlamentarPerfilPage() {
     // Normalizar o slug da URL para comparação (remover acentos, etc)
     const slugNormalizado = slugify(decodeURIComponent(slug))
     return parlamentares.find(p => {
-      const apelidoSlug = p.apelido ? slugify(p.apelido) : ''
-      return apelidoSlug === slugNormalizado || p.id === slug
+      // A lista gera o link a partir de `apelido || nome` (ver parlamentares/page.tsx
+      // e galeria); quando o apelido esta vazio, o slug vem do nome. Casar pelo mesmo
+      // criterio evita "parlamentar nao encontrado" para quem nao tem apelido.
+      const alvoSlug = slugify(p.apelido || p.nome)
+      return alvoSlug === slugNormalizado || p.id === slug
     })
   }, [parlamentares, slug])
 
@@ -169,7 +172,11 @@ export default function ParlamentarPerfilPage() {
     fetchPerfil()
   }, [parlamentarEncontrado?.id])
 
-  const loading = loadingParlamentares || loadingPerfil
+  // So considera "carregando perfil" quando ha um parlamentar para carregar.
+  // Sem isso, um slug sem match deixaria loadingPerfil=true para sempre (o
+  // useEffect retorna cedo e nunca reseta) → spinner infinito, sem cair na tela
+  // de "nao encontrado".
+  const loading = loadingParlamentares || (!!parlamentarEncontrado && loadingPerfil)
 
   // Memoizar votos (antes dos early returns para respeitar regra de hooks)
   const votosResumo = useMemo(() => {

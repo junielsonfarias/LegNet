@@ -28,6 +28,7 @@ import {
 import { ParlamentarCompleto } from '@/lib/types/parlamentar-avancado'
 import { toast } from 'sonner'
 import { createLogger } from '@/lib/logging/logger'
+import { slugify } from '@/lib/utils'
 
 const log = createLogger('parlamentares/perfil-completo')
 
@@ -46,18 +47,22 @@ export default function PerfilCompletoPage({ params: paramsPromise }: PerfilComp
   const carregarParlamentar = useCallback(async () => {
     try {
       setLoading(true)
-      // Buscar parlamentar da API real por slug
-      const response = await fetch(`/api/parlamentares?search=${encodeURIComponent(params.slug)}&ativo=true`)
+      // Busca a lista e resolve por slug (apelido||nome) OU id. NAO usar
+      // ?search=<slug>: o slug vem com hifens e o ILIKE por nome (com espacos)
+      // nunca casaria \u2014 retornava 0 e a pagina abria vazia (ver ERR-058).
+      const response = await fetch('/api/parlamentares')
       const data = await response.json()
 
       if (data.success && data.data && data.data.length > 0) {
-        // Encontrar o parlamentar pelo slug (apelido normalizado)
-        const parlamentarEncontrado = data.data.find((p: any) => {
-          const slugNormalizado = (p.apelido || p.nome).toLowerCase()
-            .replace(/\s+/g, '-')
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          return slugNormalizado === params.slug || p.id === params.slug
-        }) || data.data[0]
+        // Mesmo criterio de match da pagina /parlamentares/[slug]
+        const parlamentarEncontrado = data.data.find((p: any) =>
+          slugify(p.apelido || p.nome) === params.slug || p.id === params.slug
+        )
+
+        if (!parlamentarEncontrado) {
+          setParlamentar(null)
+          return
+        }
 
         // Converter para o formato ParlamentarCompleto
         const parlamentarCompleto: ParlamentarCompleto = {
