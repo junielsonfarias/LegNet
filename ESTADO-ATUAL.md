@@ -1,11 +1,27 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (instalação VPS automática/não-interativa + orquestrador)
-> **Versao**: 1.40.11
+> **Ultima Atualizacao**: 2026-07-02 (instalação automática detecta existente: update vs reinstall)
+> **Versao**: 1.40.12
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Instalação detecta existente: atualizar vs reinstalar
+
+O `install.sh` **já detectava** instalação existente (menu `1) Atualizar · 2) Reinstalar ·
+3) Cancelar`), mas o menu usava `read < /dev/tty` **sem proteção** para o modo automático —
+travaria numa 2ª execução via `curl | bash`. Corrigido:
+- **`install.sh`**: no modo não-interativo (`CAMARA_UNATTENDED=1`), a detecção de
+  instalação existente escolhe pela variável **`AUTO_INSTALL_MODE`** (`update` padrão =
+  preserva banco/config/dados; `reinstall` = apaga tudo e instala do zero), sem prompt.
+- **`scripts/instalar-producao.sh`**: expõe `AUTO_INSTALL_MODE`; detecta se `/opt/camara`
+  já existe **antes** do install.sh e **protege o restore** — numa *atualização* NÃO
+  recarrega o seed nem redefine o admin (preserva a produção); só popula em instalação
+  nova, `AUTO_INSTALL_MODE=reinstall` ou `RESTORE_SEED=1`.
+- Runbook `DEPLOY-VPS-COM-DADOS.md`: tabela update vs reinstall. Sintaxe validada (`bash -n`).
 
 ---
 

@@ -41,6 +41,31 @@ Ao final: site em `https://$SITE_DOMAIN`, login `$ADMIN_EMAIL`. O `install.sh` r
 não-interativo (`CAMARA_UNATTENDED=1`); o fluxo manual abaixo segue funcionando
 normalmente **sem** essas variáveis.
 
+### Rodar de novo numa VPS que já tem o sistema
+
+O `install.sh` **detecta instalação existente** (`/opt/camara`) sozinho. No fluxo
+automático você escolhe o comportamento pela variável `AUTO_INSTALL_MODE`:
+
+| `AUTO_INSTALL_MODE` | O que faz | Dados |
+|---------------------|-----------|-------|
+| `update` (**padrão**) | `git pull` + rebuild + migrações de schema | **Preserva** banco/config/dados. **Não** recarrega o seed nem mexe no admin. |
+| `reinstall` | Backup de emergência do banco, apaga `/opt/camara` e instala do zero | **Apaga tudo** e repopula com o seed; redefine o admin. |
+
+```bash
+# Atualizar o código, mantendo os dados de produção (padrão):
+curl -fsSL .../instalar-producao.sh | bash
+
+# Reinstalar do ZERO (apaga tudo e recarrega o seed):
+export AUTO_INSTALL_MODE=reinstall
+curl -fsSL .../instalar-producao.sh | bash
+
+# Atualizar mas forçar recarga do seed por cima (sobrescreve os dados atuais):
+export RESTORE_SEED=1
+curl -fsSL .../instalar-producao.sh | bash
+```
+> No modo **interativo** (`sudo bash install.sh` direto), ele mostra o menu
+> `1) Atualizar · 2) Reinstalar · 3) Cancelar` e a reinstalação pede digitar `SIM`.
+
 ---
 
 ## Passo a passo MANUAL (alternativa)
