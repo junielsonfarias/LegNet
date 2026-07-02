@@ -1,11 +1,68 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-01 (auditoria de páginas/links do frontend)
-> **Versao**: 1.40.1
+> **Ultima Atualizacao**: 2026-07-02 (merge da migração em main + limpeza de branches)
+> **Versao**: 1.40.2
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Correções: perfil de parlamentar sem apelido + service worker em dev
+
+Dois bugs encontrados após o merge (detalhes em `docs/ERROS-E-SOLUCOES.md`):
+
+**ERR-058 — Perfil público do parlamentar (spinner infinito)**. Como **os 36
+parlamentares têm apelido vazio** (11 ativos + 25 inativos), 100% dos perfis abertos
+por slug estavam quebrados: a lista gera o link de `slugify(apelido || nome)` (nome),
+mas o detalhe casava só por apelido → `parlamentarEncontrado = null` → e como
+`loadingPerfil` nunca era resetado, ficava em spinner eterno.
+- `parlamentares/[slug]/page.tsx`: match por `slugify(apelido || nome)` + `loading`
+  destravado (slug sem match agora cai em "não encontrado").
+- `parlamentares/[slug]/perfil-completo/page.tsx`: buscava `?search=<slug>` (hifens →
+  ILIKE não casava, 0 resultados; fallback `|| data.data[0]` abria o parlamentar
+  errado) → agora busca a lista e casa por `slugify(apelido || nome) === slug || id`.
+- `parlamentares/vereadores/page.tsx`: links "Perfil"/"Completo" usavam
+  `apelido.toLowerCase()` sem fallback → `slugify(apelido || nome) || id`.
+
+**ERR-057 — Service worker do PWA servindo `503 (Offline)` em dev**. Um SW registrado
+numa sessão de produção continuava controlando `localhost:3000` e devolvia 503 aos
+assets `_next/static` com o dev server fora do ar. Hardening em
+`src/components/pwa-register.tsx`: em `NODE_ENV !== 'production'`, desregistra qualquer
+SW existente e limpa os caches.
+
+tsc/diagnostics = 0; páginas de parlamentar retornam 200.
+
+---
+
+## 2026-07-02 — Merge da migração em `main` + limpeza de branches
+
+Consolidação em `main` de todo o trabalho da migração de dados históricos (Câmara de
+Chaves) e do polimento de UX pós-migração que estava na branch `feature/dev-db-local`.
+
+**Verificação antes do merge**:
+- `next build` **VERDE** (exit 0): compilou em 59s, **286 páginas estáticas**, 649
+  rotas coletadas, `tsc`/`eslint` sem erros. Confirmou que a falha de build de
+  2026-07-01 era contenção de recursos (3 dev servers), não bug de código.
+- **Crawl de runtime** (dev server sozinho, Postgres healthy): **22/22 páginas
+  públicas = HTTP 200** (incl. `/legislativo/proposicoes`, que antes travava no
+  compile, agora ~1,5s) e **4/4 rotas dinâmicas de detalhe = 200** (proposição,
+  sessão, norma, parlamentar por `[id]`). Endpoint `/api/publico/sessoes/[id]` = 200.
+  (Não existe rota de LISTAGEM `/api/publico/sessoes` — só a de detalhe por `[id]`;
+  404 nesse path é esperado, não é bug.)
+
+**PR e merge**:
+- `gh` CLI 2.95.0 instalado via winget e autenticado (junielsonfarias, escopo `repo`).
+- **PR #8** criado e **MERGEADO** em `main` — merge commit `7eeaa5d`
+  (65 commits, 135 arquivos, +8.834/−431).
+  https://github.com/junielsonfarias/LegNet/pull/8
+
+**Limpeza de branches** (todas já mergeadas, 0 commits perdidos):
+- `feature/dev-db-local` — remota e local deletadas (era `cef3797`).
+- `feature/migrate-confirms-2026-05-29` — remota e local deletadas (era `aa56b6d`).
+- Estado final: **apenas `main`** (local e `origin/main`); `main` local sincronizada
+  e working tree limpo.
 
 ---
 

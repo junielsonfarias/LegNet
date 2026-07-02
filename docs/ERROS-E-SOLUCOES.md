@@ -1,8 +1,24 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-06-30 (Ambiente DEV local Docker: ERR-053)
+> **Ultima Atualizacao**: 2026-07-02 (Perfil de parlamentar sem apelido: spinner infinito — ERR-058)
 > **Versao Analisada**: 1.39.0
+
+---
+
+### Correções Aplicadas em 2026-07-02 (Perfil público do parlamentar: spinner infinito quando o apelido é vazio)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-058 | Clicar em um parlamentar SEM apelido (ex.: "Cristiani Kelli Silva dos Santos", apelido vazio) em `/parlamentares/[slug]` deixava a página **carregando para sempre** (spinner "Carregando perfil..."), nunca exibindo os dados nem a tela de "não encontrado". **Duas causas:** (1) A lista gera o link a partir de `slugify(apelido \|\| nome)` (`parlamentares/page.tsx:51`, galeria idem) → slug vindo do NOME quando não há apelido; mas o detalhe casava **só pelo apelido** (`apelidoSlug = p.apelido ? slugify(p.apelido) : ''`) → `parlamentarEncontrado = null`. (2) Deadlock: `loadingPerfil` inicia `true` e o `useEffect` que o zera retorna cedo quando não há parlamentar → `loading = loadingParlamentares \|\| loadingPerfil` ficava `true` eternamente, sem cair no ramo de erro. Bug do mesmo tipo em `parlamentares/vereadores/page.tsx:426,435`, que montava o link com `vereador.apelido.toLowerCase()` (sem fallback e sem `?.` → link vazio ou crash se apelido null). | (1) Match do detalhe passou a usar `slugify(p.apelido \|\| p.nome)` (mesmo critério do link) + fallback por `id`. (2) `loading = loadingParlamentares \|\| (!!parlamentarEncontrado && loadingPerfil)` — slug sem match agora cai corretamente na tela "Parlamentar não encontrado". (3) `vereadores/page.tsx`: importado `slugify` e links trocados por `slugify(vereador.apelido \|\| vereador.nome) \|\| vereador.id`. (4) `perfil-completo/page.tsx`: buscava `?search=<slug>` — o slug tem hifens e o ILIKE por nome (com espaços) retornava **0** → página abria vazia (e o fallback `\|\| data.data[0]` podia abrir o parlamentar ERRADO); trocado por buscar a lista e casar por `slugify(apelido \|\| nome) === slug \|\| id === slug`, guardando not-found. **Escopo real: os 36 parlamentares têm apelido vazio → 100% dos perfis por slug estavam afetados.** tsc/diagnostics = 0; páginas retornam 200. |
+
+---
+
+### Correções Aplicadas em 2026-07-02 (PWA: service worker "grudado" servindo 503 Offline no dev)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-057 | Em desenvolvimento, o navegador retornava `GET /_next/static/... net::ERR_ABORTED 503 (Offline)` para `layout.css`, `webpack.js`, `main-app.js` etc. Causa: um **service worker** (`public/sw.js`) registrado numa sessão anterior de produção (`npm run build && npm start`) ou pelo site público continuava **controlando `localhost:3000`** mesmo em dev. Como os chunks levam `?v=<timestamp>` (cache-busting a cada build), o `cacheFirst` dava cache miss → `fetch()` → dev server fora do ar → SW devolvia `new Response('Offline', { status: 503 })` (sw.js:100). O `pwa-register.tsx` só registra o SW em produção, mas nada removia um SW pré-existente ao voltar pro dev. | (1) Imediato: subir o dev server (o `fetch` volta a ter sucesso) + desregistrar o SW no navegador (Console: `navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()))` + `caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)))`, ou DevTools → Application → Unregister + Clear site data). (2) Hardening em `pwa-register.tsx`: bloco `else` que, em `NODE_ENV !== 'production'`, **desregistra qualquer SW existente e limpa todos os caches** — impede o SW de produção de "grudar" no dev daqui pra frente. |
 
 ---
 
