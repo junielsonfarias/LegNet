@@ -1,11 +1,49 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (merge da migração em main + limpeza de branches)
-> **Versao**: 1.40.2
+> **Ultima Atualizacao**: 2026-07-02 (auditoria integração front↔back público, Tier 1)
+> **Versao**: 1.40.4
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Auditoria de integração frontend↔backend (site público) — Tier 1
+
+Auditoria de cada página pública vs suas APIs (3 agentes de análise estática + prova
+de runtime com dev server). ~30 achados; **Tier 1 corrigido** (ver ERR-059 em
+`docs/ERROS-E-SOLUCOES.md`, que também lista o backlog Tier 2/3). Resumo:
+
+- **Envelope lido errado** (páginas vazias): `calendario`, `institucional/e-sic`,
+  `institucional/ouvidoria`, paginação de `tramitacoes` — corrigidos para ler
+  `data.data.*`/`json.data.*`/`response.meta`.
+- **`limit>100` → 400**: cap elevado a `max(500)` em `programas-acoes`,
+  `cartoes-corporativos`, `ordem-pagamentos`, `documentos-transparencia`.
+- **Rota autenticada em página pública → 401**: `pessoal/{terceirizados,estagiarios}`
+  → `/api/publico/servidores`.
+- **Crashes**: `legislativo/pautas-sessoes` (normaliza `itens`→`expediente/ordemDoDia`)
+  e `busca` com filtro de ano (ISO datetime + guarda).
+
+Verificado: endpoints 400/401 → 200; 11/11 páginas afetadas → 200; diagnostics 0.
+Tier 2 (teto de 50/10, shapes divergentes, filtros mortos) e Tier 3 (páginas
+mock/estáticas) documentados como pendentes.
+
+---
+
+## 2026-07-02 — Preenchimento do apelido dos parlamentares
+
+Os 36 parlamentares vinham SEM apelido da migração (a fonte não tinha). Novo
+importador `prisma/importers/44-apelidos.ts` (fase `--only=apelidos`, idempotente)
+preenche `apelido` com a convenção **primeiro + último nome** (ex.: "Cristiani Kelli
+Silva dos Santos" → "Cristiani Santos"). O apelido dirige a exibição pública e o slug
+da URL, então o valor é garantido **único por slug**: se "primeiro + último" colidir,
+inclui tokens do meio até desambiguar. Não altera `nome`.
+
+Resultado: 36/36 preenchidos, **36 apelidos distintos**, 0 colisões (os 3 "Raimundo"
+ficaram Miranda/Silva/Brito). Novos slugs testados: `/parlamentares/cristiani-santos`,
+`raimundo-miranda/silva/brito` = 200. Fluxo:
+`npx tsx prisma/importers/index.ts --apply --only=apelidos`.
 
 ---
 
