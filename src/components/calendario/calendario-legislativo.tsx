@@ -75,7 +75,7 @@ export function CalendarioLegislativo({ className }: CalendarioLegislativoProps)
 
       const res = await fetch(url)
       const data = await res.json()
-      setEventos(data.eventos || [])
+      setEventos(data.data?.eventos || [])
     } catch (error) {
       log.error('Erro ao buscar eventos', error)
       setEventos([])

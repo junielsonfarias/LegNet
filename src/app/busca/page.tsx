@@ -96,13 +96,15 @@ function BuscaContent() {
       }
 
       if (anoSelecionado && anoSelecionado !== 'all') {
-        params.set('dataInicio', `${anoSelecionado}-01-01`)
-        params.set('dataFim', `${anoSelecionado}-12-31`)
+        params.set('dataInicio', `${anoSelecionado}-01-01T00:00:00.000Z`)
+        params.set('dataFim', `${anoSelecionado}-12-31T23:59:59.999Z`)
       }
 
       const res = await fetch(`/api/busca?${params.toString()}`)
       const data = await res.json()
-      setResultado(data)
+      // A API pode devolver {success:false,error} (ex.: validação); só seta um
+      // resultado válido para não quebrar o render (resultado.resultados.length).
+      setResultado(Array.isArray(data?.resultados) ? data : null)
     } catch (error) {
       log.error('Erro na busca', error)
     } finally {

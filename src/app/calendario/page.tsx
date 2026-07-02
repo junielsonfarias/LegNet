@@ -47,7 +47,7 @@ export default function CalendarioPage() {
         const res = await fetch('/api/calendario?periodo=proximos&limite=5')
         if (!res.ok) throw new Error('Erro ao carregar dados')
         const data = await res.json()
-        setProximosEventos(data.eventos || [])
+        setProximosEventos(data.data?.eventos || [])
       } catch (error) {
         log.error('Erro ao buscar proximos eventos', error)
       } finally {

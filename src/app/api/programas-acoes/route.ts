@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 const TIPOS = ['PROGRAMA', 'ACAO'] as const
 
 const QuerySchema = PaginationSchema.extend({
-  limit: z.coerce.number().int().min(1).max(100).default(50),
+  limit: z.coerce.number().int().min(1).max(500).default(50),
   ano: z.coerce.number().int().optional(),
   tipo: z.enum(TIPOS).optional(),
   ativo: z.coerce.boolean().optional()

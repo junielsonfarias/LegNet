@@ -107,7 +107,24 @@ export default function PautasSessoesPublicPage() {
       const result = await response.json()
 
       if (result.success && result.data) {
-        setPautas(result.data.pautas || [])
+        // A API pública devolve cada pauta com `itens[]` (campo `secao`); o layout
+        // espera `expediente[]` e `ordemDoDia[]`. Normaliza aqui para não quebrar
+        // (pauta.expediente.length) e derivar número/título da proposição.
+        const pautasNorm = (result.data.pautas || []).map((p: any) => {
+          const itens = (p.itens || []).map((it: any) => ({
+            ...it,
+            numero: it.proposicao
+              ? `${it.proposicao.tipo} ${it.proposicao.numero}/${it.proposicao.ano}`
+              : it.numero,
+            titulo: it.titulo || it.proposicao?.ementa || 'Item da pauta',
+          }))
+          return {
+            ...p,
+            expediente: itens.filter((it: any) => it.secao !== 'ORDEM_DO_DIA'),
+            ordemDoDia: itens.filter((it: any) => it.secao === 'ORDEM_DO_DIA'),
+          }
+        })
+        setPautas(pautasNorm)
         if (result.data.stats) {
           setStats(result.data.stats)
         }
