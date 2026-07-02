@@ -259,17 +259,6 @@ export default function NoticiasPage() {
           </Card>
         )}
 
-        {/* Paginação */}
-        <div className="mt-12 text-center">
-          <div className="flex justify-center space-x-2">
-            <Button variant="outline" size="sm" disabled>Anterior</Button>
-            <Button variant="outline" size="sm" className="bg-camara-primary text-white">1</Button>
-            <Button variant="outline" size="sm">2</Button>
-            <Button variant="outline" size="sm">3</Button>
-            <Button variant="outline" size="sm">Próximo</Button>
-          </div>
-        </div>
-
         {/* Newsletter */}
         <div className="mt-12">
           <Card className="camara-card bg-gradient-to-r from-camara-primary to-camara-secondary text-white">

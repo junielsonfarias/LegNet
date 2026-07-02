@@ -59,7 +59,7 @@ export function useConvenios(filters?: ConvenioFilters) {
       if (filters?.convenente) params.append('convenente', filters.convenente)
       if (filters?.orgaoConcedente) params.append('orgaoConcedente', filters.orgaoConcedente)
       params.append('page', (filters?.page || 1).toString())
-      params.append('limit', (filters?.limit || 50).toString())
+      params.append('limit', (filters?.limit || 500).toString())
 
       const response = await fetch(`/api/convenios?${params}`, { signal: controller.signal })
       const result = await response.json()
