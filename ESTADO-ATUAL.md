@@ -1,7 +1,7 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (validação ponta a ponta: 14 páginas + 5 ações admin — ERR-063)
-> **Versao**: 1.40.8
+> **Ultima Atualizacao**: 2026-07-02 (deploy VPS com dados migrados — pg_dump seed + runbook)
+> **Versao**: 1.40.9
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO

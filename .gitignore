@@ -3,6 +3,10 @@ node_modules/
 .pnp
 .pnp.js
 
+# Deploy: seed de dados de produção (contém dados reais — transferir por scp)
+deploy/*.sql
+deploy/*.sql.gz
+
 # Testing
 coverage/
 playwright-report/
