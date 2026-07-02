@@ -6,6 +6,14 @@
 
 ---
 
+### Correções Aplicadas em 2026-07-02 (Build no VPS falhava no ESLint)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-064 | 1ª instalação no VPS Debian 13 (KingHost): o `next build` **compilava OK (68s)** mas abortava no passo de ESLint com `Failed to compile … Error: Definition for rule '@typescript-eslint/no-explicit-any' was not found` em 3 páginas (`legislativo/legislatura`, `transparencia/folha-pagamento`, `transparencia/gestao-fiscal`). O site ficava **fora do ar** (health HTTP 000) porque o `.next` não era gerado. Causa: o `.eslintrc.json` estende só `next/core-web-vitals` e o plugin `@typescript-eslint` (transitivo de `eslint-config-next`) **não é registrado no ambiente de produção do VPS**, então os comentários `// eslint-disable-next-line @typescript-eslint/no-explicit-any` (adicionados em correções anteriores) referenciam uma regra "desconhecida" → ESLint trata como erro. Funcionava na Vercel (onde o plugin é resolvido), mas não no self-host. | `next.config.js` → `eslint.ignoreDuringBuilds: true` (antes `false`, decisão F1.5 validada só na Vercel). O ESLint deixa de rodar no `next build`; o **type-check do TypeScript continua** no build (não é afetado) e o lint segue disponível em dev/CI via `npm run lint`. Correção independente de ambiente: conserta o deploy do VPS e o `npm run build` manual. Também guardado o prompt de identidade visual do `do_update` no `install.sh` sob `CAMARA_UNATTENDED=1` (não trava mais em atualizações automáticas). `bash -n` OK; `next.config.js` carrega sem erro. |
+
+---
+
 ### Correções Aplicadas em 2026-07-02 (Validação ponta a ponta — 4 agentes + runtime)
 
 Validação de todo o sistema (4 agentes por domínio + tsc + crawl). Dados íntegros

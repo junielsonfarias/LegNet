@@ -313,9 +313,13 @@ detect_existing_installation() {
 do_update() {
   header "ATUALIZANDO SISTEMA"
 
-  # Perguntar se quer alterar identidade visual
+  # Perguntar se quer alterar identidade visual (pulado no modo nao-interativo)
   echo ""
-  read -rp "$(echo -e ${CYAN}Deseja alterar a identidade visual \(cores do portal\)?${NC} [s/N]: )" CHANGE_THEME < /dev/tty
+  if [ "${CAMARA_UNATTENDED:-}" = "1" ]; then
+    CHANGE_THEME="${CHANGE_THEME:-n}"
+  else
+    read -rp "$(echo -e ${CYAN}Deseja alterar a identidade visual \(cores do portal\)?${NC} [s/N]: )" CHANGE_THEME < /dev/tty
+  fi
   CHANGE_THEME="${CHANGE_THEME,,}"
   if [ "$CHANGE_THEME" = "s" ]; then
     select_identity
