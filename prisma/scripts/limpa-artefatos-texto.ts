@@ -12,8 +12,28 @@
  *   npx tsx prisma/scripts/limpa-artefatos-texto.ts --apply    # grava
  */
 import { PrismaClient } from '@prisma/client'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-const prisma = new PrismaClient()
+// PrismaClient não carrega .env em runtime (só a CLI do Prisma carrega). Ao rodar
+// via `npx tsx` numa shell limpa (ex.: no VPS), DATABASE_URL pode não estar no
+// ambiente — então lemos do .env do projeto como fallback.
+function resolveDatabaseUrl(): string | undefined {
+  if (process.env.DATABASE_URL) return process.env.DATABASE_URL
+  for (const nome of ['.env', '.env.production', '.env.local']) {
+    try {
+      const conteudo = readFileSync(resolve(process.cwd(), nome), 'utf8')
+      const linha = conteudo.split(/\r?\n/).find((l) => l.trim().startsWith('DATABASE_URL='))
+      if (linha) return linha.slice(linha.indexOf('=') + 1).trim().replace(/^["']|["']$/g, '')
+    } catch { /* arquivo ausente — tenta o próximo */ }
+  }
+  return undefined
+}
+
+const databaseUrl = resolveDatabaseUrl()
+const prisma = new PrismaClient(
+  databaseUrl ? { datasources: { db: { url: databaseUrl } } } : undefined
+)
 const APPLY = process.argv.includes('--apply')
 
 const RE = /\$?([A-Za-z0-9])\^\{?([oO0aA])\}?\$?/g
