@@ -220,11 +220,26 @@ export function limparTextoIntegralOCR<T extends string | null | undefined>(text
   // Palavras de conteúdo real: linha que as tem NUNCA é removida.
   const CONTEUDO =
     /requerimento|projeto|indica[çc][ãa]o|mo[çc][ãa]o|decreto|resolu[çc][ãa]o|autor|assunto|senhor|justificativa|vereador|sala das sess|solicit|c[âa]mara municipal|estado do par|considerando|resolve|art\.?\s*\d|ementa|par[áa]grafo|inciso/i
+  // Lixo de carimbo GRUDADO no fim de uma linha real (título/autor). São tokens
+  // que NÃO são palavras do português, então removê-los do fim é seguro; o
+  // conteúdo real (antes do token) é preservado.
+  const TRAILING_LIXO: RegExp[] = [
+    /\s*\blivront\b.*$/i, // "Livront OLD Fis" (carimbo "Livro nº ... Fls")
+    /\s*\bold\s+fis\b.*$/i,
+    /\s*\bdoZals\b.*$/i,
+    /\s*\bnaH5[\d\s-]*$/i,
+    /\s*[àa]s\s+\d+\s+\d+\s*horas?\.?\s*$/i, // hora do protocolo garbleada ("Às 14 300 horas")
+  ]
   // Lixo conhecido quando é a LINHA INTEIRA (âncoras evitam pegar texto real).
   const LIXO_LINHA =
-    /camscanner|digitalizado com|^\s*protocolo sob|^\s*!?\s*otocol\b|^\s*em\s+lo\s+do\b|^\s*,?\s*\d{1,3}\s*$/i
+    /camscanner|digitalizado com|^\s*protocolo sob|^\s*!?\s*otocol\b|^\s*em\s+lo\s+do\b|^\s*,?\s*\d{1,3}\s*$|^\s*[|]\s/i
   const limpo = (texto as string)
     .split(/\r?\n/)
+    .map((l) => {
+      let t = l
+      for (const re of TRAILING_LIXO) t = t.replace(re, '')
+      return t.replace(/\s+$/, '')
+    })
     .filter((l) => {
       const t = l.trim()
       if (t === '') return true // preserva parágrafos
