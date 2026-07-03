@@ -1,11 +1,25 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (fix: reinstalação automática — TEMA_NOME unbound)
-> **Versao**: 1.40.15
+> **Ultima Atualizacao**: 2026-07-02 (pós-deploy: sync de uploads + VLibras CSP)
+> **Versao**: 1.40.16
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Pós-deploy VPS: site no ar; uploads e VLibras
+
+Instalação automática **concluiu no VPS** (build corrigido + TEMA_NOME) — site
+respondendo. Dois ajustes de pós-deploy:
+- **Imagens 404/400** (fotos de parlamentares): o seed leva só o banco; os arquivos
+  de `public/uploads/` (~3 GB, git-ignored) não vão no clone. Novo
+  `scripts/sync-uploads.sh` (rsync ou tar/ssh) leva os uploads para
+  `/opt/camara/public/uploads/`; aceita subpasta (`parlamentares` = 1,2 MB) ou tudo.
+- **VLibras CSP**: o plugin do gov.br carrega script secundário de `cdn.jsdelivr.net`;
+  liberado em `script-src`/`script-src-elem` no `src/middleware.ts`.
+- Ver ERR-066/ERR-067; runbook passo 8.
 
 ---
 
