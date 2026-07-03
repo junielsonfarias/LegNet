@@ -206,6 +206,41 @@ export function normalizarTextoLegislativo<T extends string | null | undefined>(
 // "060" convivem), entao ordenar por string quebra. Estas helpers ordenam por
 // ANO (sempre desc) e depois pelo NUMERO INTEIRO (dir configuravel).
 
+// === LIMPEZA DE TEXTO INTEGRAL (OCR de PDF escaneado) ===
+//
+// O campo `texto` é OCR de documentos digitalizados e traz ruído físico do
+// papel: carimbo de protocolo, marca d'água do CamScanner, rabisco da assinatura,
+// cabeçalho/rodapé. Este limpador é CONSERVADOR e roda só no DISPLAY (não altera
+// o dado — preserva o original, RN-004): remove apenas linhas INTEIRAMENTE lixo
+// e nunca toca em linhas que contêm conteúdo real (protege título/autor/corpo,
+// mesmo quando o carimbo grudou na mesma linha). Resíduo inline é aceito de
+// propósito — removê-lo arriscaria apagar texto oficial.
+export function limparTextoIntegralOCR<T extends string | null | undefined>(texto: T): T {
+  if (!texto) return texto
+  // Palavras de conteúdo real: linha que as tem NUNCA é removida.
+  const CONTEUDO =
+    /requerimento|projeto|indica[çc][ãa]o|mo[çc][ãa]o|decreto|resolu[çc][ãa]o|autor|assunto|senhor|justificativa|vereador|sala das sess|solicit|c[âa]mara municipal|estado do par|considerando|resolve|art\.?\s*\d|ementa|par[áa]grafo|inciso/i
+  // Lixo conhecido quando é a LINHA INTEIRA (âncoras evitam pegar texto real).
+  const LIXO_LINHA =
+    /camscanner|digitalizado com|^\s*protocolo sob|^\s*!?\s*otocol\b|^\s*em\s+lo\s+do\b|^\s*,?\s*\d{1,3}\s*$/i
+  const limpo = (texto as string)
+    .split(/\r?\n/)
+    .filter((l) => {
+      const t = l.trim()
+      if (t === '') return true // preserva parágrafos
+      if (CONTEUDO.test(t)) return true // protege conteúdo real
+      if (LIXO_LINHA.test(t)) return false
+      const letras = (t.match(/[A-Za-zÀ-ÿ]/g) || []).length
+      if (letras < 3) return false // "/ : |) é", ", 06"
+      if (t.length <= 20 && letras / t.length < 0.5) return false // rabisco curto
+      return true
+    })
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+  return limpo as T
+}
+
 /** Extrai o inteiro inicial do numero da materia ("009-2" -> 9, "011" -> 11). */
 export function parseNumeroMateria(numero: string | number | null | undefined): number {
   const m = String(numero ?? '').match(/\d+/)

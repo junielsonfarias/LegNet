@@ -9,6 +9,16 @@
 
 ---
 
+## 2026-07-03 — Texto Integral: limpeza de ruído de OCR no display (ERR-071)
+
+O campo `texto` (OCR de PDFs escaneados) trazia carimbo/marca d'água/rabisco. Novo
+`limparTextoIntegralOCR` (legislative-labels.ts) — limpador CONSERVADOR **só no
+display** (não altera o banco; RN-004): remove linhas inteiramente-lixo, protege
+linhas com conteúdo real (título/autor). Aplicado em `/legislativo/proposicoes/[id]`
++ rótulo "Transcrição automática (OCR)" + link p/ documento original. tsc/build 0.
+
+---
+
 ## 2026-07-03 — Listagens: grafia "Nº" + ordem por número/ano (ERR-070)
 
 Ementas exibiam `$n^{0}$` (LaTeX de "nº") e as listas vinham fora de ordem (API por
