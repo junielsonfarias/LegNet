@@ -80,6 +80,14 @@ const nextConfig = {
     ],
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
+    // ERR-068: no self-host (VPS), o otimizador do next/image faz um fetch
+    // interno para 127.0.0.1:3000/uploads/... — mas o `next start` só serve
+    // arquivos de public/ que existiam NO BUILD. Uploads são adicionados em
+    // runtime (admin/sync), logo o Next devolve 404 e o otimizador responde
+    // 400 ("not a valid image"), quebrando fotos de parlamentares/logos.
+    // Com unoptimized, next/image renderiza <img src="/uploads/..."> puro,
+    // servido direto pelo nginx (200, com cache). Sem /_next/image no meio.
+    unoptimized: true,
   },
   
   // Configurações de compressão

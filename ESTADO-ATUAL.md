@@ -1,11 +1,26 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (pós-deploy: sync de uploads + VLibras CSP)
+> **Ultima Atualizacao**: 2026-07-03 (fix next/image 400 no self-host — fotos quebradas)
 > **Versao**: 1.40.16
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-03 — Fix: fotos quebradas em produção (`next/image` 400 no self-host)
+
+Auditoria de produção (`siscam.vps-kinghost.net`, deploy KingHost) via HTTP + SSH:
+- **Fotos de parlamentares quebradas** nas páginas apesar do `sync-uploads.sh`. Causa:
+  `next start` só serve `public/` do que existia **no build**; uploads são adicionados
+  em runtime → o Next devolve 404 em `127.0.0.1:3000/uploads/...` (nginx serve 200), e
+  o otimizador `/_next/image` responde 400. Fix: `next.config.js` `images.unoptimized:
+  true` → `next/image` vira `<img>` puro servido pelo nginx. Ver **ERR-068**.
+- **VLibras ainda pré-#20 em produção**: o CSP servido não continha `cdn.jsdelivr.net`
+  (o fix #20 já está em `main`, mas o build no VPS é anterior). Resolvido pelo mesmo
+  deploy update que leva o fix das fotos. Arquivo alterado: `next.config.js`.
+- Uploads de parlamentares **confirmados** no VPS (200 direto no nginx).
 
 ---
 
