@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { normalizarTextoLegislativo } from '@/lib/utils/legislative-labels'
+import { normalizarTextoLegislativo, limparTextoIntegralOCR } from '@/lib/utils/legislative-labels'
 import { Badge } from '@/components/ui/badge'
 import {
   FileText, User, Calendar, ArrowLeft, Download, ExternalLink,
@@ -334,10 +334,26 @@ export default function ProposicaoDetalhePage() {
                       )}
                     </Button>
                   </div>
+                  <p className="text-xs text-gray-400 mt-1.5">
+                    Transcrição automática (OCR) do documento digitalizado — pode conter ruídos da digitalização.
+                    {documentos.length > 0 && (
+                      <>
+                        {' '}Para a versão oficial, consulte o{' '}
+                        <a
+                          href={documentos[0].url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:text-camara-primary"
+                        >
+                          documento original
+                        </a>.
+                      </>
+                    )}
+                  </p>
                 </CardHeader>
                 <CardContent>
                   <div className={`prose max-w-none text-gray-700 whitespace-pre-wrap ${!showTextoCompleto ? 'max-h-64 overflow-hidden relative' : ''}`}>
-                    {normalizarTextoLegislativo(proposicao.texto)}
+                    {limparTextoIntegralOCR(normalizarTextoLegislativo(proposicao.texto))}
                     {!showTextoCompleto && (
                       <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />
                     )}
