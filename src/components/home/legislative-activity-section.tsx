@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { createLogger } from '@/lib/logging/logger'
+import { normalizarTextoLegislativo } from '@/lib/utils/legislative-labels'
 
 const log = createLogger('legislative-activity-section')
 import {
@@ -99,7 +100,7 @@ function ProposicaoItem({ prop }: { prop: Proposicao }) {
           </Badge>
         </div>
         <p className="text-sm text-gray-700 truncate mt-0.5">
-          {prop.titulo || prop.ementa || 'Sem titulo'}
+          {normalizarTextoLegislativo(prop.titulo || prop.ementa || 'Sem titulo')}
         </p>
       </div>
       <span className="text-xs text-gray-600 shrink-0 hidden md:block">
@@ -143,7 +144,7 @@ function VotacaoItem({ votacao }: { votacao: Votacao }) {
           </span>
         )}
         <p className="text-sm text-gray-700 truncate mt-0.5">
-          {votacao.proposicao?.titulo || votacao.proposicao?.ementa || 'Votacao'}
+          {normalizarTextoLegislativo(votacao.proposicao?.titulo || votacao.proposicao?.ementa || 'Votacao')}
         </p>
       </div>
       <div className="shrink-0 flex flex-col items-end gap-1">
@@ -218,9 +219,22 @@ export function LegislativeActivitySection() {
 
     const fetchVotacoes = async () => {
       try {
-        const res = await fetch('/api/dados-abertos/votacoes?limit=5')
+        // A API devolve UMA linha por voto individual → a mesma proposição
+        // repetia várias vezes. Buscamos um lote e deduplicamos por proposição,
+        // mantendo 5 matérias distintas (as mais recentes).
+        const res = await fetch('/api/dados-abertos/votacoes?limit=200')
         const data = await res.json()
-        setVotacoes(data.dados || data.data || [])
+        const rows: Votacao[] = data.dados || data.data || []
+        const vistos = new Set<string>()
+        const distintas: Votacao[] = []
+        for (const v of rows) {
+          const chave = v.proposicao?.id || v.proposicaoId || v.id
+          if (vistos.has(chave)) continue
+          vistos.add(chave)
+          distintas.push(v)
+          if (distintas.length >= 5) break
+        }
+        setVotacoes(distintas)
       } catch (e) { log.warn("Erro ao carregar dados", { error: String(e) }) } finally {
         setLoading((prev) => ({ ...prev, votacoes: false }))
       }

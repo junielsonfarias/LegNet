@@ -9,6 +9,18 @@
 
 ---
 
+## 2026-07-03 — Listagens: grafia "Nº" + ordem por número/ano (ERR-070)
+
+Ementas exibiam `$n^{0}$` (LaTeX de "nº") e as listas vinham fora de ordem (API por
+data; `numero` é String sem padding uniforme). Correções:
+- `legislative-labels.ts`: `normalizarTextoLegislativo` (Xº/Xª sem comer espaços) +
+  `ordenarMaterias`/`parseNumeroMateria` (ano desc + número inteiro desc).
+- Aplicado em `/legislativo/proposicoes`, `transparencia/.../votacoes-nominais`, home
+  (`legislative-activity-section`, + dedup do mesmo PL) e detalhe da proposição.
+- Script `prisma/scripts/limpa-artefatos-texto.ts` normaliza a fonte no banco. tsc/build 0.
+
+---
+
 ## 2026-07-03 — Perfil/dashboard: presença e produção SEPARADAS por mandato (ERR-069)
 
 Vereadores com mais de um mandato tinham frequência e produção **somadas de todos

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { normalizarTextoLegislativo } from '@/lib/utils/legislative-labels'
 import { Badge } from '@/components/ui/badge'
 import {
   FileText, User, Calendar, ArrowLeft, Download, ExternalLink,
@@ -200,7 +201,7 @@ export default function ProposicaoDetalhePage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             {tipo.sigla} {proposicao.numero}/{proposicao.ano}
           </h1>
-          <p className="text-lg text-gray-600 max-w-4xl">{proposicao.titulo}</p>
+          <p className="text-lg text-gray-600 max-w-4xl">{normalizarTextoLegislativo(proposicao.titulo)}</p>
 
           {/* Meta info rapida */}
           <div className="flex flex-wrap items-center gap-4 mt-5 text-sm text-gray-500">
@@ -307,7 +308,7 @@ export default function ProposicaoDetalhePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-base">
-                  {proposicao.ementa}
+                  {normalizarTextoLegislativo(proposicao.ementa)}
                 </p>
               </CardContent>
             </Card>
@@ -336,7 +337,7 @@ export default function ProposicaoDetalhePage() {
                 </CardHeader>
                 <CardContent>
                   <div className={`prose max-w-none text-gray-700 whitespace-pre-wrap ${!showTextoCompleto ? 'max-h-64 overflow-hidden relative' : ''}`}>
-                    {proposicao.texto}
+                    {normalizarTextoLegislativo(proposicao.texto)}
                     {!showTextoCompleto && (
                       <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />
                     )}

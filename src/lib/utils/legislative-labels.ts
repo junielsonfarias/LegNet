@@ -183,3 +183,54 @@ export function formatDateTimeBR(date: string | Date | null | undefined): string
     return String(date)
   }
 }
+
+// === NORMALIZACAO DE TEXTO (artefatos de OCR/LaTeX) ===
+//
+// O acervo migrado tem ementas com ordinais em notacao LaTeX/matematica, ex.:
+// "O Projeto de Lei $n^{0}$ 011/2024 ...". Isso deve aparecer como "nº".
+// Converte "$X^{o}$" / "X^{0}" / "X^o" em "Xº" e "$X^{a}$" em "Xª"
+// (preserva a caixa do caractere-base: n->nº, N->Nº, 1->1º).
+export function normalizarTextoLegislativo<T extends string | null | undefined>(text: T): T {
+  if (!text) return text
+  // Sem \s* nas bordas: não pode "comer" os espaços que cercam o token (senão
+  // "Requerimento n^{0} 5" viraria "Requerimentonº5").
+  return (text as string).replace(
+    /\$?([A-Za-z0-9])\^\{?([oO0aA])\}?\$?/g,
+    (_m, base: string, sup: string) => base + (sup === 'a' || sup === 'A' ? 'ª' : 'º')
+  ) as T
+}
+
+// === ORDENACAO DE MATERIAS (por ano e numero) ===
+//
+// `numero` e String no schema e o padding NAO e uniforme no acervo (ex.: "9" e
+// "060" convivem), entao ordenar por string quebra. Estas helpers ordenam por
+// ANO (sempre desc) e depois pelo NUMERO INTEIRO (dir configuravel).
+
+/** Extrai o inteiro inicial do numero da materia ("009-2" -> 9, "011" -> 11). */
+export function parseNumeroMateria(numero: string | number | null | undefined): number {
+  const m = String(numero ?? '').match(/\d+/)
+  return m ? parseInt(m[0], 10) : 0
+}
+
+/**
+ * Ordena materias por ano (desc) e numero (numerico). `dir` controla o numero
+ * dentro do ano: 'desc' (mais recente primeiro, padrao) ou 'asc'.
+ */
+export function ordenarMaterias<T>(
+  items: T[],
+  getAno: (x: T) => number | null | undefined,
+  getNumero: (x: T) => string | number | null | undefined,
+  dir: 'asc' | 'desc' = 'desc'
+): T[] {
+  const sign = dir === 'asc' ? 1 : -1
+  return [...items].sort((a, b) => {
+    const anoA = getAno(a) ?? 0
+    const anoB = getAno(b) ?? 0
+    if (anoA !== anoB) return anoB - anoA // ano sempre desc (mais recente primeiro)
+    const nA = parseNumeroMateria(getNumero(a))
+    const nB = parseNumeroMateria(getNumero(b))
+    if (nA !== nB) return (nA - nB) * sign
+    // desempate estavel pelo numero completo (ex.: "009" vs "009-2")
+    return String(getNumero(a) ?? '').localeCompare(String(getNumero(b) ?? '')) * sign
+  })
+}
