@@ -157,7 +157,7 @@ export default function ParlamentarDashboardPage() {
     )
   }
 
-  const { parlamentar, resumo, comissoes, mesas, votacoes, presenca } = dashboard
+  const { parlamentar, resumo, comissoes, mesas, votacoes, presenca, mandatosDetalhados } = dashboard
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -196,6 +196,9 @@ export default function ParlamentarDashboardPage() {
                 <p className="text-3xl font-bold text-blue-600">
                   {resumo.presencaPercentual?.toFixed(1) || '0'}%
                 </p>
+                {resumo.legislaturaAtivaLabel && (
+                  <p className="text-[10px] text-gray-400">{resumo.legislaturaAtivaLabel}</p>
+                )}
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                 <CheckCircle className="h-6 w-6 text-blue-600" />
@@ -289,6 +292,60 @@ export default function ParlamentarDashboardPage() {
                 </Badge>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Frequência e produção por mandato (ERR-069) */}
+      {mandatosDetalhados && mandatosDetalhados.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-orange-600" />
+              Frequência e produção por mandato
+            </CardTitle>
+            <CardDescription>
+              Dados separados por legislatura — o mandato atual e os anteriores.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mandatosDetalhados.map((d: any) => {
+              const atual = d.legislaturaAtiva || d.ativo
+              return (
+                <div
+                  key={d.id}
+                  className={`p-4 rounded-lg border ${atual ? 'border-blue-300 bg-blue-50/40' : 'bg-gray-50'}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <p className="font-semibold">{d.legislaturaLabel}</p>
+                    <Badge className={atual ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}>
+                      {atual ? 'Legislatura atual' : 'Encerrado'}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                    <div>
+                      <p className="text-2xl font-bold text-blue-600">{d.presenca?.percentual ?? 0}%</p>
+                      <p className="text-[11px] text-gray-500">Frequência</p>
+                      <p className="text-[10px] text-gray-400">
+                        {d.presenca?.sessoesPresente ?? 0}/{d.presenca?.totalSessoes ?? 0} sessões
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-700">{d.producao?.total ?? 0}</p>
+                      <p className="text-[11px] text-gray-500">Matérias</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-green-600">{d.producao?.aprovadas ?? 0}</p>
+                      <p className="text-[11px] text-gray-500">Aprovadas</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-amber-600">{d.producao?.emTramitacao ?? 0}</p>
+                      <p className="text-[11px] text-gray-500">Tramitando</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </CardContent>
         </Card>
       )}

@@ -1,6 +1,28 @@
 # Skill: Area do Parlamentar
 
-> **Ultima atualizacao**: 2026-05-29 (Sprint P0-Legislativo)
+> **Ultima atualizacao**: 2026-07-03 (segmentacao por mandato — ERR-069)
+
+## Segmentacao por mandato (2026-07-03 / ERR-069)
+
+Presenca e Producao sao SEPARADAS POR MANDATO. Como `PresencaSessao` e `Proposicao`
+nao tem FK para `Mandato`/`Legislatura`, a separacao usa o ANO (`sessao.data` /
+`proposicao.ano`) dentro da faixa `anoInicio–anoFim` da legislatura de cada mandato.
+
+- Helper `computeMandatosBreakdown(parlamentarId, nome, mandatos)` em
+  `src/lib/services/parlamentar-db-service.ts` — usado por `getPerfil` e `getDashboard`.
+- `getPerfil`/`getDashboard`: a estatistica do topo (`estatisticas.legislaturaAtual`,
+  `presencaResumo`) reflete **so a legislatura ativa**; alem disso retornam
+  `mandatosDetalhados[]` (cada item com `presenca{sessoesPresente,totalSessoes,percentual}`
+  e `producao{total,aprovadas,emTramitacao,distribuicao}` + `materias[]`).
+- Mandato ATIVO = primeiro com `legislatura.ativa`; senao `mandato.ativo`; senao o
+  mais recente.
+- Frontend: `/parlamentares/[slug]` (aba Mandatos separa ativo x anteriores) e
+  `/parlamentar` (secao "Frequencia e producao por mandato").
+- Legislaturas renumeradas para os numeros reais (2025-2028 = 18a). Rotulo tolerante
+  a numero invalido via `formatLegislaturaLabel`. Script:
+  `prisma/scripts/renumera-legislaturas.ts`.
+
+---
 
 ## Sprint P0-Legislativo (2026-05-29)
 

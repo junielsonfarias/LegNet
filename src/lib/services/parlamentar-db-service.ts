@@ -75,6 +75,156 @@ const defaultInclude = {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Segmentação por mandato (ERR-069)
+//
+// Presença e Produção NÃO têm FK direta para Mandato/Legislatura, então a
+// separação por mandato usa o ANO (ano de sessao.data / proposicao.ano) dentro
+// da faixa anoInicio–anoFim da legislatura de cada mandato. Isso é robusto mesmo
+// quando sessao.legislaturaId é nulo e resolve o "buraco" entre mandatos (um
+// vereador com mandatos 2021-2024 e 2025-2028 não é mais medido contra o período
+// inteiro somado).
+// ---------------------------------------------------------------------------
+
+const fmtDataUTC = (d: Date | string) =>
+  new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(d))
+
+// Rótulo tolerante a numero inválido (<=0) vindo da migração.
+function formatLegislaturaLabel(
+  leg?: { numero: number; anoInicio: number; anoFim: number } | null
+): string {
+  if (!leg) return 'Legislatura não informada'
+  const anos = `${leg.anoInicio}–${leg.anoFim}`
+  return leg.numero > 0 ? `${leg.numero}ª Legislatura (${anos})` : `Legislatura ${anos}`
+}
+
+interface MandatoComLegislatura {
+  id: string
+  cargo: CargoParlamentar | string
+  numeroVotos: number
+  dataInicio: Date | null
+  dataFim: Date | null
+  ativo: boolean
+  legislaturaId: string
+  legislatura: {
+    id: string
+    numero: number
+    anoInicio: number
+    anoFim: number
+    ativa: boolean
+  } | null
+}
+
+async function computeMandatosBreakdown(
+  parlamentarId: string,
+  nomeParlamentar: string,
+  mandatos: MandatoComLegislatura[]
+) {
+  const [presencas, sessoesConcluidas, materias, totalPropsPorAnoRaw] = await Promise.all([
+    prisma.presencaSessao.findMany({
+      where: { parlamentarId },
+      select: { presente: true, sessao: { select: { data: true } } }
+    }),
+    prisma.sessao.findMany({
+      where: { status: 'CONCLUIDA' },
+      select: { data: true }
+    }),
+    prisma.proposicao.findMany({
+      where: { autorId: parlamentarId },
+      select: {
+        id: true, numero: true, ano: true, tipo: true,
+        status: true, ementa: true, dataApresentacao: true
+      },
+      orderBy: { dataApresentacao: 'desc' as const }
+    }),
+    prisma.proposicao.groupBy({ by: ['ano'], _count: { _all: true } })
+  ])
+
+  const totalPropsPorAno = new Map<number, number>()
+  for (const g of totalPropsPorAnoRaw) totalPropsPorAno.set(g.ano, g._count._all)
+
+  const anoDe = (d: Date | string | null | undefined): number | null =>
+    d ? new Date(d).getUTCFullYear() : null
+
+  const detalhados = mandatos.map(m => {
+    const leg = m.legislatura
+    const ini = leg?.anoInicio ?? null
+    const fim = leg?.anoFim ?? null
+    const noPeriodo = (ano: number | null) =>
+      ini != null && fim != null && ano != null && ano >= ini && ano <= fim
+
+    // Presença (denominador e numerador bucketizados pelo MESMO critério de ano)
+    const totalSessoes = ini != null && fim != null
+      ? sessoesConcluidas.filter(s => noPeriodo(anoDe(s.data))).length
+      : 0
+    const sessoesPresente = presencas.filter(
+      p => p.presente && noPeriodo(anoDe(p.sessao?.data ?? null))
+    ).length
+    const percentualPresenca = totalSessoes > 0
+      ? Math.round((sessoesPresente / totalSessoes) * 10000) / 100
+      : 0
+
+    // Produção
+    const materiasMandato = materias.filter(x => noPeriodo(x.ano))
+    const totalMat = materiasMandato.length
+    const aprovadas = materiasMandato.filter(x => x.status === 'APROVADA').length
+    const emTramitacao = materiasMandato.filter(x => x.status === 'EM_TRAMITACAO').length
+    const distMap = new Map<string, number>()
+    for (const x of materiasMandato) distMap.set(x.tipo, (distMap.get(x.tipo) || 0) + 1)
+    const distribuicao = Array.from(distMap.entries()).map(([tipo, quantidade]) => ({
+      tipo,
+      quantidade,
+      percentual: totalMat > 0 ? Math.round((quantidade / totalMat) * 1000) / 10 : 0
+    }))
+    let totalSistemaPeriodo = 0
+    if (ini != null && fim != null) {
+      for (let a = ini; a <= fim; a++) totalSistemaPeriodo += totalPropsPorAno.get(a) || 0
+    }
+    const percentualMaterias = totalSistemaPeriodo > 0
+      ? Math.round((totalMat / totalSistemaPeriodo) * 10000) / 100
+      : 0
+
+    return {
+      id: m.id,
+      legislaturaId: m.legislaturaId,
+      legislaturaNumero: leg?.numero ?? null,
+      legislaturaLabel: formatLegislaturaLabel(leg),
+      anoInicio: ini,
+      anoFim: fim,
+      cargo: m.cargo,
+      vinculo: m.cargo === 'VEREADOR' ? 'VEREADOR EM EXERCÍCIO' : 'MESA DIRETORA',
+      periodo: m.dataInicio
+        ? `${fmtDataUTC(m.dataInicio)}${m.dataFim ? ` a ${fmtDataUTC(m.dataFim)}` : ''}`
+        : (ini != null ? `${ini} a ${fim}` : 'Atual'),
+      numeroVotos: m.numeroVotos,
+      ativo: m.ativo,
+      legislaturaAtiva: !!leg?.ativa,
+      presenca: { sessoesPresente, totalSessoes, percentual: percentualPresenca },
+      producao: { total: totalMat, aprovadas, emTramitacao, percentualMaterias, distribuicao },
+      materias: materiasMandato.map(x => ({
+        id: x.id,
+        numero: `${x.numero}/${x.ano}`,
+        tipo: x.tipo,
+        titulo: x.ementa,
+        data: x.dataApresentacao ? fmtDataUTC(x.dataApresentacao) : '',
+        status: x.status,
+        autor: nomeParlamentar
+      }))
+    }
+  })
+
+  // Mandato ativo: prioriza legislatura.ativa; senão mandato.ativo; senão o 1º (mais recente).
+  let ativoIndex = detalhados.findIndex(d => d.legislaturaAtiva)
+  if (ativoIndex < 0) ativoIndex = detalhados.findIndex(d => d.ativo)
+  if (ativoIndex < 0 && detalhados.length > 0) ativoIndex = 0
+
+  return {
+    detalhados,
+    ativoIndex,
+    ativo: ativoIndex >= 0 ? detalhados[ativoIndex] : null
+  }
+}
+
 export const parlamentarDbService = {
   async list(filters: ParlamentarFilters = {}) {
     return prisma.parlamentar.findMany({
@@ -316,11 +466,6 @@ export const parlamentarDbService = {
           include: { comissao: true },
           orderBy: { dataInicio: 'desc' as const }
         },
-        proposicoes: {
-          orderBy: { dataApresentacao: 'desc' as const },
-          take: 10,
-          include: { sessao: true }
-        },
         presencas: {
           include: { sessao: true }
         },
@@ -334,56 +479,23 @@ export const parlamentarDbService = {
 
     if (!parlamentar) return null
 
-    // Denominador de presença = sessões CONCLUIDA DENTRO do período de mandato do
-    // parlamentar, não todas as sessões históricas (ERR-060). Assim uma vereadora
-    // de 2025 não é medida contra as sessões de 2016-2024.
-    const mandatoInicios = parlamentar.mandatos
-      .map(m => m.dataInicio)
-      .filter((d): d is Date => !!d)
-    const mandatoFins = parlamentar.mandatos
-      .map(m => m.dataFim)
-      .filter((d): d is Date => !!d)
-    const mandatoInicio = mandatoInicios.length
-      ? new Date(Math.min(...mandatoInicios.map(d => d.getTime())))
-      : null
-    const mandatoFim = mandatoFins.length
-      ? new Date(Math.max(...mandatoFins.map(d => d.getTime())))
-      : null
+    // Presença e Produção SEPARADAS POR MANDATO (ERR-069). A estatística do topo
+    // reflete APENAS a legislatura ativa; mandatos anteriores vêm em
+    // `mandatosDetalhados` (cada um com sua frequência e produção próprias).
+    const breakdown = await computeMandatosBreakdown(id, parlamentar.nome, parlamentar.mandatos)
+    const ativo = breakdown.ativo
 
-    // Calcular estatísticas
-    const [totalSessoes, materiasAutor, totalProposicoes, proposicoesPorTipo, proposicoesPorStatus] = await Promise.all([
-      prisma.sessao.count({
-        where: mandatoInicio
-          ? { status: 'CONCLUIDA', data: { gte: mandatoInicio, ...(mandatoFim ? { lte: mandatoFim } : {}) } }
-          : { status: 'CONCLUIDA' }
-      }),
-      // Total REAL de matérias por autor (a lista `proposicoes` acima tem take:10,
-      // então NÃO serve como total — ERR-060).
-      prisma.proposicao.count({ where: { autorId: id } }),
-      prisma.proposicao.count(),
-      prisma.proposicao.groupBy({
-        by: ['tipo'],
-        where: { autorId: id },
-        _count: { id: true }
-      }),
-      prisma.proposicao.groupBy({
-        by: ['status'],
-        where: { autorId: id },
-        _count: { id: true }
-      })
-    ])
-
-    const sessoesPresente = parlamentar.presencas.filter(p => p.presente).length
-    const percentualPresenca = totalSessoes > 0
-      ? Math.round((sessoesPresente / totalSessoes) * 100 * 100) / 100
-      : 0
-
-    const percentualMaterias = totalProposicoes > 0
-      ? Math.round((materiasAutor / totalProposicoes) * 100 * 100) / 100
-      : 0
-
-    const aprovadasCount = proposicoesPorStatus.find(p => p.status === 'APROVADA')?._count?.id || 0
-    const emTramitacaoCount = proposicoesPorStatus.find(p => p.status === 'EM_TRAMITACAO')?._count?.id || 0
+    // Estatística "atual" = mandato ativo (fallbacks já tratados no helper).
+    const sessoesPresente = ativo?.presenca.sessoesPresente ?? 0
+    const totalSessoes = ativo?.presenca.totalSessoes ?? 0
+    const percentualPresenca = ativo?.presenca.percentual ?? 0
+    const materiasAutor = ativo?.producao.total ?? 0
+    const percentualMaterias = ativo?.producao.percentualMaterias ?? 0
+    const aprovadasCount = ativo?.producao.aprovadas ?? 0
+    const emTramitacaoCount = ativo?.producao.emTramitacao ?? 0
+    const distribuicaoAtiva = ativo?.producao.distribuicao ?? []
+    // Lista de matérias da legislatura ativa (substitui o antigo take:10 all-time).
+    const ultimasMateriasAtivo = ativo?.materias ?? []
 
     return {
       // Dados básicos
@@ -401,7 +513,7 @@ export const parlamentarDbService = {
       createdAt: parlamentar.createdAt,
       updatedAt: parlamentar.updatedAt,
 
-      // Estatísticas calculadas
+      // Estatísticas calculadas — SOMENTE a legislatura ativa (ERR-069).
       estatisticas: {
         legislaturaAtual: {
           materias: materiasAutor,
@@ -409,6 +521,7 @@ export const parlamentarDbService = {
           sessoes: sessoesPresente,
           totalSessoes,
           percentualPresenca,
+          legislaturaLabel: ativo?.legislaturaLabel ?? null,
           dataAtualizacao: new Date().toLocaleDateString('pt-BR', { timeZone: 'UTC' })
         },
         exercicioAtual: {
@@ -419,30 +532,16 @@ export const parlamentarDbService = {
         }
       },
 
-      // Estatísticas de matérias
+      // Estatísticas de matérias — da legislatura ativa
       estatisticasMaterias: {
         total: materiasAutor,
         aprovadas: aprovadasCount,
         emTramitacao: emTramitacaoCount,
-        distribuicao: proposicoesPorTipo.map(p => ({
-          tipo: p.tipo,
-          quantidade: p._count.id,
-          percentual: materiasAutor > 0
-            ? Math.round((p._count.id / materiasAutor) * 100 * 10) / 10
-            : 0
-        }))
+        distribuicao: distribuicaoAtiva
       },
 
-      // Últimas matérias/proposições
-      ultimasMaterias: parlamentar.proposicoes.map(p => ({
-        id: p.id,
-        numero: `${p.numero}/${p.ano}`,
-        tipo: p.tipo,
-        titulo: p.ementa,
-        data: p.dataApresentacao ? new Date(p.dataApresentacao).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '',
-        status: p.status,
-        autor: parlamentar.nome
-      })),
+      // Últimas matérias/proposições — da legislatura ativa
+      ultimasMaterias: ultimasMateriasAtivo,
 
       // Comissões
       comissoes: parlamentar.comissoes.map((mc: { comissao: { id: string; nome: string }; cargo: string; dataInicio: Date | null; dataFim: Date | null }) => ({
@@ -453,13 +552,13 @@ export const parlamentarDbService = {
         dataFim: mc.dataFim ? new Date(mc.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Atual'
       })),
 
-      // Mandatos
+      // Mandatos (lista simples — compatibilidade)
       mandatos: parlamentar.mandatos.map(m => ({
         id: m.id,
         cargo: m.cargo,
         vinculo: m.cargo === 'VEREADOR' ? 'VEREADOR EM EXERCÍCIO' : 'MESA DIRETORA',
         legislatura: m.legislatura
-          ? `${m.legislatura.numero}ª Legislatura (${m.legislatura.anoInicio} - ${m.legislatura.anoFim})`
+          ? formatLegislaturaLabel(m.legislatura)
           : parlamentar.legislatura,
         periodo: m.dataInicio
           ? `${new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(m.dataInicio))}${m.dataFim ? ` a ${new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(m.dataFim))}` : ''}`
@@ -467,6 +566,11 @@ export const parlamentarDbService = {
         numeroVotos: m.numeroVotos,
         ativo: m.ativo
       })),
+
+      // Mandatos DETALHADOS — presença + produção SEPARADAS por mandato (ERR-069).
+      // O mandato ativo é o primeiro com legislaturaAtiva=true; os demais são
+      // "mandatos anteriores".
+      mandatosDetalhados: breakdown.detalhados,
 
       // Filiação partidária
       filiacaoPartidaria: parlamentar.filiacoes.map(f => ({
@@ -560,7 +664,8 @@ export const parlamentarDbService = {
         }
       }),
       prisma.presencaSessao.findMany({
-        where: { parlamentarId }
+        where: { parlamentarId },
+        select: { presente: true, justificativa: true, sessao: { select: { data: true } } }
       }),
       prisma.votacao.findMany({
         where: { parlamentarId }
@@ -582,24 +687,23 @@ export const parlamentarDbService = {
       })
     ])
 
-    // Denominador de presença = sessões CONCLUIDA no período de mandato (ERR-060),
-    // consistente com getPerfil. Sem isso, o dashboard mostraria ~100%.
-    const dInicios = (parlamentar.mandatos as Array<{ dataInicio: Date | null }>)
-      .map(m => m.dataInicio).filter((d): d is Date => !!d)
-    const dFins = (parlamentar.mandatos as Array<{ dataFim: Date | null }>)
-      .map(m => m.dataFim).filter((d): d is Date => !!d)
-    const dGte = dInicios.length ? new Date(Math.min(...dInicios.map(d => d.getTime()))) : null
-    const dLte = dFins.length ? new Date(Math.max(...dFins.map(d => d.getTime()))) : null
-    const totalSessoesMandato = await prisma.sessao.count({
-      where: {
-        status: 'CONCLUIDA',
-        ...(dGte ? { data: { gte: dGte, ...(dLte ? { lte: dLte } : {}) } } : {}),
-      },
-    })
+    // Presença/produção SEPARADAS POR MANDATO (ERR-069): o resumo do topo reflete
+    // APENAS a legislatura ativa; os demais mandatos vêm em `mandatosDetalhados`.
+    const breakdown = await computeMandatosBreakdown(parlamentarId, parlamentar.nome, parlamentar.mandatos)
+    const ativo = breakdown.ativo
+    const ini = ativo?.anoInicio ?? null
+    const fim = ativo?.anoFim ?? null
+    const noPeriodoAtivo = (d: Date | string | null | undefined) => {
+      if (ini == null || fim == null || !d) return false
+      const ano = new Date(d).getUTCFullYear()
+      return ano >= ini && ano <= fim
+    }
 
     const presencaResumo = calcularPresencaResumo(
-      presencas.map(p => ({ presente: p.presente, justificativa: p.justificativa })),
-      totalSessoesMandato
+      presencas
+        .filter(p => noPeriodoAtivo(p.sessao?.data ?? null))
+        .map(p => ({ presente: p.presente, justificativa: p.justificativa })),
+      ativo?.presenca.totalSessoes ?? 0
     )
 
     const votacaoResumo = calcularVotacaoResumo(
@@ -612,7 +716,11 @@ export const parlamentarDbService = {
       membrosMesa,
       presencaResumo,
       votacaoResumo,
-      sessoesAgendadas
+      sessoesAgendadas,
+      // Produção da legislatura ativa + breakdown por mandato (ERR-069)
+      producaoResumo: ativo?.producao ?? null,
+      legislaturaAtivaLabel: ativo?.legislaturaLabel ?? null,
+      mandatosDetalhados: breakdown.detalhados
     }
   },
 

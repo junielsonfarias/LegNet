@@ -28,10 +28,11 @@ function chave(n: string): string {
 }
 
 // legislatura por ano da sessão
+// Números absolutos na Câmara de Chaves (cadência de 4 anos; 2025-2028 = 18ª).
 function legDoAno(ano: number): { id: string; numero: number; ini: number; fim: number } | null {
-  if (ano >= 2013 && ano <= 2016) return { id: 'leg-2013-2016', numero: -3, ini: 2013, fim: 2016 }
-  if (ano >= 2017 && ano <= 2020) return { id: 'leg-2017-2020', numero: -2, ini: 2017, fim: 2020 }
-  if (ano >= 2021 && ano <= 2024) return { id: 'leg-2021-2024', numero: -1, ini: 2021, fim: 2024 }
+  if (ano >= 2013 && ano <= 2016) return { id: 'leg-2013-2016', numero: 15, ini: 2013, fim: 2016 }
+  if (ano >= 2017 && ano <= 2020) return { id: 'leg-2017-2020', numero: 16, ini: 2017, fim: 2020 }
+  if (ano >= 2021 && ano <= 2024) return { id: 'leg-2021-2024', numero: 17, ini: 2021, fim: 2024 }
   return null
 }
 
@@ -97,7 +98,7 @@ export async function importVereadoresHistoricos(ctx: ImportContext): Promise<vo
   for (const ano of anosUsados) {
     const l = legDoAno(ano)!
     await ctx.prisma.legislatura.upsert({
-      where: { id: l.id }, update: {},
+      where: { id: l.id }, update: { numero: l.numero },
       create: { id: l.id, numero: l.numero, anoInicio: l.ini, anoFim: l.fim, ativa: false, descricao: `Legislatura ${l.ini}/${l.fim} (histórica)` },
     })
     legCache.set(l.id, l.id)

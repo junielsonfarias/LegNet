@@ -53,6 +53,7 @@ interface PerfilParlamentar {
       sessoes: number
       totalSessoes: number
       percentualPresenca: number
+      legislaturaLabel?: string | null
       dataAtualizacao: string
     }
     exercicioAtual: {
@@ -96,6 +97,37 @@ interface PerfilParlamentar {
     periodo: string
     numeroVotos: number
     ativo: boolean
+  }>
+  mandatosDetalhados?: Array<{
+    id: string
+    legislaturaId: string
+    legislaturaNumero: number | null
+    legislaturaLabel: string
+    anoInicio: number | null
+    anoFim: number | null
+    cargo: string
+    vinculo: string
+    periodo: string
+    numeroVotos: number
+    ativo: boolean
+    legislaturaAtiva: boolean
+    presenca: { sessoesPresente: number; totalSessoes: number; percentual: number }
+    producao: {
+      total: number
+      aprovadas: number
+      emTramitacao: number
+      percentualMaterias: number
+      distribuicao: Array<{ tipo: string; quantidade: number; percentual: number }>
+    }
+    materias: Array<{
+      id: string
+      numero: string
+      tipo: string
+      titulo: string
+      data: string
+      status: string
+      autor: string
+    }>
   }>
   filiacaoPartidaria: Array<{
     id: string
@@ -407,7 +439,12 @@ export default function ParlamentarPerfilPage() {
           {/* Presença - Donut Chart */}
           <Card className="shadow-lg border-0">
             <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-gray-500 mb-3">Presença em Sessões</h3>
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold text-gray-500">Presença em Sessões</h3>
+                {perfil.estatisticas.legislaturaAtual.legislaturaLabel && (
+                  <p className="text-[10px] text-gray-400">{perfil.estatisticas.legislaturaAtual.legislaturaLabel}</p>
+                )}
+              </div>
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
@@ -443,7 +480,12 @@ export default function ParlamentarPerfilPage() {
           {/* Produção - Números */}
           <Card className="shadow-lg border-0">
             <CardContent className="p-5">
-              <h3 className="text-sm font-semibold text-gray-500 mb-3">Produção Legislativa</h3>
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold text-gray-500">Produção Legislativa</h3>
+                {perfil.estatisticas.legislaturaAtual.legislaturaLabel && (
+                  <p className="text-[10px] text-gray-400">{perfil.estatisticas.legislaturaAtual.legislaturaLabel}</p>
+                )}
+              </div>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="p-2 rounded-lg bg-blue-50">
                   <div className="text-2xl font-bold text-blue-600">{perfil.estatisticasMaterias.total}</div>
@@ -536,6 +578,11 @@ export default function ParlamentarPerfilPage() {
                     </CardTitle>
                     <FiltroAno ano={anoMateria} setAno={setAnoMateria} anos={anosMaterias} />
                   </div>
+                  {perfil.estatisticas.legislaturaAtual.legislaturaLabel && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {perfil.estatisticas.legislaturaAtual.legislaturaLabel} · para mandatos anteriores, veja a aba <span className="font-medium">Mandatos</span>
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {materiasFiltradas.length === 0 ? (
@@ -718,14 +765,115 @@ export default function ParlamentarPerfilPage() {
 
           {/* Mandatos */}
           <TabsContent value="mandatos" className="space-y-6">
-            <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-camara-primary">
-                  Histórico de Mandatos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {perfil.mandatos.length > 0 ? (
+            {perfil.mandatosDetalhados && perfil.mandatosDetalhados.length > 0 ? (
+              (() => {
+                const dets = perfil.mandatosDetalhados!
+                const ativos = dets.filter((d) => d.legislaturaAtiva || d.ativo)
+                const anteriores = dets.filter((d) => !(d.legislaturaAtiva || d.ativo))
+
+                const renderMandato = (
+                  d: NonNullable<PerfilParlamentar['mandatosDetalhados']>[number],
+                  destaque: boolean
+                ) => (
+                  <Card key={d.id} className={`shadow-lg ${destaque ? 'ring-2 ring-camara-primary/40' : ''}`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <CardTitle className="text-camara-primary text-lg">{d.legislaturaLabel}</CardTitle>
+                        <Badge className={destaque ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}>
+                          {destaque ? 'Legislatura atual' : 'Encerrado'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {getCargoLabel(d.cargo)} · {d.periodo}
+                        {d.numeroVotos > 0 ? ` · ${d.numeroVotos.toLocaleString('pt-BR')} votos` : ''}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Frequência do mandato */}
+                        <div className="rounded-lg border p-4">
+                          <h4 className="text-xs font-semibold text-gray-500 mb-1">Frequência (assiduidade)</h4>
+                          <div className="text-2xl font-bold" style={{ color: 'var(--municipal-primary)' }}>
+                            {d.presenca.percentual}%
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {d.presenca.sessoesPresente} de {d.presenca.totalSessoes} sessões
+                          </p>
+                        </div>
+                        {/* Produção do mandato */}
+                        <div className="rounded-lg border p-4">
+                          <h4 className="text-xs font-semibold text-gray-500 mb-2">Material produzido</h4>
+                          <div className="flex gap-4">
+                            <div>
+                              <div className="text-2xl font-bold text-blue-600">{d.producao.total}</div>
+                              <div className="text-[10px] text-gray-500">Total</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-green-600">{d.producao.aprovadas}</div>
+                              <div className="text-[10px] text-gray-500">Aprovadas</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-amber-600">{d.producao.emTramitacao}</div>
+                              <div className="text-[10px] text-gray-500">Tramitando</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Matérias produzidas neste mandato */}
+                      {d.materias.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-500 mb-2">
+                            Matérias produzidas ({d.materias.length})
+                          </h4>
+                          <div className="space-y-1.5">
+                            {d.materias.slice(0, 5).map((m) => (
+                              <Link
+                                key={m.id}
+                                href={`/legislativo/proposicoes/${m.id}`}
+                                className="block rounded-md border p-2 hover:bg-gray-50 transition-colors"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-sm font-medium">{m.tipo} {m.numero}</span>
+                                  <span className="text-[10px] text-gray-400 flex-shrink-0">{m.data}</span>
+                                </div>
+                                <p className="text-xs text-gray-500 line-clamp-1">{m.titulo}</p>
+                              </Link>
+                            ))}
+                          </div>
+                          {d.materias.length > 5 && (
+                            <p className="text-[11px] text-gray-400 mt-1.5">
+                              + {d.materias.length - 5} outras matérias neste mandato
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+
+                return (
+                  <>
+                    {ativos.length > 0 && (
+                      <div className="space-y-4">{ativos.map((d) => renderMandato(d, true))}</div>
+                    )}
+                    {anteriores.length > 0 && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-gray-600 uppercase tracking-wide pt-2">
+                          Mandatos Anteriores
+                        </h3>
+                        {anteriores.map((d) => renderMandato(d, false))}
+                      </div>
+                    )}
+                  </>
+                )
+              })()
+            ) : perfil.mandatos.length > 0 ? (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-camara-primary">Histórico de Mandatos</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
@@ -756,11 +904,11 @@ export default function ParlamentarPerfilPage() {
                       </tbody>
                     </table>
                   </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-8">Nenhum mandato registrado.</p>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ) : (
+              <p className="text-gray-500 text-center py-8">Nenhum mandato registrado.</p>
+            )}
           </TabsContent>
 
           {/* Filiação Partidária */}
