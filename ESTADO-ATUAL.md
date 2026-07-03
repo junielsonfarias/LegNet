@@ -1,11 +1,24 @@
 # ESTADO ATUAL DA APLICACAO
 
-> **Ultima Atualizacao**: 2026-07-02 (fix: build VPS falhava no ESLint — ignoreDuringBuilds)
-> **Versao**: 1.40.14
+> **Ultima Atualizacao**: 2026-07-02 (fix: reinstalação automática — TEMA_NOME unbound)
+> **Versao**: 1.40.15
 > **Status Geral**: EM PRODUCAO
 > **URL Producao**: https://cmchaves.pa.gov.br (Camara Municipal de Chaves)
 > **Supabase**: https://xaoyyyflwdfvkcpihgbt.supabase.co (sa-east-1) — PRODUCAO
 > **Banco DEV local**: PostgreSQL via Docker (`camara_postgres`, porta 5433)
+
+---
+
+## 2026-07-02 — Fix: reinstalação automática abortava (`TEMA_NOME: unbound`)
+
+Após o fix do ESLint, a reinstalação limpa (`AUTO_INSTALL_MODE=reinstall`) apagou a
+instalação antiga com sucesso, mas a **instalação nova abortou** no resumo:
+`install.sh: line 978: TEMA_NOME: unbound variable` (script roda com `set -u`).
+Causa: no modo automático as cores vêm do ambiente → `select_identity` (que define
+`TEMA_NOME`) é pulado, mas o resumo usava `$TEMA_NOME` sem default. **Fix**: define
+`TEMA_NOME=Personalizado` ao pular o select_identity + usos com `${TEMA_NOME:-...}`.
+Varredura confirmou que era o único landmine (demais `read` já guardados). Backup de
+emergência do banco antigo preservado em `/opt/backups/emergency-*`. Ver ERR-065.
 
 ---
 
