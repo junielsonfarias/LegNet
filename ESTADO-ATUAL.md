@@ -9,6 +9,30 @@
 
 ---
 
+## 2026-07-03 — Perfil/dashboard: presença e produção SEPARADAS por mandato (ERR-069)
+
+Vereadores com mais de um mandato tinham frequência e produção **somadas de todos
+os mandatos** e rotuladas como "Legislatura Atual" (ex.: José Martins, 2025-2028 +
+2021-2024). Agora:
+- **Backend** (`parlamentar-db-service`): helper `computeMandatosBreakdown` segmenta
+  presença (por ano de `sessao.data`) e produção (por `proposicao.ano`) dentro da
+  faixa da legislatura de cada mandato. `getPerfil` e `getDashboard` retornam a
+  estatística do topo **só da legislatura ativa** + `mandatosDetalhados[]`.
+- **Frontend**: perfil público (`/parlamentares/[slug]`) — card do topo rotulado com
+  a legislatura ativa e aba **Mandatos** com frequência + material produzido por
+  mandato (ativo destacado, "Mandatos Anteriores"). Dashboard do parlamentar
+  (`/parlamentar`) ganhou seção "Frequência e produção por mandato". Admin usa a
+  mesma API (corrigido por tabela).
+- **Dados**: `formatLegislaturaLabel` elimina o "-1ª" da exibição; script
+  `prisma/scripts/renumera-legislaturas.ts` + importers 01/29 renumeram para os
+  números reais (2025-2028 = **18ª**, 2021-2024=17, 2017-2020=16, 2013-2016=15).
+- Arquivos: `parlamentar-db-service.ts`, `api/parlamentares/[id]/dashboard/route.ts`,
+  `parlamentares/[slug]/page.tsx`, `parlamentar/page.tsx`, `use-parlamentar-dashboard.ts`,
+  `importers/01-legislatura.ts`, `importers/29-vereadores-historicos.ts`,
+  `scripts/renumera-legislaturas.ts`. tsc 0. Ver ERR-069.
+
+---
+
 ## 2026-07-03 — Fix: fotos quebradas em produção (`next/image` 400 no self-host)
 
 Auditoria de produção (`siscam.vps-kinghost.net`, deploy KingHost) via HTTP + SSH:

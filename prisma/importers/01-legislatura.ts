@@ -14,8 +14,8 @@ export interface NucleoRefs {
   anoFim: number
 }
 
-// Número absoluto da legislatura na Câmara de Chaves — ajustar se conhecido.
-const LEGISLATURA_NUMERO = 1
+// Número absoluto da legislatura na Câmara de Chaves (2025-2028 = 18ª).
+const LEGISLATURA_NUMERO = 18
 
 export async function importLegislatura(ctx: ImportContext): Promise<NucleoRefs> {
   ctx.log('▶ Legislatura / Período')
@@ -44,7 +44,7 @@ export async function importLegislatura(ctx: ImportContext): Promise<NucleoRefs>
 
   const legislatura = await ctx.prisma.legislatura.upsert({
     where: { id: `leg-${leg.anoInicio}-${leg.anoFim}` },
-    update: { ativa: true },
+    update: { ativa: true, numero: LEGISLATURA_NUMERO },
     create: {
       id: `leg-${leg.anoInicio}-${leg.anoFim}`,
       numero: LEGISLATURA_NUMERO,

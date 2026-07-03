@@ -19,9 +19,12 @@ interface ParlamentarDashboard {
     mesasAtivas: number
     presencaPercentual: number
     totalVotacoes: number
+    legislaturaAtivaLabel?: string | null
   }
   presenca: any
   votacoes: any
+  producao?: any
+  mandatosDetalhados?: any[]
   mandatos: any[]
   filiacoes: any[]
   comissoes: {

@@ -31,7 +31,7 @@ export const GET = withAuth(withErrorHandler(async (
     throw new NotFoundError('Parlamentar')
   }
 
-  const { parlamentar, membrosComissao, membrosMesa, presencaResumo, votacaoResumo, sessoesAgendadas } = dashboardData
+  const { parlamentar, membrosComissao, membrosMesa, presencaResumo, votacaoResumo, sessoesAgendadas, producaoResumo, legislaturaAtivaLabel, mandatosDetalhados } = dashboardData
 
   const comissoesAtivas = membrosComissao.filter(m => m.ativo)
   const comissoesHistorico = membrosComissao.filter(m => !m.ativo)
@@ -67,10 +67,14 @@ export const GET = withAuth(withErrorHandler(async (
       comissoesAtivas: comissoesAtivas.length,
       mesasAtivas: mesasAtivas.length,
       presencaPercentual: presencaResumo.percentualPresenca,
-      totalVotacoes: votacaoResumo.total
+      totalVotacoes: votacaoResumo.total,
+      legislaturaAtivaLabel: legislaturaAtivaLabel ?? null
     },
     presenca: presencaResumo,
     votacoes: votacaoResumo,
+    // Produção da legislatura ativa + separação por mandato (ERR-069)
+    producao: producaoResumo,
+    mandatosDetalhados: mandatosDetalhados ?? [],
     mandatos: parlamentar.mandatos.map((m: Record<string, unknown>) => ({
       id: m.id,
       legislatura: m.legislatura
