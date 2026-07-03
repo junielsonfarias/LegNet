@@ -243,15 +243,18 @@ export async function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://vlibras.gov.br",
     "style-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br",
   ]
+  // VLibras: o plugin servido por vlibras.gov.br carrega um script secundario
+  // de cdn.jsdelivr.net (spbgovbr-vlibras/vlibras-portal) — precisa ser liberado
+  // em script-src/script-src-elem, senao o widget de Libras nao inicializa.
   const scriptsPermissive = [
-    `script-src 'self' 'unsafe-inline' https://vlibras.gov.br${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
-    "script-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br",
+    `script-src 'self' 'unsafe-inline' https://vlibras.gov.br https://cdn.jsdelivr.net${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+    "script-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br https://cdn.jsdelivr.net",
   ]
   // Estrita: sem unsafe-inline em scripts (mantemos em styles porque Tailwind
   // gera inline styles em runtime — quebrar style-src inviabilizaria o portal).
   const scriptsStrict = [
-    `script-src 'self' https://vlibras.gov.br${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
-    "script-src-elem 'self' https://vlibras.gov.br",
+    `script-src 'self' https://vlibras.gov.br https://cdn.jsdelivr.net${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
+    "script-src-elem 'self' https://vlibras.gov.br https://cdn.jsdelivr.net",
   ]
 
   const enforcingDirectives = [...baseDirectives, ...stylesPermissive, ...(cspStrictEnforce ? scriptsStrict : scriptsPermissive)]

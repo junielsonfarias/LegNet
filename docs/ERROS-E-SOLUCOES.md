@@ -6,6 +6,15 @@
 
 ---
 
+### Correções Aplicadas em 2026-07-02 (Pós-deploy VPS: imagens 404/400 + VLibras CSP)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-066 | Site no ar no VPS, mas **fotos de parlamentares davam 404** (`/uploads/parlamentares/*.png`) e o otimizador respondia **400** (`/_next/image?url=%2Fuploads%2F...`). Causa: o seed migra só o **banco**; os arquivos de `public/uploads/` (fotos + PDFs, ~3 GB) são **git-ignored** e não vão no seed nem no `git clone` → a pasta fica vazia no VPS. | Novo `scripts/sync-uploads.sh` (roda na DEV): envia `public/uploads/` para `/opt/camara/public/uploads/` via `rsync` (resumível) ou `tar` sobre `ssh`; aceita subpasta (ex.: `parlamentares` = 1,2 MB p/ corrigir as fotos na hora) ou tudo (~3 GB); reaplica permissões e recarrega o nginx. Runbook (`DEPLOY-VPS-COM-DADOS.md` passo 8) atualizado. |
+| ERR-067 | Widget de acessibilidade **VLibras não inicializava** no VPS: `Loading the script 'https://cdn.jsdelivr.net/gh/spbgovbr-vlibras/.../vlibras-plugin.js' violates CSP "script-src-elem 'self' 'unsafe-inline' https://vlibras.gov.br"`. O plugin servido por `vlibras.gov.br` carrega um script secundário de `cdn.jsdelivr.net`, host não liberado na CSP. | `src/middleware.ts`: adicionado `https://cdn.jsdelivr.net` a `script-src` e `script-src-elem` (variantes permissiva e estrita). Demais diretivas inalteradas. |
+
+---
+
 ### Correções Aplicadas em 2026-07-02 (Reinstalação automática: `TEMA_NOME: unbound variable`)
 
 | ID | Problema | Solução |

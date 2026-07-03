@@ -151,6 +151,20 @@ Abra o site e confira `/parlamentares`, `/legislativo/proposicoes`, `/transparen
 - **Troque a senha do admin** (os usuários vieram do DEV).
 - Confira o cron de backup (`scripts/backup-cron.sh`).
 
+### 8. Sincronizar os uploads (fotos, PDFs) — OBRIGATÓRIO
+
+O seed leva só o **banco**. Os arquivos de `public/uploads/` (fotos de parlamentares,
+PDFs de atas/normas/licitações — ~3 GB) são **git-ignored** e não vão no seed nem no
+clone. Sem eles, as imagens dão 404 e o `/_next/image` responde 400. Sincronize da
+máquina **DEV** (usa `rsync` se houver, senão `tar` sobre `ssh`):
+```bash
+bash scripts/sync-uploads.sh parlamentares   # rápido (1,2 MB) — corrige as fotos
+bash scripts/sync-uploads.sh logos           # brasão/logos
+bash scripts/sync-uploads.sh                 # TUDO (~3 GB — documentos de transparência)
+```
+Os arquivos vão para `/opt/camara/public/uploads/` (servido pelo nginx em `/uploads/`);
+o script reaplica permissões e recarrega o nginx.
+
 ## Regerar o seed (quando o DEV mudar)
 
 Na máquina **DEV** (container `camara_postgres`, porta 5433):
