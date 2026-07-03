@@ -1,8 +1,16 @@
 # Erros Identificados e Solucoes Propostas
 
 > **Data da Analise**: 2026-01-16
-> **Ultima Atualizacao**: 2026-07-02 (Validação ponta a ponta: 14 páginas + 5 ações admin — ERR-063)
+> **Ultima Atualizacao**: 2026-07-03 (next/image 400 no self-host — fotos quebradas — ERR-068)
 > **Versao Analisada**: 1.39.0
+
+---
+
+### Correções Aplicadas em 2026-07-03 (Fotos quebradas em produção — otimizador next/image)
+
+| ID | Problema | Solução |
+|----|----------|---------|
+| ERR-068 | Mesmo **após** o `sync-uploads.sh` (ERR-066), as fotos de parlamentares continuavam **quebradas nas páginas** que usam `next/image`. Diagnóstico no VPS: o arquivo **existe** em `/opt/camara/public/uploads/parlamentares/*.png` e o **nginx serve direto** (200), mas o **próprio Next** (`http://127.0.0.1:3000/uploads/...`) devolve **404**, então o otimizador (`/_next/image`) responde **400** (`"The requested resource isn't a valid image"`). Causa raiz: o `next start` **só serve arquivos de `public/` que existiam NO BUILD**; uploads são adicionados em **runtime** (admin/sync-uploads) → o handler estático do Next não os conhece (favicon/robots do repo = 200; upload pós-build = 404). Rebuildar não resolve de forma durável (uploads mudam em runtime). | `next.config.js` → `images.unoptimized: true`. Com isso o `next/image` renderiza `<img src="/uploads/...">` **puro** (sem `/_next/image`), servido direto pelo **nginx** (200, com cache/HTTP caching), tirando o otimizador do caminho para uploads. Corrige fotos de parlamentares, logos e documentos de uma vez, em qualquer ambiente self-host. Trade-off aceito: sem webp/resize automático (imagens grandes podem ser pré-redimensionadas no upload depois). `next.config.js` carrega sem erro. |
 
 ---
 
