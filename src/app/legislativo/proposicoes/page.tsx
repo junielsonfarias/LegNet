@@ -14,6 +14,7 @@ import { useConfiguracaoInstitucional } from '@/lib/hooks/use-configuracao-insti
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { useBreadcrumbs } from '@/lib/hooks/use-breadcrumbs'
 import { createLogger } from '@/lib/logging/logger'
+import { ordenarMaterias, normalizarTextoLegislativo } from '@/lib/utils/legislative-labels'
 
 const log = createLogger('legislativo/proposicoes')
 
@@ -98,9 +99,10 @@ export default function ProposicoesPage() {
   // Filtro de ano (padrão: ano atual → mais recente com dados)
   const { ano, setAno, anosDisponiveis } = useFiltroAno(proposicoes, (p) => p.ano)
 
-  // Filtrar proposições
+  // Filtrar proposições (e ordenar por ano desc + número numérico desc — o acervo
+  // não tem padding uniforme, então ordenar por string do número bagunçaria).
   const filteredProposicoes = useMemo(() => {
-    return proposicoes.filter(p => {
+    const filtradas = proposicoes.filter(p => {
       const term = searchTerm.toLowerCase()
       const matchesSearch = !searchTerm ||
         (p.titulo || '').toLowerCase().includes(term) ||
@@ -114,6 +116,7 @@ export default function ProposicoesPage() {
 
       return matchesSearch && matchesTipo && matchesStatus && matchesAno
     })
+    return ordenarMaterias(filtradas, (p) => p.ano, (p) => p.numero, 'desc')
   }, [proposicoes, searchTerm, tipoFilter, statusFilter, ano])
 
   // Paginação
@@ -371,13 +374,13 @@ export default function ProposicoesPage() {
 
                     {/* Titulo */}
                     <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-camara-primary">
-                      {proposicao.titulo || proposicao.ementa}
+                      {normalizarTextoLegislativo(proposicao.titulo || proposicao.ementa)}
                     </h2>
 
                     {/* Ementa (se diferente do titulo) */}
                     {proposicao.titulo && proposicao.ementa && proposicao.titulo !== proposicao.ementa && (
                       <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-                        {proposicao.ementa}
+                        {normalizarTextoLegislativo(proposicao.ementa)}
                       </p>
                     )}
 

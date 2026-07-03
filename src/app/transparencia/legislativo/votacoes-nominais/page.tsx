@@ -11,6 +11,7 @@ import {
 import { Vote, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { ExportarDadosButton } from '@/components/transparencia/exportar-dados-button'
 import { UltimaAtualizacao } from '@/components/transparencia/ultima-atualizacao'
+import { ordenarMaterias, normalizarTextoLegislativo } from '@/lib/utils/legislative-labels'
 
 interface Voto {
   parlamentar?: { nome: string }
@@ -36,6 +37,7 @@ interface Votacao {
 interface DemaisVotacao {
   id: string
   titulo: string
+  numero: string
   ano: number
   tipo: string
   resultado: string
@@ -96,10 +98,15 @@ export default function VotacoesNominaisPage() {
           else grupo.totalAbstencao!++
         }
         setTodasVotacoes(
-          Array.from(mapa.values()).map((g) => ({
-            ...g,
-            resultado: (g.totalSim ?? 0) > (g.totalNao ?? 0) ? 'APROVADA' : 'REJEITADA',
-          }))
+          ordenarMaterias(
+            Array.from(mapa.values()).map((g) => ({
+              ...g,
+              resultado: (g.totalSim ?? 0) > (g.totalNao ?? 0) ? 'APROVADA' : 'REJEITADA',
+            })),
+            (v) => v.proposicao?.ano,
+            (v) => v.proposicao?.numero,
+            'desc'
+          )
         )
 
         // 2) DEMAIS votações: proposições COM resultado e SEM voto nominal (a
@@ -119,6 +126,7 @@ export default function VotacoesNominaisPage() {
           .map((p) => ({
             id: p.id as string,
             titulo: `${p.tipo} ${p.numero}/${p.ano}`,
+            numero: String(p.numero ?? ''),
             ano: p.ano as number,
             tipo: p.tipo as string,
             resultado: p.resultado as string,
@@ -127,8 +135,7 @@ export default function VotacoesNominaisPage() {
             autor: ((p.autor as { apelido?: string; nome?: string })?.apelido
               ?? (p.autor as { nome?: string })?.nome) ?? null,
           }))
-          .sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
-        setDemais(demaisList)
+        setDemais(ordenarMaterias(demaisList, (d) => d.ano, (d) => d.numero, 'desc'))
       } catch (e) {
         console.error(e)
       } finally {
@@ -191,7 +198,7 @@ export default function VotacoesNominaisPage() {
                 sessao: v.sessao?.titulo || v.sessaoTitulo || '',
                 data_sessao: v.sessao?.dataInicio || '',
                 proposicao: v.proposicao ? `${v.proposicao.tipo} ${v.proposicao.numero}/${v.proposicao.ano}` : '',
-                ementa: v.proposicao?.ementa || '',
+                ementa: normalizarTextoLegislativo(v.proposicao?.ementa || ''),
                 total_sim: v.totalSim ?? 0,
                 total_nao: v.totalNao ?? 0,
                 total_abstencao: v.totalAbstencao ?? 0,
@@ -245,7 +252,7 @@ export default function VotacoesNominaisPage() {
                           {v.sessao?.dataInicio ? new Date(v.sessao.dataInicio).toLocaleDateString('pt-BR') : ''}
                         </p>
                         {v.proposicao?.ementa && (
-                          <p className="text-sm text-gray-500 mt-1 truncate max-w-2xl">{v.proposicao.ementa}</p>
+                          <p className="text-sm text-gray-500 mt-1 truncate max-w-2xl">{normalizarTextoLegislativo(v.proposicao.ementa)}</p>
                         )}
                       </div>
                       <Button variant="ghost" size="sm">
@@ -325,7 +332,7 @@ export default function VotacoesNominaisPage() {
                       )}
                     </div>
                     {d.ementa && (
-                      <p className="text-sm text-gray-500 truncate max-w-3xl">{d.ementa}</p>
+                      <p className="text-sm text-gray-500 truncate max-w-3xl">{normalizarTextoLegislativo(d.ementa)}</p>
                     )}
                     {d.autor && (
                       <p className="text-xs text-gray-400 mt-1">Autor: {d.autor}</p>
